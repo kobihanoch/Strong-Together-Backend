@@ -1,30 +1,29 @@
-import express from "express";
-import dotenv from "dotenv";
-import cors from "cors";
-import connectDB from "./config/db.js";
-import userRoutes from "./routes/userRoutes.js";
-import authRoutes from "./routes/authRoutes.js";
 import cookieParser from "cookie-parser";
+import cors from "cors";
+import dotenv from "dotenv";
+import express from "express";
+import helmet from "helmet";
+import { connectDB } from "./config/db.js";
+import { createIOServer, startSocket } from "./config/webSocket.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
+import { generalLimiter } from "./middlewares/rateLimiter.js";
+import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
-// Config-------------------------------------------------------------------
+// RESOURECES CONNECTIONS AND GENERAL CONFIGURATIONS  ------------------------------------------
 dotenv.config();
+
+// Create an express server
 const app = express();
 
-// Port
+// Define port
 const PORT = process.env.PORT || 5000;
 
-app.use(cookieParser());
+await connectDB(); // Connect to MongoDB
+//await connectRedis(); // Connect to Redis
 
-// CORS allowance-----------------------------------------------------
-const allowedOrigins = [
-  process.env.SHILAT_IP,
-  process.env.HOME_IP,
-  process.env.COMPUTER_IP,
-  process.env.PHONE_IP,
-  "https://myapp.com", // Production frontend
-];
-
-app.use(
+// MIDDLWARES ----------------------------------------------------------------------------------
+/*app.use(
   cors({
     origin: function (origin, callback) {
       if (!origin || allowedOrigins.includes(origin)) {
@@ -35,30 +34,57 @@ app.use(
     },
     credentials: true,
   })
-);
-/*app.use(
+);*/
+
+// Apply CORS
+app.use(
   cors({
     origin: true,
     credentials: true,
   })
-);*/
+);
+
+// For using cookies
+app.use(cookieParser());
+
+// Use express JSON formats
 app.use(express.json());
-//connectDB(); // Connect to MongoDB
+
+// Use helmet
+app.use(helmet());
+
+// Trust proxy to get the request device IP for rate limiting
+// IMPORTANT: Allow it only if using secured cloud services like Render, AWS, Azure, etc...
+app.set("trust proxy", 1);
+
+// Use general rate limiter
+app.use(generalLimiter);
 
 // Notify the server is running
 app.get("/", (req, res) => {
   res.send("Server is running...");
 });
 
-// Listening to the server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// Health check
+app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
 
-// API Routes---------------------------------------------------------------
+// API ROUTES --------------------------------------------------------------------------------------------------
 
 // Users
 app.use("/api/users", userRoutes);
 
 // Auth
 app.use("/api/auth", authRoutes);
+
+// Error Handler
+app.use(errorHandler);
+
+// SOCKET CONNECTIONS ---------------------------------------------------------------------------------------------
+const { io, server } = createIOServer(app);
+await startSocket(io);
+
+// LISTEN TO PORT ------------------------------------------------------------------------------------------------
+server.listen(PORT, () => {
+  console.log(`Websocket is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
+});

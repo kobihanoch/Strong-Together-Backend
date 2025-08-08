@@ -29,35 +29,3 @@ export const protect = async (req, res, next) => {
     return res.status(401).json({ message: "Invalid or expired access token" });
   }
 };
-
-export const protectAdmin = async (req, res, next) => {
-  try {
-    const accessToken = req.cookies.accessToken;
-
-    if (!accessToken) {
-      return res.status(401).json({ message: "No access token provided" });
-    }
-
-    const blacklisted = await BlacklistedToken.findOne({ token: accessToken });
-    if (blacklisted) {
-      return res.status(401).json({ message: "Access token has been revoked" });
-    }
-
-    const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
-
-    req.user = await User.findById(decoded.id).select("-password +role");
-
-    if (!req.user) {
-      return res.status(401).json({ message: "User not found" });
-    }
-
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access forbidden: Admins only" });
-    }
-
-    next();
-  } catch (error) {
-    console.error("ProtectAdmin Middleware Error:", error);
-    return res.status(401).json({ message: "Invalid or expired access token" });
-  }
-};

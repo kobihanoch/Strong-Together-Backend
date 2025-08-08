@@ -1,17 +1,19 @@
-import mongoose from "mongoose";
+import { createClient } from "@supabase/supabase-js";
 
-const connectDB = async () => {
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  { auth: { persistSession: false } }
+);
+
+export default supabase;
+
+export const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      dbName: process.env.DB_NAME,
-    });
-    console.log("MongoDB connected successfully");
-  } catch (error) {
-    console.error("MongoDB connection failed:", error.message);
+    await supabase.from("users").select("username").limit(1);
+    console.log("✅ Connected to Supabase successfully!");
+  } catch (err) {
+    console.error("❌ Failed to connect to Supabase:", err.message);
     process.exit(1);
   }
 };
-
-export default connectDB;
