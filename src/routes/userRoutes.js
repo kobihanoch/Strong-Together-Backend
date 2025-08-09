@@ -13,7 +13,7 @@ import { protect } from "../middlewares/authMiddleware.js";
 import { authorizeRoles } from "../middlewares/roleMiddleware.js";
 import { validate } from "../middlewares/validateRequest.js";
 import { registerSchema } from "../validators/auth/register.schema.js";
-//import { editUserSchema } from "../validators/admin/editUser.schema.js";
+import { updateUserSchema } from "../validators/update/updateUser.schema.js";
 
 const router = Router();
 
@@ -22,11 +22,16 @@ router.post("/create", validate(registerSchema), asyncHandler(createUser)); // P
 
 // User routes
 router.get("/get", protect, asyncHandler(getAuthenticatedUserById)); // User - Get their own profile
-router.put("/update", protect, asyncHandler(updateAuthenticatedUser)); // User - Update their own profile
+router.put(
+  "/update",
+  protect,
+  validate(updateUserSchema),
+  asyncHandler(updateAuthenticatedUser)
+); // User - Update their own profile
 
 // Admin routes
-router.get("/all", protect, authorizeRoles("admin"), asyncHandler(getAllUsers)); // Admin - Get all users
-router.get("/:id", protect, authorizeRoles("admin"), asyncHandler(getUserById)); // Admin - Get a specific user by ID
+//router.get("/all", protect, authorizeRoles("admin"), asyncHandler(getAllUsers)); // Admin - Get all users
+//router.get("/:id", protect, authorizeRoles("admin"), asyncHandler(getUserById)); // Admin - Get a specific user by ID
 /*router.put(
   "/update/:id",
   protect,
@@ -34,11 +39,11 @@ router.get("/:id", protect, authorizeRoles("admin"), asyncHandler(getUserById));
   validate(editUserSchema),
   asyncHandler(updateUser)
 ); // Admin - Update a specific user by ID*/
-router.delete(
+/*router.delete(
   "/delete/:id",
   protect,
   authorizeRoles("admin"),
   asyncHandler(deleteUser)
-); // Admin - Delete a specific user by ID
+); // Admin - Delete a specific user by ID*/
 
 export default router;
