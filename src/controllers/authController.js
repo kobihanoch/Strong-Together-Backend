@@ -46,45 +46,44 @@ export const loginUser = async (req, res) => {
 // @route   POST /api/auth/logout
 // @access  Private
 export const logoutUser = async (req, res) => {
-  const accessTokenCookies = req.accessToken;
-  const refreshTokenCookies = req.refreshToken;
+  // Delete expired tokens every log out attempt
+  await sql`DELETE FROM blacklistedtokens WHERE expires_at < now()`;
 
-  if (!accessTokenCookies && !refreshTokenCookies) {
+  // Get tokens from request body and decode
+  const authHeader = req.headers["authorization"] || "";
+  const accessToken = authHeader.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : null;
+  const refreshHeader = req.headers["x-refresh-token"] || "";
+  const refreshToken = refreshHeader.startsWith("Bearer ")
+    ? refreshHeader.slice(7)
+    : null;
+
+  if (!accessToken && !refreshToken) {
     res.status(200).json({ message: "Already logged out" });
     return;
   }
 
-  const decodedRefresh = jwt.decode(refreshTokenCookies);
-  const expiresAt = decodedRefresh?.exp
+  // Decode tokens
+  const decodedRefresh = jwt.decode(refreshToken);
+  const expiresAtRefresh = decodedRefresh?.exp
     ? new Date(decodedRefresh.exp * 1000)
     : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-  if (accessTokenCookies) {
-    const exists = await BlacklistedToken.findOne({
-      token: accessTokenCookies,
-    });
-    if (!exists)
-      await BlacklistedToken.create({ token: accessTokenCookies, expiresAt });
+  const decodedAccess = jwt.decode(accessToken);
+  const expiresAtAccess = decodedAccess?.exp
+    ? new Date(decodedAccess.exp * 1000)
+    : new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  // Add to blacklist
+  if (accessToken) {
+    await sql`INSERT INTO blacklistedtokens (token, expires_at) values(${accessToken}, ${expiresAtAccess}) ON CONFLICT (token) DO NOTHING`;
   }
 
-  if (refreshTokenCookies) {
-    const exists = await BlacklistedToken.findOne({
-      token: refreshTokenCookies,
-    });
-    if (!exists)
-      await BlacklistedToken.create({ token: refreshTokenCookies, expiresAt });
+  // Add to blacklist
+  if (refreshToken) {
+    await sql`INSERT INTO blacklistedtokens (token, expires_at) values(${refreshToken}, ${expiresAtRefresh}) ON CONFLICT (token) DO NOTHING`;
   }
-
-  res.clearCookie("accessToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-  });
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-  });
 
   res.status(200).json({ message: "Logged out successfully" });
 };
