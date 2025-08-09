@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {
-  checkIfUserAuthenticated,
+  checkAuthAndRefresh,
   loginUser,
   logoutUser,
   refreshAccessToken,
@@ -15,7 +15,7 @@ const router = Router();
 // User Routes
 router.post("/login", validate(loginSchema), asyncHandler(loginUser)); // Logging in a user
 router.post("/logout", asyncHandler(logoutUser)); // Logging out a user
-router.get("/checkauth", protect, asyncHandler(checkIfUserAuthenticated)); // Check if user is authenticated
+router.get("/checkauth", asyncHandler(checkAuthAndRefresh)); // Check if user is authenticated
 router.post("/refresh", asyncHandler(refreshAccessToken)); // Refresh token
 
 export default router;

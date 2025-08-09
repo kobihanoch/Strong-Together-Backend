@@ -81,9 +81,64 @@ export const logoutUser = async (req, res) => {
 // @desc    Check if user is authenticated
 // @route   GET /api/auth/checkauth
 // @access  Private
+export const checkAuthAndRefresh = async (req, res) => {
+  const refreshToken = getRefreshToken(req);
+  const decodedRefresh = decodeRefreshToken(refreshToken);
+  // Mostly will fail here if user is not logged in
+  if (!decodedRefresh) {
+    throw createError(401, "Invalid or expired refresh token");
+  }
 
-export const checkIfUserAuthenticated = async (req, res) => {
-  res.status(200).json({ message: "User is authenticated" });
+  // Check if refresh token is blacklisted
+  const [revoked] =
+    await sql`SELECT token FROM blacklistedtokens WHERE token=${refreshToken}`;
+  if (revoked) {
+    throw createError(401, "Refresh token has been revoked");
+  }
+
+  // Check if access token exists => If true blacklist
+  const accessToken = getAccessToken(req);
+  if (accessToken && accessToken.length > 0) {
+    const decodedAccess = decodeAccessToken(accessToken);
+    const expA = decodedAccess?.exp
+      ? new Date(decodedAccess.exp * 1000)
+      : new Date(Date.now() + 15 * 60 * 1000);
+    await sql`
+      INSERT INTO blacklistedtokens (token, expires_at)
+      VALUES (${accessToken}, ${expA})
+      ON CONFLICT (token) DO NOTHING`;
+  }
+
+  // Blacklist refresh token
+  const expR = decodedRefresh.exp
+    ? new Date(decodedRefresh.exp * 1000)
+    : new Date(Date.now() + 24 * 60 * 60 * 1000);
+  await sql`
+    INSERT INTO blacklistedtokens (token, expires_at)
+    VALUES (${refreshToken}, ${expR})
+    ON CONFLICT (token) DO NOTHING`;
+
+  // Check if user exists
+  const [user] =
+    await sql`SELECT id, role FROM users WHERE id=${decodedRefresh.id} LIMIT 1`;
+  if (!user) throw createError(401, "User not found");
+
+  // Generate new tokens
+  const accessTokenNew = jwt.sign(
+    { id: decodedRefresh.id, role: decodedRefresh.role },
+    process.env.JWT_ACCESS_SECRET,
+    { expiresIn: "15m" }
+  );
+  const refreshTokenNew = jwt.sign(
+    { id: decodedRefresh.id, role: decodedRefresh.role },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: "10d" }
+  );
+  res.status(200).json({
+    message: "User is authenticated",
+    accessToken: accessTokenNew,
+    refreshToken: refreshTokenNew,
+  });
 };
 
 // @desc    Refresh token
