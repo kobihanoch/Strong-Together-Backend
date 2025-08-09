@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { asyncHandler } from "../middlewares/asyncHandler.js";
 import {
+  checkIfUserAuthenticated,
   loginUser,
   logoutUser,
-  checkIfUserAuthenticated,
-  refreshToken,
+  refreshAccessToken,
 } from "../controllers/authController.js";
+import { asyncHandler } from "../middlewares/asyncHandler.js";
+import { protect } from "../middlewares/authMiddleware.js";
 import { validate } from "../middlewares/validateRequest.js";
 import { loginSchema } from "../validators/auth/login.schema.js";
-import { protect } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
@@ -16,6 +16,6 @@ const router = Router();
 router.post("/login", validate(loginSchema), asyncHandler(loginUser)); // Logging in a user
 router.post("/logout", asyncHandler(logoutUser)); // Logging out a user
 router.get("/checkauth", protect, asyncHandler(checkIfUserAuthenticated)); // Check if user is authenticated
-router.post("/refresh", asyncHandler(refreshToken)); // Refresh token
+router.post("/refresh", asyncHandler(refreshAccessToken)); // Refresh token
 
 export default router;
