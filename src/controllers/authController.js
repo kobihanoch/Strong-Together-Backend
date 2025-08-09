@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import createError from "http-errors";
 import User from "../models/userModel.js";
 import BlacklistedToken from "../models/blacklistedTokenModel.js";
+import sql from "../config/db.js";
 
 // @desc    Login a user
 // @route   POST /api/auth/login
@@ -13,47 +14,40 @@ export const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
   // Validate data
-  const user = await User.findOne({ username }).select("+password");
+  const [user] =
+    await sql`SELECT id, password, role FROM users WHERE username=${username} LIMIT 1`;
   if (!user) throw createError(401, "Invalid credentials");
 
+  // Check if user exists
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw createError(401, "Invalid credentials");
 
+  // Sign tokens
   const accessToken = jwt.sign(
-    { id: user._id, role: user.role },
+    { id: user.id, role: user.role },
     process.env.JWT_ACCESS_SECRET,
     { expiresIn: "15m" }
   );
 
   const refreshToken = jwt.sign(
-    { id: user._id, role: user.role },
+    { id: user.id, role: user.role },
     process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "1d" }
+    { expiresIn: "10d" }
   );
 
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    maxAge: 15 * 60 * 1000, // 15 minutes
+  res.status(200).json({
+    message: "Login successful",
+    accessToken: accessToken,
+    refreshToken: refreshToken,
   });
-
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
-  });
-
-  res.status(200).json({ message: "Login successful" });
 };
 
 // @desc    Logout a user
 // @route   POST /api/auth/logout
 // @access  Private
 export const logoutUser = async (req, res) => {
-  const accessTokenCookies = req.cookies.accessToken;
-  const refreshTokenCookies = req.cookies.refreshToken;
+  const accessTokenCookies = req.accessToken;
+  const refreshTokenCookies = req.refreshToken;
 
   if (!accessTokenCookies && !refreshTokenCookies) {
     res.status(200).json({ message: "Already logged out" });
