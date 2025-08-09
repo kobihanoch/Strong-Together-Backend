@@ -1,10 +1,14 @@
 // src/controllers/authController.js
-
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import createError from "http-errors";
-import User from "../models/userModel.js";
-import BlacklistedToken from "../models/blacklistedTokenModel.js";
+import jwt from "jsonwebtoken";
+import sql from "../config/db.js";
+import {
+  decodeAccessToken,
+  decodeRefreshToken,
+  getAccessToken,
+  getRefreshToken,
+} from "../utils/tokenUtils.js";
 
 // @desc    Login a user
 // @route   POST /api/auth/login
@@ -13,138 +17,108 @@ export const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
   // Validate data
-  const user = await User.findOne({ username }).select("+password");
+  const [user] =
+    await sql`SELECT id, password, role FROM users WHERE username=${username} LIMIT 1`;
   if (!user) throw createError(401, "Invalid credentials");
 
+  // Check if user exists
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw createError(401, "Invalid credentials");
 
+  // Sign tokens
   const accessToken = jwt.sign(
-    { id: user._id, role: user.role },
+    { id: user.id, role: user.role },
     process.env.JWT_ACCESS_SECRET,
     { expiresIn: "15m" }
   );
 
   const refreshToken = jwt.sign(
-    { id: user._id, role: user.role },
+    { id: user.id, role: user.role },
     process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "1d" }
+    { expiresIn: "10d" }
   );
 
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    maxAge: 15 * 60 * 1000, // 15 minutes
+  res.status(200).json({
+    message: "Login successful",
+    accessToken: accessToken,
+    refreshToken: refreshToken,
   });
-
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
-  });
-
-  res.status(200).json({ message: "Login successful" });
 };
 
 // @desc    Logout a user
 // @route   POST /api/auth/logout
 // @access  Private
 export const logoutUser = async (req, res) => {
-  const accessTokenCookies = req.cookies.accessToken;
-  const refreshTokenCookies = req.cookies.refreshToken;
+  // Delete expired tokens every log out attempt
+  await sql`DELETE FROM blacklistedtokens WHERE expires_at < now()`;
 
-  if (!accessTokenCookies && !refreshTokenCookies) {
-    res.status(200).json({ message: "Already logged out" });
-    return;
-  }
+  // Get tokens from request body and decode
+  const refreshToken = getRefreshToken(req);
+  const accessToken = getAccessToken(req);
 
-  const decodedRefresh = jwt.decode(refreshTokenCookies);
-  const expiresAt = decodedRefresh?.exp
+  // Decode tokens
+  const decodedAccess = decodeAccessToken(accessToken);
+  const expiresAtAccess = decodedAccess?.exp
+    ? new Date(decodedAccess.exp * 1000)
+    : new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  const decodedRefresh = decodeRefreshToken(refreshToken);
+  const expiresAtRefresh = decodedRefresh?.exp
     ? new Date(decodedRefresh.exp * 1000)
     : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-  if (accessTokenCookies) {
-    const exists = await BlacklistedToken.findOne({
-      token: accessTokenCookies,
-    });
-    if (!exists)
-      await BlacklistedToken.create({ token: accessTokenCookies, expiresAt });
+  // Add to blacklist
+  if (decodedAccess) {
+    await sql`INSERT INTO blacklistedtokens (token, expires_at) values(${accessToken}, ${expiresAtAccess}) ON CONFLICT (token) DO NOTHING`;
   }
-
-  if (refreshTokenCookies) {
-    const exists = await BlacklistedToken.findOne({
-      token: refreshTokenCookies,
-    });
-    if (!exists)
-      await BlacklistedToken.create({ token: refreshTokenCookies, expiresAt });
+  if (decodedRefresh) {
+    await sql`INSERT INTO blacklistedtokens (token, expires_at) values(${refreshToken}, ${expiresAtRefresh}) ON CONFLICT (token) DO NOTHING`;
   }
-
-  res.clearCookie("accessToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-  });
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-  });
 
   res.status(200).json({ message: "Logged out successfully" });
 };
 
 // @desc    Check if user is authenticated
 // @route   GET /api/auth/checkauth
-// @access  Public
+// @access  Private
+
 export const checkIfUserAuthenticated = async (req, res) => {
-  const accessToken = req.cookies.accessToken;
-  const refreshToken = req.cookies.refreshToken;
-  const token = accessToken || refreshToken;
-
-  if (!token) throw createError(401, "Not authenticated");
-
-  let decoded;
-  if (accessToken) {
-    decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
-  } else if (refreshToken) {
-    decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    throw createError(401, "No access token, need to refresh.");
-  }
-
-  const user = await User.findById(decoded.id).select("-password +role");
-  if (!user) throw createError(401, "User not found");
-
   res.status(200).json({ message: "User is authenticated" });
 };
 
 // @desc    Refresh token
 // @route   POST /api/auth/refresh
 // @access  Public
-export const refreshToken = async (req, res) => {
-  const token = req.cookies.refreshToken;
-  if (!token) throw createError(401, "No refresh token provided");
+export const refreshAccessToken = async (req, res) => {
+  // Check if refresh token is sent
+  const refreshToken = getRefreshToken(req);
+  if (!refreshToken) throw createError(401, "No refresh token provided");
 
-  const blacklisted = await BlacklistedToken.findOne({ token });
-  if (blacklisted) throw createError(401, "Refresh token is blacklisted.");
+  // Decode
+  const decoded = decodeRefreshToken(refreshToken);
+  if (!decoded) {
+    throw createError(401, "Invalid or expired refresh token");
+  }
 
-  const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-  const user = await User.findById(decoded.id).select("-password +role");
+  const [revoked] =
+    await sql`SELECT token FROM blacklistedtokens WHERE token=${refreshToken} LIMIT 1`;
+  if (revoked) {
+    throw createError(401, "Refresh token has been revoked");
+  }
+
+  // Find user
+  const [user] =
+    await sql`SELECT id, role FROM users WHERE id=${decoded.id} LIMIT 1`;
   if (!user) throw createError(401, "User not found");
 
+  // Sign a new access token
   const newAccess = jwt.sign(
-    { id: user._id, role: user.role },
+    { id: user.id, role: user.role },
     process.env.JWT_ACCESS_SECRET,
     { expiresIn: "15m" }
   );
 
-  res.cookie("accessToken", newAccess, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    maxAge: 15 * 60 * 1000,
-  });
-
-  res.status(200).json({ message: "Access token refreshed" });
+  res
+    .status(200)
+    .json({ message: "Access token refreshed", accessToken: newAccess });
 };

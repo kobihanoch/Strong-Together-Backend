@@ -1,31 +1,42 @@
-import jwt from "jsonwebtoken";
-import BlacklistedToken from "../models/blacklistedTokenModel.js";
-import User from "../models/userModel.js";
+import createError from "http-errors";
+import sql from "../config/db.js";
+import { decodeAccessToken, getAccessToken } from "../utils/tokenUtils.js";
 
 export const protect = async (req, res, next) => {
   try {
-    const accessToken = req.cookies.accessToken;
-
+    // Get access token
+    const accessToken = getAccessToken(req);
     if (!accessToken) {
       return res.status(401).json({ message: "No access token provided" });
     }
 
-    const blacklisted = await BlacklistedToken.findOne({ token: accessToken });
-    if (blacklisted) {
-      return res.status(401).json({ message: "Access token has been revoked" });
+    // Check if access token is blacklisted (not valid)
+    const [revoked] =
+      await sql`SELECT 1 FROM blacklistedtokens WHERE token = ${accessToken} AND expires_at > now() LIMIT 1`;
+    if (revoked) {
+      throw createError(401, "Access token has been revoked");
     }
 
-    const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
+    // Decode
+    const decoded = decodeAccessToken(accessToken);
+    if (!decoded) {
+      throw createError(401, "Access token is not valid");
+    }
 
-    req.user = await User.findById(decoded.id).select("-password +role");
+    // Fetch user id and role
+    const [user] = await sql`SELECT id, role FROM users WHERE id=${decoded.id}`;
 
-    if (!req.user) {
+    // If user not found
+    if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
+
+    // Inject to request
+    req.user = user;
 
     next();
   } catch (error) {
     console.error("Protect Middleware Error:", error);
-    return res.status(401).json({ message: "Invalid or expired access token" });
+    throw createError(401, "Invalid or expired access token");
   }
 };
