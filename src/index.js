@@ -9,6 +9,7 @@ import { errorHandler } from "./middlewares/errorHandler.js";
 import { generalLimiter } from "./middlewares/rateLimiter.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import workoutRoutes from "./routes/workoutRoutes.js";
 
 // RESOURECES CONNECTIONS AND GENERAL CONFIGURATIONS  ------------------------------------------
 dotenv.config();
@@ -75,6 +76,9 @@ app.use("/api/users", userRoutes);
 
 // Auth
 app.use("/api/auth", authRoutes);
+
+// Workouts
+app.use("/api/workouts", workoutRoutes);
 
 // Error Handler
 app.use(errorHandler);
