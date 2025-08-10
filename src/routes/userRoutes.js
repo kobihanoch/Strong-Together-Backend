@@ -1,16 +1,11 @@
 import { Router } from "express";
-import { asyncHandler } from "../middlewares/asyncHandler.js";
 import {
   createUser,
-  getAllUsers,
   getAuthenticatedUserById,
   updateAuthenticatedUser,
-  updateUser,
-  deleteUser,
-  getUserById,
 } from "../controllers/userController.js";
+import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { protect } from "../middlewares/authMiddleware.js";
-import { authorizeRoles } from "../middlewares/roleMiddleware.js";
 import { validate } from "../middlewares/validateRequest.js";
 import { registerSchema } from "../validators/auth/register.schema.js";
 import { updateUserSchema } from "../validators/update/updateUser.schema.js";
