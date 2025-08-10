@@ -87,6 +87,9 @@ export const logoutUser = async (req, res) => {
 // @route   GET /api/auth/checkauth
 // @access  Private
 export const checkAuthAndRefresh = async (req, res) => {
+  // Delete expired tokens every log out attempt
+  await sql`DELETE FROM blacklistedtokens WHERE expires_at < now()`;
+
   const refreshToken = getRefreshToken(req);
   const decodedRefresh = decodeRefreshToken(refreshToken);
   // Mostly will fail here if user is not logged in
