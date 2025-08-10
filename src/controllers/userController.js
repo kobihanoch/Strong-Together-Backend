@@ -1,37 +1,36 @@
 // src/controllers/userController.js
-
 import bcrypt from "bcryptjs";
 import createError from "http-errors";
-import User from "../models/userModel.js";
+import sql from "../config/db.js";
 
 // @desc    Create a new user
 // @route   POST /api/users/create
 // @access  Public
 export const createUser = async (req, res) => {
-  const { username, fullName, email, password, birthDate, gender } = req.body;
+  const { username, fullName, email, password, gender } = req.body;
   // Check if user already exists
-  if (await User.findOne({ email }))
-    throw createError(400, "User already exists");
+  const [user] =
+    await sql`SELECT id FROM users WHERE username=${username} OR email=${email} LIMIT 1`;
+  if (user) throw createError(400, "User already exists");
 
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(password, salt);
-  const user = await User.create({
-    username,
-    fullName,
-    email,
-    password: hash,
-    birthDate,
-    gender,
-    role: "user",
-  });
-  res.status(201).json({ message: "User created successfully!", user });
+
+  const [created] = await sql`
+    INSERT INTO users (username, name, email, gender, password)
+    VALUES (${username}, ${fullName}, ${email}, ${gender}, ${hash})
+    RETURNING id, username, name, email, gender, role, created_at`;
+
+  res
+    .status(201)
+    .json({ message: "User created successfully!", user: created });
 };
 
 // @desc    Get all users
 // @route   GET /api/users/all
 // @access  Private/Admin
 export const getAllUsers = async (req, res) => {
-  const page = req.query.page || 1;
+  /*const page = req.query.page || 1;
   const limit = req.query.limit || 10;
   const search = req.query.search || "";
   const sortField = req.query.sortField || "username";
@@ -67,32 +66,32 @@ export const getAllUsers = async (req, res) => {
     total,
     page,
     totalPages: Math.ceil(total / limit),
-  });
+  });*/
 };
 
 // @desc    Get authenticated user by ID
 // @route   GET /api/users/get
 // @access  Private
 export const getAuthenticatedUserById = async (req, res) => {
-  const user = await User.findById(req.user.id).select("-password +role");
-  if (!user) throw createError(404, "User not found");
-  res.json(user);
+  const [user] =
+    await sql`SELECT to_jsonb(users) - 'password' AS user_data FROM users WHERE id = ${req.user.id}`;
+  res.json(user.user_data);
 };
 
 // @desc    Get a user by ID
 // @route   GET /api/users/:id
 // @access  Private/Admin
 export const getUserById = async (req, res) => {
-  const user = await User.findById(req.params.id).select("-password +role");
+  /*const user = await User.findById(req.params.id).select("-password +role");
   if (!user) throw createError(404, "User not found");
-  res.json(user);
+  res.json(user);*/
 };
 
 // @desc    Update a user by ID
 // @route   PUT /api/users/update/:id
 // @access  Private/Admin
 export const updateUser = async (req, res) => {
-  // Locate user
+  /*// Locate user
   const user = await User.findById(req.params.id).select("+role"); // role is normally hidden
   if (!user) throw createError(404, "User not found");
 
@@ -105,26 +104,60 @@ export const updateUser = async (req, res) => {
   res.status(200).json({
     message: "User updated successfully",
     user: updated,
-  });
+  });*/
 };
 
 // @desc    Update authenticated user
 // @route   PUT /api/users/update
 // @access  Private
 export const updateAuthenticatedUser = async (req, res) => {
-  const user = await User.findById(req.user.id);
-  if (!user) throw createError(404, "User not found");
-  Object.assign(user, req.body);
-  const updated = await user.save();
-  res.json(updated);
+  const {
+    username,
+    fullName,
+    email,
+    gender,
+    password,
+    profileImgUrl,
+    pushToken,
+  } = req.body;
+  if (username || email) {
+    const [conflict] = await sql`
+      SELECT 1 FROM users
+      WHERE (username=${username} OR email=${email})
+        AND id <> ${req.user.id}
+      LIMIT 1`;
+    if (conflict) throw createError(409, "Username or email already in use");
+  }
+
+  let hashed = null;
+  if (password) {
+    hashed = await bcrypt.hash(password, 10);
+  }
+
+  const [updated] = await sql`
+    UPDATE users
+    SET
+      username          = COALESCE(${username}, username),
+      name              = COALESCE(${fullName}, name),
+      email             = COALESCE(${email}, email),
+      gender            = COALESCE(${gender}, gender),
+      password          = COALESCE(${hashed}, password),
+      profile_image_url = COALESCE(${profileImgUrl}, profile_image_url),
+      push_token        = COALESCE(${pushToken}, push_token)
+    WHERE id = ${req.user.id}
+    RETURNING to_jsonb(users) - 'password' AS user_data
+  `;
+
+  res.status(200).json({
+    message: "User updated successfully",
+    user: updated.user_data,
+  });
 };
 
 // @desc    Delete a user by ID
 // @route   DELETE /api/users/delete/:id
 // @access  Private/Admin
 export const deleteUser = async (req, res) => {
-  const user = await User.findById(req.params.id);
-  if (!user) throw createError(404, "User not found");
-  await user.deleteOne();
+  await sql`DELETE FROM users WHERE id=${req.params.id}`;
   res.json({ message: "User deleted successfully" });
 };

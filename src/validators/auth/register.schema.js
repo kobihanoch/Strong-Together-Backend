@@ -1,29 +1,25 @@
 import { z } from "zod";
 
 export const registerSchema = z.object({
-  username: z.string().min(1, "Username is required").trim(),
-
-  fullName: z.string().min(1, "Full name is required").trim(),
-
-  email: z
+  username: z
     .string()
-    .min(1, "Email is required")
     .trim()
-    .refine((val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), {
-      message: "Invalid email format",
-    }),
+    .min(3, "Username must be at least 3 characters")
+    .max(30, "Username must be at most 30 characters")
+    .regex(
+      /^[a-zA-Z0-9_]+$/,
+      "Username may contain letters, numbers, and underscore only"
+    ),
 
-  password: z
+  fullName: z
     .string()
-    .min(1, "Password is required")
-    .min(6, "Password must be at least 6 characters long"),
+    .trim()
+    .min(1, "Full name is required")
+    .max(100, "Full name is too long"),
 
-  birthDate: z
-    .string()
-    .min(1, "Birth date is required")
-    .refine((val) => !isNaN(Date.parse(val)), {
-      message: "Invalid birth date",
-    }),
+  email: z.string().trim().toLowerCase().email("Invalid email format"),
+
+  password: z.string().min(8, "Password must be at least 8 characters long"),
 
   gender: z.enum(["male", "female", "other"], {
     errorMap: () => ({ message: "You must select a valid gender" }),
