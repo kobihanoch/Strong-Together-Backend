@@ -38,8 +38,13 @@ export const loginUser = async (req, res) => {
     { expiresIn: "10d" }
   );
 
+  // Fetch all user data
+  const [userData] =
+    await sql`SELECT to_jsonb(users) - 'password' AS user_data FROM users WHERE username = ${username} LIMIT 1`;
+
   res.status(200).json({
     message: "Login successful",
+    user: userData.user_data,
     accessToken: accessToken,
     refreshToken: refreshToken,
   });
