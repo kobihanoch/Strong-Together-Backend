@@ -35,7 +35,7 @@ export const loginUser = async (req, res) => {
   const refreshToken = jwt.sign(
     { id: user.id, role: user.role },
     process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "10d" }
+    { expiresIn: "4h" }
   );
 
   // Fetch all user data
@@ -137,7 +137,7 @@ export const checkAuthAndRefresh = async (req, res) => {
   const refreshTokenNew = jwt.sign(
     { id: decodedRefresh.id, role: decodedRefresh.role },
     process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "10d" }
+    { expiresIn: "4h" }
   );
   res.status(200).json({
     message: "User is authenticated",
