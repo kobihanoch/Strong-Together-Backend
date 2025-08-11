@@ -9,6 +9,7 @@ import {
   getAccessToken,
   getRefreshToken,
 } from "../utils/tokenUtils.js";
+import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
 
 // @desc    Login a user
 // @route   POST /api/auth/login
@@ -18,7 +19,7 @@ export const loginUser = async (req, res) => {
 
   // Validate data
   const [user] =
-    await sql`SELECT id, password, role FROM users WHERE username=${username} LIMIT 1`;
+    await sql`SELECT id, password, role, is_first_login, name FROM users WHERE username=${username} LIMIT 1`;
   if (!user) throw createError(401, "Invalid credentials");
 
   // Check if user exists
@@ -37,6 +38,12 @@ export const loginUser = async (req, res) => {
     process.env.JWT_REFRESH_SECRET,
     { expiresIn: "30d" }
   );
+
+  // If first log in send welcome message
+  if (user.is_first_login) {
+    await sql`UPDATE users SET is_first_login=FALSE WHERE id=${user.id} RETURNING id`;
+    sendSystemMessageToUserWhenFirstLogin(user.id, user.name);
+  }
 
   // Fetch all user data
   const [userData] =
