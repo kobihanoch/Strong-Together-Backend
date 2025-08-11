@@ -1,6 +1,7 @@
 import createError from "http-errors";
-import jwt from "jsonwebtoken";
 import sql from "../config/db.js";
+import { getEndOfWorkoutMessage } from "../templates/messageTemplates.js";
+import { success } from "zod";
 
 // @desc    Get all user messages
 // @route   GET /api/messages/getmessages
