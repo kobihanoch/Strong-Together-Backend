@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createUser,
   getAuthenticatedUserById,
+  getUserUsernamePicAndName,
   updateAuthenticatedUser,
 } from "../controllers/userController.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
@@ -23,6 +24,11 @@ router.put(
   validate(updateUserSchema),
   asyncHandler(updateAuthenticatedUser)
 ); // User - Update their own profile
+router.get(
+  "/getusernamepicandname/:id",
+  protect,
+  asyncHandler(getUserUsernamePicAndName)
+); // User - Get anothers porifle pic and username
 
 // Admin routes
 //router.get("/all", protect, authorizeRoles("admin"), asyncHandler(getAllUsers)); // Admin - Get all users

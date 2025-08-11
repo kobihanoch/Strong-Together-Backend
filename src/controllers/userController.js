@@ -161,3 +161,16 @@ export const deleteUser = async (req, res) => {
   await sql`DELETE FROM users WHERE id=${req.params.id}`;
   res.json({ message: "User deleted successfully" });
 };
+
+// @desc    Get a user username and porifle pic url
+// @route   GET /api/users/getusernamepicandname/:id
+// @access  Private
+export const getUserUsernamePicAndName = async (req, res) => {
+  const [data] =
+    await sql`SELECT id, username, profile_image_url, name FROM users WHERE id=${req.params.id}`;
+
+  if (!data) {
+    throw createError(404, "User not found");
+  }
+  res.status(200).json(data);
+};
