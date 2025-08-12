@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createUser,
+  deleteUserProfilePic,
   getAuthenticatedUserById,
   getUserUsernamePicAndName,
   saveUserPushToken,
@@ -39,6 +40,7 @@ router.put(
   uploadImage.single("file"),
   asyncHandler(setProfilePicAndUpdateDB)
 ); // User - Stores profile pic in bucket, and updates user DB to profile pic new URL
+router.delete("/deleteprofilepic", protect, asyncHandler(deleteUserProfilePic)); // User - Deletes a pic from bucket and from user DB
 
 // Admin routes
 //router.get("/all", protect, authorizeRoles("admin"), asyncHandler(getAllUsers)); // Admin - Get all users

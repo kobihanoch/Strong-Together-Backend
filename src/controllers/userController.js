@@ -248,3 +248,13 @@ export const setProfilePicAndUpdateDB = async (req, res) => {
     .status(201)
     .json({ path: newPath, url: publicUrl, message: "Upload success" });
 };
+
+// @desc    Deletes a pic from bucket and from user DB
+// @route   DELETE /api/users/deleteprofilepic
+// @access  Private
+export const deleteUserProfilePic = async (req, res) => {
+  await deleteFromSupabase(req.body.path);
+  // Update user profile url
+  await queryUpdateUserProfilePicURL(req.user.id, null);
+  return res.status(200).end();
+};
