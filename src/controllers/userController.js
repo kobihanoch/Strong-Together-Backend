@@ -1,7 +1,15 @@
 // src/controllers/userController.js
 import bcrypt from "bcryptjs";
 import createError from "http-errors";
-import sql from "../config/db.js";
+import {
+  queryUserExistsByUsernameOrEmail,
+  queryInsertUser,
+  queryAuthenticatedUserById,
+  queryUsernameOrEmailConflict,
+  queryUpdateAuthenticatedUser,
+  queryDeleteUserById,
+  queryUserUsernamePicAndName,
+} from "../queries/userQueries.js";
 
 // @desc    Create a new user
 // @route   POST /api/users/create
@@ -9,17 +17,21 @@ import sql from "../config/db.js";
 export const createUser = async (req, res) => {
   const { username, fullName, email, password, gender } = req.body;
   // Check if user already exists
-  const [user] =
-    await sql`SELECT id FROM users WHERE username=${username} OR email=${email} LIMIT 1`;
+  const rowsExists = await queryUserExistsByUsernameOrEmail(username, email);
+  const [user] = rowsExists;
   if (user) throw createError(400, "User already exists");
 
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(password, salt);
 
-  const [created] = await sql`
-    INSERT INTO users (username, name, email, gender, password)
-    VALUES (${username}, ${fullName}, ${email}, ${gender}, ${hash})
-    RETURNING id, username, name, email, gender, role, created_at`;
+  const rowsCreated = await queryInsertUser(
+    username,
+    fullName,
+    email,
+    gender,
+    hash
+  );
+  const [created] = rowsCreated;
 
   res
     .status(201)
@@ -73,8 +85,8 @@ export const getAllUsers = async (req, res) => {
 // @route   GET /api/users/get
 // @access  Private
 export const getAuthenticatedUserById = async (req, res) => {
-  const [user] =
-    await sql`SELECT to_jsonb(users) - 'password' AS user_data FROM users WHERE id = ${req.user.id}`;
+  const rows = await queryAuthenticatedUserById(req.user.id);
+  const [user] = rows;
   res.json(user.user_data);
 };
 
@@ -121,11 +133,12 @@ export const updateAuthenticatedUser = async (req, res) => {
     pushToken,
   } = req.body;
   if (username || email) {
-    const [conflict] = await sql`
-      SELECT 1 FROM users
-      WHERE (username=${username} OR email=${email})
-        AND id <> ${req.user.id}
-      LIMIT 1`;
+    const rowsConflict = await queryUsernameOrEmailConflict(
+      username,
+      email,
+      req.user.id
+    );
+    const [conflict] = rowsConflict;
     if (conflict) throw createError(409, "Username or email already in use");
   }
 
@@ -134,19 +147,16 @@ export const updateAuthenticatedUser = async (req, res) => {
     hashed = await bcrypt.hash(password, 10);
   }
 
-  const [updated] = await sql`
-    UPDATE users
-    SET
-      username          = COALESCE(${username}, username),
-      name              = COALESCE(${fullName}, name),
-      email             = COALESCE(${email}, email),
-      gender            = COALESCE(${gender}, gender),
-      password          = COALESCE(${hashed}, password),
-      profile_image_url = COALESCE(${profileImgUrl}, profile_image_url),
-      push_token        = COALESCE(${pushToken}, push_token)
-    WHERE id = ${req.user.id}
-    RETURNING to_jsonb(users) - 'password' AS user_data
-  `;
+  const rowsUpdated = await queryUpdateAuthenticatedUser(req.user.id, {
+    username,
+    fullName,
+    email,
+    gender,
+    hashed,
+    profileImgUrl,
+    pushToken,
+  });
+  const [updated] = rowsUpdated;
 
   res.status(200).json({
     message: "User updated successfully",
@@ -158,7 +168,7 @@ export const updateAuthenticatedUser = async (req, res) => {
 // @route   DELETE /api/users/delete/:id
 // @access  Private/Admin
 export const deleteUser = async (req, res) => {
-  await sql`DELETE FROM users WHERE id=${req.params.id}`;
+  await queryDeleteUserById(req.params.id);
   res.json({ message: "User deleted successfully" });
 };
 
@@ -166,8 +176,8 @@ export const deleteUser = async (req, res) => {
 // @route   GET /api/users/getusernamepicandname/:id
 // @access  Private
 export const getUserUsernamePicAndName = async (req, res) => {
-  const [data] =
-    await sql`SELECT id, username, profile_image_url, name FROM users WHERE id=${req.params.id}`;
+  const rows = await queryUserUsernamePicAndName(req.params.id);
+  const [data] = rows;
 
   if (!data) {
     throw createError(404, "User not found");

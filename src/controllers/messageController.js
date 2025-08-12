@@ -1,32 +1,30 @@
 import createError from "http-errors";
-import sql from "../config/db.js";
 import { getEndOfWorkoutMessage } from "../templates/messageTemplates.js";
 import { success } from "zod";
+import {
+  queryAllUserMessages,
+  queryMarkUserMessageAsRead,
+  queryDeleteMessage,
+} from "../queries/messageQueries.js";
 
 // @desc    Get all user messages
 // @route   GET /api/messages/getmessages
 // @access  Private
 export const getAllUserMessages = async (req, res) => {
   // Get messages
-  const messages =
-    await sql`SELECT * FROM messages WHERE receiver_id=${req.user.id}`;
+  const messages = await queryAllUserMessages(req.user.id);
 
   return res.status(200).json(messages);
 };
 
 // -----------------------------------
-// 1. Need to check both below endpoints
-// 2. Need to create a method for sending a system message
-// 3. Check 2
 
 // @desc    Update message to read
 // @route   PUT /api/messages/markmasread/:id
 // @access  Private
 export const markUserMessageAsRead = async (req, res) => {
   // Update the message (won't e effective if trying to change other user's message)
-  const rows =
-    await sql`UPDATE messages AS m SET is_read = TRUE WHERE m.id=${req.params.id} AND m.receiver_id=${req.user.id}
-     RETURNING id, is_read`;
+  const rows = await queryMarkUserMessageAsRead(req.params.id, req.user.id);
 
   // If message don't exist
   if (!rows.length) {
@@ -41,8 +39,7 @@ export const markUserMessageAsRead = async (req, res) => {
 // @route   DELETE /api/messages/delete/:id
 // @access  Private
 export const deleteMessage = async (req, res) => {
-  const rows =
-    await sql`DELETE FROM messages AS m WHERE m.id=${req.params.id} AND (m.receiver_id=${req.user.id} OR m.sender_id=${req.user.id}) RETURNING id`;
+  const rows = await queryDeleteMessage(req.params.id, req.user.id);
   if (!rows.length) {
     throw createError(404, "Message not found.");
   }

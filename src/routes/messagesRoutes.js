@@ -3,7 +3,7 @@ import {
   deleteMessage,
   getAllUserMessages,
   markUserMessageAsRead,
-} from "../controllers/messagesController.js";
+} from "../controllers/messageController.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { protect } from "../middlewares/authMiddleware.js";
 
