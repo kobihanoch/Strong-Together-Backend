@@ -4,6 +4,7 @@ import {
   getAuthenticatedUserById,
   getUserUsernamePicAndName,
   saveUserPushToken,
+  setProfilePicAndUpdateDB,
   updateAuthenticatedUser,
 } from "../controllers/userController.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
@@ -11,6 +12,7 @@ import { protect } from "../middlewares/authMiddleware.js";
 import { validate } from "../middlewares/validateRequest.js";
 import { registerSchema } from "../validators/auth/register.schema.js";
 import { updateUserSchema } from "../validators/update/updateUser.schema.js";
+import { uploadImage } from "../middlewares/uploadImage.js";
 
 const router = Router();
 
@@ -31,6 +33,12 @@ router.get(
   asyncHandler(getUserUsernamePicAndName)
 ); // User - Get anothers porifle pic and username
 router.put("/pushtoken", protect, asyncHandler(saveUserPushToken)); // User - save push token to DB
+router.put(
+  "/setprofilepic",
+  protect,
+  uploadImage.single("file"),
+  asyncHandler(setProfilePicAndUpdateDB)
+); // User - Stores profile pic in bucket, and updates user DB to profile pic new URL
 
 // Admin routes
 //router.get("/all", protect, authorizeRoles("admin"), asyncHandler(getAllUsers)); // Admin - Get all users

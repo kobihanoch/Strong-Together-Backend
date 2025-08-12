@@ -22,6 +22,7 @@ export async function uploadBufferToSupabase(bucket, key, buffer, contentType) {
       maxBodyLength: Infinity,
     });
   } catch (e) {
+    console.log(e);
     throw createError(500, "Internal server error");
   }
 
@@ -39,6 +40,7 @@ export async function deleteFromSupabase(path) {
       headers: { Authorization: `Bearer ${svc}`, apikey: svc },
     });
   } catch (e) {
+    console.log(e);
     throw createError(500, "Internal server error");
   }
 }

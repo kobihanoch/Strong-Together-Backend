@@ -9,10 +9,18 @@ import {
   queryUpdateAuthenticatedUser,
   queryDeleteUserById,
   queryUserUsernamePicAndName,
+  queryGetUserProfilePicURL,
+  queryUpdateUserProfilePicURL,
 } from "../queries/userQueries.js";
 import sql from "../config/db.js";
 import { Expo } from "expo-server-sdk";
+import {
+  deleteFromSupabase,
+  uploadBufferToSupabase,
+} from "../services/supabaseStorageService.js";
 const expo = new Expo();
+import path from "path";
+import mime from "mime";
 
 // @desc    Create a new user
 // @route   POST /api/users/create
@@ -193,5 +201,50 @@ export const getUserUsernamePicAndName = async (req, res) => {
 // @access  Private
 export const saveUserPushToken = async (req, res) => {
   await sql`UPDATE users SET push_token=${req.body.token} WHERE id=${req.user.id}`;
-  res.status(204).json();
+  res.status(204).end();
+};
+
+// @desc    Stores profile pic in bucket, and updates user DB to profile pic new URL
+// @route   PUT /api/users/setprofilepic
+// @access  Private
+export const setProfilePicAndUpdateDB = async (req, res) => {
+  if (!req.file) {
+    throw createError(400, "No file provided");
+  }
+
+  const userId = req.user.id;
+
+  // Media params
+  const ext =
+    path.extname(req.file.originalname) ||
+    `.${mime.getExtension(req.file.mimetype) || "jpg"}`;
+  const key = `${userId}/${Date.now()}${ext}`;
+
+  const { path: newPath, publicUrl } = await uploadBufferToSupabase(
+    process.env.BUCKET_NAME,
+    key,
+    req.file.buffer,
+    req.file.mimetype
+  );
+
+  // Get last profile pic url to delete
+  const [row] = await queryGetUserProfilePicURL(userId);
+  const oldPath = row?.profile_image_url;
+
+  // Update user profile url
+  await queryUpdateUserProfilePicURL(userId, newPath);
+
+  // Delete last image from bucket
+  if (oldPath && oldPath !== newPath) {
+    deleteFromSupabase(oldPath).catch((e) =>
+      console.warn(
+        "Failed to delete old profile image:",
+        e?.response?.data || e.message
+      )
+    );
+  }
+
+  return res
+    .status(201)
+    .json({ path: newPath, url: publicUrl, message: "Upload success" });
 };

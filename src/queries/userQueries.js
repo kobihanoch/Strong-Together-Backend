@@ -51,3 +51,11 @@ export async function queryDeleteUserById(id) {
 export async function queryUserUsernamePicAndName(id) {
   return sql`SELECT id, username, profile_image_url, name FROM users WHERE id=${id}`;
 }
+
+export const queryGetUserProfilePicURL = async (userId) => {
+  return sql`SELECT profile_image_url FROM users WHERE id=${userId} LIMIT 1`;
+};
+
+export const queryUpdateUserProfilePicURL = async (userId, newURL) => {
+  return sql`UPDATE users SET profile_image_url=${newURL} WHERE id=${userId} RETURNING profile_image_url`;
+};
