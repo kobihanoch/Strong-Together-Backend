@@ -36,7 +36,6 @@ export const protect = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.error("Protect Middleware Error:", err);
     next(createError(401, err.message || "Invalid or expired access token"));
   }
 };
