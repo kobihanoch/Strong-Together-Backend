@@ -2,7 +2,6 @@
 import bcrypt from "bcryptjs";
 import createError from "http-errors";
 import jwt from "jsonwebtoken";
-import sql from "../config/db.js";
 import {
   decodeAccessToken,
   decodeRefreshToken,
@@ -10,6 +9,15 @@ import {
   getRefreshToken,
 } from "../utils/tokenUtils.js";
 import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
+import {
+  queryUserByUsernameForLogin,
+  querySetUserFirstLoginFalse,
+  queryUserDataByUsername,
+  queryDeleteExpiredBlacklistedTokens,
+  querySelectBlacklistedToken,
+  queryUserIdRoleById,
+  queryInsertBlacklistedToken,
+} from "../queries/authQueries.js";
 
 // @desc    Login a user
 // @route   POST /api/auth/login
@@ -18,8 +26,8 @@ export const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
   // Validate data
-  const [user] =
-    await sql`SELECT id, password, role, is_first_login, name FROM users WHERE username=${username} LIMIT 1`;
+  const rowsUser = await queryUserByUsernameForLogin(username);
+  const [user] = rowsUser;
   if (!user) throw createError(401, "Invalid credentials");
 
   // Check if user exists
@@ -41,14 +49,15 @@ export const loginUser = async (req, res) => {
 
   // If first log in send welcome message
   if (user.is_first_login) {
-    await sql`UPDATE users SET is_first_login=FALSE WHERE id=${user.id} RETURNING id`;
+    await querySetUserFirstLoginFalse(user.id);
     sendSystemMessageToUserWhenFirstLogin(user.id, user.name);
   }
 
   // Fetch all user data
-  const [userData] =
-    await sql`SELECT to_jsonb(users) - 'password' AS user_data FROM users WHERE username = ${username} LIMIT 1`;
+  const rowsUserData = await queryUserDataByUsername(username);
+  const [userData] = rowsUserData;
 
+  res.set("Cache-Control", "no-store");
   res.status(200).json({
     message: "Login successful",
     user: userData.user_data,
@@ -62,7 +71,7 @@ export const loginUser = async (req, res) => {
 // @access  Private
 export const logoutUser = async (req, res) => {
   // Delete expired tokens every log out attempt
-  await sql`DELETE FROM blacklistedtokens WHERE expires_at < now()`;
+  await queryDeleteExpiredBlacklistedTokens();
 
   // Get tokens from request body and decode
   const refreshToken = getRefreshToken(req);
@@ -81,10 +90,10 @@ export const logoutUser = async (req, res) => {
 
   // Add to blacklist
   if (decodedAccess) {
-    await sql`INSERT INTO blacklistedtokens (token, expires_at) values(${accessToken}, ${expiresAtAccess}) ON CONFLICT (token) DO NOTHING`;
+    await queryInsertBlacklistedToken(accessToken, expiresAtAccess);
   }
   if (decodedRefresh) {
-    await sql`INSERT INTO blacklistedtokens (token, expires_at) values(${refreshToken}, ${expiresAtRefresh}) ON CONFLICT (token) DO NOTHING`;
+    await queryInsertBlacklistedToken(refreshToken, expiresAtRefresh);
   }
 
   res.status(200).json({ message: "Logged out successfully" });
@@ -94,7 +103,7 @@ export const logoutUser = async (req, res) => {
 // @route   POST /api/auth/refresh
 // @access  Public
 export const refreshAccessToken = async (req, res) => {
-  await sql`DELETE FROM blacklistedtokens WHERE expires_at < now()`;
+  await queryDeleteExpiredBlacklistedTokens();
 
   const refreshToken = getRefreshToken(req);
   if (!refreshToken) throw createError(401, "No refresh token provided");
@@ -104,23 +113,20 @@ export const refreshAccessToken = async (req, res) => {
   if (!decoded) throw createError(401, "Invalid or expired refresh token");
 
   // Ensure not revoked
-  const [revoked] =
-    await sql`SELECT token FROM blacklistedtokens WHERE token=${refreshToken} LIMIT 1`;
+  const rowsRevoked = await querySelectBlacklistedToken(refreshToken);
+  const [revoked] = rowsRevoked;
   if (revoked) throw createError(401, "Refresh token has been revoked");
 
   // User still exists
-  const [user] =
-    await sql`SELECT id, role FROM users WHERE id=${decoded.id} LIMIT 1`;
+  const rowsUser = await queryUserIdRoleById(decoded.id);
+  const [user] = rowsUser;
   if (!user) throw createError(401, "User not found");
 
   // One-time use refresh: blacklist the old refresh
   const expR = decoded.exp
     ? new Date(decoded.exp * 1000)
     : new Date(Date.now() + 24 * 60 * 60 * 1000);
-  await sql`
-    INSERT INTO blacklistedtokens (token, expires_at)
-    VALUES (${refreshToken}, ${expR})
-    ON CONFLICT (token) DO NOTHING`;
+  await queryInsertBlacklistedToken(refreshToken, expR);
 
   // Issue fresh access + fresh refresh (rotate)
   const newAccess = jwt.sign(
