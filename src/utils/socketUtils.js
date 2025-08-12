@@ -1,6 +1,5 @@
-import { getIO } from "../config/webSocket";
+import { getIO } from "../config/webSocket.js";
 
-let io = getIO();
 export const emitNewMessage = (userId, msg) => {
-  io.to(userId).emit("new_message", msg);
+  getIO().to(userId).emit("new_message", msg);
 };
