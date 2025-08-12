@@ -1,8 +1,6 @@
-import createError from "http-errors";
-import jwt from "jsonwebtoken";
 import {
   queryWholeUserWorkoutPlan,
-  queryExerciseTracking,
+  queryWorkoutStatsTopSplitPRAndRecent,
 } from "../queries/workoutQueries.js";
 
 // @desc    Get authenticated user workout (plan, splits, and exercises)
@@ -26,8 +24,6 @@ export const getWholeUserWorkoutPlan = async (req, res) => {
 // @access  Private
 export const getExerciseTracking = async (req, res) => {
   const userId = req.user.id;
-
-  const rows = await queryExerciseTracking(userId);
-
-  return res.status(200).json(rows ?? []);
+  const rows = await queryWorkoutStatsTopSplitPRAndRecent(userId, 45);
+  return res.status(200).json(rows[0]);
 };
