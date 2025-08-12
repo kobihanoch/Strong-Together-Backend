@@ -3,6 +3,7 @@ import {
   createUser,
   getAuthenticatedUserById,
   getUserUsernamePicAndName,
+  saveUserPushToken,
   updateAuthenticatedUser,
 } from "../controllers/userController.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
@@ -29,6 +30,7 @@ router.get(
   protect,
   asyncHandler(getUserUsernamePicAndName)
 ); // User - Get anothers porifle pic and username
+router.put("/pushtoken", protect, asyncHandler(saveUserPushToken)); // User - save push token to DB
 
 // Admin routes
 //router.get("/all", protect, authorizeRoles("admin"), asyncHandler(getAllUsers)); // Admin - Get all users

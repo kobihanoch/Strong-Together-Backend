@@ -10,6 +10,9 @@ import {
   queryDeleteUserById,
   queryUserUsernamePicAndName,
 } from "../queries/userQueries.js";
+import sql from "../config/db.js";
+import { Expo } from "expo-server-sdk";
+const expo = new Expo();
 
 // @desc    Create a new user
 // @route   POST /api/users/create
@@ -183,4 +186,12 @@ export const getUserUsernamePicAndName = async (req, res) => {
     throw createError(404, "User not found");
   }
   res.status(200).json(data);
+};
+
+// @desc    Save user's expo push token to DB
+// @route   PUT /api/users/pushtoken
+// @access  Private
+export const saveUserPushToken = async (req, res) => {
+  await sql`UPDATE users SET push_token=${req.body.token} WHERE id=${req.user.id}`;
+  res.status(204).json();
 };
