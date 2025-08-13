@@ -349,6 +349,5 @@ export const queryInsertUserFinishedWorkout = async (userId, workoutArray) => {
 
   // result is an array with one row: [{ items: [...] }]
   const items = result[0].items;
-  console.log(items);
   return items;
 };

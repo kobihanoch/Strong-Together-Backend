@@ -3,6 +3,7 @@ import {
   queryWholeUserWorkoutPlan,
   queryWorkoutStatsTopSplitPRAndRecent,
 } from "../queries/workoutQueries.js";
+import { sendSystemMessageToUserWorkoutDone } from "../services/messagesService.js";
 
 // @desc    Get authenticated user workout (plan, splits, and exercises)
 // @route   GET /api/workouts/getworkout
@@ -38,5 +39,6 @@ export const finishUserWorkout = async (req, res) => {
     userId,
     req.body.workout
   );
+  sendSystemMessageToUserWorkoutDone(userId);
   return res.status(200).json(returnedEt);
 };
