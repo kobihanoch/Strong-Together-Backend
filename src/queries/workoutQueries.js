@@ -260,3 +260,95 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
     LEFT JOIN recent ON TRUE;
   `;
 };
+
+/*
+ * Workout structure
+ * [
+ * {"exercisetosplit_id": 756, "reps": [1, 3, 3], "user_id": id, "weight": [2.5, 2.5, 5], "workoutdate": "2025-08-13"},
+ * {"exercisetosplit_id": 757, "reps": [3, 2, 2], "user_id": id, "weight": [7.5, 7.5, 5], "workoutdate": "2025-08-13"},
+ * {"exercisetosplit_id": 758, "reps": [1, 2, 2], "user_id": id, "weight": [5, 5, 5], "workoutdate": "2025-08-13"}
+ * ]
+ */
+export const queryInsertUserFinishedWorkout = async (userId, workoutArray) => {
+  if (!Array.isArray(workoutArray) || workoutArray.length === 0) return [];
+
+  // Build tuples with array literals passed as parameters and casted in SQL
+  const tuples = workoutArray.map((r) => {
+    const reps = Array.isArray(r.reps)
+      ? r.reps.map(Number)
+      : String(r.reps).split(",").map(Number);
+
+    const weights = Array.isArray(r.weight)
+      ? r.weight.map(Number)
+      : String(r.weight).split(",").map(Number);
+
+    // Build Postgres array literal strings like "{1,2,3}"
+    const repsLit = `{${reps.join(",")}}`;
+    const weightsLit = `{${weights.join(",")}}`;
+
+    return sql`
+      (
+        ${Number(r.exercisetosplit_id)}::int4,
+        ${repsLit}::int4[],
+        ${weightsLit}::float8[],
+        ${userId}::uuid,
+        ${r.workoutdate}::date
+      )
+    `;
+  });
+
+  // Join tuples without sql.join
+  const values = tuples.reduce(
+    (acc, t, i) => (i ? sql`${acc}, ${t}` : t),
+    null
+  );
+
+  const [etDate] = await sql`
+    INSERT INTO exercisetracking
+      (exercisetosplit_id, reps, weight, user_id, workoutdate)
+    VALUES ${values}
+    RETURNING workoutdate
+  `;
+
+  const result = await sql`
+  SELECT COALESCE(
+    jsonb_agg(row_data ORDER BY row_data.workoutdate ASC, row_data.id ASC),
+    '[]'::jsonb
+  ) AS items
+  FROM (
+    SELECT
+      et.id,
+      et.user_id,
+      et.exercise,
+      et.exercise_id,
+      et.exercisetosplit_id,
+      et.splitname,
+      et.workoutsplit_id,
+      et.weight,
+      et.reps,
+      to_char(et.workoutdate::date, 'YYYY-MM-DD') AS workoutdate,
+      (
+        SELECT
+          to_jsonb(ews.*)
+          || jsonb_build_object(
+               'exercises',
+               json_build_object(
+                 'targetmuscle',         ex.targetmuscle,
+                 'specifictargetmuscle', ex.specifictargetmuscle
+               )
+             )
+        FROM exercisetoworkoutsplit AS ews
+        LEFT JOIN exercises AS ex ON ex.id = ews.exercise_id
+        WHERE ews.id = et.exercisetosplit_id
+      ) AS exercisetoworkoutsplit
+    FROM exercisetracking AS et
+    WHERE et.workoutdate = ${etDate.workoutdate}::date AND et.user_id=${userId}
+    ORDER BY et.workoutdate::date DESC, et.id DESC
+  ) AS row_data
+`;
+
+  // result is an array with one row: [{ items: [...] }]
+  const items = result[0].items;
+  console.log(items);
+  return items;
+};
