@@ -9,11 +9,11 @@ export const sendSystemMessageToUserWorkoutDone = async (receiverId) => {
   const msg = getEndOfWorkoutMessage();
   const senderId = process.env.SYSTEM_USER_ID;
 
-  const rows =
-    await sql`INSERT INTO messages (sender_id, receiver_id, subject, msg) VALUES (${senderId}, ${receiverId}, ${msg.header}, ${msg.text}) RETURNING id`;
+  const [rows] =
+    await sql`INSERT INTO messages (sender_id, receiver_id, subject, msg) VALUES (${senderId}, ${receiverId}, ${msg.header}, ${msg.text}) RETURNING *`;
 
   // Send in socket too
-  emitNewMessage(receiverId, msg);
+  emitNewMessage(receiverId, rows);
   return rows.length ? rows[0].id : null;
 };
 
@@ -25,10 +25,10 @@ export const sendSystemMessageToUserWhenFirstLogin = async (
 
   const senderId = process.env.SYSTEM_USER_ID;
 
-  const rows =
-    await sql`INSERT INTO messages (sender_id, receiver_id, subject, msg) VALUES (${senderId}, ${receiverId}, ${msg.header}, ${msg.text}) RETURNING id`;
+  const [rows] =
+    await sql`INSERT INTO messages (sender_id, receiver_id, subject, msg) VALUES (${senderId}, ${receiverId}, ${msg.header}, ${msg.text}) RETURNING *`;
 
   // Send in socket too
-  emitNewMessage(receiverId, msg);
+  emitNewMessage(receiverId, rows);
   return rows.length ? rows[0].id : null;
 };
