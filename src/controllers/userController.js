@@ -186,7 +186,7 @@ export const deleteUser = async (req, res) => {
 // @desc    Get a user username and porifle pic url
 // @route   GET /api/users/getusernamepicandname/:id
 // @access  Private
-export const getUserUsernamePicAndName = async (req, res) => {
+/*export const getUserUsernamePicAndName = async (req, res) => {
   const rows = await queryUserUsernamePicAndName(req.params.id);
   const [data] = rows;
 
@@ -194,7 +194,7 @@ export const getUserUsernamePicAndName = async (req, res) => {
     throw createError(404, "User not found");
   }
   res.status(200).json(data);
-};
+};*/
 
 // @desc    Save user's expo push token to DB
 // @route   PUT /api/users/pushtoken
