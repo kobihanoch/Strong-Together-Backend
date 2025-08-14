@@ -29,7 +29,7 @@ export async function queryWholeUserWorkoutPlan(userId) {
         WHERE workoutsplits.workout_id = workoutplans.id
       ) AS workoutsplits
     FROM workoutplans
-    WHERE workoutplans.user_id = ${userId}
+    WHERE workoutplans.user_id = ${userId} AND workoutplans.is_active=TRUE
     LIMIT 1;
   `;
 }
@@ -362,5 +362,7 @@ export const queryAddWorkout = async (userId, workoutName, numberOfSplits) => {
     VALUES (${userId}, ${userId}, ${workoutName}, ${numberOfSplits})
     RETURNING *
   `;
+
+  await sql`INSERT INTO `;
   return rows[0];
 };
