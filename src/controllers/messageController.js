@@ -1,10 +1,8 @@
 import createError from "http-errors";
-import { getEndOfWorkoutMessage } from "../templates/messageTemplates.js";
-import { success } from "zod";
 import {
   queryAllUserMessages,
-  queryMarkUserMessageAsRead,
   queryDeleteMessage,
+  queryMarkUserMessageAsRead,
 } from "../queries/messageQueries.js";
 
 // @desc    Get all user messages
@@ -12,9 +10,23 @@ import {
 // @access  Private
 export const getAllUserMessages = async (req, res) => {
   // Get messages
-  const messages = await queryAllUserMessages(req.user.id);
+  const rows = await queryAllUserMessages(req.user.id); // Fetches sender profile pic path also
+  const sendersMap = new Map();
+  rows.forEach((msg) => {
+    if (!sendersMap.has(msg.sender_id)) {
+      sendersMap.set(msg.sender_id, {
+        sender_id: msg.sender_id,
+        sender_username: msg.sender_username,
+        sender_full_name: msg.sender_full_name,
+        sender_profile_image_url: msg.sender_profile_image_url,
+        sender_gender: msg.sender_gender,
+      });
+    }
+  });
 
-  return res.status(200).json(messages);
+  return res
+    .status(200)
+    .json({ messages: rows, senders: Array.from(sendersMap.values()) });
 };
 
 // -----------------------------------

@@ -3,17 +3,16 @@ import {
   createUser,
   deleteUserProfilePic,
   getAuthenticatedUserById,
-  getUserUsernamePicAndName,
   saveUserPushToken,
   setProfilePicAndUpdateDB,
   updateAuthenticatedUser,
 } from "../controllers/userController.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { protect } from "../middlewares/authMiddleware.js";
+import { uploadImage } from "../middlewares/uploadImage.js";
 import { validate } from "../middlewares/validateRequest.js";
 import { registerSchema } from "../validators/auth/register.schema.js";
 import { updateUserSchema } from "../validators/update/updateUser.schema.js";
-import { uploadImage } from "../middlewares/uploadImage.js";
 
 const router = Router();
 
@@ -28,11 +27,11 @@ router.put(
   validate(updateUserSchema),
   asyncHandler(updateAuthenticatedUser)
 ); // User - Update their own profile
-router.get(
+/*router.get(
   "/getusernamepicandname/:id",
   protect,
   asyncHandler(getUserUsernamePicAndName)
-); // User - Get anothers porifle pic and username
+); // User - Get anothers porifle pic and username*/
 router.put("/pushtoken", protect, asyncHandler(saveUserPushToken)); // User - save push token to DB
 router.put(
   "/setprofilepic",
