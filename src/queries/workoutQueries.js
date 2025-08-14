@@ -351,3 +351,16 @@ export const queryInsertUserFinishedWorkout = async (userId, workoutArray) => {
   const items = result[0].items;
   return items;
 };
+
+export const queryDeleteUserWorkout = async (userId) => {
+  await sql`DELETE FROM workoutplans WHERE user_id=${userId}`;
+};
+
+export const queryAddWorkout = async (userId, workoutName, numberOfSplits) => {
+  const rows = await sql`
+    INSERT INTO workoutplans (user_id, trainer_id, name, numberofsplits)
+    VALUES (${userId}, ${userId}, ${workoutName}, ${numberOfSplits})
+    RETURNING *
+  `;
+  return rows[0];
+};

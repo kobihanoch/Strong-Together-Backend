@@ -1,4 +1,6 @@
 import {
+  queryAddWorkout,
+  queryDeleteUserWorkout,
   queryInsertUserFinishedWorkout,
   queryWholeUserWorkoutPlan,
   queryWorkoutStatsTopSplitPRAndRecent,
@@ -41,4 +43,23 @@ export const finishUserWorkout = async (req, res) => {
   );
   sendSystemMessageToUserWorkoutDone(userId);
   return res.status(200).json(returnedEt);
+};
+
+// @desc    Delete user's workout
+// @route   DELETE /api/workouts/delete
+// @access  Private
+export const deleteUserWorkout = async (req, res) => {
+  const userId = req.user.id;
+  await queryDeleteUserWorkout(userId);
+  return res.status(204).end();
+};
+
+// @desc    Add workout
+// @route   POST /api/workouts/add
+// @access  Private
+export const addWorkout = async (req, res) => {
+  const userId = req.user.id;
+  const { name, numberOfSplits } = req.body;
+  const data = await queryAddWorkout(userId, name, numberOfSplits);
+  return res.status(200).json(data);
 };
