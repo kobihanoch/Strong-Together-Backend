@@ -1,6 +1,7 @@
 import {
   queryAddWorkout,
   queryDeleteUserWorkout,
+  queryGetWorkoutSplitsObj,
   queryInsertUserFinishedWorkout,
   queryWholeUserWorkoutPlan,
   queryWorkoutStatsTopSplitPRAndRecent,
@@ -14,13 +15,18 @@ export const getWholeUserWorkoutPlan = async (req, res) => {
   const userId = req.user.id;
 
   const rows = await queryWholeUserWorkoutPlan(userId);
+
   const [plan] = rows;
 
   if (!plan) {
-    return res.status(200).json(null);
+    return res.status(200).json({ workoutPlan: null });
   }
 
-  return res.status(200).json(plan);
+  const { splits } = await queryGetWorkoutSplitsObj(rows[0].id);
+
+  return res
+    .status(200)
+    .json({ workoutPlan: plan, workoutPlanForEditWorkout: splits });
 };
 
 // @desc    Get authenticated user exercise tracking (Past 45 days only)
@@ -59,7 +65,9 @@ export const deleteUserWorkout = async (req, res) => {
 // @access  Private
 export const addWorkout = async (req, res) => {
   const userId = req.user.id;
-  const { name, numberOfSplits } = req.body;
-  const data = await queryAddWorkout(userId, name, numberOfSplits);
+  const workoutData = req.body.workoutData;
+  console.log(workoutData);
+  /*const { name, numberOfSplits } = req.body;
+  const data = await queryAddWorkout(userId, name, numberOfSplits);*/
   return res.status(200).json(data);
 };

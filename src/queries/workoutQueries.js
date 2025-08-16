@@ -34,6 +34,26 @@ export async function queryWholeUserWorkoutPlan(userId) {
   `;
 }
 
+export const queryGetWorkoutSplitsObj = async (workoutId) => {
+  const rows = await sql`SELECT jsonb_object_agg(
+    ws.name,
+    COALESCE(
+      (
+        SELECT json_agg(
+                 jsonb_build_object('id', ets.exercise_id, 'name', ets.exercise)
+                 ORDER BY ets.exercise_id
+               )
+        FROM exercisetoworkoutsplit AS ets
+        WHERE ets.workoutsplit_id = ws.id
+      ),
+      '[]'::json
+    )
+  ) AS splits
+  FROM workoutsplits AS ws
+  WHERE ws.workout_id = ${workoutId}`;
+  return rows[0];
+};
+
 export async function queryExerciseTracking(userId) {
   return sql`
   SELECT
@@ -65,7 +85,7 @@ export async function queryExerciseTracking(userId) {
   FROM exercisetracking AS et
   WHERE et.user_id = ${userId}
     AND et.workoutdate >= CURRENT_DATE - INTERVAL '45 days'
-  ORDER BY et.workoutdate::date DESC, et.id DESC;
+  ORDER BY et.workoutdate::date DESC;
   `;
 }
 
@@ -357,6 +377,8 @@ export const queryDeleteUserWorkout = async (userId) => {
 };
 
 export const queryAddWorkout = async (userId, workoutName, numberOfSplits) => {
+  // First disable original workout if exists
+  await sql`UPDATE workoutplans SET(is_active=FALSE) WHERE user_id=${userId}`;
   const rows = await sql`
     INSERT INTO workoutplans (user_id, trainer_id, name, numberofsplits)
     VALUES (${userId}, ${userId}, ${workoutName}, ${numberOfSplits})
