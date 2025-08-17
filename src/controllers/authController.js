@@ -1,10 +1,23 @@
 // src/controllers/authController.js
-
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import createError from "http-errors";
-import User from "../models/userModel.js";
-import BlacklistedToken from "../models/blacklistedTokenModel.js";
+import jwt from "jsonwebtoken";
+import {
+  decodeAccessToken,
+  decodeRefreshToken,
+  getAccessToken,
+  getRefreshToken,
+} from "../utils/tokenUtils.js";
+import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
+import {
+  queryUserByUsernameForLogin,
+  querySetUserFirstLoginFalse,
+  queryUserDataByUsername,
+  queryDeleteExpiredBlacklistedTokens,
+  querySelectBlacklistedToken,
+  queryUserIdRoleById,
+  queryInsertBlacklistedToken,
+} from "../queries/authQueries.js";
 
 // @desc    Login a user
 // @route   POST /api/auth/login
@@ -13,138 +26,125 @@ export const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
   // Validate data
-  const user = await User.findOne({ username }).select("+password");
+  const rowsUser = await queryUserByUsernameForLogin(username);
+  const [user] = rowsUser;
   if (!user) throw createError(401, "Invalid credentials");
 
+  // Check if user exists
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw createError(401, "Invalid credentials");
 
+  // Sign tokens
   const accessToken = jwt.sign(
-    { id: user._id, role: user.role },
+    { id: user.id, role: user.role },
     process.env.JWT_ACCESS_SECRET,
     { expiresIn: "15m" }
   );
 
   const refreshToken = jwt.sign(
-    { id: user._id, role: user.role },
+    { id: user.id, role: user.role },
     process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "1d" }
+    { expiresIn: "30d" }
   );
 
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    maxAge: 15 * 60 * 1000, // 15 minutes
-  });
+  // If first log in send welcome message
+  if (user.is_first_login) {
+    await querySetUserFirstLoginFalse(user.id);
+    sendSystemMessageToUserWhenFirstLogin(user.id, user.name);
+  }
 
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
-  });
+  // Fetch all user data
+  const rowsUserData = await queryUserDataByUsername(username);
+  const [userData] = rowsUserData;
 
-  res.status(200).json({ message: "Login successful" });
+  res.set("Cache-Control", "no-store");
+  res.status(200).json({
+    message: "Login successful",
+    user: userData.user_data,
+    accessToken: accessToken,
+    refreshToken: refreshToken,
+  });
 };
 
 // @desc    Logout a user
 // @route   POST /api/auth/logout
 // @access  Private
 export const logoutUser = async (req, res) => {
-  const accessTokenCookies = req.cookies.accessToken;
-  const refreshTokenCookies = req.cookies.refreshToken;
+  // Delete expired tokens every log out attempt
+  await queryDeleteExpiredBlacklistedTokens();
 
-  if (!accessTokenCookies && !refreshTokenCookies) {
-    res.status(200).json({ message: "Already logged out" });
-    return;
-  }
+  // Get tokens from request body and decode
+  const refreshToken = getRefreshToken(req);
+  const accessToken = getAccessToken(req);
 
-  const decodedRefresh = jwt.decode(refreshTokenCookies);
-  const expiresAt = decodedRefresh?.exp
+  // Decode tokens
+  const decodedAccess = decodeAccessToken(accessToken);
+  const expiresAtAccess = decodedAccess?.exp
+    ? new Date(decodedAccess.exp * 1000)
+    : new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  const decodedRefresh = decodeRefreshToken(refreshToken);
+  const expiresAtRefresh = decodedRefresh?.exp
     ? new Date(decodedRefresh.exp * 1000)
     : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-  if (accessTokenCookies) {
-    const exists = await BlacklistedToken.findOne({
-      token: accessTokenCookies,
-    });
-    if (!exists)
-      await BlacklistedToken.create({ token: accessTokenCookies, expiresAt });
+  // Add to blacklist
+  if (decodedAccess) {
+    await queryInsertBlacklistedToken(accessToken, expiresAtAccess);
   }
-
-  if (refreshTokenCookies) {
-    const exists = await BlacklistedToken.findOne({
-      token: refreshTokenCookies,
-    });
-    if (!exists)
-      await BlacklistedToken.create({ token: refreshTokenCookies, expiresAt });
+  if (decodedRefresh) {
+    await queryInsertBlacklistedToken(refreshToken, expiresAtRefresh);
   }
-
-  res.clearCookie("accessToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-  });
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-  });
 
   res.status(200).json({ message: "Logged out successfully" });
 };
 
-// @desc    Check if user is authenticated
-// @route   GET /api/auth/checkauth
-// @access  Public
-export const checkIfUserAuthenticated = async (req, res) => {
-  const accessToken = req.cookies.accessToken;
-  const refreshToken = req.cookies.refreshToken;
-  const token = accessToken || refreshToken;
-
-  if (!token) throw createError(401, "Not authenticated");
-
-  let decoded;
-  if (accessToken) {
-    decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
-  } else if (refreshToken) {
-    decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    throw createError(401, "No access token, need to refresh.");
-  }
-
-  const user = await User.findById(decoded.id).select("-password +role");
-  if (!user) throw createError(401, "User not found");
-
-  res.status(200).json({ message: "User is authenticated" });
-};
-
-// @desc    Refresh token
+// @desc    Refresh token (sliding session)
 // @route   POST /api/auth/refresh
 // @access  Public
-export const refreshToken = async (req, res) => {
-  const token = req.cookies.refreshToken;
-  if (!token) throw createError(401, "No refresh token provided");
+export const refreshAccessToken = async (req, res) => {
+  await queryDeleteExpiredBlacklistedTokens();
 
-  const blacklisted = await BlacklistedToken.findOne({ token });
-  if (blacklisted) throw createError(401, "Refresh token is blacklisted.");
+  const refreshToken = getRefreshToken(req);
+  if (!refreshToken) throw createError(401, "No refresh token provided");
 
-  const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-  const user = await User.findById(decoded.id).select("-password +role");
+  // Verify refresh token
+  const decoded = decodeRefreshToken(refreshToken);
+  if (!decoded) throw createError(401, "Invalid or expired refresh token");
+
+  // Ensure not revoked
+  const rowsRevoked = await querySelectBlacklistedToken(refreshToken);
+  const [revoked] = rowsRevoked;
+  if (revoked) throw createError(401, "Refresh token has been revoked");
+
+  // User still exists
+  const rowsUser = await queryUserIdRoleById(decoded.id);
+  const [user] = rowsUser;
   if (!user) throw createError(401, "User not found");
 
+  // One-time use refresh: blacklist the old refresh
+  const expR = decoded.exp
+    ? new Date(decoded.exp * 1000)
+    : new Date(Date.now() + 24 * 60 * 60 * 1000);
+  await queryInsertBlacklistedToken(refreshToken, expR);
+
+  // Issue fresh access + fresh refresh (rotate)
   const newAccess = jwt.sign(
-    { id: user._id, role: user.role },
+    { id: user.id, role: user.role },
     process.env.JWT_ACCESS_SECRET,
     { expiresIn: "15m" }
   );
 
-  res.cookie("accessToken", newAccess, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    maxAge: 15 * 60 * 1000,
-  });
+  const newRefresh = jwt.sign(
+    { id: user.id, role: user.role },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: "30d" }
+  );
 
-  res.status(200).json({ message: "Access token refreshed" });
+  res.set("Cache-Control", "no-store");
+  res.status(200).json({
+    message: "Access token refreshed",
+    accessToken: newAccess,
+    refreshToken: newRefresh,
+  });
 };

@@ -1,19 +1,18 @@
-import { createClient } from "@supabase/supabase-js";
+import postgres from "postgres";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  { auth: { persistSession: false } }
-);
+import dns from "dns";
+dns.setDefaultResultOrder("ipv4first");
 
-export default supabase;
+const connectionString = process.env.DATABASE_URL;
+const sql = postgres(connectionString);
 
+// Check DB connection
 export const connectDB = async () => {
   try {
-    await supabase.from("users").select("username").limit(1);
-    console.log("✅ Connected to Supabase successfully!");
+    await sql`SELECT 1 as connected`;
+    console.log("Connected to Postgres.");
   } catch (err) {
-    console.error("❌ Failed to connect to Supabase:", err.message);
-    process.exit(1);
+    console.log("Connection to Postgres has failed.", err.message);
   }
 };
+export default sql;
