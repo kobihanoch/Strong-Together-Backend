@@ -65,9 +65,15 @@ export const deleteUserWorkout = async (req, res) => {
 // @access  Private
 export const addWorkout = async (req, res) => {
   const userId = req.user.id;
-  const workoutData = req.body.workoutData;
-  console.log(workoutData);
-  /*const { name, numberOfSplits } = req.body;
-  const data = await queryAddWorkout(userId, name, numberOfSplits);*/
-  return res.status(200).json(data);
+  const { workoutData, workoutName } = req.body;
+
+  await queryAddWorkout(userId, workoutData, workoutName);
+  const [plan] = await queryWholeUserWorkoutPlan(userId);
+  const { splits } = await queryGetWorkoutSplitsObj(plan.id);
+
+  return res.status(200).json({
+    message: "Workout created successfully!",
+    workoutPlan: plan,
+    workoutPlanForEditWorkout: splits,
+  });
 };

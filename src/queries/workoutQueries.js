@@ -16,7 +16,7 @@ export async function queryWholeUserWorkoutPlan(userId) {
                                    'targetmuscle', ex.targetmuscle,
                                    'specifictargetmuscle', ex.specifictargetmuscle
                                  )
-                              ORDER BY ews.id
+                              ORDER BY ews.order_index
                             )
                      FROM exercisetoworkoutsplit ews
                      LEFT JOIN exercises ex ON ex.id = ews.exercise_id
@@ -40,10 +40,11 @@ export const queryGetWorkoutSplitsObj = async (workoutId) => {
     COALESCE(
       (
         SELECT json_agg(
-                 jsonb_build_object('id', ets.exercise_id, 'name', ets.exercise)
-                 ORDER BY ets.exercise_id
+                 jsonb_build_object('id', ets.exercise_id, 'name', ets.exercise, 'sets', ets.sets, 'order_index', ets.order_index, 'targetmuscle', e.targetmuscle, 'specifictargetmuscle', e.specifictargetmuscle)
+                 ORDER BY ets.order_index
                )
         FROM exercisetoworkoutsplit AS ets
+        INNER JOIN exercises e ON ets.exercise_id = e.id
         WHERE ets.workoutsplit_id = ws.id
       ),
       '[]'::json
@@ -376,15 +377,77 @@ export const queryDeleteUserWorkout = async (userId) => {
   await sql`DELETE FROM workoutplans WHERE user_id=${userId}`;
 };
 
-export const queryAddWorkout = async (userId, workoutName, numberOfSplits) => {
-  // First disable original workout if exists
-  await sql`UPDATE workoutplans SET(is_active=FALSE) WHERE user_id=${userId}`;
-  const rows = await sql`
-    INSERT INTO workoutplans (user_id, trainer_id, name, numberofsplits)
-    VALUES (${userId}, ${userId}, ${workoutName}, ${numberOfSplits})
-    RETURNING *
+// Adds a workout for user
+// Returns same structure as initial fetching to client
+// English comments only inside code
+export const queryAddWorkout = async (
+  userId,
+  workoutData, // JS object: { A: [...], B: [...] }
+  workoutName = "My Workout"
+) => {
+  const numberOfSplits = Object.keys(workoutData || {}).length;
+  if (!numberOfSplits) throw new Error("workoutData has no splits");
+
+  const payloadJson = sql.json(workoutData);
+
+  await sql`
+    WITH
+    params AS (
+      SELECT ${payloadJson}::jsonb AS data
+    ),
+
+    disabled AS (
+      UPDATE workoutplans
+      SET is_active = FALSE
+      WHERE user_id = ${userId} AND is_active = TRUE
+      RETURNING 1
+    ),
+
+    new_plan AS (
+      INSERT INTO workoutplans (user_id, trainer_id, name, numberofsplits, is_active)
+      VALUES (${userId}, ${userId}, ${workoutName}, ${numberOfSplits}, TRUE)
+      RETURNING id
+    ),
+
+    inserted_splits AS (
+      INSERT INTO workoutsplits (workout_id, name)
+      SELECT
+        np.id,
+        t.key::text
+      FROM params p
+      JOIN new_plan np ON TRUE
+      CROSS JOIN LATERAL jsonb_each(p.data) AS t(key, val)
+      WHERE jsonb_typeof(p.data) = 'object'
+      RETURNING id, workout_id, name
+    )
+
+    INSERT INTO exercisetoworkoutsplit (exercise_id, workoutsplit_id, sets, order_index)
+    SELECT
+      (ex->>'id')::int,
+      s.id,
+      CASE
+        WHEN jsonb_typeof(ex->'sets') = 'array' THEN (
+          SELECT COALESCE(
+            array_agg((elem)::text::bigint ORDER BY elem_ord),
+            ARRAY[]::bigint[]
+          )
+          FROM jsonb_array_elements(ex->'sets') WITH ORDINALITY AS e2(elem, elem_ord)
+        )
+        WHEN jsonb_typeof(ex->'sets') = 'number' THEN ARRAY[(ex->>'sets')::bigint]::bigint[]
+        ELSE ARRAY[]::bigint[]
+      END,
+      COALESCE((ex->>'order_index')::int, ord - 1)
+    FROM params p
+    JOIN new_plan np ON TRUE
+    CROSS JOIN LATERAL jsonb_each(p.data) AS t(split_name, exercises_json)
+    JOIN inserted_splits s
+      ON s.workout_id = np.id
+     AND s.name = split_name::text
+    CROSS JOIN LATERAL jsonb_array_elements(exercises_json) WITH ORDINALITY AS e(ex, ord)
+    WHERE jsonb_typeof(p.data) = 'object'
+      AND jsonb_typeof(exercises_json) = 'array';
   `;
 
-  await sql`INSERT INTO `;
-  return rows[0];
+  // nothing to return
+  return;
 };
