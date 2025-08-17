@@ -14,5 +14,19 @@ export const connectDB = async () => {
   } catch (err) {
     console.log("Connection to Postgres has failed.", err.message);
   }
+  /*(async () => {
+    const [{ current_user }] = await sql`select current_user`;
+    const [r] = await sql`
+    select rolsuper, rolbypassrls
+    from pg_roles
+    where rolname = current_user
+  `;
+    console.log({
+      current_user,
+      rolsuper: r.rolsuper,
+      rolbypassrls: r.rolbypassrls,
+    });
+    await sql.end();
+  })();*/
 };
 export default sql;

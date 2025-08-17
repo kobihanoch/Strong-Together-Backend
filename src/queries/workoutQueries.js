@@ -55,41 +55,6 @@ export const queryGetWorkoutSplitsObj = async (workoutId) => {
   return rows[0];
 };
 
-export async function queryExerciseTracking(userId) {
-  return sql`
-  SELECT
-    et.id,
-    et.user_id,
-    et.exercise,
-    et.exercise_id,
-    et.exercisetosplit_id,
-    et.splitname,
-    et.workoutsplit_id,
-    et.weight,
-    et.reps,
-    to_char(et.workoutdate::date, 'YYYY-MM-DD') AS workoutdate,
-    (
-      SELECT
-        to_jsonb(ews.*)
-        || jsonb_build_object(
-            'exercises',
-            json_build_object(
-              'targetmuscle', ex.targetmuscle,
-              'specifictargetmuscle', ex.specifictargetmuscle
-            )
-          )
-      FROM exercisetoworkoutsplit AS ews
-      LEFT JOIN exercises AS ex
-        ON ex.id = ews.exercise_id
-      WHERE ews.id = et.exercisetosplit_id
-    ) AS exercisetoworkoutsplit
-  FROM exercisetracking AS et
-  WHERE et.user_id = ${userId}
-    AND et.workoutdate >= CURRENT_DATE - INTERVAL '45 days'
-  ORDER BY et.workoutdate::date DESC;
-  `;
-}
-
 /*
  * Returns workout stats + recent tracking for a specific user in ONE roundtrip.
  *
@@ -107,6 +72,7 @@ export async function queryExerciseTracking(userId) {
  *     reps: number | null,
  *     workoutdate: string | null                   // YYYY-MM-DD
  *   } | null,
+ *   splitDaysByName: {"A": times performed, "B":.....},
  *   exerciseTracking: [                            // recent N days (default 45) tracking rows (same shape you already return)
  *     {
  *       id, user_id, exercise, exercise_id, exercisetosplit_id,
@@ -149,6 +115,12 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
       GROUP BY splitname
     ),
 
+    /* Build a JSON object: { splitname: days_count, ... } */
+    split_counts_obj AS (
+      SELECT jsonb_object_agg(splitname, days_count) AS split_days_map
+      FROM split_counts
+    ),
+
     /* Pick the most frequent split by distinct-day count (tie-break by splitname for determinism) */
     top_split AS (
       SELECT
@@ -178,8 +150,7 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
       LIMIT 1
     ),
 
-    /* Unnest (weight[], reps[]) into set rows to find the global PR (max weight).
-       We keep reps paired by index and carry exercise + workoutdate for context. */
+    /* Unnest (weight[], reps[]) into set rows to find the global PR (max weight) */
     all_sets AS (
       SELECT
         f.id,
@@ -265,6 +236,8 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
       tsi.most_frequent_split_id,
       tt.has_trained_today AS "hasTrainedToday",
       to_char(lw.last_workout_date, 'YYYY-MM-DD') AS "lastWorkoutDate",
+      /* Map of splitname -> distinct workout-day count */
+      COALESCE(sco.split_days_map, '{}'::jsonb)::json AS "splitDaysByName",
       json_build_object(
         'exercise',    mp.exercise,
         'weight',      mp.weight,
@@ -278,10 +251,10 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
     LEFT JOIN trained_today tt ON TRUE
     LEFT JOIN last_workout lw ON TRUE
     LEFT JOIN max_pr mp ON TRUE
+    LEFT JOIN split_counts_obj sco ON TRUE
     LEFT JOIN recent ON TRUE;
   `;
 };
-
 /*
  * Workout structure
  * [

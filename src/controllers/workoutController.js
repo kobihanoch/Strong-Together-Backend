@@ -1,7 +1,6 @@
 import {
   queryAddWorkout,
   queryDeleteUserWorkout,
-  queryExerciseTracking,
   queryGetWorkoutSplitsObj,
   queryInsertUserFinishedWorkout,
   queryWholeUserWorkoutPlan,
