@@ -1,6 +1,7 @@
 import {
   queryAddWorkout,
   queryDeleteUserWorkout,
+  queryExerciseTracking,
   queryGetWorkoutSplitsObj,
   queryInsertUserFinishedWorkout,
   queryWholeUserWorkoutPlan,
@@ -43,12 +44,10 @@ export const getExerciseTracking = async (req, res) => {
 // @access  Private
 export const finishUserWorkout = async (req, res) => {
   const userId = req.user.id;
-  const returnedEt = await queryInsertUserFinishedWorkout(
-    userId,
-    req.body.workout
-  );
+  await queryInsertUserFinishedWorkout(userId, req.body.workout);
+  const et = await queryWorkoutStatsTopSplitPRAndRecent(userId, 45);
   sendSystemMessageToUserWorkoutDone(userId);
-  return res.status(200).json(returnedEt);
+  return res.status(200).json(et[0]);
 };
 
 // @desc    Delete user's workout
