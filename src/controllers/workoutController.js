@@ -57,8 +57,24 @@ export const getWholeUserWorkoutPlan = async (req, res) => {
 // @access  Private
 export const getExerciseTracking = async (req, res) => {
   const userId = req.user.id;
-  const rows = await queryWorkoutStatsTopSplitPRAndRecent(userId, 45);
-  return res.status(200).json(rows[0]);
+  const days = 45;
+
+  const ver = await getUserVersion(userId);
+  const key = buildTrackingKey(userId, ver, days);
+
+  const cached = await cacheGetJSON(key);
+  if (cached) {
+    res.set("X-Cache", "HIT");
+    return res.status(200).json(cached);
+  }
+
+  const rows = await queryWorkoutStatsTopSplitPRAndRecent(userId, days);
+  const payload = rows[0];
+
+  await cacheSetJSON(key, payload, TTL_TRACKING);
+
+  res.set("X-Cache", "MISS");
+  return res.status(200).json(payload);
 };
 
 // @desc    Finish user workout
