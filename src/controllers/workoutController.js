@@ -29,6 +29,7 @@ export const getWholeUserWorkoutPlan = async (req, res) => {
   const planKey = buildPlanKey(userId, ver);
   const cached = await cacheGetJSON(planKey);
   if (cached) {
+    console.log("Workout Plan is cached!");
     res.set("X-Cache", "HIT");
     return res.status(200).json(cached);
   }
@@ -64,6 +65,7 @@ export const getExerciseTracking = async (req, res) => {
 
   const cached = await cacheGetJSON(key);
   if (cached) {
+    console.log("Exercise tracking and analysis is cached!");
     res.set("X-Cache", "HIT");
     return res.status(200).json(cached);
   }
