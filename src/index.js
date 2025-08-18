@@ -12,18 +12,19 @@ import userRoutes from "./routes/userRoutes.js";
 import workoutRoutes from "./routes/workoutRoutes.js";
 import messagesRoutes from "./routes/messagesRoutes.js";
 import exercisesRoutes from "./routes/exercisesRoutes.js";
+import { connectRedis } from "./config/redisClient.js";
 
 // RESOURECES CONNECTIONS AND GENERAL CONFIGURATIONS  ------------------------------------------
 dotenv.config();
 
-// Create an express server
+// Create an express servernpm
 const app = express();
 
 // Define port
 const PORT = process.env.PORT || 5000;
 
 await connectDB(); // Connect to MongoDB
-//await connectRedis(); // Connect to Redis
+await connectRedis(); // Connect to Redis
 
 // MIDDLWARES ----------------------------------------------------------------------------------
 /*app.use(
