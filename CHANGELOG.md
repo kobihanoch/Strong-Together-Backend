@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.1.0...v1.2.0) (2025-08-18)
+
+
+### Features
+
+* **Postgres:** Auto reconnect Postgres client after idle ([c628ff1](https://github.com/kobihanoch/Strong-Together-Backend/commit/c628ff17b4f6c649ad80a4388e511561ffbf3396))
+* **Push:** Create push notification endpoint and route ([4c7f215](https://github.com/kobihanoch/Strong-Together-Backend/commit/4c7f2157551d12d29f967545be7a0d516f28b9bb))
+* **Queries:** Added counter for each split in analytics fetch ([31a2c08](https://github.com/kobihanoch/Strong-Together-Backend/commit/31a2c08869b0a3d3d59c8ba4797918db59c26e0c))
+* **Queries:** Added query to set push token of user to null on logging out ([42ee1ce](https://github.com/kobihanoch/Strong-Together-Backend/commit/42ee1ce787c0aab18cc13820598ea615d8e8c2b3))
+* **Redis:** Bump versioning to invalidate data already cached on data updates ([82bb3a3](https://github.com/kobihanoch/Strong-Together-Backend/commit/82bb3a3b571926f9fb486e029b84d2ca70888e69))
+* **Redis:** Cached exercise tracking and analysis ([7f517d4](https://github.com/kobihanoch/Strong-Together-Backend/commit/7f517d493fc535698bb28125b7fd00dbc5ca1f7d))
+* **Redis:** Cached workout plan ([9c2b94c](https://github.com/kobihanoch/Strong-Together-Backend/commit/9c2b94c8d108e9f8cf41093c699c878187fb4c0f))
+* **Redis:** Connected redis client and created Redis utiils file ([4e28bf8](https://github.com/kobihanoch/Strong-Together-Backend/commit/4e28bf846b874993e66509f24a50c2e007292923))
+* **Redis:** Updated TTL for tracking and analysis and workout plan to 36 hours cache ([1be56f5](https://github.com/kobihanoch/Strong-Together-Backend/commit/1be56f5cfc4c79db869e2ebf53db333fcfd3f71e))
+* **Redis:** Updated TTL for tracking and analysis and workout plan to 48 hours cache ([937fa81](https://github.com/kobihanoch/Strong-Together-Backend/commit/937fa818fdd64d563abf66e14f8f00330d83e6e6))
+
+
+### Bug Fixes
+
+* **Queries:** Fixed JSON parsing in add workout ([89884d3](https://github.com/kobihanoch/Strong-Together-Backend/commit/89884d32846fe3994b478a2baabea1b2ce87f486))
+
 ## 1.1.0 (2025-08-17)
 
 
