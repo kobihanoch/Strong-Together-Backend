@@ -31,3 +31,7 @@ export async function queryInsertBlacklistedToken(token, expiresAt) {
     ON CONFLICT (token) DO NOTHING
   `;
 }
+
+export const queryUpdateExpoPushTokenToNull = async (userId) => {
+  return sql`UPDATE users SET push_token=NULL WHERE id=${userId}`;
+};
