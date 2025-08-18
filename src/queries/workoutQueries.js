@@ -375,13 +375,13 @@ export const queryDeleteUserWorkout = async (userId) => {
 // English comments only inside code
 export const queryAddWorkout = async (
   userId,
-  workoutData, // JS object: { A: [...], B: [...] }
+  workoutData, // JS object { A:[...], B:[...] }
   workoutName = "My Workout"
 ) => {
   const numberOfSplits = Object.keys(workoutData || {}).length;
   if (!numberOfSplits) throw new Error("workoutData has no splits");
 
-  const payloadJson = sql.json(workoutData);
+  const payloadJson = workoutData;
 
   await sql`
     WITH
@@ -410,7 +410,6 @@ export const queryAddWorkout = async (
       FROM params p
       JOIN new_plan np ON TRUE
       CROSS JOIN LATERAL jsonb_each(p.data) AS t(key, val)
-      WHERE jsonb_typeof(p.data) = 'object'
       RETURNING id, workout_id, name
     )
 
@@ -441,6 +440,5 @@ export const queryAddWorkout = async (
       AND jsonb_typeof(exercises_json) = 'array';
   `;
 
-  // nothing to return
   return;
 };
