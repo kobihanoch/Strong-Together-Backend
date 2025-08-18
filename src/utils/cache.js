@@ -11,8 +11,8 @@ const numFromEnv = (name, def) => {
   return Number.isFinite(v) && v > 0 ? v : def;
 };
 
-export const TTL_TRACKING = numFromEnv("CACHE_TTL_TRACKING_SEC", 6 * 60 * 60); // 6h
-export const TTL_PLAN = numFromEnv("CACHE_TTL_PLAN_SEC", 24 * 60 * 60); // 24h
+export const TTL_TRACKING = numFromEnv("CACHE_TTL_TRACKING_SEC", 6 * 60 * 60); // 36h
+export const TTL_PLAN = numFromEnv("CACHE_TTL_PLAN_SEC", 24 * 60 * 60); // 36
 
 export const buildTrackingKey = (userId, version, days) =>
   `${TRACKING_NS}:${userId}:v${version}:${days}`;
