@@ -1,4 +1,4 @@
-import { redis } from "../config/redisClient";
+import { redis } from "../config/redisClient.js";
 
 const TRACKING_NS = "xt:maps:v1";
 const PLAN_NS = "xt:plan:v1";

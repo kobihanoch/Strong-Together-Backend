@@ -7,6 +7,16 @@ import {
   queryWorkoutStatsTopSplitPRAndRecent,
 } from "../queries/workoutQueries.js";
 import { sendSystemMessageToUserWorkoutDone } from "../services/messagesService.js";
+import {
+  getUserVersion,
+  bumpUserVersion,
+  buildTrackingKey,
+  buildPlanKey,
+  cacheGetJSON,
+  cacheSetJSON,
+  TTL_TRACKING,
+  TTL_PLAN,
+} from "../utils/cache.js";
 
 // @desc    Get authenticated user workout (plan, splits, and exercises)
 // @route   GET /api/workouts/getworkout
@@ -14,19 +24,32 @@ import { sendSystemMessageToUserWorkoutDone } from "../services/messagesService.
 export const getWholeUserWorkoutPlan = async (req, res) => {
   const userId = req.user.id;
 
+  // Try to get data from cache first
+  const ver = await getUserVersion(userId);
+  const planKey = buildPlanKey(userId, ver);
+  const cached = await cacheGetJSON(planKey);
+  if (cached) {
+    res.set("X-Cache", "HIT");
+    return res.status(200).json(cached);
+  }
+
+  // Fetch from DB if not in cache and set in cache
   const rows = await queryWholeUserWorkoutPlan(userId);
-
   const [plan] = rows;
-
   if (!plan) {
-    return res.status(200).json({ workoutPlan: null });
+    const empty = { workoutPlan: null };
+    await cacheSetJSON(planKey, empty, TTL_PLAN);
+    res.set("X-Cache", "MISS");
+    return res.status(200).json(empty);
   }
 
   const { splits } = await queryGetWorkoutSplitsObj(rows[0].id);
+  const payload = { workoutPlan: plan, workoutPlanForEditWorkout: splits };
 
-  return res
-    .status(200)
-    .json({ workoutPlan: plan, workoutPlanForEditWorkout: splits });
+  await cacheSetJSON(planKey, payload, TTL_PLAN);
+
+  res.set("X-Cache", "MISS");
+  return res.status(200).json(payload);
 };
 
 // @desc    Get authenticated user exercise tracking (Past 45 days only)
