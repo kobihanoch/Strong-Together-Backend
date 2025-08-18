@@ -15,11 +15,9 @@ export const setIO = (val) => {
 export const createIOServer = (app) => {
   const server = createServer(app);
   io = new Server(server, {
-    cors: {
-      origin: process.env.NODE_ENV === "development" ? "*" : "<FrontDomainURL>",
-      methods: ["GET", "POST"],
-      credentials: true,
-    },
+    path: "/socket.io",
+    transports: ["polling", "websocket"],
+    cors: { origin: "*", credentials: true },
   });
   setIO(io);
   return { io, server };

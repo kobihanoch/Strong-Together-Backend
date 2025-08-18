@@ -42,12 +42,12 @@ await connectRedis(); // Connect to Redis
 );*/
 
 // Apply CORS
-/*app.use(
+app.use(
   cors({
     origin: true,
     credentials: true,
   })
-);*/
+);
 
 // For using cookies
 app.use(cookieParser());
