@@ -83,6 +83,10 @@ export const getExerciseTracking = async (req, res) => {
 export const finishUserWorkout = async (req, res) => {
   const userId = req.user.id;
   await queryInsertUserFinishedWorkout(userId, req.body.workout);
+
+  // bump user cache version (invalidates all keys logically)
+  await bumpUserVersion(userId);
+
   const et = await queryWorkoutStatsTopSplitPRAndRecent(userId, 45);
   sendSystemMessageToUserWorkoutDone(userId);
   return res.status(200).json(et[0]);
@@ -94,6 +98,10 @@ export const finishUserWorkout = async (req, res) => {
 export const deleteUserWorkout = async (req, res) => {
   const userId = req.user.id;
   await queryDeleteUserWorkout(userId);
+
+  // Plan changed -> bump version
+  await bumpUserVersion(userId);
+
   return res.status(204).end();
 };
 
@@ -105,6 +113,10 @@ export const addWorkout = async (req, res) => {
   const { workoutData, workoutName } = req.body;
 
   await queryAddWorkout(userId, workoutData, workoutName);
+
+  // Plan changed -> bump version
+  await bumpUserVersion(userId);
+
   const [plan] = await queryWholeUserWorkoutPlan(userId);
   const { splits } = await queryGetWorkoutSplitsObj(plan.id);
 
