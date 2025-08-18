@@ -12,6 +12,7 @@ import userRoutes from "./routes/userRoutes.js";
 import workoutRoutes from "./routes/workoutRoutes.js";
 import messagesRoutes from "./routes/messagesRoutes.js";
 import exercisesRoutes from "./routes/exercisesRoutes.js";
+import pushRoutes from "./routes/pushRoutes.js";
 import { connectRedis } from "./config/redisClient.js";
 
 // RESOURECES CONNECTIONS AND GENERAL CONFIGURATIONS  ------------------------------------------
@@ -88,6 +89,9 @@ app.use("/api/messages", messagesRoutes);
 
 // Exercises
 app.use("/api/exercises", exercisesRoutes);
+
+// Push notifications
+app.use("/api/push", pushRoutes);
 
 // Error Handler
 app.use(errorHandler);

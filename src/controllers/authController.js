@@ -17,6 +17,7 @@ import {
   querySelectBlacklistedToken,
   queryUserIdRoleById,
   queryInsertBlacklistedToken,
+  queryUpdateExpoPushTokenToNull,
 } from "../queries/authQueries.js";
 
 // @desc    Login a user
@@ -87,6 +88,8 @@ export const logoutUser = async (req, res) => {
   const expiresAtRefresh = decodedRefresh?.exp
     ? new Date(decodedRefresh.exp * 1000)
     : new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  await queryUpdateExpoPushTokenToNull(decodedRefresh.id);
 
   // Add to blacklist
   if (decodedAccess) {
