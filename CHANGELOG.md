@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.2.0...v1.3.0) (2025-08-19)
+
+
+### Features
+
+* **CORS:** DIsabled CORS ([dd8c8a7](https://github.com/kobihanoch/Strong-Together-Backend/commit/dd8c8a76ac5c0b41c151c61a95f38344afb14dcd))
+* **CORS:** Enbaled CORS ([1493167](https://github.com/kobihanoch/Strong-Together-Backend/commit/1493167a4f60bb47a0abf928d38d3dcdc4a6021e))
+* **Queries:** Created new indexes and views on DB ([b363b53](https://github.com/kobihanoch/Strong-Together-Backend/commit/b363b534b21bca00ab92f0854e255425e947dc4d))
+
 ## [1.2.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.1.0...v1.2.0) (2025-08-18)
 
 
