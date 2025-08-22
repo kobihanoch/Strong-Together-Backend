@@ -79,12 +79,15 @@ export const queryGetWorkoutSplitsObj = async (workoutId) => {
  *        hasTrainedToday: Boolean,                    // whether there's any entry with today's date
  *        lastWorkoutDate: String | null,              // most recent workout date across all history (YYYY-MM-DD)
  *        splitDaysByName: { [splitname: String]: Number }, // map splitname -> distinct workout-day count
- *        pr_max: {                                    // global PR (max weight) across all history
- *              exercise: String | null,
- *              weight: Number | null,
- *              reps: Number | null,
- *              workoutdate: String | null                 // YYYY-MM-DD
- *        } | null
+ *        prs: {
+ *                 pr_map_etsid: {.. Mapped by exercise id}
+ *                 pr_max: {                                    // global PR (max weight) across all history
+ *                      exercise: String | null,
+ *                      weight: Number | null,
+ *                      reps: Number | null,
+ *                      workoutdate: String | null                 // YYYY-MM-DD
+ *                } | null
+ *        }
  *   },
  *   exerciseTrackingMaps: {
  *          byDate:      { [date]: Array<row> },  // date keys are "YYYY-MM-DD", newest first},
@@ -109,6 +112,7 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
   days = 45
 ) => {
   return sql`
+    -- English comments only inside the code
     WITH filtered AS (
       SELECT *
       FROM public.v_exercisetracking_expanded
@@ -145,24 +149,17 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
       ORDER BY scbi.days_count DESC, scbi.workoutsplit_id ASC
       LIMIT 1
     ),
-    all_sets AS (
-      SELECT f.id, f.exercise, f.workoutdate::date AS workoutdate, s.weight, s.reps
-      FROM filtered f
-      CROSS JOIN LATERAL unnest(f.weight, f.reps) AS s(weight, reps)
-      WHERE s.weight IS NOT NULL
-    ),
-    max_pr AS (
-      SELECT exercise, weight, reps, workoutdate
-      FROM all_sets
-      ORDER BY weight DESC NULLS LAST, reps DESC NULLS LAST, workoutdate DESC NULLS LAST, id DESC
-      LIMIT 1
-    ),
     trained_today AS (
       SELECT EXISTS (SELECT 1 FROM filtered WHERE workoutdate = CURRENT_DATE) AS has_trained_today
     ),
     last_workout AS (
       SELECT MAX(workoutdate) AS last_workout_date FROM filtered
     ),
+    -- Pull precomputed PR rows (one per exercise_id) for this user
+    prs AS (
+      SELECT * FROM public.v_prs WHERE user_id = ${userId}
+    ),
+    -- Recent rows for maps (last N days)
     recent_rows AS (
       SELECT
         et.id,
@@ -230,7 +227,6 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
       ) x
     )
     SELECT
-      /* Rename top-level aliases back to what the frontend uses */
       json_build_object(
         'unique_days', u.unique_days,
         'most_frequent_split', ts.most_frequent_split,
@@ -239,7 +235,53 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
         'hasTrainedToday', tt.has_trained_today,
         'lastWorkoutDate', to_char(lw.last_workout_date, 'YYYY-MM-DD'),
         'splitDaysByName', COALESCE(sco.split_days_map, '{}'::jsonb)::json,
-        'pr_max', json_build_object('exercise', mp.exercise, 'weight', mp.weight, 'reps', mp.reps, 'workoutdate', mp.workoutdate)
+        -- PR payload under exerciseTrackingAnalysis.prs
+        'prs', json_build_object(
+          -- Map: { [exercise_id]: PR data }
+          'pr_map_exercise_id',
+            COALESCE((
+              SELECT jsonb_object_agg(ex_id, item)
+              FROM (
+                -- Pick the best PR per exercise_id
+                -- Tie-breaker: weight DESC, reps DESC, workoutdate DESC, id DESC
+                SELECT DISTINCT ON (pr.exercise_id)
+                  pr.exercise_id AS ex_id,
+                  jsonb_build_object(
+                    'id', pr.id,
+                    'user_id', pr.user_id,
+                    'exercise_id', pr.exercise_id,
+                    'exercisetosplit_id', pr.exercisetosplit_id,
+                    'workoutdate', to_char(pr.workoutdate::date, 'YYYY-MM-DD'),
+                    'exercise', pr.exercise,
+                    'weight', pr.weight,
+                    'reps', pr.reps
+                  ) AS item
+                FROM prs pr
+                WHERE pr.exercise_id IS NOT NULL
+                AND pr.user_id = ${userId}
+                ORDER BY
+                  pr.exercise_id,
+                  pr.weight      DESC,
+                  pr.reps        DESC,
+                  pr.workoutdate DESC,
+                  pr.id          DESC
+              ) t
+            ), '{}'::jsonb),
+          -- Global max PR chosen from PRs (weight -> reps -> date -> id)
+          'pr_max',
+            COALESCE((
+              SELECT json_build_object(
+                'exercise',    pr.exercise,
+                'weight',      pr.weight,
+                'reps',        pr.reps,
+                'workoutdate', to_char(pr.workoutdate::date, 'YYYY-MM-DD')
+              )
+              FROM prs pr
+              WHERE pr.user_id = ${userId}
+              ORDER BY pr.weight DESC, pr.reps DESC, pr.workoutdate DESC, pr.id DESC
+              LIMIT 1
+            ), NULL)
+        )
       ) AS "exerciseTrackingAnalysis",
       json_build_object(
         'byDate',      COALESCE(bdm.by_date, '{}'::jsonb),
@@ -251,7 +293,6 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
     LEFT JOIN top_split_id tsi     ON TRUE
     LEFT JOIN trained_today tt     ON TRUE
     LEFT JOIN last_workout lw      ON TRUE
-    LEFT JOIN max_pr mp            ON TRUE
     LEFT JOIN split_counts_obj sco ON TRUE
     LEFT JOIN by_date_map  bdm     ON TRUE
     LEFT JOIN by_ets_map   bem     ON TRUE
