@@ -5,7 +5,7 @@ import { redis } from "../config/redisClient.js";
 const TRACKING_NS = "xt:tracking:v1";
 const PLAN_NS = "xt:workoutplan:v1";
 
-const enabled = process.env.CACHE_ENABLED === "true";
+const enabled = false; //process.env.CACHE_ENABLED === "true";
 
 const numFromEnv = (name, def) => {
   const v = Number(process.env[name]);
