@@ -10,7 +10,7 @@ import sql from "../config/db.js";
  *        } , .....
  * }
  */
-export const queryGetWorkoutAnalytics = async (userId) => {
+export const queryGetWorkoutRMs = async (userId) => {
   const rows = await sql`
     /* 1) Compute an estimated 1RM per set (route by rep-range) */
     WITH per_set AS (
@@ -69,11 +69,11 @@ export const queryGetWorkoutAnalytics = async (userId) => {
 
 /**
  * {
- *        [splitname]: { [exercise]: { planned, actual } }
+ *      [splitname]: { [exercise]: { planned, actual } }
  * }
  */
 
-export const queryGoalAttendence = async (userId) => {
+export const queryGoalAdherence = async (userId) => {
   const rows = await sql`
     WITH p AS (
       -- Planned per split+exercise: sum of the sets[] array from EWS
@@ -86,7 +86,7 @@ export const queryGoalAttendence = async (userId) => {
       FROM public.workoutsplits ws
       JOIN public.workoutplans w  ON w.id = ws.workout_id
       JOIN public.v_exercisetoworkoutsplit_expanded ews ON ews.workoutsplit_id = ws.id
-      WHERE w.user_id = ${userId}
+      WHERE w.user_id = ${userId} AND w.is_active=TRUE
       GROUP BY ws.id, ws.name, ews.exercise_id, ews.exercise
     ),
     a_raw AS (
@@ -120,8 +120,8 @@ export const queryGoalAttendence = async (userId) => {
         a.actual
       FROM p
       INNER JOIN a
-        ON a.split_id = p.split_id
-       AND a.exercise_id = p.exercise_id
+        ON a.splitname   = p.splitname
+        AND a.exercise_id = p.exercise_id  
     )
     -- Final JSON: "<splitname>": { "<exercise>": { planned, actual, adherence_pct } }
     SELECT jsonb_object_agg(splitname, per_split) AS result
