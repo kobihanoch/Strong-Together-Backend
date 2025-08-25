@@ -142,5 +142,5 @@ export const queryGoalAdherence = async (userId) => {
     ) t;
   `;
 
-  return rows[0]?.result ?? null;
+  return rows[0]?.result ?? {};
 };
