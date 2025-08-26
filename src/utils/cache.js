@@ -15,11 +15,13 @@ const numFromEnv = (name, def) => {
 
 export const TTL_TRACKING = numFromEnv("CACHE_TTL_TRACKING_SEC", 48 * 60 * 60); // 48 Hours
 export const TTL_PLAN = numFromEnv("CACHE_TTL_PLAN_SEC", 48 * 60 * 60); // 48 Hours
+export const TTL_ANALYTICS = numFromEnv("CACHE_TTL_ANALYTICS_SEC", 1 * 60 * 60);
 
 // Key builders
 export const buildTrackingKeyStable = (userId, days) =>
   `${TRACKING_NS}:${userId}:${days}`;
 export const buildPlanKeyStable = (userId) => `${PLAN_NS}:${userId}`;
+export const buildAnalyticsKeyStable = (userId) => `${ANALYTICS_NS}:${userId}`;
 
 export const cacheGetJSON = async (key) => {
   if (!enabled || !redis) return null;

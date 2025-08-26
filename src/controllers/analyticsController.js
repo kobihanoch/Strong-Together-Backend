@@ -17,6 +17,7 @@ export const getAnalytics = async (req, res) => {
   const cached = await cacheGetJSON(analyticsKey);
   if (cached) {
     res.set("X-Cache", "HIT");
+    console.log("Analytics is cached!");
     return res.status(200).json(cached);
   }
   res.set("X-Cache", "MISS");
