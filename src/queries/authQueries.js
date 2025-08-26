@@ -9,7 +9,7 @@ export async function querySetUserFirstLoginFalse(userId) {
 }
 
 export async function queryUserDataByUsername(username) {
-  return sql`SELECT to_jsonb(users) - 'password' AS user_data FROM users WHERE username = ${username} LIMIT 1`;
+  return sql`UPDATE users SET token_version=token_version + 1 WHERE username = ${username} RETURNING token_version, (to_jsonb(users) - 'password' - 'token_version') AS user_data`;
 }
 
 export async function queryDeleteExpiredBlacklistedTokens() {
@@ -17,8 +17,12 @@ export async function queryDeleteExpiredBlacklistedTokens() {
 }
 
 export async function querySelectBlacklistedToken(token) {
-  return sql`SELECT token FROM blacklistedtokens WHERE token=${token} LIMIT 1`;
+  return sql`SELECT 1 FROM blacklistedtokens WHERE token=${token} LIMIT 1`;
 }
+
+export const queryGetCurrentTokenVersion = async (userId) => {
+  return sql`SELECT token_version FROM users WHERE id=${userId}`;
+};
 
 export async function queryUserIdRoleById(userId) {
   return sql`SELECT id, role FROM users WHERE id=${userId} LIMIT 1`;

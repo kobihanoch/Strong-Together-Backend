@@ -15,6 +15,7 @@ import {
   cacheDeleteKey,
   TTL_TRACKING,
   TTL_PLAN,
+  buildAnalyticsKeyStable,
 } from "../utils/cache.js";
 
 // @desc    Get authenticated user workout (plan, splits, and exercises)
@@ -85,7 +86,9 @@ export const finishUserWorkout = async (req, res) => {
 
   // Delete current tracking key
   const trackingKey = buildTrackingKeyStable(userId, 45);
+  const analyticsKey = buildAnalyticsKeyStable(userId);
   await cacheDeleteKey(trackingKey);
+  await cacheDeleteKey(analyticsKey);
 
   // Warm new cache (fetch fresh data, set in cache)
   const rows = await queryWorkoutStatsTopSplitPRAndRecent(userId, 45);
@@ -106,6 +109,8 @@ export const deleteUserWorkout = async (req, res) => {
 
   // Delete current plan cache key
   const planKey = buildPlanKeyStable(userId);
+  const analyticsKey = buildAnalyticsKeyStable(userId);
+  await cacheDeleteKey(analyticsKey);
   await cacheDeleteKey(planKey);
 
   // Respond with no content
@@ -125,6 +130,8 @@ export const addWorkout = async (req, res) => {
   // Delete current plan cache key
   const planKey = buildPlanKeyStable(userId);
   await cacheDeleteKey(planKey);
+  const analyticsKey = buildAnalyticsKeyStable(userId);
+  await cacheDeleteKey(analyticsKey);
 
   // Fetch fresh data from DB
   const [plan] = await queryWholeUserWorkoutPlan(userId);

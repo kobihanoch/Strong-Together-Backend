@@ -1,6 +1,7 @@
 import createError from "http-errors";
 import sql from "../config/db.js";
 import { decodeAccessToken, getAccessToken } from "../utils/tokenUtils.js";
+import { queryGetCurrentTokenVersion } from "../queries/authQueries.js";
 
 export const protect = async (req, res, next) => {
   try {
@@ -10,17 +11,15 @@ export const protect = async (req, res, next) => {
       return res.status(401).json({ message: "No access token provided" });
     }
 
-    // Check if access token is blacklisted (not valid)
-    const [revoked] =
-      await sql`SELECT 1 FROM blacklistedtokens WHERE token = ${accessToken} AND expires_at > now() LIMIT 1`;
-    if (revoked) {
-      throw createError(401, "Access token has been revoked");
-    }
-
     // Decode
     const decoded = decodeAccessToken(accessToken);
     if (!decoded) {
       throw createError(401, "Access token is not valid");
+    }
+    const [{ token_version: currentTokenVersion }] =
+      await queryGetCurrentTokenVersion(decoded.id);
+    if (decoded.tokenVer !== currentTokenVersion) {
+      throw createError(401, "New login required");
     }
 
     // Fetch user id and role
