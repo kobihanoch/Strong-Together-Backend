@@ -149,5 +149,6 @@ export const refreshAccessToken = async (req, res) => {
     message: "Access token refreshed",
     accessToken: newAccess,
     refreshToken: newRefresh,
+    userId: user.id,
   });
 };
