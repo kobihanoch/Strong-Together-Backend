@@ -3,23 +3,17 @@ import bcrypt from "bcryptjs";
 import createError from "http-errors";
 import jwt from "jsonwebtoken";
 import {
-  decodeAccessToken,
-  decodeRefreshToken,
-  getAccessToken,
-  getRefreshToken,
-} from "../utils/tokenUtils.js";
-import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
-import {
-  queryUserByUsernameForLogin,
-  querySetUserFirstLoginFalse,
-  queryUserDataByUsername,
-  queryDeleteExpiredBlacklistedTokens,
-  querySelectBlacklistedToken,
-  queryUserIdRoleById,
-  queryInsertBlacklistedToken,
-  queryUpdateExpoPushTokenToNull,
   queryGetCurrentTokenVersion,
+  queryInsertBlacklistedToken,
+  querySelectBlacklistedToken,
+  querySetUserFirstLoginFalse,
+  queryUpdateExpoPushTokenToNull,
+  queryUserByUsernameForLogin,
+  queryUserDataByUsername,
+  queryUserIdRoleById,
 } from "../queries/authQueries.js";
+import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
+import { decodeRefreshToken, getRefreshToken } from "../utils/tokenUtils.js";
 
 // @desc    Login a user
 // @route   POST /api/auth/login
@@ -73,27 +67,17 @@ export const loginUser = async (req, res) => {
 // @access  Public
 export const logoutUser = async (req, res) => {
   // Delete expired tokens every log out attempt
-  await queryDeleteExpiredBlacklistedTokens();
+  //await queryDeleteExpiredBlacklistedTokens();
 
   // Get tokens from request body and decode
   const refreshToken = getRefreshToken(req);
-  const accessToken = getAccessToken(req);
 
   // Decode tokens
-  const decodedAccess = decodeAccessToken(accessToken);
-  const expiresAtAccess = decodedAccess?.exp
-    ? new Date(decodedAccess.exp * 1000)
-    : new Date(Date.now() + 24 * 60 * 60 * 1000);
-
   const decodedRefresh = decodeRefreshToken(refreshToken);
   const expiresAtRefresh = decodedRefresh?.exp
     ? new Date(decodedRefresh.exp * 1000)
     : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-  // Add to blacklist
-  if (decodedAccess) {
-    await queryInsertBlacklistedToken(accessToken, expiresAtAccess);
-  }
   if (decodedRefresh) {
     await queryInsertBlacklistedToken(refreshToken, expiresAtRefresh);
     await queryUpdateExpoPushTokenToNull(decodedRefresh.id);
@@ -106,7 +90,7 @@ export const logoutUser = async (req, res) => {
 // @route   POST /api/auth/refresh
 // @access  Public
 export const refreshAccessToken = async (req, res) => {
-  await queryDeleteExpiredBlacklistedTokens();
+  //await queryDeleteExpiredBlacklistedTokens();
 
   const refreshToken = getRefreshToken(req);
   if (!refreshToken) throw createError(401, "No refresh token provided");

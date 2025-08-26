@@ -17,7 +17,7 @@ export async function queryDeleteExpiredBlacklistedTokens() {
 }
 
 export async function querySelectBlacklistedToken(token) {
-  return sql`SELECT token FROM blacklistedtokens WHERE token=${token} LIMIT 1`;
+  return sql`SELECT 1 FROM blacklistedtokens WHERE token=${token} LIMIT 1`;
 }
 
 export const queryGetCurrentTokenVersion = async (userId) => {

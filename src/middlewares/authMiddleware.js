@@ -11,13 +11,6 @@ export const protect = async (req, res, next) => {
       return res.status(401).json({ message: "No access token provided" });
     }
 
-    // Check if access token is blacklisted (not valid)
-    const [revoked] =
-      await sql`SELECT 1 FROM blacklistedtokens WHERE token = ${accessToken} AND expires_at > now() LIMIT 1`;
-    if (revoked) {
-      throw createError(401, "Access token has been revoked");
-    }
-
     // Decode
     const decoded = decodeAccessToken(accessToken);
     if (!decoded) {
