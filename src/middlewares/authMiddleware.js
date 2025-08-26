@@ -1,6 +1,7 @@
 import createError from "http-errors";
 import sql from "../config/db.js";
 import { decodeAccessToken, getAccessToken } from "../utils/tokenUtils.js";
+import { queryGetCurrentTokenVersion } from "../queries/authQueries.js";
 
 export const protect = async (req, res, next) => {
   try {
@@ -21,6 +22,11 @@ export const protect = async (req, res, next) => {
     const decoded = decodeAccessToken(accessToken);
     if (!decoded) {
       throw createError(401, "Access token is not valid");
+    }
+    const [{ token_version: currentTokenVersion }] =
+      await queryGetCurrentTokenVersion(decoded.id);
+    if (decoded.tokenVer !== currentTokenVersion) {
+      throw createError(401, "New login required");
     }
 
     // Fetch user id and role
