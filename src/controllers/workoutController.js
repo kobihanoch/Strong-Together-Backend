@@ -17,6 +17,7 @@ import {
   TTL_PLAN,
   buildAnalyticsKeyStable,
 } from "../utils/cache.js";
+import { todayIL } from "../utils/sharedUtils.js";
 
 // @desc    Get authenticated user workout (plan, splits, and exercises)
 // @route   GET /api/workouts/getworkout
@@ -63,18 +64,34 @@ export const getExerciseTracking = async (req, res) => {
 
   const cached = await cacheGetJSON(key);
   if (cached) {
-    console.log("Exercise tracking and analysis is cached!");
-    res.set("X-Cache", "HIT");
-    return res.status(200).json(cached);
+    // If "hasTrainedToday" is relevant to yesterday: patch it
+    const last = cached?.exerciseTrackingAnalysis?.lastWorkoutDate || null;
+    const shouldBe = last === todayIL(); // recompute for today
+    const curr = !!cached?.exerciseTrackingAnalysis?.hasTrainedToday;
+
+    if (curr !== shouldBe) {
+      const fixed = {
+        ...cached,
+        exerciseTrackingAnalysis: {
+          ...cached.exerciseTrackingAnalysis,
+          hasTrainedToday: shouldBe,
+        },
+      };
+      await cacheDeleteKey(key); // delete old key
+      await cacheSetJSON(key, fixed, TTL_TRACKING); // write updated value (same TTL)
+      res.set("X-Cache", "PATCHED");
+      console.log("Exercise tracking is cached! => Patched");
+      return res.status(200).json(fixed);
+    }
+
+    const rows = await queryWorkoutStatsTopSplitPRAndRecent(userId, days);
+    const payload = rows[0];
+
+    await cacheSetJSON(key, payload, TTL_TRACKING);
+
+    res.set("X-Cache", "MISS");
+    return res.status(200).json(payload);
   }
-
-  const rows = await queryWorkoutStatsTopSplitPRAndRecent(userId, days);
-  const payload = rows[0];
-
-  await cacheSetJSON(key, payload, TTL_TRACKING);
-
-  res.set("X-Cache", "MISS");
-  return res.status(200).json(payload);
 };
 
 // @desc    Finish user workout
