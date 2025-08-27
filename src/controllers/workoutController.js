@@ -69,6 +69,7 @@ export const getExerciseTracking = async (req, res) => {
     const shouldBe = last === todayIL(); // recompute for today
     const curr = !!cached?.exerciseTrackingAnalysis?.hasTrainedToday;
 
+    // If needs to be patched
     if (curr !== shouldBe) {
       const fixed = {
         ...cached,
@@ -83,15 +84,19 @@ export const getExerciseTracking = async (req, res) => {
       console.log("Exercise tracking is cached! => Patched");
       return res.status(200).json(fixed);
     }
-
-    const rows = await queryWorkoutStatsTopSplitPRAndRecent(userId, days);
-    const payload = rows[0];
-
-    await cacheSetJSON(key, payload, TTL_TRACKING);
-
-    res.set("X-Cache", "MISS");
-    return res.status(200).json(payload);
+    // If cached and doesn't need to be patched
+    res.set("X-Cache", "HIT");
+    return res.status(200).json(cached);
   }
+
+  // If not cached
+  const rows = await queryWorkoutStatsTopSplitPRAndRecent(userId, days);
+  const payload = rows[0];
+
+  await cacheSetJSON(key, payload, TTL_TRACKING);
+
+  res.set("X-Cache", "MISS");
+  return res.status(200).json(payload);
 };
 
 // @desc    Finish user workout
