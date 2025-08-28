@@ -64,32 +64,11 @@ export const getExerciseTracking = async (req, res) => {
 
   const cached = await cacheGetJSON(key);
   if (cached) {
-    // If "hasTrainedToday" is relevant to yesterday: patch it
-    const last = cached?.exerciseTrackingAnalysis?.lastWorkoutDate || null;
-    const shouldBe = last === todayIL(); // recompute for today
-    const curr = !!cached?.exerciseTrackingAnalysis?.hasTrainedToday;
-
-    // If needs to be patched
-    if (curr !== shouldBe) {
-      const fixed = {
-        ...cached,
-        exerciseTrackingAnalysis: {
-          ...cached.exerciseTrackingAnalysis,
-          hasTrainedToday: shouldBe,
-        },
-      };
-      await cacheDeleteKey(key); // delete old key
-      await cacheSetJSON(key, fixed, TTL_TRACKING); // write updated value (same TTL)
-      res.set("X-Cache", "PATCHED");
-      console.log("Exercise tracking is cached! => Patched");
-      return res.status(200).json(fixed);
-    }
-    // If cached and doesn't need to be patched
+    console.log("Exercise tracking and analysis is cached!");
     res.set("X-Cache", "HIT");
     return res.status(200).json(cached);
   }
 
-  // If not cached
   const rows = await queryWorkoutStatsTopSplitPRAndRecent(userId, days);
   const payload = rows[0];
 

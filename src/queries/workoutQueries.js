@@ -149,9 +149,9 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
       ORDER BY scbi.days_count DESC, scbi.workoutsplit_id ASC
       LIMIT 1
     ),
-    trained_today AS (
+    /*trained_today AS (
       SELECT EXISTS (SELECT 1 FROM filtered WHERE workoutdate = CURRENT_DATE) AS has_trained_today
-    ),
+    ),*/
     last_workout AS (
       SELECT MAX(workoutdate) AS last_workout_date FROM filtered
     ),
@@ -232,7 +232,7 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
         'most_frequent_split', ts.most_frequent_split,
         'most_frequent_split_days', ts.most_frequent_split_days,
         'most_frequent_split_id', tsi.most_frequent_split_id,
-        'hasTrainedToday', tt.has_trained_today,
+        /*'hasTrainedToday', tt.has_trained_today,*/
         'lastWorkoutDate', to_char(lw.last_workout_date, 'YYYY-MM-DD'),
         'splitDaysByName', COALESCE(sco.split_days_map, '{}'::jsonb)::json,
         -- PR payload under exerciseTrackingAnalysis.prs
@@ -291,7 +291,7 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
     FROM unique_days u
     LEFT JOIN top_split ts         ON TRUE
     LEFT JOIN top_split_id tsi     ON TRUE
-    LEFT JOIN trained_today tt     ON TRUE
+    /*LEFT JOIN trained_today tt     ON TRUE*/
     LEFT JOIN last_workout lw      ON TRUE
     LEFT JOIN split_counts_obj sco ON TRUE
     LEFT JOIN by_date_map  bdm     ON TRUE
