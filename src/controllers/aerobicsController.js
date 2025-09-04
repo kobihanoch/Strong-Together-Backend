@@ -16,7 +16,7 @@ export const getUserAerobics = async (req, res) => {
   const userId = req.user.id;
 
   // Check for cache
-  const aerobicsKey = buildAerobicsKeyStable(userId);
+  const aerobicsKey = buildAerobicsKeyStable(userId, 45);
   const cached = await cacheGetJSON(aerobicsKey);
   if (cached) {
     res.set("X-Cache", "HIT");
@@ -40,7 +40,7 @@ export const addUserAerobics = async (req, res) => {
 
   // Insert into cache
   const [rows] = queryGetUserAerobicsForNDays(req.user.id, 45);
-  const aerobicsKey = buildAerobicsKeyStable(req.user.id);
+  const aerobicsKey = buildAerobicsKeyStable(req.user.id, 45);
   await cacheSetJSON(aerobicsKey, rows, TTL_AEROBICS);
   return res.status(201).end();
 };
