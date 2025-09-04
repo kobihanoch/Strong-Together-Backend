@@ -24,7 +24,7 @@ export const buildTrackingKeyStable = (userId, days) =>
   `${TRACKING_NS}:${userId}:${days}`;
 export const buildPlanKeyStable = (userId) => `${PLAN_NS}:${userId}`;
 export const buildAnalyticsKeyStable = (userId) => `${ANALYTICS_NS}:${userId}`;
-export const buildAerobicsKeyStable = (userId) =>
+export const buildAerobicsKeyStable = (userId, days) =>
   `${ANALYTICS_NS}:${userId}:${days}`;
 
 export const cacheGetJSON = async (key) => {

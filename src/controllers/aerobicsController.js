@@ -23,7 +23,7 @@ export const getUserAerobics = async (req, res) => {
     return res.status(200).json(cached);
   }
 
-  const [rows] = await queryGetUserAerobicsForNDays(userId, 45);
+  const rows = await queryGetUserAerobicsForNDays(userId, 45);
 
   // Store in cache
   await cacheSetJSON(aerobicsKey, rows, TTL_AEROBICS);
@@ -39,7 +39,7 @@ export const addUserAerobics = async (req, res) => {
   await queryAddAerobicTracking(req.user.id, req.body.record);
 
   // Insert into cache
-  const [rows] = queryGetUserAerobicsForNDays(req.user.id, 45);
+  const rows = await queryGetUserAerobicsForNDays(req.user.id, 45);
   const aerobicsKey = buildAerobicsKeyStable(req.user.id, 45);
   await cacheSetJSON(aerobicsKey, rows, TTL_AEROBICS);
   return res.status(201).end();
