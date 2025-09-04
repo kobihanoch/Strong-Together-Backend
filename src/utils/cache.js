@@ -5,6 +5,7 @@ import { redis } from "../config/redisClient.js";
 const TRACKING_NS = "xt:tracking:v1";
 const PLAN_NS = "xt:workoutplan:v1";
 const ANALYTICS_NS = "xt:analytics:v1";
+const AEROBICS_NS = "xt:aerobics:v1";
 
 const enabled = false; //process.env.CACHE_ENABLED === "true";
 
@@ -15,13 +16,15 @@ const numFromEnv = (name, def) => {
 
 export const TTL_TRACKING = numFromEnv("CACHE_TTL_TRACKING_SEC", 48 * 60 * 60); // 48 Hours
 export const TTL_PLAN = numFromEnv("CACHE_TTL_PLAN_SEC", 48 * 60 * 60); // 48 Hours
-export const TTL_ANALYTICS = numFromEnv("CACHE_TTL_ANALYTICS_SEC", 1 * 60 * 60);
+export const TTL_ANALYTICS = numFromEnv("CACHE_TTL_ANALYTICS_SEC", 1 * 60 * 60); // 1 Hr
+export const TTL_AEROBICS = numFromEnv("CACHE_TTL_AEROBICS_SEC", 48 * 60 * 60); // 48 Hours
 
 // Key builders
 export const buildTrackingKeyStable = (userId, days) =>
   `${TRACKING_NS}:${userId}:${days}`;
 export const buildPlanKeyStable = (userId) => `${PLAN_NS}:${userId}`;
 export const buildAnalyticsKeyStable = (userId) => `${ANALYTICS_NS}:${userId}`;
+export const buildAerobicsKeyStable = (userId) => `${ANALYTICS_NS}:${userId}`;
 
 export const cacheGetJSON = async (key) => {
   if (!enabled || !redis) return null;
