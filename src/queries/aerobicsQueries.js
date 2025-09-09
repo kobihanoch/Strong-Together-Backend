@@ -2,29 +2,52 @@ import sql from "../config/db.js";
 
 // Gets all records from last 45 days mapped by dates
 /**
- * {
-      "daily": {
-          "2025-09-02": [
-              {
-                  "type": "Walk",
-                  "duration_sec": 0,
-                  "duration_mins": 30
-              }
-          ],
-          "2025-09-03": [
-              {
-                  "type": "Walk",
-                  "duration_sec": 0,
-                  "duration_mins": 30
-              }
-      },
-      "weekly": {
-          "2025-08-31": {
-              "total_duration_sec": 0,
-              "total_duration_mins": 90
-          }
-      }
- * }
+ *  "daily": {
+        "2025-09-02": [
+            {
+                "type": "Walk",
+                "duration_sec": 0,
+                "duration_mins": 30
+            }
+        ],
+        "2025-09-03": [
+            {
+                "type": "Walk",
+                "duration_sec": 0,
+                "duration_mins": 30
+            }
+        ],
+        "2025-09-04": [
+            {
+                "type": "Walk",
+                "duration_sec": 0,
+                "duration_mins": 30
+            }
+        ]
+    },
+    "weekly": {
+        "2025-08-31": {
+            "records": [
+                {
+                    "type": "Walk",
+                    "duration_sec": 0,
+                    "duration_mins": 30
+                },
+                {
+                    "type": "Walk",
+                    "duration_sec": 0,
+                    "duration_mins": 30
+                },
+                {
+                    "type": "Walk",
+                    "duration_sec": 0,
+                    "duration_mins": 30
+                }
+            ],
+            "total_duration_sec": 0,
+            "total_duration_mins": 90
+        }
+    }
  */
 export const queryGetUserAerobicsForNDays = async (userId, days) => {
   const [obj] = await sql`
@@ -49,14 +72,15 @@ export const queryGetUserAerobicsForNDays = async (userId, days) => {
   weekly AS (
     SELECT n.week_start::text AS ws, jsonb_build_object(
       'total_duration_mins', SUM(n.dm), 
-      'total_duration_sec', SUM(n.ds)) AS total_duration
+      'total_duration_sec', SUM(n.ds), 
+      'records', jsonb_agg(n.row ORDER BY n.id ASC)) AS records
     FROM norm n
     GROUP BY n.week_start
   )
   /* Final result */
   SELECT jsonb_build_object(
     'daily', COALESCE((SELECT jsonb_object_agg(d.d, d.records) FROM daily d), '{}'::jsonb),
-    'weekly', COALESCE((SELECT jsonb_object_agg(w.ws, w.total_duration) FROM weekly w), '{}'::jsonb)
+    'weekly', COALESCE((SELECT jsonb_object_agg(w.ws, w.records) FROM weekly w), '{}'::jsonb)
     ) AS data
     `;
 
