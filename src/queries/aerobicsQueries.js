@@ -31,16 +31,19 @@ import sql from "../config/db.js";
                 {
                     "type": "Walk",
                     "duration_sec": 0,
+                    "workout_date": "2025-09-02",
                     "duration_mins": 30
                 },
                 {
                     "type": "Walk",
                     "duration_sec": 0,
+                    "workout_date": "2025-09-03",
                     "duration_mins": 30
                 },
                 {
                     "type": "Walk",
                     "duration_sec": 0,
+                    "workout_date": "2025-09-04",
                     "duration_mins": 30
                 }
             ],
@@ -73,7 +76,7 @@ export const queryGetUserAerobicsForNDays = async (userId, days) => {
     SELECT n.week_start::text AS ws, jsonb_build_object(
       'total_duration_mins', SUM(n.dm), 
       'total_duration_sec', SUM(n.ds), 
-      'records', jsonb_agg(n.row ORDER BY n.id ASC)) AS records
+      'records', jsonb_agg(to_jsonb(n.row) || jsonb_build_object('workout_date', n.date) ORDER BY n.id ASC)) AS records
     FROM norm n
     GROUP BY n.week_start
   )
