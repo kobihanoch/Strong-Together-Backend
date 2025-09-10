@@ -1,13 +1,14 @@
 // English comments only inside the code
 
 import { redis } from "../config/redisClient.js";
+import { gzipSync, gunzipSync } from "zlib";
 
 const TRACKING_NS = "xt:tracking:v1";
 const PLAN_NS = "xt:workoutplan:v1";
 const ANALYTICS_NS = "xt:analytics:v1";
 const AEROBICS_NS = "xt:aerobics:v1";
 
-const enabled = false; //process.env.CACHE_ENABLED === "true";
+const enabled = process.env.CACHE_ENABLED === "true";
 
 const numFromEnv = (name, def) => {
   const v = Number(process.env[name]);
@@ -25,28 +26,40 @@ export const buildTrackingKeyStable = (userId, days) =>
 export const buildPlanKeyStable = (userId) => `${PLAN_NS}:${userId}`;
 export const buildAnalyticsKeyStable = (userId) => `${ANALYTICS_NS}:${userId}`;
 export const buildAerobicsKeyStable = (userId, days) =>
-  `${ANALYTICS_NS}:${userId}:${days}`;
+  `${AEROBICS_NS}:${userId}:${days}`;
 
+// --- MINIMAL CHANGE: now reads compressed values, with legacy fallback ---
 export const cacheGetJSON = async (key) => {
   if (!enabled || !redis) return null;
   try {
-    const raw = await redis.get(key);
-    return raw ? JSON.parse(raw) : null;
+    // Fetch as Buffer to support compressed payloads
+    const buf = await redis.getBuffer(key);
+    if (!buf) return null;
+
+    // Detect gzip by magic bytes 0x1f 0x8b; if not, treat as UTF-8 JSON (legacy)
+    const isGzip = buf.length >= 2 && buf[0] === 0x1f && buf[1] === 0x8b;
+    const jsonStr = isGzip
+      ? gunzipSync(buf).toString("utf8")
+      : buf.toString("utf8");
+    return JSON.parse(jsonStr);
   } catch {
     return null;
   }
 };
 
+// --- MINIMAL CHANGE: now always stores compressed (gzip) ---
 export const cacheSetJSON = async (key, obj, ttlSec) => {
   if (!enabled || !redis) return;
   try {
-    await redis.set(key, JSON.stringify(obj), { EX: ttlSec });
+    const raw = JSON.stringify(obj);
+    const gz = gzipSync(raw); // Store compressed binary
+    await redis.set(key, gz, { EX: ttlSec });
   } catch {
     // ignore
   }
 };
 
-// Delete a single exact key */
+// Delete a single exact key
 export const cacheDeleteKey = async (key) => {
   if (!enabled || !redis) return;
   try {
