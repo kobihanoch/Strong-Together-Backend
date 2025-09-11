@@ -17,7 +17,7 @@ import {
   TTL_PLAN,
   buildAnalyticsKeyStable,
 } from "../utils/cache.js";
-import { todayIL } from "../utils/sharedUtils.js";
+import createError from "http-errors";
 
 // @desc    Get authenticated user workout (plan, splits, and exercises)
 // @route   GET /api/workouts/getworkout
@@ -82,8 +82,12 @@ export const getExerciseTracking = async (req, res) => {
 // @route   POST /api/workouts/finishworkout
 // @access  Private
 export const finishUserWorkout = async (req, res) => {
+  const workoutArray = req.body.workout;
+  if (!Array.isArray(workoutArray) || workoutArray.length === 0) {
+    throw createError(400, "Not a valid workout");
+  }
   const userId = req.user.id;
-  await queryInsertUserFinishedWorkout(userId, req.body.workout);
+  await queryInsertUserFinishedWorkout(userId, workoutArray);
 
   // Delete current tracking key
   const trackingKey = buildTrackingKeyStable(userId, 45);

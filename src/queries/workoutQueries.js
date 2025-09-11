@@ -296,53 +296,38 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
   `;
 };
 
-/*
- * Workout structure
+/**
+ * rows: Array of row objects
  * [
- * {"exercisetosplit_id": 756, "reps": [1, 3, 3], "user_id": id, "weight": [2.5, 2.5, 5], "workoutdate": "2025-08-13"},
- * {"exercisetosplit_id": 757, "reps": [3, 2, 2], "user_id": id, "weight": [7.5, 7.5, 5], "workoutdate": "2025-08-13"},
- * {"exercisetosplit_id": 758, "reps": [1, 2, 2], "user_id": id, "weight": [5, 5, 5], "workoutdate": "2025-08-13"}
+ *   {
+ *     exercisetosplit_id: 764,
+ *     weight: [80, 70, 70],         // float4[]
+ *     reps: [6, 7, 7],              // int8[]
+ *     user_id: null => need to get from middleware to avoid injections,
+ *     notes: null
+ *   },
+ *   ...
  * ]
  */
 export const queryInsertUserFinishedWorkout = async (userId, workoutArray) => {
-  if (!Array.isArray(workoutArray) || workoutArray.length === 0) return [];
-
-  // Optional: wrap all inserts in a transaction for atomicity
-  await sql.begin(async (tx) => {
-    for (const r of workoutArray) {
-      // Normalize arrays to numbers
-      const reps = Array.isArray(r.reps)
-        ? r.reps.map(Number)
-        : String(r.reps ?? "")
-            .split(",")
-            .filter(Boolean)
-            .map(Number);
-
-      const weights = Array.isArray(r.weight)
-        ? r.weight.map(Number)
-        : String(r.weight ?? "")
-            .split(",")
-            .filter(Boolean)
-            .map(Number);
-
-      // Build Postgres array literals like "{1,2,3}"
-      const repsLit = `{${reps.join(",")}}`;
-      const weightsLit = `{${weights.join(",")}}`;
-
-      // Single-row insert (no VALUES list)
-      await tx`
-        INSERT INTO public.exercisetracking
-          (exercisetosplit_id, reps, weight, user_id, workoutdate)
-        VALUES (
-          ${Number(r.exercisetosplit_id)}::int4,
-          ${repsLit}::int4[],
-          ${weightsLit}::float8[],
-          ${userId}::uuid,
-          ${r.workoutdate}::date
-        )
-      `;
-    }
-  });
+  await sql`
+    INSERT INTO exercisetracking
+      (exercisetosplit_id, weight, reps, user_id, notes)
+    SELECT
+      t.exercisetosplit_id::int8,
+      t.weight::float4[],
+      t.reps::int8[],
+      ${userId}::uuid AS user_id,
+      t.notes::text
+    FROM jsonb_to_recordset(${workoutArray}::jsonb) AS t(
+      exercisetosplit_id int8,
+      weight float4[],
+      reps int8[],
+      user_id uuid,
+      notes text
+    )
+    RETURNING id;
+  `;
 };
 
 export const queryDeleteUserWorkout = async (userId) => {
