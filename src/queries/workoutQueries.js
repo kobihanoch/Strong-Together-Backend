@@ -11,7 +11,7 @@ export async function queryWholeUserWorkoutPlan(userId) {
                       'exercisetoworkoutsplit',
                       (
                         SELECT json_agg(
-                                 to_jsonb(ews.*)
+                                 (to_jsonb(ews.*) - 'workoutsplit_id' - 'workout_id' - 'exercise_id' - 'created_at' - 'order_index')
                                  || jsonb_build_object(
                                       'targetmuscle', ex.targetmuscle,
                                       'specifictargetmuscle', ex.specifictargetmuscle
