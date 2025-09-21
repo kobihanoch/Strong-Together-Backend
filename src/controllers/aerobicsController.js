@@ -20,6 +20,7 @@ export const getUserAerobics = async (req, res) => {
   const cached = await cacheGetJSON(aerobicsKey);
   if (cached) {
     res.set("X-Cache", "HIT");
+    console.log("Aerobics is cached!");
     return res.status(200).json(cached);
   }
 
@@ -42,5 +43,5 @@ export const addUserAerobics = async (req, res) => {
   const rows = await queryGetUserAerobicsForNDays(req.user.id, 45);
   const aerobicsKey = buildAerobicsKeyStable(req.user.id, 45);
   await cacheSetJSON(aerobicsKey, rows, TTL_AEROBICS);
-  return res.status(201).end();
+  return res.status(201).json(rows);
 };

@@ -93,5 +93,5 @@ export const queryGetUserAerobicsForNDays = async (userId, days) => {
 // Add a new aerobic record
 export const queryAddAerobicTracking = async (userId, record) => {
   const { durationMins, durationSec, type } = record;
-  await sql`INSERT INTO aerobicstracking (user_id, type, duration_mins, duration_sec) VALUES (${userId}, ${type}, ${durationMins}, ${durationSec})`;
+  await sql`INSERT INTO aerobictracking (user_id, type, duration_mins, duration_sec) VALUES (${userId}, ${type}, ${durationMins}, ${durationSec})`;
 };
