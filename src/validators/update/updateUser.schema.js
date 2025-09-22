@@ -15,7 +15,8 @@ export const updateUserSchema = z.object({
     .string()
     .trim()
     .min(1, "Full name is required")
-    .max(20, "Full name is too long"),
+    .max(20, "Full name is too long")
+    .regex(/^[a-zA-Z\s]+$/, "Full name may contain letters and spaces only"),
 
   email: z.string().trim().toLowerCase().email("Invalid email format"),
 });

@@ -131,17 +131,17 @@ export const updateUser = async (req, res) => {
 };
 
 // @desc    Update authenticated user
-// @route   PUT /api/users/update
+// @route   PUT /api/users/updateself
 // @access  Private
 export const updateAuthenticatedUser = async (req, res) => {
   const {
-    username,
-    fullName,
-    email,
-    gender,
-    password,
-    profileImgUrl,
-    pushToken,
+    username = null,
+    fullName = null,
+    email = null,
+    gender = null,
+    password = null,
+    profileImgUrl = null,
+    pushToken = null,
   } = req.body;
   if (username || email) {
     const rowsConflict = await queryUsernameOrEmailConflict(
@@ -176,25 +176,12 @@ export const updateAuthenticatedUser = async (req, res) => {
 };
 
 // @desc    Delete a user by ID
-// @route   DELETE /api/users/delete/:id
+// @route   DELETE /api/users/deleteself
 // @access  Private/Admin
-export const deleteUser = async (req, res) => {
-  await queryDeleteUserById(req.params.id);
+export const deleteSelfUser = async (req, res) => {
+  await queryDeleteUserById(req.user.id);
   res.json({ message: "User deleted successfully" });
 };
-
-// @desc    Get a user username and porifle pic url
-// @route   GET /api/users/getusernamepicandname/:id
-// @access  Private
-/*export const getUserUsernamePicAndName = async (req, res) => {
-  const rows = await queryUserUsernamePicAndName(req.params.id);
-  const [data] = rows;
-
-  if (!data) {
-    throw createError(404, "User not found");
-  }
-  res.status(200).json(data);
-};*/
 
 // @desc    Save user's expo push token to DB
 // @route   PUT /api/users/pushtoken

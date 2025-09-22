@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createUser,
+  deleteSelfUser,
   deleteUserProfilePic,
   getAuthenticatedUserById,
   saveUserPushToken,
@@ -26,12 +27,7 @@ router.put(
   protect,
   validate(updateUserSchema),
   asyncHandler(updateAuthenticatedUser)
-); // User - Update their own profile
-/*router.get(
-  "/getusernamepicandname/:id",
-  protect,
-  asyncHandler(getUserUsernamePicAndName)
-); // User - Get anothers porifle pic and username*/
+);
 router.put("/pushtoken", protect, asyncHandler(saveUserPushToken)); // User - save push token to DB
 router.put(
   "/setprofilepic",
@@ -40,22 +36,12 @@ router.put(
   asyncHandler(setProfilePicAndUpdateDB)
 ); // User - Stores profile pic in bucket, and updates user DB to profile pic new URL
 router.delete("/deleteprofilepic", protect, asyncHandler(deleteUserProfilePic)); // User - Deletes a pic from bucket and from user DB
-
-// Admin routes
-//router.get("/all", protect, authorizeRoles("admin"), asyncHandler(getAllUsers)); // Admin - Get all users
-//router.get("/:id", protect, authorizeRoles("admin"), asyncHandler(getUserById)); // Admin - Get a specific user by ID
-/*router.put(
-  "/update/:id",
+router.delete("/deleteself", protect, asyncHandler(deleteSelfUser)); // User -Delete self user
+router.put(
+  "/updateself",
   protect,
-  authorizeRoles("admin"),
-  validate(editUserSchema),
-  asyncHandler(updateUser)
-); // Admin - Update a specific user by ID*/
-/*router.delete(
-  "/delete/:id",
-  protect,
-  authorizeRoles("admin"),
-  asyncHandler(deleteUser)
-); // Admin - Delete a specific user by ID*/
+  validate(updateUserSchema),
+  asyncHandler(updateAuthenticatedUser)
+); // User - Update self user
 
 export default router;
