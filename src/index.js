@@ -15,6 +15,7 @@ import exercisesRoutes from "./routes/exercisesRoutes.js";
 import pushRoutes from "./routes/pushRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import aerobicsRoutes from "./routes/aerobicsRoutes.js";
+import bootsrapRoutes from "./routes/bootstrapRoutes.js";
 import { connectRedis } from "./config/redisClient.js";
 
 // RESOURECES CONNECTIONS AND GENERAL CONFIGURATIONS  ------------------------------------------
@@ -100,6 +101,9 @@ app.use("/api/aerobics", aerobicsRoutes);
 
 // Push notifications
 app.use("/api/push", pushRoutes);
+
+// Bootstrap
+app.use("/api/bootstrap", bootsrapRoutes);
 
 // Error Handler
 app.use(errorHandler);

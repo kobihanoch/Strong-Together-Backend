@@ -19,37 +19,56 @@ import {
 } from "../utils/cache.js";
 import createError from "http-errors";
 
-// @desc    Get authenticated user workout (plan, splits, and exercises)
-// @route   GET /api/workouts/getworkout
-// @access  Private
-export const getWholeUserWorkoutPlan = async (req, res) => {
-  const userId = req.user.id;
+/** ---------------------------
+ * Pure helpers (no req/res)
+ * ---------------------------*/
 
-  // Try to get data from cache first
+// Returns { payload, cacheHit }
+export const getWorkoutPlanData = async (userId) => {
   const planKey = buildPlanKeyStable(userId);
   const cached = await cacheGetJSON(planKey);
   if (cached) {
-    console.log("Workout Plan is cached!");
-    res.set("X-Cache", "HIT");
-    return res.status(200).json(cached);
+    return { payload: cached, cacheHit: true };
   }
 
-  // Fetch from DB if not in cache and set in cache
   const rows = await queryWholeUserWorkoutPlan(userId);
   const [plan] = rows;
   if (!plan) {
     const empty = { workoutPlan: null };
     await cacheSetJSON(planKey, empty, TTL_PLAN);
-    res.set("X-Cache", "MISS");
-    return res.status(200).json(empty);
+    return { payload: empty, cacheHit: false };
   }
 
   const { splits } = await queryGetWorkoutSplitsObj(rows[0].id);
   const payload = { workoutPlan: plan, workoutPlanForEditWorkout: splits };
-
   await cacheSetJSON(planKey, payload, TTL_PLAN);
+  return { payload, cacheHit: false };
+};
 
-  res.set("X-Cache", "MISS");
+// Returns { payload, cacheHit }
+export const getExerciseTrackingData = async (userId, days = 45) => {
+  const key = buildTrackingKeyStable(userId, days);
+  const cached = await cacheGetJSON(key);
+  if (cached) {
+    return { payload: cached, cacheHit: true };
+  }
+  const rows = await queryWorkoutStatsTopSplitPRAndRecent(userId, days);
+  const payload = rows[0];
+  await cacheSetJSON(key, payload, TTL_TRACKING);
+  return { payload, cacheHit: false };
+};
+
+/** ---------------------------
+ * Express handlers (use helpers)
+ * ---------------------------*/
+
+// @desc    Get authenticated user workout (plan, splits, and exercises)
+// @route   GET /api/workouts/getworkout
+// @access  Private
+export const getWholeUserWorkoutPlan = async (req, res) => {
+  const userId = req.user.id;
+  const { payload, cacheHit } = await getWorkoutPlanData(userId);
+  res.set("X-Cache", cacheHit ? "HIT" : "MISS");
   return res.status(200).json(payload);
 };
 
@@ -58,23 +77,8 @@ export const getWholeUserWorkoutPlan = async (req, res) => {
 // @access  Private
 export const getExerciseTracking = async (req, res) => {
   const userId = req.user.id;
-  const days = 45;
-
-  const key = buildTrackingKeyStable(userId, days);
-
-  const cached = await cacheGetJSON(key);
-  if (cached) {
-    console.log("Exercise tracking and analysis is cached!");
-    res.set("X-Cache", "HIT");
-    return res.status(200).json(cached);
-  }
-
-  const rows = await queryWorkoutStatsTopSplitPRAndRecent(userId, days);
-  const payload = rows[0];
-
-  await cacheSetJSON(key, payload, TTL_TRACKING);
-
-  res.set("X-Cache", "MISS");
+  const { payload, cacheHit } = await getExerciseTrackingData(userId, 45);
+  res.set("X-Cache", cacheHit ? "HIT" : "MISS");
   return res.status(200).json(payload);
 };
 
@@ -89,13 +93,12 @@ export const finishUserWorkout = async (req, res) => {
   const userId = req.user.id;
   await queryInsertUserFinishedWorkout(userId, workoutArray);
 
-  // Delete current tracking key
+  // Invalidate and warm new cache for tracking/analytics
   const trackingKey = buildTrackingKeyStable(userId, 45);
   const analyticsKey = buildAnalyticsKeyStable(userId);
   await cacheDeleteKey(trackingKey);
   await cacheDeleteKey(analyticsKey);
 
-  // Warm new cache (fetch fresh data, set in cache)
   const rows = await queryWorkoutStatsTopSplitPRAndRecent(userId, 45);
   await cacheSetJSON(buildTrackingKeyStable(userId, 45), rows[0], TTL_TRACKING);
 
@@ -108,17 +111,13 @@ export const finishUserWorkout = async (req, res) => {
 // @access  Private
 export const deleteUserWorkout = async (req, res) => {
   const userId = req.user.id;
-
-  // Remove workout from DB
   await queryDeleteUserWorkout(userId);
 
-  // Delete current plan cache key
   const planKey = buildPlanKeyStable(userId);
   const analyticsKey = buildAnalyticsKeyStable(userId);
   await cacheDeleteKey(analyticsKey);
   await cacheDeleteKey(planKey);
 
-  // Respond with no content
   return res.status(204).end();
 };
 
@@ -129,17 +128,16 @@ export const addWorkout = async (req, res) => {
   const userId = req.user.id;
   const { workoutData, workoutName } = req.body;
 
-  // Insert new workout into DB
   await queryAddWorkout(userId, workoutData, workoutName);
 
-  // Delete current plan cache key
   const planKey = buildPlanKeyStable(userId);
-  await cacheDeleteKey(planKey);
   const analyticsKey = buildAnalyticsKeyStable(userId);
   await cacheDeleteKey(analyticsKey);
+  await cacheDeleteKey(planKey);
 
-  // Fetch fresh data from DB
-  const [plan] = await queryWholeUserWorkoutPlan(userId);
+  // Rebuild plan and cache
+  const rows = await queryWholeUserWorkoutPlan(userId);
+  const [plan] = rows;
   const { splits } = await queryGetWorkoutSplitsObj(plan.id);
 
   const payload = {
@@ -148,10 +146,8 @@ export const addWorkout = async (req, res) => {
     workoutPlanForEditWorkout: splits,
   };
 
-  // Warm up new cache under the bumped version
-  const newPlanKey = buildPlanKeyStable(userId);
   await cacheSetJSON(
-    newPlanKey,
+    buildPlanKeyStable(userId),
     {
       workoutPlan: plan,
       workoutPlanForEditWorkout: splits,
@@ -159,6 +155,5 @@ export const addWorkout = async (req, res) => {
     TTL_PLAN
   );
 
-  // Respond
   return res.status(200).json(payload);
 };
