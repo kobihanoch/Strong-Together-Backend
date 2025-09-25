@@ -5,12 +5,10 @@ import {
   queryMarkUserMessageAsRead,
 } from "../queries/messageQueries.js";
 
-// @desc    Get all user messages
-// @route   GET /api/messages/getmessages
-// @access  Private
-export const getAllUserMessages = async (req, res) => {
+/** Pure helper (no req/res) */
+export const getAllMessagesData = async (userId) => {
   // Get messages
-  const rows = await queryAllUserMessages(req.user.id); // Fetches sender profile pic path also
+  const rows = await queryAllUserMessages(userId); // Fetches sender profile pic path also
   const sendersMap = new Map();
   rows.forEach((msg) => {
     if (!sendersMap.has(msg.sender_id)) {
@@ -24,9 +22,18 @@ export const getAllUserMessages = async (req, res) => {
     }
   });
 
-  return res
-    .status(200)
-    .json({ messages: rows, senders: Array.from(sendersMap.values()) });
+  return {
+    payload: { messages: rows, senders: Array.from(sendersMap.values()) },
+  };
+};
+
+// @desc    Get all user messages
+// @route   GET /api/messages/getmessages
+// @access  Private
+export const getAllUserMessages = async (req, res) => {
+  // Get messages
+  const { payload } = await getAllMessagesData(req.user.id);
+  return res.status(200).json(payload);
 };
 
 // -----------------------------------

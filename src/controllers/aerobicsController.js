@@ -9,28 +9,30 @@ import {
   TTL_AEROBICS,
 } from "../utils/cache.js";
 
-// @desc    Get aerobics for user
-// @route   GET /api/aerobics/get
-// @access  Private
-export const getUserAerobics = async (req, res) => {
-  const userId = req.user.id;
-
+/** Pure helper (no req/res) */
+export const getAerobicsData = async (userId, days = 45) => {
   // Check for cache
-  const aerobicsKey = buildAerobicsKeyStable(userId, 45);
+  const aerobicsKey = buildAerobicsKeyStable(userId, days);
   const cached = await cacheGetJSON(aerobicsKey);
   if (cached) {
-    res.set("X-Cache", "HIT");
-    console.log("Aerobics is cached!");
-    return res.status(200).json(cached);
+    return { payload: cached, cacheHit: true };
   }
 
-  const rows = await queryGetUserAerobicsForNDays(userId, 45);
+  const rows = await queryGetUserAerobicsForNDays(userId, days);
 
   // Store in cache
   await cacheSetJSON(aerobicsKey, rows, TTL_AEROBICS);
 
-  res.set("X-Cache", "MISS");
-  return res.status(200).json(rows);
+  return { payload: rows, cacheHit: false };
+};
+
+// @desc    Get aerobics for user
+// @route   GET /api/aerobics/get
+// @access  Private
+export const getUserAerobics = async (req, res) => {
+  const { payload, cacheHit } = await getAerobicsData(req.user.id, 45);
+  res.set("X-Cache", cacheHit ? "HIT" : "MISS");
+  return res.status(200).json(payload);
 };
 
 // @desc    Add an aerobic record for user
@@ -40,8 +42,6 @@ export const addUserAerobics = async (req, res) => {
   await queryAddAerobicTracking(req.user.id, req.body.record);
 
   // Insert into cache
-  const rows = await queryGetUserAerobicsForNDays(req.user.id, 45);
-  const aerobicsKey = buildAerobicsKeyStable(req.user.id, 45);
-  await cacheSetJSON(aerobicsKey, rows, TTL_AEROBICS);
-  return res.status(201).json(rows);
+  const { payload } = await getAerobicsData(req.user.id, 45); // refresh + cache
+  return res.status(201).json(payload);
 };

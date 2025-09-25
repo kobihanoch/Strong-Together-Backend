@@ -56,7 +56,7 @@ export const loginUser = async (req, res) => {
   res.set("Cache-Control", "no-store");
   res.status(200).json({
     message: "Login successful",
-    user: userData,
+    user: userData?.id,
     accessToken: accessToken,
     refreshToken: refreshToken,
   });
