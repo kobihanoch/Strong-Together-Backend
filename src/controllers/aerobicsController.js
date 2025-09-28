@@ -10,12 +10,14 @@ import {
 } from "../utils/cache.js";
 
 /** Pure helper (no req/res) */
-export const getAerobicsData = async (userId, days = 45) => {
+export const getAerobicsData = async (userId, days = 45, fromCache = true) => {
   // Check for cache
   const aerobicsKey = buildAerobicsKeyStable(userId, days);
-  const cached = await cacheGetJSON(aerobicsKey);
-  if (cached) {
-    return { payload: cached, cacheHit: true };
+  if (fromCache) {
+    const cached = await cacheGetJSON(aerobicsKey);
+    if (cached) {
+      return { payload: cached, cacheHit: true };
+    }
   }
 
   const rows = await queryGetUserAerobicsForNDays(userId, days);
@@ -42,6 +44,9 @@ export const addUserAerobics = async (req, res) => {
   await queryAddAerobicTracking(req.user.id, req.body.record);
 
   // Insert into cache
-  const { payload } = await getAerobicsData(req.user.id, 45); // refresh + cache
+  const { payload } = await getAerobicsData(req.user.id, 45, false); // refresh + cache
+
+  const aerobicsKey = buildAerobicsKeyStable(req.user.id, 45);
+  await cacheSetJSON(aerobicsKey, payload, TTL_AEROBICS);
   return res.status(201).json(payload);
 };

@@ -24,11 +24,13 @@ import createError from "http-errors";
  * ---------------------------*/
 
 // Returns { payload, cacheHit }
-export const getWorkoutPlanData = async (userId) => {
+export const getWorkoutPlanData = async (userId, fromCache = true) => {
   const planKey = buildPlanKeyStable(userId);
-  const cached = await cacheGetJSON(planKey);
-  if (cached) {
-    return { payload: cached, cacheHit: true };
+  if (fromCache) {
+    const cached = await cacheGetJSON(planKey);
+    if (cached) {
+      return { payload: cached, cacheHit: true };
+    }
   }
 
   const rows = await queryWholeUserWorkoutPlan(userId);
@@ -46,12 +48,19 @@ export const getWorkoutPlanData = async (userId) => {
 };
 
 // Returns { payload, cacheHit }
-export const getExerciseTrackingData = async (userId, days = 45) => {
+export const getExerciseTrackingData = async (
+  userId,
+  days = 45,
+  fromCache = true
+) => {
   const key = buildTrackingKeyStable(userId, days);
-  const cached = await cacheGetJSON(key);
-  if (cached) {
-    return { payload: cached, cacheHit: true };
+  if (fromCache) {
+    const cached = await cacheGetJSON(key);
+    if (cached) {
+      return { payload: cached, cacheHit: true };
+    }
   }
+
   const rows = await queryWorkoutStatsTopSplitPRAndRecent(userId, days);
   const payload = rows[0];
   await cacheSetJSON(key, payload, TTL_TRACKING);
@@ -93,17 +102,15 @@ export const finishUserWorkout = async (req, res) => {
   const userId = req.user.id;
   await queryInsertUserFinishedWorkout(userId, workoutArray);
 
-  // Invalidate and warm new cache for tracking/analytics
-  const trackingKey = buildTrackingKeyStable(userId, 45);
-  const analyticsKey = buildAnalyticsKeyStable(userId);
-  await cacheDeleteKey(trackingKey);
-  await cacheDeleteKey(analyticsKey);
+  // Invalidate and warm new cache for tracking
+  //const trackingKey = buildTrackingKeyStable(userId, 45);
+  //await cacheDeleteKey(trackingKey);
 
-  const rows = await queryWorkoutStatsTopSplitPRAndRecent(userId, 45);
-  await cacheSetJSON(buildTrackingKeyStable(userId, 45), rows[0], TTL_TRACKING);
+  const { payload } = await getExerciseTrackingData(userId, 45, false);
+  await cacheSetJSON(buildTrackingKeyStable(userId, 45), payload, TTL_TRACKING);
 
   sendSystemMessageToUserWorkoutDone(userId);
-  return res.status(200).json(rows[0]);
+  return res.status(200).json(payload);
 };
 
 // @desc    Delete user's workout
