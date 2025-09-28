@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.3.0...v1.4.0) (2025-09-28)
+
+
+### Features
+
+* **Aerobics:** Added an endpoint for receiving user's aerobics for last N days mapped by date ([6c43d7c](https://github.com/kobihanoch/Strong-Together-Backend/commit/6c43d7c2dba59d93ccf1a3994afce03fe017b4d9))
+* **Aerobics:** Added cache control over aerobics data and new endpoints for add tracking ([ebd7767](https://github.com/kobihanoch/Strong-Together-Backend/commit/ebd77670eab74326ac82b059d6d181ed88339642))
+* **Aerobics:** Added records view for each week ([0da7dc4](https://github.com/kobihanoch/Strong-Together-Backend/commit/0da7dc4e911798d61466f819abc4b96de8b594a0))
+* **Analytics:** Add logging for cached analytics retrieval ([0cdd541](https://github.com/kobihanoch/Strong-Together-Backend/commit/0cdd541f3def4ecbb555ecac93840cd3a2fe703f))
+* **Analytics:** Added anayltics endpoints ([a7837f0](https://github.com/kobihanoch/Strong-Together-Backend/commit/a7837f0f40526b9135c2780317aca6061bf582a7))
+* **Analytics:** Added goal adherence query ([d0ea364](https://github.com/kobihanoch/Strong-Together-Backend/commit/d0ea364a76aff544057ec6d896be48a876ec40d8))
+* **Analytics:** Implement caching for analytics data retrieval and deletion ([eefc4ad](https://github.com/kobihanoch/Strong-Together-Backend/commit/eefc4ad64ba3c3426c92e9e29a20b3fbab67e8b4))
+* **Auth:** Added token_version to make sure one device is integrated with client cache ([8ce1493](https://github.com/kobihanoch/Strong-Together-Backend/commit/8ce1493378569c584f7c1fea938b788dc2cc56be))
+* **Bootstrap:** Created bootstrap router and endpoint for all initial data, and divided controllers with pure helpers ([3e5a0f3](https://github.com/kobihanoch/Strong-Together-Backend/commit/3e5a0f30d164cec2441b6eca2f1d08e5f7c2e924))
+* **Cache:** Implement gzip compression for cache storage and retrieval ([5faa9b9](https://github.com/kobihanoch/Strong-Together-Backend/commit/5faa9b99f2d9a9749f9caca15b9ef3ee3c5d6b09))
+* **Cache:** Write back cache when updating data ([b41f474](https://github.com/kobihanoch/Strong-Together-Backend/commit/b41f47443c1abf67b23f51c87e30989e6620a8ca))
+* **Push:** Daily push notifications for all logged in users ([cd6df50](https://github.com/kobihanoch/Strong-Together-Backend/commit/cd6df507aae08106394170add4594e962f5581ce))
+* **Queries:** Messages queries is returned sorted ([87965ae](https://github.com/kobihanoch/Strong-Together-Backend/commit/87965aefda6867b2df21e23533d0998d39f7ab94))
+* **Queries:** Optimize DB latency, moved delete tokens to cron and store only refresh tokens at DB ([6157192](https://github.com/kobihanoch/Strong-Together-Backend/commit/6157192aa1a7a6f784282837b5f3dc1a7280593c))
+* **Queries:** Updated analysis query to fetch also PRs (Added view in DB) ([8da3a17](https://github.com/kobihanoch/Strong-Together-Backend/commit/8da3a17e46d063066611d472e2ab5d9a00d69b29))
+* **User:** Implemented new endpoint and query for update self user and delete self user ([00b70a1](https://github.com/kobihanoch/Strong-Together-Backend/commit/00b70a156cbf16ddfc5656acdc7bd7935799096e))
+
+
+### Bug Fixes
+
+* **Aerobics:** Fixed table name in query ([ec39f7d](https://github.com/kobihanoch/Strong-Together-Backend/commit/ec39f7d5536bbdcae1a8fe3de8206bb64ade5c1f))
+* **Analytics:** Returns an empty object istead of null when no workout history is available ([3f4eded](https://github.com/kobihanoch/Strong-Together-Backend/commit/3f4ededabf54998a465c0529f3e02d423c468542))
+* **Cache:** Fixed unexpected caching problems ([37745f7](https://github.com/kobihanoch/Strong-Together-Backend/commit/37745f71bbab5f4072375f501f2be2c1a9a9ae8a))
+* **Cache:** IMPORTANT - Fixed roken compressed cache data usage with base 64 data formatting ([df8fd99](https://github.com/kobihanoch/Strong-Together-Backend/commit/df8fd99543259e44266b27e0098835f16e8d2b22))
+* **Cache:** Patched exercise tracking analysis "hasTrainedToday" for next day login ([06012fd](https://github.com/kobihanoch/Strong-Together-Backend/commit/06012fd5f718cbb396d4d8d4c6c6144a3b21a42f))
+* **Tracking:** Patch exercise tracking analysis for accurate caching response ([ff125bf](https://github.com/kobihanoch/Strong-Together-Backend/commit/ff125bffcdac06293ac0a821677cfa973ae5173f))
+* **Zod:** FIxed passing parsed request body to controllers ([b3b64e2](https://github.com/kobihanoch/Strong-Together-Backend/commit/b3b64e29cd01abf48da6d409ccf4d6fe6d5bbc76))
+
 ## [1.3.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.2.0...v1.3.0) (2025-08-19)
 
 
