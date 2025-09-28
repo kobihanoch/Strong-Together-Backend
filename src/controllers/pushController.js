@@ -1,13 +1,14 @@
+import { queryGetAllUsersWithNotificationsEnabled } from "../queries/pushQueries.js";
 import { sendPushNotification } from "../services/pushService.js";
 
 export const sendDailyPush = async (req, res) => {
-  const userTokens = ["ExponentPushToken[QXwVCmErETgYSflnH2H8Jv]"];
-
+  const users = await queryGetAllUsersWithNotificationsEnabled();
+  console.log(users);
   try {
-    for (const token of userTokens) {
+    for (const user of users) {
       await sendPushNotification(
-        token,
-        "Good Morning Kobi!",
+        user.push_token,
+        `Good Morning ${user.name.split(" ")[0]}!`,
         "Ready to go workout?"
       );
     }

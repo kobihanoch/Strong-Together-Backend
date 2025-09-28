@@ -18,15 +18,18 @@ import sql from "../config/db.js";
 export async function queryAllUserMessages(userId) {
   return sql`
     SELECT 
-      m.*,
-      u.username AS sender_username,
+      m.id AS id,
+      m.subject AS subject,
+      m.msg AS msg,
+      m.sent_at AS sent_at,
+      m.is_read AS is_read,
       u.name AS sender_full_name,
-      u.profile_image_url AS sender_profile_image_url,
-      u.gender AS sender_gender
+      u.profile_image_url AS sender_profile_image_url
     FROM messages m
     LEFT JOIN users u
       ON u.id = m.sender_id
     WHERE m.receiver_id = ${userId}
+    ORDER BY sent_at DESC
   `;
 }
 

@@ -3,22 +3,17 @@ import bcrypt from "bcryptjs";
 import createError from "http-errors";
 import jwt from "jsonwebtoken";
 import {
-  decodeAccessToken,
-  decodeRefreshToken,
-  getAccessToken,
-  getRefreshToken,
-} from "../utils/tokenUtils.js";
-import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
-import {
-  queryUserByUsernameForLogin,
-  querySetUserFirstLoginFalse,
-  queryUserDataByUsername,
-  queryDeleteExpiredBlacklistedTokens,
-  querySelectBlacklistedToken,
-  queryUserIdRoleById,
+  queryGetCurrentTokenVersion,
   queryInsertBlacklistedToken,
+  querySelectBlacklistedToken,
+  querySetUserFirstLoginFalse,
   queryUpdateExpoPushTokenToNull,
+  queryUserByUsernameForLogin,
+  queryUserDataByUsername,
+  queryUserIdRoleById,
 } from "../queries/authQueries.js";
+import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
+import { decodeRefreshToken, getRefreshToken } from "../utils/tokenUtils.js";
 
 // @desc    Login a user
 // @route   POST /api/auth/login
@@ -35,33 +30,33 @@ export const loginUser = async (req, res) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw createError(401, "Invalid credentials");
 
-  // Sign tokens
-  const accessToken = jwt.sign(
-    { id: user.id, role: user.role },
-    process.env.JWT_ACCESS_SECRET,
-    { expiresIn: "15m" }
-  );
-
-  const refreshToken = jwt.sign(
-    { id: user.id, role: user.role },
-    process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "30d" }
-  );
-
   // If first log in send welcome message
   if (user.is_first_login) {
     await querySetUserFirstLoginFalse(user.id);
     sendSystemMessageToUserWhenFirstLogin(user.id, user.name);
   }
 
-  // Fetch all user data
+  // Fetch all user data and bump token version
   const rowsUserData = await queryUserDataByUsername(username);
-  const [userData] = rowsUserData;
+  const [{ token_version, user_data: userData }] = rowsUserData;
+
+  // Sign tokens
+  const accessToken = jwt.sign(
+    { id: user.id, role: user.role, tokenVer: token_version },
+    process.env.JWT_ACCESS_SECRET,
+    { expiresIn: "15m" }
+  );
+
+  const refreshToken = jwt.sign(
+    { id: user.id, role: user.role, tokenVer: token_version },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: "30d" }
+  );
 
   res.set("Cache-Control", "no-store");
   res.status(200).json({
     message: "Login successful",
-    user: userData.user_data,
+    user: userData?.id,
     accessToken: accessToken,
     refreshToken: refreshToken,
   });
@@ -69,34 +64,23 @@ export const loginUser = async (req, res) => {
 
 // @desc    Logout a user
 // @route   POST /api/auth/logout
-// @access  Private
+// @access  Public
 export const logoutUser = async (req, res) => {
   // Delete expired tokens every log out attempt
-  await queryDeleteExpiredBlacklistedTokens();
+  //await queryDeleteExpiredBlacklistedTokens();
 
   // Get tokens from request body and decode
   const refreshToken = getRefreshToken(req);
-  const accessToken = getAccessToken(req);
 
   // Decode tokens
-  const decodedAccess = decodeAccessToken(accessToken);
-  const expiresAtAccess = decodedAccess?.exp
-    ? new Date(decodedAccess.exp * 1000)
-    : new Date(Date.now() + 24 * 60 * 60 * 1000);
-
   const decodedRefresh = decodeRefreshToken(refreshToken);
   const expiresAtRefresh = decodedRefresh?.exp
     ? new Date(decodedRefresh.exp * 1000)
     : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-  await queryUpdateExpoPushTokenToNull(decodedRefresh.id);
-
-  // Add to blacklist
-  if (decodedAccess) {
-    await queryInsertBlacklistedToken(accessToken, expiresAtAccess);
-  }
   if (decodedRefresh) {
     await queryInsertBlacklistedToken(refreshToken, expiresAtRefresh);
+    await queryUpdateExpoPushTokenToNull(decodedRefresh.id);
   }
 
   res.status(200).json({ message: "Logged out successfully" });
@@ -106,7 +90,7 @@ export const logoutUser = async (req, res) => {
 // @route   POST /api/auth/refresh
 // @access  Public
 export const refreshAccessToken = async (req, res) => {
-  await queryDeleteExpiredBlacklistedTokens();
+  //await queryDeleteExpiredBlacklistedTokens();
 
   const refreshToken = getRefreshToken(req);
   if (!refreshToken) throw createError(401, "No refresh token provided");
@@ -114,6 +98,11 @@ export const refreshAccessToken = async (req, res) => {
   // Verify refresh token
   const decoded = decodeRefreshToken(refreshToken);
   if (!decoded) throw createError(401, "Invalid or expired refresh token");
+  const [{ token_version: currentTokenVersion }] =
+    await queryGetCurrentTokenVersion(decoded.id);
+
+  if (currentTokenVersion !== decoded.tokenVer)
+    throw createError(401, "New login required");
 
   // Ensure not revoked
   const rowsRevoked = await querySelectBlacklistedToken(refreshToken);
@@ -133,13 +122,13 @@ export const refreshAccessToken = async (req, res) => {
 
   // Issue fresh access + fresh refresh (rotate)
   const newAccess = jwt.sign(
-    { id: user.id, role: user.role },
+    { id: user.id, role: user.role, tokenVer: currentTokenVersion },
     process.env.JWT_ACCESS_SECRET,
     { expiresIn: "15m" }
   );
 
   const newRefresh = jwt.sign(
-    { id: user.id, role: user.role },
+    { id: user.id, role: user.role, tokenVer: currentTokenVersion },
     process.env.JWT_REFRESH_SECRET,
     { expiresIn: "30d" }
   );
@@ -149,5 +138,6 @@ export const refreshAccessToken = async (req, res) => {
     message: "Access token refreshed",
     accessToken: newAccess,
     refreshToken: newRefresh,
+    userId: user.id,
   });
 };

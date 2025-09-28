@@ -22,6 +22,15 @@ const expo = new Expo();
 import path from "path";
 import mime from "mime";
 
+// ---------- HELPERS -----------------
+export const getUserData = async (userId) => {
+  const rows = await queryAuthenticatedUserById(userId);
+  const [user] = rows;
+  return { payload: user.user_data };
+};
+
+// -----------------------------------------------------------
+
 // @desc    Create a new user
 // @route   POST /api/users/create
 // @access  Public
@@ -49,99 +58,26 @@ export const createUser = async (req, res) => {
     .json({ message: "User created successfully!", user: created });
 };
 
-// @desc    Get all users
-// @route   GET /api/users/all
-// @access  Private/Admin
-export const getAllUsers = async (req, res) => {
-  /*const page = req.query.page || 1;
-  const limit = req.query.limit || 10;
-  const search = req.query.search || "";
-  const sortField = req.query.sortField || "username";
-  const sortOrder = req.query.sortOrder === "desc" ? -1 : 1;
-  const skip = (page - 1) * limit;
-
-  if (page < 1 || limit < 1 || limit > 100) {
-    throw createError(400, "Invalid pagination parameters");
-  }
-
-  // Free text search
-  const filter = {
-    $or: [
-      { username: { $regex: search, $options: "i" } },
-      { fullName: { $regex: search, $options: "i" } },
-      { email: { $regex: search, $options: "i" } },
-      { gender: { $regex: search, $options: "i" } },
-      { role: { $regex: search, $options: "i" } },
-    ],
-  };
-
-  const [users, total] = await Promise.all([
-    User.find(filter)
-      .select("-password +role")
-      .sort({ [sortField]: sortOrder })
-      .skip(skip)
-      .limit(limit),
-    User.countDocuments(filter),
-  ]);
-
-  res.status(200).json({
-    users,
-    total,
-    page,
-    totalPages: Math.ceil(total / limit),
-  });*/
-};
-
 // @desc    Get authenticated user by ID
 // @route   GET /api/users/get
 // @access  Private
 export const getAuthenticatedUserById = async (req, res) => {
-  const rows = await queryAuthenticatedUserById(req.user.id);
-  const [user] = rows;
-  res.json(user.user_data);
-};
-
-// @desc    Get a user by ID
-// @route   GET /api/users/:id
-// @access  Private/Admin
-export const getUserById = async (req, res) => {
-  /*const user = await User.findById(req.params.id).select("-password +role");
-  if (!user) throw createError(404, "User not found");
-  res.json(user);*/
-};
-
-// @desc    Update a user by ID
-// @route   PUT /api/users/update/:id
-// @access  Private/Admin
-export const updateUser = async (req, res) => {
-  /*// Locate user
-  const user = await User.findById(req.params.id).select("+role"); // role is normally hidden
-  if (!user) throw createError(404, "User not found");
-
-  Object.assign(user, req.body);
-  await user.save();
-
-  // Re-fetch WITHOUT the password field and send back to client
-  const updated = await User.findById(user._id).select("-password +role");
-
-  res.status(200).json({
-    message: "User updated successfully",
-    user: updated,
-  });*/
+  const { payload } = await getUserData(req.user.id);
+  res.status(200).json(payload);
 };
 
 // @desc    Update authenticated user
-// @route   PUT /api/users/update
+// @route   PUT /api/users/updateself
 // @access  Private
 export const updateAuthenticatedUser = async (req, res) => {
   const {
-    username,
-    fullName,
-    email,
-    gender,
-    password,
-    profileImgUrl,
-    pushToken,
+    username = null,
+    fullName = null,
+    email = null,
+    gender = null,
+    password = null,
+    profileImgUrl = null,
+    pushToken = null,
   } = req.body;
   if (username || email) {
     const rowsConflict = await queryUsernameOrEmailConflict(
@@ -176,25 +112,12 @@ export const updateAuthenticatedUser = async (req, res) => {
 };
 
 // @desc    Delete a user by ID
-// @route   DELETE /api/users/delete/:id
+// @route   DELETE /api/users/deleteself
 // @access  Private/Admin
-export const deleteUser = async (req, res) => {
-  await queryDeleteUserById(req.params.id);
+export const deleteSelfUser = async (req, res) => {
+  await queryDeleteUserById(req.user.id);
   res.json({ message: "User deleted successfully" });
 };
-
-// @desc    Get a user username and porifle pic url
-// @route   GET /api/users/getusernamepicandname/:id
-// @access  Private
-/*export const getUserUsernamePicAndName = async (req, res) => {
-  const rows = await queryUserUsernamePicAndName(req.params.id);
-  const [data] = rows;
-
-  if (!data) {
-    throw createError(404, "User not found");
-  }
-  res.status(200).json(data);
-};*/
 
 // @desc    Save user's expo push token to DB
 // @route   PUT /api/users/pushtoken

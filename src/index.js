@@ -13,6 +13,9 @@ import workoutRoutes from "./routes/workoutRoutes.js";
 import messagesRoutes from "./routes/messagesRoutes.js";
 import exercisesRoutes from "./routes/exercisesRoutes.js";
 import pushRoutes from "./routes/pushRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
+import aerobicsRoutes from "./routes/aerobicsRoutes.js";
+import bootsrapRoutes from "./routes/bootstrapRoutes.js";
 import { connectRedis } from "./config/redisClient.js";
 
 // RESOURECES CONNECTIONS AND GENERAL CONFIGURATIONS  ------------------------------------------
@@ -75,6 +78,11 @@ app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
 
 // API ROUTES --------------------------------------------------------------------------------------------------
 
+app.use((req, res, next) => {
+  console.log(`[${req.method}] ${req.originalUrl}`);
+  next();
+});
+
 // Users
 app.use("/api/users", userRoutes);
 
@@ -90,8 +98,17 @@ app.use("/api/messages", messagesRoutes);
 // Exercises
 app.use("/api/exercises", exercisesRoutes);
 
+// Analytics
+app.use("/api/analytics", analyticsRoutes);
+
+// Aerobics
+app.use("/api/aerobics", aerobicsRoutes);
+
 // Push notifications
 app.use("/api/push", pushRoutes);
+
+// Bootstrap
+app.use("/api/bootstrap", bootsrapRoutes);
 
 // Error Handler
 app.use(errorHandler);

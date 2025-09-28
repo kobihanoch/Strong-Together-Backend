@@ -9,5 +9,7 @@ export const validate = (schema) => (req, res, next) => {
       result.error?.issues?.[0]?.message || "Invalid Input"
     );
   }
+
+  req.body = result.data;
   next();
 };
