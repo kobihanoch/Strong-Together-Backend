@@ -107,12 +107,8 @@ export const queryGetWorkoutSplitsObj = async (workoutId) => {
  * @param {number} userId - authenticated user's id
  * @param {number} days   - how many recent days to include (default 45)
  */
-export const queryWorkoutStatsTopSplitPRAndRecent = async (
-  userId,
-  days = 45
-) => {
+export const queryGetExerciseTrackingAndStats = async (userId, days = 45) => {
   return sql`
-    -- English comments only inside the code
     WITH filtered AS (
       SELECT workoutdate, exercisetosplit_id, weight, reps, notes, exercise_id, splitname, exercise, workoutsplit_id
       FROM public.v_exercisetracking_expanded
@@ -142,13 +138,13 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
       WHERE workoutsplit_id IS NOT NULL
       GROUP BY splitname, workoutsplit_id
     ),
-    top_split_id AS (
+    /*top_split_id AS (
       SELECT scbi.workoutsplit_id AS most_frequent_split_id
       FROM split_counts_by_id scbi
       JOIN top_split ts ON ts.most_frequent_split = scbi.splitname
       ORDER BY scbi.days_count DESC, scbi.workoutsplit_id ASC
       LIMIT 1
-    ),
+    ),*/
     /*trained_today AS (
       SELECT EXISTS (SELECT 1 FROM filtered WHERE workoutdate = CURRENT_DATE) AS has_trained_today
     ),*/
@@ -173,7 +169,7 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
         et.reps,
         et.notes,
         to_char(et.workoutdate::date, 'YYYY-MM-DD') AS workoutdate,
-        COALESCE(ews.order_index, 9223372036854775807) AS order_idx,
+        ews.order_index AS order_idx,
         /* Rename to match frontend key */
             jsonb_build_object(
               'sets', ews.sets,
@@ -286,7 +282,7 @@ export const queryWorkoutStatsTopSplitPRAndRecent = async (
       ) AS "exerciseTrackingMaps"
     FROM unique_days u
     LEFT JOIN top_split ts         ON TRUE
-    LEFT JOIN top_split_id tsi     ON TRUE
+    /*LEFT JOIN top_split_id tsi     ON TRUE*/
     /*LEFT JOIN trained_today tt     ON TRUE*/
     LEFT JOIN last_workout lw      ON TRUE
     LEFT JOIN split_counts_obj sco ON TRUE

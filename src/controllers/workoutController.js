@@ -1,23 +1,23 @@
+import createError from "http-errors";
 import {
   queryAddWorkout,
   queryDeleteUserWorkout,
+  queryGetExerciseTrackingAndStats,
   queryGetWorkoutSplitsObj,
   queryInsertUserFinishedWorkout,
   queryWholeUserWorkoutPlan,
-  queryWorkoutStatsTopSplitPRAndRecent,
 } from "../queries/workoutQueries.js";
 import { sendSystemMessageToUserWorkoutDone } from "../services/messagesService.js";
 import {
-  buildTrackingKeyStable,
+  buildAnalyticsKeyStable,
   buildPlanKeyStable,
+  buildTrackingKeyStable,
+  cacheDeleteKey,
   cacheGetJSON,
   cacheSetJSON,
-  cacheDeleteKey,
-  TTL_TRACKING,
   TTL_PLAN,
-  buildAnalyticsKeyStable,
+  TTL_TRACKING,
 } from "../utils/cache.js";
-import createError from "http-errors";
 
 /** ---------------------------
  * Pure helpers (no req/res)
@@ -61,7 +61,7 @@ export const getExerciseTrackingData = async (
     }
   }
 
-  const rows = await queryWorkoutStatsTopSplitPRAndRecent(userId, days);
+  const rows = await queryGetExerciseTrackingAndStats(userId, days);
   const payload = rows[0];
   await cacheSetJSON(key, payload, TTL_TRACKING);
   return { payload, cacheHit: false };
