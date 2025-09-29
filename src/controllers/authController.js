@@ -79,7 +79,7 @@ export const logoutUser = async (req, res) => {
     : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   if (decodedRefresh) {
-    await queryInsertBlacklistedToken(refreshToken, expiresAtRefresh);
+    //await queryInsertBlacklistedToken(refreshToken, expiresAtRefresh);
     await queryUpdateExpoPushTokenToNull(decodedRefresh.id);
   }
 
@@ -118,7 +118,7 @@ export const refreshAccessToken = async (req, res) => {
   const expR = decoded.exp
     ? new Date(decoded.exp * 1000)
     : new Date(Date.now() + 24 * 60 * 60 * 1000);
-  await queryInsertBlacklistedToken(refreshToken, expR);
+  //await queryInsertBlacklistedToken(refreshToken, expR);
 
   // Issue fresh access + fresh refresh (rotate)
   const newAccess = jwt.sign(
