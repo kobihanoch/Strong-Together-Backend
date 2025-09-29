@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.4.0...v1.4.1) (2025-09-29)
+
+
+### Features
+
+* **Auth:** Deleted usage of blacklisted tokens for now ([01fe5eb](https://github.com/kobihanoch/Strong-Together-Backend/commit/01fe5ebd6b9efe79e3841a5bd698d41105ce41e5))
+* **Queries:** Reduced paylaod size from DB in exercise tracking ([71ebd7f](https://github.com/kobihanoch/Strong-Together-Backend/commit/71ebd7feecd4ab652a21ea1202fcd298af53125f))
+* **Queries:** Refactored save editing of workout query logic to upsert instead of recreating new workout every change ([72e45b3](https://github.com/kobihanoch/Strong-Together-Backend/commit/72e45b3bdcf85e8fd72e483b3d3d06cc9d0d6bba))
+
 ## [1.4.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.3.0...v1.4.0) (2025-09-28)
 
 
