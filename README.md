@@ -1,4 +1,4 @@
-# Strong Together Backend (v1.3.0)
+# Strong Together Backend (v1.4.1)
 
 **Strong Together** is a fitness-oriented application.  
 This repository contains the backend server that powers the app.  
@@ -25,6 +25,8 @@ Migrating to this dedicated backend improved performance, introduced server-side
    - [Exercises](#exercises)
    - [Messages](#messages)
    - [Workouts](#workouts)
+   - [Analytics](#analytics)
+   - [Bootstrap](#bootstrap)
    - [Push Notifications](#push-notifications)
 7. [Database Models & Indexes](#database-models--indexes)
    - [Database Schema](#database-schema)
@@ -39,18 +41,17 @@ Migrating to this dedicated backend improved performance, introduced server-side
 
 ## Technologies & Architecture
 
-| Layer/Service           | Purpose/Notes                                                                                                                                                                                                                                 |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Node.js / Express 5** | HTTP server and routing framework. Express 5 provides promise‑aware request handlers.                                                                                                                                                         |
-| **PostgreSQL**          | Primary relational database. SQL queries live in `src/queries`. The code relies on Postgres views (e.g. `v_exercisetracking_expanded`) to assemble workout plans and analytics.                                                               |
-| **Redis**               | Optional cache layer. When `CACHE_ENABLED=true`, workout plans and exercise tracking results are cached for 48h. Each user has a version number in Redis; whenever workout data changes the version is incremented to invalidate cached keys. |
-| **Socket.IO**           | WebSockets server used to emit `new_message` events when system or user messages arrive. Clients join a room named after their user ID to receive targeted events.                                                                            |
-| **Supabase Storage**    | Used for storing user profile pictures. Files are uploaded and retrieved via signed service‑role keys.                                                                                                                                        |
-| **Expo Push service**   | Sends push notifications to users’ devices. The server exposes an example `/api/push/daily` endpoint that loops over tokens and calls Expo’s API.                                                                                             |
-| **JWT**                 | Authentication with short‑lived access tokens (15 min) and long‑lived refresh tokens (30 days). Tokens signed with secrets from `.env`. A blacklist table stores revoked tokens to prevent reuse.                                             |
-| **Docker & Compose**    | Dockerfile produces Node 20 image, `docker-compose.yml` maps port 5000 to host.                                                                                                                                                               |
-| **Render Deployment**   | The backend is deployed on Render for hosting and scaling.                                                                                                                                                                                    |
-
+| Layer/Service           | Purpose/Notes                                                                                                                                                                                                                                                  |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Node.js / Express 5** | HTTP server and routing framework. Express 5 provides promise‑aware request handlers.                                                                                                                                                                          |
+| **PostgreSQL**          | Primary relational database. SQL queries live in `src/queries`. The code relies on Postgres views (e.g. `v_exercisetracking_expanded`) to assemble workout plans and analytics.                                                                                |
+| **Redis**               | Cache layer. When `CACHE_ENABLED=true`, workout plans and exercise tracking results are cached for 48h. **Payloads are GZIP‑compressed** to reduce size and network time. Each user has a cache‑version; on data changes the version increments to invalidate. |
+| **Socket.IO**           | WebSockets server used to emit `new_message` events when system or user messages arrive. Clients join a room named after their user ID to receive targeted events.                                                                                             |
+| **Supabase Storage**    | Used for storing user profile pictures. Files are uploaded and retrieved via signed service‑role keys.                                                                                                                                                         |
+| **Expo Push service**   | Sends push notifications to users’ devices. The server exposes an example `/api/push/daily` endpoint that loops over tokens and calls Expo’s API.                                                                                                              |
+| **JWT**                 | Auth with short‑lived access tokens (15 min) and long‑lived refresh tokens (30 days). **Per‑user `tokenVersion` enforces single active device** and prevents stale sessions when the frontend uses SWR. **Note:** a blacklist table exists but is **currently disabled** due to Supabase space limits. |              
+| **Docker & Compose**    | Dockerfile produces Node 20 image, `docker-compose.yml` maps port 5000 to host.                                                                                                                                                                                |
+| **Render Deployment**   | The backend is deployed on Render for hosting and scaling.        |                                                                                                                                                                              
 ---
 
 ## Project Structure
@@ -86,8 +87,11 @@ src/
 | **uploadImage**                     | Handles multipart uploads (images ≤10 MB, only JPEG/JPG/PNG/WebP). |
 | **errorHandler**                    | Central error handler with JSON responses.                         |
 
+
 **Other Security Measures:**
 
+- **Blacklist currently disabled** – Although a blacklist table exists, it is **not used at the moment** due to Supabase space limits.
+- **Single‑device sessions via `tokenVersion` (NEW)** – Each user has an integer `tokenVersion`. All issued tokens embed the version; bumping it invalidates existing tokens instantly. This prevents stale/buggy parallel sessions and aligns well with SWR on the client.
 - JWT rotation & blacklist (access short‑lived, refresh one‑time use).
 - Password hashing with bcrypt (10 salt rounds).
 - CORS + rate limiting enabled, trust proxy for real client IP.
@@ -98,10 +102,13 @@ src/
 
 ## Caching
 
+- **Compression (NEW):** cache payloads are **GZIP‑compressed** before writing to Redis and decompressed on read. This reduces Redis memory footprint and network transfer time (especially over cellular).
 - Controlled by `CACHE_ENABLED`.
-- Workout plan (`/api/workouts/getworkout`) cached under `{namespace}:{userId}:v{n}`. TTL: 48h.
-- Exercise tracking (`/api/workouts/gettracking`) cached similarly.
-- `X-Cache` response header shows `HIT` or `MISS`.
+- Workout plan (`/api/workouts/getworkout`) and exercise analytics (`/api/workouts/gettracking`) are cached under `{namespace}:{userId}:v{n}` where `v{n}` is the user’s cache‑version.
+- TTLs:
+  - Plan cache: 48h (configurable via `CACHE_TTL_PLAN_SEC`)
+  - Tracking cache: 48h (configurable via `CACHE_TTL_TRACKING_SEC`)
+- `X-Cache` response header exposes `HIT` / `MISS`.
 
 ---
 
@@ -190,11 +197,26 @@ Health: `/health` returns server status.
 | DELETE | `/workouts/delete`        | Yes   | —                               | Delete workout plan.                    |
 | POST   | `/workouts/add`           | Yes   | `{ workoutData, workoutName? }` | Create new workout plan.                |
 
+### Analytics
+
+| Method | Endpoint       | Auth? | Description            |
+| ------ | -------------- | ----- | ---------------------- |
+| GET    | `/analytics/get` | Yes  | Returns user analytics |
+
+### Bootstrap
+
+| Method | Endpoint        | Auth? | Description                                                                                         |
+| ------ | --------------- | ----- | --------------------------------------------------------------------------------------------------- |
+| GET    | `/bootstrap/get`| Yes   | Returns a bundled payload: `{ user, workout, tracking, aerobics, messages }` (tracking window 45d). |
+
+
 ### Push Notifications
 
-| Method | Endpoint      | Auth? | Description               |
-| ------ | ------------- | ----- | ------------------------- |
-| GET    | `/push/daily` | No    | Sends test push via Expo. |
+| Method | Endpoint      | Auth? | Description                                                |
+| ------ | ------------- | ----- | ---------------------------------------------------------- |
+| GET    | `/push/daily` | No    | Test endpoint that sends a demo push via Expo.            |
+
+**Operational note:** A **daily external cron job** triggers the push workflow every day at **08:30** (local time) to deliver scheduled notifications.
 
 ---
 
@@ -202,9 +224,15 @@ Health: `/health` returns server status.
 
 - Uses **Postgres** with parameterised queries.
 - Views: `v_exercisetoworkoutsplit_expanded`, `v_exercisetracking_expanded`.
-- **Blacklist table** for revoked JWTs with TTL cleanup.
-- Legacy Mongoose models exist but unused.
+- **Blacklist table** exists for revoked JWTs with TTL cleanup, **but is currently disabled** due to Supabase space limits.
 - Unique constraints on `username` and `email`.
+- Column **`users.tokenVersion`** (int, default 0) – embedded into JWTs to enforce single‑device sessions and to kill stale tokens on demand.
+- **UPSERT‑friendly uniqueness** for workout structures:
+  - `workoutplans`: a single active plan per user (e.g., partial unique index on `(user_id)` where `is_active = TRUE`).
+  - `workoutsplits`: unique per plan on `(workout_id, name)` to allow idempotent updates.
+  - `exercisetoworkoutsplit`: unique per split on `(workoutsplit_id, exercise_id)` (plus `order_index` as data) to enable upserts.
+- Table **`aerobictracking`** – logs aerobic/cardio sessions (e.g., `type`, `duration_mins`, `duration_sec`, `workout_date`) per user for non‑strength activities.
+- Soft‑deletes / toggling: `is_active` is used on splits and ETS rows to deactivate removed items during plan updates.
 
 ---
 
@@ -212,23 +240,30 @@ Health: `/health` returns server status.
 
 The backend uses PostgreSQL as its primary datastore. The schema
 defines tables for users, messages, workout plans, splits, exercises
-and tracking logs.
+and tracking logs, **including aerobic sessions via `aerobictracking`**.
 
 ### Workout Flow
 
-![Database workout flow](https://github.com/user-attachments/assets/e61c060e-222e-43b8-9819-aedf67963e15)
+![Database workout flow](https://github.com/user-attachments/assets/7a634d62-9c30-4546-b24e-46df64781a6a)
 
-1. **Create a Plan** – A user creates a `WorkoutPlan`.
-2. **Add Splits** – Each plan has multiple `WorkoutSplits`.
-3. **Assign Exercises** – Exercises are mapped to splits with order and sets.
+1. **Create or Update Plan (UPSERT)** – One active `WorkoutPlan` per user. Updating a plan keeps the same plan row and bumps metadata (name, number of splits).
+2. **UPSERT Splits** – Incoming split keys are upserted by `(workout_id, name)`. Splits not present in the payload are set `is_active = FALSE`.
+3. **UPSERT Exercises per Split** – Each `(workoutsplit_id, exercise_id)` is upserted with the latest `sets` and `order_index`. Missing exercises are set `is_active = FALSE`.
+4. **Cache invalidation** – After a successful update, the user’s cache‑version increments so clients fetch fresh data.
+> **Why UPSERT?**  
+> - Avoids churn of creating new plans on every edit  
+> - Preserves stable IDs for splits/exercises (better analytics & references)  
+> - Minimizes writes and reduces race conditions  
+> - Plays nicely with SWR on the client (precise invalidation via cache‑version)
 
 ### Tracking Flow
 
-![Database workout tracking flow](https://github.com/user-attachments/assets/9ffa26e2-d762-465e-bbbd-28460373e0a7)
+![Database workout tracking flow](https://github.com/user-attachments/assets/21dba52e-1cb9-459c-a2f6-2b4e9a3e9588)
 
 1. **Select a split** – User opens a split.
 2. **Record Sets** – Weight/repetitions logged into `exercisetracking`.
 3. **Review Progress** – Data aggregated for analytics.
+4. **Aerobic tracking:** In addition to strength sets, the backend stores cardio sessions in `aerobictracking` (type + duration) so progress can include non‑strength work.
 
 ### Messages Flow
 
