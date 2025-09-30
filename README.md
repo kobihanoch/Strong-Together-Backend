@@ -1,4 +1,4 @@
-# Strong Together Backend (v1.4.1)
+# Strong Together Backend (v1.4.2)
 
 **Strong Together** is a fitness-oriented application.  
 This repository contains the backend server that powers the app.  
