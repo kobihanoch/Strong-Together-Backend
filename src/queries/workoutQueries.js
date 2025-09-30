@@ -397,7 +397,7 @@ export const queryAddWorkout = async (
       INSERT INTO public.exercisetoworkoutsplit (workoutsplit_id, exercise_id, sets, order_index, is_active)
       SELECT
         s.id AS workoutsplit_id,
-        (ex->>'id')::int AS exercise_id,
+        (ex->>'id')::bigint AS exercise_id,
         CASE
           WHEN jsonb_typeof(ex->'sets') = 'array' THEN (
             SELECT COALESCE(array_agg((elem)::text::bigint ORDER BY ord2), ARRAY[]::bigint[])
@@ -406,12 +406,11 @@ export const queryAddWorkout = async (
           WHEN jsonb_typeof(ex->'sets') = 'number' THEN ARRAY[(ex->>'sets')::bigint]::bigint[]
           ELSE ARRAY[]::bigint[]
         END AS sets,
-        COALESCE((ex->>'order_index')::int, ord - 1) AS order_index,
+        COALESCE((ex->>'order_index')::bigint, (ord - 1)) AS order_index,
         TRUE AS is_active
       FROM jsonb_each(${payloadJson}::jsonb) AS kv(split_name, arr)
-      JOIN public.workoutsplits s
-        ON s.workout_id = (SELECT id FROM plan)
-       AND s.name = kv.split_name::text
+      JOIN upsert_splits s
+        ON s.name = kv.split_name::text
       CROSS JOIN LATERAL jsonb_array_elements(arr) WITH ORDINALITY AS e(ex, ord)
       WHERE jsonb_typeof(arr) = 'array'
       ON CONFLICT (workoutsplit_id, exercise_id)
