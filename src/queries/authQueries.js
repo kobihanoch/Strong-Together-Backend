@@ -1,7 +1,7 @@
 import sql from "../config/db.js";
 
 export async function queryUserByUsernameForLogin(username) {
-  return sql`SELECT id, password, role, is_first_login, name FROM users WHERE username=${username} LIMIT 1`;
+  return sql`SELECT id, name, password, role, is_first_login, name FROM users WHERE username=${username} LIMIT 1`;
 }
 
 export async function querySetUserFirstLoginFalse(userId) {

@@ -11,13 +11,15 @@ import {
   queryUserDataByUsername,
   queryUserIdRoleById,
 } from "../queries/authQueries.js";
+import { queryUserExistsByUsernameOrEmail } from "../queries/userQueries.js";
+import { sendVerificationEmail } from "../services/emailService.js";
 import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
 import {
   decodeRefreshToken,
   decodeVerifyToken,
   getRefreshToken,
 } from "../utils/tokenUtils.js";
-import { sendVerificationEmail } from "../services/emailService.js";
+import sql from "../config/db.js";
 
 // @desc    Login a user
 // @route   POST /api/auth/login
@@ -180,9 +182,32 @@ export const verifyUserAccount = async (req, res) => {
 };
 
 // @desc    Validate user acoount
-// @route   GET /api/auth/sendverificationemail
+// @route   POST /api/auth/sendverificationemail
 // @access  Public
 export const sendVerificationMail = async (req, res) => {
-  await sendVerificationEmail(email, created.id, fullName);
+  const { id, email, fullName } = req.body;
+  await sendVerificationEmail(email, id, fullName);
   return res.status(204).end();
+};
+
+// @desc    Validate user acoount
+// @route   PUT /api/auth/changeemailverify
+// @access  Public
+export const changeEmailAndVerify = async (req, res) => {
+  const { username, password, newEmail } = req.body;
+
+  const [user] = await queryUserByUsernameForLogin(username);
+  if (!user) throw createError(401, "Invalid credentials");
+  const ok = await bcrypt.compare(password, user.password);
+  if (!ok) throw createError(401, "Invalid credentials");
+
+  if (user.is_verified) throw createError(400, "Account already verified");
+
+  const [exists] = await queryUserExistsByUsernameOrEmail(null, newEmail);
+  if (exists) throw createError(409, "Email already in use");
+
+  await sql`UPDATE users SET email = ${newEmail} WHERE id = ${user.id}::uuid`;
+  await sendVerificationEmail(newEmail, user.id, user.name);
+
+  res.status(204).end();
 };

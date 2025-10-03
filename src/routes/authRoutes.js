@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  changeEmailAndVerify,
   loginUser,
   logoutUser,
   refreshAccessToken,
@@ -8,6 +9,7 @@ import {
 } from "../controllers/authController.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { validate } from "../middlewares/validateRequest.js";
+import { changeEmailSchema } from "../validators/auth/changeemail.schema.js";
 import { loginSchema } from "../validators/auth/login.schema.js";
 
 const router = Router();
@@ -17,6 +19,11 @@ router.post("/login", validate(loginSchema), asyncHandler(loginUser)); // Loggin
 router.post("/refresh", asyncHandler(refreshAccessToken)); // Refresh token
 router.post("/logout", asyncHandler(logoutUser)); // Logging out a user
 router.get("/verify", asyncHandler(verifyUserAccount)); // Verification mail
-router.get("/sendverificationmail", asyncHandler(sendVerificationMail)); // Send email
+router.post("/sendverificationmail", asyncHandler(sendVerificationMail)); // Send email
+router.put(
+  "/changeemailverify",
+  validate(changeEmailSchema),
+  asyncHandler(changeEmailAndVerify)
+); // Change email
 
 export default router;
