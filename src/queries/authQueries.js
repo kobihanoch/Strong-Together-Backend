@@ -39,3 +39,7 @@ export async function queryInsertBlacklistedToken(token, expiresAt) {
 export const queryUpdateExpoPushTokenToNull = async (userId) => {
   return sql`UPDATE users SET push_token=NULL WHERE id=${userId}`;
 };
+
+export const queryUpdateUserVerficiationStatus = async (userId, state) => {
+  await sql`UPDATE users SET is_verified = ${state} WHERE users.id = ${userId}`;
+};

@@ -21,6 +21,7 @@ import {
 const expo = new Expo();
 import path from "path";
 import mime from "mime";
+import { sendVerificationEmail } from "../services/emailService.js";
 
 // ---------- HELPERS -----------------
 export const getUserData = async (userId) => {
@@ -52,6 +53,8 @@ export const createUser = async (req, res) => {
     hash
   );
   const [created] = rowsCreated;
+
+  await sendVerificationEmail(email, created.id, fullName);
 
   res
     .status(201)

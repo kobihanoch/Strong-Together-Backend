@@ -4,16 +4,20 @@ import createError from "http-errors";
 import jwt from "jsonwebtoken";
 import {
   queryGetCurrentTokenVersion,
-  queryInsertBlacklistedToken,
-  querySelectBlacklistedToken,
   querySetUserFirstLoginFalse,
   queryUpdateExpoPushTokenToNull,
+  queryUpdateUserVerficiationStatus,
   queryUserByUsernameForLogin,
   queryUserDataByUsername,
   queryUserIdRoleById,
 } from "../queries/authQueries.js";
 import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
-import { decodeRefreshToken, getRefreshToken } from "../utils/tokenUtils.js";
+import {
+  decodeRefreshToken,
+  decodeVerifyToken,
+  getRefreshToken,
+} from "../utils/tokenUtils.js";
+import { sendVerificationEmail } from "../services/emailService.js";
 
 // @desc    Login a user
 // @route   POST /api/auth/login
@@ -40,6 +44,9 @@ export const loginUser = async (req, res) => {
   const rowsUserData = await queryUserDataByUsername(username);
   const [{ token_version, user_data: userData }] = rowsUserData;
 
+  if (!userData?.is_verified) {
+    throw createError(401, "A validation email is pending.");
+  }
   // Sign tokens
   const accessToken = jwt.sign(
     { id: user.id, role: user.role, tokenVer: token_version },
@@ -105,9 +112,9 @@ export const refreshAccessToken = async (req, res) => {
     throw createError(401, "New login required");
 
   // Ensure not revoked
-  const rowsRevoked = await querySelectBlacklistedToken(refreshToken);
+  /*const rowsRevoked = await querySelectBlacklistedToken(refreshToken);
   const [revoked] = rowsRevoked;
-  if (revoked) throw createError(401, "Refresh token has been revoked");
+  if (revoked) throw createError(401, "Refresh token has been revoked");*/
 
   // User still exists
   const rowsUser = await queryUserIdRoleById(decoded.id);
@@ -140,4 +147,42 @@ export const refreshAccessToken = async (req, res) => {
     refreshToken: newRefresh,
     userId: user.id,
   });
+};
+
+// @desc    Validate user acoount
+// @route   GET /api/auth/verify
+// @access  Public
+export const verifyUserAccount = async (req, res) => {
+  const { token } = req.query;
+  if (!token) throw createError(400, "Missing token");
+  const decoded = decodeVerifyToken(token);
+  if (!decoded) {
+    throw createError(400, "Verfication token is not valid");
+  }
+  await queryUpdateUserVerficiationStatus(decoded.sub, true);
+  return res.status(200).send(`<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Verified</title>
+<style>
+  body { margin:0; background:#f6f8fc; font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:#0b1220; }
+  .wrap { max-width:560px; margin:10vh auto; background:#fff; border-radius:12px; padding:24px;
+          box-shadow:0 10px 25px rgba(2,6,23,0.08); text-align:center; }
+  .muted { color:#64748b; }
+  .btn { display:inline-block; margin-top:16px; padding:12px 18px; border-radius:10px; background:#2979ff; color:#fff; font-weight:600; text-decoration:none; }
+</style>
+</head><body>
+  <div class="wrap">
+    <h1>You're verified 🎉</h1>
+    <p class="muted">You can safely return to the app, and login.</p>
+  </div>
+</body></html>`);
+};
+
+// @desc    Validate user acoount
+// @route   GET /api/auth/sendverificationemail
+// @access  Public
+export const sendVerificationMail = async (req, res) => {
+  await sendVerificationEmail(email, created.id, fullName);
+  return res.status(204).end();
 };
