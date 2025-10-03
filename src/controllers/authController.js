@@ -45,7 +45,7 @@ export const loginUser = async (req, res) => {
   const [{ token_version, user_data: userData }] = rowsUserData;
 
   if (!userData?.is_verified) {
-    throw createError(401, "A validation email is pending.");
+    throw createError(401, "You need to verify you account");
   }
   // Sign tokens
   const accessToken = jwt.sign(

@@ -34,10 +34,10 @@ export const generateValidateUserEmail = ({ fullName, verifyUrl, logoUrl }) => `
                 </table>
 
                 <p style="margin:0 0 8px 0;font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif;font-size:28px;line-height:1.3;color:#333;text-align:center;">
-                  Validate Your Account
+                  Verify Your Account
                 </p>
                 <p style="margin:0;font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif;font-size:14px;line-height:1.6;color:#555;text-align:center;">
-                  Hi ${fullName}, please verify your email to activate your account.
+                  Hi <strong>${fullName}</strong>, please verify your email to activate your account.
                 </p>
 
                 <table role="presentation" width="100%" style="margin-top:24px;background:#f1f1f1;border-radius:6px;">
