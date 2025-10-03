@@ -11,6 +11,7 @@ import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { validate } from "../middlewares/validateRequest.js";
 import { changeEmailSchema } from "../validators/auth/changeemail.schema.js";
 import { loginSchema } from "../validators/auth/login.schema.js";
+import { changeVerificationEmailLimiter } from "../middlewares/rateLimiter.js";
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.get("/verify", asyncHandler(verifyUserAccount)); // Verification mail
 router.post("/sendverificationmail", asyncHandler(sendVerificationMail)); // Send email
 router.put(
   "/changeemailverify",
+  changeVerificationEmailLimiter,
   validate(changeEmailSchema),
   asyncHandler(changeEmailAndVerify)
 ); // Change email

@@ -13,3 +13,16 @@ export const generalLimiter = rateLimit({
     next(createError(429, options.message)); // Throws error to error handler to inject to the response
   },
 });
+
+export const changeVerificationEmailLimiter = rateLimit({
+  // Allow max of 1 requests per 1 minute for each IP
+  windowMs: 60 * 1000,
+  max: 1,
+  message:
+    "You've reached the maximum amount of requests per minute. Please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res, next, options) => {
+    next(createError(429, options.message)); // Throws error to error handler to inject to the response
+  },
+});
