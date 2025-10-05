@@ -8,7 +8,7 @@ export const sendDailyPush = async (req, res) => {
     for (const user of users) {
       await sendPushNotification(
         user.push_token,
-        `Good Morning ${user.name.split(" ")[0]}!`,
+        `Hello, ${user.name.split(" ")[0]}!`,
         "Ready to go workout?"
       );
     }
