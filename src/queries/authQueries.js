@@ -1,15 +1,19 @@
 import sql from "../config/db.js";
 
-export async function queryUserByUsernameForLogin(username) {
-  return sql`SELECT id, name, password, role, is_first_login, name FROM users WHERE username=${username} LIMIT 1`;
+export async function queryUserByIdentifierForLogin(identifier) {
+  return sql`SELECT id, name, password, role, is_first_login FROM users WHERE username=${identifier} OR email=${identifier} LIMIT 1`;
 }
 
 export async function querySetUserFirstLoginFalse(userId) {
   return sql`UPDATE users SET is_first_login=FALSE WHERE id=${userId} RETURNING id`;
 }
 
-export async function queryUserDataByUsername(username) {
-  return sql`UPDATE users SET token_version=token_version + 1 WHERE username = ${username} RETURNING token_version, (to_jsonb(users) - 'password' - 'token_version') AS user_data`;
+export async function queryUserDataByID(userId) {
+  return sql`UPDATE users SET token_version=token_version + 1 WHERE id = ${userId} RETURNING token_version, (to_jsonb(users) - 'password' - 'token_version') AS user_data`;
+}
+
+export async function queryUserByUsername(username) {
+  return sql`SELECT id, name, password, role, is_first_login FROM users WHERE username=${username} LIMIT 1`;
 }
 
 export async function queryDeleteExpiredBlacklistedTokens() {
@@ -42,4 +46,8 @@ export const queryUpdateExpoPushTokenToNull = async (userId) => {
 
 export const queryUpdateUserVerficiationStatus = async (userId, state) => {
   await sql`UPDATE users SET is_verified = ${state} WHERE users.id = ${userId}`;
+};
+
+export const queryUpdateUserPassword = async (userId, newPass) => {
+  await sql`UPDATE users SET password=${newPass} WHERE id=${userId}`;
 };

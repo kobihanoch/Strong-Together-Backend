@@ -46,12 +46,12 @@ export const changeVerificationEmailLimiterDaily = rateLimit({
   max: 3,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req /*, res*/) => {
+  /*keyGenerator: (req /*, res*/ /*) => {
     const b = req.body || {};
     const target = b.username || "";
     // Prefer hashed target; if empty, fall back to IP
     return sha256Hex(target) || req.ip;
-  },
+  },*/
   message: "You've reached the maximum amount of requests per day.",
   handler: (req, res, next, options) => {
     next(

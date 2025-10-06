@@ -2,33 +2,44 @@
 import bcrypt from "bcryptjs";
 import createError from "http-errors";
 import jwt from "jsonwebtoken";
+import sql from "../config/db.js";
 import {
   queryGetCurrentTokenVersion,
   querySetUserFirstLoginFalse,
   queryUpdateExpoPushTokenToNull,
+  queryUpdateUserPassword,
   queryUpdateUserVerficiationStatus,
-  queryUserByUsernameForLogin,
-  queryUserDataByUsername,
+  queryUserByIdentifierForLogin,
+  queryUserByUsername,
+  queryUserDataByID,
   queryUserIdRoleById,
 } from "../queries/authQueries.js";
 import { queryUserExistsByUsernameOrEmail } from "../queries/userQueries.js";
-import { sendVerificationEmail } from "../services/emailService.js";
+import {
+  sendForgotPasswordEmail,
+  sendVerificationEmail,
+} from "../services/emailService.js";
 import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
 import {
+  generateForgotPasswordHTML,
+  generateVerifiedHTML,
+} from "../templates/responseHTMLTemplates.js";
+import {
+  decodeForgotPasswordToken,
   decodeRefreshToken,
   decodeVerifyToken,
   getRefreshToken,
 } from "../utils/tokenUtils.js";
-import sql from "../config/db.js";
 
 // @desc    Login a user
 // @route   POST /api/auth/login
 // @access  Public
 export const loginUser = async (req, res) => {
-  const { username, password } = req.body;
+  const { identifier, password } = req.body;
 
   // Validate data
-  const rowsUser = await queryUserByUsernameForLogin(username);
+
+  const rowsUser = await queryUserByIdentifierForLogin(identifier);
   const [user] = rowsUser;
   if (!user) throw createError(401, "Invalid credentials");
 
@@ -43,7 +54,7 @@ export const loginUser = async (req, res) => {
   }
 
   // Fetch all user data and bump token version
-  const rowsUserData = await queryUserDataByUsername(username);
+  const rowsUserData = await queryUserDataByID(user.id);
   const [{ token_version, user_data: userData }] = rowsUserData;
 
   if (!userData?.is_verified) {
@@ -151,7 +162,7 @@ export const refreshAccessToken = async (req, res) => {
   });
 };
 
-// @desc    Validate user acoount
+// @desc    Verify user acoount
 // @route   GET /api/auth/verify
 // @access  Public
 export const verifyUserAccount = async (req, res) => {
@@ -162,41 +173,25 @@ export const verifyUserAccount = async (req, res) => {
     throw createError(400, "Verfication token is not valid");
   }
   await queryUpdateUserVerficiationStatus(decoded.sub, true);
-  return res.status(200).send(`<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Verified</title>
-<style>
-  body { margin:0; background:#f6f8fc; font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:#0b1220; }
-  .wrap { max-width:560px; margin:10vh auto; background:#fff; border-radius:12px; padding:24px;
-          box-shadow:0 10px 25px rgba(2,6,23,0.08); text-align:center; }
-  .muted { color:#64748b; }
-  .btn { display:inline-block; margin-top:16px; padding:12px 18px; border-radius:10px; background:#2979ff; color:#fff; font-weight:600; text-decoration:none; }
-</style>
-</head><body>
-  <div class="wrap">
-    <h1>You're verified 🎉</h1>
-    <p class="muted">You can safely return to the app, and login.</p>
-  </div>
-</body></html>`);
+  return res.status(200).send(generateVerifiedHTML());
 };
 
 // @desc    Validate user acoount
 // @route   POST /api/auth/sendverificationemail
 // @access  Public
-export const sendVerificationMail = async (req, res) => {
+/*export const sendVerificationMail = async (req, res) => {
   const { id, email, fullName } = req.body;
   await sendVerificationEmail(email, id, fullName);
   return res.status(204).end();
-};
+};*/
 
-// @desc    Validate user acoount
+// @desc    Resend email to new address and verify user acoount
 // @route   PUT /api/auth/changeemailverify
 // @access  Public
 export const changeEmailAndVerify = async (req, res) => {
   const { username, password, newEmail } = req.body;
 
-  const [user] = await queryUserByUsernameForLogin(username);
+  const [user] = await queryUserByUsername(username);
   if (!user) throw createError(401, "Invalid credentials");
   const ok = await bcrypt.compare(password, user.password);
   if (!ok) throw createError(401, "Invalid credentials");
@@ -210,4 +205,46 @@ export const changeEmailAndVerify = async (req, res) => {
   await sendVerificationEmail(newEmail, user.id, user.name);
 
   res.status(204).end();
+};
+
+// @desc    Resend email to new address and verify user acoount
+// @route   GET /api/auth/checkuserverify
+// @access  Public
+export const checkUserVerify = async (req, res) => {
+  const [user] =
+    await sql`SELECT is_verified FROM users WHERE username=${req.query.username}`;
+  return res.status(200).json({ isVerified: user.is_verified });
+};
+
+// ------------------------------ NOT WORKING YET
+// @desc    Sends email for resetting password
+// @route   POST /api/auth/forgotpassemail
+// @access  Public
+export const sendChangePassEmail = async (req, res) => {
+  const { identifier } = req.body;
+  if (!identifier) throw createError(400, "Please fill username or email");
+  const [user] =
+    await sql`SELECT id, email, name FROM users WHERE email=${identifier} OR username=${identifier} LIMIT 1`;
+  if (!user) throw createError(404, "User not found");
+
+  await sendForgotPasswordEmail(user.email, user.id, user.name);
+
+  return res.status(204).end();
+};
+
+// @desc    Update password
+// @route   PUT /api/auth/resetpassword
+// @access  Public
+export const resetPassword = async (req, res) => {
+  const { token } = req.query;
+  const { newPassword } = req.body;
+  if (!token) throw createError(400, "Missing token");
+  const decoded = decodeForgotPasswordToken(token);
+  if (!decoded) {
+    throw createError(400, "Verfication token is not valid");
+  }
+  const salt = await bcrypt.genSalt(10);
+  const hash = await bcrypt.hash(newPassword, salt);
+  await queryUpdateUserPassword(decoded.sub, hash);
+  return res.status(200).json({ ok: true }).send(generateForgotPasswordHTML());
 };

@@ -15,6 +15,7 @@ import messagesRoutes from "./routes/messagesRoutes.js";
 import pushRoutes from "./routes/pushRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import workoutRoutes from "./routes/workoutRoutes.js";
+import cors from "cors";
 
 // RESOURECES CONNECTIONS AND GENERAL CONFIGURATIONS  ------------------------------------------
 dotenv.config();
@@ -32,6 +33,16 @@ await connectRedis(); // Connect to Redis
 
 // Use express JSON formats
 app.use(express.json());
+
+// For resetting password
+app.use(
+  cors({
+    origin: ["https://kobihanoch.github.io"],
+    methods: ["POST", "PUT", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: false,
+  })
+);
 
 // Use helmet
 app.use(helmet());

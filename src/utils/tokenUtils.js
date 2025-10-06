@@ -61,3 +61,16 @@ export const decodeVerifyToken = (verifyToken) => {
     return null;
   }
 };
+
+export const decodeForgotPasswordToken = (forgotPasswordToken) => {
+  let decoded;
+  try {
+    decoded = jwt.verify(
+      forgotPasswordToken,
+      process.env.JWT_FORGOT_PASSWORD_SECRET
+    );
+    return decoded;
+  } catch {
+    return null;
+  }
+};

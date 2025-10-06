@@ -1,20 +1,23 @@
 import { Router } from "express";
 import {
   changeEmailAndVerify,
+  checkUserVerify,
   loginUser,
   logoutUser,
   refreshAccessToken,
-  sendVerificationMail,
+  resetPassword,
+  sendChangePassEmail,
   verifyUserAccount,
 } from "../controllers/authController.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
-import { validate } from "../middlewares/validateRequest.js";
-import { changeEmailSchema } from "../validators/auth/changeemail.schema.js";
-import { loginSchema } from "../validators/auth/login.schema.js";
 import {
   changeVerificationEmailLimiter,
   changeVerificationEmailLimiterDaily,
 } from "../middlewares/rateLimiter.js";
+import { validate } from "../middlewares/validateRequest.js";
+import { changeEmailSchema } from "../validators/auth/changeemail.schema.js";
+import { loginSchema } from "../validators/auth/login.schema.js";
+import { resetPasswordSchema } from "../validators/auth/resetpassword.schema.js";
 
 const router = Router();
 
@@ -22,8 +25,8 @@ const router = Router();
 router.post("/login", validate(loginSchema), asyncHandler(loginUser)); // Logging in a user and returns user
 router.post("/refresh", asyncHandler(refreshAccessToken)); // Refresh token
 router.post("/logout", asyncHandler(logoutUser)); // Logging out a user
-router.get("/verify", asyncHandler(verifyUserAccount)); // Verification mail
-router.post("/sendverificationmail", asyncHandler(sendVerificationMail)); // Send email
+router.get("/verify", asyncHandler(verifyUserAccount)); // Verification mail button url (to verify user)
+//router.post("/sendverificationmail", asyncHandler(sendVerificationMail)); // Send email
 router.put(
   "/changeemailverify",
   changeVerificationEmailLimiterDaily,
@@ -31,5 +34,13 @@ router.put(
   validate(changeEmailSchema),
   asyncHandler(changeEmailAndVerify)
 ); // Change email
+router.get("/checkuserverify", asyncHandler(checkUserVerify)); // Check if user verified
+
+router.post("/forgotpassemail", asyncHandler(sendChangePassEmail)); // Send change password email
+router.put(
+  "/resetpassword",
+  validate(resetPasswordSchema),
+  asyncHandler(resetPassword)
+); // Reset password
 
 export default router;
