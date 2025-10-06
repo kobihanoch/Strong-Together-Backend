@@ -20,10 +20,7 @@ import {
   sendVerificationEmail,
 } from "../services/emailService.js";
 import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
-import {
-  generateForgotPasswordHTML,
-  generateVerifiedHTML,
-} from "../templates/responseHTMLTemplates.js";
+import { generateVerifiedHTML } from "../templates/responseHTMLTemplates.js";
 import {
   decodeForgotPasswordToken,
   decodeRefreshToken,
@@ -173,7 +170,9 @@ export const verifyUserAccount = async (req, res) => {
     throw createError(400, "Verfication token is not valid");
   }
   await queryUpdateUserVerficiationStatus(decoded.sub, true);
-  return res.status(204).send(generateVerifiedHTML());
+  const html = generateVerifiedHTML();
+
+  res.status(200).type("html").set("Cache-Control", "no-store").send(html);
 };
 
 // @desc    Validate user acoount
@@ -248,5 +247,5 @@ export const resetPassword = async (req, res) => {
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(newPassword, salt);
   await queryUpdateUserPassword(decoded.sub, hash);
-  return res.status(200).json({ ok: true }).send(generateForgotPasswordHTML());
+  return res.status(200).json({ ok: true });
 };

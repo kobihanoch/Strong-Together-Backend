@@ -12,9 +12,9 @@ export const generalLimiter = rateLimit({
   },
 });
 
-// 1 per minute per IP (burst)
+// 1 per 45 secs per IP (burst)
 export const changeVerificationEmailLimiter = rateLimit({
-  windowMs: 60 * 1000,
+  windowMs: 45 * 1000,
   max: 1,
   standardHeaders: true,
   legacyHeaders: false,
@@ -24,10 +24,10 @@ export const changeVerificationEmailLimiter = rateLimit({
   },
 });
 
-// 3 per 24h per ip
+// 2 per 24h per ip
 export const changeVerificationEmailLimiterDaily = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 hours
-  max: 3,
+  max: 2,
   standardHeaders: true,
   legacyHeaders: false,
   message: "You've reached the maximum amount of requests per day.",
@@ -48,9 +48,9 @@ export const restPasswordEmailLimiterDaily = rateLimit({
   },
 });
 
-// 2 per minute per IP (burst)
+// 1 per 45 secs per IP (burst)
 export const resetPasswordEmailLimiter = rateLimit({
-  windowMs: 60 * 1000,
+  windowMs: 45 * 1000,
   max: 2,
   standardHeaders: true,
   legacyHeaders: false,
