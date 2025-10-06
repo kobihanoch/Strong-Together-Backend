@@ -7,6 +7,7 @@ import {
   refreshAccessToken,
   resetPassword,
   sendChangePassEmail,
+  sendVerificationMail,
   verifyUserAccount,
 } from "../controllers/authController.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
@@ -28,7 +29,12 @@ router.post("/login", validate(loginSchema), asyncHandler(loginUser)); // Loggin
 router.post("/refresh", asyncHandler(refreshAccessToken)); // Refresh token
 router.post("/logout", asyncHandler(logoutUser)); // Logging out a user
 router.get("/verify", asyncHandler(verifyUserAccount)); // Verification mail button url (to verify user)
-//router.post("/sendverificationmail", asyncHandler(sendVerificationMail)); // Send email
+router.post(
+  "/sendverificationemail",
+  changeVerificationEmailLimiterDaily,
+  changeVerificationEmailLimiter,
+  asyncHandler(sendVerificationMail)
+); // Send verification email
 router.put(
   "/changeemailverify",
   changeVerificationEmailLimiterDaily,
@@ -38,11 +44,14 @@ router.put(
 ); // Change email
 router.get("/checkuserverify", asyncHandler(checkUserVerify)); // Check if user verified
 
-router.post("/forgotpassemail", asyncHandler(sendChangePassEmail)); // Send change password email
-router.put(
-  "/resetpassword",
+router.post(
+  "/forgotpassemail",
   restPasswordEmailLimiterDaily,
   resetPasswordEmailLimiter,
+  asyncHandler(sendChangePassEmail)
+); // Send change password email
+router.put(
+  "/resetpassword",
   validate(resetPasswordSchema),
   asyncHandler(resetPassword)
 ); // Reset password

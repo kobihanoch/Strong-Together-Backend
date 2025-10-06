@@ -1,16 +1,14 @@
-// middlewares/rateLimiter.js
-
 import rateLimit from "express-rate-limit";
 import createError from "http-errors";
-import { createHash } from "node:crypto";
 
 export const generalLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  message: "Too many requests.",
   handler: (req, res, next, options) => {
-    next(createError(429, options.message || "Too many requests."));
+    next(createError(429, options.message));
   },
 });
 
@@ -22,13 +20,7 @@ export const changeVerificationEmailLimiter = rateLimit({
   legacyHeaders: false,
   message: "You've reached the maximum amount of requests per minute.",
   handler: (req, res, next, options) => {
-    next(
-      createError(
-        429,
-        options.message ||
-          "You've reached the maximum amount of requests per minute."
-      )
-    );
+    next(createError(429, options.message));
   },
 });
 
@@ -40,13 +32,7 @@ export const changeVerificationEmailLimiterDaily = rateLimit({
   legacyHeaders: false,
   message: "You've reached the maximum amount of requests per day.",
   handler: (req, res, next, options) => {
-    next(
-      createError(
-        429,
-        options.message ||
-          "You've reached the maximum amount of requests per day."
-      )
-    );
+    next(createError(429, options.message));
   },
 });
 
@@ -58,30 +44,18 @@ export const restPasswordEmailLimiterDaily = rateLimit({
   legacyHeaders: false,
   message: "You've reached the maximum amount of requests per day.",
   handler: (req, res, next, options) => {
-    next(
-      createError(
-        429,
-        options.message ||
-          "You've reached the maximum amount of requests per day."
-      )
-    );
+    next(createError(429, options.message));
   },
 });
 
-// 3 per minute per IP (burst)
+// 2 per minute per IP (burst)
 export const resetPasswordEmailLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 3,
+  max: 2,
   standardHeaders: true,
   legacyHeaders: false,
   message: "You've reached the maximum amount of requests per minute.",
   handler: (req, res, next, options) => {
-    next(
-      createError(
-        429,
-        options.message ||
-          "You've reached the maximum amount of requests per minute."
-      )
-    );
+    next(createError(429, options.message));
   },
 });

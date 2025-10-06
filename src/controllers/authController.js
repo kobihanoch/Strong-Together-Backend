@@ -173,17 +173,19 @@ export const verifyUserAccount = async (req, res) => {
     throw createError(400, "Verfication token is not valid");
   }
   await queryUpdateUserVerficiationStatus(decoded.sub, true);
-  return res.status(200).send(generateVerifiedHTML());
+  return res.status(204).send(generateVerifiedHTML());
 };
 
 // @desc    Validate user acoount
 // @route   POST /api/auth/sendverificationemail
 // @access  Public
-/*export const sendVerificationMail = async (req, res) => {
-  const { id, email, fullName } = req.body;
-  await sendVerificationEmail(email, id, fullName);
+export const sendVerificationMail = async (req, res) => {
+  const { email } = req.body;
+  const [{ id, name }] =
+    await sql`SELECT id, name FROM users WHERE email=${email}`;
+  await sendVerificationEmail(email, id, name);
   return res.status(204).end();
-};*/
+};
 
 // @desc    Resend email to new address and verify user acoount
 // @route   PUT /api/auth/changeemailverify
@@ -216,7 +218,6 @@ export const checkUserVerify = async (req, res) => {
   return res.status(200).json({ isVerified: user.is_verified });
 };
 
-// ------------------------------ NOT WORKING YET
 // @desc    Sends email for resetting password
 // @route   POST /api/auth/forgotpassemail
 // @access  Public
@@ -225,7 +226,8 @@ export const sendChangePassEmail = async (req, res) => {
   if (!identifier) throw createError(400, "Please fill username or email");
   const [user] =
     await sql`SELECT id, email, name FROM users WHERE email=${identifier} OR username=${identifier} LIMIT 1`;
-  if (!user) throw createError(404, "User not found");
+  // Don;t overshare
+  if (!user) return res.status(204).end();
 
   await sendForgotPasswordEmail(user.email, user.id, user.name);
 
