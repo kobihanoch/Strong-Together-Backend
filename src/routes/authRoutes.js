@@ -13,6 +13,8 @@ import { asyncHandler } from "../middlewares/asyncHandler.js";
 import {
   changeVerificationEmailLimiter,
   changeVerificationEmailLimiterDaily,
+  resetPasswordEmailLimiter,
+  restPasswordEmailLimiterDaily,
 } from "../middlewares/rateLimiter.js";
 import { validate } from "../middlewares/validateRequest.js";
 import { changeEmailSchema } from "../validators/auth/changeemail.schema.js";
@@ -39,6 +41,8 @@ router.get("/checkuserverify", asyncHandler(checkUserVerify)); // Check if user 
 router.post("/forgotpassemail", asyncHandler(sendChangePassEmail)); // Send change password email
 router.put(
   "/resetpassword",
+  restPasswordEmailLimiterDaily,
+  resetPasswordEmailLimiter,
   validate(resetPasswordSchema),
   asyncHandler(resetPassword)
 ); // Reset password
