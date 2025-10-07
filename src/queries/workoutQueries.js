@@ -1,9 +1,11 @@
 import sql from "../config/db.js";
 
-export async function queryWholeUserWorkoutPlan(userId) {
+export async function queryWholeUserWorkoutPlan(userId, tz) {
   return sql`
     SELECT
       workoutplans.*,
+      -- Localized timestamp derived from timestamptz using the requested time zone
+      (workoutplans.updated_at AT TIME ZONE ${tz}) AS updated_at,
       (
         SELECT json_agg(
                  to_jsonb(workoutsplits.*)
@@ -11,7 +13,12 @@ export async function queryWholeUserWorkoutPlan(userId) {
                       'exercisetoworkoutsplit',
                       (
                         SELECT json_agg(
-                                 (to_jsonb(ews.*) - 'workoutsplit_id' - 'workout_id' - 'exercise_id' - 'created_at' - 'order_index')
+                                 (to_jsonb(ews.*)
+                                  - 'workoutsplit_id'
+                                  - 'workout_id'
+                                  - 'exercise_id'
+                                  - 'created_at'
+                                  - 'order_index')
                                  || jsonb_build_object(
                                       'targetmuscle', ex.targetmuscle,
                                       'specifictargetmuscle', ex.specifictargetmuscle

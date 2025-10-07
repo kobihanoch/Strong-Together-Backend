@@ -24,7 +24,11 @@ import {
  * ---------------------------*/
 
 // Returns { payload, cacheHit }
-export const getWorkoutPlanData = async (userId, fromCache = true) => {
+export const getWorkoutPlanData = async (
+  userId,
+  fromCache = true,
+  tz = "Asia/Jerusalem"
+) => {
   const planKey = buildPlanKeyStable(userId);
   if (fromCache) {
     const cached = await cacheGetJSON(planKey);
@@ -33,7 +37,7 @@ export const getWorkoutPlanData = async (userId, fromCache = true) => {
     }
   }
 
-  const rows = await queryWholeUserWorkoutPlan(userId);
+  const rows = await queryWholeUserWorkoutPlan(userId, tz);
   const [plan] = rows;
   if (!plan) {
     const empty = { workoutPlan: null };
@@ -77,7 +81,8 @@ export const getExerciseTrackingData = async (
 // @access  Private
 export const getWholeUserWorkoutPlan = async (req, res) => {
   const userId = req.user.id;
-  const { payload, cacheHit } = await getWorkoutPlanData(userId);
+  const tz = req.query.tz;
+  const { payload, cacheHit } = await getWorkoutPlanData(userId, true, tz);
   res.set("X-Cache", cacheHit ? "HIT" : "MISS");
   return res.status(200).json(payload);
 };
@@ -143,7 +148,7 @@ export const deleteUserWorkout = async (req, res) => {
 // @access  Private
 export const addWorkout = async (req, res) => {
   const userId = req.user.id;
-  const { workoutData, workoutName } = req.body;
+  const { workoutData, workoutName, tz } = req.body;
 
   await queryAddWorkout(userId, workoutData, workoutName);
 
@@ -153,7 +158,7 @@ export const addWorkout = async (req, res) => {
   await cacheDeleteKey(planKey);
 
   // Rebuild plan and cache
-  const rows = await queryWholeUserWorkoutPlan(userId);
+  const rows = await queryWholeUserWorkoutPlan(userId, tz);
   const [plan] = rows;
   const { splits } = await queryGetWorkoutSplitsObj(plan.id);
 
