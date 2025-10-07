@@ -269,7 +269,7 @@ export const queryGetExerciseTrackingAndStats = async (
                   'id', pr.id,
                   'exercise_id', pr.exercise_id,
                   'exercisetosplit_id', pr.exercisetosplit_id,
-                  'workoutdate', to_char(pr.workoutdate::date, 'YYYY-MM-DD'),
+                  'workout_time_utc', to_char(pr.workout_time_utc AT TIME ZONE ${tz}, 'YYYY-MM-DD'),
                   'exercise', pr.exercise,
                   'weight', pr.weight,
                   'reps', pr.reps
@@ -291,7 +291,7 @@ export const queryGetExerciseTrackingAndStats = async (
               'exercise',    pr.exercise,
               'weight',      pr.weight,
               'reps',        pr.reps,
-              'workoutdate', to_char(pr.workoutdate::date, 'YYYY-MM-DD')
+              'workout_time_utc', to_char(pr.workout_time_utc AT TIME ZONE ${tz}, 'YYYY-MM-DD')
             )
             FROM prs pr
             WHERE pr.user_id = ${userId}
