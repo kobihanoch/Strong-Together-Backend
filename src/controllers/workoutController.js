@@ -51,7 +51,8 @@ export const getWorkoutPlanData = async (userId, fromCache = true) => {
 export const getExerciseTrackingData = async (
   userId,
   days = 45,
-  fromCache = true
+  fromCache = true,
+  tz
 ) => {
   const key = buildTrackingKeyStable(userId, days);
   if (fromCache) {
@@ -61,7 +62,7 @@ export const getExerciseTrackingData = async (
     }
   }
 
-  const rows = await queryGetExerciseTrackingAndStats(userId, days);
+  const rows = await queryGetExerciseTrackingAndStats(userId, days, tz);
   const payload = rows[0];
   await cacheSetJSON(key, payload, TTL_TRACKING);
   return { payload, cacheHit: false };
@@ -86,7 +87,14 @@ export const getWholeUserWorkoutPlan = async (req, res) => {
 // @access  Private
 export const getExerciseTracking = async (req, res) => {
   const userId = req.user.id;
-  const { payload, cacheHit } = await getExerciseTrackingData(userId, 45);
+  const tz = req.query.tz;
+
+  const { payload, cacheHit } = await getExerciseTrackingData(
+    userId,
+    45,
+    true,
+    tz
+  );
   res.set("X-Cache", cacheHit ? "HIT" : "MISS");
   return res.status(200).json(payload);
 };
@@ -96,6 +104,8 @@ export const getExerciseTracking = async (req, res) => {
 // @access  Private
 export const finishUserWorkout = async (req, res) => {
   const workoutArray = req.body.workout;
+  const tz = req.body.tz;
+
   if (!Array.isArray(workoutArray) || workoutArray.length === 0) {
     throw createError(400, "Not a valid workout");
   }
@@ -106,7 +116,7 @@ export const finishUserWorkout = async (req, res) => {
   //const trackingKey = buildTrackingKeyStable(userId, 45);
   //await cacheDeleteKey(trackingKey);
 
-  const { payload } = await getExerciseTrackingData(userId, 45, false);
+  const { payload } = await getExerciseTrackingData(userId, 45, false, tz);
   await cacheSetJSON(buildTrackingKeyStable(userId, 45), payload, TTL_TRACKING);
 
   sendSystemMessageToUserWorkoutDone(userId);

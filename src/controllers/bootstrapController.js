@@ -12,12 +12,13 @@ import { getUserData } from "./userController.js";
 // @access  Private
 export const getBootstrapData = async (req, res) => {
   const userId = req.user.id;
+  const tz = req.query.tz;
 
   // Run all in parallel using the pure helpers
   const [ud, wp, et, msg, aer] = await Promise.all([
     getUserData(userId),
     getWorkoutPlanData(userId),
-    getExerciseTrackingData(userId, 45),
+    getExerciseTrackingData(userId, 45, true, tz),
     getAllMessagesData(userId),
     getAerobicsData(userId, 45),
   ]);

@@ -111,188 +111,200 @@ export const queryGetWorkoutSplitsObj = async (workoutId) => {
  * @param {number} userId - authenticated user's id
  * @param {number} days   - how many recent days to include (default 45)
  */
-export const queryGetExerciseTrackingAndStats = async (userId, days = 45) => {
+export const queryGetExerciseTrackingAndStats = async (
+  userId,
+  days = 45,
+  tz = "Asia/Jerusalem"
+) => {
   return sql`
-    WITH filtered AS (
-      SELECT workoutdate, exercisetosplit_id, weight, reps, notes, exercise_id, splitname, exercise, workoutsplit_id
-      FROM public.v_exercisetracking_expanded
-      WHERE user_id = ${userId}::uuid
-    ),
-    unique_days AS (
-      SELECT COUNT(DISTINCT workoutdate) AS unique_days FROM filtered
-    ),
-    split_counts AS (
-      SELECT splitname, COUNT(DISTINCT workoutdate) AS days_count
-      FROM filtered
+  WITH
+  params AS (
+    SELECT
+      ${userId}::uuid AS user_id,
+      ${days}::int    AS days,
+      COALESCE(NULLIF(${tz}, ''), 'Asia/Jerusalem')::text AS tz -- default for backward compatibility
+  ),
+  bounds AS (
+  SELECT
+    ((now() AT TIME ZONE p.tz)::date - p.days)::timestamp AT TIME ZONE p.tz AS start_utc,
+    now() AS end_utc,
+    p.user_id,
+    p.tz
+  FROM params p
+  ),
+  filtered AS (
+    -- Pull rows for the user within the UTC window; compute local day once
+    SELECT
+      et.workout_time_utc,
+      (et.workout_time_utc AT TIME ZONE b.tz)::date AS local_day,
+      et.exercisetosplit_id,
+      et.weight,
+      et.reps,
+      et.notes,
+      et.exercise_id,
+      et.splitname,
+      et.exercise,
+      et.workoutsplit_id
+    FROM public.v_exercisetracking_expanded et
+    JOIN bounds b ON TRUE
+    WHERE et.user_id = b.user_id
+      AND et.workout_time_utc >= b.start_utc
+      AND et.workout_time_utc <  b.end_utc
+  ),
+  unique_days AS (
+    SELECT COUNT(DISTINCT local_day) AS unique_days FROM filtered
+  ),
+  split_counts AS (
+    SELECT splitname, COUNT(DISTINCT local_day) AS days_count
+    FROM filtered
+    WHERE splitname IS NOT NULL
+    GROUP BY splitname
+  ),
+  split_counts_obj AS (
+    SELECT jsonb_object_agg(splitname, days_count) AS split_days_map FROM split_counts
+  ),
+  top_split AS (
+    SELECT splitname AS most_frequent_split, days_count AS most_frequent_split_days
+    FROM split_counts
+    ORDER BY days_count DESC, splitname ASC
+    LIMIT 1
+  ),
+  split_counts_by_id AS (
+    SELECT splitname, workoutsplit_id, COUNT(DISTINCT local_day) AS days_count
+    FROM filtered
+    WHERE workoutsplit_id IS NOT NULL
+    GROUP BY splitname, workoutsplit_id
+  ),
+  last_workout AS (
+    SELECT MAX(local_day) AS last_workout_date FROM filtered
+  ),
+
+  -- Precomputed PRs as before (kept intact for output compatibility)
+  prs AS (
+    SELECT * FROM public.v_prs WHERE user_id = ${userId}
+  ),
+
+  -- Recent rows for maps (keyed by local YYYY-MM-DD string)
+  recent_rows AS (
+    SELECT
+      f.exercise,
+      f.exercise_id,
+      f.exercisetosplit_id,
+      f.splitname,
+      f.weight,
+      f.reps,
+      f.notes,
+      to_char(f.local_day, 'YYYY-MM-DD') AS workoutdate,
+      ews.order_index AS order_idx,
+      jsonb_build_object(
+        'sets', ews.sets,
+        'exercises', jsonb_build_object(
+          'targetmuscle', ex.targetmuscle,
+          'specifictargetmuscle', ex.specifictargetmuscle
+        )
+      ) AS exercisetoworkoutsplit
+    FROM filtered f
+    LEFT JOIN public.v_exercisetoworkoutsplit_expanded ews ON ews.id = f.exercisetosplit_id
+    LEFT JOIN public.exercises ex ON ex.id = ews.exercise_id
+  ),
+
+  by_date_map AS (
+    SELECT jsonb_object_agg(workoutdate, items ORDER BY workoutdate DESC) AS by_date
+    FROM (
+      SELECT
+        workoutdate,
+        json_agg(to_jsonb(r) - 'order_idx'
+                ORDER BY order_idx ASC, exercisetosplit_id ASC, exercise_id ASC) AS items
+      FROM recent_rows r
+      GROUP BY workoutdate
+    ) x
+  ),
+  by_ets_map AS (
+    SELECT jsonb_object_agg(exercisetosplit_id, items) AS by_etsid
+    FROM (
+      SELECT
+        exercisetosplit_id,
+        json_agg(to_jsonb(r) - 'order_idx'
+                ORDER BY workoutdate DESC) AS items
+      FROM recent_rows r
+      WHERE exercisetosplit_id IS NOT NULL
+      GROUP BY exercisetosplit_id
+    ) x
+  ),
+  by_split_map AS (
+    SELECT jsonb_object_agg(splitname, items) AS by_splitname
+    FROM (
+      SELECT
+        splitname,
+        json_agg(to_jsonb(r) - 'order_idx'
+                ORDER BY workoutdate DESC) AS items
+      FROM recent_rows r
       WHERE splitname IS NOT NULL
       GROUP BY splitname
-    ),
-    split_counts_obj AS (
-      SELECT jsonb_object_agg(splitname, days_count) AS split_days_map FROM split_counts
-    ),
-    top_split AS (
-      SELECT splitname AS most_frequent_split, days_count AS most_frequent_split_days
-      FROM split_counts
-      ORDER BY days_count DESC, splitname ASC
-      LIMIT 1
-    ),
-    split_counts_by_id AS (
-      SELECT splitname, workoutsplit_id, COUNT(DISTINCT workoutdate) AS days_count
-      FROM filtered
-      WHERE workoutsplit_id IS NOT NULL
-      GROUP BY splitname, workoutsplit_id
-    ),
-    /*top_split_id AS (
-      SELECT scbi.workoutsplit_id AS most_frequent_split_id
-      FROM split_counts_by_id scbi
-      JOIN top_split ts ON ts.most_frequent_split = scbi.splitname
-      ORDER BY scbi.days_count DESC, scbi.workoutsplit_id ASC
-      LIMIT 1
-    ),*/
-    /*trained_today AS (
-      SELECT EXISTS (SELECT 1 FROM filtered WHERE workoutdate = CURRENT_DATE) AS has_trained_today
-    ),*/
-    last_workout AS (
-      SELECT MAX(workoutdate) AS last_workout_date FROM filtered
-    ),
-    -- Pull precomputed PR rows (one per exercise_id) for this user
-    prs AS (
-      SELECT * FROM public.v_prs WHERE user_id = ${userId}
-    ),
-    -- Recent rows for maps (last N days)
-    recent_rows AS (
-      SELECT
-        /*et.id,*/
-        /*et.user_id,*/
-        et.exercise,
-        et.exercise_id,
-        et.exercisetosplit_id,
-        et.splitname,
-        /*et.workoutsplit_id,*/
-        et.weight,
-        et.reps,
-        et.notes,
-        to_char(et.workoutdate::date, 'YYYY-MM-DD') AS workoutdate,
-        ews.order_index AS order_idx,
-        /* Rename to match frontend key */
-            jsonb_build_object(
-              'sets', ews.sets,
-              'exercises', jsonb_build_object(
-                'targetmuscle', ex.targetmuscle,
-                'specifictargetmuscle', ex.specifictargetmuscle
-              )
-          ) AS exercisetoworkoutsplit
-      FROM filtered et
-      LEFT JOIN public.v_exercisetoworkoutsplit_expanded ews ON ews.id = et.exercisetosplit_id
-      LEFT JOIN public.exercises ex ON ex.id = ews.exercise_id
-      WHERE et.workoutdate >= (CURRENT_DATE - ${days}::int)
-    ),
-    by_date_map AS (
-      SELECT jsonb_object_agg(workoutdate, items ORDER BY workoutdate DESC) AS by_date
-      FROM (
-        SELECT
-          workoutdate,
-          json_agg(to_jsonb(r) - 'order_idx'
-                   ORDER BY order_idx ASC, exercisetosplit_id ASC, exercise_id ASC) AS items
-        FROM recent_rows r
-        GROUP BY workoutdate
-      ) x
-    ),
-    by_ets_map AS (
-      SELECT jsonb_object_agg(exercisetosplit_id, items) AS by_etsid
-      FROM (
-        SELECT
-          exercisetosplit_id,
-          json_agg(to_jsonb(r) - 'order_idx'
-                   ORDER BY workoutdate DESC) AS items
-        FROM recent_rows r
-        WHERE exercisetosplit_id IS NOT NULL
-        GROUP BY exercisetosplit_id
-      ) x
-    ),
-    by_split_map AS (
-      SELECT jsonb_object_agg(splitname, items) AS by_splitname
-      FROM (
-        SELECT
-          splitname,
-          json_agg(to_jsonb(r) - 'order_idx'
-                   ORDER BY workoutdate DESC) AS items
-        FROM recent_rows r
-        WHERE splitname IS NOT NULL
-        GROUP BY splitname
-      ) x
-    )
-    SELECT
-      json_build_object(
-        'unique_days', u.unique_days,
-        'most_frequent_split', ts.most_frequent_split,
-        'most_frequent_split_days', ts.most_frequent_split_days,
-        /*'most_frequent_split_id', tsi.most_frequent_split_id,*/
-        /*'hasTrainedToday', tt.has_trained_today,*/
-        'lastWorkoutDate', to_char(lw.last_workout_date, 'YYYY-MM-DD'),
-        'splitDaysByName', COALESCE(sco.split_days_map, '{}'::jsonb)::json,
-        -- PR payload under exerciseTrackingAnalysis.prs
-        'prs', json_build_object(
-          -- Map: { [exercise_id]: PR data }
-          'pr_map_exercise_id',
-            COALESCE((
-              SELECT jsonb_object_agg(ex_id, item)
-              FROM (
-                -- Pick the best PR per exercise_id
-                -- Tie-breaker: weight DESC, reps DESC, workoutdate DESC, id DESC
-                SELECT DISTINCT ON (pr.exercise_id)
-                  pr.exercise_id AS ex_id,
-                  jsonb_build_object(
-                    'id', pr.id,
-                    /*'user_id', pr.user_id,*/
-                    'exercise_id', pr.exercise_id,
-                    'exercisetosplit_id', pr.exercisetosplit_id,
-                    'workoutdate', to_char(pr.workoutdate::date, 'YYYY-MM-DD'),
-                    'exercise', pr.exercise,
-                    'weight', pr.weight,
-                    'reps', pr.reps
-                  ) AS item
-                FROM prs pr
-                WHERE pr.exercise_id IS NOT NULL
-                AND pr.user_id = ${userId}
-                ORDER BY
-                  pr.exercise_id,
-                  pr.weight      DESC,
-                  pr.reps        DESC,
-                  pr.workoutdate DESC,
-                  pr.id          DESC
-              ) t
-            ), '{}'::jsonb),
-          -- Global max PR chosen from PRs (weight -> reps -> date -> id)
-          'pr_max',
-            COALESCE((
-              SELECT json_build_object(
-                'exercise',    pr.exercise,
-                'weight',      pr.weight,
-                'reps',        pr.reps,
-                'workoutdate', to_char(pr.workoutdate::date, 'YYYY-MM-DD')
-              )
+    ) x
+  )
+
+  SELECT
+    json_build_object(
+      'unique_days', u.unique_days,
+      'most_frequent_split', ts.most_frequent_split,
+      'most_frequent_split_days', ts.most_frequent_split_days,
+      'lastWorkoutDate', to_char(lw.last_workout_date, 'YYYY-MM-DD'),
+      'splitDaysByName', COALESCE(sco.split_days_map, '{}'::jsonb)::json,
+      'prs', json_build_object(
+        'pr_map_exercise_id',
+          COALESCE((
+            SELECT jsonb_object_agg(ex_id, item)
+            FROM (
+              SELECT DISTINCT ON (pr.exercise_id)
+                pr.exercise_id AS ex_id,
+                jsonb_build_object(
+                  'id', pr.id,
+                  'exercise_id', pr.exercise_id,
+                  'exercisetosplit_id', pr.exercisetosplit_id,
+                  'workoutdate', to_char(pr.workoutdate::date, 'YYYY-MM-DD'),
+                  'exercise', pr.exercise,
+                  'weight', pr.weight,
+                  'reps', pr.reps
+                ) AS item
               FROM prs pr
-              WHERE pr.user_id = ${userId}
-              ORDER BY pr.weight DESC, pr.reps DESC, pr.workoutdate DESC, pr.id DESC
-              LIMIT 1
-            ), NULL)
-        )
-      ) AS "exerciseTrackingAnalysis",
-      json_build_object(
-        'byDate',      COALESCE(bdm.by_date, '{}'::jsonb),
-        'byETSId',     COALESCE(bem.by_etsid, '{}'::jsonb),
-        'bySplitName', COALESCE(bsm.by_splitname, '{}'::jsonb)
-      ) AS "exerciseTrackingMaps"
-    FROM unique_days u
-    LEFT JOIN top_split ts         ON TRUE
-    /*LEFT JOIN top_split_id tsi     ON TRUE*/
-    /*LEFT JOIN trained_today tt     ON TRUE*/
-    LEFT JOIN last_workout lw      ON TRUE
-    LEFT JOIN split_counts_obj sco ON TRUE
-    LEFT JOIN by_date_map  bdm     ON TRUE
-    LEFT JOIN by_ets_map   bem     ON TRUE
-    LEFT JOIN by_split_map bsm     ON TRUE;
+              WHERE pr.exercise_id IS NOT NULL
+                AND pr.user_id = ${userId}
+              ORDER BY
+                pr.exercise_id,
+                pr.weight      DESC,
+                pr.reps        DESC,
+                pr.workoutdate DESC,
+                pr.id          DESC
+            ) t
+          ), '{}'::jsonb),
+        'pr_max',
+          COALESCE((
+            SELECT json_build_object(
+              'exercise',    pr.exercise,
+              'weight',      pr.weight,
+              'reps',        pr.reps,
+              'workoutdate', to_char(pr.workoutdate::date, 'YYYY-MM-DD')
+            )
+            FROM prs pr
+            WHERE pr.user_id = ${userId}
+            ORDER BY pr.weight DESC, pr.reps DESC, pr.workoutdate DESC, pr.id DESC
+            LIMIT 1
+          ), NULL)
+      )
+    ) AS "exerciseTrackingAnalysis",
+    json_build_object(
+      'byDate',      COALESCE(bdm.by_date, '{}'::jsonb),
+      'byETSId',     COALESCE(bem.by_etsid, '{}'::jsonb),
+      'bySplitName', COALESCE(bsm.by_splitname, '{}'::jsonb)
+    ) AS "exerciseTrackingMaps"
+  FROM unique_days u
+  LEFT JOIN top_split ts         ON TRUE
+  LEFT JOIN last_workout lw      ON TRUE
+  LEFT JOIN split_counts_obj sco ON TRUE
+  LEFT JOIN by_date_map  bdm     ON TRUE
+  LEFT JOIN by_ets_map   bem     ON TRUE
+  LEFT JOIN by_split_map bsm     ON TRUE;
   `;
 };
 
