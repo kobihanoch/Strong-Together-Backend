@@ -51,3 +51,26 @@ export const decodeAccessToken = (accessToken) => {
     return null;
   }
 };
+
+export const decodeVerifyToken = (verifyToken) => {
+  let decoded;
+  try {
+    decoded = jwt.verify(verifyToken, process.env.JWT_VERIFY_SECRET);
+    return decoded;
+  } catch {
+    return null;
+  }
+};
+
+export const decodeForgotPasswordToken = (forgotPasswordToken) => {
+  let decoded;
+  try {
+    decoded = jwt.verify(
+      forgotPasswordToken,
+      process.env.JWT_FORGOT_PASSWORD_SECRET
+    );
+    return decoded;
+  } catch {
+    return null;
+  }
+};

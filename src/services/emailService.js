@@ -1,0 +1,42 @@
+import { sendMail } from "../config/mailer.js";
+import {
+  generateForgotPasswordEmail,
+  generateValidateUserEmail,
+} from "../templates/emailTemplates.js";
+import jwt from "jsonwebtoken";
+
+const base = "http://10.0.0.32:5000"; //process.env.PUBLIC_BASE_URL
+
+export const sendVerificationEmail = async (email, userId, fullName) => {
+  const token = jwt.sign(
+    { sub: userId, typ: "email-verify" }, // payload
+    process.env.JWT_VERIFY_SECRET, // strong secret in env
+    { expiresIn: "1h", issuer: "strong-together" } // claims
+  );
+  const verifyUrl = `${base}/api/auth/verify?token=${encodeURIComponent(
+    token
+  )}`;
+  const html = generateValidateUserEmail({
+    fullName,
+    verifyUrl,
+    logoUrl: `https://github.com/user-attachments/assets/b30f6b34-859c-4884-9ef0-6b196497356d`,
+  });
+  await sendMail({ to: email, subject: "Verify your email", html });
+};
+
+export const sendForgotPasswordEmail = async (email, userId, fullName) => {
+  const token = jwt.sign(
+    { sub: userId, typ: "forgot-pass" }, // payload
+    process.env.JWT_FORGOT_PASSWORD_SECRET, // strong secret in env
+    { expiresIn: "5m", issuer: "strong-together" } // claims
+  );
+  const changePasswordUrl = `https://kobihanoch.github.io/strongtogether-privacy/reset-password?token=${encodeURIComponent(
+    token
+  )}`;
+  const html = generateForgotPasswordEmail({
+    fullName,
+    changePasswordUrl,
+    logoUrl: `https://github.com/user-attachments/assets/b30f6b34-859c-4884-9ef0-6b196497356d`,
+  });
+  await sendMail({ to: email, subject: "Reset your password", html });
+};
