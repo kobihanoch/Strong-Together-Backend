@@ -6,24 +6,12 @@ import {
 } from "../queries/messageQueries.js";
 
 /** Pure helper (no req/res) */
-export const getAllMessagesData = async (userId) => {
+export const getAllMessagesData = async (userId, tz = "Asia/Jerusalem") => {
   // Get messages
-  const rows = await queryAllUserMessages(userId); // Fetches sender profile pic path also
-  const sendersMap = new Map();
-  rows.forEach((msg) => {
-    if (!sendersMap.has(msg.sender_id)) {
-      sendersMap.set(msg.sender_id, {
-        sender_id: msg.sender_id,
-        sender_username: msg.sender_username,
-        sender_full_name: msg.sender_full_name,
-        sender_profile_image_url: msg.sender_profile_image_url,
-        sender_gender: msg.sender_gender,
-      });
-    }
-  });
+  const rows = await queryAllUserMessages(userId, tz); // Fetches sender profile pic path also
 
   return {
-    payload: { messages: rows, senders: Array.from(sendersMap.values()) },
+    payload: { messages: rows },
   };
 };
 
@@ -31,8 +19,9 @@ export const getAllMessagesData = async (userId) => {
 // @route   GET /api/messages/getmessages
 // @access  Private
 export const getAllUserMessages = async (req, res) => {
+  const tz = req.query.tz;
   // Get messages
-  const { payload } = await getAllMessagesData(req.user.id);
+  const { payload } = await getAllMessagesData(req.user.id, tz);
   return res.status(200).json(payload);
 };
 

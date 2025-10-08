@@ -25,7 +25,7 @@ export const createIOServer = (app) => {
 
 export const startSocket = async () => {
   io.on("connection", (socket) => {
-    console.log("New connection:", Date());
+    //console.log("New connection:", Date());
 
     socket.on("user_loggedin", (userId) => {
       socket.join(String(userId));

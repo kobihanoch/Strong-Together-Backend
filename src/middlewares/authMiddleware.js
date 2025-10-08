@@ -23,11 +23,18 @@ export const protect = async (req, res, next) => {
     }
 
     // Fetch user id and role
-    const [user] = await sql`SELECT id, role FROM users WHERE id=${decoded.id}`;
+    const [user] =
+      await sql`SELECT id, role, is_verified FROM users WHERE id=${decoded.id}`;
 
     // If user not found
     if (!user) {
       return res.status(401).json({ message: "User not found" });
+    }
+
+    if (!user?.is_verified) {
+      return res
+        .status(401)
+        .json({ message: "A validation email is pending." });
     }
 
     // Inject to request

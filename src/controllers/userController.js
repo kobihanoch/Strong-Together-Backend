@@ -1,26 +1,26 @@
 // src/controllers/userController.js
 import bcrypt from "bcryptjs";
-import createError from "http-errors";
-import {
-  queryUserExistsByUsernameOrEmail,
-  queryInsertUser,
-  queryAuthenticatedUserById,
-  queryUsernameOrEmailConflict,
-  queryUpdateAuthenticatedUser,
-  queryDeleteUserById,
-  queryUserUsernamePicAndName,
-  queryGetUserProfilePicURL,
-  queryUpdateUserProfilePicURL,
-} from "../queries/userQueries.js";
-import sql from "../config/db.js";
 import { Expo } from "expo-server-sdk";
+import createError from "http-errors";
+import mime from "mime";
+import path from "path";
+import sql from "../config/db.js";
+import {
+  queryAuthenticatedUserById,
+  queryDeleteUserById,
+  queryGetUserProfilePicURL,
+  queryInsertUser,
+  queryUpdateAuthenticatedUser,
+  queryUpdateUserProfilePicURL,
+  queryUserExistsByUsernameOrEmail,
+  queryUsernameOrEmailConflict,
+} from "../queries/userQueries.js";
+import { sendVerificationEmail } from "../services/emailService.js";
 import {
   deleteFromSupabase,
   uploadBufferToSupabase,
 } from "../services/supabaseStorageService.js";
 const expo = new Expo();
-import path from "path";
-import mime from "mime";
 
 // ---------- HELPERS -----------------
 export const getUserData = async (userId) => {
@@ -52,6 +52,8 @@ export const createUser = async (req, res) => {
     hash
   );
   const [created] = rowsCreated;
+
+  await sendVerificationEmail(email, created.id, fullName);
 
   res
     .status(201)
