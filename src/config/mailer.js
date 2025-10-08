@@ -10,7 +10,7 @@ export const sendMail = async ({ to, subject, html }) => {
       to,
       subject,
       html,
-      replyTo: "support@auth.kobihanoch.com",
+      reply_to: "support@auth.kobihanoch.com",
     });
     console.log("An email has been sent to", to);
   } catch (err) {

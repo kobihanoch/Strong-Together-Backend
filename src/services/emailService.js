@@ -19,7 +19,7 @@ export const sendVerificationEmail = async (email, userId, fullName) => {
   const html = generateValidateUserEmail({
     fullName,
     verifyUrl,
-    logoUrl: `https://github.com/user-attachments/assets/b30f6b34-859c-4884-9ef0-6b196497356d`,
+    logoUrl: `https://portfolio.kobihanoch.com/images/strongtogethericon.png`,
   });
   await sendMail({ to: email, subject: "Verify your email", html });
 };
@@ -30,13 +30,13 @@ export const sendForgotPasswordEmail = async (email, userId, fullName) => {
     process.env.JWT_FORGOT_PASSWORD_SECRET, // strong secret in env
     { expiresIn: "5m", issuer: "strong-together" } // claims
   );
-  const changePasswordUrl = `https://kobihanoch.github.io/strongtogether-privacy/reset-password?token=${encodeURIComponent(
+  const changePasswordUrl = `https://strongtogether-privacy.kobihanoch.com/reset-password?token=${encodeURIComponent(
     token
   )}`;
   const html = generateForgotPasswordEmail({
     fullName,
     changePasswordUrl,
-    logoUrl: `https://github.com/user-attachments/assets/b30f6b34-859c-4884-9ef0-6b196497356d`,
+    logoUrl: `https://portfolio.kobihanoch.com/images/strongtogethericon.png`,
   });
   await sendMail({ to: email, subject: "Reset your password", html });
 };
