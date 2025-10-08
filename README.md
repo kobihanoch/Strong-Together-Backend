@@ -1,10 +1,11 @@
-# Strong Together Backend (v1.4.2)
+# Strong Together Backend (v1.5.0)
 
 **Strong Together** is a fitness-oriented application.  
 This repository contains the backend server that powers the app.  
 It exposes a REST API for user registration and authentication, workout planning and tracking, messaging, exercises, and push notifications.
 
-The backend is built with **Node.js** and **Express**, uses **PostgreSQL** as its main database, **Redis** for caching, **Socket.IO** for realtime events, **JWT** for authentication, **Zod** for schema validation, and integrates with **Supabase Storage** and the **Expo push notification service**.
+The backend is built with **Node.js** and **Express**, uses **PostgreSQL** as its main database, **Redis** for caching, **Socket.IO** for realtime events, **JWT** for authentication, **Zod** for schema validation, and integrates with **Supabase Storage** and the **Expo push notification service**.  
+It also uses **Resend** for transactional email (account verification & password reset).
 
 The application is containerized with **Docker** and currently deployed on **Render**.  
 Previously, the project used **Supabase Client** directly from the frontend as a BaaS (Backend as a Service).  
@@ -27,6 +28,7 @@ Migrating to this dedicated backend improved performance, introduced server-side
    - [Workouts](#workouts)
    - [Analytics](#analytics)
    - [Bootstrap](#bootstrap)
+   - [Aerobics](#aerobics)
    - [Push Notifications](#push-notifications)
 7. [Database Models & Indexes](#database-models--indexes)
    - [Database Schema](#database-schema)
@@ -49,9 +51,11 @@ Migrating to this dedicated backend improved performance, introduced server-side
 | **Socket.IO**           | WebSockets server used to emit `new_message` events when system or user messages arrive. Clients join a room named after their user ID to receive targeted events.                                                                                             |
 | **Supabase Storage**    | Used for storing user profile pictures. Files are uploaded and retrieved via signed service‑role keys.                                                                                                                                                         |
 | **Expo Push service**   | Sends push notifications to users’ devices. The server exposes an example `/api/push/daily` endpoint that loops over tokens and calls Expo’s API.                                                                                                              |
-| **JWT**                 | Auth with short‑lived access tokens (15 min) and long‑lived refresh tokens (30 days). **Per‑user `tokenVersion` enforces single active device** and prevents stale sessions when the frontend uses SWR. **Note:** a blacklist table exists but is **currently disabled** due to Supabase space limits. |              
+| **Resend (Email)**      | Transactional email for **account verification** and **password reset** flows.                                                                                                                                                                                 |
+| **JWT**                 | Auth with short‑lived access tokens (15 min) and long‑lived refresh tokens (30 days). **Per‑user `tokenVersion` enforces single active device** and prevents stale sessions when the frontend uses SWR. **Note:** a blacklist table exists but is **currently disabled** due to Supabase space limits. |
 | **Docker & Compose**    | Dockerfile produces Node 20 image, `docker-compose.yml` maps port 5000 to host.                                                                                                                                                                                |
-| **Render Deployment**   | The backend is deployed on Render for hosting and scaling.        |                                                                                                                                                                              
+| **Render Deployment**   | The backend is deployed on Render for hosting and scaling.                                                                                                                                                                                                     |
+
 ---
 
 ## Project Structure
@@ -86,7 +90,6 @@ src/
 | **validateRequest**                 | Validates `req.body` with Zod schemas.                             |
 | **uploadImage**                     | Handles multipart uploads (images ≤10 MB, only JPEG/JPG/PNG/WebP). |
 | **errorHandler**                    | Central error handler with JSON responses.                         |
-
 
 **Other Security Measures:**
 
@@ -154,24 +157,33 @@ docker compose up --build
 Base path: `/api`  
 Health: `/health` returns server status.
 
+> **Timezone note (`tz`)**: several endpoints accept a `tz` query parameter (IANA zone string, e.g., `Asia/Jerusalem`) to compute day boundaries server‑side.
+
 ### Authentication
 
-| Method | Endpoint        | Auth? | Body                                        | Description                                                                        |
-| ------ | --------------- | ----- | ------------------------------------------- | ---------------------------------------------------------------------------------- |
-| POST   | `/auth/login`   | No    | `{ username, password }`                    | Login, returns user + access/refresh tokens. Sends welcome message if first login. |
-| POST   | `/auth/refresh` | No    | Header `x-refresh-token`                    | Sliding sessions: refresh token rotation.                                          |
-| POST   | `/auth/logout`  | Yes   | Headers: `Authorization`, `x-refresh-token` | Blacklists tokens, clears push token.                                              |
+| Method | Endpoint                          | Auth? | Body / Query                                                  | Description                                                                                   |
+| ------ | --------------------------------- | ----- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| POST   | `/auth/login`                     | No    | `{ identifier, password }`                                    | Login by username **or** email. Returns `accessToken`, `refreshToken`, and `user` ID.         |
+| POST   | `/auth/refresh`                   | No    | Header `x-refresh-token` (or cookie/body via `getRefreshToken`)| Rotates session: issues fresh access/refresh if `tokenVersion` matches.                       |
+| POST   | `/auth/logout`                    | No    | Header/body `x-refresh-token`                                 | Clears Expo push token for the user. (Blacklist storage disabled due to space limits.)        |
+| GET    | `/auth/verify`                    | No    | Query `?token=...`                                            | Verifies account from email link and returns an HTML confirmation page.                       |
+| POST   | `/auth/sendverificationemail`     | No    | `{ email }`                                                   | Sends a verification email (via Resend). `204 No Content` on success.                         |
+| PUT    | `/auth/changeemailverify`         | No    | `{ username, password, newEmail }`                            | Updates email **before** verification and resends a verification email (via Resend).          |
+| GET    | `/auth/checkuserverify`           | No    | Query `?username=...`                                         | Returns `{ isVerified: boolean }`.                                                            |
+| POST   | `/auth/forgotpassemail`           | No    | `{ identifier }`                                              | Sends password‑reset email (via Resend). `204 No Content` regardless of user existence.       |
+| PUT    | `/auth/resetpassword`             | No    | Query `?token=...`, Body `{ newPassword }`                    | Resets password using token issued by forgot‑password flow.                                   |
 
 ### Users
 
-| Method | Endpoint                  | Auth? | Body                                              | Description                                 |
-| ------ | ------------------------- | ----- | ------------------------------------------------- | ------------------------------------------- |
-| POST   | `/users/create`           | No    | `{ username, fullName, email, password, gender }` | Register new user.                          |
-| GET    | `/users/get`              | Yes   | —                                                 | Get profile.                                |
-| PUT    | `/users/update`           | Yes   | Optional fields                                   | Update user info.                           |
-| PUT    | `/users/pushtoken`        | Yes   | `{ token }`                                       | Save Expo push token.                       |
-| PUT    | `/users/setprofilepic`    | Yes   | multipart `file`                                  | Upload new profile pic. Stored in Supabase. |
-| DELETE | `/users/deleteprofilepic` | Yes   | `{ path }`                                        | Delete profile pic from Supabase.           |
+| Method | Endpoint                  | Auth? | Body / Params                                        | Description                                                                 |
+| ------ | ------------------------- | ----- | ---------------------------------------------------- | --------------------------------------------------------------------------- |
+| POST   | `/users/create`           | No    | `{ username, fullName, email, password, gender }`    | Register new user. Sends verification email (Resend).                       |
+| GET    | `/users/get`              | Yes   | —                                                    | Get authenticated user profile (aggregated JSON).                           |
+| PUT    | `/users/updateself`       | Yes   | Any of: `username, fullName, email, gender, password, profileImgUrl, pushToken` | Update authenticated user; handles uniqueness checks and password hashing. |
+| DELETE | `/users/deleteself`       | Yes   | —                                                    | Delete own account.                                                         |
+| PUT    | `/users/pushtoken`        | Yes   | `{ token }`                                          | Save Expo push token.                                                       |
+| PUT    | `/users/setprofilepic`    | Yes   | multipart `file`                                     | Upload a new profile picture to Supabase Storage.                           |
+| DELETE | `/users/deleteprofilepic` | Yes   | `{ path }`                                           | Delete profile picture from Supabase & clear from user profile.             |
 
 ### Exercises
 
@@ -181,34 +193,40 @@ Health: `/health` returns server status.
 
 ### Messages
 
-| Method | Endpoint                   | Auth? | Params/Body | Description           |
-| ------ | -------------------------- | ----- | ----------- | --------------------- |
-| GET    | `/messages/getmessages`    | Yes   | —           | Get inbox messages.   |
-| PUT    | `/messages/markasread/:id` | Yes   | URL `id`    | Mark message as read. |
-| DELETE | `/messages/delete/:id`     | Yes   | URL `id`    | Delete message.       |
+| Method | Endpoint                         | Auth? | Body / Params | Description                                   |
+| ------ | -------------------------------- | ----- | ------------- | --------------------------------------------- |
+| GET    | `/messages/getmessages`          | Yes   | Optional `?tz=` | Get inbox messages (sender pics resolved).   |
+| PUT    | `/messages/markmasread/:id`      | Yes   | URL `id`      | Mark a message as read.                        |
+| DELETE | `/messages/delete/:id`           | Yes   | URL `id`      | Delete a message.                              |
 
 ### Workouts
 
-| Method | Endpoint                  | Auth? | Body                            | Description                             |
-| ------ | ------------------------- | ----- | ------------------------------- | --------------------------------------- |
-| GET    | `/workouts/getworkout`    | Yes   | —                               | Get active workout plan (cached).       |
-| GET    | `/workouts/gettracking`   | Yes   | —                               | Get 45‑day exercise analytics (cached). |
-| POST   | `/workouts/finishworkout` | Yes   | Array `workout`                 | Save completed workout.                 |
-| DELETE | `/workouts/delete`        | Yes   | —                               | Delete workout plan.                    |
-| POST   | `/workouts/add`           | Yes   | `{ workoutData, workoutName? }` | Create new workout plan.                |
+| Method | Endpoint                    | Auth? | Body / Query                                 | Description                                                                 |
+| ------ | --------------------------- | ----- | -------------------------------------------- | --------------------------------------------------------------------------- |
+| GET    | `/workouts/getworkout`      | Yes   | Optional `?tz=`                              | Get active workout plan (cached).                                           |
+| GET    | `/workouts/gettracking`     | Yes   | Optional `?tz=`                              | Get 45‑day exercise analytics (cached).                                     |
+| POST   | `/workouts/finishworkout`   | Yes   | `{ workout: Array, tz }`                     | Save completed workout; warms tracking cache and sends a system message.    |
+| POST   | `/workouts/add`             | Yes   | `{ workoutData, workoutName?, tz }`          | Create a new workout plan; invalidates/warm‑caches plan + analytics.        |
+| DELETE | `/workouts/delete`          | Yes   | —                                            | **Temporarily disabled** (no‑op in controller).                              |
 
 ### Analytics
 
-| Method | Endpoint       | Auth? | Description            |
-| ------ | -------------- | ----- | ---------------------- |
-| GET    | `/analytics/get` | Yes  | Returns user analytics |
+| Method | Endpoint            | Auth? | Description                                  |
+| ------ | ------------------- | ----- | -------------------------------------------- |
+| GET    | `/analytics/get`    | Yes   | Returns `{ _1RM, goals }` (Redis‑cached).    |
 
 ### Bootstrap
 
-| Method | Endpoint        | Auth? | Description                                                                                         |
-| ------ | --------------- | ----- | --------------------------------------------------------------------------------------------------- |
-| GET    | `/bootstrap/get`| Yes   | Returns a bundled payload: `{ user, workout, tracking, aerobics, messages }` (tracking window 45d). |
+| Method | Endpoint          | Auth? | Query / Body | Description                                                                                         |
+| ------ | ----------------- | ----- | ------------ | --------------------------------------------------------------------------------------------------- |
+| POST   | `/bootstrap/get`  | Yes   | Optional `?tz=` | Returns bundled payload: `{ user, workout, tracking, aerobics, messages }` (tracking window 45d). |
 
+### Aerobics
+
+| Method | Endpoint            | Auth? | Body / Query                 | Description                                                         |
+| ------ | ------------------- | ----- | ---------------------------- | ------------------------------------------------------------------- |
+| GET    | `/aerobics/get`     | Yes   | Optional `?tz=`              | Returns user's aerobic sessions map for the last 45 days (cached).  |
+| POST   | `/aerobics/add`     | Yes   | `{ record, tz }`             | Adds an aerobic record and returns the refreshed 45‑day payload.    |
 
 ### Push Notifications
 
