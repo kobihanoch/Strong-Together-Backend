@@ -16,6 +16,7 @@ import pushRoutes from "./routes/pushRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import workoutRoutes from "./routes/workoutRoutes.js";
 import cors from "cors";
+import { checkAppVersion } from "./middlewares/checkAppVersion.js";
 
 // RESOURECES CONNECTIONS AND GENERAL CONFIGURATIONS  ------------------------------------------
 dotenv.config();
@@ -65,9 +66,14 @@ app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
 // API ROUTES --------------------------------------------------------------------------------------------------
 
 app.use((req, res, next) => {
-  console.log(`[${req.method}] ${req.originalUrl}`);
+  console.log(
+    `[${req.headers["x-username"] ?? null}] ${req.method}:${req.originalUrl}`
+  );
   next();
 });
+
+// Check app version middleware
+app.use(checkAppVersion);
 
 // Users
 app.use("/api/users", userRoutes);

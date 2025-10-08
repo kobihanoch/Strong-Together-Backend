@@ -5,7 +5,7 @@ import {
 } from "../templates/emailTemplates.js";
 import jwt from "jsonwebtoken";
 
-const base = "http://10.0.0.32:5000"; //process.env.PUBLIC_BASE_URL
+const base = process.env.PUBLIC_BASE_URL;
 
 export const sendVerificationEmail = async (email, userId, fullName) => {
   const token = jwt.sign(
