@@ -20,7 +20,7 @@ export const getBootstrapData = async (req, res) => {
     getWorkoutPlanData(userId, true, tz),
     getExerciseTrackingData(userId, 45, true, tz),
     getAllMessagesData(userId, tz),
-    getAerobicsData(userId, 45),
+    getAerobicsData(userId, 45, true, tz),
   ]);
 
   return res.status(200).json({
