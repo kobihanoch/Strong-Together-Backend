@@ -13,6 +13,7 @@ import {
   buildPlanKeyStable,
   buildTrackingKeyStable,
   cacheDeleteKey,
+  cacheDeleteOtherTimezones,
   cacheGetJSON,
   cacheSetJSON,
   TTL_PLAN,
@@ -29,8 +30,9 @@ export const getWorkoutPlanData = async (
   fromCache = true,
   tz = "Asia/Jerusalem"
 ) => {
-  const planKey = buildPlanKeyStable(userId);
+  const planKey = buildPlanKeyStable(userId, tz);
   if (fromCache) {
+    await cacheDeleteOtherTimezones(planKey);
     const cached = await cacheGetJSON(planKey);
     if (cached) {
       return { payload: cached, cacheHit: true };
@@ -58,8 +60,9 @@ export const getExerciseTrackingData = async (
   fromCache = true,
   tz
 ) => {
-  const key = buildTrackingKeyStable(userId, days);
+  const key = buildTrackingKeyStable(userId, days, tz);
   if (fromCache) {
+    await cacheDeleteOtherTimezones(key);
     const cached = await cacheGetJSON(key);
     if (cached) {
       return { payload: cached, cacheHit: true };
@@ -122,7 +125,11 @@ export const finishUserWorkout = async (req, res) => {
   //await cacheDeleteKey(trackingKey);
 
   const { payload } = await getExerciseTrackingData(userId, 45, false, tz);
-  await cacheSetJSON(buildTrackingKeyStable(userId, 45), payload, TTL_TRACKING);
+  await cacheSetJSON(
+    buildTrackingKeyStable(userId, 45, tz),
+    payload,
+    TTL_TRACKING
+  );
 
   sendSystemMessageToUserWorkoutDone(userId);
   return res.status(200).json(payload);
@@ -133,14 +140,14 @@ export const finishUserWorkout = async (req, res) => {
 // @access  Private
 export const deleteUserWorkout = async (req, res) => {
   const userId = req.user.id;
-  await queryDeleteUserWorkout(userId);
+  /*await queryDeleteUserWorkout(userId);
 
-  const planKey = buildPlanKeyStable(userId);
+  const planKey = buildPlanKeyStable(userId, tz);
   const analyticsKey = buildAnalyticsKeyStable(userId);
   await cacheDeleteKey(analyticsKey);
   await cacheDeleteKey(planKey);
 
-  return res.status(204).end();
+  return res.status(204).end();*/
 };
 
 // @desc    Add workout
@@ -152,7 +159,7 @@ export const addWorkout = async (req, res) => {
 
   await queryAddWorkout(userId, workoutData, workoutName);
 
-  const planKey = buildPlanKeyStable(userId);
+  const planKey = buildPlanKeyStable(userId, tz);
   const analyticsKey = buildAnalyticsKeyStable(userId);
   await cacheDeleteKey(analyticsKey);
   await cacheDeleteKey(planKey);
@@ -169,7 +176,7 @@ export const addWorkout = async (req, res) => {
   };
 
   await cacheSetJSON(
-    buildPlanKeyStable(userId),
+    buildPlanKeyStable(userId, tz),
     {
       workoutPlan: plan,
       workoutPlanForEditWorkout: splits,

@@ -4,6 +4,7 @@ import {
 } from "../queries/aerobicsQueries.js";
 import {
   buildAerobicsKeyStable,
+  cacheDeleteOtherTimezones,
   cacheGetJSON,
   cacheSetJSON,
   TTL_AEROBICS,
@@ -17,8 +18,9 @@ export const getAerobicsData = async (
   tz = "Asia/Jerusalem"
 ) => {
   // Check for cache
-  const aerobicsKey = buildAerobicsKeyStable(userId, days);
+  const aerobicsKey = buildAerobicsKeyStable(userId, days, tz);
   if (fromCache) {
+    await cacheDeleteOtherTimezones(aerobicsKey);
     const cached = await cacheGetJSON(aerobicsKey);
     if (cached) {
       return { payload: cached, cacheHit: true };
@@ -58,7 +60,7 @@ export const addUserAerobics = async (req, res) => {
   // Insert into cache
   const { payload } = await getAerobicsData(req.user.id, 45, false, tz);
 
-  const aerobicsKey = buildAerobicsKeyStable(req.user.id, 45);
+  const aerobicsKey = buildAerobicsKeyStable(req.user.id, 45, tz);
   await cacheSetJSON(aerobicsKey, payload, TTL_AEROBICS);
   return res.status(201).json(payload);
 };
