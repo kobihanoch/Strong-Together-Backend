@@ -15,13 +15,13 @@ import sql from "../config/db.js";
  *   is_read: true/false
  * }
  */
-export async function queryAllUserMessages(userId) {
+export async function queryAllUserMessages(userId, tz = "Asia/Jerusalem") {
   return sql`
     SELECT 
       m.id AS id,
       m.subject AS subject,
       m.msg AS msg,
-      m.sent_at AS sent_at,
+      m.sent_at AT TIME ZONE ${tz} AS sent_at,
       m.is_read AS is_read,
       u.name AS sender_full_name,
       u.profile_image_url AS sender_profile_image_url

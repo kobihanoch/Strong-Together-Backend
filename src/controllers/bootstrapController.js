@@ -12,14 +12,15 @@ import { getUserData } from "./userController.js";
 // @access  Private
 export const getBootstrapData = async (req, res) => {
   const userId = req.user.id;
+  const tz = req.query.tz || "Asia/Jerusalem";
 
   // Run all in parallel using the pure helpers
   const [ud, wp, et, msg, aer] = await Promise.all([
     getUserData(userId),
-    getWorkoutPlanData(userId),
-    getExerciseTrackingData(userId, 45),
-    getAllMessagesData(userId),
-    getAerobicsData(userId, 45),
+    getWorkoutPlanData(userId, true, tz),
+    getExerciseTrackingData(userId, 45, true, tz),
+    getAllMessagesData(userId, tz),
+    getAerobicsData(userId, 45, true, tz),
   ]);
 
   return res.status(200).json({

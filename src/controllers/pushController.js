@@ -3,7 +3,6 @@ import { sendPushNotification } from "../services/pushService.js";
 
 export const sendDailyPush = async (req, res) => {
   const users = await queryGetAllUsersWithNotificationsEnabled();
-  console.log(users);
   try {
     for (const user of users) {
       await sendPushNotification(
