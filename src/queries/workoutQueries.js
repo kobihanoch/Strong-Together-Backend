@@ -125,22 +125,47 @@ export const queryGetExerciseTrackingAndStats = async (
 ) => {
   return sql`
   WITH
+  /* Normalize inputs (coalesce tz for safety) */
   params AS (
     SELECT
       ${userId}::uuid AS user_id,
       ${days}::int    AS days,
-      COALESCE(NULLIF(${tz}, ''), 'Asia/Jerusalem')::text AS tz -- default for backward compatibility
+      COALESCE(NULLIF(${tz}, ''), 'Asia/Jerusalem')::text AS tz
   ),
+
+  /* Recent-time window boundaries in UTC based on the provided tz */
   bounds AS (
-  SELECT
-    ((now() AT TIME ZONE p.tz)::date - p.days)::timestamp AT TIME ZONE p.tz AS start_utc,
-    now() AS end_utc,
-    p.user_id,
-    p.tz
-  FROM params p
+    SELECT
+      /* Local midnight (today - days) interpreted in tz, converted to UTC */
+      ((now() AT TIME ZONE p.tz)::date - p.days)::timestamp AT TIME ZONE p.tz AS start_utc,
+      now() AS end_utc,
+      p.user_id,
+      p.tz
+    FROM params p
   ),
-  filtered AS (
-    -- Pull rows for the user within the UTC window; compute local day once
+
+  /* --------- ALL-TIME stream (for stats) --------- */
+  all_rows AS (
+    /* All rows for the user; compute local day in the selected tz */
+    SELECT
+      et.workout_time_utc,
+      (et.workout_time_utc AT TIME ZONE p.tz)::date AS local_day,
+      et.exercisetosplit_id,
+      et.weight,
+      et.reps,
+      et.notes,
+      et.exercise_id,
+      et.splitname,
+      et.exercise,
+      et.workoutsplit_id
+    FROM public.v_exercisetracking_expanded et
+    JOIN params p ON TRUE
+    WHERE et.user_id = p.user_id
+  ),
+
+  /* --------- RECENT stream (for maps only) --------- */
+  recent_rows_src AS (
+    /* Only rows within the UTC window; compute local day once */
     SELECT
       et.workout_time_utc,
       (et.workout_time_utc AT TIME ZONE b.tz)::date AS local_day,
@@ -158,12 +183,14 @@ export const queryGetExerciseTrackingAndStats = async (
       AND et.workout_time_utc >= b.start_utc
       AND et.workout_time_utc <  b.end_utc
   ),
+
+  /* --------- ALL-TIME stats --------- */
   unique_days AS (
-    SELECT COUNT(DISTINCT local_day) AS unique_days FROM filtered
+    SELECT COUNT(DISTINCT local_day) AS unique_days FROM all_rows
   ),
   split_counts AS (
     SELECT splitname, COUNT(DISTINCT local_day) AS days_count
-    FROM filtered
+    FROM all_rows
     WHERE splitname IS NOT NULL
     GROUP BY splitname
   ),
@@ -177,21 +204,22 @@ export const queryGetExerciseTrackingAndStats = async (
     LIMIT 1
   ),
   split_counts_by_id AS (
+    /* Kept for parity even if not selected; now uses all-time rows */
     SELECT splitname, workoutsplit_id, COUNT(DISTINCT local_day) AS days_count
-    FROM filtered
+    FROM all_rows
     WHERE workoutsplit_id IS NOT NULL
     GROUP BY splitname, workoutsplit_id
   ),
   last_workout AS (
-    SELECT MAX(local_day) AS last_workout_date FROM filtered
+    SELECT MAX(local_day) AS last_workout_date FROM all_rows
   ),
 
-  -- Precomputed PRs as before (kept intact for output compatibility)
+  /* PRs (already all-time) */
   prs AS (
     SELECT * FROM public.v_prs WHERE user_id = ${userId}
   ),
 
-  -- Recent rows for maps (keyed by local YYYY-MM-DD string)
+  /* --------- MAPS (built from RECENT ONLY) --------- */
   recent_rows AS (
     SELECT
       f.exercise,
@@ -210,7 +238,7 @@ export const queryGetExerciseTrackingAndStats = async (
           'specifictargetmuscle', ex.specifictargetmuscle
         )
       ) AS exercisetoworkoutsplit
-    FROM filtered f
+    FROM recent_rows_src f
     LEFT JOIN public.v_exercisetoworkoutsplit_expanded ews ON ews.id = f.exercisetosplit_id
     LEFT JOIN public.exercises ex ON ex.id = ews.exercise_id
   ),
@@ -221,7 +249,7 @@ export const queryGetExerciseTrackingAndStats = async (
       SELECT
         workoutdate,
         json_agg(to_jsonb(r) - 'order_idx'
-                ORDER BY order_idx ASC, exercisetosplit_id ASC, exercise_id ASC) AS items
+                 ORDER BY order_idx ASC, exercisetosplit_id ASC, exercise_id ASC) AS items
       FROM recent_rows r
       GROUP BY workoutdate
     ) x
@@ -232,7 +260,7 @@ export const queryGetExerciseTrackingAndStats = async (
       SELECT
         exercisetosplit_id,
         json_agg(to_jsonb(r) - 'order_idx'
-                ORDER BY workoutdate DESC) AS items
+                 ORDER BY workoutdate DESC) AS items
       FROM recent_rows r
       WHERE exercisetosplit_id IS NOT NULL
       GROUP BY exercisetosplit_id
@@ -244,7 +272,7 @@ export const queryGetExerciseTrackingAndStats = async (
       SELECT
         splitname,
         json_agg(to_jsonb(r) - 'order_idx'
-                ORDER BY workoutdate DESC) AS items
+                 ORDER BY workoutdate DESC) AS items
       FROM recent_rows r
       WHERE splitname IS NOT NULL
       GROUP BY splitname
@@ -269,7 +297,8 @@ export const queryGetExerciseTrackingAndStats = async (
                   'id', pr.id,
                   'exercise_id', pr.exercise_id,
                   'exercisetosplit_id', pr.exercisetosplit_id,
-                  'workout_time_utc', to_char(pr.workout_time_utc AT TIME ZONE ${tz}, 'YYYY-MM-DD'),
+                  /* Use the coalesced tz from params for safety */
+                  'workout_time_utc', to_char(pr.workout_time_utc AT TIME ZONE (SELECT tz FROM params), 'YYYY-MM-DD'),
                   'exercise', pr.exercise,
                   'weight', pr.weight,
                   'reps', pr.reps
@@ -291,7 +320,7 @@ export const queryGetExerciseTrackingAndStats = async (
               'exercise',    pr.exercise,
               'weight',      pr.weight,
               'reps',        pr.reps,
-              'workout_time_utc', to_char(pr.workout_time_utc AT TIME ZONE ${tz}, 'YYYY-MM-DD')
+              'workout_time_utc', to_char(pr.workout_time_utc AT TIME ZONE (SELECT tz FROM params), 'YYYY-MM-DD')
             )
             FROM prs pr
             WHERE pr.user_id = ${userId}
