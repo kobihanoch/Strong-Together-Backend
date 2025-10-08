@@ -38,7 +38,10 @@ app.use(express.json());
 // For resetting password
 app.use(
   cors({
-    origin: ["https://kobihanoch.github.io"],
+    origin: [
+      "https://kobihanoch.github.io",
+      "https://strongtogether-privacy.kobihanoch.com",
+    ],
     methods: ["POST", "PUT", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: false,
