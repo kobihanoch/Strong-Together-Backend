@@ -21,12 +21,12 @@ export const TTL_ANALYTICS = numFromEnv("CACHE_TTL_ANALYTICS_SEC", 1 * 60 * 60);
 export const TTL_AEROBICS = numFromEnv("CACHE_TTL_AEROBICS_SEC", 48 * 60 * 60); // 48 Hours
 
 // Key builders
-export const buildTrackingKeyStable = (userId, days) =>
-  `${TRACKING_NS}:${userId}:${days}`;
-export const buildPlanKeyStable = (userId) => `${PLAN_NS}:${userId}`;
+export const buildTrackingKeyStable = (userId, days, tz) =>
+  `${TRACKING_NS}:${userId}:${days}:${tz}`;
+export const buildPlanKeyStable = (userId, tz) => `${PLAN_NS}:${userId}:${tz}`;
 export const buildAnalyticsKeyStable = (userId) => `${ANALYTICS_NS}:${userId}`;
-export const buildAerobicsKeyStable = (userId, days) =>
-  `${AEROBICS_NS}:${userId}:${days}`;
+export const buildAerobicsKeyStable = (userId, days, tz) =>
+  `${AEROBICS_NS}:${userId}:${days}:${tz}`;
 
 // --- MINIMAL CHANGE: now reads compressed values, with legacy fallback ---
 export const cacheGetJSON = async (key) => {
@@ -73,5 +73,78 @@ export const cacheDeleteKey = async (key) => {
     }
   } catch {
     // ignore
+  }
+};
+
+// Delets other timezone key
+export const cacheDeleteOtherTimezones = async (currentKey) => {
+  if (!enabled || !redis || !currentKey) return;
+
+  // --- helpers ---
+  // Normalize to string and trim invisible characters
+  const normalizeKey = (k) =>
+    String(k)
+      .normalize("NFC")
+      .replace(/[\u200E\u200F\uFEFF]/g, "")
+      .replace(/\0/g, "")
+      .trim();
+
+  const curr = normalizeKey(currentKey);
+  const lastColon = curr.lastIndexOf(":");
+  if (lastColon === -1) return; // not a base:tz structure
+
+  const base = curr.slice(0, lastColon);
+  const tzToKeep = curr.slice(lastColon + 1);
+  const pattern = `${base}:*`;
+
+  // IANA-like tz (e.g., "Asia/Jerusalem", "America/New_York")
+  const looksLikeTz = (s) =>
+    /^[A-Za-z]+(?:[_-][A-Za-z]+)*(?:\/[A-Za-z]+(?:[_-][A-Za-z]+)*)+$/.test(s);
+
+  const buf = [];
+
+  // Some clients yield a string per iteration; others yield an array (chunk).
+  for await (const chunk of redis.scanIterator({
+    MATCH: pattern,
+    COUNT: 1000,
+  })) {
+    const keys = Array.isArray(chunk) ? chunk : [chunk];
+
+    for (const rawKey of keys) {
+      const k = normalizeKey(rawKey);
+
+      // Never delete the exact current key
+      if (k === curr) continue;
+
+      // Only direct siblings: base:<suffix> (no extra colons)
+      if (!k.startsWith(base + ":")) continue;
+      const tail = k.slice(base.length + 1);
+      if (tail.includes(":")) continue;
+
+      // Only keys that look like tz
+      if (!looksLikeTz(tail)) continue;
+
+      // Never delete the same tz suffix
+      if (tail === tzToKeep) continue;
+
+      // Push the raw key (as string) to the deletion buffer
+      buf.push(String(rawKey));
+
+      if (buf.length >= 500) {
+        try {
+          await redis.unlink(...buf);
+        } catch {
+          await redis.del(...buf);
+        }
+        buf.length = 0;
+      }
+    }
+  }
+  if (buf.length) {
+    try {
+      await redis.unlink(...buf);
+    } catch {
+      await redis.del(...buf);
+    }
   }
 };

@@ -3,12 +3,11 @@ import { sendPushNotification } from "../services/pushService.js";
 
 export const sendDailyPush = async (req, res) => {
   const users = await queryGetAllUsersWithNotificationsEnabled();
-  console.log(users);
   try {
     for (const user of users) {
       await sendPushNotification(
         user.push_token,
-        `Good Morning ${user.name.split(" ")[0]}!`,
+        `Hello, ${user.name.split(" ")[0]}!`,
         "Ready to go workout?"
       );
     }

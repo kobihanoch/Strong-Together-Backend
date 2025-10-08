@@ -13,6 +13,7 @@ import {
   buildPlanKeyStable,
   buildTrackingKeyStable,
   cacheDeleteKey,
+  cacheDeleteOtherTimezones,
   cacheGetJSON,
   cacheSetJSON,
   TTL_PLAN,
@@ -24,16 +25,21 @@ import {
  * ---------------------------*/
 
 // Returns { payload, cacheHit }
-export const getWorkoutPlanData = async (userId, fromCache = true) => {
-  const planKey = buildPlanKeyStable(userId);
+export const getWorkoutPlanData = async (
+  userId,
+  fromCache = true,
+  tz = "Asia/Jerusalem"
+) => {
+  const planKey = buildPlanKeyStable(userId, tz);
   if (fromCache) {
+    await cacheDeleteOtherTimezones(planKey);
     const cached = await cacheGetJSON(planKey);
     if (cached) {
       return { payload: cached, cacheHit: true };
     }
   }
 
-  const rows = await queryWholeUserWorkoutPlan(userId);
+  const rows = await queryWholeUserWorkoutPlan(userId, tz);
   const [plan] = rows;
   if (!plan) {
     const empty = { workoutPlan: null };
@@ -51,17 +57,19 @@ export const getWorkoutPlanData = async (userId, fromCache = true) => {
 export const getExerciseTrackingData = async (
   userId,
   days = 45,
-  fromCache = true
+  fromCache = true,
+  tz
 ) => {
-  const key = buildTrackingKeyStable(userId, days);
+  const key = buildTrackingKeyStable(userId, days, tz);
   if (fromCache) {
+    await cacheDeleteOtherTimezones(key);
     const cached = await cacheGetJSON(key);
     if (cached) {
       return { payload: cached, cacheHit: true };
     }
   }
 
-  const rows = await queryGetExerciseTrackingAndStats(userId, days);
+  const rows = await queryGetExerciseTrackingAndStats(userId, days, tz);
   const payload = rows[0];
   await cacheSetJSON(key, payload, TTL_TRACKING);
   return { payload, cacheHit: false };
@@ -76,7 +84,8 @@ export const getExerciseTrackingData = async (
 // @access  Private
 export const getWholeUserWorkoutPlan = async (req, res) => {
   const userId = req.user.id;
-  const { payload, cacheHit } = await getWorkoutPlanData(userId);
+  const tz = req.query.tz;
+  const { payload, cacheHit } = await getWorkoutPlanData(userId, true, tz);
   res.set("X-Cache", cacheHit ? "HIT" : "MISS");
   return res.status(200).json(payload);
 };
@@ -86,7 +95,14 @@ export const getWholeUserWorkoutPlan = async (req, res) => {
 // @access  Private
 export const getExerciseTracking = async (req, res) => {
   const userId = req.user.id;
-  const { payload, cacheHit } = await getExerciseTrackingData(userId, 45);
+  const tz = req.query.tz;
+
+  const { payload, cacheHit } = await getExerciseTrackingData(
+    userId,
+    45,
+    true,
+    tz
+  );
   res.set("X-Cache", cacheHit ? "HIT" : "MISS");
   return res.status(200).json(payload);
 };
@@ -96,6 +112,8 @@ export const getExerciseTracking = async (req, res) => {
 // @access  Private
 export const finishUserWorkout = async (req, res) => {
   const workoutArray = req.body.workout;
+  const tz = req.body.tz;
+
   if (!Array.isArray(workoutArray) || workoutArray.length === 0) {
     throw createError(400, "Not a valid workout");
   }
@@ -106,8 +124,12 @@ export const finishUserWorkout = async (req, res) => {
   //const trackingKey = buildTrackingKeyStable(userId, 45);
   //await cacheDeleteKey(trackingKey);
 
-  const { payload } = await getExerciseTrackingData(userId, 45, false);
-  await cacheSetJSON(buildTrackingKeyStable(userId, 45), payload, TTL_TRACKING);
+  const { payload } = await getExerciseTrackingData(userId, 45, false, tz);
+  await cacheSetJSON(
+    buildTrackingKeyStable(userId, 45, tz),
+    payload,
+    TTL_TRACKING
+  );
 
   sendSystemMessageToUserWorkoutDone(userId);
   return res.status(200).json(payload);
@@ -118,14 +140,14 @@ export const finishUserWorkout = async (req, res) => {
 // @access  Private
 export const deleteUserWorkout = async (req, res) => {
   const userId = req.user.id;
-  await queryDeleteUserWorkout(userId);
+  /*await queryDeleteUserWorkout(userId);
 
-  const planKey = buildPlanKeyStable(userId);
+  const planKey = buildPlanKeyStable(userId, tz);
   const analyticsKey = buildAnalyticsKeyStable(userId);
   await cacheDeleteKey(analyticsKey);
   await cacheDeleteKey(planKey);
 
-  return res.status(204).end();
+  return res.status(204).end();*/
 };
 
 // @desc    Add workout
@@ -133,17 +155,17 @@ export const deleteUserWorkout = async (req, res) => {
 // @access  Private
 export const addWorkout = async (req, res) => {
   const userId = req.user.id;
-  const { workoutData, workoutName } = req.body;
+  const { workoutData, workoutName, tz } = req.body;
 
   await queryAddWorkout(userId, workoutData, workoutName);
 
-  const planKey = buildPlanKeyStable(userId);
+  const planKey = buildPlanKeyStable(userId, tz);
   const analyticsKey = buildAnalyticsKeyStable(userId);
   await cacheDeleteKey(analyticsKey);
   await cacheDeleteKey(planKey);
 
   // Rebuild plan and cache
-  const rows = await queryWholeUserWorkoutPlan(userId);
+  const rows = await queryWholeUserWorkoutPlan(userId, tz);
   const [plan] = rows;
   const { splits } = await queryGetWorkoutSplitsObj(plan.id);
 
@@ -154,7 +176,7 @@ export const addWorkout = async (req, res) => {
   };
 
   await cacheSetJSON(
-    buildPlanKeyStable(userId),
+    buildPlanKeyStable(userId, tz),
     {
       workoutPlan: plan,
       workoutPlanForEditWorkout: splits,
