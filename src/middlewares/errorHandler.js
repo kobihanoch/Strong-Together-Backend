@@ -6,7 +6,7 @@ export const errorHandler = (err, req, res, next) => {
   const logMessage =
     process.env.NODE_ENV === "development" ? err.stack : err.message;
 
-  console.error(`[Error ${err.statusCode}]: ${logMessage}`);
+  console.error(`[Error ${statusCode}]: ${logMessage}`);
 
   res.status(statusCode).json({
     success: false,

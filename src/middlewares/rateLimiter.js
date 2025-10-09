@@ -5,6 +5,7 @@ export const generalLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 100,
   standardHeaders: true,
+  validate: false,
   legacyHeaders: false,
   message: "Too many requests.",
   handler: (req, res, next, options) => {
@@ -18,6 +19,7 @@ export const changeVerificationEmailLimiter = rateLimit({
   max: 1,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
   message: "You've reached the maximum amount of requests per minute.",
   handler: (req, res, next, options) => {
     next(createError(429, options.message));
@@ -30,6 +32,7 @@ export const changeVerificationEmailLimiterDaily = rateLimit({
   max: 2,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
   message: "You've reached the maximum amount of requests per day.",
   handler: (req, res, next, options) => {
     next(createError(429, options.message));
@@ -42,6 +45,7 @@ export const restPasswordEmailLimiterDaily = rateLimit({
   max: 3,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
   message: "You've reached the maximum amount of requests per day.",
   handler: (req, res, next, options) => {
     next(createError(429, options.message));
@@ -54,6 +58,7 @@ export const resetPasswordEmailLimiter = rateLimit({
   max: 2,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
   message: "You've reached the maximum amount of requests per minute.",
   handler: (req, res, next, options) => {
     next(createError(429, options.message));
@@ -66,6 +71,7 @@ export const loginLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
   message:
     "You've reached the maximum amount of login attempts per 15 minutes.",
   handler: (req, res, next, options) => {
