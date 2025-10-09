@@ -14,6 +14,7 @@ import { asyncHandler } from "../middlewares/asyncHandler.js";
 import {
   changeVerificationEmailLimiter,
   changeVerificationEmailLimiterDaily,
+  loginLimiter,
   resetPasswordEmailLimiter,
   restPasswordEmailLimiterDaily,
 } from "../middlewares/rateLimiter.js";
@@ -25,7 +26,12 @@ import { resetPasswordSchema } from "../validators/auth/resetpassword.schema.js"
 const router = Router();
 
 // No authentication required
-router.post("/login", validate(loginSchema), asyncHandler(loginUser)); // Logging in a user and returns user
+router.post(
+  "/login",
+  loginLimiter,
+  validate(loginSchema),
+  asyncHandler(loginUser)
+); // Logging in a user and returns user
 router.post("/refresh", asyncHandler(refreshAccessToken)); // Refresh token
 router.post("/logout", asyncHandler(logoutUser)); // Logging out a user
 router.get("/verify", asyncHandler(verifyUserAccount)); // Verification mail button url (to verify user)

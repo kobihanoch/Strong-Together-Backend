@@ -17,6 +17,7 @@ import userRoutes from "./routes/userRoutes.js";
 import workoutRoutes from "./routes/workoutRoutes.js";
 import cors from "cors";
 import { checkAppVersion } from "./middlewares/checkAppVersion.js";
+import { botBlocker } from "./middlewares/botBlocker.js";
 
 // RESOURECES CONNECTIONS AND GENERAL CONFIGURATIONS  ------------------------------------------
 dotenv.config();
@@ -69,11 +70,17 @@ app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
 // API ROUTES --------------------------------------------------------------------------------------------------
 
 app.use((req, res, next) => {
+  const clientIP = req.ip;
+  const username = req.headers["x-username"] ?? null;
+
   console.log(
-    `[${req.headers["x-username"] ?? null}] ${req.method}:${req.originalUrl}`
+    `[IP: ${clientIP}] [User: ${username}] ${req.method}:${req.originalUrl}`
   );
   next();
 });
+
+//Bot blocker
+app.use(botBlocker);
 
 // Check app version middleware
 app.use(checkAppVersion);

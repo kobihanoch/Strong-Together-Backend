@@ -59,3 +59,16 @@ export const resetPasswordEmailLimiter = rateLimit({
     next(createError(429, options.message));
   },
 });
+
+// 5 per 15 mins per IP (burst)
+export const loginLimiter = rateLimit({
+  windowMs: 60 * 1000 * 15,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message:
+    "You've reached the maximum amount of login attempts per 15 minutes.",
+  handler: (req, res, next, options) => {
+    next(createError(429, options.message));
+  },
+});
