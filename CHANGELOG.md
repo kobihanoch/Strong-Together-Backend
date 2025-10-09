@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.4.2...v1.5.0) (2025-10-09)
+
+
+### Features
+
+* **Auth:** Added rate limiting to forgot password ([2cb5a43](https://github.com/kobihanoch/Strong-Together-Backend/commit/2cb5a4346424d2f46cfde8e3b0a3a1df3f635761))
+* **Auth:** Implemented forgot my password ([1a3e5ad](https://github.com/kobihanoch/Strong-Together-Backend/commit/1a3e5add35e3ce35147d8e3c8e20c3b0dcd1a7e9))
+* **Cache:** Delete other timezones cache keys to ensure one cache source of truth and prevent stale data ([b025ba9](https://github.com/kobihanoch/Strong-Together-Backend/commit/b025ba95e4b8b802f6919329d6b80cf897e1e099))
+* **Date and Time:** Implemented UTC timestamp fetch on prs ([98994ac](https://github.com/kobihanoch/Strong-Together-Backend/commit/98994ac361d5290c2172b09da83fcc130ab83271))
+* **Date and Time:** Inject tz from client to requests ([acc68cc](https://github.com/kobihanoch/Strong-Together-Backend/commit/acc68cc13bcd7a8e78060e553be72bf316bbd8cf))
+* **Date and Time:** Messages and workout with timezone ([68842df](https://github.com/kobihanoch/Strong-Together-Backend/commit/68842dfab1e8081d0721e435835eb5b2491beb45))
+* **Date and Time:** Timezone aerobics ([32ad44c](https://github.com/kobihanoch/Strong-Together-Backend/commit/32ad44ca0fd06aff2d6ed2822a334302b2ee5009))
+* **Logs:** Added username to logs ([48512da](https://github.com/kobihanoch/Strong-Together-Backend/commit/48512dada72e5cdcf0d7122072f671c5dc9dafe3))
+* **Mailer:** Use new bought domain ([8896e83](https://github.com/kobihanoch/Strong-Together-Backend/commit/8896e8363b42efde845308faa1148204b2e4e07e))
+* **Middlewares:** Added a minimum version middleware ([9dce20c](https://github.com/kobihanoch/Strong-Together-Backend/commit/9dce20c7115254c50ae053454366279565bd1202))
+* **Middlewares:** Added bot blocker middleware and login rate limit ([b8a9a1e](https://github.com/kobihanoch/Strong-Together-Backend/commit/b8a9a1e07f7cef291884ae94a5a89f6e9316c6cf))
+* **Verification:** Added a rate limiter to change email and verify endpoint ([746cac3](https://github.com/kobihanoch/Strong-Together-Backend/commit/746cac367814b5ca77d7e8b21ad734f21a59aa23))
+* **Verification:** Added send verify email (for resending) ([0805886](https://github.com/kobihanoch/Strong-Together-Backend/commit/0805886250326ef907067781f6d28fe24af8676c))
+* **Verification:** Created email verification on user register ([b39566c](https://github.com/kobihanoch/Strong-Together-Backend/commit/b39566c87076e26beb5329efcf4cd26453ccece8))
+* **Verification:** New change email in verification endpoint ([05807ee](https://github.com/kobihanoch/Strong-Together-Backend/commit/05807ee002f62a2448f49618ebc8136cd16df500))
+
 ### [1.4.2](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.4.1...v1.4.2) (2025-09-30)
 
 ### [1.4.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.4.0...v1.4.1) (2025-09-29)
