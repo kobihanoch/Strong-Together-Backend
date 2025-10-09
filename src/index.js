@@ -54,7 +54,7 @@ app.use(helmet());
 
 // Trust proxy to get the request device IP for rate limiting
 // IMPORTANT: Allow it only if using secured cloud services like Render, AWS, Azure, etc...
-app.set("trust proxy", 1);
+app.set("trust proxy", true);
 
 // Use general rate limiter
 app.use(generalLimiter);
