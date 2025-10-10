@@ -4,15 +4,14 @@ import createError from "http-errors";
 import jwt from "jsonwebtoken";
 import sql from "../config/db.js";
 import {
-  queryGetCurrentTokenVersion,
+  queryBumpTokenVersionAndGetSelfData,
+  queryBumpTokenVersionAndGetSelfDataCAS,
   querySetUserFirstLoginFalse,
   queryUpdateExpoPushTokenToNull,
   queryUpdateUserPassword,
   queryUpdateUserVerficiationStatus,
   queryUserByIdentifierForLogin,
   queryUserByUsername,
-  queryUserDataByID,
-  queryUserIdRoleById,
 } from "../queries/authQueries.js";
 import { queryUserExistsByUsernameOrEmail } from "../queries/userQueries.js";
 import {
@@ -36,38 +35,41 @@ export const loginUser = async (req, res) => {
 
   // Validate data
 
-  const rowsUser = await queryUserByIdentifierForLogin(identifier);
-  const [user] = rowsUser;
+  const [user = null] = await queryUserByIdentifierForLogin(identifier);
   if (!user) throw createError(401, "Invalid credentials");
 
   // Check if user exists
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw createError(401, "Invalid credentials");
 
+  // Check verification
+  if (!user.is_verified) {
+    throw createError(401, "You need to verify you account");
+  }
+
   // If first log in send welcome message
   if (user.is_first_login) {
     await querySetUserFirstLoginFalse(user.id);
-    sendSystemMessageToUserWhenFirstLogin(user.id, user.name);
+    try {
+      await sendSystemMessageToUserWhenFirstLogin(user.id, user.name);
+    } catch {}
   }
 
   // Fetch all user data and bump token version
-  const rowsUserData = await queryUserDataByID(user.id);
+  const rowsUserData = await queryBumpTokenVersionAndGetSelfData(user.id);
   const [{ token_version, user_data: userData }] = rowsUserData;
 
-  if (!userData?.is_verified) {
-    throw createError(401, "You need to verify you account");
-  }
   // Sign tokens
   const accessToken = jwt.sign(
-    { id: user.id, role: user.role, tokenVer: token_version },
+    { id: userData.id, role: userData.role, tokenVer: token_version },
     process.env.JWT_ACCESS_SECRET,
-    { expiresIn: "15m" }
+    { expiresIn: "5m" }
   );
 
   const refreshToken = jwt.sign(
-    { id: user.id, role: user.role, tokenVer: token_version },
+    { id: userData.id, role: userData.role, tokenVer: token_version },
     process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "30d" }
+    { expiresIn: "14d" }
   );
 
   res.set("Cache-Control", "no-store");
@@ -88,16 +90,15 @@ export const logoutUser = async (req, res) => {
 
   // Get tokens from request body and decode
   const refreshToken = getRefreshToken(req);
-
   // Decode tokens
   const decodedRefresh = decodeRefreshToken(refreshToken);
-  const expiresAtRefresh = decodedRefresh?.exp
-    ? new Date(decodedRefresh.exp * 1000)
-    : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   if (decodedRefresh) {
     //await queryInsertBlacklistedToken(refreshToken, expiresAtRefresh);
-    await queryUpdateExpoPushTokenToNull(decodedRefresh.id);
+    await Promise.all([
+      queryUpdateExpoPushTokenToNull(decodedRefresh.id),
+      queryBumpTokenVersionAndGetSelfData(decodedRefresh.id),
+    ]);
   }
 
   res.status(200).json({ message: "Logged out successfully" });
@@ -115,39 +116,28 @@ export const refreshAccessToken = async (req, res) => {
   // Verify refresh token
   const decoded = decodeRefreshToken(refreshToken);
   if (!decoded) throw createError(401, "Invalid or expired refresh token");
-  const [{ token_version: currentTokenVersion }] =
-    await queryGetCurrentTokenVersion(decoded.id);
 
-  if (currentTokenVersion !== decoded.tokenVer)
-    throw createError(401, "New login required");
+  // Bump token version and sign new JWTs with new tokev version (CAS)
+  // If not rows - there is a gap between last token and token_version => login was fired in another device -> logout
+  const [user = null] = await queryBumpTokenVersionAndGetSelfDataCAS(
+    decoded.id,
+    decoded.tokenVer
+  );
+  if (!user) throw createError(401, "New login required");
 
-  // Ensure not revoked
-  /*const rowsRevoked = await querySelectBlacklistedToken(refreshToken);
-  const [revoked] = rowsRevoked;
-  if (revoked) throw createError(401, "Refresh token has been revoked");*/
-
-  // User still exists
-  const rowsUser = await queryUserIdRoleById(decoded.id);
-  const [user] = rowsUser;
-  if (!user) throw createError(401, "User not found");
-
-  // One-time use refresh: blacklist the old refresh
-  const expR = decoded.exp
-    ? new Date(decoded.exp * 1000)
-    : new Date(Date.now() + 24 * 60 * 60 * 1000);
-  //await queryInsertBlacklistedToken(refreshToken, expR);
+  const { token_version, user_data: userData } = user;
 
   // Issue fresh access + fresh refresh (rotate)
   const newAccess = jwt.sign(
-    { id: user.id, role: user.role, tokenVer: currentTokenVersion },
+    { id: userData.id, role: userData.role, tokenVer: token_version },
     process.env.JWT_ACCESS_SECRET,
-    { expiresIn: "15m" }
+    { expiresIn: "5m" }
   );
 
   const newRefresh = jwt.sign(
-    { id: user.id, role: user.role, tokenVer: currentTokenVersion },
+    { id: userData.id, role: userData.role, tokenVer: token_version },
     process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "30d" }
+    { expiresIn: "14d" }
   );
 
   res.set("Cache-Control", "no-store");
@@ -155,7 +145,7 @@ export const refreshAccessToken = async (req, res) => {
     message: "Access token refreshed",
     accessToken: newAccess,
     refreshToken: newRefresh,
-    userId: user.id,
+    userId: userData.id,
   });
 };
 
@@ -180,8 +170,10 @@ export const verifyUserAccount = async (req, res) => {
 // @access  Public
 export const sendVerificationMail = async (req, res) => {
   const { email } = req.body;
-  const [{ id, name }] =
+  const [user = null] =
     await sql`SELECT id, name FROM users WHERE email=${email}`;
+  if (!user) return res.status(204).end();
+  const { id, name } = user;
   await sendVerificationEmail(email, id, name);
   return res.status(204).end();
 };
@@ -192,7 +184,7 @@ export const sendVerificationMail = async (req, res) => {
 export const changeEmailAndVerify = async (req, res) => {
   const { username, password, newEmail } = req.body;
 
-  const [user] = await queryUserByUsername(username);
+  const [user = null] = await queryUserByUsername(username);
   if (!user) throw createError(401, "Invalid credentials");
   const ok = await bcrypt.compare(password, user.password);
   if (!ok) throw createError(401, "Invalid credentials");
@@ -214,7 +206,7 @@ export const changeEmailAndVerify = async (req, res) => {
 export const checkUserVerify = async (req, res) => {
   const [user] =
     await sql`SELECT is_verified FROM users WHERE username=${req.query.username}`;
-  return res.status(200).json({ isVerified: user.is_verified });
+  return res.status(200).json({ isVerified: user?.is_verified ?? false });
 };
 
 // @desc    Sends email for resetting password
@@ -223,7 +215,7 @@ export const checkUserVerify = async (req, res) => {
 export const sendChangePassEmail = async (req, res) => {
   const { identifier } = req.body;
   if (!identifier) throw createError(400, "Please fill username or email");
-  const [user] =
+  const [user = null] =
     await sql`SELECT id, email, name FROM users WHERE email=${identifier} OR username=${identifier} LIMIT 1`;
   // Don;t overshare
   if (!user) return res.status(204).end();
@@ -246,6 +238,9 @@ export const resetPassword = async (req, res) => {
   }
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(newPassword, salt);
-  await queryUpdateUserPassword(decoded.sub, hash);
+  await Promise.all([
+    queryUpdateUserPassword(decoded.sub, hash),
+    queryBumpTokenVersionAndGetSelfData(decoded.sub),
+  ]);
   return res.status(200).json({ ok: true });
 };
