@@ -8,7 +8,12 @@ export const botBlocker = (req, res, next) => {
 
   // If sent from app continue
   if (appVersion) return next();
-  if (path.includes("verify") || path.includes("resetpassword")) return next();
+  if (
+    path.includes("verify") ||
+    path.includes("resetpassword") ||
+    path.includes("pushdaily")
+  )
+    return next();
 
   // Try to catch null user agent
   if (!userAgent) return next(createError(404, "Not found"));
