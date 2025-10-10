@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.6.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.5.0...v1.6.0) (2025-10-10)
+
+
+### Features
+
+* **SQL:** Added authenticated role to pg and enabled RLS security and policies ([2639c02](https://github.com/kobihanoch/Strong-Together-Backend/commit/2639c0224f673746dcacd86357b79e7890a100fb))
+
+
+### Bug Fixes
+
+* **Middleware:** Don't return min app version ([449d2fe](https://github.com/kobihanoch/Strong-Together-Backend/commit/449d2fec0e541952dbaebe6326ae839b7b2c552e))
+* **Middleware:** Push daily bypass middleware ([ac7a823](https://github.com/kobihanoch/Strong-Together-Backend/commit/ac7a823d15d9c0cf9d5e6297f103bcf179e06817))
+* **Queries:** Disabled inner trx inside add workout ([ec3add2](https://github.com/kobihanoch/Strong-Together-Backend/commit/ec3add2f0d28da5c687ac7998e959889fbfa17c0))
+
 ## [1.5.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.4.2...v1.5.0) (2025-10-09)
 
 
