@@ -1,4 +1,4 @@
-# Strong Together Backend (v1.5.0)
+# Strong Together Backend (v1.6.0)
 
 **Strong Together** is a fitness-oriented application.  
 This repository contains the backend server that powers the app.  
@@ -77,24 +77,35 @@ src/
 
 ## Middleware & Security
 
-| Middleware                          | Purpose                                                            |
+| Middleware                          | Purpose                                                            |
 | ----------------------------------- | ------------------------------------------------------------------ |
-| **cors**                            | Configured for any origin with credentials.                        |
-| **cookie‑parser**                   | Parses cookies from incoming requests.                             |
-| **express.json**                    | Parses JSON bodies.                                                |
-| **helmet**                          | Adds security headers.                                             |
-| **generalLimiter**                  | Rate‑limits (100 req/min/IP).                                      |
-| **asyncHandler**                    | Wraps handlers, forwards errors.                                   |
-| **authMiddleware (protect)**        | Verifies JWT, checks blacklist, attaches `req.user`.               |
-| **roleMiddleware (authorizeRoles)** | Restricts routes by roles (e.g. admin, currently unused).          |
-| **validateRequest**                 | Validates `req.body` with Zod schemas.                             |
-| **uploadImage**                     | Handles multipart uploads (images ≤10 MB, only JPEG/JPG/PNG/WebP). |
-| **errorHandler**                    | Central error handler with JSON responses.                         |
+| **cors**                            | Configured for any origin with credentials.                        |
+| **cookie‑parser**                   | Parses cookies from incoming requests.                             |
+| **express.json**                    | Parses JSON bodies.                                                |
+| **helmet**                          | Adds security headers.                                             |
+| **generalLimiter**                  | Rate‑limits (100 req/min/IP).                                      |
+| **botBlocker**                      | **Blocks malicious bots and scanners (NEW).**                      |
+| **checkAppVersion**                 | **Enforces minimum app version (NEW).**                           |
+| **asyncHandler**                    | Wraps handlers, forwards errors.                                   |
+| **authMiddleware (protect)**        | Verifies JWT, checks blacklist, attaches `req.user`.               |
+| **roleMiddleware (authorizeRoles)** | Restricts routes by roles (e.g. admin, currently unused).          |
+| **withRlsTx**                       | **Manages RLS and Transactions (NEW).**                            |
+| **validateRequest**                 | Validates `req.body` with Zod schemas.                             |
+| **uploadImage**                     | Handles multipart uploads (images ≤10 MB, only JPEG/JPG/PNG/WebP). |
+| **errorHandler**                    | Central error handler with JSON responses.                         |
 
 **Other Security Measures:**
 
+- **App Version Enforcement (NEW):** The **`checkAppVersion`** middleware ensures clients are running at least the version specified by the server's `MIN_APP_VERSION` environment variable.
+    - It reads the client version.
+    - If the client version is too old or missing, it returns **HTTP 426 (Upgrade Required)**.
+    - Critical public routes (e.g., `/auth/verify`, `/health`) are exempted from this check.
 - **Blacklist currently disabled** – Although a blacklist table exists, it is **not used at the moment** due to Supabase space limits.
 - **Single‑device sessions via `tokenVersion` (NEW)** – Each user has an integer `tokenVersion`. All issued tokens embed the version; bumping it invalidates existing tokens instantly. This prevents stale/buggy parallel sessions and aligns well with SWR on the client.
+- **Bot/Scanner Blocker (NEW):** The **`botBlocker`** middleware drops requests that exhibit highly suspicious patterns to protect against common attacks and vulnerability scans. It blocks:
+    - Requests with suspicious **User‑Agents** (e.g., `curl`, `wget`, `python`, known crawlers/scanners like `ZGrab`, `Masscan`).
+    - Requests attempting to access known **vulnerable paths** or configuration files (e.g., `/.env`, `/admin/`, `/phpmyadmin/`, `/etc/passwd`).
+    - Requests from non-browser User-Agents that include suspicious **`Accept` headers** (e.g., `text/html`, `application/xml`) when the request isn't coming from the mobile app (`x-app-version`).
 - JWT rotation & blacklist (access short‑lived, refresh one‑time use).
 - Password hashing with bcrypt (10 salt rounds).
 - CORS + rate limiting enabled, trust proxy for real client IP.
@@ -135,6 +146,7 @@ SYSTEM_USER_ID=...
 CACHE_ENABLED=true
 CACHE_TTL_TRACKING_SEC=...
 CACHE_TTL_PLAN_SEC=...
+MIN_APP_VERSION=...
 ```
 
 2. Install dependencies:
@@ -237,7 +249,6 @@ Health: `/health` returns server status.
 **Operational note:** A **daily external cron job** triggers the push workflow every day at **08:30** (local time) to deliver scheduled notifications.
 
 ---
-
 ## Database Models & Indexes
 
 - Uses **Postgres** with parameterised queries.
@@ -246,11 +257,26 @@ Health: `/health` returns server status.
 - Unique constraints on `username` and `email`.
 - Column **`users.tokenVersion`** (int, default 0) – embedded into JWTs to enforce single‑device sessions and to kill stale tokens on demand.
 - **UPSERT‑friendly uniqueness** for workout structures:
-  - `workoutplans`: a single active plan per user (e.g., partial unique index on `(user_id)` where `is_active = TRUE`).
-  - `workoutsplits`: unique per plan on `(workout_id, name)` to allow idempotent updates.
-  - `exercisetoworkoutsplit`: unique per split on `(workoutsplit_id, exercise_id)` (plus `order_index` as data) to enable upserts.
+  - `workoutplans`: a single active plan per user (e.g., partial unique index on `(user_id)` where `is_active = TRUE`).
+  - `workoutsplits`: unique per plan on `(workout_id, name)` to allow idempotent updates.
+  - `exercisetoworkoutsplit`: unique per split on `(workoutsplit_id, exercise_id)` (plus `order_index` as data) to enable upserts.
 - Table **`aerobictracking`** – logs aerobic/cardio sessions (e.g., `type`, `duration_mins`, `duration_sec`, `workout_date`) per user for non‑strength activities.
 - Soft‑deletes / toggling: `is_active` is used on splits and ETS rows to deactivate removed items during plan updates.
+
+### Row Level Security (RLS) & Transaction Management (NEW)
+
+The backend implements a robust server-side **Row Level Security (RLS)** layer to ensure data ownership and integrity.
+
+1.  **RLS Middleware (`withRlsTx`):** This critical middleware uses **Node.js `AsyncLocalStorage`** to manage database connections. For every authenticated request, it:
+    * Opens a dedicated **transaction** (`BEGIN`).
+    * Sets the Postgres **`ROLE`** to `authenticated`.
+    * Injects the user's ID (`req.user.id`) and JWT claims into the database session using `SET app.jwt.claims...`.
+    * This ensures that all downstream queries are automatically scoped and protected by RLS Policies.
+2.  **RLS Policies (Database Enforcement):** Policies are defined in Postgres to restrict data access based on the authenticated user's ID (`auth.uid()`):
+    * **Direct Ownership:** Policies on top-level tables (`workoutplans`, `exercisetracking`, etc.) enforce that users can only read/write their own rows (`user_id = auth.uid()`).
+    * **Cascading Ownership:** Policies on nested tables (`workoutsplits`, `exercisetoworkoutsplit`) use joins to confirm that the split or exercise belongs to a plan owned by the authenticated user. This prevents unauthorized modification of subordinate data.
+3.  **Transaction Safety:** The core logic (e.g., `queryAddWorkout`) is now executed within the single, wrapping transaction initiated by `withRlsTx`. This guarantees **Atomicity** (all-or-nothing changes) for complex, multi-step operations like updating a workout plan.
+4.  **Public Endpoints Fallback:** Public endpoints (e.g., `/users/create`) automatically **skip** the RLS setup but utilize the global database client. For public actions involving multiple queries (which could compromise data integrity if one fails), **manual transaction management** (`sql.begin`) is used to maintain Atomicity.
 
 ---
 
