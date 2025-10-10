@@ -50,8 +50,5 @@ export const checkAppVersion = (req, res, next) => {
     res.setHeader("x-min-Version", min);
     return next(createError(426, `Please update the app on AppStore`));
   }
-
-  // Optional: expose the minimum in responses
-  res.setHeader("x-min-version", min);
   return next();
 };
