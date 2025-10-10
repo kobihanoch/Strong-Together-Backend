@@ -1,4 +1,3 @@
-// English comments only inside code
 import postgres from "postgres";
 import dns from "dns";
 dns.setDefaultResultOrder("ipv4first");
@@ -48,6 +47,35 @@ sqlTag.begin = async (fn) => {
     _sql = makeClient();
     return _sql.begin(fn);
   }
+};
+
+// RLS
+export const withRlsTx = (handler) => {
+  return async (req, res, next) => {
+    const userId = req.user?.id; // From auth middleware
+    console.log("RLS:", userId);
+    if (!userId) return handler(req, res, next); // public route -> no RLS injection
+
+    try {
+      await _sql.begin(async (tx) => {
+        // Inject claims so auth.uid() works in RLS policies
+        const claims = JSON.stringify({
+          sub: userId,
+          role: "authenticated",
+          aud: "authenticated",
+        });
+        await tx`select set_config('request.jwt.claims', ${claims}, true)`;
+
+        // Expose the tx-bound client on the request
+        req.sql = tx;
+
+        // Run the actual handler; all DB calls must use req.sql here
+        await handler(req, res, next);
+      });
+    } catch (e) {
+      next(e);
+    }
+  };
 };
 
 // Optional: quick connectivity check on boot
