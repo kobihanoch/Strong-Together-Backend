@@ -19,7 +19,10 @@ import {
   sendVerificationEmail,
 } from "../services/emailService.js";
 import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
-import { generateVerifiedHTML } from "../templates/responseHTMLTemplates.js";
+import {
+  generateVerificationFailedHTML,
+  generateVerifiedHTML,
+} from "../templates/responseHTMLTemplates.js";
 import {
   decodeForgotPasswordToken,
   decodeRefreshToken,
@@ -157,12 +160,20 @@ export const verifyUserAccount = async (req, res) => {
   if (!token) throw createError(400, "Missing token");
   const decoded = decodeVerifyToken(token);
   if (!decoded) {
-    throw createError(400, "Verfication token is not valid");
+    return res
+      .status(401)
+      .type("html")
+      .set("Cache-Control", "no-store")
+      .send(generateVerificationFailedHTML());
   }
   await queryUpdateUserVerficiationStatus(decoded.sub, true);
   const html = generateVerifiedHTML();
 
-  res.status(200).type("html").set("Cache-Control", "no-store").send(html);
+  return res
+    .status(200)
+    .type("html")
+    .set("Cache-Control", "no-store")
+    .send(html);
 };
 
 // @desc    Validate user acoount
