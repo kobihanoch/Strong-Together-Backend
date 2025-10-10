@@ -22,6 +22,7 @@ import { validate } from "../middlewares/validateRequest.js";
 import { changeEmailSchema } from "../validators/auth/changeemail.schema.js";
 import { loginSchema } from "../validators/auth/login.schema.js";
 import { resetPasswordSchema } from "../validators/auth/resetpassword.schema.js";
+import { withRlsTx } from "../config/db.js";
 
 const router = Router();
 
@@ -30,36 +31,36 @@ router.post(
   "/login",
   loginLimiter,
   validate(loginSchema),
-  asyncHandler(loginUser)
+  asyncHandler(withRlsTx(loginUser))
 ); // Logging in a user and returns user
-router.post("/refresh", asyncHandler(refreshAccessToken)); // Refresh token
-router.post("/logout", asyncHandler(logoutUser)); // Logging out a user
-router.get("/verify", asyncHandler(verifyUserAccount)); // Verification mail button url (to verify user)
+router.post("/refresh", asyncHandler(withRlsTx(refreshAccessToken))); // Refresh token
+router.post("/logout", asyncHandler(withRlsTx(logoutUser))); // Logging out a user
+router.get("/verify", asyncHandler(withRlsTx(verifyUserAccount))); // Verification mail button url (to verify user)
 router.post(
   "/sendverificationemail",
   changeVerificationEmailLimiterDaily,
   changeVerificationEmailLimiter,
-  asyncHandler(sendVerificationMail)
+  asyncHandler(withRlsTx(sendVerificationMail))
 ); // Send verification email
 router.put(
   "/changeemailverify",
   changeVerificationEmailLimiterDaily,
   changeVerificationEmailLimiter,
   validate(changeEmailSchema),
-  asyncHandler(changeEmailAndVerify)
+  asyncHandler(withRlsTx(changeEmailAndVerify))
 ); // Change email
-router.get("/checkuserverify", asyncHandler(checkUserVerify)); // Check if user verified
+router.get("/checkuserverify", asyncHandler(withRlsTx(checkUserVerify))); // Check if user verified
 
 router.post(
   "/forgotpassemail",
   restPasswordEmailLimiterDaily,
   resetPasswordEmailLimiter,
-  asyncHandler(sendChangePassEmail)
+  asyncHandler(withRlsTx(sendChangePassEmail))
 ); // Send change password email
 router.put(
   "/resetpassword",
   validate(resetPasswordSchema),
-  asyncHandler(resetPassword)
+  asyncHandler(withRlsTx(resetPassword))
 ); // Reset password
 
 export default router;
