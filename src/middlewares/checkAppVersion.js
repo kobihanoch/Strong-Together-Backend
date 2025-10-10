@@ -8,6 +8,7 @@ const EXEMPT_PREFIXES = [
   "/api/auth/verify",
   "/api/auth/resetpassword",
   "/api/auth/forgotpassemail",
+  "api/push/dailypush",
 ];
 
 // Parse "v4.2.1", "4.2", or "4" into [major, minor, patch] (numbers)
@@ -49,8 +50,5 @@ export const checkAppVersion = (req, res, next) => {
     res.setHeader("x-min-Version", min);
     return next(createError(426, `Please update the app on AppStore`));
   }
-
-  // Optional: expose the minimum in responses
-  res.setHeader("x-min-version", min);
   return next();
 };
