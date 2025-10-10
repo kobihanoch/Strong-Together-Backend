@@ -1,9 +1,10 @@
 import rateLimit from "express-rate-limit";
 import createError from "http-errors";
 
+// 30 per minute
 export const generalLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 100,
+  max: 30,
   standardHeaders: true,
   validate: false,
   legacyHeaders: false,

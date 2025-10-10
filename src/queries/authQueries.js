@@ -1,15 +1,22 @@
 import sql from "../config/db.js";
 
 export async function queryUserByIdentifierForLogin(identifier) {
-  return sql`SELECT id, name, password, role, is_first_login FROM users WHERE username=${identifier} OR email=${identifier} LIMIT 1`;
+  return sql`SELECT id, password, is_first_login, is_verified FROM users WHERE username=${identifier} OR email=${identifier} LIMIT 1`;
 }
 
 export async function querySetUserFirstLoginFalse(userId) {
   return sql`UPDATE users SET is_first_login=FALSE WHERE id=${userId} RETURNING id`;
 }
 
-export async function queryUserDataByID(userId) {
+export async function queryBumpTokenVersionAndGetSelfData(userId) {
   return sql`UPDATE users SET token_version=token_version + 1 WHERE id = ${userId} RETURNING token_version, (to_jsonb(users) - 'password' - 'token_version') AS user_data`;
+}
+
+export async function queryBumpTokenVersionAndGetSelfDataCAS(
+  userId,
+  prevTokenVer
+) {
+  return sql`UPDATE users SET token_version=token_version + 1 WHERE id = ${userId} AND token_version = ${prevTokenVer} RETURNING token_version, (to_jsonb(users) - 'password' - 'token_version') AS user_data`;
 }
 
 export async function queryUserByUsername(username) {
