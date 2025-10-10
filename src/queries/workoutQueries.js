@@ -393,10 +393,9 @@ export const queryAddWorkout = async (
 ) => {
   const payloadJson = workoutData;
   const numSplits = Object.keys(payloadJson || {}).length;
-  if (!numSplits) throw new Error("workoutData has no splits");
+  if (!numSplits) throw new Error("workoutData has no splits"); // **תיקון קריטי: הסרת sql.begin**
 
-  await sql.begin(async (trx) => {
-    await trx`
+  await sql`
       WITH
       -- Ensure (or update) one active plan for this user
       plan AS (
@@ -468,7 +467,5 @@ export const queryAddWorkout = async (
         order_index = EXCLUDED.order_index,
         is_active   = TRUE
     `;
-  });
-
   return;
 };
