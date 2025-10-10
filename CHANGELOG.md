@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.7.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.6.0...v1.7.0) (2025-10-10)
+
+
+### Features
+
+* **Auth:** Enhance user verification and token management logic, and more frequent token versions increasments ([9b81fbb](https://github.com/kobihanoch/Strong-Together-Backend/commit/9b81fbb745d1bb64ee090b680c275f22c9a84784))
+
 ## [1.6.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.5.0...v1.6.0) (2025-10-10)
 
 
