@@ -11,7 +11,7 @@ export const botBlocker = (req, res, next) => {
   if (
     path.includes("verify") ||
     path.includes("resetpassword") ||
-    path.includes("pushdaily")
+    path.includes("daily/push")
   )
     return next();
 
