@@ -124,3 +124,13 @@ server.listen(PORT, () => {
   console.log(`Websocket is running on port ${PORT}`);
   console.log(`Server is running on port ${PORT}`);
 });
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("[FATAL] Unhandled Rejection at:", promise, "Reason:", reason);
+  process.exit(1);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("[FATAL] Uncaught Exception:", err.stack);
+  process.exit(1);
+});

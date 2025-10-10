@@ -138,7 +138,8 @@ export const queryGetExerciseTrackingAndStats = async (
     SELECT
       /* Local midnight (today - days) interpreted in tz, converted to UTC */
       ((now() AT TIME ZONE p.tz)::date - p.days)::timestamp AT TIME ZONE p.tz AS start_utc,
-      now() AS end_utc,
+      /* Local end of day today interpreted in tz, converted to UTC */
+      (((now() AT TIME ZONE p.tz)::date + interval '1 day')::timestamp AT TIME ZONE p.tz) AS end_utc,
       p.user_id,
       p.tz
     FROM params p
