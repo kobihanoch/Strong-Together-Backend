@@ -385,22 +385,18 @@ export const queryDeleteUserWorkout = async (userId) => {
 
 // Adds a workout for user
 // Returns same structure as initial fetching to client
-// English comments only inside code
 export const queryAddWorkout = async (
   userId,
   workoutData,
   workoutName = "My Workout"
 ) => {
   // Note: sql() here automatically uses the 'tx' bound by withRlsTx
-
   const payloadJson = workoutData;
   const numSplits = Object.keys(payloadJson || {}).length;
   if (!numSplits) throw new Error("workoutData has no splits");
 
-  let planId;
+  let planId; // --- STEP 1: UPSERT the WORKOUTPLAN (Parent) and retrieve the new ID. ---
 
-  // --- STEP 1: UPSERT the WORKOUTPLAN (Parent) and retrieve the new ID. ---
-  // This statement completes, making the new plan row visible for the next statement.
   const planResult = await sql`
         WITH
         -- Ensure (or update) one active plan for this user
@@ -422,11 +418,9 @@ export const queryAddWorkout = async (
   if (!planResult || planResult.length === 0) {
     throw new Error("Failed to create or retrieve workout plan ID.");
   }
-  planId = planResult[0].id;
+  planId = planResult[0].id; // --- STEP 2: UPSERT the WORKOUTSPLITS (Children) and retrieve their IDs. --- // Must be separate so RLS policies on workoutsplits can see the workoutplan row (planId).
 
-  // --- STEP 2: UPSERT the WORKOUTSPLITS and EXERCISES (Children). ---
-  // This statement runs AFTER the plan row is visible, resolving the RLS issue.
-  await sql`
+  const splitsResult = await sql`
         WITH
         -- Deactivate all splits in this plan (we will re-activate only desired)
         deact_splits AS (
@@ -434,26 +428,35 @@ export const queryAddWorkout = async (
             SET is_active = FALSE
             WHERE s.workout_id = ${planId}
             RETURNING 1
-        ),
+        )
 
         -- Upsert desired splits from payload keys; set active = TRUE
-        upsert_splits AS (
-            INSERT INTO public.workoutsplits (workout_id, name, is_active)
-            SELECT ${planId}, kv.key::text, TRUE
-            FROM jsonb_each(${payloadJson}::jsonb) AS kv
-            WHERE jsonb_typeof(kv.value) = 'array'
-            ON CONFLICT (workout_id, name)
-            DO UPDATE SET is_active = TRUE
-            RETURNING id, name
+        INSERT INTO public.workoutsplits (workout_id, name, is_active)
+        SELECT ${planId}, kv.key::text, TRUE
+        FROM jsonb_each(${payloadJson}::jsonb) AS kv
+        WHERE jsonb_typeof(kv.value) = 'array'
+        ON CONFLICT (workout_id, name)
+        DO UPDATE SET is_active = TRUE
+        RETURNING id, name;
+    `; // Create a map for quick lookup: { split_name: split_id }
+  const splitMap = splitsResult.reduce((map, split) => {
+    map[split.name] = split.id;
+    return map;
+  }, {}); // --- STEP 3: UPSERT the EXERCISES (Grandchildren). --- // This must be separate so RLS policies on exercisetoworkoutsplit can see the workoutsplits rows.
+
+  await sql`
+        WITH
+        -- Collect all split IDs that exist in the database and were just upserted
+        existing_split_ids AS (
+            SELECT id FROM public.workoutsplits WHERE workout_id = ${planId}
         ),
 
-        -- Deactivate all exercises under this plan (scope via workoutsplits)
+        -- Deactivate all exercises under this plan's existing splits
         deact_exercises AS (
             UPDATE public.exercisetoworkoutsplit ets
             SET is_active = FALSE
             WHERE ets.workoutsplit_id IN (
-                SELECT s.id FROM public.workoutsplits s
-                JOIN upsert_splits us ON us.id = s.id
+                SELECT id FROM existing_split_ids
             )
             RETURNING 1
         )
@@ -461,7 +464,7 @@ export const queryAddWorkout = async (
         -- Final action: Upsert desired exercises per split; set active = TRUE
         INSERT INTO public.exercisetoworkoutsplit (workoutsplit_id, exercise_id, sets, order_index, is_active)
         SELECT
-            s.id AS workoutsplit_id,
+            ${splitMap}[kv.split_name::text] AS workoutsplit_id, -- Use map for split_id lookup
             (ex->>'id')::bigint AS exercise_id,
             CASE
                 WHEN jsonb_typeof(ex->'sets') = 'array' THEN (
@@ -474,10 +477,9 @@ export const queryAddWorkout = async (
             COALESCE((ex->>'order_index')::bigint, (ord - 1)) AS order_index,
             TRUE AS is_active
         FROM jsonb_each(${payloadJson}::jsonb) AS kv(split_name, arr)
-        JOIN upsert_splits s
-            ON s.name = kv.split_name::text
         CROSS JOIN LATERAL jsonb_array_elements(arr) WITH ORDINALITY AS e(ex, ord)
         WHERE jsonb_typeof(arr) = 'array'
+          AND ${splitMap}[kv.split_name::text] IS NOT NULL -- Only process exercises for splits found/upserted
         ON CONFLICT (workoutsplit_id, exercise_id)
         DO UPDATE SET
             sets        = EXCLUDED.sets,
