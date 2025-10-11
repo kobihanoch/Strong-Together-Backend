@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.7.3](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.7.2...v1.7.3) (2025-10-11)
+
+
+### Bug Fixes
+
+* **Create Workout:** Fixed inserting new workouts with new RLS policies by seperating into 2 automic queries (unexpected beahviuor) ([43a62c0](https://github.com/kobihanoch/Strong-Together-Backend/commit/43a62c0de591db7703abb23e09cfedf7590d6fa0))
+
 ### [1.7.2](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.7.1...v1.7.2) (2025-10-11)
 
 
