@@ -464,7 +464,7 @@ export const queryAddWorkout = async (
         -- Final action: Upsert desired exercises per split; set active = TRUE
         INSERT INTO public.exercisetoworkoutsplit (workoutsplit_id, exercise_id, sets, order_index, is_active)
         SELECT
-            ${splitMap}[kv.split_name::text] AS workoutsplit_id, -- Use map for split_id lookup
+            ((${splitMap}::jsonb) ->> kv.split_name::text)::bigint AS workoutsplit_id, -- Explicitly cast map to jsonb and use ->> operator for lookup
             (ex->>'id')::bigint AS exercise_id,
             CASE
                 WHEN jsonb_typeof(ex->'sets') = 'array' THEN (
@@ -479,7 +479,7 @@ export const queryAddWorkout = async (
         FROM jsonb_each(${payloadJson}::jsonb) AS kv(split_name, arr)
         CROSS JOIN LATERAL jsonb_array_elements(arr) WITH ORDINALITY AS e(ex, ord)
         WHERE jsonb_typeof(arr) = 'array'
-          AND ${splitMap}[kv.split_name::text] IS NOT NULL -- Only process exercises for splits found/upserted
+          AND ((${splitMap}::jsonb) ->> kv.split_name::text) IS NOT NULL -- Use explicit casting for check too
         ON CONFLICT (workoutsplit_id, exercise_id)
         DO UPDATE SET
             sets        = EXCLUDED.sets,
