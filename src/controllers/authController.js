@@ -36,8 +36,17 @@ import {
 export const loginUser = async (req, res) => {
   const { identifier, password } = req.body;
 
-  // Validate data
+  const jkt = req.headers["dpop-key-binding"];
+  if (
+    /*req.headers["x-app-version"] !== "4.1.0" &&
+    req.headers["x-app-version"] !== "4.1.1"*/ true
+  ) {
+    if (!jkt) {
+      throw createError(400, "DPoP-Key-Binding header is missing.");
+    }
+  }
 
+  // Validate data
   const [user = null] = await queryUserByIdentifierForLogin(identifier);
   if (!user) throw createError(401, "Invalid credentials");
 
@@ -62,18 +71,32 @@ export const loginUser = async (req, res) => {
   const rowsUserData = await queryBumpTokenVersionAndGetSelfData(user.id);
   const [{ token_version, user_data: userData }] = rowsUserData;
 
-  // Sign tokens
+  const cnfClaim = { cnf: { jkt: jkt } };
+
+  // Sign tokens with DPoP confirmation claim
   const accessToken = jwt.sign(
-    { id: userData.id, role: userData.role, tokenVer: token_version },
+    {
+      id: userData.id,
+      role: userData.role,
+      tokenVer: token_version,
+      ...cnfClaim,
+    },
     process.env.JWT_ACCESS_SECRET,
     { expiresIn: "5m" }
   );
 
   const refreshToken = jwt.sign(
-    { id: userData.id, role: userData.role, tokenVer: token_version },
+    {
+      id: userData.id,
+      role: userData.role,
+      tokenVer: token_version,
+      ...cnfClaim,
+    },
     process.env.JWT_REFRESH_SECRET,
     { expiresIn: "14d" }
   );
+
+  console.log({ login: { accessToken, refreshToken } });
 
   res.set("Cache-Control", "no-store");
   res.status(200).json({
@@ -113,12 +136,33 @@ export const logoutUser = async (req, res) => {
 export const refreshAccessToken = async (req, res) => {
   //await queryDeleteExpiredBlacklistedTokens();
 
+  const dpopJkt = req.dpopJkt;
+  if (
+    /*req.headers["x-app-version"] !== "4.1.0" &&
+    req.headers["x-app-version"] !== "4.1.1"*/ true
+  ) {
+    if (!dpopJkt) {
+      // Should not happen if dpopValidationMiddleware ran first
+      throw createError(500, "Internal error: DPoP JKT not found on request.");
+    }
+  }
+
   const refreshToken = getRefreshToken(req);
   if (!refreshToken) throw createError(401, "No refresh token provided");
 
   // Verify refresh token
   const decoded = decodeRefreshToken(refreshToken);
   if (!decoded) throw createError(401, "Invalid or expired refresh token");
+
+  if (
+    /*req.headers["x-app-version"] !== "4.1.0" &&
+    req.headers["x-app-version"] !== "4.1.1"*/ true
+  ) {
+    const tokenJkt = decoded.cnf?.jkt;
+    if (!tokenJkt || tokenJkt !== dpopJkt) {
+      throw createError(401, "Proof-of-Possession failed (JKT mismatch).");
+    }
+  }
 
   // Bump token version and sign new JWTs with new tokev version (CAS)
   // If not rows - there is a gap between last token and token_version => login was fired in another device -> logout
@@ -130,18 +174,32 @@ export const refreshAccessToken = async (req, res) => {
 
   const { token_version, user_data: userData } = user;
 
+  const cnfClaim = { cnf: { jkt: dpopJkt } }; // Use the JKT from the proof
+
   // Issue fresh access + fresh refresh (rotate)
   const newAccess = jwt.sign(
-    { id: userData.id, role: userData.role, tokenVer: token_version },
+    {
+      id: userData.id,
+      role: userData.role,
+      tokenVer: token_version,
+      ...cnfClaim,
+    },
     process.env.JWT_ACCESS_SECRET,
     { expiresIn: "5m" }
   );
 
   const newRefresh = jwt.sign(
-    { id: userData.id, role: userData.role, tokenVer: token_version },
+    {
+      id: userData.id,
+      role: userData.role,
+      tokenVer: token_version,
+      ...cnfClaim,
+    },
     process.env.JWT_REFRESH_SECRET,
     { expiresIn: "14d" }
   );
+
+  console.log({ refresh: { newAccess, newRefresh } });
 
   res.set("Cache-Control", "no-store");
   res.status(200).json({
