@@ -78,7 +78,7 @@ export const loginUser = async (req, res) => {
     cnf: {
       jkt: jkt
         ? jkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
-        : "",
+        : "jtk",
     },
   };
 
@@ -187,7 +187,7 @@ export const refreshAccessToken = async (req, res) => {
     cnf: {
       jkt: dpopJkt
         ? dpopJkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
-        : "",
+        : "jkt",
     },
   }; // Use the JKT from the proof
 

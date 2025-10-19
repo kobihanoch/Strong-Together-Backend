@@ -16,9 +16,8 @@ export const extractBearerToken = (rawHeader) => {
 
 export const extractDpopToken = (rawHeader) => {
   if (!rawHeader || typeof rawHeader !== "string") return null;
-  return rawHeader.startsWith("DPoP ")
-    ? rawHeader.slice(5).trim()
-    : rawHeader.trim() || null;
+  if (!rawHeader.startsWith("DPoP ")) return null;
+  return rawHeader.slice(5).trim() || null;
 };
 
 /*
@@ -60,7 +59,8 @@ export const decodeAccessToken = (accessToken) => {
   try {
     decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
     return decoded;
-  } catch {
+  } catch (e) {
+    console.log(e);
     return null;
   }
 };
