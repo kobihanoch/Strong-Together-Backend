@@ -39,7 +39,8 @@ export const loginUser = async (req, res) => {
   const jkt = req.headers["dpop-key-binding"];
   if (
     /*req.headers["x-app-version"] !== "4.1.0" &&
-    req.headers["x-app-version"] !== "4.1.1"*/ true
+    req.headers["x-app-version"] !== "4.1.1"*/ true &&
+    process.env.DPOP_ENABLED === "true"
   ) {
     if (!jkt) {
       throw createError(400, "DPoP-Key-Binding header is missing.");
@@ -75,7 +76,9 @@ export const loginUser = async (req, res) => {
 
   const cnfClaim = {
     cnf: {
-      jkt: jkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, ""),
+      jkt: jkt
+        ? jkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
+        : "",
     },
   };
 
@@ -143,7 +146,8 @@ export const refreshAccessToken = async (req, res) => {
   const dpopJkt = req.dpopJkt;
   if (
     /*req.headers["x-app-version"] !== "4.1.0" &&
-    req.headers["x-app-version"] !== "4.1.1"*/ true
+    req.headers["x-app-version"] !== "4.1.1"*/ true &&
+    process.env.DPOP_ENABLED === "true"
   ) {
     if (!dpopJkt) {
       // Should not happen if dpopValidationMiddleware ran first
@@ -160,7 +164,8 @@ export const refreshAccessToken = async (req, res) => {
 
   if (
     /*req.headers["x-app-version"] !== "4.1.0" &&
-    req.headers["x-app-version"] !== "4.1.1"*/ true
+    req.headers["x-app-version"] !== "4.1.1"*/ true &&
+    process.env.DPOP_ENABLED
   ) {
     const tokenJkt = decoded.cnf?.jkt;
     if (!tokenJkt || tokenJkt !== dpopJkt) {
@@ -180,7 +185,9 @@ export const refreshAccessToken = async (req, res) => {
 
   const cnfClaim = {
     cnf: {
-      jkt: dpopJkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, ""),
+      jkt: dpopJkt
+        ? dpopJkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
+        : "",
     },
   }; // Use the JKT from the proof
 
