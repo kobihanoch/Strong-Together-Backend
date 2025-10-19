@@ -1,8 +1,10 @@
-# Strong Together Backend (v1.7.0)
+# Strong Together Backend (v1.8.0)
 
 **Strong Together** is a fitness-oriented application.  
 This repository contains the backend server that powers the app.  
 It exposes a REST API for user registration and authentication, workout planning and tracking, messaging, exercises, and push notifications.
+
+> **Security-first note:** The authentication layer uses **JWTs bound with DPoP (Demonstration of Proof-of-Possession)**. Tokens are cryptographically tied to a client-held key and validated per request with a DPoP proof. Details and client requirements appear below.
 
 The backend is built with **Node.js** and **Express**, uses **PostgreSQL** as its main database, **Redis** for caching, **Socket.IO** for realtime events, **JWT** for authentication, **Zod** for schema validation, and integrates with **Supabase Storage** and the **Expo push notification service**.  
 It also uses **Resend** for transactional email (account verification & password reset).
@@ -37,24 +39,28 @@ Migrating to this dedicated backend improved performance, introduced server-side
    - [Messages Flow](#messages-flow)
    - [Auth Flow](#auth-flow)
 8. [WebSocket Events](#websocket-events)
-9. [Conclusion](#conclusion)
+9. [DPoP (Proof-of-Possession) Overview](#dpop-proof-of-possession-overview)
+   - [How DPoP Works Here](#how-dpop-works-here)
+   - [Required Headers From Client](#required-headers-from-client)
+   - [Environment Variables](#environment-variables)
+10. [Conclusion](#conclusion)
 
 ---
 
 ## Technologies & Architecture
 
-| Layer/Service           | Purpose/Notes                                                                                                                                                                                                                                                                                          |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Node.js / Express 5** | HTTP server and routing framework. Express 5 provides promise‑aware request handlers.                                                                                                                                                                                                                  |
-| **PostgreSQL**          | Primary relational database. SQL queries live in `src/queries`. The code relies on Postgres views (e.g. `v_exercisetracking_expanded`) to assemble workout plans and analytics.                                                                                                                        |
-| **Redis**               | Cache layer. When `CACHE_ENABLED=true`, workout plans and exercise tracking results are cached for 48h. **Payloads are GZIP‑compressed** to reduce size and network time. Each user has a cache‑version; on data changes the version increments to invalidate.                                         |
-| **Socket.IO**           | WebSockets server used to emit `new_message` events when system or user messages arrive. Clients join a room named after their user ID to receive targeted events.                                                                                                                                     |
-| **Supabase Storage**    | Used for storing user profile pictures. Files are uploaded and retrieved via signed service‑role keys.                                                                                                                                                                                                 |
-| **Expo Push service**   | Sends push notifications to users’ devices. The server exposes an example `/api/push/daily` endpoint that loops over tokens and calls Expo’s API.                                                                                                                                                      |
-| **Resend (Email)**      | Transactional email for **account verification** and **password reset** flows.                                                                                                                                                                                                                         |
-| **JWT**                 | Auth with short‑lived access tokens (15 min) and long‑lived refresh tokens (30 days). **Per‑user `tokenVersion` enforces single active device** and prevents stale sessions when the frontend uses SWR. **Note:** a blacklist table exists but is **currently disabled** due to Supabase space limits. |
-| **Docker & Compose**    | Dockerfile produces Node 20 image, `docker-compose.yml` maps port 5000 to host.                                                                                                                                                                                                                        |
-| **Render Deployment**   | The backend is deployed on Render for hosting and scaling.                                                                                                                                                                                                                                             |
+| Layer/Service           | Purpose/Notes                                                                                                                                                                                                                                                                                                  |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Node.js / Express 5** | HTTP server and routing framework. Express 5 provides promise-aware request handlers.                                                                                                                                                                                                                          |
+| **PostgreSQL**          | Primary relational database. SQL queries live in `src/queries`. The code relies on Postgres views (e.g. `v_exercisetracking_expanded`) to assemble workout plans and analytics.                                                                                                                                |
+| **Redis**               | Cache layer. When `CACHE_ENABLED=true`, workout plans and exercise tracking results are cached for 48h. **Payloads are GZIP-compressed** to reduce size and network time. Each user has a cache-version; on data changes the version increments to invalidate.                                                 |
+| **Socket.IO**           | WebSockets server used to emit `new_message` events when system or user messages arrive. Clients join a room named after their user ID to receive targeted events.                                                                                                                                             |
+| **Supabase Storage**    | Used for storing user profile pictures. Files are uploaded and retrieved via signed service-role keys.                                                                                                                                                                                                         |
+| **Expo Push service**   | Sends push notifications to users’ devices. The server exposes a `/api/push/daily` endpoint that loops over tokens and calls Expo’s API.                                                                                                                                                                       |
+| **Resend (Email)**      | Transactional email for **account verification** and **password reset** flows.                                                                                                                                                                                                                                 |
+| **JWT + DPoP**          | Auth uses short-lived access tokens and longer-lived refresh tokens. Tokens are **DPoP-bound** (confirmation claim) and validated per request with a DPoP proof to prevent replay with a stolen token.                                                                                                         |
+| **Docker & Compose**    | Dockerfile produces Node 20 image, `docker-compose.yml` maps port 5000 to host.                                                                                                                                                                                                                                |
+| **Render Deployment**   | The backend is deployed on Render for hosting and scaling.                                                                                                                                                                                                                                                     |
 
 ---
 
@@ -64,7 +70,7 @@ Migrating to this dedicated backend improved performance, introduced server-side
 src/
 ├── config/        # DB/Redis/socket configuration
 ├── controllers/   # Route handlers
-├── middlewares/   # Middlewares (auth, validation, upload, rate limiting, etc.)
+├── middlewares/   # Middlewares (auth, validation, upload, rate limiting, DPoP, etc.)
 ├── queries/       # Parameterised SQL queries for Postgres
 ├── routes/        # Express route definitions
 ├── services/      # Domain services (messaging, push notifications, storage)
@@ -77,43 +83,41 @@ src/
 
 ## Middleware & Security
 
-| Middleware                           | Purpose                                                             |
-| ------------------------------------ | ------------------------------------------------------------------- |
-| **cors**                             | Configured for any origin with credentials.                         |
-| **cookie‑parser**                    | Parses cookies from incoming requests.                              |
-| **express.json**                     | Parses JSON bodies.                                                 |
-| **helmet**                           | Adds security headers.                                              |
-| **generalLimiter**                   | Rate‑limits (100 req/min/IP).                                       |
-| **botBlocker**                       | **Blocks malicious bots and scanners (NEW).**                       |
-| **checkAppVersion**                  | **Enforces minimum app version (NEW).**                             |
-| **asyncHandler**                     | Wraps handlers, forwards errors.                                    |
-| **authMiddleware (protect)**         | Verifies JWT, checks blacklist, attaches `req.user`.                |
-| **roleMiddleware (authorizeRoles)**  | Restricts routes by roles (e.g. admin, currently unused).           |
-| **withRlsTx**                        | **Manages RLS and Transactions (NEW).**                             |
-| **validateRequest**                  | Validates `req.body` with Zod schemas.                              |
-| **uploadImage**                      | Handles multipart uploads (images ≤10 MB, only JPEG/JPG/PNG/WebP).  |
-| **errorHandler**                     | Central error handler with JSON responses.                          |
+| Middleware                           | Purpose                                                                                           |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| **cors**                             | Configured for any origin with credentials.                                                        |
+| **cookie-parser**                    | Parses cookies from incoming requests.                                                             |
+| **express.json**                     | Parses JSON bodies.                                                                                |
+| **helmet**                           | Adds security headers.                                                                             |
+| **generalLimiter**                   | Rate-limits (100 req/min/IP).                                                                      |
+| **botBlocker**                       | Blocks malicious bots and scanners.                                                                |
+| **checkAppVersion**                  | Enforces minimum app version via `MIN_APP_VERSION`.                                                |
+| **dpopValidationMiddleware**         | Verifies DPoP proof: signature, `typ`, `htm`, strict origin+path validation, and a short `iat` window. |
+| **asyncHandler**                     | Wraps handlers, forwards errors.                                                                   |
+| **authMiddleware (protect)**         | Verifies JWT, checks `tokenVersion`, and **matches the token’s DPoP confirmation** with the live proof. |
+| **roleMiddleware (authorizeRoles)**  | Restricts routes by roles (e.g. admin, currently unused).                                          |
+| **withRlsTx**                        | Manages RLS + transaction per request (sets role/claims, wraps multi-query ops atomically).        |
+| **validateRequest**                  | Validates `req.body` with Zod schemas.                                                             |
+| **uploadImage**                      | Handles multipart uploads (images ≤10 MB, only JPEG/JPG/PNG/WebP).                                 |
+| **errorHandler**                     | Central error handler with JSON responses.                                                         |
 
 **Other Security Measures:**
 
-- **Atomic CAS (Compare-and-Set) Refresh (NEW):** The `POST /auth/refresh` endpoint now uses an atomic operation to validate the current `tokenVersion`, issue new tokens, and increment the version in one step, preventing race conditions and ensuring strong token rotation.
-- **Token TTL Policy (NEW):** Access Tokens are valid for **5 minutes** (short-lived) and Refresh Tokens for **14 days** (long-lived).
-- **App Version Enforcement:** The **`checkAppVersion`** middleware ensures clients are running at least the version specified by the server's `MIN_APP_VERSION` environment variable.
-- **Blacklist currently disabled** – Although a blacklist table exists, it is **not used at the moment** due to Supabase space limits.
-- **Single‑device sessions via `tokenVersion`** – Each user has an integer `tokenVersion`. All issued tokens embed the version; bumping it invalidates existing tokens instantly.
-- **Bot/Scanner Blocker:** The **`botBlocker`** middleware drops requests that exhibit highly suspicious patterns to protect against common attacks and vulnerability scans.
-- Password hashing with **bcrypt (10 salt rounds)**.
-- CORS + **Rate Limiting (30 req/min)** enabled, trust proxy for real client IP.
-- Input validation on all public endpoints (Zod).
-- File upload filtering (image types only, max 10 MB).
+- **Atomic CAS Refresh:** `POST /auth/refresh` validates current `tokenVersion`, issues new tokens, and increments the version atomically.
+- **Short-lived access tokens** and **longer-lived refresh tokens**.
+- **Single-device sessions via `tokenVersion`.**
+- **Bot/Scanner blocker** and **rate limiting** on public endpoints.
+- **Password hashing** with bcrypt (10 salt rounds).
+- **Strict input validation** (Zod).
+- **CORS** configured with credentials; proxy trust is enabled to capture the real client IP.
 
 ---
 
 ## Caching
 
-- **Compression (NEW):** cache payloads are **GZIP‑compressed** before writing to Redis and decompressed on read. This reduces Redis memory footprint and network transfer time (especially over cellular).
+- **Compression:** cache payloads are **GZIP-compressed** before writing to Redis and decompressed on read.  
 - Controlled by `CACHE_ENABLED`.
-- Workout plan (`/api/workouts/getworkout`) and exercise analytics (`/api/workouts/gettracking`) are cached under `{namespace}:{userId}:v{n}` where `v{n}` is the user’s cache‑version.
+- Workout plan (`/api/workouts/getworkout`) and exercise analytics (`/api/workouts/gettracking`) are cached under `{namespace}:{userId}:v{n}` where `v{n}` is the user’s cache-version.
 - TTLs:
   - Plan cache: 48h (configurable via `CACHE_TTL_PLAN_SEC`)
   - Tracking cache: 48h (configurable via `CACHE_TTL_TRACKING_SEC`)
@@ -142,6 +146,12 @@ CACHE_ENABLED=true
 CACHE_TTL_TRACKING_SEC=...
 CACHE_TTL_PLAN_SEC=...
 MIN_APP_VERSION=...
+
+# DPoP settings
+DPOP_ENABLED=true
+PUBLIC_BASE_URL=https://<prod-host>
+PUBLIC_BASE_URL_RENDER_DEFAULT=https://<render-host>
+PRIVATE_BASE_URL_DEV=http://localhost:5000
 ```
 
 2. Install dependencies:
@@ -164,21 +174,24 @@ docker compose up --build
 Base path: `/api`  
 Health: `/health` returns server status.
 
-> **Timezone note (`tz`)**: several endpoints accept a `tz` query parameter (IANA zone string, e.g., `Asia/Jerusalem`) to compute day boundaries server‑side.
+> **Timezone note (`tz`)**: several endpoints accept a `tz` query parameter (IANA zone string, e.g., `Asia/Jerusalem`) to compute day boundaries server-side.
 
 ### Authentication
 
-| Method | Endpoint                      | Auth? | Body / Query                                                    | Description                                                                             |
-| ------ | ----------------------------- | ----- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| POST   | `/auth/login`                 | No    | `{ identifier, password }`                                      | Login by username **or** email. Returns `accessToken`, `refreshToken`, and `user` ID.   |
-| POST   | `/auth/refresh`               | No    | Header `x-refresh-token` (or cookie/body via `getRefreshToken`) | Rotates session: issues fresh access/refresh if `tokenVersion` matches.                 |
-| POST   | `/auth/logout`                | No    | Header/body `x-refresh-token`                                   | Clears Expo push token for the user. (Blacklist storage disabled due to space limits.)  |
-| GET    | `/auth/verify`                | No    | Query `?token=...`                                              | Verifies account from email link and returns an HTML confirmation page.                 |
-| POST   | `/auth/sendverificationemail` | No    | `{ email }`                                                     | Sends a verification email (via Resend). `204 No Content` on success.                   |
-| PUT    | `/auth/changeemailverify`     | No    | `{ username, password, newEmail }`                              | Updates email **before** verification and resends a verification email (via Resend).    |
-| GET    | `/auth/checkuserverify`       | No    | Query `?username=...`                                           | Returns `{ isVerified: boolean }`.                                                      |
-| POST   | `/auth/forgotpassemail`       | No    | `{ identifier }`                                                | Sends password‑reset email (via Resend). `204 No Content` regardless of user existence. |
-| PUT    | `/auth/resetpassword`         | No    | Query `?token=...`, Body `{ newPassword }`                      | Resets password using token issued by forgot‑password flow.                             |
+| Method | Endpoint                      | Auth? | Body / Query / Headers                                                                                     | Description                                                                                                                                                                                                                                                                      |
+| ------ | ----------------------------- | ----- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/auth/login`                 | No    | Body: `{ identifier, password }` • Header: `DPoP-Key-Binding`                                            | Logs in by username **or** email. On success returns `accessToken`, `refreshToken`, and `user` ID. When DPoP is enabled, the client sends `DPoP-Key-Binding` containing the public-key thumbprint to bind tokens via a confirmation claim.                                        |
+| POST   | `/auth/refresh`               | No    | Header: `x-refresh-token` (or cookie/body via `getRefreshToken`) • Header: `DPoP`                         | Rotates session. Requires a valid per-request **DPoP** proof; the refresh token’s confirmation must match the proof’s key material. On success returns fresh access+refresh tokens (with updated `tokenVersion`).                                                                 |
+| POST   | `/auth/logout`                | No    | Header/body `x-refresh-token`                                                                              | Clears Expo push token and bumps `tokenVersion`.                                                                                                                                                                                                                                 |
+| GET    | `/auth/verify`                | No    | Query `?token=...`                                                                                         | Verifies account from email link and returns an HTML confirmation page.                                                                                                                                                                                                          |
+| POST   | `/auth/sendverificationemail` | No    | `{ email }`                                                                                                 | Sends verification email (via Resend). `204 No Content` on success.                                                                                                                                                                                                              |
+| PUT    | `/auth/changeemailverify`     | No    | `{ username, password, newEmail }`                                                                          | Updates email **before** verification and resends a verification email (via Resend).                                                                                                                                                                                             |
+| GET    | `/auth/checkuserverify`       | No    | `?username=...`                                                                                              | Returns `{ isVerified: boolean }`.                                                                                                                                                                                                                                               |
+| POST   | `/auth/forgotpassemail`       | No    | `{ identifier }`                                                                                             | Sends password-reset email (via Resend). `204 No Content` regardless of user existence.                                                                                                                                                                                          |
+| PUT    | `/auth/resetpassword`         | No    | Query `?token=...`, Body `{ newPassword }`                                                                   | Resets password using token issued by forgot-password flow and bumps `tokenVersion`.                                                                                                                                                                                             |
+
+**Authorization header for protected routes:**  
+`Authorization: DPoP <accessToken>` + `DPoP: <proof>`
 
 ### Users
 
@@ -190,7 +203,7 @@ Health: `/health` returns server status.
 | DELETE | `/users/deleteself`       | Yes   | —                                                                               | Delete own account.                                                        |
 | PUT    | `/users/pushtoken`        | Yes   | `{ token }`                                                                     | Save Expo push token.                                                      |
 | PUT    | `/users/setprofilepic`    | Yes   | multipart `file`                                                                | Upload a new profile picture to Supabase Storage.                          |
-| DELETE | `/users/deleteprofilepic` | Yes   | `{ path }`                                                                      | Delete profile picture from Supabase & clear from user profile.            |
+| DELETE | `/users/deleteprofilepic` | Yes   | `{ path }`                                                                      | Delete a profile picture from Supabase & clear from user profile.          |
 
 ### Exercises
 
@@ -211,16 +224,16 @@ Health: `/health` returns server status.
 | Method | Endpoint                  | Auth? | Body / Query                        | Description                                                              |
 | ------ | ------------------------- | ----- | ----------------------------------- | ------------------------------------------------------------------------ |
 | GET    | `/workouts/getworkout`    | Yes   | Optional `?tz=`                     | Get active workout plan (cached).                                        |
-| GET    | `/workouts/gettracking`   | Yes   | Optional `?tz=`                     | Get 45‑day exercise analytics (cached).                                  |
+| GET    | `/workouts/gettracking`   | Yes   | Optional `?tz=`                     | Get 45-day exercise analytics (cached).                                  |
 | POST   | `/workouts/finishworkout` | Yes   | `{ workout: Array, tz }`            | Save completed workout; warms tracking cache and sends a system message. |
-| POST   | `/workouts/add`           | Yes   | `{ workoutData, workoutName?, tz }` | Create a new workout plan; invalidates/warm‑caches plan + analytics.     |
-| DELETE | `/workouts/delete`        | Yes   | —                                   | **Temporarily disabled** (no‑op in controller).                          |
+| POST   | `/workouts/add`           | Yes   | `{ workoutData, workoutName?, tz }` | Create a new workout plan; invalidates/warm-caches plan + analytics.     |
+| DELETE | `/workouts/delete`        | Yes   | —                                   | **Temporarily disabled** (no-op in controller).                          |
 
 ### Analytics
 
 | Method | Endpoint         | Auth? | Description                               |
 | ------ | ---------------- | ----- | ----------------------------------------- |
-| GET    | `/analytics/get` | Yes   | Returns `{ _1RM, goals }` (Redis‑cached). |
+| GET    | `/analytics/get` | Yes   | Returns `{ _1RM, goals }` (Redis-cached). |
 
 ### Bootstrap
 
@@ -233,7 +246,7 @@ Health: `/health` returns server status.
 | Method | Endpoint        | Auth? | Body / Query     | Description                                                        |
 | ------ | --------------- | ----- | ---------------- | ------------------------------------------------------------------ |
 | GET    | `/aerobics/get` | Yes   | Optional `?tz=`  | Returns user's aerobic sessions map for the last 45 days (cached). |
-| POST   | `/aerobics/add` | Yes   | `{ record, tz }` | Adds an aerobic record and returns the refreshed 45‑day payload.   |
+| POST   | `/aerobics/add` | Yes   | `{ record, tz }` | Adds an aerobic record and returns the refreshed 45-day payload.   |
 
 ### Push Notifications
 
@@ -249,30 +262,23 @@ Health: `/health` returns server status.
 
 - Uses **Postgres** with parameterised queries.
 - Views: `v_exercisetoworkoutsplit_expanded`, `v_exercisetracking_expanded`.
-- **Blacklist table** exists for revoked JWTs with TTL cleanup, **but is currently disabled** due to Supabase space limits.
 - Unique constraints on `username` and `email`.
-- Column **`users.tokenVersion`** (int, default 0) – embedded into JWTs to enforce single‑device sessions and to kill stale tokens on demand.
-- **UPSERT‑friendly uniqueness** for workout structures:
-    - `workoutplans`: a single active plan per user (e.g., partial unique index on `(user_id)` where `is_active = TRUE`).
-    - `workoutsplits`: unique per plan on `(workout_id, name)` to allow idempotent updates.
-    - `exercisetoworkoutsplit`: unique per split on `(workoutsplit_id, exercise_id)` (plus `order_index` as data) to enable upserts.
-- Table **`aerobictracking`** – logs aerobic/cardio sessions (e.g., `type`, `duration_mins`, `duration_sec`, `workout_date`) per user for non‑strength activities.
-- Soft‑deletes / toggling: `is_active` is used on splits and ETS rows to deactivate removed items during plan updates.
+- Column **`users.tokenVersion`** (int, default 0) – embedded into JWTs to enforce single-device sessions and to kill stale tokens on demand.
+- **UPSERT-friendly uniqueness** for workout structures:
+    - `workoutplans`: a single active plan per user (e.g., partial unique index on `(user_id)` where `is_active = TRUE`).
+    - `workoutsplits`: unique per plan on `(workout_id, name)` to allow idempotent updates.
+    - `exercisetoworkoutsplit`: unique per split on `(workoutsplit_id, exercise_id)` (plus `order_index` as data) to enable upserts.
+- Table **`aerobictracking`** – logs aerobic/cardio sessions (e.g., `type`, `duration_mins`, `duration_sec`, `workout_date`) per user for non-strength activities.
+- Soft-deletes / toggling: `is_active` is used on splits and ETS rows to deactivate removed items during plan updates.
 
-### Row Level Security (RLS) & Transaction Management (NEW)
+### Row Level Security (RLS) & Transaction Management
 
 The backend implements a robust server-side **Row Level Security (RLS)** layer to ensure data ownership and integrity.
 
-1.  **RLS Middleware (`withRlsTx`):** This critical middleware uses **Node.js `AsyncLocalStorage`** to manage database connections. For every authenticated request, it:
-    - Opens a dedicated **transaction** (`BEGIN`).
-    - Sets the Postgres **`ROLE`** to `authenticated`.
-    - Injects the user's ID (`req.user.id`) and JWT claims into the database session using `SET app.jwt.claims...`.
-    - This ensures that all downstream queries are automatically scoped and protected by RLS Policies.
-2.  **RLS Policies (Database Enforcement):** Policies are defined in Postgres to restrict data access based on the authenticated user's ID (`auth.uid()`):
-    - **Direct Ownership:** Policies on top-level tables (`workoutplans`, `exercisetracking`, etc.) enforce that users can only read/write their own rows (`user_id = auth.uid()`).
-    - **Cascading Ownership:** Policies on nested tables (`workoutsplits`, `exercisetoworkoutsplit`) use joins to confirm that the split or exercise belongs to a plan owned by the authenticated user. This prevents unauthorized modification of subordinate data.
-3.  **Transaction Safety:** The core logic (e.g., `queryAddWorkout`) is now executed within the single, wrapping transaction initiated by `withRlsTx`. This guarantees **Atomicity** (all-or-nothing changes) for complex, multi-step operations like updating a workout plan.
-4.  **Public Endpoints Fallback:** Public endpoints (e.g., `/users/create`) automatically **skip** the RLS setup but utilize the global database client. For public actions involving multiple queries (which could compromise data integrity if one fails), **manual transaction management** (`sql.begin`) is used to maintain Atomicity.
+1. **RLS Middleware (`withRlsTx`):** For every authenticated request, it opens a **transaction**, sets role to `authenticated`, and injects user claims into the session so policies enforce `auth.uid()` correctly across all queries.
+2. **Policies:** Top-level tables enforce direct ownership (`user_id = auth.uid()`); nested tables verify ownership via joins to the parent entities.
+3. **Atomicity:** Domain operations run inside the wrapping transaction to guarantee all-or-nothing behavior (e.g., plan updates).
+4. **Public endpoints:** Skip RLS but use explicit transactions when multi-query integrity matters.
 
 ---
 
@@ -289,13 +295,7 @@ and tracking logs, **including aerobic sessions via `aerobictracking`**.
 1. **Create or Update Plan (UPSERT)** – One active `WorkoutPlan` per user. Updating a plan keeps the same plan row and bumps metadata (name, number of splits).
 2. **UPSERT Splits** – Incoming split keys are upserted by `(workout_id, name)`. Splits not present in the payload are set `is_active = FALSE`.
 3. **UPSERT Exercises per Split** – Each `(workoutsplit_id, exercise_id)` is upserted with the latest `sets` and `order_index`. Missing exercises are set `is_active = FALSE`.
-4. **Cache invalidation** – After a successful update, the user’s cache‑version increments so clients fetch fresh data.
-   > **Why UPSERT?**
-   >
-   > - Avoids churn of creating new plans on every edit
-   > - Preserves stable IDs for splits/exercises (better analytics & references)
-   > - Minimizes writes and reduces race conditions
-   > - Plays nicely with SWR on the client (precise invalidation via cache‑version)
+4. **Cache invalidation** – After a successful update, the user’s cache-version increments so clients fetch fresh data.
 
 ### Tracking Flow
 
@@ -304,11 +304,11 @@ and tracking logs, **including aerobic sessions via `aerobictracking`**.
 1. **Select a split** – User opens a split.
 2. **Record Sets** – Weight/repetitions logged into `exercisetracking`.
 3. **Review Progress** – Data aggregated for analytics.
-4. **Aerobic tracking:** In addition to strength sets, the backend stores cardio sessions in `aerobictracking` (type + duration) so progress can include non‑strength work.
+4. **Aerobic tracking** – Cardio sessions stored in `aerobictracking` and included in progress views.
 
 ### Messages Flow
 
-![Database workout tracking flow](https://github.com/user-attachments/assets/d0e6754a-9123-4443-9fe5-eaecca6885a8)
+![Database workout tracking flow](https://github.com/user-attachments/assets/d0e6754a-9123-4443-9fe5-eaecca6885a)
 
 1. **Compose Message** – System inserts message.
 2. **Receive & Read** – Users fetch inbox, mark read.
@@ -318,10 +318,9 @@ and tracking logs, **including aerobic sessions via `aerobictracking`**.
 
 ![Database authentication flow](https://github.com/user-attachments/assets/1516ac04-941f-4792-a4c9-31036a1d9de2)
 
-1. **Login & Token Issuance** – Access + refresh tokens created.
-2. **Access Control** – All API requests require access token.
-3. **Token Refresh** – Refresh token rotates session.
-4. **Blacklisting** – Revoked tokens stored in blacklist table.
+1. **Login & Token Issuance** – Access + refresh tokens created; when DPoP is enabled, tokens include a confirmation claim bound to the client key.
+2. **Access Control** – All protected API requests require access token + DPoP proof.
+3. **Token Refresh** – Refresh rotates both tokens; the request must include a valid DPoP proof whose key material matches the token’s confirmation.
 
 ---
 
@@ -333,12 +332,49 @@ and tracking logs, **including aerobic sessions via `aerobictracking`**.
 
 ---
 
+## DPoP (Proof-of-Possession) Overview
+
+**Goal:** Bind JWTs to a client-held asymmetric key so that a stolen token alone is **not enough** to call the API.
+
+- **Key:** Client keeps an **EC P‑256** key pair (ES256).
+- **Binding at login:** Client sends a public-key thumbprint (`DPoP-Key-Binding`). The server embeds it as a confirmation claim in both tokens.
+- **Per-request proof:** For protected routes (and for `/auth/refresh`), client sends a **DPoP** proof (compact JWS) in the `DPoP` header. The proof includes the HTTP method, absolute URL, issued-at, and the public JWK for verification.
+- **Server checks:** Signature and header type; method and path equality; strict origin/path validation against server configuration; and a **short** issued-at window. The server derives the key thumbprint from the proof and matches it to the token’s confirmation.
+
+### How DPoP Works Here
+
+1. Client generates and stores a P‑256 key pair.
+2. **Login** → send credentials + `DPoP-Key-Binding` (public key thumbprint). Server issues DPoP-bound tokens.
+3. **Protected requests** → send `Authorization: DPoP <accessToken>` and `DPoP: <proof>`.
+4. Middleware validates the proof, confirms it matches the token, and authorizes the request.
+
+### Required Headers From Client
+
+```
+# Protected routes
+Authorization: DPoP <accessToken>
+DPoP: <compact-JWS-proof>
+
+# Login only
+DPoP-Key-Binding: <public-key-thumbprint>
+```
+
+### Environment Variables
+
+- `DPOP_ENABLED=true|false`
+- `PUBLIC_BASE_URL`
+- `PUBLIC_BASE_URL_RENDER_DEFAULT`
+- `PRIVATE_BASE_URL_DEV`
+
+> The server validates DPoP `htu` against its configured origins and enforces exact path matching.
+
+---
+
 ## Conclusion
 
-The backend provides a secure, modular API for **Strong Together** fitness app.  
-Built with **Node.js**, **Postgres**, **Redis**, **JWT**, and **Socket.IO**.  
-Security: JWT rotation, blacklist, bcrypt, rate limiting, CORS, Zod validation.  
-Performance: Redis caching.  
+The backend provides a secure, modular API for the **Strong Together** fitness app.  
+Built with **Node.js**, **Postgres**, **Redis**, **JWT (DPoP-bound)**, and **Socket.IO**.  
+Security: short-lived access tokens, atomic refresh rotation, DPoP proof-of-possession, bcrypt, rate limiting, CORS, and Zod validation.  
+Performance: Redis caching with GZIP.  
 Deployment: Containerized with Docker, hosted on Render.  
-Previously used Supabase client directly from frontend, now optimized with a dedicated backend.  
-Extensible and production‑ready.
+Extensible and production-ready.
