@@ -1,4 +1,4 @@
-# Strong Together Backend (v1.8.0)
+# Strong Together Backend (v1.9.0)
 
 **Strong Together** is a fitness-oriented application.  
 This repository contains the backend server that powers the app.  
@@ -340,6 +340,7 @@ and tracking logs, **including aerobic sessions via `aerobictracking`**.
 - **Binding at login:** Client sends a public-key thumbprint (`DPoP-Key-Binding`). The server embeds it as a confirmation claim in both tokens.
 - **Per-request proof:** For protected routes (and for `/auth/refresh`), client sends a **DPoP** proof (compact JWS) in the `DPoP` header. The proof includes the HTTP method, absolute URL, issued-at, and the public JWK for verification.
 - **Server checks:** Signature and header type; method and path equality; strict origin/path validation against server configuration; and a **short** issued-at window. The server derives the key thumbprint from the proof and matches it to the token’s confirmation.
+- **JTI blacklisting:** Validates with **Redis cache** to check if JTI was already in use, to prevent **replay-attacks.**
 
 ### How DPoP Works Here
 
