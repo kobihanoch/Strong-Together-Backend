@@ -12,13 +12,13 @@ const ALLOWED_BASES = [
 
 export default async function dpopValidationMiddleware(req, res, next) {
   // Bypass for current users
-  /*if (
+  if (
     req.headers["x-app-version"] === "4.1.0" ||
-    req.headers["x-app-version"] === "4.1.1" || process.env.DPOP_ENABLED === "false"
-    
+    req.headers["x-app-version"] === "4.1.1" ||
+    process.env.DPOP_ENABLED === "false"
   ) {
     return next();
-  }*/
+  }
 
   const dpopProof = req.headers["dpop"];
   if (!dpopProof) {
