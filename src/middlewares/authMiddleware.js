@@ -2,6 +2,7 @@ import createError from "http-errors";
 import sql from "../config/db.js";
 import { decodeAccessToken, getAccessToken } from "../utils/tokenUtils.js";
 import { queryGetCurrentTokenVersion } from "../queries/authQueries.js";
+import * as crypto from "crypto";
 
 export const protect = async (req, res, next) => {
   const dpopJkt = req.dpopJkt;
@@ -33,6 +34,7 @@ export const protect = async (req, res, next) => {
     }
 
     // Bypass for versions 4.1.0 and 4.1.1
+    // Check if access token JKT is equal to DPoP JKT
     if (
       req.headers["x-app-version"] !== "4.1.0" &&
       req.headers["x-app-version"] !== "4.1.1" &&
@@ -40,17 +42,20 @@ export const protect = async (req, res, next) => {
     ) {
       const tokenJkt = decoded.cnf?.jkt;
 
-      // Normalize both sides to base64url without padding (no extra helpers)
-      const nj = tokenJkt
-        ? tokenJkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
-        : tokenJkt;
-      const pj = dpopJkt
-        ? dpopJkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
-        : dpopJkt;
-
-      if (!nj || nj !== pj) {
+      if (!tokenJkt || tokenJkt !== dpopJkt) {
         throw createError(401, "Proof-of-Possession failed (JKT mismatch).");
       }
+
+      const currentAth = crypto
+        .createHash("sha256")
+        .update(accessToken, "ascii")
+        .digest("base64")
+        .replace(/=/g, "")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_");
+
+      if (currentAth !== req.dpopAth)
+        throw createError(401, "DPoP ath doens't match.");
     }
 
     const [{ token_version: currentTokenVersion }] =
@@ -65,7 +70,7 @@ export const protect = async (req, res, next) => {
 
     // If user not found
     if (!user) {
-      return res.status(401).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found" });
     }
 
     if (!user?.is_verified) {

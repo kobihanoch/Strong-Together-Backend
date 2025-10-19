@@ -92,7 +92,9 @@ export default async function dpopValidationMiddleware(req, res, next) {
       protectedHeader.jwk,
       "sha256"
     );
+
     req.dpopJkt = jkt;
+    req.dpopAth = claims.ath;
 
     return next();
   } catch (error) {
