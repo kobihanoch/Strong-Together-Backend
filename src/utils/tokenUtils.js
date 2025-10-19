@@ -27,7 +27,10 @@ export const extractDpopToken = (rawHeader) => {
  * @returns {string|null}
  */
 export const getAccessToken = (req) => {
-  return extractDpopToken(req.headers.authorization || "");
+  return (
+    extractDpopToken(req.headers.authorization) ||
+    extractBearerToken(req.headers.authorization)
+  );
 };
 
 /*
@@ -36,7 +39,10 @@ export const getAccessToken = (req) => {
  * @returns {string|null}
  */
 export const getRefreshToken = (req) => {
-  return extractDpopToken(req.headers["x-refresh-token"] || "");
+  return (
+    extractDpopToken(req.headers["x-refresh-token"]) ||
+    extractBearerToken(req.headers["x-refresh-token"])
+  );
 };
 
 export const decodeRefreshToken = (refreshToken) => {
