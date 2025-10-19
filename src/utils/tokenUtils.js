@@ -14,13 +14,20 @@ export const extractBearerToken = (rawHeader) => {
     : rawHeader.trim() || null;
 };
 
+export const extractDpopToken = (rawHeader) => {
+  if (!rawHeader || typeof rawHeader !== "string") return null;
+  return rawHeader.startsWith("DPoP ")
+    ? rawHeader.slice(5).trim()
+    : rawHeader.trim() || null;
+};
+
 /*
  * Extracts the access token from the Authorization header.
  * @param {object} req - Express request object.
  * @returns {string|null}
  */
 export const getAccessToken = (req) => {
-  return extractBearerToken(req.headers.authorization || "");
+  return extractDpopToken(req.headers.authorization || "");
 };
 
 /*
@@ -29,7 +36,7 @@ export const getAccessToken = (req) => {
  * @returns {string|null}
  */
 export const getRefreshToken = (req) => {
-  return extractBearerToken(req.headers["x-refresh-token"] || "");
+  return extractDpopToken(req.headers["x-refresh-token"] || "");
 };
 
 export const decodeRefreshToken = (refreshToken) => {
