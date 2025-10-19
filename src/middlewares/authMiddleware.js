@@ -8,8 +8,8 @@ export const protect = async (req, res, next) => {
   try {
     // Bypass for versions 4.1.0 and 4.1.1
     if (
-      req.headers["x-app-version"] !== "4.1.0" &&
-      req.headers["x-app-version"] !== "4.1.1" &&
+      /*req.headers["x-app-version"] !== "4.1.0" &&
+      req.headers["x-app-version"] !== "4.1.1"*/ true &&
       process.env.DPOP_ENABLED === "true"
     ) {
       if (!dpopJkt) {
@@ -34,8 +34,8 @@ export const protect = async (req, res, next) => {
 
     // Bypass for versions 4.1.0 and 4.1.1
     if (
-      req.headers["x-app-version"] !== "4.1.0" &&
-      req.headers["x-app-version"] !== "4.1.1" &&
+      /*req.headers["x-app-version"] !== "4.1.0" &&
+          req.headers["x-app-version"] !== "4.1.1"*/ true &&
       process.env.DPOP_ENABLED === "true"
     ) {
       const tokenJkt = decoded.cnf?.jkt;
