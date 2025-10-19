@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.8.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.7.3...v1.8.0) (2025-10-19)
+
+
+### Features
+
+* **DPoP:** Created DPoP middleware ([73f56f1](https://github.com/kobihanoch/Strong-Together-Backend/commit/73f56f138f24e716d314f3d20769758030f8adb3))
+* **DPoP:** DPoP is implemented in routes ([ac0313b](https://github.com/kobihanoch/Strong-Together-Backend/commit/ac0313b9d3e2e7d5cf8eae2c0ca8f54bad9a903c))
+* **DPoP:** DPoP is working ([ba3fe35](https://github.com/kobihanoch/Strong-Together-Backend/commit/ba3fe353b6b6062bcc0074607102290c8dfbb19b))
+
 ### [1.7.3](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.7.2...v1.7.3) (2025-10-11)
 
 
