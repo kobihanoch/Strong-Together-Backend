@@ -1,5 +1,6 @@
 import * as jose from "jose";
 import createError from "http-errors";
+import { cacheGetJSON, cacheSetJSON } from "../utils/cache.js";
 
 const DPOP_EXPIRATION_SECONDS = 60;
 
@@ -86,6 +87,16 @@ export default async function dpopValidationMiddleware(req, res, next) {
         createError(401, "DPoP proof is expired or timestamp is invalid.")
       );
     }
+
+    // Check JTI blacklist
+    try {
+      const jti = claims.jti;
+      const jtiIsBlacklisted = await cacheGetJSON(`dpop:jti:${jti}`);
+      if (jtiIsBlacklisted) throw createError(401, "");
+
+      // Store in Redis
+      await cacheSetJSON(`dpop:jti:${jti}`, { jti }, DPOP_EXPIRATION_SECONDS);
+    } catch {}
 
     // 6) Attach JKT
     const jkt = await jose.calculateJwkThumbprint(
