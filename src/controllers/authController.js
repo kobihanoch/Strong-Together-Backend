@@ -71,7 +71,11 @@ export const loginUser = async (req, res) => {
   const rowsUserData = await queryBumpTokenVersionAndGetSelfData(user.id);
   const [{ token_version, user_data: userData }] = rowsUserData;
 
-  const cnfClaim = { cnf: { jkt: jkt } };
+  const cnfClaim = {
+    cnf: {
+      jkt: jkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, ""),
+    },
+  };
 
   // Sign tokens with DPoP confirmation claim
   const accessToken = jwt.sign(
@@ -95,8 +99,6 @@ export const loginUser = async (req, res) => {
     process.env.JWT_REFRESH_SECRET,
     { expiresIn: "14d" }
   );
-
-  console.log({ login: { accessToken, refreshToken } });
 
   res.set("Cache-Control", "no-store");
   res.status(200).json({
@@ -174,7 +176,11 @@ export const refreshAccessToken = async (req, res) => {
 
   const { token_version, user_data: userData } = user;
 
-  const cnfClaim = { cnf: { jkt: dpopJkt } }; // Use the JKT from the proof
+  const cnfClaim = {
+    cnf: {
+      jkt: dpopJkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, ""),
+    },
+  }; // Use the JKT from the proof
 
   // Issue fresh access + fresh refresh (rotate)
   const newAccess = jwt.sign(
@@ -198,8 +204,6 @@ export const refreshAccessToken = async (req, res) => {
     process.env.JWT_REFRESH_SECRET,
     { expiresIn: "14d" }
   );
-
-  console.log({ refresh: { newAccess, newRefresh } });
 
   res.set("Cache-Control", "no-store");
   res.status(200).json({

@@ -34,10 +34,19 @@ export const protect = async (req, res, next) => {
     // Bypass for versions 4.1.0 and 4.1.1
     if (
       /*req.headers["x-app-version"] !== "4.1.0" &&
-      req.headers["x-app-version"] !== "4.1.1"*/ true
+          req.headers["x-app-version"] !== "4.1.1"*/ true
     ) {
       const tokenJkt = decoded.cnf?.jkt;
-      if (!tokenJkt || tokenJkt !== dpopJkt) {
+
+      // Normalize both sides to base64url without padding (no extra helpers)
+      const nj = tokenJkt
+        ? tokenJkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
+        : tokenJkt;
+      const pj = dpopJkt
+        ? dpopJkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
+        : dpopJkt;
+
+      if (!nj || nj !== pj) {
         throw createError(401, "Proof-of-Possession failed (JKT mismatch).");
       }
     }

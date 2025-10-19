@@ -1,107 +1,93 @@
-// dpopValidationMiddleware.js
 import * as jose from "jose";
 import createError from "http-errors";
 
-// Import or define your JTI storage/checking function
-//import { checkAndStoreJti } from "./jtiStore";
-// Use a placeholder for your custom error creation function
-// const createError = (status, message) => { const e = new Error(message); e.status = status; return e; };
-
 const DPOP_EXPIRATION_SECONDS = 60;
 
-export async function dpopValidationMiddleware(req, res, next) {
-  // Bypass for current users
-  /*if (
-    req.headers["x-app-version"] === "4.1.0" ||
-    req.headers["x-app-version"] === "4.1.1" ||
-    
-  ) {
-    return next();
-  }*/
+// Allowed production domains (hardcoded)
+const ALLOWED_BASES = [
+  process.env.PUBLIC_BASE_URL,
+  process.env.PUBLIC_BASE_URL_RENDER_DEFAULT,
+  process.env.PRIVATE_BASE_URL_DEV,
+];
 
+export default async function dpopValidationMiddleware(req, res, next) {
   const dpopProof = req.headers["dpop"];
-
-  // 1. Check for DPoP Proof presence
   if (!dpopProof) {
-    // Only for secured routes where DPoP is expected.
     return next(createError(401, "DPoP proof is missing in the request."));
   }
 
   try {
-    // 2. JOSE: Decode and Verify Signature
-    const verificationResult = await jose.compactVerify(
+    // 1) Verify JWS using public JWK from header
+    const { payload, protectedHeader } = await jose.compactVerify(
       dpopProof,
-      // jose automatically imports the 'jwk' from the header to verify the signature
-      (protectedHeader) => {
-        const jwk = protectedHeader.jwk;
-        if (!jwk) {
-          throw next(createError("DPoP header must contain jwk."));
+      (h) => {
+        const jwk = h.jwk;
+        if (!jwk) throw createError(400, "DPoP header must contain jwk.");
+        if (h.alg !== "ES256") throw createError(401, "Unsupported DPoP alg.");
+        if (jwk.kty !== "EC" || jwk.crv !== "P-256") {
+          throw createError(401, "Invalid DPoP JWK (must be EC P-256).");
         }
-        return jose.importJWK(jwk, protectedHeader.alg);
+        const { kid, ...publicJwkToImport } = jwk;
+        return jose.importJWK(publicJwkToImport, h.alg);
       }
     );
 
-    const payload = JSON.parse(
-      new TextDecoder().decode(verificationResult.payload)
-    );
-    const protectedHeader = JSON.parse(
-      new TextDecoder().decode(verificationResult.protectedHeader)
-    );
+    const claims = JSON.parse(new TextDecoder().decode(payload));
 
-    // 3. Mandatory Claims Validation
+    // 2) Validate typ
+    if ((protectedHeader.typ || "").toLowerCase() !== "dpop+jwt") {
+      return next(createError(401, "Invalid DPoP typ."));
+    }
 
-    // a. JTI validation (Replay Attack Prevention)
-    /*const isUnique = await checkAndStoreJti(
-      payload.jti,
-      DPOP_EXPIRATION_SECONDS
-    );
-    if (!isUnique) {
-      return next(
-        createError(401, "DPoP proof JTI reuse detected (Replay Attack).")
-      );
-    }*/
-
-    // b. HTM (HTTP Method) validation
-    const htm = payload.htm?.toUpperCase();
+    // 3) Validate method
+    const htm = (claims.htm || "").toUpperCase();
     if (htm !== req.method) {
       return next(createError(401, "DPoP proof HTM mismatch."));
     }
 
-    // c. HTU (HTTP URI) validation
-    // Crucial: Use the URI *before* any query parameters for security, or the canonical URL.
-    // We ensure the HTU in the Proof matches the full URI (including path).
-    // Note: req.originalUrl includes path and query, which is fine if the client sent the full URI.
-    const requestUri = req.originalUrl;
-    const htu = payload.htu;
+    // 4) Validate HTU
+    const proto = req.protocol;
+    const host = (req.get("host") || "").trim();
+    if (!host) return next(createError(400, "Missing Host header."));
 
-    if (requestUri !== htu) {
-      return next(
-        createError(401, `DPoP proof HTU mismatch. Expected: ${requestUri}`)
-      );
+    const serverURL = new URL(`${proto}://${host}${req.originalUrl}`);
+    const htuURL = new URL(claims.htu);
+
+    // Check allowed base domains
+    const isAllowed = ALLOWED_BASES.some(
+      (base) => base.toLowerCase() === htuURL.origin.toLowerCase()
+    );
+
+    if (!isAllowed) {
+      return next(createError(401, `DPoP request host not allowed.`));
     }
 
-    // d. IAT (Issued At) validation (Proof freshness)
+    const serverPath =
+      serverURL.pathname.replace(/\/+$/, "").toLowerCase() || "/";
+    const clientPath = htuURL.pathname.replace(/\/+$/, "").toLowerCase() || "/";
+
+    if (clientPath !== serverPath) {
+      return next(createError(401, `DPoP proof HTU mismatch.`));
+    }
+
+    // 5) Validate IAT
     const now = Math.floor(Date.now() / 1000);
-    // Proof must be recent (e.g., within 60 seconds) and not in the far future.
-    if (now - payload.iat > DPOP_EXPIRATION_SECONDS || payload.iat > now + 5) {
+    if (now - claims.iat > DPOP_EXPIRATION_SECONDS || claims.iat > now + 5) {
       return next(
         createError(401, "DPoP proof is expired or timestamp is invalid.")
       );
     }
 
-    // 4. Extract JKT (JWK Thumbprint) and pass it to the next middleware
-    const jwk = protectedHeader.jwk;
-
-    // Calculate the JKT from the JWK (using SHA-256 by convention)
-    const jkt = await jose.calculateJwkThumbprint(jwk, "sha256");
-
-    // Store JKT on the request object for the Auth Middleware
+    // 6) Attach JKT
+    const jkt = await jose.calculateJwkThumbprint(
+      protectedHeader.jwk,
+      "sha256"
+    );
     req.dpopJkt = jkt;
 
-    next();
+    return next();
   } catch (error) {
-    // Catch signature failures, bad JWT format, etc.
-    console.error("DPoP Proof validation failed:", error.message);
+    console.error("DPoP Proof validation failed:", error?.message || error);
     return next(createError(401, "Invalid DPoP proof signature or format."));
   }
 }
