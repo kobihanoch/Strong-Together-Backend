@@ -74,7 +74,7 @@ app.use((req, res, next) => {
   const username = req.headers["x-username"] ?? null;
 
   console.log(
-    `[IP: ${clientIP}] [User: ${username}] ${req.method}:${req.originalUrl}`
+    `[IP: ${clientIP}] [App Version: ${req.headers["x-app-version"]}] [User: ${username}] ${req.method}:${req.originalUrl}`
   );
   next();
 });
