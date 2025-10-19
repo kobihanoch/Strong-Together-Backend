@@ -74,13 +74,13 @@ export const loginUser = async (req, res) => {
   const rowsUserData = await queryBumpTokenVersionAndGetSelfData(user.id);
   const [{ token_version, user_data: userData }] = rowsUserData;
 
-  const cnfClaim = {
-    cnf: {
-      jkt: jkt
-        ? jkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
-        : "jtk",
-    },
-  };
+  const cnfClaim = jkt
+    ? {
+        cnf: {
+          jkt: jkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, ""),
+        },
+      }
+    : {};
 
   // Sign tokens with DPoP confirmation claim
   const accessToken = jwt.sign(
@@ -142,7 +142,6 @@ export const logoutUser = async (req, res) => {
 // @access  Public
 export const refreshAccessToken = async (req, res) => {
   //await queryDeleteExpiredBlacklistedTokens();
-
   const dpopJkt = req.dpopJkt;
   if (
     req.headers["x-app-version"] !== "4.1.0" &&
@@ -165,10 +164,11 @@ export const refreshAccessToken = async (req, res) => {
   if (
     req.headers["x-app-version"] !== "4.1.0" &&
     req.headers["x-app-version"] !== "4.1.1" &&
-    process.env.DPOP_ENABLED
+    process.env.DPOP_ENABLED === "true"
   ) {
+    // One time migration path for older versions (newer tokens will pu JKT inside)
     const tokenJkt = decoded.cnf?.jkt;
-    if (!tokenJkt || tokenJkt !== dpopJkt) {
+    if (tokenJkt && tokenJkt !== req.dpopJkt) {
       throw createError(401, "Proof-of-Possession failed (JKT mismatch).");
     }
   }
@@ -183,13 +183,16 @@ export const refreshAccessToken = async (req, res) => {
 
   const { token_version, user_data: userData } = user;
 
-  const cnfClaim = {
-    cnf: {
-      jkt: dpopJkt
-        ? dpopJkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
-        : "jkt",
-    },
-  }; // Use the JKT from the proof
+  const cnfClaim = dpopJkt
+    ? {
+        cnf: {
+          jkt: dpopJkt
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=+$/g, ""),
+        },
+      }
+    : {};
 
   // Issue fresh access + fresh refresh (rotate)
   const newAccess = jwt.sign(
