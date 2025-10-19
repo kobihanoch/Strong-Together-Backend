@@ -38,8 +38,8 @@ export const loginUser = async (req, res) => {
 
   const jkt = req.headers["dpop-key-binding"];
   if (
-    /*req.headers["x-app-version"] !== "4.1.0" &&
-    req.headers["x-app-version"] !== "4.1.1"*/ true &&
+    req.headers["x-app-version"] !== "4.1.0" &&
+    req.headers["x-app-version"] !== "4.1.1" &&
     process.env.DPOP_ENABLED === "true"
   ) {
     if (!jkt) {
@@ -145,8 +145,8 @@ export const refreshAccessToken = async (req, res) => {
 
   const dpopJkt = req.dpopJkt;
   if (
-    /*req.headers["x-app-version"] !== "4.1.0" &&
-    req.headers["x-app-version"] !== "4.1.1"*/ true &&
+    req.headers["x-app-version"] !== "4.1.0" &&
+    req.headers["x-app-version"] !== "4.1.1" &&
     process.env.DPOP_ENABLED === "true"
   ) {
     if (!dpopJkt) {
@@ -163,8 +163,8 @@ export const refreshAccessToken = async (req, res) => {
   if (!decoded) throw createError(401, "Invalid or expired refresh token");
 
   if (
-    /*req.headers["x-app-version"] !== "4.1.0" &&
-    req.headers["x-app-version"] !== "4.1.1"*/ true &&
+    req.headers["x-app-version"] !== "4.1.0" &&
+    req.headers["x-app-version"] !== "4.1.1" &&
     process.env.DPOP_ENABLED
   ) {
     const tokenJkt = decoded.cnf?.jkt;
