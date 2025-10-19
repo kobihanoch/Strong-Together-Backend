@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.9.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.8.0...v1.9.0) (2025-10-19)
+
+
+### Features
+
+* **DPoP:** Added JTI redis caching for jtis ([46feafa](https://github.com/kobihanoch/Strong-Together-Backend/commit/46feafa29be363f9bea12d09cee21709e8f42d0c))
+
 ## [1.8.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.7.3...v1.8.0) (2025-10-19)
 
 
