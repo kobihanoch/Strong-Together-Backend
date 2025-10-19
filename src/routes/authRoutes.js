@@ -23,6 +23,7 @@ import { changeEmailSchema } from "../validators/auth/changeemail.schema.js";
 import { loginSchema } from "../validators/auth/login.schema.js";
 import { resetPasswordSchema } from "../validators/auth/resetpassword.schema.js";
 import { withRlsTx } from "../config/db.js";
+import dpopValidationMiddleware from "../middlewares/DPoPValidationMiddleware.js";
 
 const router = Router();
 
@@ -33,7 +34,11 @@ router.post(
   validate(loginSchema),
   asyncHandler(withRlsTx(loginUser))
 ); // Logging in a user and returns user
-router.post("/refresh", asyncHandler(withRlsTx(refreshAccessToken))); // Refresh token
+router.post(
+  "/refresh",
+  dpopValidationMiddleware,
+  asyncHandler(withRlsTx(refreshAccessToken))
+); // Refresh token
 router.post("/logout", asyncHandler(withRlsTx(logoutUser))); // Logging out a user
 router.get("/verify", asyncHandler(withRlsTx(verifyUserAccount))); // Verification mail button url (to verify user)
 router.post(

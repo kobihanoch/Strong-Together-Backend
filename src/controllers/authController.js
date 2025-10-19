@@ -64,7 +64,9 @@ export const loginUser = async (req, res) => {
     await querySetUserFirstLoginFalse(user.id);
     try {
       await sendSystemMessageToUserWhenFirstLogin(user.id, user.name);
-    } catch {}
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   // Fetch all user data and bump token version
