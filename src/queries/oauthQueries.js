@@ -28,7 +28,7 @@ export async function queryTryToLinkUserWithEmail(googleEmail, googleSub) {
     const existing = await trx`
       SELECT u.id
       FROM users u
-      WHERE lower(u.email) = lower(${googleEmail})
+      WHERE lower(u.email) = lower(${googleEmail}) AND auth_provider='app'
       FOR UPDATE
       LIMIT 1
     `;
@@ -71,14 +71,6 @@ export async function queryCreateUserWithGoogleInfo(
   return await sql.begin(async (trx) => {
     // Generate a unique username
     const username = await ensureUniqueUsername(trx, candidateUsername);
-    console.log({
-      username,
-      email,
-      fullName,
-      oauthMissingFields,
-      googleSub,
-      googleEmail,
-    });
 
     // Create user
     const inserted = await trx`

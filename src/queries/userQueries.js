@@ -17,31 +17,48 @@ export async function queryAuthenticatedUserById(userId) {
 }
 
 export async function queryUsernameOrEmailConflict(username, email, userId) {
-  return sql`
-      SELECT 1 FROM users
-      WHERE (username=${username} OR email=${email})
-        AND id <> ${userId}
-      LIMIT 1
+  // Cast params to text so Postgres knows their type even when null
+  const rows = await sql`
+    SELECT EXISTS (
+      SELECT 1
+      FROM users
+      WHERE id <> ${userId}
+        AND (
+          (${username}::text IS NOT NULL AND lower(username) = lower(${username}::text))
+          OR
+          (${email}::text IS NOT NULL AND lower(email) = lower(${email}::text))
+        )
+    ) AS conflict
   `;
+  // rows[0] is always defined with a boolean 'conflict' field
+  return rows[0]?.conflict === true;
 }
 
 export async function queryUpdateAuthenticatedUser(
   userId,
-  { username, fullName, email, gender, hashed, profileImgUrl, pushToken }
+  { username, fullName, email, gender, hashed, profileImgUrl, pushToken },
+  setCompletedOnOAuthUser
 ) {
-  return sql`
-    UPDATE users
-    SET
-      username          = COALESCE(${username}, username),
-      name              = COALESCE(${fullName}, name),
-      email             = COALESCE(${email}, email),
-      gender            = COALESCE(${gender}, gender),
-      password          = COALESCE(${hashed}, password),
-      profile_image_url = COALESCE(${profileImgUrl}, profile_image_url),
-      push_token        = COALESCE(${pushToken}, push_token)
-    WHERE id = ${userId}
-    RETURNING to_jsonb(users) - 'password' AS user_data
-  `;
+  const rows = await sql`
+      UPDATE users
+      SET
+        username          = COALESCE(${username}, username),
+        name              = COALESCE(${fullName}, name),
+        email             = COALESCE(${email}, email),
+        gender            = COALESCE(${gender}, gender),
+        password          = COALESCE(${hashed}, password),
+        profile_image_url = COALESCE(${profileImgUrl}, profile_image_url),
+        push_token        = COALESCE(${pushToken}, push_token)
+      WHERE id = ${userId}
+      RETURNING to_jsonb(users) - 'password' AS user_data
+    `;
+
+  // Set inputs completed on OAuth accounts row
+  if (setCompletedOnOAuthUser) {
+    await sql`UPDATE oauth_accounts SET missing_fields=NULL WHERE user_id=${userId}`;
+  }
+
+  return rows;
 }
 
 export async function queryDeleteUserById(id) {

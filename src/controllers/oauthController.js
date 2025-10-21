@@ -6,11 +6,14 @@ import {
 } from "../queries/authQueries.js";
 import {
   queryCreateUserWithGoogleInfo,
+  queryFindUserIdWithAppleUserId,
   queryFindUserIdWithGoogleUserId,
   queryTryToLinkUserWithEmail,
 } from "../queries/oauthQueries.js";
 import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
 import { isEnglishName, verifyGoogleIdToken } from "../utils/oauthUtils.js";
+import { decodeAccessToken, getAccessToken } from "../utils/tokenUtils.js";
+import sql from "../config/db.js";
 
 const validateJkt = (req) => {
   const jkt = req.headers["dpop-key-binding"];
@@ -29,25 +32,21 @@ const validateJkt = (req) => {
 export const createOrSignInWithGoogle = async (req, res) => {
   const jkt = validateJkt(req);
   const idToken = req.body.idToken;
+
   if (!idToken) throw createError(400, "Missing google id token");
   //Verify the Google ID token
   const { googleSub, email, emailVerified, fullName, picture } =
     await verifyGoogleIdToken(idToken);
-
-  //console.log({ googleSub, email, emailVerified, fullName, picture });
 
   // Check OAuth accounts to get user_id and fetch is first login from users
   let { userId, missing_fields } = await queryFindUserIdWithGoogleUserId(
     googleSub
   );
   let userExistOnOAuthUsers = !!userId;
-
+  let missingFieldsPayload = null;
   // If trying to log in and only missing fields (to show UI to  update these fields)
   if (userExistOnOAuthUsers && missing_fields)
-    return res.status(409).json({
-      message: "Following fields are missing",
-      missing_fields: missing_fields.split(","),
-    });
+    missingFieldsPayload = missing_fields.split(",");
 
   // If user doesn't exist as OAuth
   if (!userExistOnOAuthUsers) {
@@ -95,11 +94,7 @@ export const createOrSignInWithGoogle = async (req, res) => {
 
       console.log("User created");
 
-      if (missingFields !== "")
-        return res.status(200).json({
-          message: "Following fields are missing",
-          missing_fields: missingFields.split(","),
-        });
+      if (missingFields !== "") missingFieldsPayload = missingFields.split(",");
     }
   }
 
@@ -135,20 +130,23 @@ export const createOrSignInWithGoogle = async (req, res) => {
     { expiresIn: "5m" }
   );
 
-  const refreshToken = jwt.sign(
-    {
-      id: userData.id,
-      role: userData.role,
-      tokenVer: token_version,
-      ...cnfClaim,
-    },
-    process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "14d" }
-  );
+  const refreshToken = missingFieldsPayload
+    ? null
+    : jwt.sign(
+        {
+          id: userData.id,
+          role: userData.role,
+          tokenVer: token_version,
+          ...cnfClaim,
+        },
+        process.env.JWT_REFRESH_SECRET,
+        { expiresIn: "14d" }
+      );
   res.set("Cache-Control", "no-store");
   return res.status(200).json({
     message: "Login successful",
     user: userData?.id,
+    missingFields: missingFieldsPayload,
     accessToken: accessToken,
     refreshToken: refreshToken,
   });
@@ -168,4 +166,68 @@ export const createOrSignInWithApple = async (req, res) => {
   // Login user
   const rowsUserData = await queryBumpTokenVersionAndGetSelfData(userId);
   const [{ token_version, user_data: userData }] = rowsUserData;
+};
+
+// @desc    Create or Login a user with
+// @route   POST /api/oauth/proceedauth
+// @access  Private
+export const proceedLogin = async (req, res) => {
+  const jkt = req.dpopJkt;
+  const userId = req.user.id;
+
+  const [{ missing_fields }] = await sql`
+    SELECT missing_fields FROM oauth_accounts WHERE user_id=${userId} `;
+
+  if (missing_fields) {
+    throw createError(409, "Profile not completed yet");
+  }
+
+  // Bump and release new tokens
+  const rowsUserData = await queryBumpTokenVersionAndGetSelfData(userId);
+  const [{ token_version, user_data: userData }] = rowsUserData;
+  // If first log in send welcome message
+  if (userData.is_first_login) {
+    await querySetUserFirstLoginFalse(userId);
+    try {
+      await sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  // Login user
+  const cnfClaim = {
+    cnf: {
+      jkt: jkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, ""),
+    },
+  };
+
+  const accessTokenRes = jwt.sign(
+    {
+      id: userData.id,
+      role: userData.role,
+      tokenVer: token_version,
+      ...cnfClaim,
+    },
+    process.env.JWT_ACCESS_SECRET,
+    { expiresIn: "5m" }
+  );
+
+  const refreshTokenRes = jwt.sign(
+    {
+      id: userData.id,
+      role: userData.role,
+      tokenVer: token_version,
+      ...cnfClaim,
+    },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: "14d" }
+  );
+  res.set("Cache-Control", "no-store");
+  return res.status(200).json({
+    message: "Login successful",
+    user: userData?.id,
+    accessToken: accessTokenRes,
+    refreshToken: refreshTokenRes,
+  });
 };
