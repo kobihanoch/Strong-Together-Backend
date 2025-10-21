@@ -58,3 +58,10 @@ export async function ensureUniqueUsername(trx, candidate) {
     username = `${candidate}${i}`;
   }
 }
+
+export function isEnglishName(name) {
+  if (!name) return false;
+  // Allow only English letters, spaces, hyphens, and apostrophes
+  const englishRegex = /^[A-Za-z\s'-]+$/;
+  return englishRegex.test(name.trim());
+}

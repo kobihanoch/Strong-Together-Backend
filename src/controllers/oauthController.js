@@ -10,7 +10,7 @@ import {
   queryTryToLinkUserWithEmail,
 } from "../queries/oauthQueries.js";
 import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
-import { verifyGoogleIdToken } from "../utils/oauthUtils.js";
+import { isEnglishName, verifyGoogleIdToken } from "../utils/oauthUtils.js";
 
 const validateJkt = (req) => {
   const jkt = req.headers["dpop-key-binding"];
@@ -44,9 +44,10 @@ export const createOrSignInWithGoogle = async (req, res) => {
 
   // If trying to log in and only missing fields (to show UI to  update these fields)
   if (userExistOnOAuthUsers && missing_fields)
-    return res
-      .status(200)
-      .json({ message: "Following fields are missing", missing_fields });
+    return res.status(409).json({
+      message: "Following fields are missing",
+      missing_fields: missing_fields.split(","),
+    });
 
   // If user doesn't exist as OAuth
   if (!userExistOnOAuthUsers) {
@@ -74,7 +75,7 @@ export const createOrSignInWithGoogle = async (req, res) => {
       const username = email?.split("@")[0].toLowerCase() || null;
 
       const isValidEmail = !!email;
-      const isValidFullname = !!fullName;
+      const isValidFullname = !!fullName && isEnglishName(fullName);
       //const isValidGender = false;
 
       let missingFields = "";
@@ -93,6 +94,12 @@ export const createOrSignInWithGoogle = async (req, res) => {
       userId = userIdFromRegister;
 
       console.log("User created");
+
+      if (missingFields !== "")
+        return res.status(200).json({
+          message: "Following fields are missing",
+          missing_fields: missingFields.split(","),
+        });
     }
   }
 
