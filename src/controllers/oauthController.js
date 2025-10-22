@@ -1,19 +1,24 @@
 import createError from "http-errors";
 import jwt from "jsonwebtoken";
+import sql from "../config/db.js";
 import {
   queryBumpTokenVersionAndGetSelfData,
   querySetUserFirstLoginFalse,
 } from "../queries/authQueries.js";
 import {
+  queryCreateUserWithAppleInfo,
   queryCreateUserWithGoogleInfo,
   queryFindUserIdWithAppleUserId,
   queryFindUserIdWithGoogleUserId,
-  queryTryToLinkUserWithEmail,
+  queryTryToLinkUserWithEmailApple,
+  queryTryToLinkUserWithEmailGoogle,
 } from "../queries/oauthQueries.js";
 import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
-import { isEnglishName, verifyGoogleIdToken } from "../utils/oauthUtils.js";
-import { decodeAccessToken, getAccessToken } from "../utils/tokenUtils.js";
-import sql from "../config/db.js";
+import {
+  isEnglishName,
+  verifyAppleIdToken,
+  verifyGoogleIdToken,
+} from "../utils/oauthUtils.js";
 
 const validateJkt = (req) => {
   const jkt = req.headers["dpop-key-binding"];
@@ -55,10 +60,8 @@ export const createOrSignInWithGoogle = async (req, res) => {
     let isLinked = false;
     console.log("User doesnt exist, try to link");
     if (emailVerified) {
-      const { userId: userIdFromLink } = await queryTryToLinkUserWithEmail(
-        email,
-        googleSub
-      );
+      const { userId: userIdFromLink } =
+        await queryTryToLinkUserWithEmailGoogle(email, googleSub);
       if (userIdFromLink) {
         userId = userIdFromLink;
         isLinked = true;
@@ -103,7 +106,7 @@ export const createOrSignInWithGoogle = async (req, res) => {
   const rowsUserData = await queryBumpTokenVersionAndGetSelfData(userId);
   const [{ token_version, user_data: userData }] = rowsUserData;
   // If first log in send welcome message
-  if (userData.is_first_login) {
+  if (userData.is_first_login && !missingFieldsPayload) {
     await querySetUserFirstLoginFalse(userId);
     try {
       await sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name);
@@ -152,20 +155,155 @@ export const createOrSignInWithGoogle = async (req, res) => {
   });
 };
 
-// @desc    Create or Login a user with
+// @desc    Create or Login a user with Apple
 // @route   POST /api/oauth/apple
 // @access  Public
 export const createOrSignInWithApple = async (req, res) => {
-  const jkt = validateJkt();
-  const idFromApple = null; ///
-  let [userId] = await queryFindUserIdWithAppleUserId(idFromApple);
-  if (!userId) {
-    //Register user
+  const jkt = validateJkt(req);
+  const { idToken, rawNonce, fullName, email } = req.body || {};
+
+  if (!idToken || typeof idToken !== "string") {
+    throw createError(400, "Missing or invalid Apple identityToken");
+  }
+  if (!rawNonce || typeof rawNonce !== "string") {
+    throw createError(400, "Missing rawNonce");
   }
 
-  // Login user
+  // 1) Verify Apple ID token cryptographically
+  const {
+    appleSub,
+    email: tokenEmail,
+    emailVerified,
+    name: normalizedName,
+  } = await verifyAppleIdToken({
+    identityToken: idToken,
+    rawNonce,
+    fullName, // may exist only on first sign-in; not cryptographically verified
+  });
+
+  // Prefer email from token when present; else fall back to client-provided
+  const resolvedEmail = tokenEmail ?? email ?? null;
+
+  // 2) Lookup by Apple sub in oauth_accounts
+  let { userId, missing_fields } = await queryFindUserIdWithAppleUserId(
+    appleSub
+  );
+  const userExistOnOAuthUsers = !!userId;
+
+  // 3) Prepare UI missing-fields payload, if already linked but incomplete
+  let missingFieldsPayload = null;
+  if (userExistOnOAuthUsers && missing_fields) {
+    missingFieldsPayload = missing_fields.split(",");
+  }
+
+  // 4) If not linked yet: try to link by verified email, else create user
+  if (!userExistOnOAuthUsers) {
+    let isLinked = false;
+
+    // Try link only if Apple says email is verified
+    if (emailVerified && resolvedEmail) {
+      const { userId: linkedId } = await queryTryToLinkUserWithEmailApple(
+        resolvedEmail,
+        appleSub
+      );
+      if (linkedId) {
+        userId = linkedId;
+        isLinked = true;
+      }
+    }
+
+    if (!isLinked) {
+      // Build username and derive missing fields like Google flow
+      const username = resolvedEmail?.split("@")[0].toLowerCase() || null;
+
+      const isValidEmail = !!resolvedEmail;
+      const candidateFullName =
+        normalizedName && typeof normalizedName === "string"
+          ? normalizedName
+          : fullName && typeof fullName === "string"
+          ? fullName
+          : null;
+
+      const isValidFullname =
+        !!candidateFullName && isEnglishName(candidateFullName);
+
+      let missingFields = "";
+      if (!isValidEmail) missingFields += "email,";
+      if (!isValidFullname) missingFields += "name";
+
+      const newUserId = await queryCreateUserWithAppleInfo(
+        username,
+        isValidEmail ? resolvedEmail : null,
+        isValidFullname ? candidateFullName : null,
+        missingFields !== "" ? missingFields : null,
+        appleSub,
+        resolvedEmail
+      );
+      userId = newUserId;
+
+      if (missingFields !== "") {
+        missingFieldsPayload = missingFields.split(",");
+      }
+    }
+  }
+
+  // 5) Bump token version + fetch user data (same as Google path)
   const rowsUserData = await queryBumpTokenVersionAndGetSelfData(userId);
   const [{ token_version, user_data: userData }] = rowsUserData;
+
+  // First login welcome
+  if (userData.is_first_login && !missingFieldsPayload) {
+    await querySetUserFirstLoginFalse(userId);
+    try {
+      await sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  console.log("Here");
+
+  // 6) Issue session (same logic as Google)
+  const cnfClaim = {
+    cnf: {
+      jkt: jkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, ""),
+    },
+  };
+
+  const accessToken = jwt.sign(
+    {
+      id: userData.id,
+      role: userData.role,
+      tokenVer: token_version,
+      ...cnfClaim,
+    },
+    process.env.JWT_ACCESS_SECRET,
+    { expiresIn: "5m" }
+  );
+
+  const refreshToken = missingFieldsPayload
+    ? null
+    : jwt.sign(
+        {
+          id: userData.id,
+          role: userData.role,
+          tokenVer: token_version,
+          ...cnfClaim,
+        },
+        process.env.JWT_REFRESH_SECRET,
+        { expiresIn: "14d" }
+      );
+
+  console.log("Here 2");
+
+  res.set("Cache-Control", "no-store");
+  return res.status(200).json({
+    message: "Login successful",
+    user: userData?.id,
+    missingFields: missingFieldsPayload,
+    accessToken,
+    refreshToken,
+  });
 };
 
 // @desc    Create or Login a user with

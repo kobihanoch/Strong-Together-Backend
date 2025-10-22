@@ -1,5 +1,6 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import createError from "http-errors";
+import * as jose from "jose";
 
 const GOOGLE_JWKS = createRemoteJWKSet(
   new URL("https://www.googleapis.com/oauth2/v3/certs")
@@ -33,6 +34,47 @@ export async function verifyGoogleIdToken(idToken) {
     picture: payload.picture || null,
     raw: payload,
   };
+}
+
+const APPLE_ISS = "https://appleid.apple.com";
+const APPLE_JWKS_URL = "https://appleid.apple.com/auth/keys";
+const jwks = jose.createRemoteJWKSet(new URL(APPLE_JWKS_URL));
+const ALLOWED_AUDS = process.env.APPLE_ALLOWED_AUDS.split(",");
+
+export async function verifyAppleIdToken({
+  identityToken,
+  rawNonce,
+  fullName,
+}) {
+  if (typeof identityToken !== "string")
+    throw new Error("Missing identityToken");
+
+  // 1) Verify token signature and claims
+  const { payload } = await jose.jwtVerify(identityToken, jwks, {
+    issuer: APPLE_ISS,
+    audience: ALLOWED_AUDS,
+  });
+
+  // 2) Verify nonce integrity
+  const enc = new TextEncoder();
+  const dig = await crypto.subtle.digest("SHA-256", enc.encode(rawNonce));
+  const nonceHashHex = Array.from(new Uint8Array(dig))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  if ((payload.nonce || "").toLowerCase() !== nonceHashHex.toLowerCase()) {
+    throw new Error("Invalid nonce");
+  }
+
+  // 3) Extract identity fields
+  const appleSub = payload.sub;
+  const email = payload.email ?? null;
+  const emailVerified =
+    payload.email_verified === "true" || payload.email_verified === true;
+
+  const name = fullName || null;
+
+  return { appleSub, email, emailVerified, name, payload };
 }
 
 export async function ensureUniqueUsername(trx, candidate) {
