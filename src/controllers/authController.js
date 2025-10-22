@@ -300,8 +300,9 @@ export const checkUserVerify = async (req, res) => {
 export const sendChangePassEmail = async (req, res) => {
   const { identifier } = req.body;
   if (!identifier) throw createError(400, "Please fill username or email");
-  const [user = null] =
-    await sql`SELECT id, email, name FROM users WHERE email=${identifier} OR username=${identifier} LIMIT 1`;
+  const [user = null] = await sql`SELECT id, email, name FROM users WHERE 
+      auth_provider='app' 
+      AND (username=${identifier} OR email=${identifier}) LIMIT 1`;
   // Don;t overshare
   if (!user) return res.status(204).end();
 

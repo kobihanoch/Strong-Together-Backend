@@ -21,7 +21,11 @@ export const sendVerificationEmail = async (email, userId, fullName) => {
     verifyUrl,
     logoUrl: `https://portfolio.kobihanoch.com/images/strongtogethericon.png`,
   });
-  await sendMail({ to: email, subject: "Verify your email", html });
+  await sendMail({
+    to: email,
+    subject: "Confirm your Strong Together account",
+    html,
+  });
 };
 
 export const sendForgotPasswordEmail = async (email, userId, fullName) => {

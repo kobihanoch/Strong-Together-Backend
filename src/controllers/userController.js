@@ -80,31 +80,35 @@ export const updateAuthenticatedUser = async (req, res) => {
     password = null,
     profileImgUrl = null,
     pushToken = null,
+    setCompletedOnOAuth = false, // Determines if set missing_fields cell to null
   } = req.body;
-  if (username || email) {
-    const rowsConflict = await queryUsernameOrEmailConflict(
-      username,
-      email,
-      req.user.id
-    );
-    const [conflict] = rowsConflict;
-    if (conflict) throw createError(409, "Username or email already in use");
-  }
 
   let hashed = null;
   if (password) {
     hashed = await bcrypt.hash(password, 10);
   }
 
-  const rowsUpdated = await queryUpdateAuthenticatedUser(req.user.id, {
-    username,
-    fullName,
-    email,
-    gender,
-    hashed,
-    profileImgUrl,
-    pushToken,
-  });
+  let rowsUpdated;
+  try {
+    rowsUpdated = await queryUpdateAuthenticatedUser(
+      req.user.id,
+      {
+        username,
+        fullName,
+        email,
+        gender,
+        hashed,
+        profileImgUrl,
+        pushToken,
+      },
+      setCompletedOnOAuth
+    );
+  } catch (e) {
+    if (e.code === "23505") {
+      // Unique violation thrown by the DB unique indexes
+      throw createError(409, "Username or email already in use");
+    }
+  }
   const [updated] = rowsUpdated;
 
   res.status(200).json({
