@@ -1,4 +1,4 @@
-# Strong Together Backend (v1.9.0)
+# Strong Together Backend (v1.10.0)
 
 **Strong Together** is a fitness-oriented application.  
 This repository contains the backend server that powers the app.  
@@ -8,6 +8,9 @@ It exposes a REST API for user registration and authentication, workout planning
 
 The backend is built with **Node.js** and **Express**, uses **PostgreSQL** as its main database, **Redis** for caching, **Socket.IO** for realtime events, **JWT** for authentication, **Zod** for schema validation, and integrates with **Supabase Storage** and the **Expo push notification service**.  
 It also uses **Resend** for transactional email (account verification & password reset).
+
+#### OAuth Providers & Account Linking (Google + Apple)
+The backend supports **OAuth 2.0** sign-in with **Google** and **Apple** and automatically **links multiple providers** to a single internal user.
 
 The application is containerized with **Docker** and currently deployed on **Render**.  
 Previously, the project used **Supabase Client** directly from the frontend as a BaaS (Backend as a Service).  
@@ -176,87 +179,139 @@ Health: `/health` returns server status.
 
 > **Timezone note (`tz`)**: several endpoints accept a `tz` query parameter (IANA zone string, e.g., `Asia/Jerusalem`) to compute day boundaries server-side.
 
-### Authentication
+## Auth headers (protected routes)
 
-| Method | Endpoint                      | Auth? | Body / Query / Headers                                                                                     | Description                                                                                                                                                                                                                                                                      |
-| ------ | ----------------------------- | ----- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| POST   | `/auth/login`                 | No    | Body: `{ identifier, password }` • Header: `DPoP-Key-Binding`                                            | Logs in by username **or** email. On success returns `accessToken`, `refreshToken`, and `user` ID. When DPoP is enabled, the client sends `DPoP-Key-Binding` containing the public-key thumbprint to bind tokens via a confirmation claim.                                        |
-| POST   | `/auth/refresh`               | No    | Header: `x-refresh-token` (or cookie/body via `getRefreshToken`) • Header: `DPoP`                         | Rotates session. Requires a valid per-request **DPoP** proof; the refresh token’s confirmation must match the proof’s key material. On success returns fresh access+refresh tokens (with updated `tokenVersion`).                                                                 |
-| POST   | `/auth/logout`                | No    | Header/body `x-refresh-token`                                                                              | Clears Expo push token and bumps `tokenVersion`.                                                                                                                                                                                                                                 |
-| GET    | `/auth/verify`                | No    | Query `?token=...`                                                                                         | Verifies account from email link and returns an HTML confirmation page.                                                                                                                                                                                                          |
-| POST   | `/auth/sendverificationemail` | No    | `{ email }`                                                                                                 | Sends verification email (via Resend). `204 No Content` on success.                                                                                                                                                                                                              |
-| PUT    | `/auth/changeemailverify`     | No    | `{ username, password, newEmail }`                                                                          | Updates email **before** verification and resends a verification email (via Resend).                                                                                                                                                                                             |
-| GET    | `/auth/checkuserverify`       | No    | `?username=...`                                                                                              | Returns `{ isVerified: boolean }`.                                                                                                                                                                                                                                               |
-| POST   | `/auth/forgotpassemail`       | No    | `{ identifier }`                                                                                             | Sends password-reset email (via Resend). `204 No Content` regardless of user existence.                                                                                                                                                                                          |
-| PUT    | `/auth/resetpassword`         | No    | Query `?token=...`, Body `{ newPassword }`                                                                   | Resets password using token issued by forgot-password flow and bumps `tokenVersion`.                                                                                                                                                                                             |
+```http
+Authorization: DPoP <accessToken>
+DPoP: <compact-JWS-proof>
+```
 
-**Authorization header for protected routes:**  
-`Authorization: DPoP <accessToken>` + `DPoP: <proof>`
+**Login / OAuth login with DPoP binding (when `DPOP_ENABLED=true`):**
+```http
+DPoP-Key-Binding: <public-key-thumbprint>
+```
 
-### Users
-
-| Method | Endpoint                  | Auth? | Body / Params                                                                   | Description                                                                |
-| ------ | ------------------------- | ----- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| POST   | `/users/create`           | No    | `{ username, fullName, email, password, gender }`                               | Register new user. Sends verification email (Resend).                      |
-| GET    | `/users/get`              | Yes   | —                                                                               | Get authenticated user profile (aggregated JSON).                          |
-| PUT    | `/users/updateself`       | Yes   | Any of: `username, fullName, email, gender, password, profileImgUrl, pushToken` | Update authenticated user; handles uniqueness checks and password hashing. |
-| DELETE | `/users/deleteself`       | Yes   | —                                                                               | Delete own account.                                                        |
-| PUT    | `/users/pushtoken`        | Yes   | `{ token }`                                                                     | Save Expo push token.                                                      |
-| PUT    | `/users/setprofilepic`    | Yes   | multipart `file`                                                                | Upload a new profile picture to Supabase Storage.                          |
-| DELETE | `/users/deleteprofilepic` | Yes   | `{ path }`                                                                      | Delete a profile picture from Supabase & clear from user profile.          |
-
-### Exercises
-
-| Method | Endpoint            | Auth? | Description            |
-| ------ | ------------------- | ----- | ---------------------- |
-| GET    | `/exercises/getall` | Yes   | Returns all exercises. |
-
-### Messages
-
-| Method | Endpoint                    | Auth? | Body / Params   | Description                                |
-| ------ | --------------------------- | ----- | --------------- | ------------------------------------------ |
-| GET    | `/messages/getmessages`     | Yes   | Optional `?tz=` | Get inbox messages (sender pics resolved). |
-| PUT    | `/messages/markmasread/:id` | Yes   | URL `id`        | Mark a message as read.                    |
-| DELETE | `/messages/delete/:id`      | Yes   | URL `id`        | Delete a message.                          |
-
-### Workouts
-
-| Method | Endpoint                  | Auth? | Body / Query                        | Description                                                              |
-| ------ | ------------------------- | ----- | ----------------------------------- | ------------------------------------------------------------------------ |
-| GET    | `/workouts/getworkout`    | Yes   | Optional `?tz=`                     | Get active workout plan (cached).                                        |
-| GET    | `/workouts/gettracking`   | Yes   | Optional `?tz=`                     | Get 45-day exercise analytics (cached).                                  |
-| POST   | `/workouts/finishworkout` | Yes   | `{ workout: Array, tz }`            | Save completed workout; warms tracking cache and sends a system message. |
-| POST   | `/workouts/add`           | Yes   | `{ workoutData, workoutName?, tz }` | Create a new workout plan; invalidates/warm-caches plan + analytics.     |
-| DELETE | `/workouts/delete`        | Yes   | —                                   | **Temporarily disabled** (no-op in controller).                          |
-
-### Analytics
-
-| Method | Endpoint         | Auth? | Description                               |
-| ------ | ---------------- | ----- | ----------------------------------------- |
-| GET    | `/analytics/get` | Yes   | Returns `{ _1RM, goals }` (Redis-cached). |
-
-### Bootstrap
-
-| Method | Endpoint         | Auth? | Query / Body    | Description                                                                                       |
-| ------ | ---------------- | ----- | --------------- | ------------------------------------------------------------------------------------------------- |
-| POST   | `/bootstrap/get` | Yes   | Optional `?tz=` | Returns bundled payload: `{ user, workout, tracking, aerobics, messages }` (tracking window 45d). |
-
-### Aerobics
-
-| Method | Endpoint        | Auth? | Body / Query     | Description                                                        |
-| ------ | --------------- | ----- | ---------------- | ------------------------------------------------------------------ |
-| GET    | `/aerobics/get` | Yes   | Optional `?tz=`  | Returns user's aerobic sessions map for the last 45 days (cached). |
-| POST   | `/aerobics/add` | Yes   | `{ record, tz }` | Adds an aerobic record and returns the refreshed 45-day payload.   |
-
-### Push Notifications
-
-| Method | Endpoint      | Auth? | Description                                    |
-| ------ | ------------- | ----- | ---------------------------------------------- |
-| GET    | `/push/daily` | No    | Test endpoint that sends a demo push via Expo. |
-
-**Operational note:** A **daily external cron job** triggers the push workflow every day at **08:30** (local time) to deliver scheduled notifications.
+> Note: Older app versions `4.1.0` / `4.1.1` may have partial relaxations. From `4.3.0` onward, full DPoP is enforced.
 
 ---
+
+## Authentication
+
+| Method | Endpoint                      | Auth? | Body / Query / Headers                                                                                     | Description |
+|--------|--------------------------------|:-----:|-------------------------------------------------------------------------------------------------------------|-------------|
+| POST   | `/auth/login`                 |  No   | Body: `{ identifier, password }` • Header: `DPoP-Key-Binding` (if DPoP on)                                | Username/Email + password. Bumps `tokenVersion`. Returns `{ accessToken, refreshToken, user }`. First-login triggers a welcome message. |
+| POST   | `/auth/refresh`               |  No   | Header: `x-refresh-token` • Headers: `DPoP` (proof), app-version checks                                    | Sliding refresh; validates DPoP key-binding vs token `cnf.jkt`. Returns fresh `{ accessToken, refreshToken, userId }`. |
+| POST   | `/auth/logout`                |  No   | Body/Header: refresh token                                                                                 | Clears push token, bumps `tokenVersion`. |
+| GET    | `/auth/verify`                |  No   | Query: `?token=...`                                                                                        | Email verification link → **HTML** success/fail. Single-use JTI allow-list. |
+| POST   | `/auth/sendverificationemail` |  No   | Body: `{ email }`                                                                                          | Sends verification email. `204` on success (even if user not found). |
+| PUT    | `/auth/changeemailverify`     |  No   | Body: `{ username, password, newEmail }`                                                                    | For **unverified** users only: change email then resend verify link. |
+| GET    | `/auth/checkuserverify`       |  No   | Query: `?username=...`                                                                                       | Returns `{ isVerified: boolean }`. |
+| POST   | `/auth/forgotpassemail`       |  No   | Body: `{ identifier }`                                                                                       | Sends forgot-password email (if `auth_provider='app'`). `204` on success. |
+| PUT    | `/auth/resetpassword`         |  No   | Query: `?token=...` • Body: `{ newPassword }`                                                               | Resets password via emailed token; single-use JTI; bumps `tokenVersion`. |
+
+---
+
+## OAuth Providers & Account Linking (Google + Apple)
+
+| Method | Endpoint               | Auth?  | Body / Headers                                                                                                                                                         | Description |
+|--------|------------------------|:------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------|
+| POST   | `/oauth/google`        |  No    | Headers: `DPoP-Key-Binding` (required if DPoP on) • Body: `{ idToken }`                                                                                                | Verifies Google ID token, **links or creates** user via `oauth_accounts`. If profile is incomplete, returns `missingFields` and **no refresh token**. Response: `{ user, accessToken, refreshToken|null, missingFields? }`. |
+| POST   | `/oauth/apple`         |  No    | Headers: `DPoP-Key-Binding` • Body: `{ idToken, rawNonce, fullName?, email? }`                                                                                         | Verifies Apple identity token (+nonce), **links or creates** user like Google. Supports first-sign-in name propagation. Returns `{ user, accessToken, refreshToken|null, missingFields? }`. |
+| POST   | `/oauth/proceedauth`   |  Yes   | Headers: `Authorization: DPoP <accessToken>`, `DPoP`                                                                                                                   | Call **after** completing required fields. If `oauth_accounts.missing_fields` is clear → bumps tokenVersion and returns **full session** `{ accessToken, refreshToken }`. If still missing → `409`. |
+
+**Linking behavior (server-side):**
+- Lookup by provider `sub`; else try **email-verified** linking to existing `users.email` (case-insensitive).
+- On success insert (idempotent) into `oauth_accounts(provider, provider_user_id)`.
+- Multiple providers with the same email **merge** into one user profile.
+- `oauth_accounts.missing_fields` guides the client to complete `email` / `name` when provider data is insufficient.
+
+---
+
+## Users
+
+| Method | Endpoint                  | Auth? | Body / Query                                                                                       | Description |
+|--------|---------------------------|:-----:|-----------------------------------------------------------------------------------------------------|-------------|
+| POST   | `/users/create`           |  No   | `{ username, fullName, email, password, gender }`                                                  | Creates user (credentials flow only), sends verification email. |
+| GET    | `/users/get`              | Yes   | —                                                                                                   | Returns authenticated user aggregate JSON. |
+| PUT    | `/users/updateself`       | Yes   | Any of: `username, fullName, email, gender, password, profileImgUrl, pushToken, setCompletedOnOAuth` | Updates profile. Email change triggers **confirm-by-link** email. When `setCompletedOnOAuth=true` → clears `oauth_accounts.missing_fields`. |
+| PUT    | `/users/changeemail`      |  No   | Query: `?token=...` (link in email)                                                                 | Confirms **email change** via link (HTML 200). Single-use JTI; 409 if email taken. |
+| DELETE | `/users/deleteself`       | Yes   | —                                                                                                   | Deletes own account. |
+| PUT    | `/users/pushtoken`        | Yes   | `{ token }`                                                                                         | Saves Expo push token. `204`. |
+| PUT    | `/users/setprofilepic`    | Yes   | `multipart/form-data` with `file`                                                                   | Uploads to Supabase Storage and updates user picture. Returns `{ path, url }`. |
+| DELETE | `/users/deleteprofilepic` | Yes   | Body: `{ path }`                                                                                    | Deletes picture from bucket & clears on user. |
+
+---
+
+## Exercises
+
+| Method | Endpoint            | Auth? | Description |
+|--------|---------------------|:-----:|-------------|
+| GET    | `/exercises/getall` | Yes   | Returns all exercises. |
+
+---
+
+## Messages
+
+| Method | Endpoint                    | Auth? | Params / Body     | Description |
+|--------|-----------------------------|:-----:|------------------|-------------|
+| GET    | `/messages/getmessages`     | Yes   | Optional `?tz=`  | Inbox with sender pics. |
+| PUT    | `/messages/markmasread/:id` | Yes   | URL `id`         | Mark message as read. |
+| DELETE | `/messages/delete/:id`      | Yes   | URL `id`         | Delete message. |
+
+---
+
+## Workouts
+
+| Method | Endpoint                  | Auth? | Body / Query                        | Description |
+|--------|---------------------------|:-----:|-------------------------------------|-------------|
+| GET    | `/workouts/getworkout`    | Yes   | Optional `?tz=`                     | Active workout plan (Redis-cached). |
+| GET    | `/workouts/gettracking`   | Yes   | Optional `?tz=`                     | 45-day analytics (Redis-cached). |
+| POST   | `/workouts/finishworkout` | Yes   | `{ workout: Array, tz }`            | Persists completed workout, warms tracking cache, sends system message. |
+| POST   | `/workouts/add`           | Yes   | `{ workoutData, workoutName?, tz }` | Create new plan; invalidates + warm-caches plan & analytics. |
+| DELETE | `/workouts/delete`        | Yes   | —                                   | **Temporarily disabled**. |
+
+---
+
+## Analytics
+
+| Method | Endpoint         | Auth? | Description |
+|--------|------------------|:-----:|-------------|
+| GET    | `/analytics/get` | Yes   | `{ _1RM, goals }` (Redis-cached). |
+
+---
+
+## Bootstrap
+
+| Method | Endpoint         | Auth? | Query / Body   | Description |
+|--------|------------------|:-----:|----------------|-------------|
+| POST   | `/bootstrap/get` | Yes   | Optional `?tz=`| Bundled payload: `{ user, workout, tracking, aerobics, messages }` (45-day). |
+
+---
+
+## Aerobics
+
+| Method | Endpoint        | Auth? | Body / Query     | Description |
+|--------|-----------------|:-----:|------------------|-------------|
+| GET    | `/aerobics/get` | Yes   | Optional `?tz=`  | Aerobic sessions map for the last 45 days. |
+| POST   | `/aerobics/add` | Yes   | `{ record, tz }` | Adds a record and returns refreshed 45-day map. |
+
+---
+
+## Push Notifications
+
+| Method | Endpoint      | Auth? | Description |
+|--------|---------------|:-----:|-------------|
+| GET    | `/push/daily` |  No   | Test endpoint that sends a demo push. |
+
+---
+
+## Data model (OAuth)
+
+**Table: `oauth_accounts`**  
+Fields: `user_id`, `provider` (`google` / `apple`), `provider_user_id`, `provider_email`, `missing_fields`  
+- Unique constraint: (`provider`, `provider_user_id`)  
+- Foreign key: `user_id → users.id`  
+- Used for **linking or merging** multiple OAuth identities under a single app user.
 
 ## Database Models & Indexes
 
