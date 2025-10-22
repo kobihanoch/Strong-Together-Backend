@@ -9,6 +9,7 @@ const EXEMPT_PREFIXES = [
   "/api/auth/resetpassword",
   "/api/auth/forgotpassemail",
   "/api/push/daily",
+  "/api/users/changeemail",
 ];
 
 // Parse "v4.2.1", "4.2", or "4" into [major, minor, patch] (numbers)

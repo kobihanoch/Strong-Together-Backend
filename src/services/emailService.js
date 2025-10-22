@@ -1,9 +1,11 @@
+import jwt from "jsonwebtoken";
 import { sendMail } from "../config/mailer.js";
 import {
+  generateConfirmEmailChange,
   generateForgotPasswordEmail,
   generateValidateUserEmail,
 } from "../templates/emailTemplates.js";
-import jwt from "jsonwebtoken";
+import { generateJti } from "../utils/tokenUtils.js";
 
 const base = process.env.PUBLIC_BASE_URL;
 
@@ -43,4 +45,41 @@ export const sendForgotPasswordEmail = async (email, userId, fullName) => {
     logoUrl: `https://portfolio.kobihanoch.com/images/strongtogethericon.png`,
   });
   await sendMail({ to: email, subject: "Reset your password", html });
+};
+
+export const sendVerificationEmailForEmailUpdate = async (
+  newEmail,
+  userId,
+  fullName
+) => {
+  const normalized = newEmail.trim().toLowerCase();
+  const jti = generateJti();
+
+  const token = jwt.sign(
+    {
+      sub: userId,
+      typ: "email_confirm",
+      newEmail: normalized,
+      jti,
+      iss: "strong-together",
+    },
+    process.env.CHANGE_EMAIL_SECRET,
+    { expiresIn: "10m" }
+  );
+
+  const confirmUrl = `${base}/api/users/changeemail?token=${encodeURIComponent(
+    token
+  )}`;
+
+  const html = generateConfirmEmailChange({
+    fullName,
+    confirmUrl,
+    logoUrl: "https://portfolio.kobihanoch.com/images/strongtogethericon.png",
+  });
+
+  await sendMail({
+    to: normalized,
+    subject: "Confirm your Strong Together Email",
+    html,
+  });
 };

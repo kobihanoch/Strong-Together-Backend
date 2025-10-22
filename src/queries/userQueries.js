@@ -36,26 +36,52 @@ export async function queryUsernameOrEmailConflict(username, email, userId) {
 
 export async function queryUpdateAuthenticatedUser(
   userId,
-  { username, fullName, email, gender, hashed, profileImgUrl, pushToken },
-  setCompletedOnOAuthUser
+  { username, fullName, gender, hashed, profileImgUrl, pushToken },
+  setCompletedOnOAuthUser,
+  emailCandidate = null // optional: probe email uniqueness without persisting
 ) {
-  const rows = await sql`
-      UPDATE users
-      SET
-        username          = COALESCE(${username}, username),
-        name              = COALESCE(${fullName}, name),
-        email             = COALESCE(${email}, email),
-        gender            = COALESCE(${gender}, gender),
-        password          = COALESCE(${hashed}, password),
-        profile_image_url = COALESCE(${profileImgUrl}, profile_image_url),
-        push_token        = COALESCE(${pushToken}, push_token)
-      WHERE id = ${userId}
-      RETURNING to_jsonb(users) - 'password' AS user_data
-    `;
+  // 1) Optional "fake" email update to trigger unique check
+  if (emailCandidate) {
+    try {
+      await sql`SAVEPOINT email_probe`;
+      try {
+        await sql`
+          UPDATE users
+          SET email = ${emailCandidate}
+          WHERE id = ${userId}
+            AND email IS DISTINCT FROM ${emailCandidate}
+        `;
+        await sql`ROLLBACK TO SAVEPOINT email_probe`;
+      } catch (e) {
+        await sql`ROLLBACK TO SAVEPOINT email_probe`;
+        if (e.code === "23505") {
+          throw e; // unique violation -> will be mapped to 409 by caller
+        }
+        throw e; // e.g., RLS denial, etc.
+      }
+    } catch (e) {
+      // If not in a transaction block (25P01), just skip the probe gracefully.
+      // The final confirm will still guard with the unique index.
+      if (e.code !== "25P01") throw e;
+    }
+  }
 
-  // Set inputs completed on OAuth accounts row
+  // 2) Real update for non-email fields
+  const rows = await sql`
+    UPDATE users
+    SET
+      username          = COALESCE(${username}, username),
+      name              = COALESCE(${fullName}, name),
+      gender            = COALESCE(${gender}, gender),
+      password          = COALESCE(${hashed}, password),
+      profile_image_url = COALESCE(${profileImgUrl}, profile_image_url),
+      push_token        = COALESCE(${pushToken}, push_token)
+    WHERE id = ${userId}
+    RETURNING to_jsonb(users) - 'password' AS user_data
+  `;
+
   if (setCompletedOnOAuthUser) {
-    await sql`UPDATE oauth_accounts SET missing_fields=NULL WHERE user_id=${userId}`;
+    await sql`UPDATE oauth_accounts SET missing_fields = NULL WHERE user_id = ${userId}`;
   }
 
   return rows;
