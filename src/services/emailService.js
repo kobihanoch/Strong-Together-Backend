@@ -10,10 +10,11 @@ import { generateJti } from "../utils/tokenUtils.js";
 const base = process.env.PUBLIC_BASE_URL;
 
 export const sendVerificationEmail = async (email, userId, fullName) => {
+  const jti = generateJti();
   const token = jwt.sign(
-    { sub: userId, typ: "email-verify" }, // payload
+    { sub: userId, typ: "email-verify", jti, iss: "strong-together" }, // payload
     process.env.JWT_VERIFY_SECRET, // strong secret in env
-    { expiresIn: "1h", issuer: "strong-together" } // claims
+    { expiresIn: "1h" } // claims
   );
   const verifyUrl = `${base}/api/auth/verify?token=${encodeURIComponent(
     token
@@ -31,10 +32,11 @@ export const sendVerificationEmail = async (email, userId, fullName) => {
 };
 
 export const sendForgotPasswordEmail = async (email, userId, fullName) => {
+  const jti = generateJti();
   const token = jwt.sign(
-    { sub: userId, typ: "forgot-pass" }, // payload
+    { sub: userId, typ: "forgot-pass", jti, iss: "strong-together" }, // payload
     process.env.JWT_FORGOT_PASSWORD_SECRET, // strong secret in env
-    { expiresIn: "5m", issuer: "strong-together" } // claims
+    { expiresIn: "5m" } // claims
   );
   const changePasswordUrl = `https://strongtogether-privacy.kobihanoch.com/reset-password?token=${encodeURIComponent(
     token
@@ -58,7 +60,7 @@ export const sendVerificationEmailForEmailUpdate = async (
   const token = jwt.sign(
     {
       sub: userId,
-      typ: "email_confirm",
+      typ: "email-confirm",
       newEmail: normalized,
       jti,
       iss: "strong-together",

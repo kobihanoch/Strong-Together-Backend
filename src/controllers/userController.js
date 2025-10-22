@@ -148,12 +148,18 @@ export const updateAuthenticatedUser = async (req, res) => {
 export const updateSelfEmail = async (req, res) => {
   const token = req.query?.token;
   if (!token)
-    return res.status(401).send(generateEmailChangeFailedHTML("Missing token"));
+    return res
+      .status(401)
+      .type("html")
+      .set("Cache-Control", "no-store")
+      .send(generateEmailChangeFailedHTML("Missing token"));
 
   const decoded = decodeChangeEmailToken(token);
   if (!decoded)
     return res
       .status(401)
+      .type("html")
+      .set("Cache-Control", "no-store")
       .send(generateEmailChangeFailedHTML("Invalid or expired link"));
 
   const { jti, sub, newEmail, exp, iss, typ } = decoded;
@@ -161,7 +167,7 @@ export const updateSelfEmail = async (req, res) => {
   // basic claim validation
   if (
     iss !== "strong-together" ||
-    typ !== "email_confirm" ||
+    typ !== "email-confirm" ||
     !jti ||
     !sub ||
     !newEmail ||
@@ -169,6 +175,8 @@ export const updateSelfEmail = async (req, res) => {
   ) {
     return res
       .status(400)
+      .type("html")
+      .set("Cache-Control", "no-store")
       .send(generateEmailChangeFailedHTML("Malformed token"));
   }
 
@@ -181,6 +189,8 @@ export const updateSelfEmail = async (req, res) => {
   if (!inserted) {
     return res
       .status(401)
+      .type("html")
+      .set("Cache-Control", "no-store")
       .send(generateEmailChangeFailedHTML("URL already used or expired"));
   }
 
@@ -201,15 +211,25 @@ export const updateSelfEmail = async (req, res) => {
       console.error("Email already in use");
       return res
         .status(409)
+        .type("html")
+        .set("Cache-Control", "no-store")
         .send(generateEmailChangeFailedHTML("Email already in use"));
     }
     console.error(e.message);
-    return res.status(500).send(generateEmailChangeFailedHTML("Server error"));
+    return res
+      .status(500)
+      .type("html")
+      .set("Cache-Control", "no-store")
+      .send(generateEmailChangeFailedHTML("Server error"));
   }
 
   // return HTML 200 (not 204)
   res.setHeader("Content-Type", "text/html; charset=utf-8");
-  return res.status(200).send(generateEmailChangeSuccessHTML());
+  return res
+    .status(200)
+    .type("html")
+    .set("Cache-Control", "no-store")
+    .send(generateEmailChangeSuccessHTML());
 };
 
 // @desc    Delete a user by ID
