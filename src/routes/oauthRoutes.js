@@ -28,7 +28,6 @@ router.post(
 // User routes
 router.post(
   "/proceedauth",
-  loginLimiter,
   dpopValidationMiddleware,
   protect,
   asyncHandler(withRlsTx(proceedLogin))
