@@ -43,6 +43,7 @@ app.use(
     origin: [
       "https://kobihanoch.github.io",
       "https://strongtogether-privacy.kobihanoch.com",
+      "https://strongtogether.kobihanoch.com",
     ],
     methods: ["POST", "PUT", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
