@@ -9,6 +9,6 @@ export const getFirstLoginMessage = (fullName) => {
   const firstName = fullName.split(" ")[0];
   return {
     header: `Welcome to Strong Together, ${firstName}!`,
-    text: "We're happy to have you with us. Your fitness journey begins now — let’s make it count!\n\nYou don’t have an active workout plan yet. To get started, go to the Home page and create one.\n\nYou can choose between 1 to 6 workout splits and add your favorite exercises to each.\n\nIf you have any questions, feel free to ask our AI trainer anytime.\n\nGood luck!\nThe Strong Together Team",
+    text: "We're excited to have you on board. Your fitness journey starts today — every step counts!\n\nYou don’t have a workout plan yet. Head over to the Home page and create one to get started.\n\nYou can build your own plan with 1 to 6 workout splits and customize each with the exercises you enjoy most.\n\nStay consistent, stay strong, and remember — progress is built one rep at a time.\n\nThe Strong Together Team",
   };
 };
