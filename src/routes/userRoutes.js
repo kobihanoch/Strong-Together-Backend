@@ -7,6 +7,7 @@ import {
   saveUserPushToken,
   setProfilePicAndUpdateDB,
   updateAuthenticatedUser,
+  updateSelfEmail,
 } from "../controllers/userController.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { protect } from "../middlewares/authMiddleware.js";
@@ -68,5 +69,6 @@ router.put(
   validate(updateUserSchema),
   asyncHandler(withRlsTx(updateAuthenticatedUser))
 ); // User - Update self user
+router.get("/changeemail", asyncHandler(withRlsTx(updateSelfEmail))); // User - Update self user
 
 export default router;

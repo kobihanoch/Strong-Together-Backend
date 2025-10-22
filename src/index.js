@@ -9,6 +9,7 @@ import { generalLimiter } from "./middlewares/rateLimiter.js";
 import aerobicsRoutes from "./routes/aerobicsRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import oauthRoutes from "./routes/oauthRoutes.js";
 import bootsrapRoutes from "./routes/bootstrapRoutes.js";
 import exercisesRoutes from "./routes/exercisesRoutes.js";
 import messagesRoutes from "./routes/messagesRoutes.js";
@@ -90,6 +91,9 @@ app.use("/api/users", userRoutes);
 
 // Auth
 app.use("/api/auth", authRoutes);
+
+// OAuth
+app.use("/api/oauth", oauthRoutes);
 
 // Workouts
 app.use("/api/workouts", workoutRoutes);

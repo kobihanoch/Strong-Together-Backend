@@ -1,6 +1,6 @@
-import { redis } from "../config/redisClient.js";
-import { gzipSync, gunzipSync } from "zlib";
 import pkg from "redis";
+import { gunzipSync, gzipSync } from "zlib";
+import { redis } from "../config/redisClient.js";
 const { commandOptions } = pkg;
 
 const TRACKING_NS = "xt:tracking:v1";
@@ -147,4 +147,14 @@ export const cacheDeleteOtherTimezones = async (currentKey) => {
       await redis.del(...buf);
     }
   }
+};
+
+export const cacheStoreJti = async (prefix, jti, ttlSec) => {
+  if (!enabled || !redis) return false;
+
+  const key = `${prefix}:jti:${jti}`;
+  const res = await redis.set(key, "1", { NX: true, EX: ttlSec });
+
+  // Redis returns truthy on success (usually 'OK'), null otherwise
+  return !!res;
 };

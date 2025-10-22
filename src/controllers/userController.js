@@ -13,13 +13,21 @@ import {
   queryUpdateAuthenticatedUser,
   queryUpdateUserProfilePicURL,
   queryUserExistsByUsernameOrEmail,
-  queryUsernameOrEmailConflict,
 } from "../queries/userQueries.js";
-import { sendVerificationEmail } from "../services/emailService.js";
+import {
+  sendVerificationEmail,
+  sendVerificationEmailForEmailUpdate,
+} from "../services/emailService.js";
 import {
   deleteFromSupabase,
   uploadBufferToSupabase,
 } from "../services/supabaseStorageService.js";
+import {
+  generateEmailChangeFailedHTML,
+  generateEmailChangeSuccessHTML,
+} from "../templates/responseHTMLTemplates.js";
+import { decodeChangeEmailToken } from "../utils/tokenUtils.js";
+import { cacheStoreJti } from "../utils/cache.js";
 const expo = new Expo();
 
 // ---------- HELPERS -----------------
@@ -80,37 +88,148 @@ export const updateAuthenticatedUser = async (req, res) => {
     password = null,
     profileImgUrl = null,
     pushToken = null,
+    setCompletedOnOAuth = false,
   } = req.body;
-  if (username || email) {
-    const rowsConflict = await queryUsernameOrEmailConflict(
-      username,
-      email,
-      req.user.id
-    );
-    const [conflict] = rowsConflict;
-    if (conflict) throw createError(409, "Username or email already in use");
-  }
 
   let hashed = null;
   if (password) {
     hashed = await bcrypt.hash(password, 10);
   }
 
-  const rowsUpdated = await queryUpdateAuthenticatedUser(req.user.id, {
-    username,
-    fullName,
-    email,
-    gender,
-    hashed,
-    profileImgUrl,
-    pushToken,
-  });
+  let rowsUpdated;
+  try {
+    rowsUpdated = await queryUpdateAuthenticatedUser(
+      req.user.id,
+      { username, fullName, gender, hashed, profileImgUrl, pushToken },
+      setCompletedOnOAuth,
+      email // emailCandidate for the probe (may be null)
+    );
+  } catch (e) {
+    if (e.code === "23505") {
+      throw createError(409, "Username or email already in use");
+    }
+    throw e;
+  }
+
   const [updated] = rowsUpdated;
 
-  res.status(200).json({
+  // fetch current name and current email to decide if we really changed it
+  const [userRow] = await sql`
+    SELECT name, email
+    FROM users
+    WHERE id = ${req.user.id}
+    LIMIT 1
+  `;
+  if (!userRow) return res.status(404).json({ message: "User not found" });
+
+  const currentEmail = (userRow.email || "").trim().toLowerCase();
+  const candidate = (email || "").trim().toLowerCase();
+
+  let emailChanged = false;
+  if (candidate && candidate !== currentEmail) {
+    await sendVerificationEmailForEmailUpdate(
+      candidate,
+      req.user.id,
+      userRow.name || "there"
+    );
+    emailChanged = true;
+  }
+
+  return res.status(200).json({
     message: "User updated successfully",
+    emailChanged,
     user: updated.user_data,
   });
+};
+
+// @desc    Confirm email change (via link)
+// @route   PUT /api/users/changeemail?token=...
+// @access  Public (link-based)
+export const updateSelfEmail = async (req, res) => {
+  const token = req.query?.token;
+  if (!token)
+    return res
+      .status(401)
+      .type("html")
+      .set("Cache-Control", "no-store")
+      .send(generateEmailChangeFailedHTML("Missing token"));
+
+  const decoded = decodeChangeEmailToken(token);
+  if (!decoded)
+    return res
+      .status(401)
+      .type("html")
+      .set("Cache-Control", "no-store")
+      .send(generateEmailChangeFailedHTML("Invalid or expired link"));
+
+  const { jti, sub, newEmail, exp, iss, typ } = decoded;
+
+  // basic claim validation
+  if (
+    iss !== "strong-together" ||
+    typ !== "email-confirm" ||
+    !jti ||
+    !sub ||
+    !newEmail ||
+    !exp
+  ) {
+    return res
+      .status(400)
+      .type("html")
+      .set("Cache-Control", "no-store")
+      .send(generateEmailChangeFailedHTML("Malformed token"));
+  }
+
+  // compute remaining TTL from exp (JWT 'exp' is seconds since epoch)
+  const nowSec = Math.floor(Date.now() / 1000);
+  const ttlSec = Math.max(1, exp - nowSec);
+
+  // JTI single-use allow-list
+  const inserted = await cacheStoreJti("emailchange", jti, ttlSec);
+  if (!inserted) {
+    return res
+      .status(401)
+      .type("html")
+      .set("Cache-Control", "no-store")
+      .send(generateEmailChangeFailedHTML("URL already used or expired"));
+  }
+
+  const normalized = newEmail.trim().toLowerCase();
+
+  try {
+    await sql.begin(async (trx) => {
+      await trx`
+        UPDATE users
+        SET email = ${normalized}
+        WHERE id = ${sub}
+      `;
+      // Optionally bump token version to force clients to refresh auth:
+      // await trx`UPDATE users SET token_version = token_version + 1 WHERE id = ${sub}`;
+    });
+  } catch (e) {
+    if (e.code === "23505") {
+      console.error("Email already in use");
+      return res
+        .status(409)
+        .type("html")
+        .set("Cache-Control", "no-store")
+        .send(generateEmailChangeFailedHTML("Email already in use"));
+    }
+    console.error(e.message);
+    return res
+      .status(500)
+      .type("html")
+      .set("Cache-Control", "no-store")
+      .send(generateEmailChangeFailedHTML("Server error"));
+  }
+
+  // return HTML 200 (not 204)
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  return res
+    .status(200)
+    .type("html")
+    .set("Cache-Control", "no-store")
+    .send(generateEmailChangeSuccessHTML());
 };
 
 // @desc    Delete a user by ID

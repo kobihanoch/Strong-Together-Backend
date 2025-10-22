@@ -87,3 +87,19 @@ export const decodeForgotPasswordToken = (forgotPasswordToken) => {
     return null;
   }
 };
+
+export const decodeChangeEmailToken = (changeEmailToken) => {
+  let decoded;
+  try {
+    decoded = jwt.verify(changeEmailToken, process.env.CHANGE_EMAIL_SECRET);
+    return decoded;
+  } catch {
+    return null;
+  }
+};
+
+import crypto from "crypto";
+
+export const generateJti = () => {
+  return crypto.randomBytes(16).toString("hex");
+};

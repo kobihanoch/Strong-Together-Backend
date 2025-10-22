@@ -29,6 +29,7 @@ import {
   decodeVerifyToken,
   getRefreshToken,
 } from "../utils/tokenUtils.js";
+import { cacheStoreJti } from "../utils/cache.js";
 
 // @desc    Login a user
 // @route   POST /api/auth/login
@@ -240,6 +241,27 @@ export const verifyUserAccount = async (req, res) => {
       .set("Cache-Control", "no-store")
       .send(generateVerificationFailedHTML());
   }
+
+  const { jti, sub, exp, iss, typ } = decoded;
+  // basic claim validation
+  if (iss !== "strong-together" || typ !== "email-verify" || !jti || !sub) {
+    return res.status(400).send(generateVerificationFailedHTML());
+  }
+
+  // compute remaining TTL from exp (JWT 'exp' is seconds since epoch)
+  const nowSec = Math.floor(Date.now() / 1000);
+  const ttlSec = Math.max(1, exp - nowSec);
+
+  // JTI single-use allow-list
+  const inserted = await cacheStoreJti("accountverify", jti, ttlSec);
+  if (!inserted) {
+    return res
+      .status(401)
+      .type("html")
+      .set("Cache-Control", "no-store")
+      .send(generateVerificationFailedHTML());
+  }
+
   await queryUpdateUserVerficiationStatus(decoded.sub, true);
   const html = generateVerifiedHTML();
 
@@ -300,8 +322,9 @@ export const checkUserVerify = async (req, res) => {
 export const sendChangePassEmail = async (req, res) => {
   const { identifier } = req.body;
   if (!identifier) throw createError(400, "Please fill username or email");
-  const [user = null] =
-    await sql`SELECT id, email, name FROM users WHERE email=${identifier} OR username=${identifier} LIMIT 1`;
+  const [user = null] = await sql`SELECT id, email, name FROM users WHERE 
+      auth_provider='app' 
+      AND (username=${identifier} OR email=${identifier}) LIMIT 1`;
   // Don;t overshare
   if (!user) return res.status(204).end();
 
@@ -321,6 +344,23 @@ export const resetPassword = async (req, res) => {
   if (!decoded) {
     throw createError(400, "Verfication token is not valid");
   }
+
+  const { jti, sub, exp, iss, typ } = decoded;
+  // basic claim validation
+  if (iss !== "strong-together" || typ !== "forgot-pass" || !jti || !sub) {
+    throw createError(400, "Verfication token is not valid");
+  }
+
+  // compute remaining TTL from exp (JWT 'exp' is seconds since epoch)
+  const nowSec = Math.floor(Date.now() / 1000);
+  const ttlSec = Math.max(1, exp - nowSec);
+
+  // JTI single-use allow-list
+  const inserted = await cacheStoreJti("forgotpassword", jti, ttlSec);
+  if (!inserted) {
+    throw createError(400, "URL already used or expired");
+  }
+
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(newPassword, salt);
   await Promise.all([
