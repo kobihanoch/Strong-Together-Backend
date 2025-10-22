@@ -22,7 +22,8 @@ export const registerSchema = z.object({
 
   password: z.string().min(8, "Password must be at least 8 characters long"),
 
-  gender: z.enum(["Male", "Female", "Other"], {
-    errorMap: () => ({ message: "You must select a valid gender" }),
-  }),
+  gender: z.preprocess(
+    (val) => (val === "" || val == null ? "Unknown" : val),
+    z.enum(["Male", "Female", "Other", "Unknown"])
+  ),
 });
