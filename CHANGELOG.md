@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.10.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.9.0...v1.10.0) (2025-10-22)
+
+
+### Features
+
+* **Email Change:** Change email requires email verification ([80a8c38](https://github.com/kobihanoch/Strong-Together-Backend/commit/80a8c384f4fd1855b6b760d87cf0358845340042))
+* **Jti Allow List:** Added JTI Allow list in Redis for email tokens ([c5879e3](https://github.com/kobihanoch/Strong-Together-Backend/commit/c5879e3b98fbfbbf808461fb66fd9b1af244f2b1))
+* **OAuth:** Apple auth is fully implemented ([336d81e](https://github.com/kobihanoch/Strong-Together-Backend/commit/336d81e8634db23da1b32d77a6802fed9a906c33))
+* **OAuth:** Created route ([58b948b](https://github.com/kobihanoch/Strong-Together-Backend/commit/58b948b476d47364f61e860c0b835f15b98a023a))
+* **OAuth:** Google auth is fully implemented ([6ed2bb6](https://github.com/kobihanoch/Strong-Together-Backend/commit/6ed2bb67e6dd5bac62e12651f3de67fdb70c2a5d))
+* **OAuth:** Google sign in is fully implemented ([c6c36c6](https://github.com/kobihanoch/Strong-Together-Backend/commit/c6c36c6c6a6733539d8040f0b6bc2719fe60fd0c))
+* **OAuth:** Require full name if name from google is not in English ([981445a](https://github.com/kobihanoch/Strong-Together-Backend/commit/981445abc3f7f422b5cb519b6dccfc6c00f69469))
+
+
+### Bug Fixes
+
+* **Register:** Gender is optional ([ec6a296](https://github.com/kobihanoch/Strong-Together-Backend/commit/ec6a29656d470754492ed27d22f937e46bcc04de))
+* **Welcome Message:** New welcome message without AI ([edd866d](https://github.com/kobihanoch/Strong-Together-Backend/commit/edd866dbe64696382f20d361ee7902dbcecd1242))
+
 ## [1.9.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.8.0...v1.9.0) (2025-10-19)
 
 
