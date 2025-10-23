@@ -27,6 +27,7 @@ import {
   decodeForgotPasswordToken,
   decodeRefreshToken,
   decodeVerifyToken,
+  generateJti,
   getRefreshToken,
 } from "../utils/tokenUtils.js";
 import { cacheStoreJti } from "../utils/cache.js";
