@@ -27,7 +27,6 @@ import {
   decodeForgotPasswordToken,
   decodeRefreshToken,
   decodeVerifyToken,
-  generateJti,
   getRefreshToken,
 } from "../utils/tokenUtils.js";
 import { cacheStoreJti } from "../utils/cache.js";
@@ -335,25 +334,13 @@ export const sendChangePassEmail = async (req, res) => {
   // Don;t overshare
   if (!user) return res.status(204).end();
 
-  // Don't send an email => redirect to website
-
-  /*await sendForgotPasswordEmail(
+  await sendForgotPasswordEmail(
     user.email,
     user.id,
     user.name ? user.name : user.username
-  );*/
-
-  const jti = generateJti();
-  const token = jwt.sign(
-    { sub: user.id, typ: "forgot-pass", jti, iss: "strong-together" }, // payload
-    process.env.JWT_FORGOT_PASSWORD_SECRET, // strong secret in env
-    { expiresIn: "5m" } // claims
   );
-  const changePasswordUrl = `https://strongtogether.kobihanoch.com/reset-password?token=${encodeURIComponent(
-    token
-  )}`;
 
-  return res.redirect(302, changePasswordUrl);
+  return res.status(204).end();
 };
 
 // @desc    Update password
