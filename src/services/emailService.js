@@ -22,7 +22,7 @@ export const sendVerificationEmail = async (email, userId, fullName) => {
   const html = generateValidateUserEmail({
     fullName,
     verifyUrl,
-    logoUrl: `https://portfolio.kobihanoch.com/images/strongtogethericon.png`,
+    logoUrl: `https://strongtogether.kobihanoch.com/appicon.png`,
   });
   await sendMail({
     to: email,
@@ -44,7 +44,7 @@ export const sendForgotPasswordEmail = async (email, userId, fullName) => {
   const html = generateForgotPasswordEmail({
     fullName,
     changePasswordUrl,
-    logoUrl: `https://portfolio.kobihanoch.com/images/strongtogethericon.png`,
+    logoUrl: `https://strongtogether.kobihanoch.com/appicon.png`,
   });
   await sendMail({ to: email, subject: "Reset your password", html });
 };
@@ -76,7 +76,7 @@ export const sendVerificationEmailForEmailUpdate = async (
   const html = generateConfirmEmailChange({
     fullName,
     confirmUrl,
-    logoUrl: "https://portfolio.kobihanoch.com/images/strongtogethericon.png",
+    logoUrl: "https://strongtogether.kobihanoch.com/appicon.png",
   });
 
   await sendMail({
