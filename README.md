@@ -363,7 +363,7 @@ and tracking logs, **including aerobic sessions via `aerobictracking`**.
 
 ### Messages Flow
 
-![Database workout tracking flow](https://github.com/user-attachments/assets/d0e6754a-9123-4443-9fe5-eaecca6885a)
+![Database workout tracking flow](https://github.com/user-attachments/assets/9a87b874-be46-403e-bfbc-c3709175767f)
 
 1. **Compose Message** – System inserts message.
 2. **Receive & Read** – Users fetch inbox, mark read.
@@ -371,7 +371,7 @@ and tracking logs, **including aerobic sessions via `aerobictracking`**.
 
 ### Auth Flow
 
-![Database authentication flow](https://github.com/user-attachments/assets/1516ac04-941f-4792-a4c9-31036a1d9de2)
+![Database authentication flow](https://github.com/user-attachments/assets/eb0c0c2a-84bc-4409-9b7a-b7019c1ebd27)
 
 1. **Login & Token Issuance** – Access + refresh tokens created; when DPoP is enabled, tokens include a confirmation claim bound to the client key.
 2. **Access Control** – All protected API requests require access token + DPoP proof.
