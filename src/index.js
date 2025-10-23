@@ -41,8 +41,8 @@ app.use(express.json());
 app.use(
   cors({
     origin: [
-      "https://kobihanoch.github.io",
-      "https://strongtogether-privacy.kobihanoch.com",
+      /*"https://kobihanoch.github.io",
+      "https://strongtogether-privacy.kobihanoch.com",*/
       "https://strongtogether.kobihanoch.com",
     ],
     methods: ["POST", "PUT", "OPTIONS"],
