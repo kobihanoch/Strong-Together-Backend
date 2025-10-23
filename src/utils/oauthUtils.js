@@ -41,11 +41,7 @@ const APPLE_JWKS_URL = "https://appleid.apple.com/auth/keys";
 const jwks = jose.createRemoteJWKSet(new URL(APPLE_JWKS_URL));
 const ALLOWED_AUDS = process.env.APPLE_ALLOWED_AUDS.split(",");
 
-export async function verifyAppleIdToken({
-  identityToken,
-  rawNonce,
-  fullName,
-}) {
+export async function verifyAppleIdToken({ identityToken, rawNonce, name }) {
   if (typeof identityToken !== "string")
     throw new Error("Missing identityToken");
 
@@ -72,9 +68,9 @@ export async function verifyAppleIdToken({
   const emailVerified =
     payload.email_verified === "true" || payload.email_verified === true;
 
-  const name = fullName || null;
+  const fullName = name?.givenName + " " + name?.familyName || null;
 
-  return { appleSub, email, emailVerified, name, payload };
+  return { appleSub, email, emailVerified, fullName, payload };
 }
 
 export async function ensureUniqueUsername(trx, candidate) {

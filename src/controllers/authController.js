@@ -30,6 +30,7 @@ import {
   getRefreshToken,
 } from "../utils/tokenUtils.js";
 import { cacheStoreJti } from "../utils/cache.js";
+import { isEnglishName } from "../utils/oauthUtils.js";
 
 // @desc    Login a user
 // @route   POST /api/auth/login
@@ -278,10 +279,10 @@ export const verifyUserAccount = async (req, res) => {
 export const sendVerificationMail = async (req, res) => {
   const { email } = req.body;
   const [user = null] =
-    await sql`SELECT id, name FROM users WHERE email=${email}`;
+    await sql`SELECT id, name, username FROM users WHERE email=${email}`;
   if (!user) return res.status(204).end();
   const { id, name } = user;
-  await sendVerificationEmail(email, id, name);
+  await sendVerificationEmail(email, id, user.name ? user.name : user.username);
   return res.status(204).end();
 };
 
@@ -302,7 +303,11 @@ export const changeEmailAndVerify = async (req, res) => {
   if (exists) throw createError(409, "Email already in use");
 
   await sql`UPDATE users SET email = ${newEmail} WHERE id = ${user.id}::uuid`;
-  await sendVerificationEmail(newEmail, user.id, user.name);
+  await sendVerificationEmail(
+    newEmail,
+    user.id,
+    user.name ? user.name : user.username
+  );
 
   res.status(204).end();
 };
@@ -322,13 +327,18 @@ export const checkUserVerify = async (req, res) => {
 export const sendChangePassEmail = async (req, res) => {
   const { identifier } = req.body;
   if (!identifier) throw createError(400, "Please fill username or email");
-  const [user = null] = await sql`SELECT id, email, name FROM users WHERE 
+  const [user = null] =
+    await sql`SELECT id, email, name, username FROM users WHERE 
       auth_provider='app' 
       AND (username=${identifier} OR email=${identifier}) LIMIT 1`;
   // Don;t overshare
   if (!user) return res.status(204).end();
 
-  await sendForgotPasswordEmail(user.email, user.id, user.name);
+  await sendForgotPasswordEmail(
+    user.email,
+    user.id,
+    user.name ? user.name : user.username
+  );
 
   return res.status(204).end();
 };

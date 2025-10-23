@@ -160,7 +160,7 @@ export const createOrSignInWithGoogle = async (req, res) => {
 // @access  Public
 export const createOrSignInWithApple = async (req, res) => {
   const jkt = validateJkt(req);
-  const { idToken, rawNonce, fullName, email } = req.body || {};
+  const { idToken, rawNonce, name, email } = req.body || {};
 
   if (!idToken || typeof idToken !== "string") {
     throw createError(400, "Missing or invalid Apple identityToken");
@@ -174,11 +174,11 @@ export const createOrSignInWithApple = async (req, res) => {
     appleSub,
     email: tokenEmail,
     emailVerified,
-    name: normalizedName,
+    fullName: normalizedName,
   } = await verifyAppleIdToken({
     identityToken: idToken,
     rawNonce,
-    fullName, // may exist only on first sign-in; not cryptographically verified
+    name, // may exist only on first sign-in; not cryptographically verified
   });
 
   // Prefer email from token when present; else fall back to client-provided
@@ -217,15 +217,11 @@ export const createOrSignInWithApple = async (req, res) => {
       const username = resolvedEmail?.split("@")[0].toLowerCase() || null;
 
       const isValidEmail = !!resolvedEmail;
-      const candidateFullName =
-        normalizedName && typeof normalizedName === "string"
-          ? normalizedName
-          : fullName && typeof fullName === "string"
-          ? fullName
-          : null;
 
-      const isValidFullname =
-        !!candidateFullName && isEnglishName(candidateFullName);
+      const candidateFullName = normalizedName;
+
+      const isValidFullname = true; // Apple requested not to get full name as its coming from Apple OAuth already
+      //!!candidateFullName && isEnglishName(candidateFullName);
 
       let missingFields = "";
       if (!isValidEmail) missingFields += "email,";
@@ -261,8 +257,6 @@ export const createOrSignInWithApple = async (req, res) => {
     }
   }
 
-  console.log("Here");
-
   // 6) Issue session (same logic as Google)
   const cnfClaim = {
     cnf: {
@@ -293,8 +287,6 @@ export const createOrSignInWithApple = async (req, res) => {
         process.env.JWT_REFRESH_SECRET,
         { expiresIn: "14d" }
       );
-
-  console.log("Here 2");
 
   res.set("Cache-Control", "no-store");
   return res.status(200).json({

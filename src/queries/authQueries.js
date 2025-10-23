@@ -29,7 +29,7 @@ export async function queryBumpTokenVersionAndGetSelfDataCAS(
 }
 
 export async function queryUserByUsername(username) {
-  return sql`SELECT id, name, password, role, is_first_login FROM users WHERE username=${username} LIMIT 1`;
+  return sql`SELECT id, name, username, password, role, is_first_login FROM users WHERE username=${username} LIMIT 1`;
 }
 
 export const queryGetCurrentTokenVersion = async (userId) => {
