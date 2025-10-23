@@ -334,13 +334,25 @@ export const sendChangePassEmail = async (req, res) => {
   // Don;t overshare
   if (!user) return res.status(204).end();
 
-  await sendForgotPasswordEmail(
+  // Don't send an email => redirect to website
+
+  /*await sendForgotPasswordEmail(
     user.email,
     user.id,
     user.name ? user.name : user.username
-  );
+  );*/
 
-  return res.status(204).end();
+  const jti = generateJti();
+  const token = jwt.sign(
+    { sub: user.id, typ: "forgot-pass", jti, iss: "strong-together" }, // payload
+    process.env.JWT_FORGOT_PASSWORD_SECRET, // strong secret in env
+    { expiresIn: "5m" } // claims
+  );
+  const changePasswordUrl = `https://strongtogether.kobihanoch.com/reset-password?token=${encodeURIComponent(
+    token
+  )}`;
+
+  return res.redirect(302, changePasswordUrl);
 };
 
 // @desc    Update password
