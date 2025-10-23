@@ -38,7 +38,7 @@ export const sendForgotPasswordEmail = async (email, userId, fullName) => {
     process.env.JWT_FORGOT_PASSWORD_SECRET, // strong secret in env
     { expiresIn: "5m" } // claims
   );
-  const changePasswordUrl = `https://strongtogether-privacy.kobihanoch.com/reset-password?token=${encodeURIComponent(
+  const changePasswordUrl = `https://strongtogether.kobihanoch.com/reset-password?token=${encodeURIComponent(
     token
   )}`;
   const html = generateForgotPasswordEmail({
