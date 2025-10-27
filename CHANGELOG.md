@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.10.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.10.0...v1.10.1) (2025-10-27)
+
+
+### Bug Fixes
+
+* **DPoP:** Fixed cache disabled behaviuor with JTI allow-list ([6e3fd4b](https://github.com/kobihanoch/Strong-Together-Backend/commit/6e3fd4bbf2a03b56d20b4875a202d2b46f585789))
+
 ## [1.10.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.9.0...v1.10.0) (2025-10-22)
 
 
