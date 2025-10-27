@@ -82,7 +82,7 @@ export default async function dpopValidationMiddleware(req, res, next) {
 
     // 5) Validate IAT
     const now = Math.floor(Date.now() / 1000);
-    if (now - claims.iat > DPOP_EXPIRATION_SECONDS || claims.iat > now + 5) {
+    if (now - claims.iat > DPOP_EXPIRATION_SECONDS || claims.iat > now + 60) {
       return next(
         createError(401, "DPoP proof is expired or timestamp is invalid.")
       );
