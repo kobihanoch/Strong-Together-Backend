@@ -16,6 +16,7 @@ import messagesRoutes from "./routes/messagesRoutes.js";
 import pushRoutes from "./routes/pushRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import workoutRoutes from "./routes/workoutRoutes.js";
+import subscriptionsRoutes from "./routes/subscriptionsRoutes.js";
 import cors from "cors";
 import { checkAppVersion } from "./middlewares/checkAppVersion.js";
 import { botBlocker } from "./middlewares/botBlocker.js";
@@ -113,6 +114,9 @@ app.use("/api/aerobics", aerobicsRoutes);
 
 // Push notifications
 app.use("/api/push", pushRoutes);
+
+// Subscriptions
+app.use("/api/subs", subscriptionsRoutes);
 
 // Bootstrap
 app.use("/api/bootstrap", bootsrapRoutes);
