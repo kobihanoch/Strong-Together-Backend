@@ -1,4 +1,4 @@
-import emailQueue from "./emailsQueue";
+import emailQueue from "./emailsQueue.js";
 
 // Add jobs to queue
 export const enqueueEmails = async (emails) => {
@@ -13,6 +13,7 @@ export const enqueueEmails = async (emails) => {
         attempts: 3,
         backoff: 5000,
         removeOnComplete: true,
+        //removeOnFail: true,
       },
     }))
   );

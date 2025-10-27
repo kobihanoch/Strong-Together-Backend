@@ -12,9 +12,9 @@ export const sendMail = async ({ to, subject, html }) => {
       html,
       reply_to: "support@auth.kobihanoch.com",
     });
-    console.log("An email has been sent to", to);
+    //console.log("An email has been sent to", to);
   } catch (err) {
-    console.error("Failed to send email via Resend:", err);
+    console.error("[Mailer]: Failed to send email via Resend:", err);
     throw createError(500, err);
   }
 };

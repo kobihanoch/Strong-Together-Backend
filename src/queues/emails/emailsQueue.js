@@ -1,9 +1,10 @@
 import Bull from "bull";
 
-let emailQueue;
+let emailsQueue = globalThis.emailsQueue || null;
 
-if (!emailQueue) {
-  emailQueue = new Bull("emailQueue", process.env.REDIS_URL);
+if (!emailsQueue) {
+  emailsQueue = new Bull("emailsQueue", process.env.REDIS_URL);
+  globalThis.emailsQueue = emailsQueue;
 }
 
-export default emailQueue;
+export default emailsQueue;
