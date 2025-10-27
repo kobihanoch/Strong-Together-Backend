@@ -60,7 +60,6 @@ export const decodeAccessToken = (accessToken) => {
     decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
     return decoded;
   } catch (e) {
-    console.log(e);
     return null;
   }
 };

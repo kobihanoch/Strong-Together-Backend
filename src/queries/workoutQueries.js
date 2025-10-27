@@ -311,7 +311,7 @@ export const queryGetExerciseTrackingAndStats = async (
                 pr.exercise_id,
                 pr.weight      DESC,
                 pr.reps        DESC,
-                pr.workoutdate DESC,
+                pr.workout_time_utc DESC,
                 pr.id          DESC
             ) t
           ), '{}'::jsonb),
@@ -325,7 +325,7 @@ export const queryGetExerciseTrackingAndStats = async (
             )
             FROM prs pr
             WHERE pr.user_id = ${userId}
-            ORDER BY pr.weight DESC, pr.reps DESC, pr.workoutdate DESC, pr.id DESC
+            ORDER BY pr.weight DESC, pr.reps DESC, pr.workout_time_utc DESC, pr.id DESC
             LIMIT 1
           ), NULL)
       )

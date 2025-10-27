@@ -150,7 +150,7 @@ export const cacheDeleteOtherTimezones = async (currentKey) => {
 };
 
 export const cacheStoreJti = async (prefix, jti, ttlSec) => {
-  if (!enabled || !redis) return false;
+  if (!enabled || !redis) return true;
 
   const key = `${prefix}:jti:${jti}`;
   const res = await redis.set(key, "1", { NX: true, EX: ttlSec });
