@@ -1,24 +1,25 @@
+import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import helmet from "helmet";
 import { connectDB } from "./config/db.js";
 import { connectRedis } from "./config/redisClient.js";
-import { createIOServer, startSocket } from "./config/webSocket.js";
+import { createIOServer } from "./config/webSocket.js";
+import { botBlocker } from "./middlewares/botBlocker.js";
+import { checkAppVersion } from "./middlewares/checkAppVersion.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { generalLimiter } from "./middlewares/rateLimiter.js";
 import aerobicsRoutes from "./routes/aerobicsRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
-import oauthRoutes from "./routes/oauthRoutes.js";
 import bootsrapRoutes from "./routes/bootstrapRoutes.js";
 import exercisesRoutes from "./routes/exercisesRoutes.js";
 import messagesRoutes from "./routes/messagesRoutes.js";
+import oauthRoutes from "./routes/oauthRoutes.js";
 import pushRoutes from "./routes/pushRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import webSocketsRoutes from "./routes/webSocketsRoutes.js";
 import workoutRoutes from "./routes/workoutRoutes.js";
-import cors from "cors";
-import { checkAppVersion } from "./middlewares/checkAppVersion.js";
-import { botBlocker } from "./middlewares/botBlocker.js";
 
 // RESOURECES CONNECTIONS AND GENERAL CONFIGURATIONS  ------------------------------------------
 dotenv.config();
@@ -114,6 +115,9 @@ app.use("/api/aerobics", aerobicsRoutes);
 // Push notifications
 app.use("/api/push", pushRoutes);
 
+// Web sockets
+app.use("/api/ws", webSocketsRoutes);
+
 // Bootstrap
 app.use("/api/bootstrap", bootsrapRoutes);
 
@@ -122,7 +126,6 @@ app.use(errorHandler);
 
 // SOCKET CONNECTIONS ---------------------------------------------------------------------------------------------
 const { io, server } = createIOServer(app);
-await startSocket(io);
 
 // LISTEN TO PORT ------------------------------------------------------------------------------------------------
 server.listen(PORT, () => {
