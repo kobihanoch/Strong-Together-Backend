@@ -44,26 +44,32 @@ Migrating to this dedicated backend improved performance, introduced server-side
    - [Messages Flow](#messages-flow)
    - [Auth Flow](#auth-flow)
 9. [WebSocket Events](#websocket-events)
+   - [Connection Flow](#connection-flow)
+   - [Security Highlights](#security-highlights)
 10. [DPoP (Proof-of-Possession) Overview](#dpop-proof-of-possession-overview)
+    - [How DPoP Works Here](#how-dpop-works-here)
+    - [Required Headers From Client](#required-headers-from-client)
+    - [Environment Variables](#environment-variables)
 11. [Conclusion](#conclusion)
 
 ---
 
 ## Technologies & Architecture
 
-| Layer/Service               | Purpose/Notes                                                                                                                                                                                                                                                         |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Node.js / Express 5**     | HTTP server and routing framework. Express 5 provides promise-aware request handlers.                                                                                                                                                                                 |
-| **PostgreSQL**              | Primary relational database. SQL queries live in `src/queries`. The code relies on Postgres views (e.g. `v_exercisetracking_expanded`) to assemble workout plans and analytics.                                                                                       |
-| **Redis**                   | Cache layer. When `CACHE_ENABLED=true`, workout plans and exercise tracking results are cached for 48h. **Payloads are GZIP-compressed** to reduce size and network time. Each user has a cache-version; on data changes the version increments to invalidate.        |
-| **Socket.IO**               | WebSockets server used to emit `new_message` events when system or user messages arrive. Clients join a room named after their user ID to receive targeted events.                                                                                                    |
-| **Supabase Storage**        | Used for storing user profile pictures. Files are uploaded and retrieved via signed service-role keys.                                                                                                                                                                |
-| **Expo Push service**       | Sends push notifications to users’ devices. The server exposes a `/api/push/daily` endpoint that loops over tokens and calls Expo’s API.                                                                                                                              |
-| **Resend (Email)**          | Transactional email for **account verification** and **password reset** flows.                                                                                                                                                                                        |
-| **JWT + DPoP**              | Auth uses short-lived access tokens and longer-lived refresh tokens. Tokens are **DPoP-bound** (confirmation claim) and validated per request with a DPoP proof to prevent replay with a stolen token.                                                                |
-| **Docker & Compose**        | Dockerfile produces Node 20 image, `docker-compose.yml` maps port 5000 to host.                                                                                                                                                                                       |
-| **Render Deployment**       | The backend is deployed on Render for hosting and scaling.                                                                                                                                                                                                            |
-| **BullMQ + Redis (Queues)** | Handles background jobs for push notifications and transactional emails. Each queue (e.g. `pushNotifications`, `email`) runs in a separate worker process. Producers enqueue jobs; workers consume and send through **Expo Push API** or **Resend API** respectively. |
+| Layer/Service               | Purpose/Notes                                                                                                                                                                                                                                                                                                                                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Node.js / Express 5**     | HTTP server and routing framework. Express 5 provides promise-aware request handlers.                                                                                                                                                                                                                                                                                                               |
+| **PostgreSQL**              | Primary relational database. SQL queries live in `src/queries`. The code relies on Postgres views (e.g. `v_exercisetracking_expanded`) to assemble workout plans and analytics.                                                                                                                                                                                                                     |
+| **Redis**                   | Cache layer. When `CACHE_ENABLED=true`, workout plans and exercise tracking results are cached for 48h. **Payloads are GZIP-compressed** to reduce size and network time. Each user has a cache-version; on data changes the version increments to invalidate.                                                                                                                                      |
+| **Socket.IO**               | Secure WebSocket layer for realtime events (messages, notifications). Each client must first request a short-lived **connection ticket** (`/api/ws/generateticket`) before connecting. The server validates the ticket (JWT signed with `JWT_SOCKET_SECRET`) during the handshake, assigns the socket to the user’s private room, and handles automatic reconnects with ticket refresh when needed. |
+|  |
+| **Supabase Storage**        | Used for storing user profile pictures. Files are uploaded and retrieved via signed service-role keys.                                                                                                                                                                                                                                                                                              |
+| **Expo Push service**       | Sends push notifications to users’ devices. The server exposes a `/api/push/daily` endpoint that loops over tokens and calls Expo’s API.                                                                                                                                                                                                                                                            |
+| **Resend (Email)**          | Transactional email for **account verification** and **password reset** flows.                                                                                                                                                                                                                                                                                                                      |
+| **JWT + DPoP**              | Auth uses short-lived access tokens and longer-lived refresh tokens. Tokens are **DPoP-bound** (confirmation claim) and validated per request with a DPoP proof to prevent replay with a stolen token.                                                                                                                                                                                              |
+| **Docker & Compose**        | Dockerfile produces Node 20 image, `docker-compose.yml` maps port 5000 to host.                                                                                                                                                                                                                                                                                                                     |
+| **Render Deployment**       | The backend is deployed on Render for hosting and scaling.                                                                                                                                                                                                                                                                                                                                          |
+| **BullMQ + Redis (Queues)** | Handles background jobs for push notifications and transactional emails. Each queue (e.g. `pushNotifications`, `email`) runs in a separate worker process. Producers enqueue jobs; workers consume and send through **Expo Push API** or **Resend API** respectively.                                                                                                                               |
 
 ---
 
@@ -429,9 +435,67 @@ and tracking logs, **including aerobic sessions via `aerobictracking`**.
 
 ## WebSocket Events
 
-- Clients connect via `/socket.io`.
-- Emit `user_loggedin` with ID → join room.
-- New messages broadcast `new_message` to user’s room.
+The backend uses **Socket.IO** (WebSocket transport only) to deliver realtime events such as new messages and system notifications.  
+Each authenticated user is assigned to a **dedicated room** named after their `userId`, enabling targeted event delivery.
+
+### Connection Flow
+
+1. **Client-side ticket minting**
+
+   - The app requests a short-lived **connection ticket** via:
+     ```
+     POST /api/ws/generateticket
+     ```
+   - The server issues a signed JWT (audience: `socket`, issuer: `strong-together`) valid for **~1.5 hours**.
+   - Ticket payload includes `{ id, username, jti }`.
+
+2. **Handshake authentication**
+
+   - Client connects to the WebSocket endpoint:
+     ```
+     io(API_BASE_URL, {
+       path: "/socket.io",
+       transports: ["websocket"],
+       auth: { ticket }
+     })
+     ```
+   - The backend intercepts connections through:
+     ```js
+     io.use(async (socket, next) => {
+       const ticket = socket.handshake.auth.ticket;
+       const payload = decodeSocketToken(ticket);
+       socket.user = { id: payload.id, username: payload.username };
+       next();
+     });
+     ```
+
+3. **Room assignment**
+
+   - After validation, each socket joins a private room:
+     ```js
+     socket.join(userId);
+     ```
+   - This room name equals the user’s internal `id`, ensuring isolation between users.
+
+4. **Event lifecycle**
+
+   - On login: client emits `user_loggedin`.
+   - On new message: server emits `new_message` to that user’s room.
+   - On disconnect: logs reason and allows automatic reconnection.
+
+5. **Automatic reconnection**
+   - If the app goes to background or network drops, the socket may close (`ping timeout`).
+   - On reconnect attempt, if the ticket is expired, the client **requests a new ticket** and reconnects automatically.
+   - This prevents stale sessions without spamming reconnections.
+
+### Security Highlights
+
+| Layer                    | Protection                                                                  |
+| ------------------------ | --------------------------------------------------------------------------- |
+| **Ticket JWT**           | Signed with `JWT_SOCKET_SECRET`, short TTL (~1.5h), audience `socket`.      |
+| **Handshake middleware** | Rejects missing, invalid, or expired tickets before connection is accepted. |
+| **Isolation**            | Each user’s socket joins only its own room.                                 |
+| **Reconnection safety**  | The client refreshes tickets only when needed (on `connect_error`).         |
 
 ---
 
