@@ -16,6 +16,8 @@ export const startGlobalWorker = async () => {
 
   // Graceful shutdown
   await setupGracefulShutdown(queues);
+
+  console.log("--------------------------------------------------");
 };
 
 await startGlobalWorker();
