@@ -44,7 +44,7 @@ export const createIOServer = (app) => {
   io.on("connection", (socket) => {
     const { id: userId, username } = socket.user || {};
     // Join per-user room
-    socket.join(`user:${userId}`);
+    socket.join(userId);
 
     console.log("[Web Socket]: User connected:", username);
 
