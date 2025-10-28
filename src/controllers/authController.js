@@ -39,11 +39,7 @@ export const loginUser = async (req, res) => {
   const { identifier, password } = req.body;
 
   const jkt = req.headers["dpop-key-binding"];
-  if (
-    req.headers["x-app-version"] !== "4.1.0" &&
-    req.headers["x-app-version"] !== "4.1.1" &&
-    process.env.DPOP_ENABLED === "true"
-  ) {
+  if (process.env.DPOP_ENABLED === "true") {
     if (!jkt) {
       throw createError(400, "DPoP-Key-Binding header is missing.");
     }
@@ -145,11 +141,7 @@ export const logoutUser = async (req, res) => {
 export const refreshAccessToken = async (req, res) => {
   //await queryDeleteExpiredBlacklistedTokens();
   const dpopJkt = req.dpopJkt;
-  if (
-    req.headers["x-app-version"] !== "4.1.0" &&
-    req.headers["x-app-version"] !== "4.1.1" &&
-    process.env.DPOP_ENABLED === "true"
-  ) {
+  if (process.env.DPOP_ENABLED === "true") {
     if (!dpopJkt) {
       // Should not happen if dpopValidationMiddleware ran first
       throw createError(500, "Internal error: DPoP JKT not found on request.");
@@ -163,11 +155,7 @@ export const refreshAccessToken = async (req, res) => {
   const decoded = decodeRefreshToken(refreshToken);
   if (!decoded) throw createError(401, "Invalid or expired refresh token");
 
-  if (
-    req.headers["x-app-version"] !== "4.1.0" &&
-    req.headers["x-app-version"] !== "4.1.1" &&
-    process.env.DPOP_ENABLED === "true"
-  ) {
+  if (process.env.DPOP_ENABLED === "true") {
     // One time migration path for older versions (newer tokens will pu JKT inside)
     const tokenJkt = decoded.cnf?.jkt;
     if (tokenJkt && tokenJkt !== req.dpopJkt) {

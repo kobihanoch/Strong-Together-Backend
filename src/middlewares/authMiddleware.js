@@ -7,12 +7,7 @@ import * as crypto from "crypto";
 export const protect = async (req, res, next) => {
   const dpopJkt = req.dpopJkt;
   try {
-    // Bypass for versions 4.1.0 and 4.1.1
-    if (
-      req.headers["x-app-version"] !== "4.1.0" &&
-      req.headers["x-app-version"] !== "4.1.1" &&
-      process.env.DPOP_ENABLED === "true"
-    ) {
+    if (process.env.DPOP_ENABLED === "true") {
       if (!dpopJkt) {
         throw createError(
           500,
@@ -33,13 +28,8 @@ export const protect = async (req, res, next) => {
       throw createError(401, "Access token is not valid");
     }
 
-    // Bypass for versions 4.1.0 and 4.1.1
     // Check if access token JKT is equal to DPoP JKT
-    if (
-      req.headers["x-app-version"] !== "4.1.0" &&
-      req.headers["x-app-version"] !== "4.1.1" &&
-      process.env.DPOP_ENABLED === "true"
-    ) {
+    if (process.env.DPOP_ENABLED === "true") {
       const tokenJkt = decoded.cnf?.jkt;
 
       if (!tokenJkt || tokenJkt !== dpopJkt) {
