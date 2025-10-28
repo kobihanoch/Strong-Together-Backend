@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { sendMail } from "../config/mailer.js";
+import { enqueueEmails } from "../queues/emails/emailsProducer.js";
 import {
   generateConfirmEmailChange,
   generateForgotPasswordEmail,
@@ -24,11 +24,18 @@ export const sendVerificationEmail = async (email, userId, fullName) => {
     verifyUrl,
     logoUrl: `https://strongtogether.kobihanoch.com/appicon.png`,
   });
-  await sendMail({
+  await enqueueEmails([
+    {
+      to: email,
+      subject: "Confirm your Strong Together account",
+      html,
+    },
+  ]);
+  /*await sendMail({
     to: email,
     subject: "Confirm your Strong Together account",
     html,
-  });
+  });*/
 };
 
 export const sendForgotPasswordEmail = async (email, userId, fullName) => {
@@ -46,7 +53,8 @@ export const sendForgotPasswordEmail = async (email, userId, fullName) => {
     changePasswordUrl,
     logoUrl: `https://strongtogether.kobihanoch.com/appicon.png`,
   });
-  await sendMail({ to: email, subject: "Reset your password", html });
+  await enqueueEmails([{ to: email, subject: "Reset your password", html }]);
+  //await sendMail({ to: email, subject: "Reset your password", html });
 };
 
 export const sendVerificationEmailForEmailUpdate = async (
@@ -79,9 +87,16 @@ export const sendVerificationEmailForEmailUpdate = async (
     logoUrl: "https://strongtogether.kobihanoch.com/appicon.png",
   });
 
-  await sendMail({
+  await enqueueEmails([
+    {
+      to: normalized,
+      subject: "Confirm your Strong Together Email",
+      html,
+    },
+  ]);
+  /*await sendMail({
     to: normalized,
     subject: "Confirm your Strong Together Email",
     html,
-  });
+  });*/
 };
