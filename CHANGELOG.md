@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.11.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.10.1...v1.11.0) (2025-10-28)
+
+
+### Features
+
+* **Bull:** Created an email producer and consumer ([9773d1e](https://github.com/kobihanoch/Strong-Together-Backend/commit/9773d1e78226b472065293310a557561002fb0ce))
+* **Logs:** Added losg labels ([71ddeff](https://github.com/kobihanoch/Strong-Together-Backend/commit/71ddeff4360d390a8c7ba7e5ba9a8287d3174d75))
+* **Web Socket:** Web socket generates a ticket with DPoP validation, and secures handshake with a socket secret ([77e0182](https://github.com/kobihanoch/Strong-Together-Backend/commit/77e0182fdb2a76e3c043c9c35ef2b1199907e955))
+* **Workers:** Created another process for emails with bull ([428acb9](https://github.com/kobihanoch/Strong-Together-Backend/commit/428acb9287512d3410cc8bd466d481272b3a05c0))
+* **Workers:** Createda  worker for push notifications ([9f51f65](https://github.com/kobihanoch/Strong-Together-Backend/commit/9f51f65df621ba307bc4683c79ff414f7ebed82c))
+
 ### [1.10.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.10.0...v1.10.1) (2025-10-27)
 
 
