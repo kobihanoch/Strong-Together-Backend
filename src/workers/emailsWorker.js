@@ -22,9 +22,7 @@ export const startEmailWorker = async () => {
         throw e;
       }
     });
-    console.log(
-      "[Email worker]: Email worker is up - ready for sending emails!"
-    );
+    console.log("[Email worker]: Email worker is up");
   } catch (e) {
     console.error("[Email worker]: Email worker failed to start:", e.message);
     throw e;
