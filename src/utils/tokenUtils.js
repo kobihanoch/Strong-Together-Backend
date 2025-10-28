@@ -97,6 +97,16 @@ export const decodeChangeEmailToken = (changeEmailToken) => {
   }
 };
 
+export const decodeSocketToken = (ticket) => {
+  let decoded;
+  try {
+    decoded = jwt.verify(ticket, process.env.JWT_SOCKET_SECRET);
+    return decoded;
+  } catch {
+    return null;
+  }
+};
+
 import crypto from "crypto";
 
 export const generateJti = () => {

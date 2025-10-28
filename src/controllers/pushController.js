@@ -1,16 +1,19 @@
 import { queryGetAllUsersWithNotificationsEnabled } from "../queries/pushQueries.js";
-import { sendPushNotification } from "../services/pushService.js";
+import { enqueuePushNotifications } from "../queues/pushNotifications/pushNotificationsProducer.js";
 
 export const sendDailyPush = async (req, res) => {
   const users = await queryGetAllUsersWithNotificationsEnabled();
   try {
+    const pushNotifications = [];
     for (const user of users) {
-      await sendPushNotification(
-        user.push_token,
-        `Hello, ${user.name.split(" ")[0]}!`,
-        "Ready to go workout?"
-      );
+      pushNotifications.push({
+        token: user.push_token,
+        title: `Hello, ${user.name.split(" ")[0]}!`,
+        body: "Ready to go workout?",
+      });
     }
+
+    await enqueuePushNotifications(pushNotifications);
     res.json({ success: true, message: "Daily notifications sent" });
   } catch (error) {
     console.error("❌ Error sending notifications:", error.message);
