@@ -129,8 +129,8 @@ const { io, server } = createIOServer(app);
 
 // LISTEN TO PORT ------------------------------------------------------------------------------------------------
 server.listen(PORT, () => {
-  console.log(`Websocket is running on port ${PORT}`);
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`[Web Socket]: Websocket is running on port ${PORT}`);
+  console.log(`[Server]: Server is running on port ${PORT}`);
 });
 
 process.on("unhandledRejection", (reason, promise) => {

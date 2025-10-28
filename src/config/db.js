@@ -83,9 +83,9 @@ export const withRlsTx = (handler) => {
 export const connectDB = async () => {
   try {
     await sql`select 1 as connected`;
-    console.log("Connected to Postgres.");
+    console.log("[Postgres]: Connected to Postgres.");
   } catch (err) {
-    console.log("Connection to Postgres has failed.", err.message);
+    console.log("[Postgres]: Connection to Postgres has failed.", err.message);
   }
 };
 export default sql;

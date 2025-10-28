@@ -13,11 +13,11 @@ export const redis = createClient({
   },
 });
 
-redis.on("error", (err) => console.log("Redis Client Error", err));
+redis.on("error", (err) => console.log("[Redis]: Redis Client Error", err));
 
 export const connectRedis = async () => {
   await redis.connect();
   await redis.set("Req", "Valid connection");
   const result = await redis.get("Req");
-  console.log("✅ Redis Connected!", result);
+  console.log("[Redis]: Redis Connected -", result);
 };
