@@ -13,7 +13,7 @@ export const generateTicket = async (req, res) => {
   };
 
   const ticket = jwt.sign(payload, process.env.JWT_SOCKET_SECRET, {
-    expiresIn: "45s", // short TTL
+    expiresIn: "5400s", // 1:30 Hrs
     issuer: "strong-together",
     audience: "socket",
   });
