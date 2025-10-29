@@ -24,6 +24,7 @@ import { loginSchema } from "../validators/auth/login.schema.js";
 import { resetPasswordSchema } from "../validators/auth/resetpassword.schema.js";
 import { withRlsTx } from "../config/db.js";
 import dpopValidationMiddleware from "../middlewares/DPoPValidationMiddleware.js";
+import { protect } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
@@ -39,7 +40,7 @@ router.post(
   dpopValidationMiddleware,
   asyncHandler(withRlsTx(refreshAccessToken))
 ); // Refresh token
-router.post("/logout", asyncHandler(withRlsTx(logoutUser))); // Logging out a user
+
 router.get("/verify", asyncHandler(withRlsTx(verifyUserAccount))); // Verification mail button url (to verify user)
 router.post(
   "/sendverificationemail",
@@ -67,5 +68,13 @@ router.put(
   validate(resetPasswordSchema),
   asyncHandler(withRlsTx(resetPassword))
 ); // Reset password
+
+// User routes
+router.post(
+  "/logout",
+  dpopValidationMiddleware,
+  protect,
+  asyncHandler(withRlsTx(logoutUser))
+); // Logging out a user
 
 export default router;
