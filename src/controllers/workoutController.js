@@ -3,7 +3,6 @@ import {
   queryAddWorkout,
   queryGetExerciseTrackingAndStats,
   queryGetWorkoutSplitsObj,
-  queryInsertUserFinishedWorkout,
   queryInsertUserFinishedWorkoutV1,
   queryInsertUserFinishedWorkoutV2,
   queryWholeUserWorkoutPlan,
