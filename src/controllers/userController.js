@@ -52,14 +52,13 @@ export const createUser = async (req, res) => {
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(password, salt);
 
-  const rowsCreated = await queryInsertUser(
+  const created = await queryInsertUser(
     username,
     fullName,
     email,
     gender,
     hash
   );
-  const [created] = rowsCreated;
 
   await sendVerificationEmail(email, created.id, fullName);
 

@@ -14,6 +14,7 @@ import { asyncHandler } from "../middlewares/asyncHandler.js";
 import {
   changeVerificationEmailLimiter,
   changeVerificationEmailLimiterDaily,
+  loginIpLimiter,
   loginLimiter,
   resetPasswordEmailLimiter,
   restPasswordEmailLimiterDaily,
@@ -32,6 +33,7 @@ const router = Router();
 router.post(
   "/login",
   loginLimiter,
+  loginIpLimiter,
   validate(loginSchema),
   asyncHandler(withRlsTx(loginUser))
 ); // Logging in a user and returns user

@@ -17,6 +17,10 @@ import { registerSchema } from "../validators/auth/register.schema.js";
 import { updateUserSchema } from "../validators/update/updateUser.schema.js";
 import { withRlsTx } from "../config/db.js";
 import dpopValidationMiddleware from "../middlewares/DPoPValidationMiddleware.js";
+import {
+  updateUserLimiter,
+  updateUserLimiterDaily,
+} from "../middlewares/rateLimiter.js";
 
 const router = Router();
 
@@ -32,6 +36,8 @@ router.get(
 ); // User - Get their own profile
 router.put(
   "/update",
+  updateUserLimiterDaily,
+  updateUserLimiter,
   dpopValidationMiddleware,
   protect,
   validate(updateUserSchema),
