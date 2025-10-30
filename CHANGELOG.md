@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.12.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.11.0...v1.12.0) (2025-10-30)
+
+
+### Features
+
+* **User Reminders:** Updated creating a new user queries (oauth/regular) to create a new record in user_reminder_settings also ([df714fa](https://github.com/kobihanoch/Strong-Together-Backend/commit/df714fafc0e1c9d49099c95e6ba56a89042ee21a))
+* **User Reminders:** User hourly reminders is implemented ([edb5646](https://github.com/kobihanoch/Strong-Together-Backend/commit/edb56469567a2fc7381e301cabe5eacc445da491))
+
 ## [1.11.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.10.1...v1.11.0) (2025-10-28)
 
 
