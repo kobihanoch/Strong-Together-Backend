@@ -126,7 +126,7 @@ export const finishUserWorkout = async (req, res) => {
   const userId = req.user.id;
 
   // simple semver-ish compare: good enough for 4.5.0 vs 4.4.x
-  const isNewClient = clientVersion >= "4.5.0";
+  const isNewClient = clientVersion === "4.5.0";
 
   if (isNewClient) {
     // compute start/end on the server if client didn't send
