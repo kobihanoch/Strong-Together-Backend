@@ -13,6 +13,7 @@ export const enqueuePushNotifications = async (notifications) => {
         attempts: 3,
         backoff: 5000,
         removeOnComplete: true,
+        delay: e.delay || 0,
         //removeOnFail: true,
       },
     }))
