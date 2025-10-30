@@ -1,15 +1,29 @@
 import sql from "../config/db.js";
+import { queryCreateUserDefaultReminderSettings } from "./userReminderSettingsQueries.js";
 
 export async function queryUserExistsByUsernameOrEmail(username, email) {
   return sql`SELECT id FROM users WHERE username=${username} OR email=${email} LIMIT 1`;
 }
 
+// Creates a new user and reminder settings
 export async function queryInsertUser(username, fullName, email, gender, hash) {
-  return sql`
-    INSERT INTO users (username, name, email, gender, password)
-    VALUES (${username}, ${fullName}, ${email}, ${gender}, ${hash})
-    RETURNING id, username, name, email, gender, role, created_at
-  `;
+  return sql.begin(async (trx) => {
+    // 1) create the user
+    const [user] = await trx`
+      INSERT INTO users (username, name, email, gender, password)
+      VALUES (${username}, ${fullName}, ${email}, ${gender}, ${hash})
+      RETURNING id, username, name, email, gender, role, created_at
+    `;
+
+    // 2) create default reminder settings for this user
+    await trx`
+      INSERT INTO user_reminder_settings (user_id)
+      VALUES (${user.id})
+    `;
+
+    // 3) return the created user
+    return user;
+  });
 }
 
 export async function queryAuthenticatedUserById(userId) {
