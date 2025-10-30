@@ -85,19 +85,19 @@ export const queryGetWorkoutSplitsObj = async (workoutId) => {
  *  - public.workout_summary (for workout_end_utc / workout_start_utc)
  *
  * Notes on compatibility:
- *  - During migration, COALESCE(workout_summary.workout_end_utc, exercisetracking.workout_time_utc)
+ *  - During migration, COALESCE(workout_start_utc, workout_end_utc, exercisetracking.workout_time_utc - interval '90 minutes')
  *    is used to support both legacy rows (without summary) and new ones (with summary).
- *  - In the future, filtering and date grouping will rely solely on workout_end_utc.
+ *  - In the future, filtering and date grouping will rely solely on workout_start_utc.
  *
  * Shape:
  * {
  *   exerciseTrackingAnalysis: {
- *     unique_days: Number,                         // count of DISTINCT workout dates (based on workout_end_utc or fallback)
+ *     unique_days: Number,                         // count of DISTINCT workout dates (based on workout_start_utc or fallback)
  *     most_frequent_split: String | null,          // splitname that appears on the most distinct days
  *     most_frequent_split_days: Number | null,     // how many distinct days that split appeared
  *     most_frequent_split_id: Number | null,       // representative workoutsplit_id for that split
  *     hasTrainedToday: Boolean,                    // true if any workout has today's local date
- *     lastWorkoutDate: String | null,              // latest workout date (YYYY-MM-DD)
+ *     lastWorkoutDate: String | null,              // latest workout date (YYYY-MM-DD) based on workout_start_utc
  *     splitDaysByName: { [splitname: String]: Number }, // map splitname -> distinct workout-day count
  *     prs: {
  *       pr_map_etsid: { [exercise_id]: {...} },    // mapped by exercise id
@@ -105,7 +105,7 @@ export const queryGetWorkoutSplitsObj = async (workoutId) => {
  *         exercise: String | null,
  *         weight: Number | null,
  *         reps: Number | null,
- *         workoutdate: String | null               // YYYY-MM-DD
+ *         workoutdate: String | null               // YYYY-MM-DD (based on workout_start_utc or fallback)
  *       } | null
  *     }
  *   },
@@ -125,7 +125,7 @@ export const queryGetWorkoutSplitsObj = async (workoutId) => {
  *
  * Implementation note:
  * - Timezone-sensitive boundaries use the user's tz (default: Asia/Jerusalem).
- * - The “recent” section filters by workout_end_utc (or fallback) between start_utc and end_utc.
+ * - The “recent” section filters by workout_start_utc (or fallback) between start_utc and end_utc.
  *
  * @param {uuid} userId - authenticated user's UUID
  * @param {number} days  - how many recent days to include (default 45)
@@ -165,9 +165,16 @@ export const queryGetExerciseTrackingAndStats = async (
      ============================================================ */
   all_rows as (
     select
-      -- pick real end if exists, otherwise legacy time
+      -- keep real timestamp for ordering / recency
       coalesce(et.workout_end_utc, et.workout_time_utc) as workout_dt,
-      (coalesce(et.workout_end_utc, et.workout_time_utc) at time zone p.tz)::date as local_day,
+
+      -- workout "day" is now based on START (or fallback to end, or to legacy-90m)
+      (
+        coalesce(
+          et.workout_start_utc,
+          coalesce(et.workout_end_utc, et.workout_time_utc) - interval '90 minutes'
+        ) at time zone p.tz
+      )::date as local_day,
       et.exercisetosplit_id,
       et.weight,
       et.reps,
@@ -188,8 +195,16 @@ export const queryGetExerciseTrackingAndStats = async (
      ============================================================ */
   recent_rows_src as (
     select
+      -- keep real end/legacy time for inside-day ordering
       coalesce(et.workout_end_utc, et.workout_time_utc) as workout_dt,
-      (coalesce(et.workout_end_utc, et.workout_time_utc) at time zone b.tz)::date as local_day,
+
+      -- day key for maps: by START (or estimated start)
+      (
+        coalesce(
+          et.workout_start_utc,
+          coalesce(et.workout_end_utc, et.workout_time_utc) - interval '90 minutes'
+        ) at time zone b.tz
+      )::date as local_day,
       et.exercisetosplit_id,
       et.weight,
       et.reps,
@@ -202,8 +217,15 @@ export const queryGetExerciseTrackingAndStats = async (
     join bounds b on true
     where et.user_id = b.user_id
       and coalesce(et.workout_end_utc, et.workout_time_utc) is not null
-      and coalesce(et.workout_end_utc, et.workout_time_utc) >= b.start_utc
-      and coalesce(et.workout_end_utc, et.workout_time_utc) <  b.end_utc
+      -- filter window now also based on START (or fallback)
+      and coalesce(
+            et.workout_start_utc,
+            coalesce(et.workout_end_utc, et.workout_time_utc) - interval '90 minutes'
+          ) >= b.start_utc
+      and coalesce(
+            et.workout_start_utc,
+            coalesce(et.workout_end_utc, et.workout_time_utc) - interval '90 minutes'
+          ) <  b.end_utc
   ),
 
   /* ============================================================
@@ -240,7 +262,7 @@ export const queryGetExerciseTrackingAndStats = async (
     from all_rows
   ),
 
-  /* PRs: still from v_prs, which already coalesces end/time in ORDER BY */
+  /* PRs: also displayed by START time now */
   prs as (
     select *
     from public.v_prs
@@ -336,9 +358,13 @@ export const queryGetExerciseTrackingAndStats = async (
                   'id', pr.id,
                   'exercise_id', pr.exercise_id,
                   'exercisetosplit_id', pr.exercisetosplit_id,
+                  -- date is now START-based
                   'workout_time_utc',
                     to_char(
-                      coalesce(pr.workout_end_utc, pr.workout_time_utc) at time zone (select tz from params),
+                      coalesce(
+                        pr.workout_start_utc,
+                        coalesce(pr.workout_end_utc, pr.workout_time_utc) - interval '90 minutes'
+                      ) at time zone (select tz from params),
                       'YYYY-MM-DD'
                     ),
                   'exercise', pr.exercise,
@@ -351,6 +377,7 @@ export const queryGetExerciseTrackingAndStats = async (
                 pr.exercise_id,
                 pr.weight desc,
                 pr.reps desc,
+                -- ordering stays by real time (end/legacy)
                 coalesce(pr.workout_end_utc, pr.workout_time_utc) desc,
                 pr.id desc
             ) t
@@ -361,9 +388,13 @@ export const queryGetExerciseTrackingAndStats = async (
               'exercise',    pr.exercise,
               'weight',      pr.weight,
               'reps',        pr.reps,
+              -- date is now START-based
               'workout_time_utc',
                 to_char(
-                  coalesce(pr.workout_end_utc, pr.workout_time_utc) at time zone (select tz from params),
+                  coalesce(
+                    pr.workout_start_utc,
+                    coalesce(pr.workout_end_utc, pr.workout_time_utc) - interval '90 minutes'
+                  ) at time zone (select tz from params),
                   'YYYY-MM-DD'
                 )
             )
