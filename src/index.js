@@ -57,7 +57,7 @@ app.use(helmet());
 
 // Trust proxy to get the request device IP for rate limiting
 // IMPORTANT: Allow it only if using secured cloud services like Render, AWS, Azure, etc...
-app.set("trust proxy", true);
+app.set("trust proxy", 1);
 
 // Use general rate limiter
 app.use(generalLimiter);
@@ -77,7 +77,7 @@ app.use((req, res, next) => {
   const username = req.headers["x-username"] ?? null;
 
   console.log(
-    `[IP: ${clientIP}] [App Version: ${req.headers["x-app-version"]}] [User: ${username}] ${req.method}:${req.originalUrl}`
+    /*`[IP: ${clientIP}]*/ `[User: ${username}] [App Version: ${req.headers["x-app-version"]}] ${req.method}:${req.originalUrl}`
   );
   next();
 });
