@@ -405,7 +405,10 @@ export const queryGetExerciseTrackingAndStats = async (
  *   ...
  * ]
  */
-export const queryInsertUserFinishedWorkout = async (userId, workoutArray) => {
+export const queryInsertUserFinishedWorkoutV1 = async (
+  userId,
+  workoutArray
+) => {
   await sql`
     INSERT INTO exercisetracking
       (exercisetosplit_id, weight, reps, user_id, notes)
@@ -424,6 +427,51 @@ export const queryInsertUserFinishedWorkout = async (userId, workoutArray) => {
     )
     RETURNING id;
   `;
+};
+
+export const queryInsertUserFinishedWorkoutV2 = async (
+  userId,
+  workoutArray,
+  workoutStartUtc,
+  workoutEndUtc
+) => {
+  // 1️⃣ Insert workout_summary first
+  const [{ id: workoutSummaryId }] = await sql`
+    insert into public.workout_summary (
+      user_id,
+      workout_start_utc,
+      workout_end_utc
+    )
+    values (
+      ${userId}::uuid,
+      ${workoutStartUtc}::timestamptz,
+      ${workoutEndUtc}::timestamptz
+    )
+    returning id;
+  `;
+
+  // 2️⃣ Insert all exercisetracking rows pointing to the same summary
+  await sql`
+    insert into public.exercisetracking
+      (exercisetosplit_id, weight, reps, user_id, notes, workout_summary_id)
+    select
+      t.exercisetosplit_id::int8,
+      t.weight::float4[],
+      t.reps::int8[],
+      ${userId}::uuid as user_id,
+      t.notes::text,
+      ${workoutSummaryId}::uuid as workout_summary_id
+    from jsonb_to_recordset(${workoutArray}::jsonb) as t(
+      exercisetosplit_id int8,
+      weight float4[],
+      reps int8[],
+      user_id uuid,
+      notes text
+    );
+  `;
+
+  // optional: return the summary id if needed
+  return workoutSummaryId;
 };
 
 export const queryDeleteUserWorkout = async (userId) => {
