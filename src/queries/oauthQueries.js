@@ -72,17 +72,23 @@ export async function queryCreateUserWithGoogleInfo(
     const username = await ensureUniqueUsername(trx, candidateUsername);
 
     // Create user
-    const inserted = await trx`
-      INSERT INTO users(username, email, name, gender, is_verified, auth_provider)
+    const [inserted] = await trx`
+      INSERT INTO users (username, email, name, gender, is_verified, auth_provider)
       VALUES (${username}, ${email}, ${fullName}, 'Unknown', true, 'google')
       RETURNING id
     `;
-    const newUserId = inserted[0].id;
+    const newUserId = inserted.id;
 
     // Create oauth link
     await trx`
-      INSERT INTO oauth_accounts(user_id, provider, provider_user_id, provider_email, missing_fields)
-      VALUES(${newUserId}, 'google', ${googleSub}, ${googleEmail}, ${oauthMissingFields})
+      INSERT INTO oauth_accounts (user_id, provider, provider_user_id, provider_email, missing_fields)
+      VALUES (${newUserId}, 'google', ${googleSub}, ${googleEmail}, ${oauthMissingFields})
+    `;
+
+    // Create default reminder settings
+    await trx`
+      INSERT INTO user_reminder_settings (user_id)
+      VALUES (${newUserId})
     `;
 
     return newUserId;
@@ -153,17 +159,23 @@ export async function queryCreateUserWithAppleInfo(
     const username = await ensureUniqueUsername(trx, candidateUsername);
 
     // Create user
-    const inserted = await trx`
-      INSERT INTO users(username, email, name, gender, is_verified, auth_provider)
+    const [inserted] = await trx`
+      INSERT INTO users (username, email, name, gender, is_verified, auth_provider)
       VALUES (${username}, ${email}, ${fullName}, 'Unknown', true, 'apple')
       RETURNING id
     `;
-    const newUserId = inserted[0].id;
+    const newUserId = inserted.id;
 
     // Create oauth link
     await trx`
-      INSERT INTO oauth_accounts(user_id, provider, provider_user_id, provider_email, missing_fields)
-      VALUES(${newUserId}, 'apple', ${appleSub}, ${appleEmail}, ${oauthMissingFields})
+      INSERT INTO oauth_accounts (user_id, provider, provider_user_id, provider_email, missing_fields)
+      VALUES (${newUserId}, 'apple', ${appleSub}, ${appleEmail}, ${oauthMissingFields})
+    `;
+
+    // Create default reminder settings
+    await trx`
+      INSERT INTO user_reminder_settings (user_id)
+      VALUES (${newUserId})
     `;
 
     return newUserId;
