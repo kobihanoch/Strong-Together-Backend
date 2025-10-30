@@ -1,10 +1,10 @@
 import createError from "http-errors";
 import {
   queryAddWorkout,
-  queryDeleteUserWorkout,
   queryGetExerciseTrackingAndStats,
   queryGetWorkoutSplitsObj,
-  queryInsertUserFinishedWorkout,
+  queryInsertUserFinishedWorkoutV1,
+  queryInsertUserFinishedWorkoutV2,
   queryWholeUserWorkoutPlan,
 } from "../queries/workoutQueries.js";
 import { sendSystemMessageToUserWorkoutDone } from "../services/messagesService.js";
@@ -112,18 +112,39 @@ export const getExerciseTracking = async (req, res) => {
 // @access  Private
 export const finishUserWorkout = async (req, res) => {
   const workoutArray = req.body.workout;
-  const tz = req.body.tz;
+  const tz = req.body.tz || "Asia/Jerusalem";
+  const workoutStartUtc = req.body.workout_start_utc || null;
+  const workoutEndUtc = req.body.workout_end_utc || null;
+
+  // Can delete after client PROD
+  const clientVersion = req.headers["x-app-version"];
 
   if (!Array.isArray(workoutArray) || workoutArray.length === 0) {
     throw createError(400, "Not a valid workout");
   }
+
   const userId = req.user.id;
-  await queryInsertUserFinishedWorkout(userId, workoutArray);
 
-  // Invalidate and warm new cache for tracking
-  //const trackingKey = buildTrackingKeyStable(userId, 45);
-  //await cacheDeleteKey(trackingKey);
+  // simple semver-ish compare: good enough for 4.5.0 vs 4.4.x
+  const isNewClient = clientVersion === "4.5.0";
 
+  if (isNewClient) {
+    // compute start/end on the server if client didn't send
+    const startIso = workoutStartUtc;
+    const endIso = workoutEndUtc;
+
+    await queryInsertUserFinishedWorkoutV2(
+      userId,
+      workoutArray,
+      startIso,
+      endIso
+    );
+  } else {
+    // old clients, no summary
+    await queryInsertUserFinishedWorkoutV1(userId, workoutArray);
+  }
+
+  // refresh tracking cache
   const { payload } = await getExerciseTrackingData(userId, 45, false, tz);
   await cacheSetJSON(
     buildTrackingKeyStable(userId, 45, tz),
