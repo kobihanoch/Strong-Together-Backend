@@ -411,8 +411,8 @@ and tracking logs, **including aerobic sessions via `aerobictracking`** and now 
 
 1. **Start / Finish workout** – App calls `/workouts/finishworkout` → server creates a row in **`workout_summary`** with `user_id`, `workout_start_utc`, `workout_end_utc` (or the trigger fills defaults). All tracking rows for this workout point to this summary via `workout_summary_id`.
 2. **Record sets** – Each set is inserted into **`exercisetracking`** and **must** include `workout_summary_id` when available. Legacy clients that only send `workout_time_utc` are still supported; the server estimates start/end as _end - 90 min_.
-3. **Analytics aggregation** – Views (`v_exercisetracking_expanded`, `v_exercisetracking_set_simple`, `v_prs`) read from `exercisetracking` **and** join `workout_summary` to know the real workout window. This is what powers `/workouts/gettracking` 45‑day analytics. fileciteturn0file0L260-L329
-4. **Housekeeping** – `public.housekeeping_compact_old_workouts()` keeps only the most recent 35 workout-days per user and deletes tracking of older days based on **`workout_summary.workout_start_utc`** (so a single long workout with many sets is deleted as a unit). fileciteturn0file0L25-L70
+3. **Analytics aggregation** – Views (`v_exercisetracking_expanded`, `v_exercisetracking_set_simple`, `v_prs`) read from `exercisetracking` **and** join `workout_summary` to know the real workout window. This is what powers `/workouts/gettracking` 45‑day analytics. 
+4. **Housekeeping** – `public.housekeeping_compact_old_workouts()` keeps only the most recent 35 workout-days per user and deletes tracking of older days based on **`workout_summary.workout_start_utc`** (so a single long workout with many sets is deleted as a unit).
 
 ---
 
