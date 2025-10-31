@@ -45,7 +45,7 @@ Migrating to this dedicated backend improved performance, introduced server-side
    3. [Tracking Flow](#tracking-flow)
    4. [Messages Flow](#messages-flow)
    5. [Auth Flow](#auth-flow)
-   6. [Reminder Flow](#reminder-flow)
+   6. [Reminder Flow](#reminder-flow-new)
 9. [WebSocket Events](#websocket-events)
    1. [Connection Flow](#connection-flow)
    2. [Security Highlights](#security-highlights)
