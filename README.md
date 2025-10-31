@@ -1,4 +1,4 @@
-# Strong Together Backend (v1.11.0)
+# Strong Together Backend (v2.0.0)
 
 **Strong Together** is a fitness-oriented application.  
 This repository contains the backend server that powers the app.  
@@ -28,28 +28,31 @@ Migrating to this dedicated backend improved performance, introduced server-side
 5. [Background Jobs & Queues](#background-jobs--queues)
 6. [Running the Server](#running-the-server)
 7. [API Endpoints](#api-endpoints)
-   - [Authentication](#authentication)
-   - [Users](#users)
-   - [Exercises](#exercises)
-   - [Messages](#messages)
-   - [Workouts](#workouts)
-   - [Analytics](#analytics)
-   - [Bootstrap](#bootstrap)
-   - [Aerobics](#aerobics)
-   - [Push Notifications](#push-notifications)
+   1. [Authentication](#authentication)
+   2. [Users](#users)
+   3. [OAuth](#oauth)
+   4. [Workouts](#workouts)
+   5. [Messages](#messages)
+   6. [Exercises](#exercises)
+   7. [Analytics](#analytics)
+   8. [Bootstrap](#bootstrap)
+   9. [Aerobics](#aerobics)
+   10. [Push Notifications](#push-notifications)
+   11. [WebSocket](#websocket)
 8. [Database Models & Indexes](#database-models--indexes)
-   - [Database Schema](#database-schema)
-   - [Workout Flow](#workout-flow)
-   - [Tracking Flow](#tracking-flow)
-   - [Messages Flow](#messages-flow)
-   - [Auth Flow](#auth-flow)
+   1. [Database Schema](#database-schema)
+   2. [Workout Flow](#workout-flow)
+   3. [Tracking Flow](#tracking-flow)
+   4. [Messages Flow](#messages-flow)
+   5. [Auth Flow](#auth-flow)
+   6. [Reminder Flow](#reminder-flow)
 9. [WebSocket Events](#websocket-events)
-   - [Connection Flow](#connection-flow)
-   - [Security Highlights](#security-highlights)
+   1. [Connection Flow](#connection-flow)
+   2. [Security Highlights](#security-highlights)
 10. [DPoP (Proof-of-Possession) Overview](#dpop-proof-of-possession-overview)
-    - [How DPoP Works Here](#how-dpop-works-here)
-    - [Required Headers From Client](#required-headers-from-client)
-    - [Environment Variables](#environment-variables)
+    1. [How DPoP Works Here](#how-dpop-works-here)
+    2. [Required Headers From Client](#required-headers-from-client)
+    3. [Environment Variables](#environment-variables)
 11. [Conclusion](#conclusion)
 
 ---
@@ -62,7 +65,6 @@ Migrating to this dedicated backend improved performance, introduced server-side
 | **PostgreSQL**              | Primary relational database. SQL queries live in `src/queries`. The code relies on Postgres views (e.g. `v_exercisetracking_expanded`) to assemble workout plans and analytics.                                                                                                                                                                                                                     |
 | **Redis**                   | Cache layer. When `CACHE_ENABLED=true`, workout plans and exercise tracking results are cached for 48h. **Payloads are GZIP-compressed** to reduce size and network time. Each user has a cache-version; on data changes the version increments to invalidate.                                                                                                                                      |
 | **Socket.IO**               | Secure WebSocket layer for realtime events (messages, notifications). Each client must first request a short-lived **connection ticket** (`/api/ws/generateticket`) before connecting. The server validates the ticket (JWT signed with `JWT_SOCKET_SECRET`) during the handshake, assigns the socket to the user’s private room, and handles automatic reconnects with ticket refresh when needed. |
-|  |
 | **Supabase Storage**        | Used for storing user profile pictures. Files are uploaded and retrieved via signed service-role keys.                                                                                                                                                                                                                                                                                              |
 | **Expo Push service**       | Sends push notifications to users’ devices. The server exposes a `/api/push/daily` endpoint that loops over tokens and calls Expo’s API.                                                                                                                                                                                                                                                            |
 | **Resend (Email)**          | Transactional email for **account verification** and **password reset** flows.                                                                                                                                                                                                                                                                                                                      |
@@ -70,12 +72,14 @@ Migrating to this dedicated backend improved performance, introduced server-side
 | **Docker & Compose**        | Dockerfile produces Node 20 image, `docker-compose.yml` maps port 5000 to host.                                                                                                                                                                                                                                                                                                                     |
 | **Render Deployment**       | The backend is deployed on Render for hosting and scaling.                                                                                                                                                                                                                                                                                                                                          |
 | **BullMQ + Redis (Queues)** | Handles background jobs for push notifications and transactional emails. Each queue (e.g. `pushNotifications`, `email`) runs in a separate worker process. Producers enqueue jobs; workers consume and send through **Expo Push API** or **Resend API** respectively.                                                                                                                               |
+| **Workout summary layer**   | New layer used to normalize per-workout metadata (`workout_start_utc`, `workout_end_utc`) and link it to `exercisetracking`. This is now the **authoritative source** for workout boundaries.                                                                                                                                                                                                       |
+| **Reminder subsystem**      | New subsystem based on `user_split_information` + `user_reminder_settings` tables. A daily DB cron recomputes preferred weekday + estimated hour per split, and an hourly server cron turns these into Expo pushes.                                                                                                                                                                                 |
 
 ---
 
 ## Project Structure
 
-```
+```text
 src/
 ├── config/        # Database, Redis, and Socket.IO configuration
 ├── controllers/   # Express route controllers (business logic)
@@ -100,8 +104,6 @@ src/
 │   ├── pushNotificationsWorker.js
 │   └── globalWorker.js
 └── index.js       # Express server entry point
-
-
 ```
 
 ---
@@ -179,6 +181,8 @@ Each producer encapsulates the logic of creating a job and adding it to the corr
 3. **Worker consume:** Worker scripts listen to the queues and process jobs concurrently.
 4. **Retries & logging:** Failed jobs are retried automatically with exponential backoff and logged.
 
+---
+
 ## Running the Server
 
 1. Create `.env` with:
@@ -247,189 +251,208 @@ DPoP-Key-Binding: <public-key-thumbprint>
 
 ---
 
-## Authentication
+### Authentication
 
-| Method | Endpoint                      | Auth? | Body / Query / Headers                                                     | Description                                                                                                                             |
-| ------ | ----------------------------- | :---: | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| POST   | `/auth/login`                 |  No   | Body: `{ identifier, password }` • Header: `DPoP-Key-Binding` (if DPoP on) | Username/Email + password. Bumps `tokenVersion`. Returns `{ accessToken, refreshToken, user }`. First-login triggers a welcome message. |
-| POST   | `/auth/refresh`               |  No   | Header: `x-refresh-token` • Headers: `DPoP` (proof), app-version checks    | Sliding refresh; validates DPoP key-binding vs token `cnf.jkt`. Returns fresh `{ accessToken, refreshToken, userId }`.                  |
-| POST   | `/auth/logout`                |  No   | Body/Header: refresh token                                                 | Clears push token, bumps `tokenVersion`.                                                                                                |
-| GET    | `/auth/verify`                |  No   | Query: `?token=...`                                                        | Email verification link → **HTML** success/fail. Single-use JTI allow-list.                                                             |
-| POST   | `/auth/sendverificationemail` |  No   | Body: `{ email }`                                                          | Sends verification email. `204` on success (even if user not found).                                                                    |
-| PUT    | `/auth/changeemailverify`     |  No   | Body: `{ username, password, newEmail }`                                   | For **unverified** users only: change email then resend verify link.                                                                    |
-| GET    | `/auth/checkuserverify`       |  No   | Query: `?username=...`                                                     | Returns `{ isVerified: boolean }`.                                                                                                      |
-| POST   | `/auth/forgotpassemail`       |  No   | Body: `{ identifier }`                                                     | Sends forgot-password email (if `auth_provider='app'`). `204` on success.                                                               |
-| PUT    | `/auth/resetpassword`         |  No   | Query: `?token=...` • Body: `{ newPassword }`                              | Resets password via emailed token; single-use JTI; bumps `tokenVersion`.                                                                |
+| Method | Endpoint                          | Auth? | DPoP?           | Body / Query / Headers                                         | Description                                                       |
+| ------ | --------------------------------- | :---: | --------------- | -------------------------------------------------------------- | ----------------------------------------------------------------- |
+| GET    | `/`                               |  No   | No              | —                                                              | Server is running ping.                                           |
+| GET    | `/health`                         |  No   | No              | —                                                              | Health check returns `{ status: "ok" }`.                          |
+| POST   | `/api/auth/login`                 |  No   | If DPoP enabled | Body: `{ identifier, password }` • Headers: `DPoP-Key-Binding` | Logs in a user; returns access/refresh tokens and user id.        |
+| POST   | `/api/auth/refresh`               |  No   | **Yes**         | Headers: `DPoP`, `x-refresh-token` (DPoP or Bearer)            | Rotates and returns new access/refresh tokens.                    |
+| GET    | `/api/auth/verify`                |  No   | No              | Query: `?token=...`                                            | Verifies account via email link; returns HTML.                    |
+| POST   | `/api/auth/sendverificationemail` |  No   | No              | Body: `{ email }`                                              | Sends verification email (`204` if email not found).              |
+| PUT    | `/api/auth/changeemailverify`     |  No   | No              | Body: `{ username, password, newEmail }`                       | Authenticates and sends email-change verification link.           |
+| GET    | `/api/auth/checkuserverify`       |  No   | No              | Query: `?username=...`                                         | Returns `{ isVerified }`.                                         |
+| POST   | `/api/auth/forgotpassemail`       |  No   | No              | Body: `{ identifier }`                                         | Sends password reset email if account exists (`204` on no-match). |
+| PUT    | `/api/auth/resetpassword`         |  No   | No              | Query: `?token=...` • Body: `{ newPassword }`                  | Resets password via emailed token.                                |
+| POST   | `/api/auth/logout`                |  Yes  | **Yes**         | Headers: `Authorization`, `DPoP`, `x-refresh-token`            | Logs out and bumps token version; clears push token.              |
+
+### Users
+
+| Method | Endpoint                      | Auth? | DPoP? | Body / Query / Headers                                                                                | Description                                               |
+| ------ | ----------------------------- | :---: | :---: | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| POST   | `/api/users/create`           |  No   |  No   | Body: `{ username, fullName, email, password, gender }`                                               | Registers a new user; sends verification email.           |
+| GET    | `/api/users/get`              |  Yes  |  Yes  | Headers: `Authorization`, `DPoP`                                                                      | Returns authenticated user profile.                       |
+| PUT    | `/api/users/update`           |  Yes  |  Yes  | Body: partial `{ username, fullName, email, setCompletedOnOAuth }` • Headers: `Authorization`, `DPoP` | Updates user; if email changed, sends confirmation email. |
+| PUT    | `/api/users/updateself`       |  Yes  |  Yes  | Body: same as `/update` • Headers: `Authorization`, `DPoP`                                            | Alias of update; validates and updates user.              |
+| PUT    | `/api/users/pushtoken`        |  Yes  |  Yes  | Body: `{ token }` • Headers: `Authorization`, `DPoP`                                                  | Saves Expo push token.                                    |
+| PUT    | `/api/users/setprofilepic`    |  Yes  |  Yes  | Headers: `Authorization`, `DPoP`, `Content-Type: multipart/form-data` • Body: file field `"file"`     | Uploads profile image and updates profile image URL.      |
+| DELETE | `/api/users/deleteprofilepic` |  Yes  |  Yes  | Body: `{ path }` • Headers: `Authorization`, `DPoP`                                                   | Deletes current profile image and clears URL.             |
+| DELETE | `/api/users/deleteself`       |  Yes  |  Yes  | Headers: `Authorization`, `DPoP`                                                                      | Deletes the authenticated user.                           |
+| GET    | `/api/users/changeemail`      |  No   |  No   | Query: `?token=...`                                                                                   | Confirms email change via link; returns HTML.             |
+
+### OAuth
+
+| Method | Endpoint                 | Auth? | DPoP?           | Body / Headers                                                             | Description                                                        |
+| ------ | ------------------------ | :---: | --------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| POST   | `/api/oauth/google`      |  No   | If DPoP enabled | Headers: `DPoP-Key-Binding` • Body: `{ idToken }`                          | Google sign-in/up; may link or create; returns tokens and user id. |
+| POST   | `/api/oauth/apple`       |  No   | If DPoP enabled | Headers: `DPoP-Key-Binding` • Body: `{ idToken, rawNonce, name?, email? }` | Apple sign-in/up; may link or create; returns tokens and user id.  |
+| POST   | `/api/oauth/proceedauth` |  Yes  | **Yes**         | Headers: `Authorization`, `DPoP`                                           | Completes OAuth profile and re-issues tokens.                      |
+
+### Workouts
+
+| Method | Endpoint                      | Auth? | DPoP? | Body / Query / Headers                                                                                                     | Description                                           |
+| ------ | ----------------------------- | :---: | :---: | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| GET    | `/api/workouts/getworkout`    |  Yes  |  Yes  | Query: `?tz=` • Headers: `Authorization`, `DPoP`                                                                           | Returns full workout plan and splits.                 |
+| GET    | `/api/workouts/gettracking`   |  Yes  |  Yes  | Query: `?tz=` • Headers: `Authorization`, `DPoP`                                                                           | Returns 45-day tracking and stats.                    |
+| POST   | `/api/workouts/finishworkout` |  Yes  |  Yes  | Body: `{ workout: array, tz?, workout_start_utc?, workout_end_utc? }` • Headers: `Authorization`, `DPoP`, `X-App-Version?` | Saves finished workout and refreshes tracking cache.  |
+| DELETE | `/api/workouts/delete`        |  Yes  |  Yes  | Headers: `Authorization`, `DPoP`                                                                                           | Reserved delete endpoint (no current implementation). |
+| POST   | `/api/workouts/add`           |  Yes  |  Yes  | Body: `{ workoutData, workoutName, tz }` • Headers: `Authorization`, `DPoP`                                                | Creates a workout and refreshes caches.               |
+
+### Messages
+
+| Method | Endpoint                       | Auth? | DPoP? | Body / Query / Headers                           | Description              |
+| ------ | ------------------------------ | :---: | :---: | ------------------------------------------------ | ------------------------ |
+| GET    | `/api/messages/getmessages`    |  Yes  |  Yes  | Query: `?tz=` • Headers: `Authorization`, `DPoP` | Lists user messages.     |
+| PUT    | `/api/messages/markasread/:id` |  Yes  |  Yes  | Path: `:id` • Headers: `Authorization`, `DPoP`   | Marks a message as read. |
+| DELETE | `/api/messages/delete/:id`     |  Yes  |  Yes  | Path: `:id` • Headers: `Authorization`, `DPoP`   | Deletes a message.       |
+
+### Exercises
+
+| Method | Endpoint                | Auth? | DPoP? | Body / Headers                   | Description                             |
+| ------ | ----------------------- | :---: | :---: | -------------------------------- | --------------------------------------- |
+| GET    | `/api/exercises/getall` |  Yes  |  Yes  | Headers: `Authorization`, `DPoP` | Returns all exercises mapped by muscle. |
+
+### Analytics
+
+| Method | Endpoint             | Auth? | DPoP? | Body / Headers                   | Description                                |
+| ------ | -------------------- | :---: | :---: | -------------------------------- | ------------------------------------------ |
+| GET    | `/api/analytics/get` |  Yes  |  Yes  | Headers: `Authorization`, `DPoP` | Returns analytics: 1RM and goal adherence. |
+
+### Bootstrap
+
+| Method | Endpoint             | Auth? | DPoP? | Body / Query / Headers                           | Description                                                          |
+| ------ | -------------------- | :---: | :---: | ------------------------------------------------ | -------------------------------------------------------------------- |
+| GET    | `/api/bootstrap/get` |  Yes  |  Yes  | Query: `?tz=` • Headers: `Authorization`, `DPoP` | Bundled bootstrap payload: user, plan, tracking, aerobics, messages. |
+
+### Aerobics
+
+| Method | Endpoint            | Auth? | DPoP? | Body / Query / Headers                                                                         | Description                                            |
+| ------ | ------------------- | :---: | :---: | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| GET    | `/api/aerobics/get` |  Yes  |  Yes  | Query: `?tz=` • Headers: `Authorization`, `DPoP`                                               | Returns aerobics data (daily/weekly) for last 45 days. |
+| POST   | `/api/aerobics/add` |  Yes  |  Yes  | Body: `{ record: { type, durationMins, durationSec }, tz }` • Headers: `Authorization`, `DPoP` | Adds an aerobic record and returns updated view.       |
+
+### Push Notifications
+
+| Method | Endpoint                   | Auth? | DPoP? | Body / Headers | Description                                               |
+| ------ | -------------------------- | :---: | :---: | -------------- | --------------------------------------------------------- |
+| GET    | `/api/push/daily`          |  No   |  No   | —              | Enqueues daily push notifications for all opt-in users.   |
+| GET    | `/api/push/hourlyreminder` |  No   |  No   | —              | Enqueues hourly reminder pushes based on user stats/time. |
+
+### WebSocket
+
+| Method | Endpoint                 | Auth? | DPoP? | Body / Headers                                           | Description                            |
+| ------ | ------------------------ | :---: | :---: | -------------------------------------------------------- | -------------------------------------- |
+| POST   | `/api/ws/generateticket` |  Yes  |  Yes  | Body: `{ username? }` • Headers: `Authorization`, `DPoP` | Issues a short-lived WebSocket ticket. |
+
+**New reminder feature – how it works (DB cron + server cron):**
+
+1. **Daily DB cron (inside Postgres):** calls `public.refresh_user_split_information()` (see SQL in `db/functions`), which:
+   - looks at the last **21 days** of workouts **per user + per split** based on `exercisetracking` **and** the new `workout_summary` table,
+   - picks the **most common weekday** for that split,
+   - calculates the **average start time** of the workout in **UTC**,
+   - writes/upserts into `public.user_split_information (user_id, split_id, estimated_time_utc, confidence, preferred_weekday)` with a confidence score.
+2. **Daily server cron (outside service):** calls `/api/push/hourlyreminder` which:
+   - fetches all users whose `user_reminder_settings.workout_reminders_enabled = TRUE`,
+   - joins them with `user_split_information` (only rows with `confidence >= 0.60` and `preferred_weekday = today`),
+   - loads the **actual split name** from `workoutsplits`,
+   - for each user, uses `computeDelayFromUTC(now, estimated_time_utc, reminder_offset_minutes)` to compute when **today** we should send the push,
+   - enqueues all pushes to the `pushNotifications` BullMQ queue with the right **delay in ms**.
+3. **Expo push worker:** sends the pushes at the exact time.
+4. **Client side:** just saves the Expo token (`/users/pushtoken`) and the user’s reminder settings. No extra logic is required on the device.
+
+This gives you **stable** and **timezone-safe** reminders based on real historic workouts, not on guesses.
 
 ---
-
-## OAuth Providers & Account Linking (Google + Apple)
-
-| Method | Endpoint             | Auth? | Body / Headers                                                                 | Description                                                                                                                                                                                                                       |
-| ------ | -------------------- | :---: | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| POST   | `/oauth/google`      |  No   | Headers: `DPoP-Key-Binding` (required if DPoP on) • Body: `{ idToken }`        | Verifies Google ID token, **links or creates** user via `oauth_accounts`. If profile is incomplete, returns `missingFields` and **no refresh token**.<br>Response: `{ user, accessToken, refreshToken \| null, missingFields? }`. |
-| POST   | `/oauth/apple`       |  No   | Headers: `DPoP-Key-Binding` • Body: `{ idToken, rawNonce, fullName?, email? }` | Verifies Apple identity token (+nonce), **links or creates** user like Google. Supports first-sign-in name propagation.<br>Response: `{ user, accessToken, refreshToken \| null, missingFields? }`.                               |
-| POST   | `/oauth/proceedauth` |  Yes  | Headers: `Authorization: DPoP <accessToken>`, `DPoP`                           | Call **after** completing required fields. If `oauth_accounts.missing_fields` is clear → bumps `tokenVersion` and returns **full session** `{ accessToken, refreshToken }`. If still missing → `409`.                             |
-
-**Linking behavior (server-side):**
-
-- Lookup by provider `sub`; else try **email-verified** linking to existing `users.email` (case-insensitive).
-- On success insert (idempotent) into `oauth_accounts(provider, provider_user_id)`.
-- Multiple providers with the same email **merge** into one user profile.
-- `oauth_accounts.missing_fields` guides the client to complete `email` / `name` when provider data is insufficient.
-
----
-
-## Users
-
-| Method | Endpoint                  | Auth? | Body / Query                                                                                         | Description                                                                                                                                 |
-| ------ | ------------------------- | :---: | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| POST   | `/users/create`           |  No   | `{ username, fullName, email, password, gender }`                                                    | Creates user (credentials flow only), sends verification email.                                                                             |
-| GET    | `/users/get`              |  Yes  | —                                                                                                    | Returns authenticated user aggregate JSON.                                                                                                  |
-| PUT    | `/users/updateself`       |  Yes  | Any of: `username, fullName, email, gender, password, profileImgUrl, pushToken, setCompletedOnOAuth` | Updates profile. Email change triggers **confirm-by-link** email. When `setCompletedOnOAuth=true` → clears `oauth_accounts.missing_fields`. |
-| PUT    | `/users/changeemail`      |  No   | Query: `?token=...` (link in email)                                                                  | Confirms **email change** via link (HTML 200). Single-use JTI; 409 if email taken.                                                          |
-| DELETE | `/users/deleteself`       |  Yes  | —                                                                                                    | Deletes own account.                                                                                                                        |
-| PUT    | `/users/pushtoken`        |  Yes  | `{ token }`                                                                                          | Saves Expo push token. `204`.                                                                                                               |
-| PUT    | `/users/setprofilepic`    |  Yes  | `multipart/form-data` with `file`                                                                    | Uploads to Supabase Storage and updates user picture. Returns `{ path, url }`.                                                              |
-| DELETE | `/users/deleteprofilepic` |  Yes  | Body: `{ path }`                                                                                     | Deletes picture from bucket & clears on user.                                                                                               |
-
----
-
-## Exercises
-
-| Method | Endpoint            | Auth? | Description            |
-| ------ | ------------------- | :---: | ---------------------- |
-| GET    | `/exercises/getall` |  Yes  | Returns all exercises. |
-
----
-
-## Messages
-
-| Method | Endpoint                    | Auth? | Params / Body   | Description             |
-| ------ | --------------------------- | :---: | --------------- | ----------------------- |
-| GET    | `/messages/getmessages`     |  Yes  | Optional `?tz=` | Inbox with sender pics. |
-| PUT    | `/messages/markmasread/:id` |  Yes  | URL `id`        | Mark message as read.   |
-| DELETE | `/messages/delete/:id`      |  Yes  | URL `id`        | Delete message.         |
-
----
-
-## Workouts
-
-| Method | Endpoint                  | Auth? | Body / Query                        | Description                                                             |
-| ------ | ------------------------- | :---: | ----------------------------------- | ----------------------------------------------------------------------- |
-| GET    | `/workouts/getworkout`    |  Yes  | Optional `?tz=`                     | Active workout plan (Redis-cached).                                     |
-| GET    | `/workouts/gettracking`   |  Yes  | Optional `?tz=`                     | 45-day analytics (Redis-cached).                                        |
-| POST   | `/workouts/finishworkout` |  Yes  | `{ workout: Array, tz }`            | Persists completed workout, warms tracking cache, sends system message. |
-| POST   | `/workouts/add`           |  Yes  | `{ workoutData, workoutName?, tz }` | Create new plan; invalidates + warm-caches plan & analytics.            |
-| DELETE | `/workouts/delete`        |  Yes  | —                                   | **Temporarily disabled**.                                               |
-
----
-
-## Analytics
-
-| Method | Endpoint         | Auth? | Description                       |
-| ------ | ---------------- | :---: | --------------------------------- |
-| GET    | `/analytics/get` |  Yes  | `{ _1RM, goals }` (Redis-cached). |
-
----
-
-## Bootstrap
-
-| Method | Endpoint         | Auth? | Query / Body    | Description                                                                  |
-| ------ | ---------------- | :---: | --------------- | ---------------------------------------------------------------------------- |
-| POST   | `/bootstrap/get` |  Yes  | Optional `?tz=` | Bundled payload: `{ user, workout, tracking, aerobics, messages }` (45-day). |
-
----
-
-## Aerobics
-
-| Method | Endpoint        | Auth? | Body / Query     | Description                                     |
-| ------ | --------------- | :---: | ---------------- | ----------------------------------------------- |
-| GET    | `/aerobics/get` |  Yes  | Optional `?tz=`  | Aerobic sessions map for the last 45 days.      |
-| POST   | `/aerobics/add` |  Yes  | `{ record, tz }` | Adds a record and returns refreshed 45-day map. |
-
----
-
-## Push Notifications
-
-| Method | Endpoint      | Auth? | Description                           |
-| ------ | ------------- | :---: | ------------------------------------- |
-| GET    | `/push/daily` |  No   | Test endpoint that sends a demo push. |
-
----
-
-## Data model (OAuth)
-
-**Table: `oauth_accounts`**  
-Fields: `user_id`, `provider` (`google` / `apple`), `provider_user_id`, `provider_email`, `missing_fields`
-
-- Unique constraint: (`provider`, `provider_user_id`)
-- Foreign key: `user_id → users.id`
-- Used for **linking or merging** multiple OAuth identities under a single app user.
 
 ## Database Models & Indexes
 
 - Uses **Postgres** with parameterised queries.
-- Views: `v_exercisetoworkoutsplit_expanded`, `v_exercisetracking_expanded`.
+- Views: `v_exercisetoworkoutsplit_expanded`, `v_exercisetracking_expanded`, `v_exercisetracking_set_simple`, `v_prs` (all updated to surface `workout_summary_id`, `workout_start_utc`, `workout_end_utc`). fileciteturn0file0L260-L329
 - Unique constraints on `username` and `email`.
 - Column **`users.tokenVersion`** (int, default 0) – embedded into JWTs to enforce single-device sessions and to kill stale tokens on demand.
 - **UPSERT-friendly uniqueness** for workout structures:
-  - `workoutplans`: a single active plan per user (e.g., partial unique index on `(user_id)` where `is_active = TRUE`).
-  - `workoutsplits`: unique per plan on `(workout_id, name)` to allow idempotent updates.
-  - `exercisetoworkoutsplit`: unique per split on `(workoutsplit_id, exercise_id)` (plus `order_index` as data) to enable upserts.
-- Table **`aerobictracking`** – logs aerobic/cardio sessions (e.g., `type`, `duration_mins`, `duration_sec`, `workout_date`) per user for non-strength activities.
+  - `workoutplans`: a single active plan per user (e.g., partial unique index on `(user_id)` where `is_active = TRUE`). fileciteturn0file0L348-L361
+  - `workoutsplits`: unique per plan on `(workout_id, name)` to allow idempotent updates. fileciteturn0file0L367-L376
+  - `exercisetoworkoutsplit`: unique per split on `(workoutsplit_id, exercise_id)` (plus `order_index` as data) to enable upserts. fileciteturn0file0L334-L346
+- Table **`workout_summary`** – **new** normalized table to capture **per-workout start/end** and link all `exercisetracking` rows that belong to that workout. If the client does not send an explicit end time, a trigger sets `workout_end_utc = workout_time_utc` and `workout_start_utc = workout_time_utc - 90 minutes`. fileciteturn0file0L329-L332
+- Table **`user_split_information`** – **new** table filled by the daily DB cron to store per-user+split preferred weekday and **estimated_time_utc** plus a confidence level. Primary key is `(id)` with a **unique** constraint on `(user_id, split_id)`. fileciteturn0file0L179-L208
+- Table **`user_reminder_settings`** – **new** table on the user that controls whether reminders are enabled and how many minutes before to remind. Defaults: `workout_reminders_enabled = true`, `reminder_offset_minutes = 60`. fileciteturn0file0L165-L178
+- Table **`aerobictracking`** – logs aerobic/cardio sessions.
 - Soft-deletes / toggling: `is_active` is used on splits and ETS rows to deactivate removed items during plan updates.
+- **Housekeeping function** `public.housekeeping_compact_old_workouts()` now relies on **`workout_summary` dates** instead of raw `exercisetracking.workout_time_utc`, so old workouts are deleted per **workout-day** and not per single set. fileciteturn0file0L25-L70
 
-### Row Level Security (RLS) & Transaction Management
-
-The backend implements a robust server-side **Row Level Security (RLS)** layer to ensure data ownership and integrity.
-
-1. **RLS Middleware (`withRlsTx`):** For every authenticated request, it opens a **transaction**, sets role to `authenticated`, and injects user claims into the session so policies enforce `auth.uid()` correctly across all queries.
-2. **Policies:** Top-level tables enforce direct ownership (`user_id = auth.uid()`); nested tables verify ownership via joins to the parent entities.
-3. **Atomicity:** Domain operations run inside the wrapping transaction to guarantee all-or-nothing behavior (e.g., plan updates).
-4. **Public endpoints:** Skip RLS but use explicit transactions when multi-query integrity matters.
-
----
-
-## Database Schema
+### Database Schema
 
 The backend uses PostgreSQL as its primary datastore. The schema
 defines tables for users, messages, workout plans, splits, exercises
-and tracking logs, **including aerobic sessions via `aerobictracking`**.
+and tracking logs, **including aerobic sessions via `aerobictracking`** and now **workout summaries** for better time analytics. fileciteturn0file0L260-L329
+
+---
 
 ### Workout Flow
 
+> 🖼 **DB Workout Flow diagram**
+
 ![Database workout flow](https://github.com/user-attachments/assets/7a634d62-9c30-4546-b24e-46df64781a6a)
 
-1. **Create or Update Plan (UPSERT)** – One active `WorkoutPlan` per user. Updating a plan keeps the same plan row and bumps metadata (name, number of splits).
+1. **Create or Update Plan (UPSERT)** – One active `workoutplans` row per user. Updating a plan keeps the same plan row and bumps metadata (name, number of splits).
 2. **UPSERT Splits** – Incoming split keys are upserted by `(workout_id, name)`. Splits not present in the payload are set `is_active = FALSE`.
 3. **UPSERT Exercises per Split** – Each `(workoutsplit_id, exercise_id)` is upserted with the latest `sets` and `order_index`. Missing exercises are set `is_active = FALSE`.
 4. **Cache invalidation** – After a successful update, the user’s cache-version increments so clients fetch fresh data.
 
+---
+
 ### Tracking Flow
 
-![Database workout tracking flow](https://github.com/user-attachments/assets/21dba52e-1cb9-459c-a2f6-2b4e9a3e9588)
+> 🖼 **DB Tracking Flow diagram**
 
-1. **Select a split** – User opens a split.
-2. **Record Sets** – Weight/repetitions logged into `exercisetracking`.
-3. **Review Progress** – Data aggregated for analytics.
-4. **Aerobic tracking** – Cardio sessions stored in `aerobictracking` and included in progress views.
+![Database workout tracking flow – with workout_summary](https://github.com/user-attachments/assets/f373dd1e-909a-425d-a1cf-e991550f22cc)
+
+1. **Start / Finish workout** – App calls `/workouts/finishworkout` → server creates a row in **`workout_summary`** with `user_id`, `workout_start_utc`, `workout_end_utc` (or the trigger fills defaults). All tracking rows for this workout point to this summary via `workout_summary_id`.
+2. **Record sets** – Each set is inserted into **`exercisetracking`** and **must** include `workout_summary_id` when available. Legacy clients that only send `workout_time_utc` are still supported; the server estimates start/end as _end - 90 min_.
+3. **Analytics aggregation** – Views (`v_exercisetracking_expanded`, `v_exercisetracking_set_simple`, `v_prs`) read from `exercisetracking` **and** join `workout_summary` to know the real workout window. This is what powers `/workouts/gettracking` 45‑day analytics. fileciteturn0file0L260-L329
+4. **Housekeeping** – `public.housekeeping_compact_old_workouts()` keeps only the most recent 35 workout-days per user and deletes tracking of older days based on **`workout_summary.workout_start_utc`** (so a single long workout with many sets is deleted as a unit). fileciteturn0file0L25-L70
+
+---
 
 ### Messages Flow
 
-![Database workout tracking flow](https://github.com/user-attachments/assets/9a87b874-be46-403e-bfbc-c3709175767f)
+> 🖼 **DB Messages Flow diagram**
+
+![Database messages flow](https://github.com/user-attachments/assets/9a87b874-be46-403e-bfbc-c3709175767f)
 
 1. **Compose Message** – System inserts message.
 2. **Receive & Read** – Users fetch inbox, mark read.
 3. **Delete** – Delete request marks record as deleted.
 
+---
+
 ### Auth Flow
+
+> 🖼 **DB Auth Flow diagram**
 
 ![Database authentication flow](https://github.com/user-attachments/assets/eb0c0c2a-84bc-4409-9b7a-b7019c1ebd27)
 
 1. **Login & Token Issuance** – Access + refresh tokens created; when DPoP is enabled, tokens include a confirmation claim bound to the client key.
 2. **Access Control** – All protected API requests require access token + DPoP proof.
 3. **Token Refresh** – Refresh rotates both tokens; the request must include a valid DPoP proof whose key material matches the token’s confirmation.
+
+---
+
+### Reminder flow (New)
+
+> 🖼 **DB Auth Flow diagram**
+
+![Database authentication flow](https://github.com/user-attachments/assets/39a0c9fb-aba8-4e27-8c6d-2568167e546c)
+
+This feature connects the **DB-level daily computation** with the **API-level hourly push** to deliver **personalized workout reminders**.
+
+- **Tables involved:**
+  - `public.user_reminder_settings` – per-user settings (enabled, offset minutes). Defaults are auto-filled.
+  - `public.user_split_information` – per user+split estimated UTC time + preferred weekday + confidence. Filled by the daily cron.
+  - `public.workoutsplits` – to get the actual split name for the push.
+  - `public.exercisetracking` + `public.workout_summary` – source events for the daily computation.
 
 ---
 
@@ -443,7 +466,7 @@ Each authenticated user is assigned to a **dedicated room** named after their `u
 1. **Client-side ticket minting**
 
    - The app requests a short-lived **connection ticket** via:
-     ```
+     ```text
      POST /api/ws/generateticket
      ```
    - The server issues a signed JWT (audience: `socket`, issuer: `strong-together`) valid for **~1.5 hours**.
@@ -452,12 +475,12 @@ Each authenticated user is assigned to a **dedicated room** named after their `u
 2. **Handshake authentication**
 
    - Client connects to the WebSocket endpoint:
-     ```
+     ```js
      io(API_BASE_URL, {
        path: "/socket.io",
        transports: ["websocket"],
-       auth: { ticket }
-     })
+       auth: { ticket },
+     });
      ```
    - The backend intercepts connections through:
      ```js
@@ -518,7 +541,7 @@ Each authenticated user is assigned to a **dedicated room** named after their `u
 
 ### Required Headers From Client
 
-```
+```text
 # Protected routes
 Authorization: DPoP <accessToken>
 DPoP: <compact-JWS-proof>
@@ -546,3 +569,5 @@ Security: short-lived access tokens, atomic refresh rotation, DPoP proof-of-poss
 Performance: Redis caching with GZIP.  
 Deployment: Containerized with Docker, hosted on Render.  
 Extensible and production-ready.
+
+> **Version note:** This is **v2.0.0** – schema-aware update that introduces `workout_summary`, `user_split_information`, `user_reminder_settings`, a daily DB cron for split habit detection, and an hourly push cron on the server. Existing endpoints remain backward-compatible with legacy tracking that only has `workout_time_utc`.
