@@ -139,7 +139,7 @@ export const queryGetExerciseTrackingAndStats = async (
 ) => {
   return sql`
   with
-  -- English comments only inside the code
+
   params as (
     select
       ${userId}::uuid as user_id,
@@ -147,93 +147,76 @@ export const queryGetExerciseTrackingAndStats = async (
       coalesce(nullif(${tz}, ''), 'Asia/Jerusalem')::text as tz
   ),
 
-  -- build time window in UTC according to user's tz
   bounds as (
     select
       ((now() at time zone p.tz)::date - p.days)::timestamp at time zone p.tz as start_utc,
-      (((now() at time zone p.tz)::date + interval '1 day')::timestamp at time zone p.tz) as end_utc,
+      ((now() at time zone p.tz)::date + interval '1 day')::timestamp at time zone p.tz as end_utc,
       p.user_id,
       p.tz
     from params p
   ),
 
-  /* ============================================================
-     ALL-TIME rows (for stats)
-     note: we rely on the expanded VIEW that already has:
-           workout_time_utc (legacy)
-           workout_start_utc, workout_end_utc, workout_summary_id (new)
-     ============================================================ */
+  workout_days_all_time as (
+    select
+      ws.id as workout_summary_id,
+      ws.workout_start_utc as workout_dt,
+      (ws.workout_start_utc at time zone p.tz)::date as local_day
+    from public.workout_summary ws
+    join params p on ws.user_id = p.user_id
+    where ws.workout_start_utc is not null
+  ),
+
   all_rows as (
     select
-      -- keep real timestamp for ordering / recency
-      coalesce(et.workout_end_utc, et.workout_time_utc) as workout_dt,
-
-      -- workout "day" is now based on START (or fallback to end, or to legacy-90m)
-      (
-        coalesce(
-          et.workout_start_utc,
-          coalesce(et.workout_end_utc, et.workout_time_utc) - interval '90 minutes'
-        ) at time zone p.tz
-      )::date as local_day,
+      ws.workout_start_utc as workout_dt,
+      (ws.workout_start_utc at time zone p.tz)::date as local_day,
       et.exercisetosplit_id,
       et.weight,
       et.reps,
       et.notes,
       et.exercise_id,
-      et.splitname,
-      et.exercise,
-      et.workoutsplit_id
-    from public.v_exercisetracking_expanded et
-    join params p on true
-    where et.user_id = p.user_id
-      -- protect against rows that for some reason have no time at all
-      and coalesce(et.workout_end_utc, et.workout_time_utc) is not null
+      ws.workoutsplit_id,
+      wspl.name as splitname,
+      et.exercise
+    from public.workout_summary ws
+    join params p on ws.user_id = p.user_id
+    join public.v_exercisetracking_expanded et
+      on et.workout_summary_id = ws.id
+    left join public.workoutsplits wspl
+      on wspl.id = ws.workoutsplit_id
+    where ws.workout_start_utc is not null
   ),
 
-  /* ============================================================
-     RECENT rows (only for maps)
-     ============================================================ */
   recent_rows_src as (
     select
-      -- keep real end/legacy time for inside-day ordering
-      coalesce(et.workout_end_utc, et.workout_time_utc) as workout_dt,
-
-      -- day key for maps: by START (or estimated start)
-      (
-        coalesce(
-          et.workout_start_utc,
-          coalesce(et.workout_end_utc, et.workout_time_utc) - interval '90 minutes'
-        ) at time zone b.tz
-      )::date as local_day,
+      ws.workout_start_utc as workout_dt,
+      (ws.workout_start_utc at time zone b.tz)::date as local_day,
       et.exercisetosplit_id,
       et.weight,
       et.reps,
       et.notes,
       et.exercise_id,
-      et.splitname,
-      et.exercise,
-      et.workoutsplit_id
-    from public.v_exercisetracking_expanded et
-    join bounds b on true
-    where et.user_id = b.user_id
-      and coalesce(et.workout_end_utc, et.workout_time_utc) is not null
-      -- filter window now also based on START (or fallback)
-      and coalesce(
-            et.workout_start_utc,
-            coalesce(et.workout_end_utc, et.workout_time_utc) - interval '90 minutes'
-          ) >= b.start_utc
-      and coalesce(
-            et.workout_start_utc,
-            coalesce(et.workout_end_utc, et.workout_time_utc) - interval '90 minutes'
-          ) <  b.end_utc
+      ws.workoutsplit_id,
+      wspl.name as splitname,
+      et.exercise
+    from public.workout_summary ws
+    join bounds b on ws.user_id = b.user_id
+    join public.v_exercisetracking_expanded et
+      on et.workout_summary_id = ws.id
+    left join public.workoutsplits wspl
+      on wspl.id = ws.workoutsplit_id
+    where ws.workout_start_utc is not null
+      and ws.workout_start_utc >= b.start_utc
+      and ws.workout_start_utc <  b.end_utc
   ),
 
-  /* ============================================================
-     ALL-TIME stats
-     ============================================================ */
   unique_days as (
     select count(distinct local_day) as unique_days
-    from all_rows
+    from workout_days_all_time
+  ),
+  last_workout as (
+    select max(local_day) as last_workout_date
+    from workout_days_all_time
   ),
   split_counts as (
     select splitname, count(distinct local_day) as days_count
@@ -251,27 +234,11 @@ export const queryGetExerciseTrackingAndStats = async (
     order by days_count desc, splitname asc
     limit 1
   ),
-  split_counts_by_id as (
-    select splitname, workoutsplit_id, count(distinct local_day) as days_count
-    from all_rows
-    where workoutsplit_id is not null
-    group by splitname, workoutsplit_id
-  ),
-  last_workout as (
-    select max(local_day) as last_workout_date
-    from all_rows
-  ),
-
-  /* PRs: also displayed by START time now */
   prs as (
     select *
     from public.v_prs
     where user_id = ${userId}
   ),
-
-  /* ============================================================
-     MAPS (built from RECENT ONLY)
-     ============================================================ */
   recent_rows as (
     select
       f.exercise,
@@ -296,7 +263,6 @@ export const queryGetExerciseTrackingAndStats = async (
     left join public.exercises ex
       on ex.id = ews.exercise_id
   ),
-
   by_date_map as (
     select jsonb_object_agg(workoutdate, items order by workoutdate desc) as by_date
     from (
@@ -347,7 +313,6 @@ export const queryGetExerciseTrackingAndStats = async (
       'lastWorkoutDate', to_char(lw.last_workout_date, 'YYYY-MM-DD'),
       'splitDaysByName', coalesce(sco.split_days_map, '{}'::jsonb)::json,
       'prs', json_build_object(
-        -- keep old structure but mapped by exercise_id
         'pr_map_exercise_id',
           coalesce((
             select jsonb_object_agg(ex_id, item)
@@ -358,13 +323,9 @@ export const queryGetExerciseTrackingAndStats = async (
                   'id', pr.id,
                   'exercise_id', pr.exercise_id,
                   'exercisetosplit_id', pr.exercisetosplit_id,
-                  -- date is now START-based
                   'workout_time_utc',
                     to_char(
-                      coalesce(
-                        pr.workout_start_utc,
-                        coalesce(pr.workout_end_utc, pr.workout_time_utc) - interval '90 minutes'
-                      ) at time zone (select tz from params),
+                      pr.workout_start_utc at time zone (select tz from params),
                       'YYYY-MM-DD'
                     ),
                   'exercise', pr.exercise,
@@ -377,24 +338,19 @@ export const queryGetExerciseTrackingAndStats = async (
                 pr.exercise_id,
                 pr.weight desc,
                 pr.reps desc,
-                -- ordering stays by real time (end/legacy)
-                coalesce(pr.workout_end_utc, pr.workout_time_utc) desc,
+                pr.workout_start_utc desc,
                 pr.id desc
             ) t
           ), '{}'::jsonb),
         'pr_max',
           coalesce((
             select json_build_object(
-              'exercise',    pr.exercise,
-              'weight',      pr.weight,
-              'reps',        pr.reps,
-              -- date is now START-based
+              'exercise', pr.exercise,
+              'weight', pr.weight,
+              'reps', pr.reps,
               'workout_time_utc',
                 to_char(
-                  coalesce(
-                    pr.workout_start_utc,
-                    coalesce(pr.workout_end_utc, pr.workout_time_utc) - interval '90 minutes'
-                  ) at time zone (select tz from params),
+                  pr.workout_start_utc at time zone (select tz from params),
                   'YYYY-MM-DD'
                 )
             )
@@ -402,24 +358,24 @@ export const queryGetExerciseTrackingAndStats = async (
             order by
               pr.weight desc,
               pr.reps desc,
-              coalesce(pr.workout_end_utc, pr.workout_time_utc) desc,
+              pr.workout_start_utc desc,
               pr.id desc
             limit 1
           ), null)
       )
     ) as "exerciseTrackingAnalysis",
     json_build_object(
-      'byDate',      coalesce(bdm.by_date, '{}'::jsonb),
-      'byETSId',     coalesce(bem.by_etsid, '{}'::jsonb),
+      'byDate', coalesce(bdm.by_date, '{}'::jsonb),
+      'byETSId', coalesce(bem.by_etsid, '{}'::jsonb),
       'bySplitName', coalesce(bsm.by_splitname, '{}'::jsonb)
     ) as "exerciseTrackingMaps"
   from unique_days u
-  left join top_split ts         on true
-  left join last_workout lw      on true
+  left join top_split ts on true
+  left join last_workout lw on true
   left join split_counts_obj sco on true
-  left join by_date_map  bdm     on true
-  left join by_ets_map   bem     on true
-  left join by_split_map bsm     on true;
+  left join by_date_map bdm on true
+  left join by_ets_map bem on true
+  left join by_split_map bsm on true;
   `;
 };
 
@@ -436,72 +392,58 @@ export const queryGetExerciseTrackingAndStats = async (
  *   ...
  * ]
  */
-export const queryInsertUserFinishedWorkoutV1 = async (
-  userId,
-  workoutArray
-) => {
-  await sql`
-    INSERT INTO exercisetracking
-      (exercisetosplit_id, weight, reps, user_id, notes)
-    SELECT
-      t.exercisetosplit_id::int8,
-      t.weight::float4[],
-      t.reps::int8[],
-      ${userId}::uuid AS user_id,
-      t.notes::text
-    FROM jsonb_to_recordset(${workoutArray}::jsonb) AS t(
-      exercisetosplit_id int8,
-      weight float4[],
-      reps int8[],
-      user_id uuid,
-      notes text
-    )
-    RETURNING id;
-  `;
-};
-
-export const queryInsertUserFinishedWorkoutV2 = async (
+export const queryInsertUserFinishedWorkout = async (
   userId,
   workoutArray,
   workoutStartUtc,
   workoutEndUtc
 ) => {
-  // 1️⃣ Insert workout_summary first
+  // English comments only inside the code
+
+  // 1) find workoutsplit_id automatically from one of the exercisetosplit_id entries
+  const [{ workoutsplit_id }] = await sql`
+    select distinct ews.workoutsplit_id
+    from jsonb_to_recordset(${workoutArray}::jsonb) as t(exercisetosplit_id int8)
+    join public.exercisetoworkoutsplit ews
+      on ews.id = t.exercisetosplit_id
+    limit 1;
+  `;
+
+  // 2) insert workout_summary with derived split_id
   const [{ id: workoutSummaryId }] = await sql`
     insert into public.workout_summary (
       user_id,
       workout_start_utc,
-      workout_end_utc
+      workout_end_utc,
+      workoutsplit_id
     )
     values (
       ${userId}::uuid,
       ${workoutStartUtc}::timestamptz,
-      ${workoutEndUtc}::timestamptz
+      ${workoutEndUtc}::timestamptz,
+      ${workoutsplit_id}::int8
     )
     returning id;
   `;
 
-  // 2️⃣ Insert all exercisetracking rows pointing to the same summary
+  // 3) insert all tracking rows for that summary
   await sql`
     insert into public.exercisetracking
-      (exercisetosplit_id, weight, reps, user_id, notes, workout_summary_id)
+      (exercisetosplit_id, weight, reps, notes, workout_summary_id)
     select
       t.exercisetosplit_id::int8,
       t.weight::float4[],
       t.reps::int8[],
-      ${userId}::uuid as user_id,
-      t.notes::text,
+      coalesce(t.notes, '')::text,
       ${workoutSummaryId}::uuid as workout_summary_id
     from jsonb_to_recordset(${workoutArray}::jsonb) as t(
       exercisetosplit_id int8,
       weight float4[],
       reps int8[],
-      user_id uuid,
       notes text
     );
   `;
 
-  // optional: return the summary id if needed
   return workoutSummaryId;
 };
 
