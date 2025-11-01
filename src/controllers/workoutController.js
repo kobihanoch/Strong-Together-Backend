@@ -3,8 +3,7 @@ import {
   queryAddWorkout,
   queryGetExerciseTrackingAndStats,
   queryGetWorkoutSplitsObj,
-  queryInsertUserFinishedWorkoutV1,
-  queryInsertUserFinishedWorkoutV2,
+  queryInsertUserFinishedWorkout,
   queryWholeUserWorkoutPlan,
 } from "../queries/workoutQueries.js";
 import { sendSystemMessageToUserWorkoutDone } from "../services/messagesService.js";
@@ -116,33 +115,16 @@ export const finishUserWorkout = async (req, res) => {
   const workoutStartUtc = req.body.workout_start_utc || null;
   const workoutEndUtc = req.body.workout_end_utc || null;
 
-  // Can delete after client PROD
-  const clientVersion = req.headers["x-app-version"];
-
   if (!Array.isArray(workoutArray) || workoutArray.length === 0) {
     throw createError(400, "Not a valid workout");
   }
 
   const userId = req.user.id;
 
-  // simple semver-ish compare: good enough for 4.5.0 vs 4.4.x
-  const isNewClient = clientVersion === "4.5.0";
+  const startIso = workoutStartUtc;
+  const endIso = workoutEndUtc;
 
-  if (isNewClient) {
-    // compute start/end on the server if client didn't send
-    const startIso = workoutStartUtc;
-    const endIso = workoutEndUtc;
-
-    await queryInsertUserFinishedWorkoutV2(
-      userId,
-      workoutArray,
-      startIso,
-      endIso
-    );
-  } else {
-    // old clients, no summary
-    await queryInsertUserFinishedWorkoutV1(userId, workoutArray);
-  }
+  await queryInsertUserFinishedWorkout(userId, workoutArray, startIso, endIso);
 
   // refresh tracking cache
   const { payload } = await getExerciseTrackingData(userId, 45, false, tz);
