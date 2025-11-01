@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.1.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v2.0.0...v2.1.0) (2025-11-01)
+
+
+### Features
+
+* **Queries:** Migration completed on finish workout ([ac31227](https://github.com/kobihanoch/Strong-Together-Backend/commit/ac3122745aaf913ffda0c1cdc35ac2afadda0a36))
+* **Queries:** Migration completed on get tracking ([df4e544](https://github.com/kobihanoch/Strong-Together-Backend/commit/df4e544df3ad64acf114fbb916cd18b945b96526))
+
 ## [2.0.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.12.0...v2.0.0) (2025-10-30)
 
 ## [1.12.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v1.11.0...v1.12.0) (2025-10-30)
