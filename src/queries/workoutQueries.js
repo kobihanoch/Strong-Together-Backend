@@ -398,42 +398,52 @@ export const queryInsertUserFinishedWorkout = async (
   workoutStartUtc,
   workoutEndUtc
 ) => {
-  // 1️⃣ Insert workout_summary first
+  // English comments only inside the code
+
+  // 1) find workoutsplit_id automatically from one of the exercisetosplit_id entries
+  const [{ workoutsplit_id }] = await sql`
+    select distinct ews.workoutsplit_id
+    from jsonb_to_recordset(${workoutArray}::jsonb) as t(exercisetosplit_id int8)
+    join public.exercisetoworkoutsplit ews
+      on ews.id = t.exercisetosplit_id
+    limit 1;
+  `;
+
+  // 2) insert workout_summary with derived split_id
   const [{ id: workoutSummaryId }] = await sql`
     insert into public.workout_summary (
       user_id,
       workout_start_utc,
-      workout_end_utc
+      workout_end_utc,
+      workoutsplit_id
     )
     values (
       ${userId}::uuid,
       ${workoutStartUtc}::timestamptz,
-      ${workoutEndUtc}::timestamptz
+      ${workoutEndUtc}::timestamptz,
+      ${workoutsplit_id}::int8
     )
     returning id;
   `;
 
-  // 2️⃣ Insert all exercisetracking rows pointing to the same summary
+  // 3) insert all tracking rows for that summary
   await sql`
     insert into public.exercisetracking
-      (exercisetosplit_id, weight, reps, user_id, notes, workout_summary_id)
+      (exercisetosplit_id, weight, reps, notes, workout_summary_id)
     select
       t.exercisetosplit_id::int8,
       t.weight::float4[],
       t.reps::int8[],
-      ${userId}::uuid as user_id,
-      t.notes::text,
+      coalesce(t.notes, '')::text,
       ${workoutSummaryId}::uuid as workout_summary_id
     from jsonb_to_recordset(${workoutArray}::jsonb) as t(
       exercisetosplit_id int8,
       weight float4[],
       reps int8[],
-      user_id uuid,
       notes text
     );
   `;
 
-  // optional: return the summary id if needed
   return workoutSummaryId;
 };
 
