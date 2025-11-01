@@ -7,7 +7,7 @@ export const enqueuePushNotifications = async (notifications) => {
     notifications.map((e) => ({
       data: {
         ...e,
-        expiresAt: Date.now() + 1000 * 60 * 10,
+        expiresAt: Date.now() + 1000 * 60 * 60 * 24, // 24 Hours
       }, // Expires after 10 mins if the worker is down
       opts: {
         attempts: 3,
