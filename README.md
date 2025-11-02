@@ -1,4 +1,4 @@
-# Strong Together Backend (v2.0.0)
+# Strong Together Backend (v2.1.0)
 
 **Strong Together** is a fitness-oriented application.  
 This repository contains the backend server that powers the app.  
@@ -368,14 +368,14 @@ This gives you **stable** and **timezone-safe** reminders based on real historic
 ## Database Models & Indexes
 
 - Uses **Postgres** with parameterised queries.
-- Views: `v_exercisetoworkoutsplit_expanded`, `v_exercisetracking_expanded`, `v_exercisetracking_set_simple`, `v_prs` (all updated to surface `workout_summary_id`, `workout_start_utc`, `workout_end_utc`). fileciteturn0file0L260-L329
+- Views: `v_exercisetoworkoutsplit_expanded`, `v_exercisetracking_expanded`, `v_exercisetracking_set_simple`, `v_prs` – **all of these join `exercise_tracking` → `workout_summary` and re-expose `user_id` and the workout timestamps.** The physical table `exercise_tracking` no longer stores `user_id` or `workout_time_utc`; the summary is the source of truth.
 - Unique constraints on `username` and `email`.
 - Column **`users.tokenVersion`** (int, default 0) – embedded into JWTs to enforce single-device sessions and to kill stale tokens on demand.
 - **UPSERT-friendly uniqueness** for workout structures:
   - `workoutplans`: a single active plan per user (e.g., partial unique index on `(user_id)` where `is_active = TRUE`). fileciteturn0file0L348-L361
   - `workoutsplits`: unique per plan on `(workout_id, name)` to allow idempotent updates. fileciteturn0file0L367-L376
   - `exercisetoworkoutsplit`: unique per split on `(workoutsplit_id, exercise_id)` (plus `order_index` as data) to enable upserts. fileciteturn0file0L334-L346
-- Table **`workout_summary`** – **new** normalized table to capture **per-workout start/end** and link all `exercisetracking` rows that belong to that workout. If the client does not send an explicit end time, a trigger sets `workout_end_utc = workout_time_utc` and `workout_start_utc = workout_time_utc - 90 minutes`. fileciteturn0file0L329-L332
+- **Table `workout_summary`** – normalized table to capture per-workout start/end and link all `exercise_tracking` rows for that workout. This makes the summary the single source of truth for timestamps.
 - Table **`user_split_information`** – **new** table filled by the daily DB cron to store per-user+split preferred weekday and **estimated_time_utc** plus a confidence level. Primary key is `(id)` with a **unique** constraint on `(user_id, split_id)`. fileciteturn0file0L179-L208
 - Table **`user_reminder_settings`** – **new** table on the user that controls whether reminders are enabled and how many minutes before to remind. Defaults: `workout_reminders_enabled = true`, `reminder_offset_minutes = 60`. fileciteturn0file0L165-L178
 - Table **`aerobictracking`** – logs aerobic/cardio sessions.
@@ -407,10 +407,10 @@ and tracking logs, **including aerobic sessions via `aerobictracking`** and now 
 
 > 🖼 **DB Tracking Flow diagram**
 
-![Database workout tracking flow – with workout_summary](https://github.com/user-attachments/assets/f373dd1e-909a-425d-a1cf-e991550f22cc)
+![Database workout tracking flow – with workout_summary](https://github.com/user-attachments/assets/be800fc7-5411-40f5-9740-2395af151f08)
 
 1. **Start / Finish workout** – App calls `/workouts/finishworkout` → server creates a row in **`workout_summary`** with `user_id`, `workout_start_utc`, `workout_end_utc` (or the trigger fills defaults). All tracking rows for this workout point to this summary via `workout_summary_id`.
-2. **Record sets** – Each set is inserted into **`exercisetracking`** and **must** include `workout_summary_id` when available. Legacy clients that only send `workout_time_utc` are still supported; the server estimates start/end as _end - 90 min_.
+2. **Record sets** – Each set is inserted into `exercisetracking` and must include `workout_summary_id` (created in step 1). **The user and the workout timestamps are taken from `workout_summary`, not from the tracking row.**
 3. **Analytics aggregation** – Views (`v_exercisetracking_expanded`, `v_exercisetracking_set_simple`, `v_prs`) read from `exercisetracking` **and** join `workout_summary` to know the real workout window. This is what powers `/workouts/gettracking` 45‑day analytics. 
 4. **Housekeeping** – `public.housekeeping_compact_old_workouts()` keeps only the most recent 35 workout-days per user and deletes tracking of older days based on **`workout_summary.workout_start_utc`** (so a single long workout with many sets is deleted as a unit).
 
@@ -569,5 +569,3 @@ Security: short-lived access tokens, atomic refresh rotation, DPoP proof-of-poss
 Performance: Redis caching with GZIP.  
 Deployment: Containerized with Docker, hosted on Render.  
 Extensible and production-ready.
-
-> **Version note:** This is **v2.0.0** – schema-aware update that introduces `workout_summary`, `user_split_information`, `user_reminder_settings`, a daily DB cron for split habit detection, and an hourly push cron on the server. Existing endpoints remain backward-compatible with legacy tracking that only has `workout_time_utc`.
