@@ -68,8 +68,8 @@ export const getExerciseTrackingData = async (
     }
   }
 
-  const rows = await queryGetExerciseTrackingAndStats(userId, days, tz);
-  const payload = rows[0];
+  const data = await queryGetExerciseTrackingAndStats(userId, days, tz);
+  const payload = data;
   await cacheSetJSON(key, payload, TTL_TRACKING);
   return { payload, cacheHit: false };
 };
