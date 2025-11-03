@@ -205,13 +205,30 @@ export const queryGetExerciseTrackingAndStats = async (
 ) => {
   const [{ data }] = await sql`
   with 
+  -- Bounds
+  -- Even if a cron job exists in DB, I want to retreive only last 45 days
+  bounds as (
+    select 
+    (now() + interval '1 day') as upper_bound_utc, 
+    (now() - ${days} * interval '1 day') as lower_bound_utc
+  ),
+  
   -- Get all workout summaries for user
+  -- In bounds
   -- Key: user ID
   all_workout_summaries as(
     select wsum.id, ws.name as split_name, ((wsum.workout_start_utc at time zone ${tz})) as workout_time_local
     from public.workout_summary wsum
     join workoutsplits ws on ws.id = wsum.workoutsplit_id
-    where wsum.user_id=${userId}::uuid
+    where wsum.user_id=${userId}::uuid and (wsum.workout_start_utc >= (select lower_bound_utc from bounds limit 1) and wsum.workout_start_utc < (select upper_bound_utc from bounds limit 1))
+  ),
+
+    -- All workout dates
+  -- Independed, not in bounds
+  unique_days as (
+    select count(ws.workout_start_utc) as workout_count
+    from public.workout_summary ws
+    where ws.user_id = ${userId}::uuid
   ),
 
   -- All exercise trackings related to user
@@ -229,12 +246,6 @@ export const queryGetExerciseTrackingAndStats = async (
     join public.exercisetoworkoutsplit ets on ets.id = et.exercisetosplit_id
     join public.exercises ex on ex.id = ets.exercise_id
     where et.workout_summary_id in (select id from all_workout_summaries)
-  ),
-
-  -- All workout dates
-  unique_days as (
-    select count(aws.workout_time_local) as workout_count
-    from all_workout_summaries aws
   ),
 
   -- All splits performs
