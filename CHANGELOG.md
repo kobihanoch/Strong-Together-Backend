@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.1.2](https://github.com/kobihanoch/Strong-Together-Backend/compare/v2.1.1...v2.1.2) (2025-11-04)
+
+
+### Bug Fixes
+
+* **Queries:** Fixed workout summary queries to clarify bounds and improve structure ([9ba4131](https://github.com/kobihanoch/Strong-Together-Backend/commit/9ba41315b3a60fd931139e2cb7f1be97687e73da))
+
 ### [2.1.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v2.1.0...v2.1.1) (2025-11-03)
 
 ## [2.1.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v2.0.0...v2.1.0) (2025-11-01)
