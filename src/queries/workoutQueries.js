@@ -214,24 +214,63 @@ export const queryGetExerciseTrackingAndStats = async (
   ),
   
   -- Get all workout summaries for user
-  -- In bounds
+  -- Out of bounds
   -- Key: user ID
   all_workout_summaries as(
-    select wsum.id, ws.name as split_name, ((wsum.workout_start_utc at time zone ${tz})) as workout_time_local
+    select wsum.id as id, ws.name as split_name, ((wsum.workout_start_utc at time zone ${tz})) as workout_time_local, 
+    wsum.workout_start_utc, wsum.workout_end_utc -- For bounds
     from public.workout_summary wsum
     join workoutsplits ws on ws.id = wsum.workoutsplit_id
-    where wsum.user_id=${userId}::uuid and (wsum.workout_start_utc >= (select lower_bound_utc from bounds limit 1) and wsum.workout_start_utc < (select upper_bound_utc from bounds limit 1))
+    where wsum.user_id=${userId}::uuid
   ),
 
-    -- All workout dates
-  -- Independed, not in bounds
+  -- Get all workout summaries inside the bounds (for trackings)
+  -- In bounds
+  -- Key: user ID
+  bounded_workout_summaries as (
+    select aws.id, aws.split_name, aws.workout_time_local
+    from all_workout_summaries aws 
+    where aws.workout_start_utc >= (select lower_bound_utc from bounds limit 1)
+      and aws.workout_start_utc <  (select upper_bound_utc from bounds limit 1)
+  ),
+
+  -- All workout dates
+  -- Not bounded
   unique_days as (
-    select count(ws.workout_start_utc) as workout_count
-    from public.workout_summary ws
-    where ws.user_id = ${userId}::uuid
+    select count(aws.id) as workout_count
+    from all_workout_summaries aws
+  ),
+
+  -- All splits performs
+  -- Not bounded
+  split_performs as (
+    select aws.split_name as name, count(aws.id) as count
+    from all_workout_summaries aws
+    group by aws.split_name
+  ),
+
+  -- Most frequent split
+  -- Contains name and nuber of perfomencres
+  -- Not bounded
+  most_frequent_split as (
+    select sp.name, sp.count
+    from split_performs sp
+    order by sp.count desc
+    limit 1
+  ),
+
+  
+  -- Last workout date
+  -- Not bounded
+  last_workout_date as (
+    select aws.workout_time_local::date as last_date
+    from all_workout_summaries aws
+    order by aws.workout_time_local desc
+    limit 1
   ),
 
   -- All exercise trackings related to user
+  -- Bounded
   -- Key: workout summary id
   all_exercise_trackings as (
     select et.id, et.exercisetosplit_id, et.weight, et.reps, et.exercise_id, et.workoutsplit_id, et.splitname, et.exercise, et.notes, to_char((et.workout_start_utc at time zone ${tz})::date, 'YYYY-MM-DD') as workoutdate,
@@ -245,34 +284,11 @@ export const queryGetExerciseTrackingAndStats = async (
     from public.v_exercisetracking_expanded et
     join public.exercisetoworkoutsplit ets on ets.id = et.exercisetosplit_id
     join public.exercises ex on ex.id = ets.exercise_id
-    where et.workout_summary_id in (select id from all_workout_summaries)
-  ),
-
-  -- All splits performs
-  split_performs as (
-    select aws.split_name as name, count(aws.id) as count
-    from all_workout_summaries aws
-    group by aws.split_name
-  ),
-
-  -- Most frequent split
-  -- Contains name and nuber of perfomencres
-  most_frequent_split as (
-    select sp.name, sp.count
-    from split_performs sp
-    order by sp.count desc
-    limit 1
-  ),
-
-  -- Last workout date
-  last_workout_date as (
-    select aws.workout_time_local::date as last_date
-    from all_workout_summaries aws
-    order by aws.workout_time_local desc
-    limit 1
+    where et.workout_summary_id in (select id from bounded_workout_summaries)
   ),
 
   -- PRs
+  -- Bounded
   -- Key: workout summary id
   all_prs as (
     select p.exercisetosplit_id as etsid, p.exercise_id, p.exercise, p.weight, p.reps, ((p.workout_start_utc at time zone ${tz})::date) as workout_date_utc
@@ -281,6 +297,7 @@ export const queryGetExerciseTrackingAndStats = async (
   ),
 
   -- PR Max
+  -- Bounded
   pr_max as (
     select ap.exercise, ap.weight, ap.reps, ap.workout_date_utc as workout_time_utc
     from all_prs ap
@@ -288,9 +305,9 @@ export const queryGetExerciseTrackingAndStats = async (
     limit 1
   ),
 
-  -- Maps
-
+  --------------------------------- Maps (All Bounded) ---------------------------------
   -- Workout date map
+  -- Ordered by order index
   by_date as (
     select jsonb_object_agg(workout_date_local_string, items) as map
     from (
@@ -302,6 +319,7 @@ export const queryGetExerciseTrackingAndStats = async (
   ),
 
   -- ETSID map
+  -- New first
   by_etsid as (
     select jsonb_object_agg(exercisetosplit_id, items) as map
     from (
@@ -312,6 +330,7 @@ export const queryGetExerciseTrackingAndStats = async (
   ),
 
   -- Split name map
+  -- New first
   by_split_name as (
     select jsonb_object_agg(splitname, items) as map
     from (
