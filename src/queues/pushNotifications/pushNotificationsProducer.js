@@ -3,20 +3,25 @@ import pushNotificationsQueue from "./pushNotificationsQueue.js";
 // Add jobs to queue
 export const enqueuePushNotifications = async (notifications) => {
   //console.log("Email has arrived!");
-  await pushNotificationsQueue.addBulk(
-    notifications.map((e) => ({
-      data: {
-        ...e,
-        expiresAt: Date.now() + 1000 * 60 * 60 * 24, // 24 Hours
-      }, // Expires after 10 mins if the worker is down
-      opts: {
-        attempts: 3,
-        backoff: 5000,
-        removeOnComplete: true,
-        delay: e.delay || 0,
-        //removeOnFail: true,
-      },
-    }))
-  );
+  try {
+    await pushNotificationsQueue.addBulk(
+      notifications.map((e) => ({
+        data: {
+          ...e,
+          expiresAt: Date.now() + 1000 * 60 * 60 * 24, // 24 Hours
+        }, // Expires after 10 mins if the worker is down
+        opts: {
+          attempts: 3,
+          backoff: 5000,
+          removeOnComplete: true,
+          delay: e.delay || 0,
+          //removeOnFail: true,
+        },
+      }))
+    );
+    console.log(
+      `[Push producer]: Enqueued ${notifications.length} push notifications`
+    );
+  } catch {}
   //console.log("Emails are enqueued");
 };
