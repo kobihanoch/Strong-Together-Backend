@@ -7,6 +7,7 @@ const TRACKING_NS = "xt:tracking:v1";
 const PLAN_NS = "xt:workoutplan:v1";
 const ANALYTICS_NS = "xt:analytics:v1";
 const AEROBICS_NS = "xt:aerobics:v1";
+const USERTIMEZONE_NS = "xt:timezone:v1";
 
 const enabled = process.env.CACHE_ENABLED === "true";
 
@@ -16,6 +17,7 @@ const numFromEnv = (name, def) => {
 };
 
 export const TTL_TRACKING = numFromEnv("CACHE_TTL_TRACKING_SEC", 48 * 60 * 60); // 48 Hours
+export const TTL_TIMEZONE = numFromEnv("CACHE_TTL_TIMEZONE_SEC", 48 * 60 * 60); // 48 Hours
 export const TTL_PLAN = numFromEnv("CACHE_TTL_PLAN_SEC", 48 * 60 * 60); // 48 Hours
 export const TTL_ANALYTICS = numFromEnv("CACHE_TTL_ANALYTICS_SEC", 1 * 60 * 60); // 1 Hr
 export const TTL_AEROBICS = numFromEnv("CACHE_TTL_AEROBICS_SEC", 48 * 60 * 60); // 48 Hours
@@ -27,6 +29,8 @@ export const buildPlanKeyStable = (userId, tz) => `${PLAN_NS}:${userId}:${tz}`;
 export const buildAnalyticsKeyStable = (userId) => `${ANALYTICS_NS}:${userId}`;
 export const buildAerobicsKeyStable = (userId, days, tz) =>
   `${AEROBICS_NS}:${userId}:${days}:${tz}`;
+export const buildUserTimezoneKeyStable = (userId) =>
+  `${USERTIMEZONE_NS}:${userId}`;
 
 // --- MINIMAL CHANGE: now reads compressed values, with legacy fallback ---
 export const cacheGetJSON = async (key) => {
