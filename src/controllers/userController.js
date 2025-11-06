@@ -37,6 +37,10 @@ export const getUserData = async (userId) => {
   return { payload: user.user_data };
 };
 
+export const updateUsersReminderSettingsTimezone = async (userId, tz) => {
+  await sql`update public.user_reminder_settings set timezone=${tz} where user_id = ${userId}::uuid`;
+};
+
 // -----------------------------------------------------------
 
 // @desc    Create a new user
