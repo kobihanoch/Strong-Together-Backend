@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.2.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v2.1.2...v2.2.0) (2025-11-06)
+
+
+### Features
+
+* **Boostrap:** Compare cached user timezone to sent tiezone and determine if to enable updating user's timezone in DB ([2e5ef49](https://github.com/kobihanoch/Strong-Together-Backend/commit/2e5ef49d7ad57b1395d9cccfcd606f3453edd9d2))
+* **Cache:** Created timezone cache support in cache utils ([739e875](https://github.com/kobihanoch/Strong-Together-Backend/commit/739e875ac59b5df562ced7ad3d0246e30cc15799))
+* **Users:** Added a controller-helper inside user controller for updating user reminder settings time zone ([4abce26](https://github.com/kobihanoch/Strong-Together-Backend/commit/4abce2658d2bf5760b606d53bbf81a809d2778f1))
+
 ### [2.1.2](https://github.com/kobihanoch/Strong-Together-Backend/compare/v2.1.1...v2.1.2) (2025-11-04)
 
 
