@@ -5,7 +5,16 @@ import {
 } from "./workoutController.js";
 import { getAllMessagesData } from "./messageController.js";
 import { getAerobicsData } from "./aerobicsController.js";
-import { getUserData } from "./userController.js";
+import {
+  getUserData,
+  updateUsersReminderSettingsTimezone,
+} from "./userController.js";
+import {
+  buildUserTimezoneKeyStable,
+  cacheGetJSON,
+  cacheSetJSON,
+  TTL_TIMEZONE,
+} from "../utils/cache.js";
 
 // @desc    Get bootstrap data (user + plan + tracking + messages + aerobics)
 // @route   POST /api/bootstrap/get
@@ -13,15 +22,29 @@ import { getUserData } from "./userController.js";
 export const getBootstrapData = async (req, res) => {
   const userId = req.user.id;
   const tz = req.query.tz || "Asia/Jerusalem";
+  const { tz: cachedTz = null } =
+    (await cacheGetJSON(buildUserTimezoneKeyStable(userId))) || {};
 
-  // Run all in parallel using the pure helpers
-  const [ud, wp, et, msg, aer] = await Promise.all([
+  const promises = [
     getUserData(userId),
     getWorkoutPlanData(userId, true, tz),
     getExerciseTrackingData(userId, 45, true, tz),
     getAllMessagesData(userId, tz),
     getAerobicsData(userId, 45, true, tz),
-  ]);
+  ];
+
+  // Check if cached timezone is sent timezone
+  // If its same than skip writing in DB, else write in DB the new time zone
+  if (cachedTz !== tz) {
+    promises.push(updateUsersReminderSettingsTimezone(userId, tz));
+  }
+
+  console.log({ cachedTz, tz });
+
+  // Run all in parallel using the pure helpers
+  const [ud, wp, et, msg, aer] = await Promise.all(promises);
+
+  await cacheSetJSON(buildUserTimezoneKeyStable(userId), { tz }, TTL_TIMEZONE);
 
   return res.status(200).json({
     user: ud.payload,
