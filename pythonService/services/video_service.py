@@ -11,6 +11,6 @@ async def process_video(video, exercise):
   return {
     "message": "Video uploaded and processed",
     "exercise": exercise,
-    "file_path": str(saved_path),
+    #"file_path": str(saved_path),
     "analysis": analysis_result
   }

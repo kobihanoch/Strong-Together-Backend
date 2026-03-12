@@ -1,4 +1,5 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI
+from routes.video_routes import router
 
 app = FastAPI()
 
