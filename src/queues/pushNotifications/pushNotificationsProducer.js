@@ -1,3 +1,4 @@
+import { makeJobId } from "../utils.js";
 import pushNotificationsQueue from "./pushNotificationsQueue.js";
 
 // Add jobs to queue
@@ -15,6 +16,7 @@ export const enqueuePushNotifications = async (notifications) => {
           backoff: 5000,
           removeOnComplete: true,
           delay: e.delay || 0,
+          jobId: makeJobId(e.userId),
           //removeOnFail: true,
         },
       }))

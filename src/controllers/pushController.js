@@ -20,6 +20,7 @@ export const sendDailyPush = async (req, res) => {
         title: `Hello, ${user.name.split(" ")[0]}!`,
         body: "Ready to go workout?",
         delay: 0,
+        userId: user.id,
       });
     }
 
@@ -61,6 +62,7 @@ export const sendHourlyReminderPush = async (req, res) => {
           user.split_name
         } workout kicks off in ${user.reminder_offset_minutes} minutes.`,
         delay: delayMs,
+        userId: user.id,
       });
     }
 
