@@ -8,6 +8,9 @@ async def process_video(video, exercise):
   # Analyze
   analysis_result = analyze_exercise_video(saved_path, exercise)
 
+  # Remove from system
+  os.remove(saved_path)
+
   return {
     "message": "Video uploaded and processed",
     "exercise": exercise,
