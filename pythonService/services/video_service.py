@@ -1,5 +1,6 @@
 from utils.file_utils import save_uploaded_video
 from analyzers.exercise_analyzer import analyze_exercise_video
+import os
 
 async def process_video(video, exercise):
   # Save video
