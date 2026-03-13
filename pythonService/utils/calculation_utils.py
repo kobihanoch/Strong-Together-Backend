@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 def calculate_angle(a, b, c):
     a = np.array(a)
@@ -13,3 +14,11 @@ def calculate_angle(a, b, c):
     angle = np.arccos(cosine_angle)
 
     return np.degrees(angle)
+
+
+def distance(a, b):
+
+    dx = a[0] - b[0]
+    dy = a[1] - b[1]
+
+    return math.sqrt(dx*dx + dy*dy)

@@ -1,8 +1,9 @@
 import cv2
 import mediapipe as mp
 import mediapipe.python.solutions.pose as mp_pose
-from utils.calculation_utils import calculate_angle
+from utils.calculation_utils import *
 from utils.exercise_analyzer_utils.squat_utils import *
+from utils.exercise_analyzer_utils.shared_utils import *
 
 pose = mp_pose.Pose()
 
@@ -28,26 +29,36 @@ def analyze_squat(path):
 
   DOWN_THRESHOLD = 100 # Min depth to count as DOWN
   UP_THRESHOLD = 130 # Min depth to count as UP
+  MAX_PERSON_JUMP = 0.25 # Max jump for "Focus lost"
 
   knee_angles = []
-
-  dominant_side = "NONDE"
+  dominant_side = None
+  tracked_center = None
 
   while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
       break
     frame_count += 1
-
-    # convert color for mediapipe
+    if frame_count % 3 != 0: # Proccess 1/3 frames
+      continue
+    # Convert color for mediapipe
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
     results = pose.process(rgb_frame)
-
     if results and results.pose_landmarks:
       detected_frames += 1
       landmarks = results.pose_landmarks.landmark
-
+      # Take hip center and calculate tracked center to check if focus lost
+      center = get_hip_center(landmarks)
+      if tracked_center is None:
+        tracked_center = center
+      # Learn new center based on first center
+      alpha = 0.1
+      tracked_center = (alpha * center[0] + (1 - alpha) * tracked_center[0], alpha * center[1] + (1 - alpha) * tracked_center[1])
+      dist = distance(center, tracked_center)
+      if dist > MAX_PERSON_JUMP:
+        continue
+      # Take dominant side
       dominant_side = get_dominant_side(landmarks)
       # Take landmarks
       hip,knee,ankle = get_dominant_side_landmarks(dominant_side, landmarks)
