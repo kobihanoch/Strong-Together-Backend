@@ -5,8 +5,6 @@ from utils.calculation_utils import *
 from utils.exercise_analyzer_utils.squat_utils import *
 from utils.exercise_analyzer_utils.shared_utils import *
 
-pose = mp_pose.Pose()
-
 def analyze_exercise_video(path, exercise):
   if exercise == "squat":
     return analyze_squat(path)
@@ -19,7 +17,7 @@ def analyze_exercise_video(path, exercise):
 
 def analyze_squat(path):
   cap = cv2.VideoCapture(str(path))
-  pose = mp_pose.Pose() if mp_pose else None
+  pose = mp_pose.Pose()
 
   frame_count = 0
   detected_frames = 0
@@ -58,8 +56,9 @@ def analyze_squat(path):
       dist = distance(center, tracked_center)
       if dist > MAX_PERSON_JUMP:
         continue
-      # Take dominant side
-      dominant_side = get_dominant_side(landmarks)
+      # Take dominant side ONCE
+      if dominant_side is None:
+        dominant_side = get_dominant_side(landmarks)
       # Take landmarks
       hip,knee,ankle = get_dominant_side_landmarks(dominant_side, landmarks)
       # Calculate knee angle
