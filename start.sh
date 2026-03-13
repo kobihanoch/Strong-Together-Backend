@@ -12,7 +12,7 @@ trap term_handler INT TERM
 node src/index.js &
 API_PID=$!
 
-node src/workers/globalWorker.js &
+node workers/globalWorker.js &
 WORKER_PID=$!
 
 wait -n

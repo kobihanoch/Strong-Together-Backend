@@ -1,5 +1,5 @@
-import pushNotificationsQueue from "../queues/pushNotifications/pushNotificationsQueue.js";
-import { sendPushNotification } from "../services/pushService.js";
+import pushNotificationsQueue from "../src/queues/pushNotifications/pushNotificationsQueue.js";
+import { sendPushNotification } from "../src/services/pushService.js";
 
 export const startPushWorker = async () => {
   try {
