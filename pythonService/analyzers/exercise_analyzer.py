@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 import mediapipe.python.solutions.pose as mp_pose
 from utils.calculation_utils import calculate_angle
+from utils.exercise_analyzer_utils.squat_utils import *
 
 pose = mp_pose.Pose()
 
@@ -26,9 +27,11 @@ def analyze_squat(path):
   stage = "UP"
 
   DOWN_THRESHOLD = 100 # Min depth to count as DOWN
-  UP_THRESHOLD = 150 # Min depth to count as UP
+  UP_THRESHOLD = 130 # Min depth to count as UP
 
   knee_angles = []
+
+  dominant_side = "NONDE"
 
   while cap.isOpened():
     ret, frame = cap.read()
@@ -43,30 +46,20 @@ def analyze_squat(path):
 
     if results and results.pose_landmarks:
       detected_frames += 1
-
-      # Open video with landmarks for debugging
-      mp.solutions.drawing_utils.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
-      small_frame = cv2.resize(frame, (640, 480))
-      cv2.imshow("Pose Debug", small_frame)
-      if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
-
-      # Take landmarks
       landmarks = results.pose_landmarks.landmark
-      hip = [landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value].x, landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value].y]
-      knee = [landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value].x, landmarks[mp_pose.PoseLandmark.RIGHT_KNEE.value].y]
-      ankle = [landmarks[mp_pose.PoseLandmark.RIGHT_ANKLE.value].x, landmarks[mp_pose.PoseLandmark.RIGHT_ANKLE.value].y]
 
+      dominant_side = get_dominant_side(landmarks)
+      # Take landmarks
+      hip,knee,ankle = get_dominant_side_landmarks(dominant_side, landmarks)
       # Calculate knee angle
       knee_angle = calculate_angle(hip, knee, ankle)
       knee_angles.append(knee_angle)
-
       # Determine state for rep counting
-      if knee_angle < DOWN_THRESHOLD and stage == "UP":
-        stage = "DOWN"
-      if knee_angle > UP_THRESHOLD and stage == "DOWN":
-        stage = "UP"
-        rep_count += 1
+      stage,rep_count = get_current_state(knee_angle, stage, rep_count, DOWN_THRESHOLD, UP_THRESHOLD)
+      # Open video with landmarks for debugging
+      if (show_window_with_landmarks(frame, results) == False):
+        break
+
 
   cap.release()
   
@@ -83,4 +76,12 @@ def analyze_bench(path):
     "exercise": "bench",
     "bar_path": "good"
   }
+
+def show_window_with_landmarks(frame, results):
+  mp.solutions.drawing_utils.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+  small_frame = cv2.resize(frame, (950, 800))
+  cv2.imshow("Pose Debug", small_frame)
+  if cv2.waitKey(1) & 0xFF == ord("q"):
+    return False
+  return True
 
