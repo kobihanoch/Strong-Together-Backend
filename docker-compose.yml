@@ -1,9 +1,32 @@
 services:
-  server:
+  src:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: src/Dockerfile
     env_file:
       - .env
     ports:
       - "5000:5000"
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: ["node", "--watch", "src/index.js"]
+  workers:
+    build:
+      context: .
+      dockerfile: workers/Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: ["node", "--watch", "workers/globalWorker.js"]
+  python-service:
+    build:
+      context: .
+      dockerfile: pythonService/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./pythonService:/app
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

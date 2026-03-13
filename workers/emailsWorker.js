@@ -1,5 +1,5 @@
-import { sendMail } from "../config/mailer.js";
-import emailsQueue from "../queues/emails/emailsQueue.js";
+import { sendMail } from "../src/config/mailer.js";
+import emailsQueue from "../src/queues/emails/emailsQueue.js";
 
 export const startEmailWorker = async () => {
   try {
