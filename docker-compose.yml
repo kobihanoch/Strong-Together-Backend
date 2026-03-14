@@ -27,6 +27,29 @@ services:
       dockerfile: pythonService/Dockerfile
     ports:
       - "8000:8000"
+    environment:
+      DISABLE_DEBUG_WINDOW: "1"
     volumes:
-      - ./pythonService:/app
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+      - ./pythonService/main.py:/app/main.py
+      - ./pythonService/routes:/app/routes
+      - ./pythonService/services:/app/services
+      - ./pythonService/analyzers:/app/analyzers
+      - ./pythonService/utils:/app/utils
+    command:
+      [
+        "uvicorn",
+        "main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+        "--reload-dir",
+        "/app/routes",
+        "--reload-dir",
+        "/app/services",
+        "--reload-dir",
+        "/app/analyzers",
+        "--reload-dir",
+        "/app/utils",
+      ]

@@ -1,6 +1,12 @@
 import mediapipe as mp
 import mediapipe.python.solutions.pose as mp_pose
 
+def _safe_visibility_avg(points):
+  return sum(point.visibility for point in points) / len(points)
+
+def _safe_abs_diff(a, b):
+  return abs(a - b)
+
 def get_hip_center(landmarks):
   left_hip = landmarks[mp_pose.PoseLandmark.LEFT_HIP.value]
   right_hip = landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value]
@@ -9,3 +15,66 @@ def get_hip_center(landmarks):
   center_y = (left_hip.y + right_hip.y) / 2
 
   return center_x, center_y
+
+def update_tracked_hip_center(landmarks, tracked_center, alpha = 0.1):
+  # Take hip center and calculate tracked center to check if focus lost
+  actual_center = get_hip_center(landmarks)
+  if tracked_center is None:
+    tracked_center = actual_center
+  # Learn new center based on first center
+  tracked_center = (alpha * actual_center[0] + (1 - alpha) * tracked_center[0], alpha * actual_center[1] + (1 - alpha) * tracked_center[1])
+  return [actual_center,tracked_center]
+
+def get_camera_view_metrics(landmarks):
+  nose = landmarks[mp_pose.PoseLandmark.NOSE.value]
+  left_ear = landmarks[mp_pose.PoseLandmark.LEFT_EAR.value]
+  right_ear = landmarks[mp_pose.PoseLandmark.RIGHT_EAR.value]
+  left_shoulder = landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value]
+  right_shoulder = landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value]
+  left_hip = landmarks[mp_pose.PoseLandmark.LEFT_HIP.value]
+  right_hip = landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value]
+
+  shoulder_z_diff = _safe_abs_diff(left_shoulder.z, right_shoulder.z)
+  hip_z_diff = _safe_abs_diff(left_hip.z, right_hip.z)
+  shoulder_x_span = _safe_abs_diff(left_shoulder.x, right_shoulder.x)
+  hip_x_span = _safe_abs_diff(left_hip.x, right_hip.x)
+  ear_x_span = _safe_abs_diff(left_ear.x, right_ear.x)
+  ear_z_diff = _safe_abs_diff(left_ear.z, right_ear.z)
+
+  torso_x_span = max((shoulder_x_span + hip_x_span) / 2, 1e-6)
+  torso_z_diff = (shoulder_z_diff + hip_z_diff) / 2
+  depth_to_width_ratio = torso_z_diff / torso_x_span
+
+  face_visibility = _safe_visibility_avg([nose, left_ear, right_ear])
+  torso_visibility = _safe_visibility_avg([left_shoulder, right_shoulder, left_hip, right_hip])
+
+  avg_visibility = (torso_visibility * 0.8) + (face_visibility * 0.2)
+
+  # Side view usually means:
+  # more left/right depth separation in the torso,
+  # narrower torso width in X,
+  # and often smaller visible face width across the ears.
+  side_score = (
+    (depth_to_width_ratio * 0.65) +
+    (torso_z_diff * 0.25) -
+    (ear_x_span * 0.08) +
+    (ear_z_diff * 0.08)
+  )
+
+  return {
+    "side_score": side_score,
+    "avg_visibility": avg_visibility,
+    "torso_x_span": torso_x_span,
+    "torso_z_diff": torso_z_diff,
+    "depth_to_width_ratio": depth_to_width_ratio,
+  }
+
+def get_camera_view(landmarks):
+  metrics = get_camera_view_metrics(landmarks)
+  if metrics["avg_visibility"] < 0.65:
+    return "UNCERTAIN"
+  if metrics["side_score"] > 0.22:
+    return "SIDE_VIEW"
+  if metrics["side_score"] < 0.08:
+    return "FRONT_VIEW"
+  return "UNCERTAIN"

@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 import mediapipe.python.solutions.pose as mp_pose
+import os
 from utils.calculation_utils import *
 from utils.exercise_analyzer_utils.squat_utils import *
 from utils.exercise_analyzer_utils.shared_utils import *
@@ -16,69 +17,85 @@ def analyze_exercise_video(path, exercise):
 
 
 def analyze_squat(path):
-  cap = cv2.VideoCapture(str(path))
-  pose = mp_pose.Pose()
+	cap = cv2.VideoCapture(str(path))
+	pose = mp_pose.Pose()
 
-  frame_count = 0
-  detected_frames = 0
+	frame_count = 0
+	detected_frames = 0
+	rep_count = 0
+	stage = "UP"
 
-  rep_count = 0
-  stage = "UP"
+	# Default thresholds for SIDE_VIEW
+	DOWN_THRESHOLD = 100
+	UP_THRESHOLD = 135
+	MAX_PERSON_JUMP = 0.25
+	VOTE_FRAMES = 5
 
-  DOWN_THRESHOLD = 100 # Min depth to count as DOWN
-  UP_THRESHOLD = 130 # Min depth to count as UP
-  MAX_PERSON_JUMP = 0.25 # Max jump for "Focus lost"
+	dominant_side = None
+	tracked_center = None
+	camera_angle = None
+	camera_votes = []
+	side_votes = []
+	current_rep = []
+	all_reps = []
 
-  knee_angles = []
-  dominant_side = None
-  tracked_center = None
+	while cap.isOpened():
+		ret, frame = cap.read()
+		if not ret:
+			break
+		
+		frame_count += 1
+		if frame_count % 3 != 0: 
+			continue
 
-  while cap.isOpened():
-    ret, frame = cap.read()
-    if not ret:
-      break
-    frame_count += 1
-    if frame_count % 3 != 0: # Proccess 1/3 frames
-      continue
-    # Convert color for mediapipe
-    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    results = pose.process(rgb_frame)
-    if results and results.pose_landmarks:
-      detected_frames += 1
-      landmarks = results.pose_landmarks.landmark
-      # Take hip center and calculate tracked center to check if focus lost
-      center = get_hip_center(landmarks)
-      if tracked_center is None:
-        tracked_center = center
-      # Learn new center based on first center
-      alpha = 0.1
-      tracked_center = (alpha * center[0] + (1 - alpha) * tracked_center[0], alpha * center[1] + (1 - alpha) * tracked_center[1])
-      dist = distance(center, tracked_center)
-      if dist > MAX_PERSON_JUMP:
-        continue
-      # Take dominant side ONCE
-      if dominant_side is None:
-        dominant_side = get_dominant_side(landmarks)
-      # Take landmarks
-      hip,knee,ankle = get_dominant_side_landmarks(dominant_side, landmarks)
-      # Calculate knee angle
-      knee_angle = calculate_angle(hip, knee, ankle)
-      knee_angles.append(knee_angle)
-      # Determine state for rep counting
-      stage,rep_count = get_current_state(knee_angle, stage, rep_count, DOWN_THRESHOLD, UP_THRESHOLD)
-      # Open video with landmarks for debugging
-      if (show_window_with_landmarks(frame, results) == False):
-        break
+		results = pose.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+		if results and results.pose_landmarks:
+			detected_frames += 1
+			landmarks = results.pose_landmarks.landmark
 
+			# Track hip center to detect sudden frame jumps
+			actual_center, tracked_center = update_tracked_hip_center(landmarks, tracked_center, 0.1)
+			if distance(actual_center, tracked_center) > MAX_PERSON_JUMP:
+				continue
 
-  cap.release()
-  
-  return {
-    "exercise": "squat",
-    "frames_processed": frame_count,
-    "frames_with_pose": detected_frames,
-    "reps_counted": rep_count
-  }
+			if camera_angle is None:
+				camera_view = get_camera_view(landmarks)
+				if camera_view != "UNCERTAIN":
+					camera_votes.append(camera_view)
+				if len(camera_votes) >= VOTE_FRAMES:
+					camera_angle = max(set(camera_votes), key=camera_votes.count)
+					if camera_angle != "SIDE_VIEW":
+						return {"error": "Only side view is supported for squat."}
+					continue
+				else:
+					continue
+
+			if dominant_side is None:
+				side_votes.append(get_squat_dominant_side(landmarks))
+				if len(side_votes) >= VOTE_FRAMES:
+					dominant_side = max(set(side_votes), key=side_votes.count)
+				else:
+					continue
+
+			# Extract joint data
+			hip, knee, ankle, shoulder, heel, foot = get_squat_dominant_side_landmarks(dominant_side, landmarks)
+			knee_angle = calculate_angle(hip, knee, ankle)
+			
+			current_rep.append({
+				"knee_angle": knee_angle, "hip": hip, "knee": knee, 
+				"ankle": ankle, "shoulder": shoulder, "heel": heel, "foot": foot
+			})
+
+			stage, rep_count = get_current_squat_state(
+				knee_angle, stage, rep_count, DOWN_THRESHOLD, UP_THRESHOLD, current_rep, all_reps
+			)
+
+			if not show_window_with_landmarks(frame, results):
+				break
+
+	cap.release()
+	# Final analysis for each detected rep
+	return [analyze_squat_rep(rep, camera_angle) for rep in all_reps]
 
 
 def analyze_bench(path):
@@ -88,6 +105,8 @@ def analyze_bench(path):
   }
 
 def show_window_with_landmarks(frame, results):
+  if os.getenv("DISABLE_DEBUG_WINDOW", "0") == "1":
+    return True
   mp.solutions.drawing_utils.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
   small_frame = cv2.resize(frame, (950, 800))
   cv2.imshow("Pose Debug", small_frame)
