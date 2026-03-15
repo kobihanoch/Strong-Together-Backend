@@ -31,14 +31,25 @@ export const createRedisAdapterClients = async () => {
   const subClient = pubClient.duplicate();
 
   pubClient.on("error", (err) =>
-    console.error("[Redis Adapter]: Publisher error", err)
+    console.error("[Redis Adapter]: Publisher error", err),
   );
   subClient.on("error", (err) =>
-    console.error("[Redis Adapter]: Subscriber error", err)
+    console.error("[Redis Adapter]: Subscriber error", err),
   );
 
   await pubClient.connect();
   await subClient.connect();
 
   return { pubClient, subClient };
+};
+
+export const createRedisSubscriber = async () => {
+  const subscriber = createClient(redisOptions);
+
+  subscriber.on("error", (err) => {
+    console.error("[Redis Subscriber]: Error", err);
+  });
+
+  await subscriber.connect();
+  return subscriber;
 };
