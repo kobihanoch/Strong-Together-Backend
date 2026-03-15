@@ -2,6 +2,9 @@ import json
 import redis
 import os
 from dotenv import load_dotenv
+import logging
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -19,15 +22,12 @@ redis_client = redis.Redis(
     decode_responses=True,
 )
 
-payload = {
-    "jobId": "123",
-    "userId": "abc",
-    "status": "completed",
-    "result": {
-        "score": 91,
-        "reps": 10
-    },
-    "error": None
-}
+def check_redis_connection():
+  try:
+    result = redis_client.ping()
+    logger.info(f"[Redis]: Connected successfully - ping={result}")
+  except Exception as e:
+    logger.exception(f"[Redis]: Connection failed: {e}")
+    raise
 
-redis_client.publish("video-analysis:results", json.dumps(payload))
+

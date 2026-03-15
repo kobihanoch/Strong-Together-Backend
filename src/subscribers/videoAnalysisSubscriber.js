@@ -25,13 +25,13 @@ export const startVideoAnalysisSubscriber = async () => {
           `[Video Analysis Subscriber]: Received ${status} for job ${jobId} user ${userId}`,
         );
 
-        if (status === "completed") {
+        /*if (status === "completed") {
           console.log("[Video Analysis Subscriber]: Result:", result);
         }
 
         if (status === "failed") {
           console.error("[Video Analysis Subscriber]: Error:", error);
-        }
+        }*/
       } catch (e) {
         console.error(
           "[Video Analysis Subscriber]: Failed to process message:",
