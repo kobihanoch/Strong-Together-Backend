@@ -125,7 +125,7 @@ app.use("/api/bootstrap", bootsrapRoutes);
 app.use(errorHandler);
 
 // SOCKET CONNECTIONS ---------------------------------------------------------------------------------------------
-const { io, server } = createIOServer(app);
+const { io, server } = await createIOServer(app);
 
 // LISTEN TO PORT ------------------------------------------------------------------------------------------------
 server.listen(PORT, () => {

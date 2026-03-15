@@ -1,7 +1,9 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { createAdapter } from "@socket.io/redis-adapter";
 import { decodeSocketToken } from "../utils/tokenUtils.js";
 import createError from "http-errors";
+import { createRedisAdapterClients } from "./redisClient.js";
 
 let io = null;
 export const getIO = () => {
@@ -12,7 +14,7 @@ export const setIO = (val) => {
   io = val;
 };
 
-export const createIOServer = (app) => {
+export const createIOServer = async (app) => {
   const server = createServer(app);
   io = new Server(server, {
     path: "/socket.io",
@@ -22,6 +24,10 @@ export const createIOServer = (app) => {
       credentials: true,
     },
   });
+
+  // Creates two channels for redis adapter
+  const { pubClient, subClient } = await createRedisAdapterClients();
+  io.adapter(createAdapter(pubClient, subClient));
 
   // --- Authenticate before connection is accepted ---
   io.use(async (socket, next) => {

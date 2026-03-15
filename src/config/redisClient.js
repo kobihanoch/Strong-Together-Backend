@@ -4,20 +4,41 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-export const redis = createClient({
+const redisOptions = {
   username: process.env.REDIS_USERNAME,
   password: process.env.REDIS_PASSWORD,
   socket: {
     host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
+    port: Number(process.env.REDIS_PORT),
   },
-});
+};
 
-redis.on("error", (err) => console.log("[Redis]: Redis Client Error", err));
+export const redis = createClient(redisOptions);
+
+redis.on("error", (err) => console.error("[Redis]: Redis Client Error", err));
 
 export const connectRedis = async () => {
-  await redis.connect();
-  await redis.set("Req", "Valid connection");
-  const result = await redis.get("Req");
+  if (!redis.isOpen) {
+    await redis.connect();
+  }
+
+  const result = await redis.ping();
   console.log("[Redis]: Redis Connected -", result);
+};
+
+export const createRedisAdapterClients = async () => {
+  const pubClient = createClient(redisOptions);
+  const subClient = pubClient.duplicate();
+
+  pubClient.on("error", (err) =>
+    console.error("[Redis Adapter]: Publisher error", err)
+  );
+  subClient.on("error", (err) =>
+    console.error("[Redis Adapter]: Subscriber error", err)
+  );
+
+  await pubClient.connect();
+  await subClient.connect();
+
+  return { pubClient, subClient };
 };
