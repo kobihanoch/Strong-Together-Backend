@@ -37,9 +37,30 @@ def _side_score(landmarks, side_prefix):
   depth_score = sum(-p.z for p in side_points) - sum(-p.z for p in other_points)
   return (visibility_score * 0.7) + (depth_score * 0.3)
 
-def get_squat_dominant_side(landmarks):
+def get_squat_dominant_side_profile(landmarks):
   left_score = _side_score(landmarks, "LEFT")
   right_score = _side_score(landmarks, "RIGHT")
+  score_gap = abs(left_score - right_score)
+  if left_score > right_score:
+    return {
+      "side": "LEFT",
+      "confidence": min(1.0, score_gap / 0.20),
+      "left_score": left_score,
+      "right_score": right_score,
+    }
+  return {
+    "side": "RIGHT",
+    "confidence": min(1.0, score_gap / 0.20),
+    "left_score": left_score,
+    "right_score": right_score,
+  }
+
+def get_squat_dominant_side(landmarks):
+  profile = get_squat_dominant_side_profile(landmarks)
+  if profile["confidence"] >= 0.10:
+    return profile["side"]
+  left_score = profile["left_score"]
+  right_score = profile["right_score"]
   if left_score > right_score + 0.02:
     return "LEFT"
   if right_score > left_score + 0.02:
@@ -52,7 +73,12 @@ def get_squat_dominant_side(landmarks):
 
 def get_squat_dominant_side_landmarks(dominant_side, landmarks):
   def extract(lm_idx):
-    return {"x": landmarks[lm_idx].x, "y": landmarks[lm_idx].y, "v": landmarks[lm_idx].visibility}
+    return {
+      "x": landmarks[lm_idx].x,
+      "y": landmarks[lm_idx].y,
+      "z": landmarks[lm_idx].z,
+      "v": landmarks[lm_idx].visibility,
+    }
 
   if dominant_side == "LEFT":
     indices = [mp_pose.PoseLandmark.LEFT_HIP, mp_pose.PoseLandmark.LEFT_KNEE, mp_pose.PoseLandmark.LEFT_ANKLE, 
@@ -62,15 +88,90 @@ def get_squat_dominant_side_landmarks(dominant_side, landmarks):
     mp_pose.PoseLandmark.RIGHT_SHOULDER, mp_pose.PoseLandmark.RIGHT_HEEL, mp_pose.PoseLandmark.RIGHT_FOOT_INDEX]
   return [extract(idx.value) for idx in indices]
 
-def get_current_squat_state(knee_angle, stage, rep_count, down_threshold, up_threshold, current_rep, all_reps):
-  if knee_angle < down_threshold and stage == "UP":
-    stage = "DOWN"
-  if knee_angle > up_threshold and stage == "DOWN":
-    stage = "UP"
-    rep_count += 1
+def get_current_squat_state(knee_angle, hip_point, shoulder_point, state_data, current_rep, all_reps):
+  smoothing_alpha = state_data["smoothing_alpha"]
+  smoothed_angle = (
+    (smoothing_alpha * knee_angle) +
+    ((1 - smoothing_alpha) * state_data["smoothed_angle"])
+  )
+  state_data["smoothed_angle"] = smoothed_angle
+
+  torso_length = max(distance(hip_point, shoulder_point), 1e-6)
+  current_hip_height = hip_point["y"]
+
+  if state_data["top_hip_height"] is None:
+    state_data["top_hip_height"] = current_hip_height
+
+  if state_data["stage"] == "UP" and smoothed_angle >= state_data["up_threshold"]:
+    state_data["top_hip_height"] = (
+      (0.2 * current_hip_height) +
+      (0.8 * state_data["top_hip_height"])
+    )
+
+  hip_drop = abs(current_hip_height - state_data["top_hip_height"]) / torso_length
+  if hip_drop > state_data["deepest_hip_drop"]:
+    state_data["deepest_hip_drop"] = hip_drop
+
+  if smoothed_angle < state_data["lowest_angle"]:
+    state_data["lowest_angle"] = smoothed_angle
+  if smoothed_angle > state_data["highest_angle"]:
+    state_data["highest_angle"] = smoothed_angle
+
+  movement_range = state_data["highest_angle"] - state_data["lowest_angle"]
+  reached_bottom_by_angle = smoothed_angle <= state_data["down_threshold"]
+  reached_bottom_by_combined_signal = (
+    smoothed_angle <= (state_data["down_threshold"] + state_data["angle_tolerance"]) and
+    hip_drop >= state_data["min_hip_drop"]
+  )
+
+  if reached_bottom_by_angle or reached_bottom_by_combined_signal:
+    state_data["down_frames"] += 1
+  else:
+    state_data["down_frames"] = 0
+
+  recovered_to_top = (
+    smoothed_angle >= state_data["up_threshold"] and
+    hip_drop <= state_data["top_recovery_tolerance"]
+  )
+  recovered_by_angle_only = (
+    smoothed_angle >= (state_data["up_threshold"] - state_data["angle_tolerance"]) and
+    movement_range >= state_data["min_rep_range"]
+  )
+
+  if recovered_to_top or recovered_by_angle_only:
+    state_data["up_frames"] += 1
+  else:
+    state_data["up_frames"] = 0
+
+  if state_data["stage"] == "UP" and state_data["down_frames"] >= state_data["min_phase_frames"]:
+    state_data["stage"] = "DOWN"
+    state_data["up_frames"] = 0
+
+  rep_has_clear_motion = (
+    movement_range >= state_data["min_rep_range"] and
+    (
+      state_data["deepest_hip_drop"] >= state_data["min_hip_drop"] or
+      state_data["lowest_angle"] <= (state_data["down_threshold"] + state_data["angle_tolerance"])
+    )
+  )
+
+  if (
+    state_data["stage"] == "DOWN" and
+    state_data["up_frames"] >= state_data["min_phase_frames"] and
+    rep_has_clear_motion
+  ):
+    state_data["stage"] = "UP"
+    state_data["rep_count"] += 1
     all_reps.append(list(current_rep))
     current_rep.clear()
-  return [stage, rep_count]
+    state_data["down_frames"] = 0
+    state_data["up_frames"] = 0
+    state_data["highest_angle"] = smoothed_angle
+    state_data["lowest_angle"] = smoothed_angle
+    state_data["deepest_hip_drop"] = 0.0
+    state_data["top_hip_height"] = current_hip_height
+
+  return state_data
 
 def analyze_squat_rep(rep_frames, camera_angle):
   MIN_VISIBILITY = 0.75
@@ -124,7 +225,12 @@ def analyze_squat_rep(rep_frames, camera_angle):
   deep_indices = [i for i, angle in enumerate(smoothed_angles) if angle <= (true_bottom_angle + 5)]
 
   def calc_back_lean(s, h):
-    return math.degrees(math.atan2(abs(s["x"] - h["x"]), abs(s["y"] - h["y"])))
+    horizontal_distance = math.sqrt(
+      ((s["x"] - h["x"]) ** 2) +
+      ((s["z"] - h["z"]) ** 2)
+    )
+    vertical_distance = abs(s["y"] - h["y"])
+    return math.degrees(math.atan2(horizontal_distance, vertical_distance))
 
   lean_values = [calc_back_lean(valid_frames[i]["shoulder"], valid_frames[i]["hip"]) for i in deep_indices[:10]]
   avg_back_angle = median(lean_values) if lean_values else 0
