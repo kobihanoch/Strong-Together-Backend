@@ -2,6 +2,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { decodeSocketToken } from "../utils/tokenUtils.js";
 import createError from "http-errors";
+import { createRedisAdapterClients } from "./redisClient.js";
 
 let io = null;
 export const getIO = () => {
@@ -12,7 +13,7 @@ export const setIO = (val) => {
   io = val;
 };
 
-export const createIOServer = (app) => {
+export const createIOServer = async (app) => {
   const server = createServer(app);
   io = new Server(server, {
     path: "/socket.io",
@@ -22,6 +23,19 @@ export const createIOServer = (app) => {
       credentials: true,
     },
   });
+
+  if (process.env.ENABLE_SOCKET_REDIS_ADAPTER === "true") {
+    try {
+      const { createAdapter } = await import("@socket.io/redis-adapter");
+      const { pubClient, subClient } = await createRedisAdapterClients();
+      io.adapter(createAdapter(pubClient, subClient));
+      console.log("[Web Socket]: Redis adapter enabled");
+    } catch (e) {
+      console.warn(
+        `[Web Socket]: Redis adapter unavailable, continuing without it: ${e.message}`,
+      );
+    }
+  }
 
   // --- Authenticate before connection is accepted ---
   io.use(async (socket, next) => {

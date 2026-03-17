@@ -20,6 +20,7 @@ import pushRoutes from "./routes/pushRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import webSocketsRoutes from "./routes/webSocketsRoutes.js";
 import workoutRoutes from "./routes/workoutRoutes.js";
+import { startVideoAnalysisSubscriber } from "./subscribers/videoAnalysisSubscriber.js";
 
 // RESOURECES CONNECTIONS AND GENERAL CONFIGURATIONS  ------------------------------------------
 dotenv.config();
@@ -30,15 +31,16 @@ const app = express();
 // Define port
 const PORT = process.env.PORT || 5000;
 
-await connectDB(); // Connect to MongoDB
+await connectDB(); // Connect to PostgreSQL
 await connectRedis(); // Connect to Redis
+await startVideoAnalysisSubscriber(); // Start subscriber
 
 // MIDDLWARES ----------------------------------------------------------------------------------
 
 // Use express JSON formats
 app.use(express.json());
 
-// For resetting password
+// For resetting password and API call from website
 app.use(
   cors({
     origin: [
@@ -49,7 +51,7 @@ app.use(
     methods: ["POST", "PUT", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: false,
-  })
+  }),
 );
 
 // Use helmet
@@ -77,7 +79,7 @@ app.use((req, res, next) => {
   const username = req.headers["x-username"] ?? null;
 
   console.log(
-    /*`[IP: ${clientIP}]*/ `[User: ${username}] [App Version: ${req.headers["x-app-version"]}] ${req.method}:${req.originalUrl}`
+    /*`[IP: ${clientIP}]*/ `[User: ${username}] [App Version: ${req.headers["x-app-version"]}] ${req.method}:${req.originalUrl}`,
   );
   next();
 });
@@ -125,7 +127,7 @@ app.use("/api/bootstrap", bootsrapRoutes);
 app.use(errorHandler);
 
 // SOCKET CONNECTIONS ---------------------------------------------------------------------------------------------
-const { io, server } = createIOServer(app);
+const { io, server } = await createIOServer(app);
 
 // LISTEN TO PORT ------------------------------------------------------------------------------------------------
 server.listen(PORT, () => {
