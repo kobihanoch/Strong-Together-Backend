@@ -6,7 +6,7 @@ router = APIRouter()
 
 
 class AnalyzeExerciseRequest(BaseModel):
-    s3Path: str
+    fileKey: str
     exercise: str
     jobId: str | None = None
     userId: str | None = None
@@ -15,7 +15,7 @@ class AnalyzeExerciseRequest(BaseModel):
 @router.post("/analyze-exercise")
 async def analyze_exercise(payload: AnalyzeExerciseRequest):
     result = await process_video(
-        payload.s3Path,
+        payload.fileKey,
         payload.exercise,
         payload.jobId,
         payload.userId,

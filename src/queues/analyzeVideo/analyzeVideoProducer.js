@@ -3,13 +3,11 @@ import analyzeVideoQueue from "./analyzeVideoQueue.js";
 // Add jobs to queue
 export const enqueueAnalyzeVideo = async (fileKey, exercise, userId) => {
   try {
-    const jobId = crypto.randomUUID();
-    await analyzeVideoQueue.add(
+    const job = await analyzeVideoQueue.add(
       {
         fileKey,
         exercise,
         userId,
-        jobId,
         expiresAt: Date.now() + 1000 * 60 * 60 * 12,
       },
       {
@@ -20,7 +18,7 @@ export const enqueueAnalyzeVideo = async (fileKey, exercise, userId) => {
       },
     );
     console.log(`[Analyze video producer]: Enqueued ${userId} video`);
-    return jobId;
+    return String(job.id);
   } catch (e) {
     console.error(
       `[Analyze video producer]: Failed to enqueue ${userId} video: ${e.message}`,

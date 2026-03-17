@@ -5,7 +5,7 @@ export const startAnalyzVideoWorker = async () => {
   try {
     // Try to run the worker
     analyzeVideoQueue.process(1, async (job) => {
-      const { userId, videoPath, exercise } = job.data;
+      const { userId, fileKey, exercise } = job.data;
       try {
         // Skip stale jobs so the analysis service does not get flooded.
         if (job.data.expiresAt && Date.now() > job.data.expiresAt) {
@@ -15,10 +15,10 @@ export const startAnalyzVideoWorker = async () => {
 
         const endpointUrl =
           process.env.NODE_ENV === "development"
-            ? "http://127.0.0.1:8000/analyze-exercise"
+            ? "http://python-service:8000/analyze-exercise"
             : process.env.ANALYSIS_SERVER_URL;
         await axios.post(endpointUrl, {
-          s3Path: videoPath,
+          fileKey,
           exercise,
           jobId: String(job.id),
           userId,
