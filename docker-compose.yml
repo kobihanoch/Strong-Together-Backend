@@ -10,7 +10,7 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    command: ["node", "--watch", "src/index.js"]
+    command: ["npm", "run", "start:server:watch"]
   background-workers:
     build:
       context: .
@@ -20,7 +20,7 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    command: ["node", "--watch", "workers/globalWorker.js"]
+    command: ["npm", "run", "start:workers:watch"]
   python-service:
     build:
       context: .

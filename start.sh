@@ -9,10 +9,10 @@ term_handler() {
 }
 trap term_handler INT TERM
 
-node src/index.js &
+npm run start:server &
 API_PID=$!
 
-node workers/globalWorker.js &
+npm run start:workers &
 WORKER_PID=$!
 
 wait -n

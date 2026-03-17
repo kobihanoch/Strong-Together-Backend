@@ -5,13 +5,19 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/index.js"
+    "start": "tsx src/index.js",
+    "start:server": "tsx src/index.js",
+    "start:server:watch": "tsx watch src/index.js",
+    "start:workers": "tsx workers/globalWorker.js",
+    "start:workers:watch": "tsx watch workers/globalWorker.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1010.0",
+    "@aws-sdk/s3-request-presigner": "^3.1010.0",
     "@socket.io/redis-adapter": "^8.3.0",
     "@supabase/supabase-js": "^2.54.0",
     "axios": "^1.11.0",
@@ -34,6 +40,12 @@
     "redis": "^5.8.1",
     "resend": "^6.1.2",
     "socket.io": "^4.8.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
     "zod": "^4.0.15"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/http-errors": "^2.0.5"
   }
 }
