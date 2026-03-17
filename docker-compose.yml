@@ -10,7 +10,7 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    command: ["node", "--watch", "src/index.js"]
+    command: ["npm", "run", "start:server:watch"]
   background-workers:
     build:
       context: .
@@ -20,7 +20,7 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    command: ["node", "--watch", "workers/globalWorker.js"]
+    command: ["npm", "run", "start:workers:watch"]
   python-service:
     build:
       context: .
@@ -33,9 +33,12 @@ services:
       DISABLE_DEBUG_WINDOW: "1"
     volumes:
       - ./pythonService/main.py:/app/main.py
+      - ./pythonService/config:/app/config
+      - ./pythonService/publishers:/app/publishers
       - ./pythonService/routes:/app/routes
       - ./pythonService/services:/app/services
       - ./pythonService/analyzers:/app/analyzers
+      - ./pythonService/aws:/app/aws
       - ./pythonService/utils:/app/utils
     command:
       [
@@ -47,11 +50,17 @@ services:
         "8000",
         "--reload",
         "--reload-dir",
+        "/app/config",
+        "--reload-dir",
+        "/app/publishers",
+        "--reload-dir",
         "/app/routes",
         "--reload-dir",
         "/app/services",
         "--reload-dir",
         "/app/analyzers",
+        "--reload-dir",
+        "/app/aws",
         "--reload-dir",
         "/app/utils",
       ]

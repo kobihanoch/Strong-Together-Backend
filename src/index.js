@@ -14,6 +14,7 @@ import analyticsRoutes from "./routes/analyticsRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import bootsrapRoutes from "./routes/bootstrapRoutes.js";
 import exercisesRoutes from "./routes/exercisesRoutes.js";
+import videoAnalysisRoutes from "./routes/videoAnalysisRoutes.js";
 import messagesRoutes from "./routes/messagesRoutes.js";
 import oauthRoutes from "./routes/oauthRoutes.js";
 import pushRoutes from "./routes/pushRoutes.js";
@@ -122,6 +123,9 @@ app.use("/api/ws", webSocketsRoutes);
 
 // Bootstrap
 app.use("/api/bootstrap", bootsrapRoutes);
+
+// Video analysis
+app.use("/api/videoanalysis", videoAnalysisRoutes);
 
 // Error Handler
 app.use(errorHandler);
