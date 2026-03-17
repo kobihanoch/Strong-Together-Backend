@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir \
     python-multipart \
     python-dotenv \
     redis \
+    boto3 \
     mediapipe==0.10.9 \
     opencv-python \
     numpy

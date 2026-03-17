@@ -1,5 +1,6 @@
 from pathlib import Path
 import shutil
+import uuid
 
 UPLOAD_DIR = Path("uploads")
 
@@ -12,3 +13,8 @@ def save_uploaded_video(video):
     shutil.copyfileobj(video.file, buffer)
 
   return file_path
+
+
+def build_download_path(file_key):
+  suffix = Path(file_key).suffix or ".mp4"
+  return UPLOAD_DIR / f"{uuid.uuid4()}{suffix}"

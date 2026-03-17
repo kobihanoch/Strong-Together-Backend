@@ -17,7 +17,12 @@ export const startAnalyzVideoWorker = async () => {
           process.env.NODE_ENV === "development"
             ? "http://127.0.0.1:8000/analyze-exercise"
             : process.env.ANALYSIS_SERVER_URL;
-        await axios.post(endpointUrl, { videoPath, exercise, userId });
+        await axios.post(endpointUrl, {
+          s3Path: videoPath,
+          exercise,
+          jobId: String(job.id),
+          userId,
+        });
         console.log(
           `[Analyze video worker]: User ${userId} video has been sent to server`,
         );
