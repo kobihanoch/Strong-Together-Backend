@@ -3,18 +3,35 @@ import mediapipe as mp
 import mediapipe.python.solutions.pose as mp_pose
 import os
 import math
+import uuid
 from utils.calculation_utils import *
 from utils.exercise_analyzer_utils.squat_utils import *
 from utils.exercise_analyzer_utils.shared_utils import *
+from publishers.analyze_video_publisher import *
 
-def analyze_exercise_video(path, exercise):
+def analyze_exercise_video(path, exercise, job_id=None, user_id=None):
   if exercise == "squat":
-    return analyze_squat(path)
+    res = analyze_squat(path)
+  elif exercise == "bench":
+    res = analyze_bench(path)
+  else:
+    res = {"error": "exercise not supported"}
 
-  if exercise == "bench":
-    return analyze_bench(path)
+  normalized_job_id = job_id or f"python-{uuid.uuid4()}"
+  normalized_user_id = user_id or "unknown"
+  has_error = isinstance(res, dict) and bool(res.get("error"))
 
-  return {"error": "exercise not supported"}
+  payload = {
+    "jobId": normalized_job_id,
+    "userId": normalized_user_id,
+    "exercise": exercise,
+    "status": "failed" if has_error else "completed",
+    "result": None if has_error else res,
+    "error": res.get("error") if has_error else None,
+  }
+
+  publish_video_analysis_result(payload)
+  return payload
 
 
 def analyze_squat(path):

@@ -10,6 +10,8 @@ RUN pip install --no-cache-dir \
     fastapi==0.110.0 \
     uvicorn==0.29.0 \
     python-multipart \
+    python-dotenv \
+    redis \
     mediapipe==0.10.9 \
     opencv-python \
     numpy
