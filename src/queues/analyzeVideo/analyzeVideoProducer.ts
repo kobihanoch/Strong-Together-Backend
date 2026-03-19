@@ -1,7 +1,12 @@
+import { EnqueueAanalyzeVideoParams } from "../../types/videoAnalysisTypes.ts";
 import analyzeVideoQueue from "./analyzeVideoQueue.js";
 
 // Add jobs to queue
-export const enqueueAnalyzeVideo = async (fileKey, exercise, userId) => {
+export const enqueueAnalyzeVideo = async ({
+  fileKey,
+  exercise,
+  userId,
+}: EnqueueAanalyzeVideoParams): Promise<string> => {
   try {
     const job = await analyzeVideoQueue.add(
       {
@@ -20,9 +25,10 @@ export const enqueueAnalyzeVideo = async (fileKey, exercise, userId) => {
     console.log(`[Analyze video producer]: Enqueued ${userId} video`);
     return String(job.id);
   } catch (e) {
-    console.error(
-      `[Analyze video producer]: Failed to enqueue ${userId} video: ${e.message}`,
-    );
+    if (e instanceof Error)
+      console.error(
+        `[Analyze video producer]: Failed to enqueue ${userId} video: ${e.message}`,
+      );
     throw e;
   }
 };

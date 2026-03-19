@@ -38,6 +38,6 @@ export const publishVideoAnalysisJob = async (
   const userId = req.user.id;
   const { fileKey, exercise } = req.body;
 
-  const jobId = await enqueueAnalyzeVideo(fileKey, exercise, userId);
+  const jobId = await enqueueAnalyzeVideo({ fileKey, exercise, userId });
   return res.status(200).json({ jobId });
 };

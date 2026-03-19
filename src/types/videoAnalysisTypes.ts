@@ -16,3 +16,16 @@ export type GetPresignedUrlFromS3Response = {
   uploadUrl: string;
   fileKey: string;
 };
+
+export type EnqueueAanalyzeVideoParams = {
+  fileKey: string;
+  exercise: string;
+  userId: string;
+};
+
+export type AnalyzeVideoPayload = {
+  fileKey: string;
+  exercise: string;
+  userId: string;
+  expiresAt: number;
+};
