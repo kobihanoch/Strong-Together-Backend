@@ -1,9 +1,21 @@
-import sql from "../config/db.js";
+import type postgres from "postgres";
+import sql from "../config/db.ts";
 import { ensureUniqueUsername } from "../utils/oauthUtils.js";
 
-export async function queryFindUserIdWithGoogleUserId(googleUserId) {
-  const rows =
-    await sql`SELECT o.user_id, o.missing_fields FROM oauth_accounts o 
+interface OAuthLookupResult {
+  userId: string | null;
+  missing_fields: string | null;
+}
+
+interface OAuthLinkResult {
+  userId: string | null;
+}
+
+export async function queryFindUserIdWithGoogleUserId(
+  googleUserId: string,
+): Promise<OAuthLookupResult> {
+  const rows = await sql<{ user_id: string; missing_fields: string | null }[]>`
+    SELECT o.user_id, o.missing_fields FROM oauth_accounts o 
     WHERE o.provider_user_id=${googleUserId} AND o.provider='google'`;
   return {
     userId: rows[0]?.user_id || null,
@@ -20,15 +32,15 @@ export async function queryFindUserIdWithGoogleUserId(googleUserId) {
  * IMPORTANT: call this only when email is verified (email_verified === true).
  */
 export async function queryTryToLinkUserWithEmailGoogle(
-  googleEmail,
-  googleSub
-) {
+  googleEmail: string | null,
+  googleSub: string,
+): Promise<OAuthLinkResult> {
   if (!googleEmail) return { userId: null };
 
   // Use a transaction to avoid race conditions between lookup and insert.
-  return await sql.begin(async (trx) => {
+  return await sql.begin(async (trx: postgres.TransactionSql) => {
     // Lock the candidate row if it exists to avoid concurrent link races.
-    const existing = await trx`
+    const existing = await trx<{ id: string }[]>`
       SELECT u.id
       FROM users u
       WHERE lower(u.email) = lower(${googleEmail})
@@ -60,19 +72,19 @@ export async function queryTryToLinkUserWithEmailGoogle(
 }
 
 export async function queryCreateUserWithGoogleInfo(
-  candidateUsername,
-  email = null,
-  fullName = null,
-  oauthMissingFields = null,
-  googleSub,
-  googleEmail
-) {
-  return await sql.begin(async (trx) => {
+  candidateUsername: string | null,
+  email: string | null = null,
+  fullName: string | null = null,
+  oauthMissingFields: string | null = null,
+  googleSub: string,
+  googleEmail: string | null,
+): Promise<string> {
+  return await sql.begin(async (trx: postgres.TransactionSql) => {
     // Generate a unique username
     const username = await ensureUniqueUsername(trx, candidateUsername);
 
     // Create user
-    const [inserted] = await trx`
+    const [inserted] = await trx<{ id: string }[]>`
       INSERT INTO users (username, email, name, gender, is_verified, auth_provider)
       VALUES (${username}, ${email}, ${fullName}, 'Unknown', true, 'google')
       RETURNING id
@@ -99,9 +111,11 @@ export async function queryCreateUserWithGoogleInfo(
 // APPLE
 
 /** Same shape as the Google version: returns { userId, missing_fields } */
-export async function queryFindUserIdWithAppleUserId(appleUserId) {
-  const rows =
-    await sql`SELECT o.user_id, o.missing_fields FROM oauth_accounts o 
+export async function queryFindUserIdWithAppleUserId(
+  appleUserId: string,
+): Promise<OAuthLookupResult> {
+  const rows = await sql<{ user_id: string; missing_fields: string | null }[]>`
+    SELECT o.user_id, o.missing_fields FROM oauth_accounts o 
               WHERE o.provider_user_id=${appleUserId} AND o.provider='apple'`;
   return {
     userId: rows[0]?.user_id || null,
@@ -110,12 +124,15 @@ export async function queryFindUserIdWithAppleUserId(appleUserId) {
 }
 
 /** Link by verified email specifically for Apple */
-export async function queryTryToLinkUserWithEmailApple(appleEmail, appleSub) {
+export async function queryTryToLinkUserWithEmailApple(
+  appleEmail: string | null,
+  appleSub: string,
+): Promise<OAuthLinkResult> {
   if (!appleEmail) return { userId: null };
 
   // Use a transaction to avoid race conditions
-  return await sql.begin(async (trx) => {
-    const existing = await trx`
+  return await sql.begin(async (trx: postgres.TransactionSql) => {
+    const existing = await trx<{ id: string }[]>`
       SELECT u.id
       FROM users u
       WHERE lower(u.email) = lower(${appleEmail})
@@ -147,19 +164,19 @@ export async function queryTryToLinkUserWithEmailApple(appleEmail, appleSub) {
 
 /** Create brand new user + oauth link for Apple (mirrors the Google variant) */
 export async function queryCreateUserWithAppleInfo(
-  candidateUsername,
-  email = null,
-  fullName = null,
-  oauthMissingFields = null,
-  appleSub,
-  appleEmail
-) {
-  return await sql.begin(async (trx) => {
+  candidateUsername: string | null,
+  email: string | null = null,
+  fullName: string | null = null,
+  oauthMissingFields: string | null = null,
+  appleSub: string,
+  appleEmail: string | null,
+): Promise<string> {
+  return await sql.begin(async (trx: postgres.TransactionSql) => {
     // Generate unique username
     const username = await ensureUniqueUsername(trx, candidateUsername);
 
     // Create user
-    const [inserted] = await trx`
+    const [inserted] = await trx<{ id: string }[]>`
       INSERT INTO users (username, email, name, gender, is_verified, auth_provider)
       VALUES (${username}, ${email}, ${fullName}, 'Unknown', true, 'apple')
       RETURNING id
