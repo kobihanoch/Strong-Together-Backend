@@ -1,9 +1,3 @@
-export interface GetAllExercisesExercise {
-  id: string;
-  name: string;
-  specificTargetMuscle: string;
-}
+import { ExercisesMapByMuscle } from "../../dto/exercises.dto.ts";
 
-export type ExercisesMapByMuscle = Record<string, GetAllExercisesExercise[]>;
-
-export type GetAllExercsesResponse = ExercisesMapByMuscle;
+export type GetAllExercisesResponse = ExercisesMapByMuscle;
