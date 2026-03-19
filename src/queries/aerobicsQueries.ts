@@ -63,9 +63,7 @@ export const queryGetUserAerobicsForNDays = async (
   days: number,
   tz: string = "Asia/Jerusalem",
 ): Promise<UserAerobicsResponse> => {
-  const [obj] = await sql<
-    { data: { daily: unknown | null; weekly: unknown | null } }[]
-  >`
+  const [obj] = await sql<[{ data: UserAerobicsResponse }]>`
   /* Normalize parameters (default tz to UTC if empty) */
   WITH params AS (
     SELECT
