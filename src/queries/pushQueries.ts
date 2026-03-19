@@ -1,11 +1,15 @@
-import sql from "../config/db.js";
+import sql from '../config/db.ts';
+import { UserToHourlyReminder, UserWithNotificationsEnabled } from '../types/dto/notifications.dto.ts';
 
-export const queryGetAllUsersWithNotificationsEnabled = async () => {
-  return await sql`SELECT push_token, name FROM users WHERE push_token IS NOT NULL`;
+export const queryGetAllUsersWithNotificationsEnabled = async (): Promise<UserWithNotificationsEnabled[]> => {
+  const rows = await sql<UserWithNotificationsEnabled[]>`
+    SELECT push_token, name FROM users WHERE push_token IS NOT NULL`;
+
+  return rows as UserWithNotificationsEnabled[];
 };
 
-export const queryGetAllUsersToSendHourlyReminder = async () => {
-  const users = await sql`
+export const queryGetAllUsersToSendHourlyReminder = async (): Promise<UserToHourlyReminder[]> => {
+  const users = await sql<UserToHourlyReminder[]>`
     SELECT
       u.id AS user_id,
       u.name AS name,
@@ -28,5 +32,5 @@ export const queryGetAllUsersToSendHourlyReminder = async () => {
       AND usi.preferred_weekday = EXTRACT(DOW FROM TIMEZONE('UTC', NOW()))
   `;
 
-  return users;
+  return users as UserToHourlyReminder[];
 };
