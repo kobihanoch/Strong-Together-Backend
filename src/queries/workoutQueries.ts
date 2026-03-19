@@ -1,38 +1,51 @@
-import sql from "../config/db.js";
+import type postgres from "postgres";
+import sql from "../config/db.ts";
+import {
+  ExerciseTrackingAndStats,
+  FinishedWorkoutEntry,
+} from "../types/dto/exerciseTracking.dto.ts";
+import {
+  AddWorkoutSplitPayload,
+  WholeUserWorkoutPlan,
+  WorkoutSplitsMap,
+} from "../types/dto/workoutPlans.dto.ts";
 
-export async function queryWholeUserWorkoutPlan(userId, tz) {
-  return sql`
+export async function queryWholeUserWorkoutPlan(
+  userId: string,
+  tz: string,
+): Promise<WholeUserWorkoutPlan[]> {
+  return sql<WholeUserWorkoutPlan[]>`
     SELECT
       workoutplans.*,
       -- Localized timestamp derived from timestamptz using the requested time zone
       (workoutplans.updated_at AT TIME ZONE ${tz}) AS updated_at,
       (
         SELECT json_agg(
-                 to_jsonb(workoutsplits.*)
-                 || jsonb_build_object(
-                      'exercisetoworkoutsplit',
-                      (
-                        SELECT json_agg(
-                                 (to_jsonb(ews.*)
-                                  - 'workoutsplit_id'
-                                  - 'workout_id'
-                                  - 'exercise_id'
-                                  - 'created_at'
-                                  - 'order_index')
-                                 || jsonb_build_object(
-                                      'targetmuscle', ex.targetmuscle,
-                                      'specifictargetmuscle', ex.specifictargetmuscle
-                                    )
-                                 ORDER BY ews.order_index
-                               )
-                        FROM public.v_exercisetoworkoutsplit_expanded AS ews
-                        LEFT JOIN public.exercises ex ON ex.id = ews.exercise_id
-                        WHERE ews.workoutsplit_id = workoutsplits.id
-                          AND ews.is_active = TRUE              -- filter only active exercise-to-split rows
-                      )
-                    )
-                 ORDER BY workoutsplits.id
-               )
+                  to_jsonb(workoutsplits.*)
+                  || jsonb_build_object(
+                       'exercisetoworkoutsplit',
+                       (
+                         SELECT json_agg(
+                                  (to_jsonb(ews.*)
+                                   - 'workoutsplit_id'
+                                   - 'workout_id'
+                                   - 'exercise_id'
+                                   - 'created_at'
+                                   - 'order_index')
+                                  || jsonb_build_object(
+                                       'targetmuscle', ex.targetmuscle,
+                                       'specifictargetmuscle', ex.specifictargetmuscle
+                                     )
+                                  ORDER BY ews.order_index
+                                )
+                         FROM public.v_exercisetoworkoutsplit_expanded AS ews
+                         LEFT JOIN public.exercises ex ON ex.id = ews.exercise_id
+                         WHERE ews.workoutsplit_id = workoutsplits.id
+                           AND ews.is_active = TRUE               -- filter only active exercise-to-split rows
+                       )
+                     )
+                  ORDER BY workoutsplits.id
+                )
         FROM public.workoutsplits
         WHERE workoutsplits.workout_id = workoutplans.id
           AND workoutsplits.is_active = TRUE                     -- filter only active splits
@@ -45,8 +58,10 @@ export async function queryWholeUserWorkoutPlan(userId, tz) {
 }
 
 // For edit workout
-export const queryGetWorkoutSplitsObj = async (workoutId) => {
-  const rows = await sql`
+export const queryGetWorkoutSplitsObj = async (
+  workoutId: number,
+): Promise<{ splits: WorkoutSplitsMap }> => {
+  const rows = await sql<[{ splits: WorkoutSplitsMap }]>`
     SELECT jsonb_object_agg(
       ws.name,
       COALESCE(
@@ -199,11 +214,11 @@ export const queryGetWorkoutSplitsObj = async (workoutId) => {
  */
 
 export const queryGetExerciseTrackingAndStats = async (
-  userId,
-  days = 45,
-  tz = "Asia/Jerusalem"
-) => {
-  const [{ data }] = await sql`
+  userId: string,
+  days: number = 45,
+  tz: string = "Asia/Jerusalem",
+): Promise<ExerciseTrackingAndStats> => {
+  const [{ data }] = await sql<[{ data: ExerciseTrackingAndStats }]>`
   with 
   -- Bounds
   -- Even if a cron job exists in DB, I want to retreive only last 45 days
@@ -374,24 +389,25 @@ export const queryGetExerciseTrackingAndStats = async (
  * ]
  */
 export const queryInsertUserFinishedWorkout = async (
-  userId,
-  workoutArray,
-  workoutStartUtc,
-  workoutEndUtc
-) => {
+  userId: string,
+  workoutArray: FinishedWorkoutEntry[],
+  workoutStartUtc: string | null,
+  workoutEndUtc: string | null,
+): Promise<string> => {
   // English comments only inside the code
+  const workoutArrayJson = workoutArray as unknown as postgres.ParameterOrFragment<never>;
 
   // 1) find workoutsplit_id automatically from one of the exercisetosplit_id entries
-  const [{ workoutsplit_id }] = await sql`
+  const [{ workoutsplit_id }] = await sql<[{ workoutsplit_id: number }]>`
     select distinct ews.workoutsplit_id
-    from jsonb_to_recordset(${workoutArray}::jsonb) as t(exercisetosplit_id int8)
+    from jsonb_to_recordset(${workoutArrayJson}::jsonb) as t(exercisetosplit_id int8)
     join public.exercisetoworkoutsplit ews
       on ews.id = t.exercisetosplit_id
     limit 1;
   `;
 
   // 2) insert workout_summary with derived split_id
-  const [{ id: workoutSummaryId }] = await sql`
+  const [{ id: workoutSummaryId }] = await sql<[{ id: string }]>`
     insert into public.workout_summary (
       user_id,
       workout_start_utc,
@@ -417,7 +433,7 @@ export const queryInsertUserFinishedWorkout = async (
       t.reps::int8[],
       coalesce(t.notes, '')::text,
       ${workoutSummaryId}::uuid as workout_summary_id
-    from jsonb_to_recordset(${workoutArray}::jsonb) as t(
+    from jsonb_to_recordset(${workoutArrayJson}::jsonb) as t(
       exercisetosplit_id int8,
       weight float4[],
       reps int8[],
@@ -428,25 +444,27 @@ export const queryInsertUserFinishedWorkout = async (
   return workoutSummaryId;
 };
 
-export const queryDeleteUserWorkout = async (userId) => {
+export const queryDeleteUserWorkout = async (userId: string): Promise<void> => {
   await sql`DELETE FROM public.workoutplans WHERE user_id = ${userId}::uuid`;
 };
 
 // Adds a workout for user
 // Returns same structure as initial fetching to client
 export const queryAddWorkout = async (
-  userId,
-  workoutData,
-  workoutName = "My Workout"
-) => {
+  userId: string,
+  workoutData: AddWorkoutSplitPayload,
+  workoutName: string = "My Workout",
+): Promise<number> => {
   // Note: sql() here automatically uses the 'tx' bound by withRlsTx
   const payloadJson = workoutData;
+  const payloadJsonParam =
+    payloadJson as unknown as postgres.ParameterOrFragment<never>;
   const numSplits = Object.keys(payloadJson || {}).length;
   if (!numSplits) throw new Error("workoutData has no splits");
 
-  let planId; // --- STEP 1: UPSERT the WORKOUTPLAN (Parent) and retrieve the new ID. ---
+  let planId: number; // --- STEP 1: UPSERT the WORKOUTPLAN (Parent) and retrieve the new ID. ---
 
-  const planResult = await sql`
+  const planResult = await sql<[{ id: number }]>`
         WITH
         -- Ensure (or update) one active plan for this user
         plan AS (
@@ -464,12 +482,12 @@ export const queryAddWorkout = async (
         SELECT id FROM plan;
     `;
 
-  if (!planResult || planResult.length === 0) {
+  if (!planResult?.[0]) {
     throw new Error("Failed to create or retrieve workout plan ID.");
   }
   planId = planResult[0].id; // --- STEP 2: UPSERT the WORKOUTSPLITS (Children) and retrieve their IDs. --- // Must be separate so RLS policies on workoutsplits can see the workoutplan row (planId).
 
-  const splitsResult = await sql`
+  const splitsResult = await sql<Array<{ id: number; name: string }>>`
         WITH
         -- Deactivate all splits in this plan (we will re-activate only desired)
         deact_splits AS (
@@ -482,16 +500,20 @@ export const queryAddWorkout = async (
         -- Upsert desired splits from payload keys; set active = TRUE
         INSERT INTO public.workoutsplits (workout_id, name, is_active)
         SELECT ${planId}, kv.key::text, TRUE
-        FROM jsonb_each(${payloadJson}::jsonb) AS kv
+        FROM jsonb_each(${payloadJsonParam}::jsonb) AS kv
         WHERE jsonb_typeof(kv.value) = 'array'
         ON CONFLICT (workout_id, name)
         DO UPDATE SET is_active = TRUE
         RETURNING id, name;
     `; // Create a map for quick lookup: { split_name: split_id }
-  const splitMap = splitsResult.reduce((map, split) => {
-    map[split.name] = split.id;
-    return map;
-  }, {}); // --- STEP 3: UPSERT the EXERCISES (Grandchildren). --- // This must be separate so RLS policies on exercisetoworkoutsplit can see the workoutsplits rows.
+  const splitMap = splitsResult.reduce(
+    (map, split) => {
+      map[split.name] = split.id;
+      return map;
+    },
+    {} as Record<string, number>,
+  ); // --- STEP 3: UPSERT the EXERCISES (Grandchildren). --- // This must be separate so RLS policies on exercisetoworkoutsplit can see the workoutsplits rows.
+  const splitMapParam = splitMap as unknown as postgres.ParameterOrFragment<never>;
 
   await sql`
         WITH
@@ -513,7 +535,7 @@ export const queryAddWorkout = async (
         -- Final action: Upsert desired exercises per split; set active = TRUE
         INSERT INTO public.exercisetoworkoutsplit (workoutsplit_id, exercise_id, sets, order_index, is_active)
         SELECT
-            ((${splitMap}::jsonb) ->> kv.split_name::text)::bigint AS workoutsplit_id, -- Explicitly cast map to jsonb and use ->> operator for lookup
+            ((${splitMapParam}::jsonb) ->> kv.split_name::text)::bigint AS workoutsplit_id, -- Explicitly cast map to jsonb and use ->> operator for lookup
             (ex->>'id')::bigint AS exercise_id,
             CASE
                 WHEN jsonb_typeof(ex->'sets') = 'array' THEN (
@@ -525,10 +547,10 @@ export const queryAddWorkout = async (
             END AS sets,
             COALESCE((ex->>'order_index')::bigint, (ord - 1)) AS order_index,
             TRUE AS is_active
-        FROM jsonb_each(${payloadJson}::jsonb) AS kv(split_name, arr)
+        FROM jsonb_each(${payloadJsonParam}::jsonb) AS kv(split_name, arr)
         CROSS JOIN LATERAL jsonb_array_elements(arr) WITH ORDINALITY AS e(ex, ord)
         WHERE jsonb_typeof(arr) = 'array'
-          AND ((${splitMap}::jsonb) ->> kv.split_name::text) IS NOT NULL -- Use explicit casting for check too
+          AND ((${splitMapParam}::jsonb) ->> kv.split_name::text) IS NOT NULL -- Use explicit casting for check too
         ON CONFLICT (workoutsplit_id, exercise_id)
         DO UPDATE SET
             sets        = EXCLUDED.sets,

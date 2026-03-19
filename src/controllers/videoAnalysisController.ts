@@ -5,11 +5,11 @@ import { enqueueAnalyzeVideo } from "../queues/analyzeVideo/analyzeVideoProducer
 import {
   GetPresignedUrlFromS3Body,
   PublishVideoAnalysisJobBody,
-} from "../types/api/video-analysis/requests.ts";
+} from "../types/api/videoAnalysis/requests.ts";
 import {
   GetPresignedUrlFromS3Response,
   PublishVideoAnalysisJobResponse,
-} from "../types/api/video-analysis/responses.ts";
+} from "../types/api/videoAnalysis/responses.ts";
 
 // @desc    Get presigned URL from AWS S3
 // @route   GET /api/videoanalysis/getpresignedurl

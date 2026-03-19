@@ -2,7 +2,7 @@ import { createRedisSubscriber } from "../config/redisClient.js";
 import {
   AnalyzeVideoResultPayload,
   SquatRepetition,
-} from "../types/dto/video-analysis.dto.ts";
+} from "../types/dto/videoAnalysis.dto.ts";
 
 const VIDEO_ANALYSIS_RESULTS_CHANNEL = "video-analysis:results";
 

@@ -1,4 +1,4 @@
-import sql from "../config/db.js";
+import sql from "../config/db.ts";
 
 // Returns sender's username, full name and profile image path too
 /*

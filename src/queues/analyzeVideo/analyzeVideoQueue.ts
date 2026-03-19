@@ -1,5 +1,5 @@
 import Bull, { Queue } from "bull";
-import { AnalyzeVideoPayload } from "../../types/dto/video-analysis.dto.ts";
+import { AnalyzeVideoPayload } from "../../types/dto/videoAnalysis.dto.ts";
 
 declare global {
   var analyzeVideoQueue: Queue<AnalyzeVideoPayload> | undefined;
