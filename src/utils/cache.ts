@@ -1,7 +1,6 @@
 import pkg from "redis";
 import { gunzipSync, gzipSync } from "zlib";
 import { redis } from "../config/redisClient.js";
-const { commandOptions } = pkg;
 
 const TRACKING_NS = "xt:tracking:v1";
 const PLAN_NS = "xt:workoutplan:v1";
@@ -10,8 +9,10 @@ const AEROBICS_NS = "xt:aerobics:v1";
 const USERTIMEZONE_NS = "xt:timezone:v1";
 
 const enabled = process.env.CACHE_ENABLED === "true";
+const redisUnlink = redis?.unlink as ((...keys: string[]) => Promise<unknown>) | undefined;
+const redisDel = redis?.del as ((...keys: string[]) => Promise<unknown>) | undefined;
 
-const numFromEnv = (name, def) => {
+const numFromEnv = (name: string, def: number): number => {
   const v = Number(process.env[name]);
   return Number.isFinite(v) && v > 0 ? v : def;
 };
@@ -23,17 +24,25 @@ export const TTL_ANALYTICS = numFromEnv("CACHE_TTL_ANALYTICS_SEC", 1 * 60 * 60);
 export const TTL_AEROBICS = numFromEnv("CACHE_TTL_AEROBICS_SEC", 48 * 60 * 60); // 48 Hours
 
 // Key builders
-export const buildTrackingKeyStable = (userId, days, tz) =>
-  `${TRACKING_NS}:${userId}:${days}:${tz}`;
-export const buildPlanKeyStable = (userId, tz) => `${PLAN_NS}:${userId}:${tz}`;
-export const buildAnalyticsKeyStable = (userId) => `${ANALYTICS_NS}:${userId}`;
-export const buildAerobicsKeyStable = (userId, days, tz) =>
-  `${AEROBICS_NS}:${userId}:${days}:${tz}`;
-export const buildUserTimezoneKeyStable = (userId) =>
+export const buildTrackingKeyStable = (
+  userId: string,
+  days: number,
+  tz: string,
+): string => `${TRACKING_NS}:${userId}:${days}:${tz}`;
+export const buildPlanKeyStable = (userId: string, tz: string): string =>
+  `${PLAN_NS}:${userId}:${tz}`;
+export const buildAnalyticsKeyStable = (userId: string): string =>
+  `${ANALYTICS_NS}:${userId}`;
+export const buildAerobicsKeyStable = (
+  userId: string,
+  days: number,
+  tz: string,
+): string => `${AEROBICS_NS}:${userId}:${days}:${tz}`;
+export const buildUserTimezoneKeyStable = (userId: string): string =>
   `${USERTIMEZONE_NS}:${userId}`;
 
 // --- MINIMAL CHANGE: now reads compressed values, with legacy fallback ---
-export const cacheGetJSON = async (key) => {
+export const cacheGetJSON = async <T = any>(key: string): Promise<T | null> => {
   if (!enabled || !redis) return null;
   try {
     const b64 = await redis.get(key);
@@ -43,7 +52,7 @@ export const cacheGetJSON = async (key) => {
     // 2) Decompress
     const json = gunzipSync(gz).toString("utf8");
     // 3) Parse JSON
-    return JSON.parse(json);
+    return JSON.parse(json) as T;
   } catch (e) {
     console.log(e);
     return null;
@@ -51,7 +60,11 @@ export const cacheGetJSON = async (key) => {
 };
 
 // --- MINIMAL CHANGE: now always stores compressed (gzip) ---
-export const cacheSetJSON = async (key, obj, ttlSec) => {
+export const cacheSetJSON = async <T = any>(
+  key: string,
+  obj: T,
+  ttlSec: number,
+): Promise<void> => {
   if (!enabled || !redis) return;
   try {
     const json = JSON.stringify(obj);
@@ -67,7 +80,7 @@ export const cacheSetJSON = async (key, obj, ttlSec) => {
 };
 
 // Delete a single exact key
-export const cacheDeleteKey = async (key) => {
+export const cacheDeleteKey = async (key: string): Promise<void> => {
   if (!enabled || !redis) return;
   try {
     try {
@@ -81,12 +94,14 @@ export const cacheDeleteKey = async (key) => {
 };
 
 // Delets other timezone key
-export const cacheDeleteOtherTimezones = async (currentKey) => {
+export const cacheDeleteOtherTimezones = async (
+  currentKey: string,
+): Promise<void> => {
   if (!enabled || !redis || !currentKey) return;
 
   // --- helpers ---
   // Normalize to string and trim invisible characters
-  const normalizeKey = (k) =>
+  const normalizeKey = (k: string): string =>
     String(k)
       .normalize("NFC")
       .replace(/[\u200E\u200F\uFEFF]/g, "")
@@ -102,10 +117,10 @@ export const cacheDeleteOtherTimezones = async (currentKey) => {
   const pattern = `${base}:*`;
 
   // IANA-like tz (e.g., "Asia/Jerusalem", "America/New_York")
-  const looksLikeTz = (s) =>
+  const looksLikeTz = (s: string) =>
     /^[A-Za-z]+(?:[_-][A-Za-z]+)*(?:\/[A-Za-z]+(?:[_-][A-Za-z]+)*)+$/.test(s);
 
-  const buf = [];
+  const buf: string[] = [];
 
   // Some clients yield a string per iteration; others yield an array (chunk).
   for await (const chunk of redis.scanIterator({
@@ -136,9 +151,9 @@ export const cacheDeleteOtherTimezones = async (currentKey) => {
 
       if (buf.length >= 500) {
         try {
-          await redis.unlink(...buf);
+          await redisUnlink?.(...buf);
         } catch {
-          await redis.del(...buf);
+          await redisDel?.(...buf);
         }
         buf.length = 0;
       }
@@ -146,14 +161,18 @@ export const cacheDeleteOtherTimezones = async (currentKey) => {
   }
   if (buf.length) {
     try {
-      await redis.unlink(...buf);
+      await redisUnlink?.(...buf);
     } catch {
-      await redis.del(...buf);
+      await redisDel?.(...buf);
     }
   }
 };
 
-export const cacheStoreJti = async (prefix, jti, ttlSec) => {
+export const cacheStoreJti = async (
+  prefix: string,
+  jti: string,
+  ttlSec: number,
+): Promise<boolean> => {
   if (!enabled || !redis) return true;
 
   const key = `${prefix}:jti:${jti}`;

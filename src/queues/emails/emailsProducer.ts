@@ -1,4 +1,4 @@
-import { EmailPayload } from "../../types/emailsTypes.ts";
+import { EmailPayload } from "../../types/dto/emails.dto.ts";
 import emailQueue from "./emailsQueue.ts";
 
 // Add jobs to queue

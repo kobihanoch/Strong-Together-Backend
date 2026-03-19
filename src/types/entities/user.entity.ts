@@ -1,13 +1,13 @@
 export interface UserEntity {
-  id: string; // uuid
+  id: string;
   username: string | null;
   email: string | null;
   name: string | null;
   gender: string | null;
-  created_at: string; // timestamptz
+  created_at: string;
   profile_image_url: string | null;
   push_token: string | null;
-  password: string | null; // password_hash
+  password: string | null;
   role: string;
   is_first_login: boolean;
   token_version: number;

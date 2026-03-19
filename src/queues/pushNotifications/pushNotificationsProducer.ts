@@ -1,4 +1,4 @@
-import { NotificationPayload } from "../../types/notificationsTypes.ts";
+import { NotificationPayload } from "../../types/dto/notifications.dto.ts";
 import pushNotificationsQueue from "./pushNotificationsQueue.ts";
 
 // Add jobs to queue

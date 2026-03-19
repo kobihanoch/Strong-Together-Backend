@@ -1,5 +1,5 @@
 import Bull, { Queue } from "bull";
-import { NotificationPayload } from "../../types/notificationsTypes.ts";
+import { NotificationPayload } from "../../types/dto/notifications.dto.ts";
 
 declare global {
   var pushNotificationsQueue: Queue<NotificationPayload> | undefined;

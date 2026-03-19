@@ -2,7 +2,7 @@ import {
   ConfirmEmailChangeParams,
   ForgotPasswordEmailParams,
   ValidateUserEmailParams,
-} from "../types/emailsTypes.ts";
+} from "../types/dto/emails.dto.ts";
 
 // English comments only inside the code
 export const generateValidateUserEmail = ({

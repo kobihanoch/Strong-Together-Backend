@@ -3,7 +3,7 @@ import { queryGetExerciseMapByMuscle } from "../queries/exercisesQueries.js";
 import {
   ExercisesMapByMuscle,
   GetAllExercsesResponse,
-} from "../types/exercisesTypes.ts";
+} from "../types/api/exercises/responses.ts";
 
 // @desc    Get all exercises
 // @route   GET /api/exercises/getall

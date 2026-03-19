@@ -1,4 +1,4 @@
-import { EnqueueAanalyzeVideoParams } from "../../types/videoAnalysisTypes.ts";
+import { EnqueueAanalyzeVideoParams } from "../../types/dto/video-analysis.dto.ts";
 import analyzeVideoQueue from "./analyzeVideoQueue.js";
 
 // Add jobs to queue

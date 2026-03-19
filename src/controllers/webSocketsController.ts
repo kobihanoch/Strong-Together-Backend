@@ -2,8 +2,10 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import {
   GenerateTicketBody,
+} from "../types/api/web-sockets/requests.ts";
+import {
   GenerateTicketResponse,
-} from "../types/webSocketsTypes.ts";
+} from "../types/api/web-sockets/responses.ts";
 
 // @desc    Generates a ticket for websocket connection
 // @route   POST /api/ws/generateticket

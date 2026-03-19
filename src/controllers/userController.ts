@@ -28,19 +28,21 @@ import {
 } from "../templates/responseHTMLTemplates.js";
 import { decodeChangeEmailToken } from "../utils/tokenUtils.js";
 import { cacheStoreJti } from "../utils/cache.js";
+import { ChangeEmailTokenPayload } from "../types/dto/user.dto.ts";
 import {
-  CreateUserRequest,
   CreateUserResponse,
-  UpdateUserBody,
+  GetAuthenticatedUserByIdResponse,
+  SetProfilePicAndUpdateDBResponse,
   UpdateAuthenticatedUserResponse,
   UserDataResponse,
-  ChangeEmailTokenPayload,
-  GetAuthenticatedUserByIdResponse,
-  SaveUserPushTokenRequest,
-  SetProfilePicAndUpdateDBResponse,
+} from "../types/api/user/responses.ts";
+import {
   DeleteUserProfilePicRequest,
-} from "../types/userTypes.js";
-import { UserEntity } from "../types/db/entities.js";
+  SaveUserPushTokenRequest,
+  UpdateUserBody,
+  CreateUserRequest,
+} from "../types/api/user/requests.ts";
+import { UserEntity } from "../types/entities/user.entity.ts";
 
 const expo = new Expo();
 

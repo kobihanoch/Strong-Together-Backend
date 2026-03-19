@@ -1,5 +1,5 @@
 import Bull, { Queue } from "bull";
-import { EmailPayload } from "../../types/emailsTypes.ts";
+import { EmailPayload } from "../../types/dto/emails.dto.ts";
 
 declare global {
   var emailsQueue: Queue<EmailPayload> | undefined;

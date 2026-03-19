@@ -5,7 +5,7 @@ import {
 } from "../queries/pushQueries.js";
 import { enqueuePushNotifications } from "../queues/pushNotifications/pushNotificationsProducer.ts";
 import { computeDelayFromUTC } from "../utils/pushUtils.js";
-import { NotificationPayload } from "../types/notificationsTypes.ts";
+import { NotificationPayload } from "../types/dto/notifications.dto.ts";
 
 // @desc    Sends daily psuh (outside cron)
 // @route   GET /api/push/daily

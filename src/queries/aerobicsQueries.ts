@@ -1,4 +1,6 @@
-import sql from "../config/db.js";
+import sql from "../config/db.ts";
+import { AddAerobicInput } from "../types/dto/aerobics.dto.ts";
+import { UserAerobicsResponse } from "../types/api/aerobics/responses.ts";
 
 // Gets all records from last 45 days mapped by dates
 /**
@@ -57,11 +59,11 @@ import sql from "../config/db.js";
 // 2) In the weekly records array, we attach 'workout_time_utc' as the local timestamp (string) in that tz
 
 export const queryGetUserAerobicsForNDays = async (
-  userId,
-  days,
-  tz = "Asia/Jerusalem"
-) => {
-  const [obj] = await sql`
+  userId: string,
+  days: number,
+  tz: string = "Asia/Jerusalem",
+): Promise<UserAerobicsResponse> => {
+  const [obj] = await sql<{ data: UserAerobicsResponse }[]>`
   /* Normalize parameters (default tz to UTC if empty) */
   WITH params AS (
     SELECT
@@ -142,7 +144,10 @@ export const queryGetUserAerobicsForNDays = async (
 };
 
 // Add a new aerobic record
-export const queryAddAerobicTracking = async (userId, record) => {
+export const queryAddAerobicTracking = async (
+  userId: string,
+  record: AddAerobicInput,
+): Promise<void> => {
   const { durationMins, durationSec, type } = record;
   await sql`INSERT INTO aerobictracking (user_id, type, duration_mins, duration_sec) VALUES (${userId}, ${type}, ${durationMins}, ${durationSec})`;
 };

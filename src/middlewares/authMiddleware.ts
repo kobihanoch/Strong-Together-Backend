@@ -1,10 +1,13 @@
+import {
+  AccessTokenPayload,
+  AuthenticatedUser,
+} from "./../types/dto/auth.dto.ts";
 import { Response, NextFunction } from "express";
 import createError from "http-errors";
 import sql from "../config/db.js";
 import { decodeAccessToken, getAccessToken } from "../utils/tokenUtils.js";
 import { queryGetCurrentTokenVersion } from "../queries/authQueries.js";
 import * as crypto from "crypto";
-import { AccessTokenPayload, AuthenticatedUser } from "../types/authTypes.ts";
 
 export const protect = async (
   req: any,

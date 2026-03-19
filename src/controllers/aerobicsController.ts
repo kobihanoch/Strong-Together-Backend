@@ -1,22 +1,31 @@
 import {
+  AddAerobicInput,
+} from "./../types/dto/aerobics.dto.ts";
+import {
+  AddUserAerobicsRequestBody,
+} from "./../types/api/aerobics/requests.ts";
+import { GetUserAerobicsQueryParams } from "./../types/api/aerobics/params.ts";
+import { UserAerobicsResponse } from "./../types/api/aerobics/responses.ts";
+import { Request, Response } from "express";
+import {
   queryAddAerobicTracking,
   queryGetUserAerobicsForNDays,
-} from "../queries/aerobicsQueries.js";
+} from "../queries/aerobicsQueries.ts";
 import {
   buildAerobicsKeyStable,
   cacheDeleteOtherTimezones,
   cacheGetJSON,
   cacheSetJSON,
   TTL_AEROBICS,
-} from "../utils/cache.js";
+} from "../utils/cache.ts";
 
 /** Pure helper (no req/res) */
 export const getAerobicsData = async (
-  userId,
-  days = 45,
-  fromCache = true,
-  tz = "Asia/Jerusalem"
-) => {
+  userId: string,
+  days: number = 45,
+  fromCache: boolean = true,
+  tz: string = "Asia/Jerusalem",
+): Promise<{ payload: UserAerobicsResponse; cacheHit: boolean }> => {
   // Check for cache
   const aerobicsKey = buildAerobicsKeyStable(userId, days, tz);
   if (fromCache) {
@@ -38,13 +47,16 @@ export const getAerobicsData = async (
 // @desc    Get aerobics for user
 // @route   GET /api/aerobics/get
 // @access  Private
-export const getUserAerobics = async (req, res) => {
+export const getUserAerobics = async (
+  req: Request<{}, UserAerobicsResponse, {}, GetUserAerobicsQueryParams>,
+  res: Response<UserAerobicsResponse>,
+): Promise<Response<UserAerobicsResponse>> => {
   const tz = req.query.tz;
   const { payload, cacheHit } = await getAerobicsData(
-    req.user.id,
+    req.user!.id,
     45,
     true,
-    tz
+    tz,
   );
   res.set("X-Cache", cacheHit ? "HIT" : "MISS");
   return res.status(200).json(payload);
@@ -53,14 +65,21 @@ export const getUserAerobics = async (req, res) => {
 // @desc    Add an aerobic record for user
 // @route   POST /api/aerobics/add
 // @access  Private
-export const addUserAerobics = async (req, res) => {
-  await queryAddAerobicTracking(req.user.id, req.body.record);
+export const addUserAerobics = async (
+  req: Request<
+    {},
+    UserAerobicsResponse,
+    AddUserAerobicsRequestBody
+  >,
+  res: Response<UserAerobicsResponse>,
+): Promise<Response<UserAerobicsResponse>> => {
+  await queryAddAerobicTracking(req.user!.id, req.body.record);
   const tz = req.body.tz;
 
   // Insert into cache
-  const { payload } = await getAerobicsData(req.user.id, 45, false, tz);
+  const { payload } = await getAerobicsData(req.user!.id, 45, false, tz);
 
-  const aerobicsKey = buildAerobicsKeyStable(req.user.id, 45, tz);
+  const aerobicsKey = buildAerobicsKeyStable(req.user!.id, 45, tz);
   await cacheSetJSON(aerobicsKey, payload, TTL_AEROBICS);
   return res.status(201).json(payload);
 };

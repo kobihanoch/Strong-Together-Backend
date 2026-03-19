@@ -4,10 +4,12 @@ import { enqueueAnalyzeVideo } from "../queues/analyzeVideo/analyzeVideoProducer
 
 import {
   GetPresignedUrlFromS3Body,
-  GetPresignedUrlFromS3Response,
   PublishVideoAnalysisJobBody,
+} from "../types/api/video-analysis/requests.ts";
+import {
+  GetPresignedUrlFromS3Response,
   PublishVideoAnalysisJobResponse,
-} from "../types/videoAnalysisTypes.ts";
+} from "../types/api/video-analysis/responses.ts";
 
 // @desc    Get presigned URL from AWS S3
 // @route   GET /api/videoanalysis/getpresignedurl
