@@ -46,6 +46,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/http-errors": "^2.0.5"
+    "@types/http-errors": "^2.0.5",
+    "@types/jsonwebtoken": "^9.0.10"
   }
 }

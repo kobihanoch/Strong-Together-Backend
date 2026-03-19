@@ -1,4 +1,4 @@
-// src/controllers/userController.js
+import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { Expo } from "expo-server-sdk";
 import createError from "http-errors";
@@ -28,16 +28,39 @@ import {
 } from "../templates/responseHTMLTemplates.js";
 import { decodeChangeEmailToken } from "../utils/tokenUtils.js";
 import { cacheStoreJti } from "../utils/cache.js";
+import { AuthenticatedRequest } from "../types/sharedTypes.js";
+import {
+  CreateUserRequest,
+  CreateUserResponse,
+  UpdateUserBody,
+  UpdateAuthenticatedUserResponse,
+  UserDataResponse,
+  ChangeEmailTokenPayload,
+  GetAuthenticatedUserByIdResponse,
+  SaveUserPushTokenRequest,
+  SetProfilePicAndUpdateDBResponse,
+  DeleteUserProfilePicRequest,
+} from "../types/userTypes.js";
+import { UserEntity } from "../types/db/entities.js";
+
 const expo = new Expo();
 
 // ---------- HELPERS -----------------
-export const getUserData = async (userId) => {
-  const rows = await queryAuthenticatedUserById(userId);
+export const getUserData = async (
+  userId: string,
+): Promise<{ payload: UserDataResponse["user_data"] }> => {
+  const rows = (await queryAuthenticatedUserById(
+    userId,
+  )) as unknown as UserDataResponse[];
   const [user] = rows;
+  if (!user) throw createError(404, "User not found");
   return { payload: user.user_data };
 };
 
-export const updateUsersReminderSettingsTimezone = async (userId, tz) => {
+export const updateUsersReminderSettingsTimezone = async (
+  userId: string,
+  tz: string,
+): Promise<void> => {
   await sql`update public.user_reminder_settings urs set timezone=${tz}::text where urs.user_id = ${userId}::uuid and urs.timezone is distinct from ${tz}::text;`;
 };
 
@@ -46,27 +69,33 @@ export const updateUsersReminderSettingsTimezone = async (userId, tz) => {
 // @desc    Create a new user
 // @route   POST /api/users/create
 // @access  Public
-export const createUser = async (req, res) => {
+export const createUser = async (
+  req: Request<{}, {}, CreateUserRequest>,
+  res: Response<CreateUserResponse>,
+): Promise<void | Response> => {
   const { username, fullName, email, password, gender } = req.body;
   // Check if user already exists
-  const rowsExists = await queryUserExistsByUsernameOrEmail(username, email);
+  const rowsExists = (await queryUserExistsByUsernameOrEmail(
+    username,
+    email,
+  )) as unknown as Pick<UserEntity, "id">[];
   const [user] = rowsExists;
   if (user) throw createError(400, "User already exists");
 
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(password, salt);
 
-  const created = await queryInsertUser(
+  const created = (await queryInsertUser(
     username,
     fullName,
     email,
     gender,
-    hash
-  );
+    hash,
+  )) as UserEntity;
 
-  await sendVerificationEmail(email, created.id, fullName);
+  await sendVerificationEmail(email as string, created.id, fullName);
 
-  res
+  return res
     .status(201)
     .json({ message: "User created successfully!", user: created });
 };
@@ -74,15 +103,21 @@ export const createUser = async (req, res) => {
 // @desc    Get authenticated user by ID
 // @route   GET /api/users/get
 // @access  Private
-export const getAuthenticatedUserById = async (req, res) => {
+export const getAuthenticatedUserById = async (
+  req: AuthenticatedRequest,
+  res: Response<GetAuthenticatedUserByIdResponse>,
+): Promise<void | Response> => {
   const { payload } = await getUserData(req.user.id);
-  res.status(200).json(payload);
+  return res.status(200).json(payload);
 };
 
 // @desc    Update authenticated user
 // @route   PUT /api/users/updateself
 // @access  Private
-export const updateAuthenticatedUser = async (req, res) => {
+export const updateAuthenticatedUser = async (
+  req: AuthenticatedRequest<UpdateUserBody>,
+  res: Response<UpdateAuthenticatedUserResponse>,
+): Promise<void | Response> => {
   const {
     username = null,
     fullName = null,
@@ -94,20 +129,20 @@ export const updateAuthenticatedUser = async (req, res) => {
     setCompletedOnOAuth = false,
   } = req.body;
 
-  let hashed = null;
+  let hashed: string | null = null;
   if (password) {
     hashed = await bcrypt.hash(password, 10);
   }
 
-  let rowsUpdated;
+  let rowsUpdated: UserDataResponse[];
   try {
-    rowsUpdated = await queryUpdateAuthenticatedUser(
+    rowsUpdated = (await queryUpdateAuthenticatedUser(
       req.user.id,
       { username, fullName, gender, hashed, profileImgUrl, pushToken },
       setCompletedOnOAuth,
-      email // emailCandidate for the probe (may be null)
-    );
-  } catch (e) {
+      email as any, // emailCandidate for the probe (may be null)
+    )) as unknown as UserDataResponse[];
+  } catch (e: any) {
     if (e.code === "23505") {
       throw createError(409, "Username or email already in use");
     }
@@ -117,13 +152,15 @@ export const updateAuthenticatedUser = async (req, res) => {
   const [updated] = rowsUpdated;
 
   // fetch current name and current email to decide if we really changed it
-  const [userRow] = await sql`
+  const [userRow] = (await sql`
     SELECT name, email
     FROM users
     WHERE id = ${req.user.id}
     LIMIT 1
-  `;
-  if (!userRow) return res.status(404).json({ message: "User not found" });
+  `) as Pick<UserEntity, "name" | "email">[];
+
+  if (!userRow)
+    return res.status(404).json({ message: "User not found" } as any);
 
   const currentEmail = (userRow.email || "").trim().toLowerCase();
   const candidate = (email || "").trim().toLowerCase();
@@ -133,7 +170,7 @@ export const updateAuthenticatedUser = async (req, res) => {
     await sendVerificationEmailForEmailUpdate(
       candidate,
       req.user.id,
-      userRow.name || "there"
+      userRow.name || "there",
     );
     emailChanged = true;
   }
@@ -148,8 +185,11 @@ export const updateAuthenticatedUser = async (req, res) => {
 // @desc    Confirm email change (via link)
 // @route   PUT /api/users/changeemail?token=...
 // @access  Public (link-based)
-export const updateSelfEmail = async (req, res) => {
-  const token = req.query?.token;
+export const updateSelfEmail = async (
+  req: Request,
+  res: Response,
+): Promise<void | Response> => {
+  const token = req.query?.token as string | undefined;
   if (!token)
     return res
       .status(401)
@@ -157,7 +197,9 @@ export const updateSelfEmail = async (req, res) => {
       .set("Cache-Control", "no-store")
       .send(generateEmailChangeFailedHTML("Missing token"));
 
-  const decoded = decodeChangeEmailToken(token);
+  const decoded = decodeChangeEmailToken(
+    token,
+  ) as ChangeEmailTokenPayload | null;
   if (!decoded)
     return res
       .status(401)
@@ -206,10 +248,8 @@ export const updateSelfEmail = async (req, res) => {
         SET email = ${normalized}
         WHERE id = ${sub}
       `;
-      // Optionally bump token version to force clients to refresh auth:
-      // await trx`UPDATE users SET token_version = token_version + 1 WHERE id = ${sub}`;
     });
-  } catch (e) {
+  } catch (e: any) {
     if (e.code === "23505") {
       console.error("Email already in use");
       return res
@@ -238,23 +278,32 @@ export const updateSelfEmail = async (req, res) => {
 // @desc    Delete a user by ID
 // @route   DELETE /api/users/deleteself
 // @access  Private/Admin
-export const deleteSelfUser = async (req, res) => {
+export const deleteSelfUser = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<void | Response> => {
   await queryDeleteUserById(req.user.id);
-  res.json({ message: "User deleted successfully" });
+  return res.json({ message: "User deleted successfully" });
 };
 
 // @desc    Save user's expo push token to DB
 // @route   PUT /api/users/pushtoken
 // @access  Private
-export const saveUserPushToken = async (req, res) => {
+export const saveUserPushToken = async (
+  req: AuthenticatedRequest<SaveUserPushTokenRequest>,
+  res: Response,
+): Promise<void | Response> => {
   await sql`UPDATE users SET push_token=${req.body.token} WHERE id=${req.user.id}`;
-  res.status(204).end();
+  return res.status(204).end();
 };
 
 // @desc    Stores profile pic in bucket, and updates user DB to profile pic new URL
 // @route   PUT /api/users/setprofilepic
 // @access  Private
-export const setProfilePicAndUpdateDB = async (req, res) => {
+export const setProfilePicAndUpdateDB = async (
+  req: AuthenticatedRequest & { file?: any },
+  res: Response<SetProfilePicAndUpdateDBResponse>,
+): Promise<void | Response> => {
   if (!req.file) {
     throw createError(400, "No file provided");
   }
@@ -268,14 +317,17 @@ export const setProfilePicAndUpdateDB = async (req, res) => {
   const key = `${userId}/${Date.now()}${ext}`;
 
   const { path: newPath, publicUrl } = await uploadBufferToSupabase(
-    process.env.BUCKET_NAME,
+    process.env.BUCKET_NAME as string,
     key,
     req.file.buffer,
-    req.file.mimetype
+    req.file.mimetype,
   );
 
   // Get last profile pic url to delete
-  const [row] = await queryGetUserProfilePicURL(userId);
+  const [row] = (await queryGetUserProfilePicURL(userId)) as unknown as Pick<
+    UserEntity,
+    "profile_image_url"
+  >[];
   const oldPath = row?.profile_image_url;
 
   // Update user profile url
@@ -283,11 +335,11 @@ export const setProfilePicAndUpdateDB = async (req, res) => {
 
   // Delete last image from bucket
   if (oldPath && oldPath !== newPath) {
-    deleteFromSupabase(oldPath).catch((e) =>
+    deleteFromSupabase(oldPath).catch((e: any) =>
       console.warn(
         "Failed to delete old profile image:",
-        e?.response?.data || e.message
-      )
+        e?.response?.data || e.message,
+      ),
     );
   }
 
@@ -299,7 +351,10 @@ export const setProfilePicAndUpdateDB = async (req, res) => {
 // @desc    Deletes a pic from bucket and from user DB
 // @route   DELETE /api/users/deleteprofilepic
 // @access  Private
-export const deleteUserProfilePic = async (req, res) => {
+export const deleteUserProfilePic = async (
+  req: AuthenticatedRequest<DeleteUserProfilePicRequest>,
+  res: Response,
+): Promise<void | Response> => {
   await deleteFromSupabase(req.body.path);
   // Update user profile url
   await queryUpdateUserProfilePicURL(req.user.id, null);

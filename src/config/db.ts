@@ -1,15 +1,15 @@
-// English comments only inside code
 import postgres from "postgres";
 import dns from "dns";
 import { AsyncLocalStorage } from "node:async_hooks";
+import { Request, Response, NextFunction } from "express";
 
 dns.setDefaultResultOrder("ipv4first");
 
 const connectionString = process.env.DATABASE_URL;
 
 // Base pool client (PgBouncer safe)
-function makeClient() {
-  return postgres(connectionString, {
+function makeClient(): postgres.Sql {
+  return postgres(connectionString!, {
     ssl: "require",
     prepare: false, // safer with transaction pooling
     connect_timeout: 30,
@@ -19,16 +19,22 @@ function makeClient() {
 let _sql = makeClient();
 
 // Per-request context: { tx, userId }
-const als = new AsyncLocalStorage();
+const als = new AsyncLocalStorage<{
+  tx: postgres.Sql | postgres.TransactionSql;
+  userId?: string;
+}>();
 
 // Detect transient connection errors
-function isTransientConnError(err) {
+function isTransientConnError(err: any): boolean {
   const msg = String(err?.message || "");
   return /CONNECTION_ENDED|ECONNRESET|terminat(ed|ion)/i.test(msg);
 }
 
 // Global tagged template: prefers the request-bound tx when present
-async function sql(strings, ...values) {
+async function sql(
+  strings: TemplateStringsArray,
+  ...values: any[]
+): Promise<any> {
   const store = als.getStore();
   const runner = store?.tx || _sql;
 
@@ -45,15 +51,17 @@ async function sql(strings, ...values) {
 }
 
 // Optional: manual transaction if you ever need it
-sql.begin = async (fn) => {
+(sql as any).begin = async (
+  fn: (tx: postgres.TransactionSql) => Promise<any>,
+): Promise<any> => {
   const store = als.getStore();
-  const runner = store?.tx || _sql;
-  return runner.begin(fn);
+  const runner = (store?.tx || _sql) as postgres.Sql;
+  return runner.begin(fn as any);
 };
 
 // Wrap a protected route with a single tx + injected claims (RLS)
-export const withRlsTx = (handler) => {
-  return async (req, res, next) => {
+export const withRlsTx = (handler: Function) => {
+  return async (req: any, res: Response, next: NextFunction) => {
     const userId = req.user?.id; // set by your auth middleware
     if (!userId) return handler(req, res, next); // public route
 
@@ -80,12 +88,15 @@ export const withRlsTx = (handler) => {
 };
 
 // Quick connectivity check (optional)
-export const connectDB = async () => {
+export const connectDB = async (): Promise<void> => {
   try {
     await sql`select 1 as connected`;
     console.log("[Postgres]: Connected to Postgres.");
-  } catch (err) {
+  } catch (err: any) {
     console.log("[Postgres]: Connection to Postgres has failed.", err.message);
   }
 };
-export default sql;
+
+export default sql as unknown as postgres.Sql & {
+  begin: <T>(fn: (tx: postgres.TransactionSql) => Promise<T>) => Promise<T>;
+};
