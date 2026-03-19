@@ -1,8 +1,8 @@
-// src/controllers/authController.js
 import bcrypt from "bcryptjs";
+import { Request, Response } from "express";
 import createError from "http-errors";
 import jwt from "jsonwebtoken";
-import sql from "../config/db.js";
+import sql from "../config/db.ts";
 import {
   queryBumpTokenVersionAndGetSelfData,
   queryBumpTokenVersionAndGetSelfDataCAS,
@@ -12,33 +12,43 @@ import {
   queryUpdateUserVerficiationStatus,
   queryUserByIdentifierForLogin,
   queryUserByUsername,
-} from "../queries/authQueries.js";
+} from "../queries/authQueries.ts";
 import { queryUserExistsByUsernameOrEmail } from "../queries/userQueries.js";
 import {
   sendForgotPasswordEmail,
   sendVerificationEmail,
-} from "../services/emailService.js";
-import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.js";
+} from "../services/emailService.ts";
+import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.ts";
 import {
   generateVerificationFailedHTML,
   generateVerifiedHTML,
-} from "../templates/responseHTMLTemplates.js";
+} from "../templates/responseHTMLTemplates.ts";
+import { LoginRequestBody } from "../types/api/auth/requests.ts";
+import {
+  LoginResponse,
+  MessageResponse,
+  RefreshTokenResponse,
+  ResetPasswordResponse,
+} from "../types/api/auth/responses.ts";
+import { cacheStoreJti } from "../utils/cache.ts";
 import {
   decodeForgotPasswordToken,
   decodeRefreshToken,
   decodeVerifyToken,
   getRefreshToken,
 } from "../utils/tokenUtils.js";
-import { cacheStoreJti } from "../utils/cache.js";
-import { isEnglishName } from "../utils/oauthUtils.js";
+import { AccessTokenPayload } from "../types/dto/auth.dto.ts";
 
 // @desc    Login a user
 // @route   POST /api/auth/login
 // @access  Public
-export const loginUser = async (req, res) => {
+export const loginUser = async (
+  req: Request<{}, LoginResponse, LoginRequestBody>,
+  res: Response<LoginResponse>,
+): Promise<Response<LoginResponse>> => {
   const { identifier, password } = req.body;
 
-  const jkt = req.headers["dpop-key-binding"];
+  const jkt = req.headers["dpop-key-binding"] as string | undefined;
   if (process.env.DPOP_ENABLED === "true") {
     if (!jkt) {
       throw createError(400, "DPoP-Key-Binding header is missing.");
@@ -50,7 +60,7 @@ export const loginUser = async (req, res) => {
   if (!user) throw createError(401, "Invalid credentials");
 
   // Check if user exists
-  const isMatch = await bcrypt.compare(password, user.password);
+  const isMatch = await bcrypt.compare(password, user.password!);
   if (!isMatch) throw createError(401, "Invalid credentials");
 
   // Check verification
@@ -62,7 +72,7 @@ export const loginUser = async (req, res) => {
   if (user.is_first_login) {
     await querySetUserFirstLoginFalse(user.id);
     try {
-      await sendSystemMessageToUserWhenFirstLogin(user.id, user.name);
+      await sendSystemMessageToUserWhenFirstLogin(user.id, user.name!);
     } catch (e) {
       console.log(e);
     }
@@ -88,8 +98,8 @@ export const loginUser = async (req, res) => {
       tokenVer: token_version,
       ...cnfClaim,
     },
-    process.env.JWT_ACCESS_SECRET,
-    { expiresIn: "5m" }
+    process.env.JWT_ACCESS_SECRET!,
+    { expiresIn: "5m" },
   );
 
   const refreshToken = jwt.sign(
@@ -99,12 +109,12 @@ export const loginUser = async (req, res) => {
       tokenVer: token_version,
       ...cnfClaim,
     },
-    process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "14d" }
+    process.env.JWT_REFRESH_SECRET!,
+    { expiresIn: "14d" },
   );
 
   res.set("Cache-Control", "no-store");
-  res.status(200).json({
+  return res.status(200).json({
     message: "Login successful",
     user: userData?.id,
     accessToken: accessToken,
@@ -115,14 +125,19 @@ export const loginUser = async (req, res) => {
 // @desc    Logout a user
 // @route   POST /api/auth/logout
 // @access  Public
-export const logoutUser = async (req, res) => {
+export const logoutUser = async (
+  req: Request<{}, MessageResponse>,
+  res: Response<MessageResponse>,
+): Promise<Response<MessageResponse>> => {
   // Delete expired tokens every log out attempt
   //await queryDeleteExpiredBlacklistedTokens();
 
   // Get tokens from request body and decode
   const refreshToken = getRefreshToken(req);
   // Decode tokens
-  const decodedRefresh = decodeRefreshToken(refreshToken);
+  const decodedRefresh = decodeRefreshToken(
+    refreshToken,
+  ) as AccessTokenPayload | null;
 
   if (decodedRefresh) {
     //await queryInsertBlacklistedToken(refreshToken, expiresAtRefresh);
@@ -132,15 +147,18 @@ export const logoutUser = async (req, res) => {
     ]);
   }
 
-  res.status(200).json({ message: "Logged out successfully" });
+  return res.status(200).json({ message: "Logged out successfully" });
 };
 
 // @desc    Refresh token (sliding session)
 // @route   POST /api/auth/refresh
 // @access  Public
-export const refreshAccessToken = async (req, res) => {
+export const refreshAccessToken = async (
+  req: Request,
+  res: Response<RefreshTokenResponse>,
+): Promise<Response<RefreshTokenResponse>> => {
   //await queryDeleteExpiredBlacklistedTokens();
-  const dpopJkt = req.dpopJkt;
+  const dpopJkt = (req as any).dpopJkt; // Casting until express.d.ts is fully loaded
   if (process.env.DPOP_ENABLED === "true") {
     if (!dpopJkt) {
       // Should not happen if dpopValidationMiddleware ran first
@@ -152,13 +170,13 @@ export const refreshAccessToken = async (req, res) => {
   if (!refreshToken) throw createError(401, "No refresh token provided");
 
   // Verify refresh token
-  const decoded = decodeRefreshToken(refreshToken);
+  const decoded = decodeRefreshToken(refreshToken) as AccessTokenPayload | null;
   if (!decoded) throw createError(401, "Invalid or expired refresh token");
 
   if (process.env.DPOP_ENABLED === "true") {
     // One time migration path for older versions (newer tokens will pu JKT inside)
     const tokenJkt = decoded.cnf?.jkt;
-    if (tokenJkt && tokenJkt !== req.dpopJkt) {
+    if (tokenJkt && tokenJkt !== dpopJkt) {
       throw createError(401, "Proof-of-Possession failed (JKT mismatch).");
     }
   }
@@ -167,7 +185,7 @@ export const refreshAccessToken = async (req, res) => {
   // If not rows - there is a gap between last token and token_version => login was fired in another device -> logout
   const [user = null] = await queryBumpTokenVersionAndGetSelfDataCAS(
     decoded.id,
-    decoded.tokenVer
+    decoded.tokenVer,
   );
   if (!user) throw createError(401, "New login required");
 
@@ -192,8 +210,8 @@ export const refreshAccessToken = async (req, res) => {
       tokenVer: token_version,
       ...cnfClaim,
     },
-    process.env.JWT_ACCESS_SECRET,
-    { expiresIn: "5m" }
+    process.env.JWT_ACCESS_SECRET!,
+    { expiresIn: "5m" },
   );
 
   const newRefresh = jwt.sign(
@@ -203,12 +221,12 @@ export const refreshAccessToken = async (req, res) => {
       tokenVer: token_version,
       ...cnfClaim,
     },
-    process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "14d" }
+    process.env.JWT_REFRESH_SECRET!,
+    { expiresIn: "14d" },
   );
 
   res.set("Cache-Control", "no-store");
-  res.status(200).json({
+  return res.status(200).json({
     message: "Access token refreshed",
     accessToken: newAccess,
     refreshToken: newRefresh,
@@ -219,7 +237,10 @@ export const refreshAccessToken = async (req, res) => {
 // @desc    Verify user acoount
 // @route   GET /api/auth/verify
 // @access  Public
-export const verifyUserAccount = async (req, res) => {
+export const verifyUserAccount = async (
+  req: Request<{}, any, any, { token?: string }>,
+  res: Response,
+): Promise<any> => {
   const { token } = req.query;
   if (!token) throw createError(400, "Missing token");
   const decoded = decodeVerifyToken(token);
@@ -251,7 +272,7 @@ export const verifyUserAccount = async (req, res) => {
       .send(generateVerificationFailedHTML());
   }
 
-  await queryUpdateUserVerficiationStatus(decoded.sub, true);
+  await queryUpdateUserVerficiationStatus(sub, true);
   const html = generateVerifiedHTML();
 
   return res
@@ -264,10 +285,14 @@ export const verifyUserAccount = async (req, res) => {
 // @desc    Validate user acoount
 // @route   POST /api/auth/sendverificationemail
 // @access  Public
-export const sendVerificationMail = async (req, res) => {
+export const sendVerificationMail = async (
+  req: Request<{}, any, { email: string }>,
+  res: Response,
+): Promise<any> => {
   const { email } = req.body;
-  const [user = null] =
-    await sql`SELECT id, name, username FROM users WHERE email=${email}`;
+  const [user = null] = await sql<
+    { id: string; name: string; username: string }[]
+  >`SELECT id, name, username FROM users WHERE email=${email}`;
   if (!user) return res.status(204).end();
   const { id, name } = user;
   await sendVerificationEmail(email, id, user.name ? user.name : user.username);
@@ -277,12 +302,19 @@ export const sendVerificationMail = async (req, res) => {
 // @desc    Resend email to new address and verify user acoount
 // @route   PUT /api/auth/changeemailverify
 // @access  Public
-export const changeEmailAndVerify = async (req, res) => {
+export const changeEmailAndVerify = async (
+  req: Request<
+    {},
+    any,
+    { username: string; password: string; newEmail: string }
+  >,
+  res: Response,
+): Promise<any> => {
   const { username, password, newEmail } = req.body;
 
   const [user = null] = await queryUserByUsername(username);
   if (!user) throw createError(401, "Invalid credentials");
-  const ok = await bcrypt.compare(password, user.password);
+  const ok = await bcrypt.compare(password, user.password!);
   if (!ok) throw createError(401, "Invalid credentials");
 
   if (user.is_verified) throw createError(400, "Account already verified");
@@ -294,29 +326,37 @@ export const changeEmailAndVerify = async (req, res) => {
   await sendVerificationEmail(
     newEmail,
     user.id,
-    user.name ? user.name : user.username
+    user.name ? user.name : user.username!,
   );
 
-  res.status(204).end();
+  return res.status(204).end();
 };
 
 // @desc    Resend email to new address and verify user acoount
 // @route   GET /api/auth/checkuserverify
 // @access  Public
-export const checkUserVerify = async (req, res) => {
-  const [user] =
-    await sql`SELECT is_verified FROM users WHERE username=${req.query.username}`;
+export const checkUserVerify = async (
+  req: Request<{}, any, any, { username: string }>,
+  res: Response<{ isVerified: boolean }>,
+): Promise<Response<{ isVerified: boolean }>> => {
+  const [user] = await sql<
+    { is_verified: boolean }[]
+  >`SELECT is_verified FROM users WHERE username=${req.query.username}`;
   return res.status(200).json({ isVerified: user?.is_verified ?? false });
 };
 
 // @desc    Sends email for resetting password
 // @route   POST /api/auth/forgotpassemail
 // @access  Public
-export const sendChangePassEmail = async (req, res) => {
+export const sendChangePassEmail = async (
+  req: Request<{}, any, { identifier: string }>,
+  res: Response,
+): Promise<any> => {
   const { identifier } = req.body;
   if (!identifier) throw createError(400, "Please fill username or email");
-  const [user = null] =
-    await sql`SELECT id, email, name, username FROM users WHERE 
+  const [user = null] = await sql<
+    { id: string; email: string; name: string; username: string }[]
+  >`SELECT id, email, name, username FROM users WHERE 
       auth_provider='app' 
       AND (username=${identifier} OR email=${identifier}) LIMIT 1`;
   // Don;t overshare
@@ -325,7 +365,7 @@ export const sendChangePassEmail = async (req, res) => {
   await sendForgotPasswordEmail(
     user.email,
     user.id,
-    user.name ? user.name : user.username
+    user.name ? user.name : user.username,
   );
 
   return res.status(204).end();
@@ -334,7 +374,15 @@ export const sendChangePassEmail = async (req, res) => {
 // @desc    Update password
 // @route   PUT /api/auth/resetpassword
 // @access  Public
-export const resetPassword = async (req, res) => {
+export const resetPassword = async (
+  req: Request<
+    {},
+    ResetPasswordResponse,
+    { newPassword: string },
+    { token?: string }
+  >,
+  res: Response<ResetPasswordResponse>,
+): Promise<Response<ResetPasswordResponse>> => {
   const { token } = req.query;
   const { newPassword } = req.body;
   if (!token) throw createError(400, "Missing token");
@@ -362,8 +410,8 @@ export const resetPassword = async (req, res) => {
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(newPassword, salt);
   await Promise.all([
-    queryUpdateUserPassword(decoded.sub, hash),
-    queryBumpTokenVersionAndGetSelfData(decoded.sub),
+    queryUpdateUserPassword(sub, hash),
+    queryBumpTokenVersionAndGetSelfData(sub),
   ]);
   return res.status(200).json({ ok: true });
 };
