@@ -1,7 +1,7 @@
 import postgres from "postgres";
 import dns from "dns";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { Request, Response, NextFunction, RequestHandler } from "express";
+import { Request, Response, NextFunction } from "express";
 
 dns.setDefaultResultOrder("ipv4first");
 
@@ -18,42 +18,34 @@ function makeClient(): postgres.Sql {
 
 let _sql = makeClient();
 
-// Per-request context: { tx, userId }
 const als = new AsyncLocalStorage<{
   tx: postgres.Sql | postgres.TransactionSql;
   userId?: string;
 }>();
 
-// Detect transient connection errors
 function isTransientConnError(err: any): boolean {
   const msg = String(err?.message || "");
   return /CONNECTION_ENDED|ECONNRESET|terminat(ed|ion)/i.test(msg);
 }
 
 // Global tagged template: prefers the request-bound tx when present
-async function sql(
-  strings: TemplateStringsArray,
-  ...values: any[]
-): Promise<any> {
+const sql = ((strings: TemplateStringsArray, ...values: any[]) => {
   const store = als.getStore();
   const runner = store?.tx || _sql;
 
-  try {
-    return await runner(strings, ...values);
-  } catch (err) {
-    if (!isTransientConnError(err) || store?.tx) throw err; // don't recycle inside active tx
+  return runner(strings, ...values).catch(async (err) => {
+    if (!isTransientConnError(err) || store?.tx) throw err;
     try {
       await _sql.end({ timeout: 1 });
     } catch {}
     _sql = makeClient();
     return _sql(strings, ...values);
-  }
-}
+  });
+}) as postgres.Sql;
 
-// Optional: manual transaction if you ever need it
 (sql as any).begin = async (
   fn: (tx: postgres.TransactionSql) => Promise<any>,
-): Promise<any> => {
+) => {
   const store = als.getStore();
   const runner = (store?.tx || _sql) as postgres.Sql;
   return runner.begin(fn as any);
@@ -72,12 +64,11 @@ export const withRlsTx = <ReqP, ResBody, ReqBody, ReqQuery>(
   next: NextFunction,
 ) => void) => {
   return async (req, res, next) => {
-    const userId = req.user?.id; // set by your auth middleware
-    if (!userId) return handler(req, res, next); // public route
+    const userId = (req as any).user?.id;
+    if (!userId) return handler(req, res, next);
 
     try {
       await _sql.begin(async (tx) => {
-        // Inject claims so auth.uid() works in RLS policies
         const claims = JSON.stringify({
           sub: userId,
           role: "authenticated",
@@ -86,7 +77,6 @@ export const withRlsTx = <ReqP, ResBody, ReqBody, ReqQuery>(
         await tx`select set_config('request.jwt.claims', ${claims}, true)`;
         await tx`SET LOCAL ROLE authenticated`;
 
-        // Bind this tx to the request's async call chain; no req.sql needed
         await als.run({ tx }, async () => {
           await handler(req, res, next);
         });
@@ -97,16 +87,15 @@ export const withRlsTx = <ReqP, ResBody, ReqBody, ReqQuery>(
   };
 };
 
-// Quick connectivity check (optional)
 export const connectDB = async (): Promise<void> => {
   try {
-    await sql`select 1 as connected`;
+    await sql<{ connected: number }[]>`select 1 as connected`;
     console.log("[Postgres]: Connected to Postgres.");
   } catch (err: any) {
     console.log("[Postgres]: Connection to Postgres has failed.", err.message);
   }
 };
 
-export default sql as unknown as postgres.Sql & {
+export default sql as postgres.Sql & {
   begin: <T>(fn: (tx: postgres.TransactionSql) => Promise<T>) => Promise<T>;
 };

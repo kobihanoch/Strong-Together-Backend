@@ -36,7 +36,7 @@ export async function queryAllUserMessages(
     FROM messages m
     LEFT JOIN users u
       ON u.id = m.sender_id
-    WHERE m.receiver_id = ${userId}
+    WHERE m.receiver_id = ${userId}::uuid
     ORDER BY sent_at DESC
   `;
 
@@ -50,7 +50,7 @@ export async function queryMarkUserMessageAsRead(
   return sql<MessageAsRead[]>`
     UPDATE messages AS m
     SET is_read = TRUE
-    WHERE m.id=${messageId} AND m.receiver_id=${userId}
+    WHERE m.id=${messageId}::uuid AND m.receiver_id=${userId}::uuid
     RETURNING id, is_read
   `;
 }
@@ -61,7 +61,7 @@ export async function queryDeleteMessage(
 ): Promise<DeletedMessage[]> {
   return sql<DeletedMessage[]>`
     DELETE FROM messages AS m
-    WHERE m.id=${messageId} AND (m.receiver_id=${userId} OR m.sender_id=${userId})
+    WHERE m.id=${messageId}::uuid AND (m.receiver_id=${userId}::uuid OR m.sender_id=${userId}::uuid)
     RETURNING id
   `;
 }

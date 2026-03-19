@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "lint:sql": "eslint",
     "start": "tsx src/index.js",
     "start:server": "tsx src/index.js",
     "start:server:watch": "tsx watch src/index.js",
@@ -25,7 +26,6 @@
     "bull": "^4.16.5",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "dotenv": "^16.5.0",
     "expo-server-sdk": "^3.15.0",
     "express": "^5.1.0",
     "express-rate-limit": "^8.0.1",
@@ -45,8 +45,14 @@
     "zod": "^4.0.15"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@ts-safeql/eslint-plugin": "^4.2.0",
     "@types/express": "^5.0.6",
     "@types/http-errors": "^2.0.5",
-    "@types/jsonwebtoken": "^9.0.10"
+    "@types/jsonwebtoken": "^9.0.10",
+    "dotenv": "^17.3.1",
+    "eslint": "^9.39.1",
+    "libpg-query": "^17.7.3",
+    "typescript-eslint": "^8.57.1"
   }
 }

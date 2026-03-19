@@ -24,7 +24,7 @@ export async function querySetUserFirstLoginFalse(
   userId: string,
 ): Promise<{ id: string }[]> {
   return sql<{ id: string }[]>`
-    UPDATE users SET is_first_login=FALSE WHERE id=${userId} RETURNING id
+    UPDATE users SET is_first_login=FALSE WHERE id=${userId}::uuid RETURNING id
   `;
 }
 
@@ -34,7 +34,7 @@ export async function queryBumpTokenVersionAndGetSelfData(
   return sql<UserAfterBump[]>`
     UPDATE users 
     SET token_version = token_version + 1 
-    WHERE id = ${userId} 
+    WHERE id = ${userId}::uuid 
     RETURNING token_version, (to_jsonb(users) - 'password' - 'token_version') AS user_data
   `;
 }
@@ -46,7 +46,7 @@ export async function queryBumpTokenVersionAndGetSelfDataCAS(
   return sql<UserAfterBump[]>`
     UPDATE users 
     SET token_version = token_version + 1 
-    WHERE id = ${userId} AND token_version = ${prevTokenVer} 
+    WHERE id = ${userId}::uuid AND token_version = ${prevTokenVer} 
     RETURNING token_version, (to_jsonb(users) - 'password' - 'token_version') AS user_data
   `;
 }
@@ -66,21 +66,21 @@ export const queryGetCurrentTokenVersion = async (
   userId: string,
 ): Promise<TokenVersionResult[]> => {
   return sql<TokenVersionResult[]>`
-    SELECT token_version FROM users WHERE id=${userId}
+    SELECT token_version FROM users WHERE id=${userId}::uuid
   `;
 };
 
 export const queryUpdateExpoPushTokenToNull = async (
   userId: string,
 ): Promise<void> => {
-  await sql`UPDATE users SET push_token=NULL WHERE id=${userId}`;
+  await sql`UPDATE users SET push_token=NULL WHERE id=${userId}::uuid`;
 };
 
 export const queryUpdateUserVerficiationStatus = async (
   userId: string,
   state: boolean,
 ): Promise<void> => {
-  await sql`UPDATE users SET is_verified = ${state} WHERE users.id = ${userId}`;
+  await sql`UPDATE users SET is_verified = ${state} WHERE users.id = ${userId}::uuid`;
 };
 
 export const queryUpdateUserPassword = async (
@@ -90,6 +90,6 @@ export const queryUpdateUserPassword = async (
   await sql`
     UPDATE users 
     SET password=${newPass} 
-    WHERE id=${userId} AND auth_provider='app'
+    WHERE id=${userId}::uuid AND auth_provider='app'
   `;
 };
