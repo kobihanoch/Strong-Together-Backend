@@ -1,7 +1,8 @@
-import emailQueue from "./emailsQueue.js";
+import { EmailPayload } from "../../types/emailsTypes.ts";
+import emailQueue from "./emailsQueue.ts";
 
 // Add jobs to queue
-export const enqueueEmails = async (emails) => {
+export const enqueueEmails = async (emails: EmailPayload[]): Promise<void> => {
   //console.log("Email has arrived!");
   try {
     await emailQueue.addBulk(
@@ -16,7 +17,7 @@ export const enqueueEmails = async (emails) => {
           removeOnComplete: true,
           //removeOnFail: true,
         },
-      }))
+      })),
     );
     console.log(`[Email producer]: Enqueued ${emails.length} emails`);
   } catch {}

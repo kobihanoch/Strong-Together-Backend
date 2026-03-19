@@ -1,52 +1,58 @@
+import { Request, Response } from "express";
 import {
   queryGetAllUsersToSendHourlyReminder,
   queryGetAllUsersWithNotificationsEnabled,
 } from "../queries/pushQueries.js";
-import { enqueuePushNotifications } from "../queues/pushNotifications/pushNotificationsProducer.js";
+import { enqueuePushNotifications } from "../queues/pushNotifications/pushNotificationsProducer.ts";
 import { computeDelayFromUTC } from "../utils/pushUtils.js";
+import { NotificationPayload } from "../types/notificationsTypes.ts";
 
 // @desc    Sends daily psuh (outside cron)
 // @route   GET /api/push/daily
 // @access  Public
-export const sendDailyPush = async (req, res) => {
+export const sendDailyPush = async (
+  req: Request<{}, {}, {}>,
+  res: Response,
+): Promise<void> => {
   const users = await queryGetAllUsersWithNotificationsEnabled();
 
   try {
-    const pushNotifications = [];
-
-    for (const user of users) {
-      pushNotifications.push({
+    await enqueuePushNotifications(
+      users.map((user) => ({
         token: user.push_token,
         title: `Hello, ${user.name.split(" ")[0]}!`,
         body: "Ready to go workout?",
         delay: 0,
-      });
-    }
-
-    await enqueuePushNotifications(pushNotifications);
+      })),
+    );
 
     res.json({ success: true, message: "Daily notifications enqueued" });
   } catch (error) {
-    console.error("❌ Error sending notifications:", error.message);
-    res.status(500).json({ success: false, error: error.message });
+    if (error instanceof Error) {
+      console.error("❌ Error sending notifications:", error.message);
+      res.status(500).json({ success: false, error: error.message });
+    }
   }
 };
 
 // @desc    Sends hourly push reminder by calculating avg stats (outside cron)
 // @route   GET /api/push/hourlyreminder
 // @access  Public
-export const sendHourlyReminderPush = async (req, res) => {
+export const sendHourlyReminderPush = async (
+  req: Request<{}, {}, {}>,
+  res: Response,
+) => {
   const users = await queryGetAllUsersToSendHourlyReminder();
 
   try {
-    const pushNotifications = [];
+    const pushNotifications: NotificationPayload[] = [];
     const now = new Date();
 
     for (const user of users) {
       const delayMs = computeDelayFromUTC(
         now,
         user.estimated_time_utc,
-        user.reminder_offset_minutes
+        user.reminder_offset_minutes,
       );
 
       // if time for today already passed -> skip
@@ -74,7 +80,9 @@ export const sendHourlyReminderPush = async (req, res) => {
       message: `Enqueued ${pushNotifications.length} workout reminders`,
     });
   } catch (error) {
-    console.error("❌ Error sending hourly reminders:", error.message);
-    res.status(500).json({ success: false, error: error.message });
+    if (error instanceof Error) {
+      console.error("❌ Error sending hourly reminders:", error.message);
+      res.status(500).json({ success: false, error: error.message });
+    }
   }
 };

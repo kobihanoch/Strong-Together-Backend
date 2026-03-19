@@ -1,7 +1,10 @@
-import pushNotificationsQueue from "./pushNotificationsQueue.js";
+import { NotificationPayload } from "../../types/notificationsTypes.ts";
+import pushNotificationsQueue from "./pushNotificationsQueue.ts";
 
 // Add jobs to queue
-export const enqueuePushNotifications = async (notifications) => {
+export const enqueuePushNotifications = async (
+  notifications: NotificationPayload[],
+): Promise<void> => {
   //console.log("Email has arrived!");
   try {
     await pushNotificationsQueue.addBulk(
@@ -17,10 +20,10 @@ export const enqueuePushNotifications = async (notifications) => {
           delay: e.delay || 0,
           //removeOnFail: true,
         },
-      }))
+      })),
     );
     console.log(
-      `[Push producer]: Enqueued ${notifications.length} push notifications`
+      `[Push producer]: Enqueued ${notifications.length} push notifications`,
     );
   } catch {}
   //console.log("Emails are enqueued");
