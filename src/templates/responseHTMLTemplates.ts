@@ -2,7 +2,7 @@
  * Generates the HTML page for a successful account verification.
  * (Provided by user for reference)
  */
-export const generateVerifiedHTML = () => {
+export const generateVerifiedHTML = (): string => {
   return `<!DOCTYPE html>
   <html lang="en"><head><meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -25,7 +25,7 @@ export const generateVerifiedHTML = () => {
 /**
  * Generates the HTML page for a failed account verification, typically due to an expired or invalid token.
  */
-export const generateVerificationFailedHTML = () => {
+export const generateVerificationFailedHTML = (): string => {
   return `<!DOCTYPE html>
   <html lang="en"><head><meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -52,7 +52,7 @@ export const generateVerificationFailedHTML = () => {
  * Generates an HTML page for successful email change.
  * The user is informed that the change will appear on the next app load.
  */
-export const generateEmailChangeSuccessHTML = () => {
+export const generateEmailChangeSuccessHTML = (): string => {
   return `<!DOCTYPE html>
   <html lang="en"><head><meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -80,8 +80,8 @@ export const generateEmailChangeSuccessHTML = () => {
  * Accepts a reason string that will be injected into the page.
  */
 export const generateEmailChangeFailedHTML = (
-  reason = "Unknown error occurred"
-) => {
+  reason: string = "Unknown error occurred",
+): string => {
   return `<!DOCTYPE html>
   <html lang="en"><head><meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1" />

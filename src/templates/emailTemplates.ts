@@ -1,5 +1,15 @@
+import {
+  ConfirmEmailChangeParams,
+  ForgotPasswordEmailParams,
+  ValidateUserEmailParams,
+} from "../types/emailsTypes.ts";
+
 // English comments only inside the code
-export const generateValidateUserEmail = ({ fullName, verifyUrl, logoUrl }) => `
+export const generateValidateUserEmail = ({
+  fullName,
+  verifyUrl,
+  logoUrl,
+}: ValidateUserEmailParams): string => `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -73,7 +83,7 @@ export const generateForgotPasswordEmail = ({
   fullName,
   changePasswordUrl,
   logoUrl,
-}) => `
+}: ForgotPasswordEmailParams): string => `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -146,7 +156,7 @@ export const generateConfirmEmailChange = ({
   fullName,
   confirmUrl,
   logoUrl,
-}) => `
+}: ConfirmEmailChangeParams): string => `
 <!DOCTYPE html>
 <html lang="en">
   <head>

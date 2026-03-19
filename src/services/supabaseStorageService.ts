@@ -6,7 +6,12 @@ const base = process.env.SUPABASE_URL;
 const svc = process.env.SUPABASE_SERVICE_ROLE;
 
 // Upload image to supabase bucket
-export async function uploadBufferToSupabase(bucket, key, buffer, contentType) {
+export async function uploadBufferToSupabase(
+  bucket: string,
+  key: string,
+  buffer: Buffer,
+  contentType: string,
+): Promise<{ path: string; publicUrl: string }> {
   // URL of Supabase API to store image
   const url = `${base}/storage/v1/object/${bucket}/${key}`;
 
@@ -31,7 +36,7 @@ export async function uploadBufferToSupabase(bucket, key, buffer, contentType) {
 }
 
 // Delete an image from supabase bucket
-export async function deleteFromSupabase(path) {
+export async function deleteFromSupabase(path: string): Promise<void> {
   // path = "<bucket>/<key>"
   const url = `${base}/storage/v1/object/${path}`;
   try {

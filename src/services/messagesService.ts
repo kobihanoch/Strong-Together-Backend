@@ -1,13 +1,15 @@
-import sql from "../config/db.js";
+import sql from "../config/db.ts";
 import {
   getEndOfWorkoutMessage,
   getFirstLoginMessage,
-} from "../templates/messageTemplates.js";
+} from "../templates/messageTemplates.ts";
 import { emitNewMessage } from "../utils/socketUtils.js";
 
-export const sendSystemMessageToUserWorkoutDone = async (receiverId) => {
+export const sendSystemMessageToUserWorkoutDone = async (
+  receiverId: string,
+): Promise<string | null> => {
   const msg = getEndOfWorkoutMessage();
-  const senderId = process.env.SYSTEM_USER_ID;
+  const senderId = process.env.SYSTEM_USER_ID!;
 
   const [row] = await sql`
   WITH inserted AS (
@@ -31,12 +33,12 @@ export const sendSystemMessageToUserWorkoutDone = async (receiverId) => {
 };
 
 export const sendSystemMessageToUserWhenFirstLogin = async (
-  receiverId,
-  receiverName
-) => {
+  receiverId: string,
+  receiverName: string,
+): Promise<string | null> => {
   const msg = getFirstLoginMessage(receiverName);
 
-  const senderId = process.env.SYSTEM_USER_ID;
+  const senderId = process.env.SYSTEM_USER_ID!;
 
   const [row] = await sql`
   WITH inserted AS (

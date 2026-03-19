@@ -1,6 +1,5 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { AuthenticatedRequest } from "../types/sharedTypes.ts";
 import {
   GenerateTicketBody,
   GenerateTicketResponse,
@@ -10,12 +9,12 @@ import {
 // @route   POST /api/ws/generateticket
 // @access  Private
 export const generateTicket = async (
-  req: AuthenticatedRequest<GenerateTicketBody>,
+  req: Request<{}, GenerateTicketResponse, GenerateTicketBody>,
   res: Response<GenerateTicketResponse>,
-): Promise<void | Response> => {
+): Promise<Response<GenerateTicketResponse>> => {
   const usernameFromBody = req.body.username; // optional, server can also look up
   const payload = {
-    id: req.user.id,
+    id: req.user!.id,
     username: usernameFromBody,
     jti: crypto.randomUUID(), // optional: store in Redis for one-time use
   };

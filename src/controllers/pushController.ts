@@ -11,7 +11,7 @@ import { NotificationPayload } from "../types/notificationsTypes.ts";
 // @route   GET /api/push/daily
 // @access  Public
 export const sendDailyPush = async (
-  req: Request<{}, {}, {}>,
+  req: Request,
   res: Response,
 ): Promise<void> => {
   const users = await queryGetAllUsersWithNotificationsEnabled();
@@ -39,9 +39,9 @@ export const sendDailyPush = async (
 // @route   GET /api/push/hourlyreminder
 // @access  Public
 export const sendHourlyReminderPush = async (
-  req: Request<{}, {}, {}>,
+  req: Request,
   res: Response,
-) => {
+): Promise<void> => {
   const users = await queryGetAllUsersToSendHourlyReminder();
 
   try {

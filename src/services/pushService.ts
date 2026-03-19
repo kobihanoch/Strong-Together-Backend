@@ -2,7 +2,7 @@ import axios from "axios";
 import createError from "http-errors";
 
 // Returns { ok: true, id? } OR { ok: false, permanent: true, reason }
-export async function sendPushNotification(token, title, body) {
+export async function sendPushNotification(token: string, title: string, body: string) {
   if (!token || typeof token !== "string" || token.length < 10)
     return { ok: false, permanent: true, reason: "Invalid token" };
 

@@ -1,7 +1,7 @@
 import postgres from "postgres";
 import dns from "dns";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 
 dns.setDefaultResultOrder("ipv4first");
 
@@ -60,8 +60,18 @@ async function sql(
 };
 
 // Wrap a protected route with a single tx + injected claims (RLS)
-export const withRlsTx = (handler: Function) => {
-  return async (req: any, res: Response, next: NextFunction) => {
+export const withRlsTx = <ReqP, ResBody, ReqBody, ReqQuery>(
+  handler: (
+    req: Request<ReqP, ResBody, ReqBody, ReqQuery>,
+    res: Response<ResBody>,
+    next: NextFunction,
+  ) => Promise<void | Response<ResBody>>,
+): ((
+  req: Request<ReqP, ResBody, ReqBody, ReqQuery>,
+  res: Response<ResBody>,
+  next: NextFunction,
+) => void) => {
+  return async (req, res, next) => {
     const userId = req.user?.id; // set by your auth middleware
     if (!userId) return handler(req, res, next); // public route
 

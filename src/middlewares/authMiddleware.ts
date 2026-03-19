@@ -30,7 +30,9 @@ export const protect = async (
     }
 
     // Decode
-    const decoded = decodeAccessToken(accessToken) as AccessTokenPayload;
+    const decoded = decodeAccessToken(
+      accessToken,
+    ) as unknown as AccessTokenPayload;
     if (!decoded) {
       throw createError(401, "Access token is not valid");
     }

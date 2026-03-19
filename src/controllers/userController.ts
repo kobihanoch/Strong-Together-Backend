@@ -28,7 +28,6 @@ import {
 } from "../templates/responseHTMLTemplates.js";
 import { decodeChangeEmailToken } from "../utils/tokenUtils.js";
 import { cacheStoreJti } from "../utils/cache.js";
-import { AuthenticatedRequest } from "../types/sharedTypes.js";
 import {
   CreateUserRequest,
   CreateUserResponse,
@@ -70,7 +69,7 @@ export const updateUsersReminderSettingsTimezone = async (
 // @route   POST /api/users/create
 // @access  Public
 export const createUser = async (
-  req: Request<{}, {}, CreateUserRequest>,
+  req: Request<{}, CreateUserResponse, CreateUserRequest>,
   res: Response<CreateUserResponse>,
 ): Promise<void | Response> => {
   const { username, fullName, email, password, gender } = req.body;
@@ -104,10 +103,10 @@ export const createUser = async (
 // @route   GET /api/users/get
 // @access  Private
 export const getAuthenticatedUserById = async (
-  req: AuthenticatedRequest,
+  req: Request<{}, GetAuthenticatedUserByIdResponse>,
   res: Response<GetAuthenticatedUserByIdResponse>,
-): Promise<void | Response> => {
-  const { payload } = await getUserData(req.user.id);
+): Promise<Response<GetAuthenticatedUserByIdResponse>> => {
+  const { payload } = await getUserData(req.user!.id);
   return res.status(200).json(payload);
 };
 
@@ -115,9 +114,9 @@ export const getAuthenticatedUserById = async (
 // @route   PUT /api/users/updateself
 // @access  Private
 export const updateAuthenticatedUser = async (
-  req: AuthenticatedRequest<UpdateUserBody>,
+  req: Request<{}, UpdateAuthenticatedUserResponse, UpdateUserBody>,
   res: Response<UpdateAuthenticatedUserResponse>,
-): Promise<void | Response> => {
+): Promise<Response<UpdateAuthenticatedUserResponse>> => {
   const {
     username = null,
     fullName = null,
@@ -137,7 +136,7 @@ export const updateAuthenticatedUser = async (
   let rowsUpdated: UserDataResponse[];
   try {
     rowsUpdated = (await queryUpdateAuthenticatedUser(
-      req.user.id,
+      req.user!.id,
       { username, fullName, gender, hashed, profileImgUrl, pushToken },
       setCompletedOnOAuth,
       email as any, // emailCandidate for the probe (may be null)
@@ -155,7 +154,7 @@ export const updateAuthenticatedUser = async (
   const [userRow] = (await sql`
     SELECT name, email
     FROM users
-    WHERE id = ${req.user.id}
+    WHERE id = ${req.user!.id}
     LIMIT 1
   `) as Pick<UserEntity, "name" | "email">[];
 
@@ -169,7 +168,7 @@ export const updateAuthenticatedUser = async (
   if (candidate && candidate !== currentEmail) {
     await sendVerificationEmailForEmailUpdate(
       candidate,
-      req.user.id,
+      req.user!.id,
       userRow.name || "there",
     );
     emailChanged = true;
@@ -188,7 +187,7 @@ export const updateAuthenticatedUser = async (
 export const updateSelfEmail = async (
   req: Request,
   res: Response,
-): Promise<void | Response> => {
+): Promise<Response> => {
   const token = req.query?.token as string | undefined;
   if (!token)
     return res
@@ -279,10 +278,10 @@ export const updateSelfEmail = async (
 // @route   DELETE /api/users/deleteself
 // @access  Private/Admin
 export const deleteSelfUser = async (
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
-): Promise<void | Response> => {
-  await queryDeleteUserById(req.user.id);
+): Promise<Response> => {
+  await queryDeleteUserById(req.user!.id);
   return res.json({ message: "User deleted successfully" });
 };
 
@@ -290,10 +289,10 @@ export const deleteSelfUser = async (
 // @route   PUT /api/users/pushtoken
 // @access  Private
 export const saveUserPushToken = async (
-  req: AuthenticatedRequest<SaveUserPushTokenRequest>,
+  req: Request<{}, {}, SaveUserPushTokenRequest>,
   res: Response,
-): Promise<void | Response> => {
-  await sql`UPDATE users SET push_token=${req.body.token} WHERE id=${req.user.id}`;
+): Promise<Response> => {
+  await sql`UPDATE users SET push_token=${req.body.token} WHERE id=${req.user!.id}`;
   return res.status(204).end();
 };
 
@@ -301,14 +300,14 @@ export const saveUserPushToken = async (
 // @route   PUT /api/users/setprofilepic
 // @access  Private
 export const setProfilePicAndUpdateDB = async (
-  req: AuthenticatedRequest & { file?: any },
+  req: Request<{}, SetProfilePicAndUpdateDBResponse> & { file?: any },
   res: Response<SetProfilePicAndUpdateDBResponse>,
-): Promise<void | Response> => {
+): Promise<Response<SetProfilePicAndUpdateDBResponse>> => {
   if (!req.file) {
     throw createError(400, "No file provided");
   }
 
-  const userId = req.user.id;
+  const userId = req.user!.id;
 
   // Media params
   const ext =
@@ -352,11 +351,11 @@ export const setProfilePicAndUpdateDB = async (
 // @route   DELETE /api/users/deleteprofilepic
 // @access  Private
 export const deleteUserProfilePic = async (
-  req: AuthenticatedRequest<DeleteUserProfilePicRequest>,
+  req: Request<{}, {}, DeleteUserProfilePicRequest>,
   res: Response,
-): Promise<void | Response> => {
+): Promise<Response> => {
   await deleteFromSupabase(req.body.path);
   // Update user profile url
-  await queryUpdateUserProfilePicURL(req.user.id, null);
+  await queryUpdateUserProfilePicURL(req.user!.id, null);
   return res.status(200).end();
 };

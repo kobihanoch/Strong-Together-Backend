@@ -1,7 +1,7 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { getUploadUrl } from "../aws/s3/s3Utils.ts";
 import { enqueueAnalyzeVideo } from "../queues/analyzeVideo/analyzeVideoProducer.js";
-import { AuthenticatedRequest } from "../types/sharedTypes.ts";
+
 import {
   GetPresignedUrlFromS3Body,
   GetPresignedUrlFromS3Response,
@@ -13,11 +13,11 @@ import {
 // @route   GET /api/videoanalysis/getpresignedurl
 // @access  Private
 export const getPresignedUrlFromS3 = async (
-  req: AuthenticatedRequest<GetPresignedUrlFromS3Body>,
+  req: Request<{}, GetPresignedUrlFromS3Response, GetPresignedUrlFromS3Body>,
   res: Response<GetPresignedUrlFromS3Response>,
-): Promise<void | Response> => {
+): Promise<Response<GetPresignedUrlFromS3Response>> => {
   const { fileName, fileType } = req.body;
-  const userId = req.user?.id;
+  const userId = req.user!.id;
   const fileKey = `${userId}/${Date.now()}-${fileName}`;
 
   const uploadUrl = await getUploadUrl(fileKey, fileType);
@@ -32,10 +32,14 @@ export const getPresignedUrlFromS3 = async (
 // @route   POST /api/videoanalysis/publishjob
 // @access  Private
 export const publishVideoAnalysisJob = async (
-  req: AuthenticatedRequest<PublishVideoAnalysisJobBody>,
+  req: Request<
+    {},
+    PublishVideoAnalysisJobResponse,
+    PublishVideoAnalysisJobBody
+  >,
   res: Response<PublishVideoAnalysisJobResponse>,
-): Promise<void | Response> => {
-  const userId = req.user.id;
+): Promise<Response<PublishVideoAnalysisJobResponse>> => {
+  const userId = req.user!.id;
   const { fileKey, exercise } = req.body;
 
   const jobId = await enqueueAnalyzeVideo({ fileKey, exercise, userId });
