@@ -1,15 +1,10 @@
-import type { FinishedWorkoutEntry } from "../../dto/exerciseTracking.dto.ts";
-import type { AddWorkoutSplitPayload } from "../../dto/workoutPlans.dto.ts";
+import z from 'zod';
+import { addWorkoutRequest } from '../../../validators/workouts/addWorkoutRequest.schema.ts';
+import { finishWorkoutRequest } from '../../../validators/workouts/finishUserWorkoutRequest.schema.ts';
+import { getExerciseTrackingRequest } from '../../../validators/workouts/getExerciseTrackingRequest.schema.ts';
+import { getWholeWorkoutPlanRequest } from '../../../validators/workouts/getWholeUserWorkoutPlanRequest.schema.ts';
 
-export interface FinishUserWorkoutRequestBody {
-  workout: FinishedWorkoutEntry[];
-  tz?: string;
-  workout_start_utc?: string | null;
-  workout_end_utc?: string | null;
-}
-
-export interface AddWorkoutRequestBody {
-  workoutData: AddWorkoutSplitPayload;
-  workoutName?: string;
-  tz: string;
-}
+export type GetWholeUserWorkoutPlanQuery = z.infer<typeof getWholeWorkoutPlanRequest.shape.query>;
+export type GetExerciseTrackingQuery = z.infer<typeof getExerciseTrackingRequest.shape.query>;
+export type FinishUserWorkoutBody = z.infer<typeof finishWorkoutRequest.shape.body>;
+export type AddWorkoutBody = z.infer<typeof addWorkoutRequest.shape.body>;

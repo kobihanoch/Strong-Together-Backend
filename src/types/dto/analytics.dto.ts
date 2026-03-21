@@ -1,5 +1,7 @@
+import { ExerciseEntity } from '../entities/exercise.entity.ts';
+
 export interface WorkoutRMRecord {
-  exercise: string;
+  exercise: ExerciseEntity['name'];
   pr_weight: number | null;
   pr_reps: number | null;
   max_1rm: number;

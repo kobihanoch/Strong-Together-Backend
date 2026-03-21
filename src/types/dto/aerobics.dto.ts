@@ -1,18 +1,12 @@
-import { AerobicEntity } from "../entities/aerobic.entity.ts";
+import { AddUserAerobicsBody } from './../api/aerobics/requests.ts';
+import { AerobicEntity } from '../entities/aerobic.entity.ts';
 
-export interface AddAerobicInput {
-  durationMins: number;
-  durationSec: number;
-  type: string;
-}
+export type AddAerobicInput = AddUserAerobicsBody['record'];
 
-export type AerobicsDailyRecord = Pick<
-  AerobicEntity,
-  "type" | "duration_sec" | "duration_mins"
->;
+export type AerobicsDailyRecord = Pick<AerobicEntity, 'type' | 'duration_sec' | 'duration_mins'>;
 
 export interface AerobicsWeeklyRecord extends AerobicsDailyRecord {
-  workout_time_utc: string;
+  workout_time_utc: AerobicEntity['workout_time_utc'];
 }
 
 export interface WeeklyData {

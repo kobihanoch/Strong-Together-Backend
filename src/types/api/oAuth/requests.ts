@@ -1,15 +1,6 @@
-export interface GoogleOAuthRequestBody {
-  idToken?: string;
-}
+import z from 'zod';
+import { googleOAuthRequest } from '../../../validators/oAuth/googleOAuthRequest.schema.ts';
+import { appleOAuthRequest } from '../../../validators/oAuth/appleOAuthRequest.schema.ts';
 
-interface AppleNameInput {
-  givenName?: string;
-  familyName?: string;
-}
-
-export interface AppleOAuthRequestBody {
-  idToken?: string;
-  rawNonce?: string;
-  name?: AppleNameInput;
-  email?: string | null;
-}
+export type GoogleOAuthBody = z.infer<typeof googleOAuthRequest.shape.body>;
+export type AppleOAuthBody = z.infer<typeof appleOAuthRequest.shape.body>;

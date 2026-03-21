@@ -18,9 +18,9 @@ import { sendVerificationEmail, sendVerificationEmailForEmailUpdate } from '../s
 import { deleteFromSupabase, uploadBufferToSupabase } from '../services/supabaseStorageService.js';
 import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from '../templates/responseHTMLTemplates.js';
 import {
-  CreateUserRequest,
-  DeleteUserProfilePicRequest,
-  SaveUserPushTokenRequest,
+  CreateUserBody,
+  DeleteUserProfilePicBody,
+  SaveUserPushTokenBody,
   UpdateUserBody,
 } from '../types/api/user/requests.ts';
 import {
@@ -54,7 +54,7 @@ export const updateUsersReminderSettingsTimezone = async (userId: string, tz: st
 // @route   POST /api/users/create
 // @access  Public
 export const createUser = async (
-  req: Request<{}, CreateUserResponse, CreateUserRequest>,
+  req: Request<{}, CreateUserResponse, CreateUserBody>,
   res: Response<CreateUserResponse>,
 ): Promise<void | Response> => {
   const { username, fullName, email, password, gender } = req.body;
@@ -214,7 +214,7 @@ export const deleteSelfUser = async (req: Request, res: Response): Promise<Respo
 // @route   PUT /api/users/pushtoken
 // @access  Private
 export const saveUserPushToken = async (
-  req: Request<{}, {}, SaveUserPushTokenRequest>,
+  req: Request<{}, {}, SaveUserPushTokenBody>,
   res: Response,
 ): Promise<Response> => {
   await sql`UPDATE users SET push_token=${req.body.token} WHERE id=${req.user!.id}::uuid`;
@@ -266,7 +266,7 @@ export const setProfilePicAndUpdateDB = async (
 // @route   DELETE /api/users/deleteprofilepic
 // @access  Private
 export const deleteUserProfilePic = async (
-  req: Request<{}, {}, DeleteUserProfilePicRequest>,
+  req: Request<{}, {}, DeleteUserProfilePicBody>,
   res: Response,
 ): Promise<Response> => {
   await deleteFromSupabase(req.body.path);

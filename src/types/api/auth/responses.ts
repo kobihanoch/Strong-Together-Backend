@@ -1,6 +1,8 @@
+import { UserEntity } from '../../entities/user.entity.ts';
+
 export interface LoginResponse {
   message: string;
-  user: string;
+  user: UserEntity['id'];
   accessToken: string;
   refreshToken: string;
 }

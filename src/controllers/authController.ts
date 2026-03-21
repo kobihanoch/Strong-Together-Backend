@@ -17,13 +17,23 @@ import { queryUserExistsByUsernameOrEmail } from '../queries/userQueries.js';
 import { sendForgotPasswordEmail, sendVerificationEmail } from '../services/emailService.ts';
 import { sendSystemMessageToUserWhenFirstLogin } from '../services/messagesService.ts';
 import { generateVerificationFailedHTML, generateVerifiedHTML } from '../templates/responseHTMLTemplates.ts';
-import { LoginRequestBody } from '../types/api/auth/requests.ts';
+import {
+  ChangeEmailAndVerifyBody,
+  CheckUserVerifyQuery,
+  LoginRequestBody,
+  ResetPasswordBody,
+  ResetPasswordQuery,
+  SendChangePassEmailBody,
+  SendVerifcationMailBody,
+  VerifyUserAccountQuery,
+} from '../types/api/auth/requests.ts';
 import {
   LoginResponse,
   MessageResponse,
   RefreshTokenResponse,
   ResetPasswordResponse,
 } from '../types/api/auth/responses.ts';
+import { AccessTokenPayload } from '../types/dto/auth.dto.ts';
 import { cacheStoreJti } from '../utils/cache.ts';
 import {
   decodeForgotPasswordToken,
@@ -31,7 +41,6 @@ import {
   decodeVerifyToken,
   getRefreshToken,
 } from '../utils/tokenUtils.js';
-import { AccessTokenPayload } from '../types/dto/auth.dto.ts';
 
 // @desc    Login a user
 // @route   POST /api/auth/login
@@ -150,7 +159,7 @@ export const refreshAccessToken = async (
   res: Response<RefreshTokenResponse>,
 ): Promise<Response<RefreshTokenResponse>> => {
   //await queryDeleteExpiredBlacklistedTokens();
-  const dpopJkt = (req as any).dpopJkt; // Casting until express.d.ts is fully loaded
+  const dpopJkt = req.dpopJkt; // Casting until express.d.ts is fully loaded
   if (process.env.DPOP_ENABLED === 'true') {
     if (!dpopJkt) {
       // Should not happen if dpopValidationMiddleware ran first
@@ -224,7 +233,7 @@ export const refreshAccessToken = async (
 // @route   GET /api/auth/verify
 // @access  Public
 export const verifyUserAccount = async (
-  req: Request<{}, any, any, { token?: string }>,
+  req: Request<{}, any, any, VerifyUserAccountQuery>,
   res: Response,
 ): Promise<any> => {
   const { token } = req.query;
@@ -259,7 +268,10 @@ export const verifyUserAccount = async (
 // @desc    Validate user acoount
 // @route   POST /api/auth/sendverificationemail
 // @access  Public
-export const sendVerificationMail = async (req: Request<{}, any, { email: string }>, res: Response): Promise<any> => {
+export const sendVerificationMail = async (
+  req: Request<{}, any, SendVerifcationMailBody>,
+  res: Response,
+): Promise<any> => {
   const { email } = req.body;
   const [user = null] = await sql<{ id: string; name: string | null; username: string }[]>`
     SELECT id, name, username FROM users WHERE email=${email}`;
@@ -273,7 +285,7 @@ export const sendVerificationMail = async (req: Request<{}, any, { email: string
 // @route   PUT /api/auth/changeemailverify
 // @access  Public
 export const changeEmailAndVerify = async (
-  req: Request<{}, any, { username: string; password: string; newEmail: string }>,
+  req: Request<{}, any, ChangeEmailAndVerifyBody>,
   res: Response,
 ): Promise<any> => {
   const { username, password, newEmail } = req.body;
@@ -298,7 +310,7 @@ export const changeEmailAndVerify = async (
 // @route   GET /api/auth/checkuserverify
 // @access  Public
 export const checkUserVerify = async (
-  req: Request<{}, any, any, { username: string }>,
+  req: Request<{}, any, any, CheckUserVerifyQuery>,
   res: Response<{ isVerified: boolean }>,
 ): Promise<Response<{ isVerified: boolean }>> => {
   const [user] = await sql<
@@ -311,7 +323,7 @@ export const checkUserVerify = async (
 // @route   POST /api/auth/forgotpassemail
 // @access  Public
 export const sendChangePassEmail = async (
-  req: Request<{}, any, { identifier: string }>,
+  req: Request<{}, any, SendChangePassEmailBody>,
   res: Response,
 ): Promise<any> => {
   const { identifier } = req.body;
@@ -333,7 +345,7 @@ export const sendChangePassEmail = async (
 // @route   PUT /api/auth/resetpassword
 // @access  Public
 export const resetPassword = async (
-  req: Request<{}, ResetPasswordResponse, { newPassword: string }, { token?: string }>,
+  req: Request<{}, ResetPasswordResponse, ResetPasswordBody, ResetPasswordQuery>,
   res: Response<ResetPasswordResponse>,
 ): Promise<Response<ResetPasswordResponse>> => {
   const { token } = req.query;

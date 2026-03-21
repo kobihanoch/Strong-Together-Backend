@@ -19,15 +19,19 @@ import {
   TTL_PLAN,
   TTL_TRACKING,
 } from '../utils/cache.ts';
-import type { AddWorkoutRequestBody, FinishUserWorkoutRequestBody } from '../types/api/workouts/requests.ts';
 import type {
   GetExerciseTrackingResponse,
   GetWholeUserWorkoutPlanResponse,
   AddWorkoutResponse,
   FinishUserWorkoutResponse,
 } from '../types/api/workouts/responses.ts';
-import type { GetExerciseTrackingQuery, GetWholeUserWorkoutPlanQuery } from '../types/api/workouts/queries.ts';
 import type { ExerciseTrackingAndStats } from '../types/dto/exerciseTracking.dto.ts';
+import {
+  AddWorkoutBody,
+  FinishUserWorkoutBody,
+  GetExerciseTrackingQuery,
+  GetWholeUserWorkoutPlanQuery,
+} from '../types/api/workouts/requests.ts';
 
 /** ---------------------------
  * Pure helpers (no req/res)
@@ -121,7 +125,7 @@ export const getExerciseTracking = async (
 // @route   POST /api/workouts/finishworkout
 // @access  Private
 export const finishUserWorkout = async (
-  req: Request<{}, FinishUserWorkoutResponse, FinishUserWorkoutRequestBody>,
+  req: Request<{}, FinishUserWorkoutResponse, FinishUserWorkoutBody>,
   res: Response<FinishUserWorkoutResponse>,
 ): Promise<Response<FinishUserWorkoutResponse>> => {
   const workoutArray = req.body.workout;
@@ -159,7 +163,7 @@ export const deleteUserWorkout = async (req: Request, res: Response): Promise<vo
 // @route   POST /api/workouts/add
 // @access  Private
 export const addWorkout = async (
-  req: Request<{}, AddWorkoutResponse, AddWorkoutRequestBody>,
+  req: Request<{}, AddWorkoutResponse, AddWorkoutBody>,
   res: Response<AddWorkoutResponse>,
 ): Promise<Response<AddWorkoutResponse>> => {
   const userId = req.user!.id;
