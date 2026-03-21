@@ -1,16 +1,16 @@
-import postgres from "postgres";
-import dns from "dns";
-import { AsyncLocalStorage } from "node:async_hooks";
-import { Request, Response, NextFunction } from "express";
+import postgres from 'postgres';
+import dns from 'dns';
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { Request, Response, NextFunction } from 'express';
 
-dns.setDefaultResultOrder("ipv4first");
+dns.setDefaultResultOrder('ipv4first');
 
 const connectionString = process.env.DATABASE_URL;
 
 // Base pool client (PgBouncer safe)
 function makeClient(): postgres.Sql {
   return postgres(connectionString!, {
-    ssl: "require",
+    ssl: 'require',
     prepare: false, // safer with transaction pooling
     connect_timeout: 30,
   });
@@ -24,7 +24,7 @@ const als = new AsyncLocalStorage<{
 }>();
 
 function isTransientConnError(err: any): boolean {
-  const msg = String(err?.message || "");
+  const msg = String(err?.message || '');
   return /CONNECTION_ENDED|ECONNRESET|terminat(ed|ion)/i.test(msg);
 }
 
@@ -43,9 +43,7 @@ const sql = ((strings: TemplateStringsArray, ...values: any[]) => {
   });
 }) as postgres.Sql;
 
-(sql as any).begin = async (
-  fn: (tx: postgres.TransactionSql) => Promise<any>,
-) => {
+(sql as any).begin = async (fn: (tx: postgres.TransactionSql) => Promise<any>) => {
   const store = als.getStore();
   const runner = (store?.tx || _sql) as postgres.Sql;
   return runner.begin(fn as any);
@@ -62,27 +60,30 @@ export const withRlsTx = <ReqP, ResBody, ReqBody, ReqQuery>(
   req: Request<ReqP, ResBody, ReqBody, ReqQuery>,
   res: Response<ResBody>,
   next: NextFunction,
-) => void) => {
+) => Promise<void | Response<ResBody>>) => {
   return async (req, res, next) => {
     const userId = (req as any).user?.id;
-    if (!userId) return handler(req, res, next);
+    if (!userId) {
+      return handler(req, res, next);
+    }
 
     try {
-      await _sql.begin(async (tx) => {
+      return await _sql.begin(async (tx) => {
         const claims = JSON.stringify({
           sub: userId,
-          role: "authenticated",
-          aud: "authenticated",
+          role: 'authenticated',
+          aud: 'authenticated',
         });
         await tx`select set_config('request.jwt.claims', ${claims}, true)`;
         await tx`SET LOCAL ROLE authenticated`;
 
-        await als.run({ tx }, async () => {
-          await handler(req, res, next);
+        return als.run({ tx }, async () => {
+          return handler(req, res, next);
         });
       });
     } catch (e) {
       next(e);
+      return;
     }
   };
 };
@@ -90,9 +91,9 @@ export const withRlsTx = <ReqP, ResBody, ReqBody, ReqQuery>(
 export const connectDB = async (): Promise<void> => {
   try {
     await sql<{ connected: number }[]>`select 1 as connected`;
-    console.log("[Postgres]: Connected to Postgres.");
+    console.log('[Postgres]: Connected to Postgres.');
   } catch (err: any) {
-    console.log("[Postgres]: Connection to Postgres has failed.", err.message);
+    console.log('[Postgres]: Connection to Postgres has failed.', err.message);
   }
 };
 
