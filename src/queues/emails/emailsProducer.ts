@@ -1,5 +1,5 @@
-import { EmailPayload } from "../../types/dto/emails.dto.ts";
-import emailQueue from "./emailsQueue.ts";
+import { EmailPayload } from '../../types/dto/emails.dto.ts';
+import emailQueue from './emailsQueue.ts';
 
 // Add jobs to queue
 export const enqueueEmails = async (emails: EmailPayload[]): Promise<void> => {

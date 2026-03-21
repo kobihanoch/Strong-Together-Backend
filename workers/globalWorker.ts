@@ -1,11 +1,12 @@
-import { startAnalyzVideoWorker } from "./analyzeVideoWorker.js";
-import { startEmailWorker } from "./emailsWorker.js";
-import { startPushWorker } from "./pushNotificationsWorker.js";
-import { setupGracefulShutdown } from "./utils/setupGracefulShutdown.js";
+import { Queue } from 'bull';
+import { startAnalyzVideoWorker } from './analyzeVideoWorker.js';
+import { startEmailWorker } from './emailsWorker.js';
+import { startPushWorker } from './pushNotificationsWorker.js';
+import { setupGracefulShutdown } from './utils/setupGracefulShutdown.ts';
 
 export const startGlobalWorker = async () => {
-  console.log("Starting global worker...");
-  const queues = [];
+  console.log('Starting global worker...');
+  const queues: Queue[] = [];
 
   // All worker types here
   const emailQueue = await startEmailWorker(); // Start the process returns the queue
@@ -20,7 +21,7 @@ export const startGlobalWorker = async () => {
   // Graceful shutdown
   await setupGracefulShutdown(queues);
 
-  console.log("--------------------------------------------------");
+  console.log('--------------------------------------------------');
 };
 
 await startGlobalWorker();

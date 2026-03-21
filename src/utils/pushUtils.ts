@@ -5,7 +5,7 @@
  * estimatedTimeUTC - timestamptz from DB (string)
  * offsetMinutes - how many minutes BEFORE the estimated time we should notify
  */
-export function computeDelayFromUTC(nowDate, estimatedTimeUTC, offsetMinutes) {
+export function computeDelayFromUTC(nowDate: Date, estimatedTimeUTC: string, offsetMinutes: number) {
   // parse DB timestamptz to JS Date
   const target = new Date(estimatedTimeUTC);
 
@@ -14,17 +14,7 @@ export function computeDelayFromUTC(nowDate, estimatedTimeUTC, offsetMinutes) {
   const month = nowDate.getUTCMonth();
   const day = nowDate.getUTCDate();
 
-  const targetToday = new Date(
-    Date.UTC(
-      year,
-      month,
-      day,
-      target.getUTCHours(),
-      target.getUTCMinutes(),
-      0,
-      0
-    )
-  );
+  const targetToday = new Date(Date.UTC(year, month, day, target.getUTCHours(), target.getUTCMinutes(), 0, 0));
 
   // apply the user offset -> remind BEFORE training time
   const remindAt = new Date(targetToday.getTime() - offsetMinutes * 60 * 1000);

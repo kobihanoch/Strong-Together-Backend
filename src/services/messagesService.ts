@@ -1,20 +1,16 @@
-import sql from "../config/db.ts";
-import {
-  getEndOfWorkoutMessage,
-  getFirstLoginMessage,
-} from "../templates/messageTemplates.ts";
-import { emitNewMessage } from "../utils/socketUtils.js";
+import { MessageAfterSendResponse } from './../types/dto/messages.dto.ts';
+import sql from '../config/db.ts';
+import { getEndOfWorkoutMessage, getFirstLoginMessage } from '../templates/messageTemplates.ts';
+import { emitNewMessage } from '../utils/socketUtils.js';
 
-export const sendSystemMessageToUserWorkoutDone = async (
-  receiverId: string,
-): Promise<string | null> => {
+export const sendSystemMessageToUserWorkoutDone = async (receiverId: string): Promise<void> => {
   const msg = getEndOfWorkoutMessage();
   const senderId = process.env.SYSTEM_USER_ID!;
 
-  const [row] = await sql`
+  const [row] = await sql<[MessageAfterSendResponse]>`
   WITH inserted AS (
     INSERT INTO messages (sender_id, receiver_id, subject, msg)
-    VALUES (${senderId}, ${receiverId}, ${msg.header}, ${msg.text})
+    VALUES (${senderId}::uuid, ${receiverId}::uuid, ${msg.header}, ${msg.text})
     RETURNING *
   )
   SELECT
@@ -29,21 +25,21 @@ export const sendSystemMessageToUserWorkoutDone = async (
 
   // Send in socket too
   emitNewMessage(receiverId, row);
-  return row?.id ?? null;
+  return;
 };
 
 export const sendSystemMessageToUserWhenFirstLogin = async (
   receiverId: string,
   receiverName: string,
-): Promise<string | null> => {
+): Promise<void> => {
   const msg = getFirstLoginMessage(receiverName);
 
   const senderId = process.env.SYSTEM_USER_ID!;
 
-  const [row] = await sql`
+  const [row] = await sql<[MessageAfterSendResponse]>`
   WITH inserted AS (
     INSERT INTO messages (sender_id, receiver_id, subject, msg)
-    VALUES (${senderId}, ${receiverId}, ${msg.header}, ${msg.text})
+    VALUES (${senderId}::uuid, ${receiverId}::uuid, ${msg.header}, ${msg.text})
     RETURNING *
   )
   SELECT
@@ -58,5 +54,5 @@ export const sendSystemMessageToUserWhenFirstLogin = async (
 
   // Send in socket too
   emitNewMessage(receiverId, row);
-  return row?.id ?? null;
+  return;
 };

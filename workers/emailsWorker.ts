@@ -1,5 +1,5 @@
-import { sendMail } from "../src/config/mailer.js";
-import emailsQueue from "../src/queues/emails/emailsQueue.js";
+import { sendMail } from '../src/config/mailer.ts';
+import emailsQueue from '../src/queues/emails/emailsQueue.ts';
 
 export const startEmailWorker = async () => {
   try {
@@ -14,17 +14,19 @@ export const startEmailWorker = async () => {
         }
 
         await sendMail({ to, subject, html });
-        console.log("[Email worker]: email sent to", to);
+        console.log('[Email worker]: email sent to', to);
       } catch (e) {
-        console.error(
-          `[Email worker]: Failed to send email to ${to}: ${e.message}`
-        );
+        if (e instanceof Error) {
+          console.error(`[Email worker]: Failed to send email to ${to}: ${e.message}`);
+        }
         throw e;
       }
     });
-    console.log("[Email worker]: Email worker is up");
+    console.log('[Email worker]: Email worker is up');
   } catch (e) {
-    console.error("[Email worker]: Email worker failed to start:", e.message);
+    if (e instanceof Error) {
+      console.error('[Email worker]: Email worker failed to start:', e.message);
+    }
     throw e;
   }
 

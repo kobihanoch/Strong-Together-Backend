@@ -1,5 +1,5 @@
-import pushNotificationsQueue from "../src/queues/pushNotifications/pushNotificationsQueue.js";
-import { sendPushNotification } from "../src/services/pushService.js";
+import pushNotificationsQueue from '../src/queues/pushNotifications/pushNotificationsQueue.ts';
+import { sendPushNotification } from '../src/services/pushService.ts';
 
 export const startPushWorker = async () => {
   try {
@@ -14,17 +14,19 @@ export const startPushWorker = async () => {
         }
 
         await sendPushNotification(token, title, body);
-        console.log("[Push worker]: Push sent to", token);
+        console.log('[Push worker]: Push sent to', token);
       } catch (e) {
-        console.error(
-          `[Push worker]: Failed to send push to ${token}: ${e.message}`
-        );
+        if (e instanceof Error) {
+          console.error(`[Push worker]: Failed to send push to ${token}: ${e.message}`);
+        }
         throw e;
       }
     });
-    console.log("[Push worker]: Push worker is up");
+    console.log('[Push worker]: Push worker is up');
   } catch (e) {
-    console.error("[Push worker]: Push worker failed to start:", e.message);
+    if (e instanceof Error) {
+      console.error('[Push worker]: Push worker failed to start:', e.message);
+    }
     throw e;
   }
 

@@ -2,6 +2,7 @@ export type EmailPayload = {
   to: string;
   subject: string;
   html: string;
+  expiresAt?: number;
 };
 
 export type ValidateUserEmailParams = {

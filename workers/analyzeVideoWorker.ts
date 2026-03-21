@@ -1,5 +1,5 @@
-import axios from "axios";
-import analyzeVideoQueue from "../src/queues/analyzeVideo/analyzeVideoQueue.js";
+import axios from 'axios';
+import analyzeVideoQueue from '../src/queues/analyzeVideo/analyzeVideoQueue.ts';
 
 export const startAnalyzVideoWorker = async () => {
   try {
@@ -14,31 +14,28 @@ export const startAnalyzVideoWorker = async () => {
         }
 
         const endpointUrl =
-          process.env.NODE_ENV === "development"
-            ? "http://python-service:8000/analyze-exercise"
-            : process.env.ANALYSIS_SERVER_URL;
+          process.env.NODE_ENV === 'development'
+            ? 'http://python-service:8000/analyze-exercise'
+            : process.env.ANALYSIS_SERVER_URL!;
         await axios.post(endpointUrl, {
           fileKey,
           exercise,
           jobId: String(job.id),
           userId,
         });
-        console.log(
-          `[Analyze video worker]: User ${userId} video has been sent to server`,
-        );
+        console.log(`[Analyze video worker]: User ${userId} video has been sent to server`);
       } catch (e) {
-        console.error(
-          `[Analyze video worker]: Failed to send user ${userId} video to server: ${e.message}`,
-        );
+        if (e instanceof Error) {
+          console.error(`[Analyze video worker]: Failed to send user ${userId} video to server: ${e.message}`);
+        }
         throw e;
       }
     });
-    console.log("[Analyze video worker]: Analyze video worker is up");
+    console.log('[Analyze video worker]: Analyze video worker is up');
   } catch (e) {
-    console.error(
-      "[Analyze video worker]: Analyze video worker failed to start:",
-      e.message,
-    );
+    if (e instanceof Error) {
+      console.error('[Analyze video worker]: Analyze video worker failed to start:', e.message);
+    }
     throw e;
   }
 
