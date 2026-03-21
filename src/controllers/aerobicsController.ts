@@ -1,30 +1,22 @@
-import {
-  AddAerobicInput,
-} from "./../types/dto/aerobics.dto.ts";
-import {
-  AddUserAerobicsRequestBody,
-} from "./../types/api/aerobics/requests.ts";
-import { GetUserAerobicsQueryParams } from "./../types/api/aerobics/params.ts";
-import { UserAerobicsResponse } from "./../types/api/aerobics/responses.ts";
-import { Request, Response } from "express";
-import {
-  queryAddAerobicTracking,
-  queryGetUserAerobicsForNDays,
-} from "../queries/aerobicsQueries.ts";
+import { Request, Response } from 'express';
+import { queryAddAerobicTracking, queryGetUserAerobicsForNDays } from '../queries/aerobicsQueries.ts';
 import {
   buildAerobicsKeyStable,
   cacheDeleteOtherTimezones,
   cacheGetJSON,
   cacheSetJSON,
   TTL_AEROBICS,
-} from "../utils/cache.ts";
+} from '../utils/cache.ts';
+import { GetUserAerobicsQueryParams } from './../types/api/aerobics/params.ts';
+import { AddUserAerobicsRequestBody } from './../types/api/aerobics/requests.ts';
+import { UserAerobicsResponse } from './../types/api/aerobics/responses.ts';
 
 /** Pure helper (no req/res) */
 export const getAerobicsData = async (
   userId: string,
   days: number = 45,
   fromCache: boolean = true,
-  tz: string = "Asia/Jerusalem",
+  tz: string = 'Asia/Jerusalem',
 ): Promise<{ payload: UserAerobicsResponse; cacheHit: boolean }> => {
   // Check for cache
   const aerobicsKey = buildAerobicsKeyStable(userId, days, tz);
@@ -52,13 +44,8 @@ export const getUserAerobics = async (
   res: Response<UserAerobicsResponse>,
 ): Promise<Response<UserAerobicsResponse>> => {
   const tz = req.query.tz;
-  const { payload, cacheHit } = await getAerobicsData(
-    req.user!.id,
-    45,
-    true,
-    tz,
-  );
-  res.set("X-Cache", cacheHit ? "HIT" : "MISS");
+  const { payload, cacheHit } = await getAerobicsData(req.user!.id, 45, true, tz);
+  res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
   return res.status(200).json(payload);
 };
 
@@ -66,11 +53,7 @@ export const getUserAerobics = async (
 // @route   POST /api/aerobics/add
 // @access  Private
 export const addUserAerobics = async (
-  req: Request<
-    {},
-    UserAerobicsResponse,
-    AddUserAerobicsRequestBody
-  >,
+  req: Request<{}, UserAerobicsResponse, AddUserAerobicsRequestBody>,
   res: Response<UserAerobicsResponse>,
 ): Promise<Response<UserAerobicsResponse>> => {
   await queryAddAerobicTracking(req.user!.id, req.body.record);

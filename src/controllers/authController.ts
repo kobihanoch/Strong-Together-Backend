@@ -1,8 +1,8 @@
-import bcrypt from "bcryptjs";
-import { Request, Response } from "express";
-import createError from "http-errors";
-import jwt from "jsonwebtoken";
-import sql from "../config/db.ts";
+import bcrypt from 'bcryptjs';
+import { Request, Response } from 'express';
+import createError from 'http-errors';
+import jwt from 'jsonwebtoken';
+import sql from '../config/db.ts';
 import {
   queryBumpTokenVersionAndGetSelfData,
   queryBumpTokenVersionAndGetSelfDataCAS,
@@ -12,32 +12,26 @@ import {
   queryUpdateUserVerficiationStatus,
   queryUserByIdentifierForLogin,
   queryUserByUsername,
-} from "../queries/authQueries.ts";
-import { queryUserExistsByUsernameOrEmail } from "../queries/userQueries.js";
-import {
-  sendForgotPasswordEmail,
-  sendVerificationEmail,
-} from "../services/emailService.ts";
-import { sendSystemMessageToUserWhenFirstLogin } from "../services/messagesService.ts";
-import {
-  generateVerificationFailedHTML,
-  generateVerifiedHTML,
-} from "../templates/responseHTMLTemplates.ts";
-import { LoginRequestBody } from "../types/api/auth/requests.ts";
+} from '../queries/authQueries.ts';
+import { queryUserExistsByUsernameOrEmail } from '../queries/userQueries.js';
+import { sendForgotPasswordEmail, sendVerificationEmail } from '../services/emailService.ts';
+import { sendSystemMessageToUserWhenFirstLogin } from '../services/messagesService.ts';
+import { generateVerificationFailedHTML, generateVerifiedHTML } from '../templates/responseHTMLTemplates.ts';
+import { LoginRequestBody } from '../types/api/auth/requests.ts';
 import {
   LoginResponse,
   MessageResponse,
   RefreshTokenResponse,
   ResetPasswordResponse,
-} from "../types/api/auth/responses.ts";
-import { cacheStoreJti } from "../utils/cache.ts";
+} from '../types/api/auth/responses.ts';
+import { cacheStoreJti } from '../utils/cache.ts';
 import {
   decodeForgotPasswordToken,
   decodeRefreshToken,
   decodeVerifyToken,
   getRefreshToken,
-} from "../utils/tokenUtils.js";
-import { AccessTokenPayload } from "../types/dto/auth.dto.ts";
+} from '../utils/tokenUtils.js';
+import { AccessTokenPayload } from '../types/dto/auth.dto.ts';
 
 // @desc    Login a user
 // @route   POST /api/auth/login
@@ -48,24 +42,24 @@ export const loginUser = async (
 ): Promise<Response<LoginResponse>> => {
   const { identifier, password } = req.body;
 
-  const jkt = req.headers["dpop-key-binding"] as string | undefined;
-  if (process.env.DPOP_ENABLED === "true") {
+  const jkt = req.headers['dpop-key-binding'] as string | undefined;
+  if (process.env.DPOP_ENABLED === 'true') {
     if (!jkt) {
-      throw createError(400, "DPoP-Key-Binding header is missing.");
+      throw createError(400, 'DPoP-Key-Binding header is missing.');
     }
   }
 
   // Validate data
   const [user = null] = await queryUserByIdentifierForLogin(identifier);
-  if (!user) throw createError(401, "Invalid credentials");
+  if (!user) throw createError(401, 'Invalid credentials');
 
   // Check if user exists
   const isMatch = await bcrypt.compare(password, user.password!);
-  if (!isMatch) throw createError(401, "Invalid credentials");
+  if (!isMatch) throw createError(401, 'Invalid credentials');
 
   // Check verification
   if (!user.is_verified) {
-    throw createError(401, "You need to verify you account");
+    throw createError(401, 'You need to verify you account');
   }
 
   // If first log in send welcome message
@@ -85,7 +79,7 @@ export const loginUser = async (
   const cnfClaim = jkt
     ? {
         cnf: {
-          jkt: jkt.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, ""),
+          jkt: jkt.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, ''),
         },
       }
     : {};
@@ -99,7 +93,7 @@ export const loginUser = async (
       ...cnfClaim,
     },
     process.env.JWT_ACCESS_SECRET!,
-    { expiresIn: "5m" },
+    { expiresIn: '5m' },
   );
 
   const refreshToken = jwt.sign(
@@ -110,12 +104,12 @@ export const loginUser = async (
       ...cnfClaim,
     },
     process.env.JWT_REFRESH_SECRET!,
-    { expiresIn: "14d" },
+    { expiresIn: '14d' },
   );
 
-  res.set("Cache-Control", "no-store");
+  res.set('Cache-Control', 'no-store');
   return res.status(200).json({
-    message: "Login successful",
+    message: 'Login successful',
     user: userData?.id,
     accessToken: accessToken,
     refreshToken: refreshToken,
@@ -135,9 +129,7 @@ export const logoutUser = async (
   // Get tokens from request body and decode
   const refreshToken = getRefreshToken(req);
   // Decode tokens
-  const decodedRefresh = decodeRefreshToken(
-    refreshToken,
-  ) as AccessTokenPayload | null;
+  const decodedRefresh = decodeRefreshToken(refreshToken) as AccessTokenPayload | null;
 
   if (decodedRefresh) {
     //await queryInsertBlacklistedToken(refreshToken, expiresAtRefresh);
@@ -147,7 +139,7 @@ export const logoutUser = async (
     ]);
   }
 
-  return res.status(200).json({ message: "Logged out successfully" });
+  return res.status(200).json({ message: 'Logged out successfully' });
 };
 
 // @desc    Refresh token (sliding session)
@@ -159,45 +151,39 @@ export const refreshAccessToken = async (
 ): Promise<Response<RefreshTokenResponse>> => {
   //await queryDeleteExpiredBlacklistedTokens();
   const dpopJkt = (req as any).dpopJkt; // Casting until express.d.ts is fully loaded
-  if (process.env.DPOP_ENABLED === "true") {
+  if (process.env.DPOP_ENABLED === 'true') {
     if (!dpopJkt) {
       // Should not happen if dpopValidationMiddleware ran first
-      throw createError(500, "Internal error: DPoP JKT not found on request.");
+      throw createError(500, 'Internal error: DPoP JKT not found on request.');
     }
   }
 
   const refreshToken = getRefreshToken(req);
-  if (!refreshToken) throw createError(401, "No refresh token provided");
+  if (!refreshToken) throw createError(401, 'No refresh token provided');
 
   // Verify refresh token
   const decoded = decodeRefreshToken(refreshToken) as AccessTokenPayload | null;
-  if (!decoded) throw createError(401, "Invalid or expired refresh token");
+  if (!decoded) throw createError(401, 'Invalid or expired refresh token');
 
-  if (process.env.DPOP_ENABLED === "true") {
+  if (process.env.DPOP_ENABLED === 'true') {
     // One time migration path for older versions (newer tokens will pu JKT inside)
     const tokenJkt = decoded.cnf?.jkt;
     if (tokenJkt && tokenJkt !== dpopJkt) {
-      throw createError(401, "Proof-of-Possession failed (JKT mismatch).");
+      throw createError(401, 'Proof-of-Possession failed (JKT mismatch).');
     }
   }
 
   // Bump token version and sign new JWTs with new tokev version (CAS)
   // If not rows - there is a gap between last token and token_version => login was fired in another device -> logout
-  const [user = null] = await queryBumpTokenVersionAndGetSelfDataCAS(
-    decoded.id,
-    decoded.tokenVer,
-  );
-  if (!user) throw createError(401, "New login required");
+  const [user = null] = await queryBumpTokenVersionAndGetSelfDataCAS(decoded.id, decoded.tokenVer);
+  if (!user) throw createError(401, 'New login required');
 
   const { token_version, user_data: userData } = user;
 
   const cnfClaim = dpopJkt
     ? {
         cnf: {
-          jkt: dpopJkt
-            .replace(/\+/g, "-")
-            .replace(/\//g, "_")
-            .replace(/=+$/g, ""),
+          jkt: dpopJkt.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, ''),
         },
       }
     : {};
@@ -211,7 +197,7 @@ export const refreshAccessToken = async (
       ...cnfClaim,
     },
     process.env.JWT_ACCESS_SECRET!,
-    { expiresIn: "5m" },
+    { expiresIn: '5m' },
   );
 
   const newRefresh = jwt.sign(
@@ -222,12 +208,12 @@ export const refreshAccessToken = async (
       ...cnfClaim,
     },
     process.env.JWT_REFRESH_SECRET!,
-    { expiresIn: "14d" },
+    { expiresIn: '14d' },
   );
 
-  res.set("Cache-Control", "no-store");
+  res.set('Cache-Control', 'no-store');
   return res.status(200).json({
-    message: "Access token refreshed",
+    message: 'Access token refreshed',
     accessToken: newAccess,
     refreshToken: newRefresh,
     userId: userData.id,
@@ -242,19 +228,15 @@ export const verifyUserAccount = async (
   res: Response,
 ): Promise<any> => {
   const { token } = req.query;
-  if (!token) throw createError(400, "Missing token");
+  if (!token) throw createError(400, 'Missing token');
   const decoded = decodeVerifyToken(token);
   if (!decoded) {
-    return res
-      .status(401)
-      .type("html")
-      .set("Cache-Control", "no-store")
-      .send(generateVerificationFailedHTML());
+    return res.status(401).type('html').set('Cache-Control', 'no-store').send(generateVerificationFailedHTML());
   }
 
   const { jti, sub, exp, iss, typ } = decoded;
   // basic claim validation
-  if (iss !== "strong-together" || typ !== "email-verify" || !jti || !sub) {
+  if (iss !== 'strong-together' || typ !== 'email-verify' || !jti || !sub) {
     return res.status(400).send(generateVerificationFailedHTML());
   }
 
@@ -263,39 +245,27 @@ export const verifyUserAccount = async (
   const ttlSec = Math.max(1, exp - nowSec);
 
   // JTI single-use allow-list
-  const inserted = await cacheStoreJti("accountverify", jti, ttlSec);
+  const inserted = await cacheStoreJti('accountverify', jti, ttlSec);
   if (!inserted) {
-    return res
-      .status(401)
-      .type("html")
-      .set("Cache-Control", "no-store")
-      .send(generateVerificationFailedHTML());
+    return res.status(401).type('html').set('Cache-Control', 'no-store').send(generateVerificationFailedHTML());
   }
 
   await queryUpdateUserVerficiationStatus(sub, true);
   const html = generateVerifiedHTML();
 
-  return res
-    .status(200)
-    .type("html")
-    .set("Cache-Control", "no-store")
-    .send(html);
+  return res.status(200).type('html').set('Cache-Control', 'no-store').send(html);
 };
 
 // @desc    Validate user acoount
 // @route   POST /api/auth/sendverificationemail
 // @access  Public
-export const sendVerificationMail = async (
-  req: Request<{}, any, { email: string }>,
-  res: Response,
-): Promise<any> => {
+export const sendVerificationMail = async (req: Request<{}, any, { email: string }>, res: Response): Promise<any> => {
   const { email } = req.body;
-  const [user = null] = await sql<
-    { id: string; name: string; username: string }[]
-  >`SELECT id, name, username FROM users WHERE email=${email}`;
+  const [user = null] = await sql<{ id: string; name: string | null; username: string }[]>`
+    SELECT id, name, username FROM users WHERE email=${email}`;
   if (!user) return res.status(204).end();
   const { id, name } = user;
-  await sendVerificationEmail(email, id, user.name ? user.name : user.username);
+  await sendVerificationEmail(email, id, name ?? user.username);
   return res.status(204).end();
 };
 
@@ -303,31 +273,23 @@ export const sendVerificationMail = async (
 // @route   PUT /api/auth/changeemailverify
 // @access  Public
 export const changeEmailAndVerify = async (
-  req: Request<
-    {},
-    any,
-    { username: string; password: string; newEmail: string }
-  >,
+  req: Request<{}, any, { username: string; password: string; newEmail: string }>,
   res: Response,
 ): Promise<any> => {
   const { username, password, newEmail } = req.body;
 
   const [user = null] = await queryUserByUsername(username);
-  if (!user) throw createError(401, "Invalid credentials");
+  if (!user) throw createError(401, 'Invalid credentials');
   const ok = await bcrypt.compare(password, user.password!);
-  if (!ok) throw createError(401, "Invalid credentials");
+  if (!ok) throw createError(401, 'Invalid credentials');
 
-  if (user.is_verified) throw createError(400, "Account already verified");
+  if (user.is_verified) throw createError(400, 'Account already verified');
 
   const [exists] = await queryUserExistsByUsernameOrEmail(null, newEmail);
-  if (exists) throw createError(409, "Email already in use");
+  if (exists) throw createError(409, 'Email already in use');
 
   await sql`UPDATE users SET email = ${newEmail} WHERE id = ${user.id}::uuid`;
-  await sendVerificationEmail(
-    newEmail,
-    user.id,
-    user.name ? user.name : user.username!,
-  );
+  await sendVerificationEmail(newEmail, user.id, user.name ? user.name : user.username!);
 
   return res.status(204).end();
 };
@@ -353,7 +315,7 @@ export const sendChangePassEmail = async (
   res: Response,
 ): Promise<any> => {
   const { identifier } = req.body;
-  if (!identifier) throw createError(400, "Please fill username or email");
+  if (!identifier) throw createError(400, 'Please fill username or email');
   const [user = null] = await sql<
     { id: string; email: string; name: string; username: string }[]
   >`SELECT id, email, name, username FROM users WHERE 
@@ -362,11 +324,7 @@ export const sendChangePassEmail = async (
   // Don;t overshare
   if (!user) return res.status(204).end();
 
-  await sendForgotPasswordEmail(
-    user.email,
-    user.id,
-    user.name ? user.name : user.username,
-  );
+  await sendForgotPasswordEmail(user.email, user.id, user.name ? user.name : user.username);
 
   return res.status(204).end();
 };
@@ -375,26 +333,21 @@ export const sendChangePassEmail = async (
 // @route   PUT /api/auth/resetpassword
 // @access  Public
 export const resetPassword = async (
-  req: Request<
-    {},
-    ResetPasswordResponse,
-    { newPassword: string },
-    { token?: string }
-  >,
+  req: Request<{}, ResetPasswordResponse, { newPassword: string }, { token?: string }>,
   res: Response<ResetPasswordResponse>,
 ): Promise<Response<ResetPasswordResponse>> => {
   const { token } = req.query;
   const { newPassword } = req.body;
-  if (!token) throw createError(400, "Missing token");
+  if (!token) throw createError(400, 'Missing token');
   const decoded = decodeForgotPasswordToken(token);
   if (!decoded) {
-    throw createError(400, "Verfication token is not valid");
+    throw createError(400, 'Verfication token is not valid');
   }
 
   const { jti, sub, exp, iss, typ } = decoded;
   // basic claim validation
-  if (iss !== "strong-together" || typ !== "forgot-pass" || !jti || !sub) {
-    throw createError(400, "Verfication token is not valid");
+  if (iss !== 'strong-together' || typ !== 'forgot-pass' || !jti || !sub) {
+    throw createError(400, 'Verfication token is not valid');
   }
 
   // compute remaining TTL from exp (JWT 'exp' is seconds since epoch)
@@ -402,16 +355,13 @@ export const resetPassword = async (
   const ttlSec = Math.max(1, exp - nowSec);
 
   // JTI single-use allow-list
-  const inserted = await cacheStoreJti("forgotpassword", jti, ttlSec);
+  const inserted = await cacheStoreJti('forgotpassword', jti, ttlSec);
   if (!inserted) {
-    throw createError(400, "URL already used or expired");
+    throw createError(400, 'URL already used or expired');
   }
 
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(newPassword, salt);
-  await Promise.all([
-    queryUpdateUserPassword(sub, hash),
-    queryBumpTokenVersionAndGetSelfData(sub),
-  ]);
+  await Promise.all([queryUpdateUserPassword(sub, hash), queryBumpTokenVersionAndGetSelfData(sub)]);
   return res.status(200).json({ ok: true });
 };

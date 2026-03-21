@@ -1,13 +1,13 @@
-import type { Request, Response } from "express";
-import createError from "http-errors";
+import type { Request, Response } from 'express';
+import createError from 'http-errors';
 import {
   queryAddWorkout,
   queryGetExerciseTrackingAndStats,
   queryGetWorkoutSplitsObj,
   queryInsertUserFinishedWorkout,
   queryWholeUserWorkoutPlan,
-} from "../queries/workoutQueries.js";
-import { sendSystemMessageToUserWorkoutDone } from "../services/messagesService.ts";
+} from '../queries/workoutQueries.js';
+import { sendSystemMessageToUserWorkoutDone } from '../services/messagesService.ts';
 import {
   buildAnalyticsKeyStable,
   buildPlanKeyStable,
@@ -18,22 +18,16 @@ import {
   cacheSetJSON,
   TTL_PLAN,
   TTL_TRACKING,
-} from "../utils/cache.ts";
-import type {
-  AddWorkoutRequestBody,
-  FinishUserWorkoutRequestBody,
-} from "../types/api/workouts/requests.ts";
+} from '../utils/cache.ts';
+import type { AddWorkoutRequestBody, FinishUserWorkoutRequestBody } from '../types/api/workouts/requests.ts';
 import type {
   GetExerciseTrackingResponse,
   GetWholeUserWorkoutPlanResponse,
   AddWorkoutResponse,
   FinishUserWorkoutResponse,
-} from "../types/api/workouts/responses.ts";
-import type {
-  GetExerciseTrackingQuery,
-  GetWholeUserWorkoutPlanQuery,
-} from "../types/api/workouts/queries.ts";
-import type { ExerciseTrackingAndStats } from "../types/dto/exerciseTracking.dto.ts";
+} from '../types/api/workouts/responses.ts';
+import type { GetExerciseTrackingQuery, GetWholeUserWorkoutPlanQuery } from '../types/api/workouts/queries.ts';
+import type { ExerciseTrackingAndStats } from '../types/dto/exerciseTracking.dto.ts';
 
 /** ---------------------------
  * Pure helpers (no req/res)
@@ -43,7 +37,7 @@ import type { ExerciseTrackingAndStats } from "../types/dto/exerciseTracking.dto
 export const getWorkoutPlanData = async (
   userId: string,
   fromCache: boolean = true,
-  tz: string = "Asia/Jerusalem",
+  tz: string = 'Asia/Jerusalem',
 ): Promise<{ payload: GetWholeUserWorkoutPlanResponse; cacheHit: boolean }> => {
   const planKey = buildPlanKeyStable(userId, tz);
   if (fromCache) {
@@ -98,18 +92,13 @@ export const getExerciseTrackingData = async (
 // @route   GET /api/workouts/getworkout
 // @access  Private
 export const getWholeUserWorkoutPlan = async (
-  req: Request<
-    {},
-    GetWholeUserWorkoutPlanResponse,
-    {},
-    GetWholeUserWorkoutPlanQuery
-  >,
+  req: Request<{}, GetWholeUserWorkoutPlanResponse, {}, GetWholeUserWorkoutPlanQuery>,
   res: Response<GetWholeUserWorkoutPlanResponse>,
 ): Promise<Response<GetWholeUserWorkoutPlanResponse>> => {
   const userId = req.user!.id;
   const tz = req.query.tz as string;
   const { payload, cacheHit } = await getWorkoutPlanData(userId, true, tz);
-  res.set("X-Cache", cacheHit ? "HIT" : "MISS");
+  res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
   return res.status(200).json(payload);
 };
 
@@ -123,13 +112,8 @@ export const getExerciseTracking = async (
   const userId = req.user!.id;
   const tz = req.query.tz as string;
 
-  const { payload, cacheHit } = await getExerciseTrackingData(
-    userId,
-    45,
-    true,
-    tz,
-  );
-  res.set("X-Cache", cacheHit ? "HIT" : "MISS");
+  const { payload, cacheHit } = await getExerciseTrackingData(userId, 45, true, tz);
+  res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
   return res.status(200).json(payload);
 };
 
@@ -141,12 +125,12 @@ export const finishUserWorkout = async (
   res: Response<FinishUserWorkoutResponse>,
 ): Promise<Response<FinishUserWorkoutResponse>> => {
   const workoutArray = req.body.workout;
-  const tz = req.body.tz || "Asia/Jerusalem";
+  const tz = req.body.tz || 'Asia/Jerusalem';
   const workoutStartUtc = req.body.workout_start_utc || null;
   const workoutEndUtc = req.body.workout_end_utc || null;
 
   if (!Array.isArray(workoutArray) || workoutArray.length === 0) {
-    throw createError(400, "Not a valid workout");
+    throw createError(400, 'Not a valid workout');
   }
 
   const userId = req.user!.id;
@@ -158,11 +142,7 @@ export const finishUserWorkout = async (
 
   // refresh tracking cache
   const { payload } = await getExerciseTrackingData(userId, 45, false, tz);
-  await cacheSetJSON(
-    buildTrackingKeyStable(userId, 45, tz),
-    payload,
-    TTL_TRACKING,
-  );
+  await cacheSetJSON(buildTrackingKeyStable(userId, 45, tz), payload, TTL_TRACKING);
 
   sendSystemMessageToUserWorkoutDone(userId);
   return res.status(200).json(payload);
@@ -171,19 +151,8 @@ export const finishUserWorkout = async (
 // @desc    Delete user's workout
 // @route   DELETE /api/workouts/delete
 // @access  Private
-export const deleteUserWorkout = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  const userId = req.user!.id;
-  /*await queryDeleteUserWorkout(userId);
-
-  const planKey = buildPlanKeyStable(userId, tz);
-  const analyticsKey = buildAnalyticsKeyStable(userId);
-  await cacheDeleteKey(analyticsKey);
-  await cacheDeleteKey(planKey);
-
-  return res.status(204).end();*/
+export const deleteUserWorkout = async (req: Request, res: Response): Promise<void> => {
+  return;
 };
 
 // @desc    Add workout
@@ -209,7 +178,7 @@ export const addWorkout = async (
   const { splits } = await queryGetWorkoutSplitsObj(plan.id);
 
   const payload = {
-    message: "Workout created successfully!",
+    message: 'Workout created successfully!',
     workoutPlan: plan,
     workoutPlanForEditWorkout: splits,
   };

@@ -1,23 +1,10 @@
-import type { UserEntity } from "../../entities/user.entity.ts";
+import z from 'zod';
+import { registerSchema } from '../../../validators/auth/register.schema.js';
+import { updateUserSchema } from '../../../validators/update/updateUser.schema.js';
 
-export type CreateUserRequest = Omit<
-  UserEntity,
-  "id" | "created_at" | "token_version" | "is_verified" | "role" | "password"
-> & {
-  fullName: string;
-  password: string;
-};
+export type CreateUserRequest = z.infer<typeof registerSchema>;
 
-export interface UpdateUserBody {
-  username?: string | null;
-  fullName?: string | null;
-  email?: string | null;
-  gender?: string | null;
-  password?: string | null;
-  profileImgUrl?: string | null;
-  pushToken?: string | null;
-  setCompletedOnOAuth?: boolean;
-}
+export type UpdateUserBody = z.infer<typeof updateUserSchema>;
 
 export interface SaveUserPushTokenRequest {
   token: string;

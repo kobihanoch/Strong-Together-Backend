@@ -1,6 +1,6 @@
-import sql from "../config/db.ts";
-import { UserAerobicsResponse } from "../types/api/aerobics/responses.ts";
-import { AddAerobicInput } from "../types/dto/aerobics.dto.ts";
+import sql from '../config/db.ts';
+import { UserAerobicsResponse } from '../types/api/aerobics/responses.ts';
+import { AddAerobicInput } from '../types/dto/aerobics.dto.ts';
 
 // Gets all records from last 45 days mapped by dates
 /**
@@ -61,7 +61,7 @@ import { AddAerobicInput } from "../types/dto/aerobics.dto.ts";
 export const queryGetUserAerobicsForNDays = async (
   userId: string,
   days: number,
-  tz: string = "Asia/Jerusalem",
+  tz: string = 'Asia/Jerusalem',
 ): Promise<UserAerobicsResponse> => {
   const [obj] = await sql<[{ data: UserAerobicsResponse }]>`
   /* Normalize parameters (default tz to UTC if empty) */
@@ -140,14 +140,11 @@ export const queryGetUserAerobicsForNDays = async (
   ) AS data
   `;
 
-  return obj.data as UserAerobicsResponse;
+  return obj.data;
 };
 
 // Add a new aerobic record
-export const queryAddAerobicTracking = async (
-  userId: string,
-  record: AddAerobicInput,
-): Promise<void> => {
+export const queryAddAerobicTracking = async (userId: string, record: AddAerobicInput): Promise<void> => {
   const { durationMins, durationSec, type } = record;
   await sql`INSERT INTO aerobictracking (user_id, type, duration_mins, duration_sec) VALUES (${userId}::uuid, ${type}, ${durationMins}, ${durationSec})`;
 };
