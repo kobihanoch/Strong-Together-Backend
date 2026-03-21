@@ -1,42 +1,40 @@
-import createError from "http-errors";
+import { NextFunction, Request, Response } from 'express';
+import createError from 'http-errors';
 
-export const botBlocker = (req, res, next) => {
-  const userAgent = req.headers["user-agent"];
-  const appVersion = req.headers["x-app-version"];
-  const acceptHeader = req.headers["accept"] || "";
+export const botBlocker = (req: Request, res: Response, next: NextFunction): void => {
+  const userAgent = req.headers['user-agent'];
+  const appVersion = req.headers['x-app-version'];
+  const acceptHeader = req.headers['accept'] || '';
   const path = req.path;
 
   // If sent from app continue
   if (appVersion) return next();
   if (
-    path.includes("verify") ||
-    path.includes("resetpassword") ||
-    path.includes("daily") ||
-    path.includes("changeemail")
+    path.includes('verify') ||
+    path.includes('resetpassword') ||
+    path.includes('daily') ||
+    path.includes('changeemail')
   )
     return next();
 
   // Try to catch null user agent
-  if (!userAgent) return next(createError(404, "Not found"));
+  if (!userAgent) return next(createError(404, 'Not found'));
 
   // Accept header
-  if (
-    acceptHeader.includes("text/html") ||
-    acceptHeader.includes("application/xml")
-  ) {
+  if (acceptHeader.includes('text/html') || acceptHeader.includes('application/xml')) {
     console.warn(`[BOT ALERT] Suspicious accept header: ${acceptHeader}`);
-    return next(createError(404, "Not found"));
+    return next(createError(404, 'Not found'));
   }
 
   const suspiciousKeywords = [
-    "curl",
-    "wget",
-    "python",
-    "go-http-client",
-    "zgrab",
-    "masscan",
-    "ahrefsbot",
-    "semrushbot",
+    'curl',
+    'wget',
+    'python',
+    'go-http-client',
+    'zgrab',
+    'masscan',
+    'ahrefsbot',
+    'semrushbot',
   ];
 
   const badPaths = [
@@ -67,13 +65,12 @@ export const botBlocker = (req, res, next) => {
   ];
 
   const isSuspicious =
-    suspiciousKeywords.some((keyword) =>
-      userAgent.toLowerCase().includes(keyword)
-    ) || badPaths.some((bad) => bad.test(path));
+    suspiciousKeywords.some((keyword) => userAgent.toLowerCase().includes(keyword)) ||
+    badPaths.some((bad) => bad.test(path));
 
   if (isSuspicious) {
     console.warn(`[BOT ALERT] Blocked suspicious UA: ${userAgent}`);
-    return next(createError(404, "Not found"));
+    return next(createError(404, 'Not found'));
   }
 
   return next();
