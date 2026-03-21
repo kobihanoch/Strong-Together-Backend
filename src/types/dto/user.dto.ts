@@ -1,5 +1,5 @@
 import z from 'zod';
-import { updateUserSchema } from '../../validators/update/updateUser.schema.js';
+import { updateUserRequest } from '../../validators/user/updateUserRequest.schema.ts';
 
 export interface ChangeEmailTokenPayload {
   jti: string;
@@ -10,4 +10,4 @@ export interface ChangeEmailTokenPayload {
   typ: string;
 }
 
-export type AuthenticatedUserForUpdate = z.infer<typeof updateUserSchema>;
+export type AuthenticatedUserForUpdate = z.infer<typeof updateUserRequest.shape.body>;

@@ -1,7 +1,7 @@
-import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import { GenerateTicketBody } from "../types/api/webSockets/requests.ts";
-import { GenerateTicketResponse } from "../types/api/webSockets/responses.ts";
+import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
+import { GenerateTicketBody } from '../types/api/webSockets/requests.ts';
+import { GenerateTicketResponse } from '../types/api/webSockets/responses.ts';
 
 // @desc    Generates a ticket for websocket connection
 // @route   POST /api/ws/generateticket
@@ -17,10 +17,10 @@ export const generateTicket = async (
     jti: crypto.randomUUID(), // optional: store in Redis for one-time use
   };
 
-  const ticket = jwt.sign(payload, process.env.JWT_SOCKET_SECRET || "", {
-    expiresIn: "5400s", // 1:30 Hrs
-    issuer: "strong-together",
-    audience: "socket",
+  const ticket = jwt.sign(payload, process.env.JWT_SOCKET_SECRET || '', {
+    expiresIn: '5400s', // 1:30 Hrs
+    issuer: 'strong-together',
+    audience: 'socket',
   });
 
   return res.status(201).json({ ticket });

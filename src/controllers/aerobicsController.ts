@@ -7,8 +7,7 @@ import {
   cacheSetJSON,
   TTL_AEROBICS,
 } from '../utils/cache.ts';
-import { GetUserAerobicsQueryParams } from './../types/api/aerobics/params.ts';
-import { AddUserAerobicsRequestBody } from './../types/api/aerobics/requests.ts';
+import { AddUserAerobicsBody, GetUserAerobicsQuery } from './../types/api/aerobics/requests.ts';
 import { UserAerobicsResponse } from './../types/api/aerobics/responses.ts';
 
 /** Pure helper (no req/res) */
@@ -40,7 +39,7 @@ export const getAerobicsData = async (
 // @route   GET /api/aerobics/get
 // @access  Private
 export const getUserAerobics = async (
-  req: Request<{}, UserAerobicsResponse, {}, GetUserAerobicsQueryParams>,
+  req: Request<{}, UserAerobicsResponse, {}, GetUserAerobicsQuery>,
   res: Response<UserAerobicsResponse>,
 ): Promise<Response<UserAerobicsResponse>> => {
   const tz = req.query.tz;
@@ -53,7 +52,7 @@ export const getUserAerobics = async (
 // @route   POST /api/aerobics/add
 // @access  Private
 export const addUserAerobics = async (
-  req: Request<{}, UserAerobicsResponse, AddUserAerobicsRequestBody>,
+  req: Request<{}, UserAerobicsResponse, AddUserAerobicsBody>,
   res: Response<UserAerobicsResponse>,
 ): Promise<Response<UserAerobicsResponse>> => {
   await queryAddAerobicTracking(req.user!.id, req.body.record);

@@ -1,25 +1,21 @@
-import { Request, Response } from "express";
-import createError from "http-errors";
+import { Request, Response } from 'express';
+import createError from 'http-errors';
+import { queryAllUserMessages, queryDeleteMessage, queryMarkUserMessageAsRead } from '../queries/messageQueries.js';
 import {
-  queryAllUserMessages,
-  queryDeleteMessage,
-  queryMarkUserMessageAsRead,
-} from "../queries/messageQueries.js";
-import {
-  DeleteMessageRequestParams,
-  GetAllUserMessagesRequestQuery,
-  MarkMessageAsReadRequestParams,
-} from "../types/api/messages/requests.ts";
+  DeleteMessageParams,
+  GetAllUserMessagesQuery,
+  MarkMessageAsReadParams,
+} from '../types/api/messages/requests.ts';
 import {
   DeleteMessageResponse,
   GetAllUserMessagesResponse,
   MarkMessageAsReadResponse,
-} from "../types/api/messages/responses.ts";
+} from '../types/api/messages/responses.ts';
 
 /** Pure helper (no req/res) */
 export const getAllMessagesData = async (
   userId: string,
-  tz: string = "Asia/Jerusalem",
+  tz: string = 'Asia/Jerusalem',
 ): Promise<{ payload: GetAllUserMessagesResponse }> => {
   // Get messages
   const rows = await queryAllUserMessages(userId, tz); // Fetches sender profile pic path also
@@ -33,12 +29,7 @@ export const getAllMessagesData = async (
 // @route   GET /api/messages/getmessages
 // @access  Private
 export const getAllUserMessages = async (
-  req: Request<
-    {},
-    GetAllUserMessagesResponse,
-    {},
-    GetAllUserMessagesRequestQuery
-  >,
+  req: Request<{}, GetAllUserMessagesResponse, {}, GetAllUserMessagesQuery>,
   res: Response<GetAllUserMessagesResponse>,
 ): Promise<Response<GetAllUserMessagesResponse>> => {
   const tz = req.query.tz;
@@ -53,7 +44,7 @@ export const getAllUserMessages = async (
 // @route   PUT /api/messages/markmasread/:id
 // @access  Private
 export const markUserMessageAsRead = async (
-  req: Request<MarkMessageAsReadRequestParams, MarkMessageAsReadResponse>,
+  req: Request<MarkMessageAsReadParams, MarkMessageAsReadResponse>,
   res: Response<MarkMessageAsReadResponse>,
 ): Promise<Response<MarkMessageAsReadResponse>> => {
   // Update the message (won't e effective if trying to change other user's message)
@@ -61,7 +52,7 @@ export const markUserMessageAsRead = async (
 
   // If message don't exist
   if (!rows.length) {
-    throw createError(404, "Message not found");
+    throw createError(404, 'Message not found');
   }
 
   // Success
@@ -72,12 +63,12 @@ export const markUserMessageAsRead = async (
 // @route   DELETE /api/messages/delete/:id
 // @access  Private
 export const deleteMessage = async (
-  req: Request<DeleteMessageRequestParams, DeleteMessageResponse>,
+  req: Request<DeleteMessageParams, DeleteMessageResponse>,
   res: Response<DeleteMessageResponse>,
 ): Promise<Response<DeleteMessageResponse>> => {
   const rows = await queryDeleteMessage(req.params.id, req.user!.id);
   if (!rows.length) {
-    throw createError(404, "Message not found.");
+    throw createError(404, 'Message not found.');
   }
   return res.status(200).json(rows[0]);
 };
