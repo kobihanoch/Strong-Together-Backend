@@ -1,0 +1,30 @@
+import { NotificationPayload } from "../../types/dto/notifications.dto.ts";
+import pushNotificationsQueue from "./pushNotificationsQueue.ts";
+
+// Add jobs to queue
+export const enqueuePushNotifications = async (
+  notifications: NotificationPayload[],
+): Promise<void> => {
+  //console.log("Email has arrived!");
+  try {
+    await pushNotificationsQueue.addBulk(
+      notifications.map((e) => ({
+        data: {
+          ...e,
+          expiresAt: Date.now() + 1000 * 60 * 60 * 24, // 24 Hours
+        }, // Expires after 10 mins if the worker is down
+        opts: {
+          attempts: 3,
+          backoff: 5000,
+          removeOnComplete: true,
+          delay: e.delay || 0,
+          //removeOnFail: true,
+        },
+      })),
+    );
+    console.log(
+      `[Push producer]: Enqueued ${notifications.length} push notifications`,
+    );
+  } catch {}
+  //console.log("Emails are enqueued");
+};
