@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
-import { authHeaders, loginWorkoutsTestUser } from '../helpers/auth.ts';
+import { authHeaders, loginAuthTestUser, loginWorkoutsTestUser } from '../helpers/auth.ts';
 import {
   getActiveWorkoutSplitNames,
   getExerciseToWorkoutSplitId,
@@ -169,6 +169,45 @@ describe('Workouts', () => {
 
     expect(await getWorkoutSummaryCount(userId)).toBe(1);
     expect(await getExerciseTrackingCountForUser(userId)).toBe(1);
+  });
+
+  // user b creates workout plan -> user a submits user b exercisetosplit_id -> assert request is rejected and no tracking rows are created
+  it('rejects finishing a workout with exercisetosplit rows that belong to another user', async () => {
+    const victimLoginResponse = await loginWorkoutsTestUser();
+    const victimAccessToken = victimLoginResponse.body.accessToken as string;
+    const victimUserId = victimLoginResponse.body.user as string;
+
+    await addWorkoutPlan(app, victimAccessToken, {
+      A: [{ id: 20, sets: [8, 8, 10], order_index: 0 }],
+    });
+
+    const foreignExerciseToSplitId = await getExerciseToWorkoutSplitId(victimUserId, 'A', 20);
+
+    expect(foreignExerciseToSplitId).not.toBeNull();
+
+    const attackerLoginResponse = await loginAuthTestUser();
+    const attackerAccessToken = attackerLoginResponse.body.accessToken as string;
+    const attackerUserId = attackerLoginResponse.body.user as string;
+    const attackerSummaryCountBefore = await getWorkoutSummaryCount(attackerUserId);
+    const attackerTrackingCountBefore = await getExerciseTrackingCountForUser(attackerUserId);
+    const victimSummaryCountBefore = await getWorkoutSummaryCount(victimUserId);
+    const victimTrackingCountBefore = await getExerciseTrackingCountForUser(victimUserId);
+
+    const response = await finishWorkout(app, attackerAccessToken, [
+      {
+        exercisetosplit_id: foreignExerciseToSplitId!,
+        weight: [80, 80, 75],
+        reps: [8, 8, 10],
+        notes: 'Should be rejected',
+      },
+    ]);
+
+    expect(response.status).toBe(500);
+    expect(response.body.message).toContain('workoutsplit_id');
+    expect(await getWorkoutSummaryCount(attackerUserId)).toBe(attackerSummaryCountBefore);
+    expect(await getExerciseTrackingCountForUser(attackerUserId)).toBe(attackerTrackingCountBefore);
+    expect(await getWorkoutSummaryCount(victimUserId)).toBe(victimSummaryCountBefore);
+    expect(await getExerciseTrackingCountForUser(victimUserId)).toBe(victimTrackingCountBefore);
   });
 
   // login -> add workout plan -> replace plan with extra split -> get workout plan -> assert active splits

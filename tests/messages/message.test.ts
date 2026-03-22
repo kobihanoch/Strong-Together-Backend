@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
-import { loginMessagesTestUser } from '../helpers/auth.ts';
+import { loginAuthTestUser, loginMessagesTestUser } from '../helpers/auth.ts';
 import { getMessageReadState, getExerciseToWorkoutSplitId, messageExists } from '../helpers/db.ts';
 import { deleteMessage, getMessages, markMessageAsRead } from '../helpers/messages.ts';
 import { addWorkoutPlan, finishWorkout } from '../helpers/workouts.ts';
@@ -121,6 +121,76 @@ describe('Messages', () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ id: messageId });
     expect(await messageExists(messageId)).toBe(false);
+  });
+
+  // user b creates system message -> user a marks that message as read -> assert 404 and unread state is preserved
+  it('rejects marking another user message as read', async () => {
+    const ownerLoginResponse = await loginMessagesTestUser();
+    const ownerAccessToken = ownerLoginResponse.body.accessToken as string;
+    const ownerUserId = ownerLoginResponse.body.user as string;
+
+    await addWorkoutPlan(app, ownerAccessToken, {
+      A: [{ id: 20, sets: [8, 8, 10], order_index: 0 }],
+    });
+
+    const exercisetosplitId = await getExerciseToWorkoutSplitId(ownerUserId, 'A', 20);
+
+    expect(exercisetosplitId).not.toBeNull();
+
+    await finishWorkout(app, ownerAccessToken, [
+      {
+        exercisetosplit_id: exercisetosplitId!,
+        weight: [80, 80, 75],
+        reps: [8, 8, 10],
+      },
+    ]);
+
+    const ownerMessagesResponse = await getMessages(app, ownerAccessToken);
+    const messageId = ownerMessagesResponse.body.messages[0].id as string;
+
+    const attackerLoginResponse = await loginAuthTestUser();
+    const attackerAccessToken = attackerLoginResponse.body.accessToken as string;
+
+    const response = await markMessageAsRead(app, attackerAccessToken, messageId);
+
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe('Message not found');
+    expect(await getMessageReadState(messageId)).toBe(false);
+  });
+
+  // user b creates system message -> user a deletes that message -> assert 404 and row still exists
+  it('rejects deleting another user message', async () => {
+    const ownerLoginResponse = await loginMessagesTestUser();
+    const ownerAccessToken = ownerLoginResponse.body.accessToken as string;
+    const ownerUserId = ownerLoginResponse.body.user as string;
+
+    await addWorkoutPlan(app, ownerAccessToken, {
+      A: [{ id: 20, sets: [8, 8, 10], order_index: 0 }],
+    });
+
+    const exercisetosplitId = await getExerciseToWorkoutSplitId(ownerUserId, 'A', 20);
+
+    expect(exercisetosplitId).not.toBeNull();
+
+    await finishWorkout(app, ownerAccessToken, [
+      {
+        exercisetosplit_id: exercisetosplitId!,
+        weight: [80, 80, 75],
+        reps: [8, 8, 10],
+      },
+    ]);
+
+    const ownerMessagesResponse = await getMessages(app, ownerAccessToken);
+    const messageId = ownerMessagesResponse.body.messages[0].id as string;
+
+    const attackerLoginResponse = await loginAuthTestUser();
+    const attackerAccessToken = attackerLoginResponse.body.accessToken as string;
+
+    const response = await deleteMessage(app, attackerAccessToken, messageId);
+
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe('Message not found.');
+    expect(await messageExists(messageId)).toBe(true);
   });
 
   // get messages without token -> assert 401
