@@ -38,6 +38,22 @@ export async function loginMessagesTestUser() {
   return login('messages_test_user@example.com');
 }
 
+export async function loginAerobicsTestUser() {
+  return login('aerobics_test_user@example.com');
+}
+
+export async function loginAerobicsAggregateUser() {
+  return login('aerobics_aggregate_user@example.com');
+}
+
+export async function loginAerobicsGetUser() {
+  return login('aerobics_get_user@example.com');
+}
+
+export async function loginAerobicsDefaultTimezoneUser() {
+  return login('aerobics_default_tz_user@example.com');
+}
+
 export async function loginTestUser() {
   return loginAuthTestUser();
 }

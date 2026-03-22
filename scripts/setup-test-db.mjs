@@ -17,7 +17,7 @@ const dbUser = 'postgres';
 
 const authTestUserHash = '$2b$10$ZpjAscThaAj5E5T5bkhktudfz1BfRNW0yIvYaKcYWpMMqWRR33TCi';
 const authTestUserSql = `
-DELETE FROM public.users WHERE username IN ('auth_test_user', 'users_test_user', 'workouts_test_user', 'bootstrap_test_user', 'bootstrap_flow_user', 'bootstrap_aerobics_user', 'messages_test_user', 'conflict_user');
+DELETE FROM public.users WHERE username IN ('auth_test_user', 'users_test_user', 'workouts_test_user', 'bootstrap_test_user', 'bootstrap_flow_user', 'bootstrap_aerobics_user', 'messages_test_user', 'aerobics_test_user', 'aerobics_aggregate_user', 'aerobics_get_user', 'aerobics_default_tz_user', 'conflict_user');
 
 INSERT INTO public.users (
   username,
@@ -207,6 +207,106 @@ INSERT INTO public.users (
   auth_provider
 )
 VALUES (
+  'aerobics_test_user',
+  'aerobics_test_user@example.com',
+  'Aerobics Test User',
+  'Male',
+  '${authTestUserHash}',
+  'User',
+  false,
+  0,
+  true,
+  'app'
+);
+
+INSERT INTO public.users (
+  username,
+  email,
+  name,
+  gender,
+  password,
+  role,
+  is_first_login,
+  token_version,
+  is_verified,
+  auth_provider
+)
+VALUES (
+  'aerobics_aggregate_user',
+  'aerobics_aggregate_user@example.com',
+  'Aerobics Aggregate User',
+  'Male',
+  '${authTestUserHash}',
+  'User',
+  false,
+  0,
+  true,
+  'app'
+);
+
+INSERT INTO public.users (
+  username,
+  email,
+  name,
+  gender,
+  password,
+  role,
+  is_first_login,
+  token_version,
+  is_verified,
+  auth_provider
+)
+VALUES (
+  'aerobics_get_user',
+  'aerobics_get_user@example.com',
+  'Aerobics Get User',
+  'Male',
+  '${authTestUserHash}',
+  'User',
+  false,
+  0,
+  true,
+  'app'
+);
+
+INSERT INTO public.users (
+  username,
+  email,
+  name,
+  gender,
+  password,
+  role,
+  is_first_login,
+  token_version,
+  is_verified,
+  auth_provider
+)
+VALUES (
+  'aerobics_default_tz_user',
+  'aerobics_default_tz_user@example.com',
+  'Aerobics Default TZ User',
+  'Male',
+  '${authTestUserHash}',
+  'User',
+  false,
+  0,
+  true,
+  'app'
+);
+
+INSERT INTO public.users (
+  username,
+  email,
+  name,
+  gender,
+  password,
+  role,
+  is_first_login,
+  token_version,
+  is_verified,
+  auth_provider
+)
+VALUES (
   'conflict_user',
   'conflict_user@example.com',
   'Conflict User',
@@ -230,6 +330,10 @@ WHERE u.username IN (
   'bootstrap_flow_user',
   'bootstrap_aerobics_user',
   'messages_test_user',
+  'aerobics_test_user',
+  'aerobics_aggregate_user',
+  'aerobics_get_user',
+  'aerobics_default_tz_user',
   'conflict_user'
 )
 ON CONFLICT (user_id) DO NOTHING;

@@ -1,4 +1,5 @@
 import sql from '../../src/config/db.ts';
+import type { AerobicEntity } from '../../src/types/entities/aerobic.entity.ts';
 
 async function wait(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -158,4 +159,23 @@ export async function messageExists(messageId: string) {
   }
 
   return true;
+}
+
+export async function getAerobicsRowsForUser(userId: string) {
+  const rows = await sql<
+    Pick<AerobicEntity, 'id' | 'type' | 'duration_mins' | 'duration_sec' | 'workout_time_utc'>[]
+  >`
+    SELECT at.id, at.type, at.duration_mins, at.duration_sec, at.workout_time_utc
+    FROM public.aerobictracking at
+    WHERE at.user_id = ${userId}::uuid
+    ORDER BY at.id ASC
+  `;
+
+  return rows.map((row) => ({
+    id: Number(row.id),
+    type: row.type,
+    duration_mins: Number(row.duration_mins),
+    duration_sec: Number(row.duration_sec),
+    workout_time_utc: row.workout_time_utc,
+  }));
 }
