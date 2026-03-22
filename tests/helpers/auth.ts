@@ -34,6 +34,10 @@ export async function loginBootstrapAerobicsUser() {
   return login('bootstrap_aerobics_user@example.com');
 }
 
+export async function loginMessagesTestUser() {
+  return login('messages_test_user@example.com');
+}
+
 export async function loginTestUser() {
   return loginAuthTestUser();
 }

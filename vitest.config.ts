@@ -6,6 +6,7 @@ export default defineConfig({
     setupFiles: ['./tests/setup/testSetup.ts'],
     include: ['tests/**/*.test.ts'],
     globals: true,
+    fileParallelism: false,
     passWithNoTests: true,
   },
 });

@@ -17,7 +17,7 @@ const dbUser = 'postgres';
 
 const authTestUserHash = '$2b$10$ZpjAscThaAj5E5T5bkhktudfz1BfRNW0yIvYaKcYWpMMqWRR33TCi';
 const authTestUserSql = `
-DELETE FROM public.users WHERE username IN ('auth_test_user', 'users_test_user', 'workouts_test_user', 'bootstrap_test_user', 'bootstrap_flow_user', 'bootstrap_aerobics_user', 'conflict_user');
+DELETE FROM public.users WHERE username IN ('auth_test_user', 'users_test_user', 'workouts_test_user', 'bootstrap_test_user', 'bootstrap_flow_user', 'bootstrap_aerobics_user', 'messages_test_user', 'conflict_user');
 
 INSERT INTO public.users (
   username,
@@ -182,6 +182,31 @@ INSERT INTO public.users (
   auth_provider
 )
 VALUES (
+  'messages_test_user',
+  'messages_test_user@example.com',
+  'Messages Test User',
+  'Male',
+  '${authTestUserHash}',
+  'User',
+  false,
+  0,
+  true,
+  'app'
+);
+
+INSERT INTO public.users (
+  username,
+  email,
+  name,
+  gender,
+  password,
+  role,
+  is_first_login,
+  token_version,
+  is_verified,
+  auth_provider
+)
+VALUES (
   'conflict_user',
   'conflict_user@example.com',
   'Conflict User',
@@ -204,6 +229,7 @@ WHERE u.username IN (
   'bootstrap_test_user',
   'bootstrap_flow_user',
   'bootstrap_aerobics_user',
+  'messages_test_user',
   'conflict_user'
 )
 ON CONFLICT (user_id) DO NOTHING;

@@ -1,5 +1,9 @@
 import sql from '../../src/config/db.ts';
 
+async function wait(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function getExerciseToWorkoutSplitId(userId: string, splitName: string, exerciseId: number) {
   const rows = await sql<{ id: number }[]>`
     SELECT ets.id
@@ -113,4 +117,45 @@ export async function getUserReminderTimezone(userId: string) {
   `;
 
   return row?.timezone ?? null;
+}
+
+export async function getMessageReadState(messageId: string) {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const [row] = await sql<{ is_read: boolean | null }[]>`
+      SELECT m.is_read
+      FROM public.messages m
+      WHERE m.id = ${messageId}::uuid
+      LIMIT 1
+    `;
+
+    if (row?.is_read === true) {
+      return true;
+    }
+
+    if (attempt < 9) {
+      await wait(25);
+    }
+  }
+
+  return false;
+}
+
+export async function messageExists(messageId: string) {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const [row] = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count
+      FROM public.messages m
+      WHERE m.id = ${messageId}::uuid
+    `;
+
+    if (Number(row?.count ?? '0') === 0) {
+      return false;
+    }
+
+    if (attempt < 9) {
+      await wait(25);
+    }
+  }
+
+  return true;
 }
