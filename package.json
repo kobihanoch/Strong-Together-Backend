@@ -18,6 +18,7 @@
     "test": "vitest run --silent",
     "test:watch": "vitest",
     "test:videoanalysis": "npm run test:db:reset && vitest run tests/videoanalysis/videoanalysis.test.ts",
+    "test:websockets": "npm run test:db:reset && vitest run tests/websockets/websockets.test.ts --silent",
     "lint:sql": "eslint",
     "start": "tsx src/index.ts",
     "start:server": "tsx src/index.ts",
