@@ -2,7 +2,14 @@ import crypto from 'crypto';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
-import { authHeaders, createVerifyToken, loginTestUser, logoutHeaders, refreshHeaders } from '../helpers/auth.ts';
+import {
+  authHeaders,
+  createForgotPasswordToken,
+  createVerifyToken,
+  loginTestUser,
+  logoutHeaders,
+  refreshHeaders,
+} from '../helpers/auth.ts';
 import { getUserAuthStateByUsername } from '../helpers/db.ts';
 
 let app: ReturnType<typeof createApp>;
@@ -40,6 +47,27 @@ async function createUnverifiedUser(overrides?: {
     email,
     password,
     createResponse,
+  };
+}
+
+async function createVerifiedUser(overrides?: {
+  username?: string;
+  email?: string;
+  password?: string;
+  fullName?: string;
+  gender?: 'Male' | 'Female' | 'Other' | 'Unknown';
+}) {
+  const created = await createUnverifiedUser(overrides);
+  const user = await getUserAuthStateByUsername(created.username);
+  const token = createVerifyToken(user!.id);
+
+  const verifyResponse = await request(app).get('/api/auth/verify').query({ token }).set('x-app-version', '4.5.0');
+
+  expect(verifyResponse.status).toBe(200);
+
+  return {
+    ...created,
+    userId: user!.id,
   };
 }
 
@@ -268,5 +296,93 @@ describe('Auth Login', () => {
 
     const unchangedUser = await getUserAuthStateByUsername(username);
     expect(unchangedUser?.email).toBe(email);
+  });
+
+  // forgotpassemail with existing app user -> assert enumeration-safe 204 response
+  it('accepts forgot password requests for an existing app user', async () => {
+    const { username } = await createVerifiedUser();
+
+    const response = await request(app).post('/api/auth/forgotpassemail').set('x-app-version', '4.5.0').send({
+      identifier: username,
+    });
+
+    expect(response.status).toBe(204);
+    expect(response.text).toBe('');
+  });
+
+  // forgotpassemail with unknown identifier -> assert same 204 response without leaking existence
+  it('returns the same forgot password response for an unknown identifier', async () => {
+    const response = await request(app).post('/api/auth/forgotpassemail').set('x-app-version', '4.5.0').send({
+      identifier: `missing_${crypto.randomUUID().slice(0, 8)}`,
+    });
+
+    expect(response.status).toBe(204);
+    expect(response.text).toBe('');
+  });
+
+  // forgotpassemail for oauth-only user -> assert app-password reset is intentionally ignored
+  it('ignores forgot password requests for oauth-only accounts', async () => {
+    const response = await request(app).post('/api/auth/forgotpassemail').set('x-app-version', '4.5.0').send({
+      identifier: 'oauth_complete_user',
+    });
+
+    expect(response.status).toBe(204);
+    expect(response.text).toBe('');
+  });
+
+  // create verified user -> resetpassword -> old password fails -> new password succeeds
+  it('resets the password and allows login only with the new password afterward', async () => {
+    const { username, password, userId } = await createVerifiedUser();
+    const newPassword = 'Reset1234!';
+    const beforeResetUser = await getUserAuthStateByUsername(username);
+    const token = createForgotPasswordToken(userId);
+
+    const response = await request(app).put('/api/auth/resetpassword').query({ token }).set('x-app-version', '4.5.0').send({
+      newPassword,
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.ok).toBe(true);
+
+    const afterResetUser = await getUserAuthStateByUsername(username);
+    expect(afterResetUser?.password).toBeTypeOf('string');
+    expect(afterResetUser?.password).not.toBe(beforeResetUser?.password);
+
+    const oldPasswordLoginResponse = await request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+      identifier: username,
+      password,
+    });
+
+    expect(oldPasswordLoginResponse.status).toBe(401);
+    expect(oldPasswordLoginResponse.body.message).toBe('Invalid credentials');
+
+    const newPasswordLoginResponse = await request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+      identifier: username,
+      password: newPassword,
+    });
+
+    expect(newPasswordLoginResponse.status).toBe(200);
+    expect(newPasswordLoginResponse.body.message).toBe('Login successful');
+    expect(newPasswordLoginResponse.body.user).toBe(userId);
+  });
+
+  // resetpassword with invalid token -> assert reset is rejected before touching the password
+  it('rejects password reset with an invalid token', async () => {
+    const response = await request(app).put('/api/auth/resetpassword').query({ token: 'not-a-real-token' }).set('x-app-version', '4.5.0').send({
+      newPassword: 'Reset1234!',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Verfication token is not valid');
+  });
+
+  // resetpassword without token -> assert validation fails with missing token
+  it('rejects password reset without a token', async () => {
+    const response = await request(app).put('/api/auth/resetpassword').set('x-app-version', '4.5.0').send({
+      newPassword: 'Reset1234!',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Missing token');
   });
 });

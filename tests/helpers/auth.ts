@@ -89,6 +89,19 @@ export function createVerifyToken(userId: string) {
   );
 }
 
+export function createForgotPasswordToken(userId: string) {
+  return jwt.sign(
+    {
+      sub: userId,
+      typ: 'forgot-pass',
+      jti: `forgot-${crypto.randomUUID()}`,
+      iss: 'strong-together',
+    },
+    process.env.JWT_FORGOT_PASSWORD_SECRET || '',
+    { expiresIn: '5m' },
+  );
+}
+
 export function authHeaders(accessToken: string) {
   return {
     'x-app-version': '4.5.0',
