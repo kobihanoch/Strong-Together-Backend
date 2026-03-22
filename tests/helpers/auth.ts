@@ -62,6 +62,14 @@ export async function loginAnalyticsEmptyUser() {
   return login('analytics_empty_user@example.com');
 }
 
+export async function loginOAuthCompleteUser() {
+  return login('oauth_complete_user@example.com');
+}
+
+export async function loginOAuthIncompleteUser() {
+  return login('oauth_incomplete_user@example.com');
+}
+
 export async function loginTestUser() {
   return loginAuthTestUser();
 }

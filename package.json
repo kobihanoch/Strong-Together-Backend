@@ -13,6 +13,7 @@
     "test:aerobics": "npm run test:db:reset && vitest run tests/aerobics/aerobics.test.ts --silent",
     "test:analytics": "npm run test:db:reset && vitest run tests/analytics/analytics.test.ts --silent",
     "test:exercises": "npm run test:db:reset && vitest run tests/exercises/exercises.test.ts --silent",
+    "test:oauth": "npm run test:db:reset && vitest run tests/oauth/oauth.test.ts --silent",
     "test:all": "npm run test:db:reset && vitest run --silent",
     "test": "vitest run --silent",
     "test:watch": "vitest",
