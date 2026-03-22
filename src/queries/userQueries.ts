@@ -109,7 +109,7 @@ export async function queryUpdateAuthenticatedUser(
 }
 
 export async function queryDeleteUserById(id: string): Promise<void> {
-  sql`DELETE FROM users WHERE id=${id}::uuid`;
+  await sql`DELETE FROM users WHERE id=${id}::uuid`;
 }
 
 export async function queryUserUsernamePicAndName(

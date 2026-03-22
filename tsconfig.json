@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    /* Base Options */
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
@@ -14,15 +13,14 @@
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
     "forceConsistentCasingInFileNames": true,
-
-    /* Strictness Enhancements */
-    "noImplicitAny": true, // Error on expressions and declarations with an implied 'any' type.
-    "noUnusedLocals": true, // Report errors on unused local variables.
-    "noImplicitReturns": true, // Ensure all code paths in a function return a value.
-    "noFallthroughCasesInSwitch": true, // Report errors for fallthrough cases in switch statements.
-    "exactOptionalPropertyTypes": true, // Ensures optional properties are strictly matched (no 'undefined' if not allowed).
-    "noImplicitOverride": true, // Ensure overrides are explicitly marked with the 'override' keyword.
-    "useUnknownInCatchVariables": true // Changes the type of variables in catch clauses from 'any' to 'unknown'.
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "useUnknownInCatchVariables": true,
+    "types": ["vitest/globals"]
   },
-  "include": ["src/**/*", "workers/**/*", "scripts/**/*"]
+  "include": ["src/**/*", "workers/**/*", "scripts/**/*", "tests/**/*"]
 }

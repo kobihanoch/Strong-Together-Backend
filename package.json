@@ -4,13 +4,27 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:db:reset": "node scripts/setup-test-db.mjs",
+    "test:auth": "npm run test:db:reset && vitest run tests/auth/login.test.ts --silent",
+    "test:users": "npm run test:db:reset && vitest run tests/users/user.test.ts --silent",
+    "test:workouts": "npm run test:db:reset && vitest run tests/workouts/workout.test.ts --silent",
+    "test:bootstrap": "npm run test:db:reset && vitest run tests/bootstrap/bootstrap.test.ts --silent",
+    "test:messages": "npm run test:db:reset && vitest run tests/messages/message.test.ts --silent",
+    "test:aerobics": "npm run test:db:reset && vitest run tests/aerobics/aerobics.test.ts --silent",
+    "test:analytics": "npm run test:db:reset && vitest run tests/analytics/analytics.test.ts --silent",
+    "test:exercises": "npm run test:db:reset && vitest run tests/exercises/exercises.test.ts --silent",
+    "test:oauth": "npm run test:db:reset && vitest run tests/oauth/oauth.test.ts --silent",
+    "test:all": "npm run test:db:reset && vitest run --silent --reporter=verbose",
+    "test": "vitest run --silent",
+    "test:watch": "vitest",
+    "test:videoanalysis": "npm run test:db:reset && vitest run tests/videoanalysis/videoanalysis.test.ts",
+    "test:websockets": "npm run test:db:reset && vitest run tests/websockets/websockets.test.ts --silent",
     "lint:sql": "eslint",
-    "start": "tsx src/index.js",
-    "start:server": "tsx src/index.js",
-    "start:server:watch": "tsx watch src/index.js",
-    "start:workers": "tsx workers/globalWorker.js",
-    "start:workers:watch": "tsx watch workers/globalWorker.js"
+    "start": "tsx src/index.ts",
+    "start:server": "tsx src/index.ts",
+    "start:server:watch": "tsx watch src/index.ts",
+    "start:workers": "tsx workers/globalWorker.ts",
+    "start:workers:watch": "tsx watch workers/globalWorker.ts"
   },
   "keywords": [],
   "author": "",
@@ -53,9 +67,12 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.1.0",
     "@types/pg": "^8.18.0",
+    "@types/supertest": "^7.2.0",
     "dotenv": "^17.3.1",
     "eslint": "^9.39.1",
     "libpg-query": "^17.7.3",
-    "typescript-eslint": "^8.57.1"
+    "supertest": "^7.2.2",
+    "typescript-eslint": "^8.57.1",
+    "vitest": "^4.1.0"
   }
 }

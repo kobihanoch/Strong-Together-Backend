@@ -304,7 +304,10 @@ export const proceedLogin = async (
   req: Request<{}, ProceedLoginResponse>,
   res: Response<ProceedLoginResponse>,
 ): Promise<Response<ProceedLoginResponse>> => {
-  const jkt = req.dpopJkt!;
+  const jkt = req.dpopJkt;
+  if (process.env.DPOP_ENABLED === 'true' && !jkt) {
+    throw createError(500, 'Internal error: DPoP JKT not found on request.');
+  }
   const userId = req.user!.id;
 
   const [{ missing_fields }] = await sql<{ missing_fields: string | null }[]>`
@@ -328,11 +331,13 @@ export const proceedLogin = async (
   }
 
   // Login user
-  const cnfClaim = {
-    cnf: {
-      jkt: jkt.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, ''),
-    },
-  };
+  const cnfClaim = jkt
+    ? {
+        cnf: {
+          jkt: jkt.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, ''),
+        },
+      }
+    : {};
 
   const accessTokenRes = jwt.sign(
     {

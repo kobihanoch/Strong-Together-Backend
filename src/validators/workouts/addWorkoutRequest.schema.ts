@@ -6,7 +6,7 @@ const workoutExerciseSchema = z.object({
   order_index: z.number().optional(),
 });
 
-const addWorkoutSplitPayloadSchema = z.record(z.string(), z.array(workoutExerciseSchema));
+const addWorkoutSplitPayloadSchema = z.record(z.string(), z.array(workoutExerciseSchema).min(1, 'Each split must include at least one exercise'));
 
 export const addWorkoutRequest = z.object({
   body: z.object({

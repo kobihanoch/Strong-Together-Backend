@@ -10,8 +10,8 @@ const connectionString = process.env.DATABASE_URL;
 // Base pool client (PgBouncer safe)
 function makeClient(): postgres.Sql {
   return postgres(connectionString!, {
-    ssl: 'require',
-    prepare: false, // safer with transaction pooling
+    ssl: process.env.NODE_ENV === 'test' ? false : 'require',
+    prepare: false,
     connect_timeout: 30,
   });
 }

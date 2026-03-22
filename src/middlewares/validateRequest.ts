@@ -22,7 +22,9 @@ export const validate =
     };
 
     if (data.body) req.body = data.body;
-    if (data.query) req.query = data.query;
+    if (data.query) {
+      Object.assign(req.query, data.query);
+    }
     if (data.params) req.params = data.params;
     return next();
   };

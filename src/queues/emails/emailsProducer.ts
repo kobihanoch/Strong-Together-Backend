@@ -3,6 +3,10 @@ import emailQueue from './emailsQueue.ts';
 
 // Add jobs to queue
 export const enqueueEmails = async (emails: EmailPayload[]): Promise<void> => {
+  if (process.env.NODE_ENV === 'test') {
+    return;
+  }
+
   //console.log("Email has arrived!");
   try {
     await emailQueue.addBulk(
