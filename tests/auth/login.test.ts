@@ -2,6 +2,12 @@ import request from 'supertest';
 import { createApp } from '../../src/app.ts';
 import { authHeaders, loginTestUser, logoutHeaders, refreshHeaders } from '../helpers/auth.ts';
 
+let app: ReturnType<typeof createApp>;
+
+beforeAll(() => {
+  app = createApp();
+});
+
 describe('Auth Login', () => {
   it('logs in with valid credentials', async () => {
     const response = await loginTestUser();
@@ -14,7 +20,6 @@ describe('Auth Login', () => {
   });
 
   it('uses the access token to reach a protected route', async () => {
-    const app = createApp();
     const loginResponse = await loginTestUser();
 
     const accessToken = loginResponse.body.accessToken as string;
@@ -27,7 +32,6 @@ describe('Auth Login', () => {
   });
 
   it('refreshes tokens with a valid refresh token and uses the new access token', async () => {
-    const app = createApp();
     const loginResponse = await loginTestUser();
 
     const refreshToken = loginResponse.body.refreshToken as string;
@@ -48,7 +52,6 @@ describe('Auth Login', () => {
   });
 
   it('invalidates the old session after logout', async () => {
-    const app = createApp();
     const loginResponse = await loginTestUser();
 
     const accessToken = loginResponse.body.accessToken as string;
@@ -65,8 +68,6 @@ describe('Auth Login', () => {
   });
 
   it('rejects login with wrong password', async () => {
-    const app = createApp();
-
     const response = await request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
       identifier: 'auth_test_user',
       password: 'WrongPassword123!',

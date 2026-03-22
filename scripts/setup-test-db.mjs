@@ -43,6 +43,33 @@ VALUES (
   true,
   'app'
 );
+
+DELETE FROM public.users WHERE username = 'conflict_user';
+
+INSERT INTO public.users (
+  username,
+  email,
+  name,
+  gender,
+  password,
+  role,
+  is_first_login,
+  token_version,
+  is_verified,
+  auth_provider
+)
+VALUES (
+  'conflict_user',
+  'conflict_user@example.com',
+  'Conflict User',
+  'Male',
+  '$2b$10$ZpjAscThaAj5E5T5bkhktudfz1BfRNW0yIvYaKcYWpMMqWRR33TCi',
+  'User',
+  false,
+  0,
+  true,
+  'app'
+);
 `;
 
 function run(command, args, options = {}) {
@@ -66,10 +93,20 @@ function sleep(ms) {
 }
 
 function runPsql(sql) {
-  return run(
-    'docker',
-    ['exec', '-i', containerName, 'psql', '-U', dbUser, '-d', dbName, '-v', 'ON_ERROR_STOP=1', '-c', sql],
-  );
+  return run('docker', [
+    'exec',
+    '-i',
+    containerName,
+    'psql',
+    '-U',
+    dbUser,
+    '-d',
+    dbName,
+    '-v',
+    'ON_ERROR_STOP=1',
+    '-c',
+    sql,
+  ]);
 }
 
 function runWithRetry(fn, { attempts = 10, delayMs = 1000 } = {}) {
@@ -104,11 +141,10 @@ function readSqlFile(filePath) {
 
 function execFileInPsql(filePath) {
   const sqlText = readSqlFile(filePath);
-  return run(
-    'docker',
-    ['exec', '-i', containerName, 'psql', '-U', dbUser, '-d', dbName],
-    { input: sqlText, encoding: 'utf8' },
-  );
+  return run('docker', ['exec', '-i', containerName, 'psql', '-U', dbUser, '-d', dbName], {
+    input: sqlText,
+    encoding: 'utf8',
+  });
 }
 
 function waitForPostgres() {

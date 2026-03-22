@@ -5,7 +5,7 @@ export async function loginTestUser() {
   const app = createApp();
 
   return request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
-    identifier: 'auth_test_user',
+    identifier: 'auth_test_user@example.com',
     password: 'Test1234!',
   });
 }
