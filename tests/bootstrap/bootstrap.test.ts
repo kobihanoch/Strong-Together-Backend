@@ -14,6 +14,7 @@ beforeAll(() => {
 });
 
 describe('Bootstrap', () => {
+  // login -> get bootstrap with tz -> assert base structure and persisted timezone
   it('returns the base bootstrap structure for a new authenticated user and stores the requested timezone', async () => {
     const loginResponse = await loginBootstrapTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -54,6 +55,7 @@ describe('Bootstrap', () => {
     expect(await getUserReminderTimezone(userId)).toBe(tz);
   });
 
+  // login -> add workout plan -> finish workout -> get bootstrap -> assert aggregated workout tracking and messages
   it('reflects workout, tracking, and workout-done message data in bootstrap after a real workout flow', async () => {
     const loginResponse = await loginBootstrapFlowUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -111,6 +113,7 @@ describe('Bootstrap', () => {
     expect(response.body.aerobics).toEqual({ daily: {}, weekly: {} });
   });
 
+  // login -> get bootstrap without tz -> assert default timezone path and persisted timezone
   it('defaults to Asia/Jerusalem when tz is omitted and persists that timezone', async () => {
     const loginResponse = await loginBootstrapAerobicsUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -128,6 +131,7 @@ describe('Bootstrap', () => {
     expect(await getUserReminderTimezone(userId)).toBe('Asia/Jerusalem');
   });
 
+  // login -> add aerobics -> get bootstrap -> assert aggregated aerobics payload
   it('includes aerobics aggregates in bootstrap after adding an aerobics record', async () => {
     const loginResponse = await loginBootstrapAerobicsUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -172,6 +176,7 @@ describe('Bootstrap', () => {
     });
   });
 
+  // get bootstrap without token -> assert 401
   it('rejects bootstrap access without token', async () => {
     const response = await request(app).get('/api/bootstrap/get').query({ tz: 'Asia/Jerusalem' }).set({
       'x-app-version': '4.5.0',

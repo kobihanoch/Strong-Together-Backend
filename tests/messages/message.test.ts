@@ -13,6 +13,7 @@ beforeAll(() => {
 });
 
 describe('Messages', () => {
+  // login -> get messages -> assert empty response
   it('returns an empty messages list for a user with no messages', async () => {
     const loginResponse = await loginMessagesTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -23,6 +24,7 @@ describe('Messages', () => {
     expect(response.body).toEqual({ messages: [] });
   });
 
+  // login -> add workout plan -> finish workout -> get messages -> assert system message exists
   it('returns the workout-done system message after a real workout flow', async () => {
     const loginResponse = await loginMessagesTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -57,6 +59,7 @@ describe('Messages', () => {
     });
   });
 
+  // login -> add workout plan -> finish workout -> get messages -> mark as read -> assert response and DB state
   it('marks a user message as read and updates the database state', async () => {
     const loginResponse = await loginMessagesTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -88,6 +91,7 @@ describe('Messages', () => {
     expect(await getMessageReadState(messageId)).toBe(true);
   });
 
+  // login -> add workout plan -> finish workout -> get messages -> delete message -> assert response and DB deletion
   it('deletes a user message and removes it from the database', async () => {
     const loginResponse = await loginMessagesTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -119,6 +123,7 @@ describe('Messages', () => {
     expect(await messageExists(messageId)).toBe(false);
   });
 
+  // get messages without token -> assert 401
   it('rejects getting messages without token', async () => {
     const response = await request(app).get('/api/messages/getmessages').query({ tz: 'Asia/Jerusalem' }).set({
       'x-app-version': '4.5.0',
@@ -128,6 +133,7 @@ describe('Messages', () => {
     expect(response.body.message).toBe('No access token provided');
   });
 
+  // login -> get messages without tz -> assert validation error
   it('rejects getting messages without the required tz query', async () => {
     const loginResponse = await loginMessagesTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -141,6 +147,7 @@ describe('Messages', () => {
     expect(response.body.message).toBe('Invalid input: expected string, received undefined');
   });
 
+  // login -> mark missing message as read -> assert 404
   it('returns 404 when marking a missing message as read', async () => {
     const loginResponse = await loginMessagesTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -151,6 +158,7 @@ describe('Messages', () => {
     expect(response.body.message).toBe('Message not found');
   });
 
+  // login -> delete missing message -> assert 404
   it('returns 404 when deleting a missing message', async () => {
     const loginResponse = await loginMessagesTestUser();
     const accessToken = loginResponse.body.accessToken as string;

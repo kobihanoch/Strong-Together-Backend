@@ -110,6 +110,23 @@ export async function getExerciseTrackingCountForUser(userId: string) {
 }
 
 export async function getUserReminderTimezone(userId: string) {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const [row] = await sql<{ timezone: string | null }[]>`
+      SELECT urs.timezone
+      FROM public.user_reminder_settings urs
+      WHERE urs.user_id = ${userId}::uuid
+      LIMIT 1
+    `;
+
+    if (row?.timezone && row.timezone !== "'UTC'::text") {
+      return row.timezone;
+    }
+
+    if (attempt < 9) {
+      await wait(25);
+    }
+  }
+
   const [row] = await sql<{ timezone: string | null }[]>`
     SELECT urs.timezone
     FROM public.user_reminder_settings urs

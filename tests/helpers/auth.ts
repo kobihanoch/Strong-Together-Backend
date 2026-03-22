@@ -54,6 +54,14 @@ export async function loginAerobicsDefaultTimezoneUser() {
   return login('aerobics_default_tz_user@example.com');
 }
 
+export async function loginAnalyticsTestUser() {
+  return login('analytics_test_user@example.com');
+}
+
+export async function loginAnalyticsEmptyUser() {
+  return login('analytics_empty_user@example.com');
+}
+
 export async function loginTestUser() {
   return loginAuthTestUser();
 }

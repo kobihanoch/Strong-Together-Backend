@@ -9,6 +9,7 @@ beforeAll(() => {
 });
 
 describe('Auth Login', () => {
+  // login -> assert tokens and response payload
   it('logs in with valid credentials', async () => {
     const response = await loginTestUser();
 
@@ -19,6 +20,7 @@ describe('Auth Login', () => {
     expect(response.body.refreshToken).toBeTypeOf('string');
   });
 
+  // login -> get authenticated user -> assert protected access works
   it('uses the access token to reach a protected route', async () => {
     const loginResponse = await loginTestUser();
 
@@ -31,6 +33,7 @@ describe('Auth Login', () => {
     expect(meResponse.body.username).toBe('auth_test_user');
   });
 
+  // login -> refresh tokens -> get authenticated user with new token -> assert session refresh works
   it('refreshes tokens with a valid refresh token and uses the new access token', async () => {
     const loginResponse = await loginTestUser();
 
@@ -51,6 +54,7 @@ describe('Auth Login', () => {
     expect(meResponse.body.username).toBe('auth_test_user');
   });
 
+  // login -> logout -> get authenticated user with old token -> assert old session is invalidated
   it('invalidates the old session after logout', async () => {
     const loginResponse = await loginTestUser();
 
@@ -67,6 +71,7 @@ describe('Auth Login', () => {
     expect(meResponse.status).toBe(401);
   });
 
+  // login with wrong password -> assert invalid credentials
   it('rejects login with wrong password', async () => {
     const response = await request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
       identifier: 'auth_test_user',
@@ -77,6 +82,7 @@ describe('Auth Login', () => {
     expect(response.body.message).toBe('Invalid credentials');
   });
 
+  // get protected route without token -> assert 401
   it('rejects protected route access without token', async () => {
     const app = createApp();
 

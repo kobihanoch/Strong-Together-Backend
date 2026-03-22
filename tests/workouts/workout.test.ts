@@ -20,6 +20,7 @@ beforeAll(() => {
 });
 
 describe('Workouts', () => {
+  // login -> get workout plan -> assert empty plan response
   it('returns null workout plan when the authenticated user has no plan', async () => {
     const loginResponse = await loginWorkoutsTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -30,6 +31,7 @@ describe('Workouts', () => {
     expect(response.body).toEqual({ workoutPlan: null });
   });
 
+  // login -> add workout plan -> get workout plan -> assert persisted plan structure
   it('adds a workout plan and then returns it', async () => {
     const loginResponse = await loginWorkoutsTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -67,6 +69,7 @@ describe('Workouts', () => {
     );
   });
 
+  // get workout plan without token -> assert 401
   it('rejects getting the workout plan without token', async () => {
     const response = await request(app).get('/api/workouts/getworkout').query({ tz: 'Asia/Jerusalem' }).set({
       'x-app-version': '4.5.0',
@@ -76,6 +79,7 @@ describe('Workouts', () => {
     expect(response.body.message).toBe('No access token provided');
   });
 
+  // login -> add workout plan with empty payload -> assert server-side rejection
   it('rejects adding a workout plan with empty workout data', async () => {
     const loginResponse = await loginWorkoutsTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -86,6 +90,7 @@ describe('Workouts', () => {
     expect(response.body.message).toBe('workoutData has no splits');
   });
 
+  // login -> get tracking -> assert empty tracking response
   it('returns empty tracking data when the authenticated user has no finished workouts', async () => {
     const loginResponse = await loginWorkoutsTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -108,6 +113,7 @@ describe('Workouts', () => {
     expect(response.body.exerciseTrackingMaps.bySplitName).toEqual({});
   });
 
+  // get tracking without token -> assert 401
   it('rejects getting tracking without token', async () => {
     const response = await request(app).get('/api/workouts/gettracking').query({ tz: 'Asia/Jerusalem' }).set({
       'x-app-version': '4.5.0',
@@ -117,6 +123,7 @@ describe('Workouts', () => {
     expect(response.body.message).toBe('No access token provided');
   });
 
+  // login -> add workout plan -> finish workout -> get tracking -> assert tracking response and DB rows
   it('adds a workout plan, finishes a workout, and reflects it in tracking', async () => {
     const loginResponse = await loginWorkoutsTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -164,6 +171,7 @@ describe('Workouts', () => {
     expect(await getExerciseTrackingCountForUser(userId)).toBe(1);
   });
 
+  // login -> add workout plan -> replace plan with extra split -> get workout plan -> assert active splits
   it('replaces an existing workout plan and adds a new split', async () => {
     const loginResponse = await loginWorkoutsTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -194,6 +202,7 @@ describe('Workouts', () => {
     expect(await getActiveWorkoutSplitNames(userId)).toEqual(['A', 'B', 'C']);
   });
 
+  // login -> add workout plan -> replace plan without one split -> get workout plan -> assert inactive split
   it('replaces an existing workout plan and removes a split', async () => {
     const loginResponse = await loginWorkoutsTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -222,6 +231,7 @@ describe('Workouts', () => {
     expect(await getInactiveWorkoutSplitNames(userId)).toContain('C');
   });
 
+  // login -> add workout plan -> rewrite split exercises -> get workout plan -> assert reordered exercises in DB
   it('replaces split exercises and deactivates removed exercises', async () => {
     const loginResponse = await loginWorkoutsTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -257,6 +267,7 @@ describe('Workouts', () => {
     ]);
   });
 
+  // login -> add workout plan -> rewrite split with fewer exercises -> get workout plan -> assert removed exercise is inactive
   it('deactivates removed exercises when a split is rewritten', async () => {
     const loginResponse = await loginWorkoutsTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -285,6 +296,7 @@ describe('Workouts', () => {
     expect(await getInactiveExercisesForSplit(userId, 'A')).toContain(21);
   });
 
+  // login -> finish workout without entries -> assert validation error
   it('rejects finishing a workout without entries', async () => {
     const loginResponse = await loginWorkoutsTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -295,6 +307,7 @@ describe('Workouts', () => {
     expect(response.body.message).toBe('Not a valid workout');
   });
 
+  // login -> add workout plan -> finish workout without workout_start_utc -> assert current contract mismatch
   it('fails finishing a workout without workout_start_utc because the API contract is inconsistent', async () => {
     const loginResponse = await loginWorkoutsTestUser();
     const accessToken = loginResponse.body.accessToken as string;

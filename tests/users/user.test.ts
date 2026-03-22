@@ -10,6 +10,7 @@ beforeAll(() => {
 });
 
 describe('Users', () => {
+  // login -> get authenticated user profile -> assert current user payload
   it('gets the authenticated user profile', async () => {
     const loginResponse = await loginUsersTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -22,6 +23,7 @@ describe('Users', () => {
     expect(response.body.email).toBe('users_test_user@example.com');
   });
 
+  // login -> update self -> get authenticated user profile -> assert persisted profile changes
   it('updates the authenticated user profile', async () => {
     const loginResponse = await loginUsersTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -44,6 +46,7 @@ describe('Users', () => {
     expect(getResponse.body.name).toBe('Auth Test User U');
   });
 
+  // get authenticated user profile without token -> assert 401
   it('rejects getting the authenticated user profile without token', async () => {
     const response = await request(app).get('/api/users/get').set('x-app-version', '4.5.0');
 
@@ -51,6 +54,7 @@ describe('Users', () => {
     expect(response.body.message).toBe('No access token provided');
   });
 
+  // login -> update self with invalid payload -> assert validation error
   it('rejects updating the authenticated user profile with invalid payload', async () => {
     const loginResponse = await loginUsersTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -64,6 +68,7 @@ describe('Users', () => {
     expect(response.body.message).toBe('Username must be at least 3 characters');
   });
 
+  // login -> save push token -> get authenticated user profile -> assert persisted push token
   it('saves the authenticated user push token', async () => {
     const loginResponse = await loginUsersTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -81,6 +86,7 @@ describe('Users', () => {
     expect(getResponse.body.push_token).toBe(pushToken);
   });
 
+  // save push token without token -> assert 401
   it('rejects saving push token without access token', async () => {
     const response = await request(app).put('/api/users/pushtoken').set('x-app-version', '4.5.0').send({
       token: 'ExponentPushToken[test-token-123]',
@@ -90,6 +96,7 @@ describe('Users', () => {
     expect(response.body.message).toBe('No access token provided');
   });
 
+  // login -> update self with conflicting username -> assert 409
   it('rejects updating the authenticated user profile with a taken username', async () => {
     const loginResponse = await loginUsersTestUser();
     const accessToken = loginResponse.body.accessToken as string;
@@ -103,6 +110,7 @@ describe('Users', () => {
     expect(response.body.message).toBe('Username or email already in use');
   });
 
+  // login -> delete self -> get authenticated user profile -> assert access is blocked afterward
   it('deletes the authenticated user and blocks further access', async () => {
     const loginResponse = await loginUsersTestUser();
     const accessToken = loginResponse.body.accessToken as string;
