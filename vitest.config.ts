@@ -6,7 +6,10 @@ export default defineConfig({
     setupFiles: ['./tests/setup/testSetup.ts'],
     include: ['tests/**/*.test.ts'],
     globals: true,
+    pool: 'threads',
+    maxWorkers: 1,
     fileParallelism: false,
+    testTimeout: 10000,
     passWithNoTests: true,
   },
 });
