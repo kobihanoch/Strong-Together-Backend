@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "test:db:reset": "node scripts/setup-test-db.mjs",
+    "test:auth": "npm run test:db:reset && vitest run tests/auth/login.test.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint:sql": "eslint",
