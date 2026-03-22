@@ -103,3 +103,14 @@ export async function getExerciseTrackingCountForUser(userId: string) {
 
   return Number(row?.count ?? '0');
 }
+
+export async function getUserReminderTimezone(userId: string) {
+  const [row] = await sql<{ timezone: string | null }[]>`
+    SELECT urs.timezone
+    FROM public.user_reminder_settings urs
+    WHERE urs.user_id = ${userId}::uuid
+    LIMIT 1
+  `;
+
+  return row?.timezone ?? null;
+}

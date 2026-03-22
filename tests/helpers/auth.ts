@@ -22,6 +22,14 @@ export async function loginWorkoutsTestUser() {
   return login('workouts_test_user@example.com');
 }
 
+export async function loginBootstrapTestUser() {
+  return login('bootstrap_test_user@example.com');
+}
+
+export async function loginBootstrapFlowUser() {
+  return login('bootstrap_flow_user@example.com');
+}
+
 export async function loginTestUser() {
   return loginAuthTestUser();
 }
