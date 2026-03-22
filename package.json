@@ -8,6 +8,7 @@
     "test:all": "npm run test:db:reset && vitest run",
     "test:auth": "npm run test:db:reset && vitest run tests/auth/login.test.ts",
     "test:users": "npm run test:db:reset && vitest run tests/users/user.test.ts",
+    "test:workouts": "npm run test:db:reset && vitest run tests/workouts/workout.test.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint:sql": "eslint",

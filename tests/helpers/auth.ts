@@ -1,13 +1,29 @@
 import request from 'supertest';
 import { createApp } from '../../src/app.ts';
 
-export async function loginTestUser() {
+async function login(identifier: string) {
   const app = createApp();
 
   return request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
-    identifier: 'auth_test_user@example.com',
+    identifier,
     password: 'Test1234!',
   });
+}
+
+export async function loginAuthTestUser() {
+  return login('auth_test_user@example.com');
+}
+
+export async function loginUsersTestUser() {
+  return login('users_test_user@example.com');
+}
+
+export async function loginWorkoutsTestUser() {
+  return login('workouts_test_user@example.com');
+}
+
+export async function loginTestUser() {
+  return loginAuthTestUser();
 }
 
 export function authHeaders(accessToken: string) {

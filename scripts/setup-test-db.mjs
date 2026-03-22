@@ -17,7 +17,7 @@ const dbUser = 'postgres';
 
 const authTestUserHash = '$2b$10$ZpjAscThaAj5E5T5bkhktudfz1BfRNW0yIvYaKcYWpMMqWRR33TCi';
 const authTestUserSql = `
-DELETE FROM public.users WHERE username = 'auth_test_user';
+DELETE FROM public.users WHERE username IN ('auth_test_user', 'users_test_user', 'workouts_test_user', 'conflict_user');
 
 INSERT INTO public.users (
   username,
@@ -44,7 +44,55 @@ VALUES (
   'app'
 );
 
-DELETE FROM public.users WHERE username = 'conflict_user';
+INSERT INTO public.users (
+  username,
+  email,
+  name,
+  gender,
+  password,
+  role,
+  is_first_login,
+  token_version,
+  is_verified,
+  auth_provider
+)
+VALUES (
+  'users_test_user',
+  'users_test_user@example.com',
+  'Users Test User',
+  'Male',
+  '${authTestUserHash}',
+  'User',
+  false,
+  0,
+  true,
+  'app'
+);
+
+INSERT INTO public.users (
+  username,
+  email,
+  name,
+  gender,
+  password,
+  role,
+  is_first_login,
+  token_version,
+  is_verified,
+  auth_provider
+)
+VALUES (
+  'workouts_test_user',
+  'workouts_test_user@example.com',
+  'Workouts Test User',
+  'Male',
+  '${authTestUserHash}',
+  'User',
+  false,
+  0,
+  true,
+  'app'
+);
 
 INSERT INTO public.users (
   username,
