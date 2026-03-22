@@ -12,6 +12,7 @@
     "test:messages": "npm run test:db:reset && vitest run tests/messages/message.test.ts",
     "test:aerobics": "npm run test:db:reset && vitest run tests/aerobics/aerobics.test.ts",
     "test:analytics": "npm run test:db:reset && vitest run tests/analytics/analytics.test.ts",
+    "test:exercises": "npm run test:db:reset && vitest run tests/exercises/exercises.test.ts",
     "test:all": "npm run test:db:reset && vitest run",
     "test": "vitest run",
     "test:watch": "vitest",
