@@ -6,5 +6,5 @@ pythonService/.venv/
 __pycache__/
 *.pyc
 schema.sql
-exercise_seed.sql
+exercises_seed.sql
 seed.sql

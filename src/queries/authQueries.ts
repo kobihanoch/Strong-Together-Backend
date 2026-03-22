@@ -55,7 +55,7 @@ export async function queryUserByUsername(
   username: string,
 ): Promise<UserByIndetifier[]> {
   return sql<UserByIndetifier[]>`
-    SELECT id, name, username, password, role, is_first_login 
+    SELECT id, name, username, password, role, is_first_login, is_verified
     FROM users 
     WHERE username=${username} 
     LIMIT 1

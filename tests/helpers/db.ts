@@ -1,5 +1,6 @@
 import sql from '../../src/config/db.ts';
 import type { AerobicEntity } from '../../src/types/entities/aerobic.entity.ts';
+import type { UserEntity } from '../../src/types/entities/user.entity.ts';
 
 async function wait(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -195,4 +196,27 @@ export async function getAerobicsRowsForUser(userId: string) {
     duration_sec: Number(row.duration_sec),
     workout_time_utc: row.workout_time_utc,
   }));
+}
+
+export async function getUserAuthStateByUsername(username: string) {
+  const [row] = await sql<
+    Pick<UserEntity, 'id' | 'username' | 'email' | 'name' | 'gender' | 'role' | 'password' | 'is_verified'>[]
+  >`
+    SELECT id, username, email, name, gender, role, password, is_verified
+    FROM public.users
+    WHERE username = ${username}
+    LIMIT 1
+  `;
+
+  return row ?? null;
+}
+
+export async function hasReminderSettings(userId: string) {
+  const [row] = await sql<{ count: string }[]>`
+    SELECT COUNT(*)::text AS count
+    FROM public.user_reminder_settings
+    WHERE user_id = ${userId}::uuid
+  `;
+
+  return Number(row?.count ?? '0') > 0;
 }

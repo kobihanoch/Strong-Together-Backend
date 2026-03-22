@@ -1,4 +1,6 @@
+import crypto from 'crypto';
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import { createApp } from '../../src/app.ts';
 
 async function login(identifier: string) {
@@ -72,6 +74,19 @@ export async function loginOAuthIncompleteUser() {
 
 export async function loginTestUser() {
   return loginAuthTestUser();
+}
+
+export function createVerifyToken(userId: string) {
+  return jwt.sign(
+    {
+      sub: userId,
+      typ: 'email-verify',
+      jti: `verify-${crypto.randomUUID()}`,
+      iss: 'strong-together',
+    },
+    process.env.JWT_VERIFY_SECRET || '',
+    { expiresIn: '1h' },
+  );
 }
 
 export function authHeaders(accessToken: string) {

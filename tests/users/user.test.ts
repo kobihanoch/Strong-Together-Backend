@@ -1,7 +1,10 @@
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
 import { authHeaders, loginUsersTestUser } from '../helpers/auth.ts';
+import { getUserAuthStateByUsername, hasReminderSettings } from '../helpers/db.ts';
 
 let app: ReturnType<typeof createApp>;
 
@@ -10,6 +13,41 @@ beforeAll(() => {
 });
 
 describe('Users', () => {
+  // create user -> assert api payload -> assert db row is unverified and reminder settings were created
+  it('creates a new app user with default registration state', async () => {
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const username = `user_${suffix}`;
+    const email = `user_${suffix}@example.com`;
+
+    const response = await request(app).post('/api/users/create').set('x-app-version', '4.5.0').send({
+      username,
+      fullName: '',
+      email,
+      password: 'Test1234!',
+      gender: '',
+    });
+
+    expect(response.status).toBe(201);
+    expect(response.body.message).toBe('User created successfully!');
+    expect(response.body.user.id).toBeTypeOf('string');
+    expect(response.body.user.username).toBe(username);
+    expect(response.body.user.name).toBe('User');
+    expect(response.body.user.email).toBe(email);
+    expect(response.body.user.gender).toBe('Unknown');
+    expect(response.body.user.role).toBe('User');
+
+    const createdUser = await getUserAuthStateByUsername(username);
+
+    expect(createdUser).not.toBeNull();
+    expect(createdUser?.email).toBe(email);
+    expect(createdUser?.name).toBe('User');
+    expect(createdUser?.gender).toBe('Unknown');
+    expect(createdUser?.is_verified).toBe(false);
+    expect(createdUser?.password).toBeTypeOf('string');
+    expect(await bcrypt.compare('Test1234!', createdUser?.password || '')).toBe(true);
+    expect(await hasReminderSettings(createdUser!.id)).toBe(true);
+  });
+
   // login -> get authenticated user profile -> assert current user payload
   it('gets the authenticated user profile', async () => {
     const loginResponse = await loginUsersTestUser();
@@ -124,5 +162,19 @@ describe('Users', () => {
 
     expect([401, 404]).toContain(getResponse.status);
     expect(['New login required', 'User not found']).toContain(getResponse.body.message);
+  });
+
+  // create user with taken username -> assert conflict is rejected before insert
+  it('rejects creating a user with an existing username', async () => {
+    const response = await request(app).post('/api/users/create').set('x-app-version', '4.5.0').send({
+      username: 'auth_test_user',
+      fullName: 'Duplicate User',
+      email: 'duplicate_create_user@example.com',
+      password: 'Test1234!',
+      gender: 'Male',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('User already exists');
   });
 });
