@@ -385,7 +385,10 @@ describe('Workouts', () => {
       { expiresIn: '1h' },
     );
 
-    const verifyResponse = await request(app).get('/api/auth/verify').query({ token: verifyToken }).set('x-app-version', '4.5.0');
+    const verifyResponse = await request(app)
+      .get('/api/auth/verify')
+      .query({ token: verifyToken })
+      .set('x-app-version', '4.5.0');
     expect(verifyResponse.status).toBe(200);
 
     const loginResponse = await request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
@@ -398,22 +401,31 @@ describe('Workouts', () => {
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
 
-    await addWorkoutPlan(app, accessToken, {
+    const addResponse = await addWorkoutPlan(app, accessToken, {
       A: [{ id: 20, sets: [8, 8, 10], order_index: 0 }],
     });
+
+    expect(addResponse.status).toBe(200);
 
     const exercisetosplitId = await getExerciseToWorkoutSplitId(userId, 'A', 20);
 
     expect(exercisetosplitId).not.toBeNull();
 
-    const response = await finishWorkout(app, accessToken, [
-      {
-        exercisetosplit_id: exercisetosplitId!,
-        weight: [80, 80, 75],
-        reps: [8, 8, 10],
-        notes: 'Solid set',
-      },
-    ], 'Asia/Jerusalem', null, null);
+    const response = await finishWorkout(
+      app,
+      accessToken,
+      [
+        {
+          exercisetosplit_id: exercisetosplitId!,
+          weight: [80, 80, 75],
+          reps: [8, 8, 10],
+          notes: 'Solid set',
+        },
+      ],
+      'Asia/Jerusalem',
+      null,
+      null,
+    );
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Invalid input: expected string, received null');

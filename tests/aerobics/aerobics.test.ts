@@ -1,10 +1,10 @@
+import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
 import type { UserAerobicsResponse } from '../../src/types/api/aerobics/responses.ts';
 import type { WeeklyData } from '../../src/types/dto/aerobics.dto.ts';
 import {
-  loginAerobicsAggregateUser,
   loginAerobicsDefaultTimezoneUser,
   loginAerobicsGetUser,
   loginAerobicsTestUser,
@@ -90,15 +90,50 @@ describe('Aerobics', () => {
 
   // login -> add aerobics -> add aerobics -> assert weekly totals -> assert DB rows
   it('keeps aggregating multiple aerobics records in the same weekly bucket', async () => {
-    const loginResponse = await loginAerobicsAggregateUser();
+    const suffix = Math.random().toString(36).slice(2, 10);
+    const username = `aggr_${suffix}`;
+    const email = `${username}@example.com`;
+
+    const createResponse = await request(app).post('/api/users/create').set('x-app-version', '4.5.0').send({
+      username,
+      fullName: 'Aerobics Aggregate',
+      email,
+      password: 'Test1234!',
+      gender: 'Other',
+    });
+
+    expect(createResponse.status).toBe(201);
+
+    const verifyToken = jwt.sign(
+      {
+        sub: createResponse.body.user.id,
+        typ: 'email-verify',
+        jti: `verify-${suffix}`,
+        iss: 'strong-together',
+      },
+      process.env.JWT_VERIFY_SECRET || '',
+      { expiresIn: '1h' },
+    );
+
+    const verifyResponse = await request(app).get('/api/auth/verify').query({ token: verifyToken }).set('x-app-version', '4.5.0');
+    expect(verifyResponse.status).toBe(200);
+
+    const loginResponse = await request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+      identifier: email,
+      password: 'Test1234!',
+    });
+
+    expect(loginResponse.status).toBe(200);
+
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
 
-    await addAerobicsRecord(app, accessToken, {
+    const firstAddResponse = await addAerobicsRecord(app, accessToken, {
       type: 'Walk',
       durationMins: 20,
       durationSec: 0,
     });
+    expect(firstAddResponse.status).toBe(201);
 
     const addResponse = await addAerobicsRecord(app, accessToken, {
       type: 'Run',
