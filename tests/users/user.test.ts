@@ -1,9 +1,10 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
-import { authHeaders, loginUsersTestUser } from '../helpers/auth.ts';
+import { authHeaders, createChangeEmailToken, loginUsersTestUser } from '../helpers/auth.ts';
 import { getUserAuthStateByUsername, hasReminderSettings } from '../helpers/db.ts';
 
 let app: ReturnType<typeof createApp>;
@@ -84,6 +85,72 @@ describe('Users', () => {
     expect(getResponse.body.name).toBe('Auth Test User U');
   });
 
+  // login -> request email update -> assert db stays unchanged until token confirmation -> confirm with token -> assert email is updated
+  it('defers email updates until the confirmation token is consumed', async () => {
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const username = `mail_${suffix}`;
+    const email = `${username}@example.com`;
+    const newEmail = `updated_${suffix}@example.com`;
+
+    const createResponse = await request(app).post('/api/users/create').set('x-app-version', '4.5.0').send({
+      username,
+      fullName: 'Email Update',
+      email,
+      password: 'Test1234!',
+      gender: 'Other',
+    });
+
+    expect(createResponse.status).toBe(201);
+
+    const verifyToken = jwt.sign(
+      {
+        sub: createResponse.body.user.id,
+        typ: 'email-verify',
+        jti: `verify-${crypto.randomUUID()}`,
+        iss: 'strong-together',
+      },
+      process.env.JWT_VERIFY_SECRET || '',
+      { expiresIn: '1h' },
+    );
+
+    const verifyResponse = await request(app).get('/api/auth/verify').query({ token: verifyToken }).set('x-app-version', '4.5.0');
+    expect(verifyResponse.status).toBe(200);
+
+    const loginResponse = await request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+      identifier: email,
+      password: 'Test1234!',
+    });
+
+    expect(loginResponse.status).toBe(200);
+
+    const accessToken = loginResponse.body.accessToken as string;
+    const userId = loginResponse.body.user as string;
+
+    const beforeUpdate = await getUserAuthStateByUsername(username);
+    expect(beforeUpdate).not.toBeNull();
+
+    const updateResponse = await request(app).put('/api/users/updateself').set(authHeaders(accessToken)).send({
+      email: newEmail,
+    });
+
+    expect(updateResponse.status).toBe(200);
+    expect(updateResponse.body.message).toBe('User updated successfully');
+    expect(updateResponse.body.emailChanged).toBe(true);
+    expect(updateResponse.body.user.email).toBe(beforeUpdate?.email);
+
+    const afterRequest = await getUserAuthStateByUsername(username);
+    expect(afterRequest?.email).toBe(beforeUpdate?.email);
+
+    const token = createChangeEmailToken(userId, newEmail);
+    const confirmResponse = await request(app).get('/api/users/changeemail').query({ token }).set('x-app-version', '4.5.0');
+
+    expect(confirmResponse.status).toBe(200);
+    expect(confirmResponse.headers['content-type']).toContain('text/html');
+
+    const afterConfirm = await getUserAuthStateByUsername(username);
+    expect(afterConfirm?.email).toBe(newEmail);
+  });
+
   // get authenticated user profile without token -> assert 401
   it('rejects getting the authenticated user profile without token', async () => {
     const response = await request(app).get('/api/users/get').set('x-app-version', '4.5.0');
@@ -162,6 +229,51 @@ describe('Users', () => {
 
     expect([401, 404]).toContain(getResponse.status);
     expect(['New login required', 'User not found']).toContain(getResponse.body.message);
+  });
+
+  // login -> delete self -> assert the user row is actually removed from the database
+  it('removes the user row from the database when deleting self', async () => {
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const username = `delete_${suffix}`;
+    const email = `${username}@example.com`;
+
+    const createResponse = await request(app).post('/api/users/create').set('x-app-version', '4.5.0').send({
+      username,
+      fullName: 'Delete Me',
+      email,
+      password: 'Test1234!',
+      gender: 'Male',
+    });
+
+    expect(createResponse.status).toBe(201);
+
+    const verifyToken = jwt.sign(
+      {
+        sub: createResponse.body.user.id,
+        typ: 'email-verify',
+        jti: `verify-${crypto.randomUUID()}`,
+        iss: 'strong-together',
+      },
+      process.env.JWT_VERIFY_SECRET || '',
+      { expiresIn: '1h' },
+    );
+
+    const verifyResponse = await request(app).get('/api/auth/verify').query({ token: verifyToken }).set('x-app-version', '4.5.0');
+    expect(verifyResponse.status).toBe(200);
+
+    const loginDeleteResponse = await request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+      identifier: email,
+      password: 'Test1234!',
+    });
+
+    expect(loginDeleteResponse.status).toBe(200);
+
+    const deleteResponse = await request(app).delete('/api/users/deleteself').set(
+      authHeaders(loginDeleteResponse.body.accessToken as string),
+    );
+
+    expect(deleteResponse.status).toBe(200);
+    expect(await getUserAuthStateByUsername(username)).toBeNull();
   });
 
   // create user with taken username -> assert conflict is rejected before insert

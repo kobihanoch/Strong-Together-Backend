@@ -11,7 +11,7 @@ export const finishWorkoutRequest = z.object({
   body: z.object({
     workout: z.array(finishedExerciseEntry),
     tz: z.string().optional(),
-    workout_start_utc: z.string().optional().nullable(),
-    workout_end_utc: z.string().optional().nullable(),
+    workout_start_utc: z.string().datetime('workout_start_utc must be a valid ISO datetime'),
+    workout_end_utc: z.string().datetime('workout_end_utc must be a valid ISO datetime').optional().nullable(),
   }),
 });

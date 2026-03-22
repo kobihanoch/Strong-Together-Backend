@@ -456,7 +456,9 @@ export const queryAddWorkout = async (
   workoutName: string = "My Workout",
 ): Promise<number> => {
   // Note: sql() here automatically uses the 'tx' bound by withRlsTx
-  const payloadJson = workoutData;
+  const payloadJson = Object.fromEntries(
+    Object.entries(workoutData || {}).filter(([, exercises]) => Array.isArray(exercises) && exercises.length > 0),
+  );
   const payloadJsonParam =
     payloadJson as unknown as postgres.ParameterOrFragment<never>;
   const numSplits = Object.keys(payloadJson || {}).length;
@@ -502,6 +504,7 @@ export const queryAddWorkout = async (
         SELECT ${planId}, kv.key::text, TRUE
         FROM jsonb_each(${payloadJsonParam}::jsonb) AS kv
         WHERE jsonb_typeof(kv.value) = 'array'
+          AND jsonb_array_length(kv.value) > 0
         ON CONFLICT (workout_id, name)
         DO UPDATE SET is_active = TRUE
         RETURNING id, name;
@@ -550,6 +553,7 @@ export const queryAddWorkout = async (
         FROM jsonb_each(${payloadJsonParam}::jsonb) AS kv(split_name, arr)
         CROSS JOIN LATERAL jsonb_array_elements(arr) WITH ORDINALITY AS e(ex, ord)
         WHERE jsonb_typeof(arr) = 'array'
+          AND jsonb_array_length(arr) > 0
           AND ((${splitMapParam}::jsonb) ->> kv.split_name::text) IS NOT NULL -- Use explicit casting for check too
         ON CONFLICT (workoutsplit_id, exercise_id)
         DO UPDATE SET

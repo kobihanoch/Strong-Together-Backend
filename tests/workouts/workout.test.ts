@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
@@ -88,6 +89,17 @@ describe('Workouts', () => {
 
     expect(response.status).toBe(500);
     expect(response.body.message).toBe('workoutData has no splits');
+  });
+
+  // login -> add workout plan with an empty split -> assert validation blocks an unusable plan
+  it('rejects adding a workout plan when a split has no exercises', async () => {
+    const loginResponse = await loginWorkoutsTestUser();
+    const accessToken = loginResponse.body.accessToken as string;
+
+    const response = await addWorkoutPlan(app, accessToken, { A: [] });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Each split must include at least one exercise');
   });
 
   // login -> get tracking -> assert empty tracking response
@@ -346,9 +358,43 @@ describe('Workouts', () => {
     expect(response.body.message).toBe('Not a valid workout');
   });
 
-  // login -> add workout plan -> finish workout without workout_start_utc -> assert current contract mismatch
-  it('fails finishing a workout without workout_start_utc because the API contract is inconsistent', async () => {
-    const loginResponse = await loginWorkoutsTestUser();
+  // login -> add workout plan -> finish workout without workout_start_utc -> assert validation blocks the request before DB insert
+  it('rejects finishing a workout without workout_start_utc', async () => {
+    const suffix = Math.random().toString(36).slice(2, 10);
+    const username = `fw_${suffix}`;
+    const email = `${username}@example.com`;
+
+    const createResponse = await request(app).post('/api/users/create').set('x-app-version', '4.5.0').send({
+      username,
+      fullName: 'Finish Workout',
+      email,
+      password: 'Test1234!',
+      gender: 'Other',
+    });
+
+    expect(createResponse.status).toBe(201);
+
+    const verifyToken = jwt.sign(
+      {
+        sub: createResponse.body.user.id,
+        typ: 'email-verify',
+        jti: `verify-${suffix}`,
+        iss: 'strong-together',
+      },
+      process.env.JWT_VERIFY_SECRET || '',
+      { expiresIn: '1h' },
+    );
+
+    const verifyResponse = await request(app).get('/api/auth/verify').query({ token: verifyToken }).set('x-app-version', '4.5.0');
+    expect(verifyResponse.status).toBe(200);
+
+    const loginResponse = await request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+      identifier: email,
+      password: 'Test1234!',
+    });
+
+    expect(loginResponse.status).toBe(200);
+
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
 
@@ -369,7 +415,7 @@ describe('Workouts', () => {
       },
     ], 'Asia/Jerusalem', null, null);
 
-    expect(response.status).toBe(500);
-    expect(response.body.message).toContain('workout_start_utc');
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Invalid input: expected string, received null');
   });
 });

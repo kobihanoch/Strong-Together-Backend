@@ -92,6 +92,7 @@ export const updateAuthenticatedUser = async (
   res: Response<UpdateAuthenticatedUserResponse>,
 ): Promise<Response<UpdateAuthenticatedUserResponse>> => {
   const { username, fullName, email } = req.body;
+  const { payload: currentUser } = await getUserData(req.user!.id);
 
   let rowsUpdated: UserDataResponse[];
   try {
@@ -109,7 +110,7 @@ export const updateAuthenticatedUser = async (
 
   const { user_data: userData } = updated;
 
-  const currentEmail = (userData.email || '').trim().toLowerCase();
+  const currentEmail = (currentUser.email || '').trim().toLowerCase();
   const candidate = (email || '').trim().toLowerCase();
 
   let emailChanged = false;

@@ -102,6 +102,20 @@ export function createForgotPasswordToken(userId: string) {
   );
 }
 
+export function createChangeEmailToken(userId: string, newEmail: string) {
+  return jwt.sign(
+    {
+      sub: userId,
+      typ: 'email-confirm',
+      newEmail: newEmail.trim().toLowerCase(),
+      jti: `email-change-${crypto.randomUUID()}`,
+      iss: 'strong-together',
+    },
+    process.env.CHANGE_EMAIL_SECRET || '',
+    { expiresIn: '10m' },
+  );
+}
+
 export function authHeaders(accessToken: string) {
   return {
     'x-app-version': '4.5.0',
