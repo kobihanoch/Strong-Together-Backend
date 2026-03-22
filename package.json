@@ -4,13 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint:sql": "eslint",
-    "start": "tsx src/index.js",
-    "start:server": "tsx src/index.js",
-    "start:server:watch": "tsx watch src/index.js",
-    "start:workers": "tsx workers/globalWorker.js",
-    "start:workers:watch": "tsx watch workers/globalWorker.js"
+    "start": "tsx src/index.ts",
+    "start:server": "tsx src/index.ts",
+    "start:server:watch": "tsx watch src/index.ts",
+    "start:workers": "tsx workers/globalWorker.ts",
+    "start:workers:watch": "tsx watch workers/globalWorker.ts"
   },
   "keywords": [],
   "author": "",
@@ -53,9 +54,12 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.1.0",
     "@types/pg": "^8.18.0",
+    "@types/supertest": "^7.2.0",
     "dotenv": "^17.3.1",
     "eslint": "^9.39.1",
     "libpg-query": "^17.7.3",
-    "typescript-eslint": "^8.57.1"
+    "supertest": "^7.2.2",
+    "typescript-eslint": "^8.57.1",
+    "vitest": "^4.1.0"
   }
 }
