@@ -1,7 +1,8 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
-import { loginBootstrapFlowUser, loginBootstrapTestUser } from '../helpers/auth.ts';
+import { loginBootstrapAerobicsUser, loginBootstrapFlowUser, loginBootstrapTestUser } from '../helpers/auth.ts';
+import { addAerobicsRecord } from '../helpers/aerobics.ts';
 import { getBootstrap } from '../helpers/bootstrap.ts';
 import { getExerciseToWorkoutSplitId, getUserReminderTimezone } from '../helpers/db.ts';
 import { addWorkoutPlan, finishWorkout } from '../helpers/workouts.ts';
@@ -108,6 +109,67 @@ describe('Bootstrap', () => {
     });
 
     expect(response.body.aerobics).toEqual({ daily: {}, weekly: {} });
+  });
+
+  it('defaults to Asia/Jerusalem when tz is omitted and persists that timezone', async () => {
+    const loginResponse = await loginBootstrapAerobicsUser();
+    const accessToken = loginResponse.body.accessToken as string;
+    const userId = loginResponse.body.user as string;
+
+    const response = await request(app).get('/api/bootstrap/get').set({
+      'x-app-version': '4.5.0',
+      Authorization: `DPoP ${accessToken}`,
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.user.id).toBe(userId);
+    expect(response.body.workout).toEqual({ workoutPlan: null });
+    expect(response.body.aerobics).toEqual({ daily: {}, weekly: {} });
+    expect(await getUserReminderTimezone(userId)).toBe('Asia/Jerusalem');
+  });
+
+  it('includes aerobics aggregates in bootstrap after adding an aerobics record', async () => {
+    const loginResponse = await loginBootstrapAerobicsUser();
+    const accessToken = loginResponse.body.accessToken as string;
+
+    const addResponse = await addAerobicsRecord(
+      app,
+      accessToken,
+      {
+        type: 'Walk',
+        durationMins: 30,
+        durationSec: 0,
+      },
+      'Asia/Jerusalem',
+    );
+
+    expect(addResponse.status).toBe(201);
+
+    const response = await getBootstrap(app, accessToken);
+
+    expect(response.status).toBe(200);
+    expect(Object.keys(response.body.aerobics.daily)).toHaveLength(1);
+    expect(Object.values(response.body.aerobics.daily)[0]).toEqual([
+      expect.objectContaining({
+        type: 'Walk',
+        duration_mins: 30,
+        duration_sec: 0,
+      }),
+    ]);
+
+    expect(Object.keys(response.body.aerobics.weekly)).toHaveLength(1);
+    expect(Object.values(response.body.aerobics.weekly)[0]).toMatchObject({
+      total_duration_mins: 30,
+      total_duration_sec: 0,
+      records: [
+        expect.objectContaining({
+          type: 'Walk',
+          duration_mins: 30,
+          duration_sec: 0,
+          workout_time_utc: expect.any(String),
+        }),
+      ],
+    });
   });
 
   it('rejects bootstrap access without token', async () => {

@@ -30,6 +30,10 @@ export async function loginBootstrapFlowUser() {
   return login('bootstrap_flow_user@example.com');
 }
 
+export async function loginBootstrapAerobicsUser() {
+  return login('bootstrap_aerobics_user@example.com');
+}
+
 export async function loginTestUser() {
   return loginAuthTestUser();
 }
