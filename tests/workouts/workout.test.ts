@@ -29,7 +29,7 @@ describe('Workouts', () => {
     const response = await getWorkoutPlan(app, accessToken);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ workoutPlan: null });
+    expect(response.body).toEqual({ workoutPlan: null, workoutPlanForEditWorkout: null });
   });
 
   // login -> add workout plan -> get workout plan -> assert persisted plan structure

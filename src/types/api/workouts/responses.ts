@@ -1,16 +1,12 @@
-import type { ExerciseTrackingAndStats } from "../../dto/exerciseTracking.dto.ts";
-import type {
-  WholeUserWorkoutPlan,
-  WorkoutSplitsMap,
-} from "../../dto/workoutPlans.dto.ts";
+import type { ExerciseTrackingAndStats } from '../../dto/exerciseTracking.dto.ts';
+import type { WholeUserWorkoutPlan, WorkoutSplitsMap } from '../../dto/workoutPlans.dto.ts';
 
 export interface GetWholeUserWorkoutPlanResponse {
   workoutPlan: WholeUserWorkoutPlan | null;
-  workoutPlanForEditWorkout?: WorkoutSplitsMap;
+  workoutPlanForEditWorkout: WorkoutSplitsMap | null;
 }
 
-export interface GetExerciseTrackingResponse
-  extends ExerciseTrackingAndStats {}
+export interface GetExerciseTrackingResponse extends ExerciseTrackingAndStats {}
 
 export interface FinishUserWorkoutResponse extends ExerciseTrackingAndStats {}
 

@@ -6,12 +6,12 @@ export type AllUserMessages = Pick<MessageEntity, 'id' | 'subject' | 'msg' | 'se
   sender_profile_image_url: UserEntity['profile_image_url'];
 };
 
-export type MessageAfterSendResponse = Pick<MessageEntity, 'sender_id' | 'receiver_id' | 'subject' | 'msg'> & {
+export interface MessageAfterSendResponse extends MessageEntity {
   sender_username: UserEntity['username'];
   sender_full_name: UserEntity['name'];
   sender_profile_image_url: UserEntity['profile_image_url'];
   sender_gender: UserEntity['gender'];
-};
+}
 
 export type MessageAsRead = Pick<MessageEntity, 'id' | 'is_read'>;
 

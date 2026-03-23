@@ -32,7 +32,7 @@ describe('Bootstrap', () => {
       name: 'Bootstrap Test User',
     });
 
-    expect(response.body.workout).toEqual({ workoutPlan: null });
+    expect(response.body.workout).toEqual({ workoutPlan: null, workoutPlanForEditWorkout: null });
     expect(response.body.tracking).toEqual({
       exerciseTrackingAnalysis: {
         unique_days: 0,
@@ -119,14 +119,16 @@ describe('Bootstrap', () => {
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
 
-    const response = await request(app).get('/api/bootstrap/get').set({
-      'x-app-version': '4.5.0',
-      Authorization: `DPoP ${accessToken}`,
-    });
+    const response = await request(app)
+      .get('/api/bootstrap/get')
+      .set({
+        'x-app-version': '4.5.0',
+        Authorization: `DPoP ${accessToken}`,
+      });
 
     expect(response.status).toBe(200);
     expect(response.body.user.id).toBe(userId);
-    expect(response.body.workout).toEqual({ workoutPlan: null });
+    expect(response.body.workout).toEqual({ workoutPlan: null, workoutPlanForEditWorkout: null });
     expect(response.body.aerobics).toEqual({ daily: {}, weekly: {} });
     expect(await getUserReminderTimezone(userId)).toBe('Asia/Jerusalem');
   });

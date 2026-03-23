@@ -55,7 +55,7 @@ export const getWorkoutPlanData = async (
   const rows = await queryWholeUserWorkoutPlan(userId, tz);
   const [plan] = rows;
   if (!plan) {
-    const empty = { workoutPlan: null };
+    const empty = { workoutPlan: null, workoutPlanForEditWorkout: null };
     await cacheSetJSON(planKey, empty, TTL_PLAN);
     return { payload: empty, cacheHit: false };
   }
