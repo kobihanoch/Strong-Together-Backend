@@ -2,7 +2,7 @@ export interface WorkoutSummaryEntity {
   id: string; // UUID
   user_id: string; // UUID
   workout_start_utc: string;
-  workout_end_utc: string | null;
+  workout_end_utc: string;
   created_at: string;
-  workoutsplit_id: number | null;
+  workoutsplit_id: number;
 }

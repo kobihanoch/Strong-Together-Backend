@@ -1,8 +1,8 @@
 export interface ExerciseTrackingEntity {
   id: number;
-  exercisetosplit_id: number | null;
-  weight: number[] | null;
-  reps: number[] | null;
+  exercisetosplit_id: number;
+  weight: number[];
+  reps: number[];
   notes: string | null;
-  workout_summary_id: string | null; // UUID
+  workout_summary_id: string; // UUID
 }

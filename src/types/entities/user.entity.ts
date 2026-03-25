@@ -1,9 +1,9 @@
 export interface UserEntity {
   id: string;
-  username: string | null;
+  username: string;
   email: string | null;
-  name: string | null;
-  gender: string | null;
+  name: string;
+  gender: string;
   created_at: string;
   profile_image_url: string | null;
   push_token: string | null;
