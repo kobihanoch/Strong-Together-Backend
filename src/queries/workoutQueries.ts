@@ -6,7 +6,7 @@ import { AddWorkoutSplitPayload, WholeUserWorkoutPlan, WorkoutSplitsMap } from '
 export async function queryWholeUserWorkoutPlan(userId: string, tz: string): Promise<WholeUserWorkoutPlan[]> {
   return sql<WholeUserWorkoutPlan[]>`
     SELECT
-      workoutplans.*,
+      workoutplans.id::INT, workoutplans.name, workoutplans.numberofsplits::INT, workoutplans.created_at, workoutplans.is_deleted, workoutplans.level, workoutplans.user_id, workoutplans.trainer_id, workoutplans.is_active,
       -- Localized timestamp derived from timestamptz using the requested time zone
       (workoutplans.updated_at AT TIME ZONE ${tz}) AS updated_at,
       (

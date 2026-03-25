@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const workoutExerciseSchema = z.object({
   id: z.number(),
-  sets: z.union([z.number(), z.array(z.number())]),
+  sets: z.array(z.number()),
   order_index: z.number(),
 });
 

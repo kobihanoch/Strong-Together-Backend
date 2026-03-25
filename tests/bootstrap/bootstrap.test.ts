@@ -1,10 +1,14 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
+import { bootstrapResponseSchema } from '../../src/validators/bootstrap/bootstrapResponse.schema.ts';
+import { userAerobicsResponseSchema } from '../../src/validators/aerobics/userAerobicsResponse.schema.ts';
+import { loginResponseSchema } from '../../src/validators/auth/loginResponse.schema.ts';
 import { loginBootstrapAerobicsUser, loginBootstrapFlowUser, loginBootstrapTestUser } from '../helpers/auth.ts';
 import { addAerobicsRecord } from '../helpers/aerobics.ts';
 import { getBootstrap } from '../helpers/bootstrap.ts';
 import { getExerciseToWorkoutSplitId, getUserReminderTimezone } from '../helpers/db.ts';
+import { expectSchema } from '../helpers/assertSchema.ts';
 import { addWorkoutPlan, finishWorkout } from '../helpers/workouts.ts';
 
 let app: ReturnType<typeof createApp>;
@@ -17,6 +21,7 @@ describe('Bootstrap', () => {
   // login -> get bootstrap with tz -> assert base structure and persisted timezone
   it('returns the base bootstrap structure for a new authenticated user and stores the requested timezone', async () => {
     const loginResponse = await loginBootstrapTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
     const tz = 'Europe/London';
@@ -24,6 +29,7 @@ describe('Bootstrap', () => {
     const response = await getBootstrap(app, accessToken, tz);
 
     expect(response.status).toBe(200);
+    expectSchema(bootstrapResponseSchema, response.body);
 
     expect(response.body.user).toMatchObject({
       id: userId,
@@ -58,6 +64,7 @@ describe('Bootstrap', () => {
   // login -> add workout plan -> finish workout -> get bootstrap -> assert aggregated workout tracking and messages
   it('reflects workout, tracking, and workout-done message data in bootstrap after a real workout flow', async () => {
     const loginResponse = await loginBootstrapFlowUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
 
@@ -81,10 +88,11 @@ describe('Bootstrap', () => {
     const response = await getBootstrap(app, accessToken);
 
     expect(response.status).toBe(200);
+    expectSchema(bootstrapResponseSchema, response.body);
     expect(response.body.user.id).toBe(userId);
     expect(response.body.workout.workoutPlan).toMatchObject({
       name: 'Test Workout',
-      numberofsplits: '1',
+      numberofsplits: 1,
     });
     expect(response.body.workout.workoutPlanForEditWorkout).toHaveProperty('A');
     expect(response.body.workout.workoutPlanForEditWorkout.A).toEqual([
@@ -116,6 +124,7 @@ describe('Bootstrap', () => {
   // login -> get bootstrap without tz -> assert default timezone path and persisted timezone
   it('defaults to Asia/Jerusalem when tz is omitted and persists that timezone', async () => {
     const loginResponse = await loginBootstrapAerobicsUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
 
@@ -127,6 +136,7 @@ describe('Bootstrap', () => {
       });
 
     expect(response.status).toBe(200);
+    expectSchema(bootstrapResponseSchema, response.body);
     expect(response.body.user.id).toBe(userId);
     expect(response.body.workout).toEqual({ workoutPlan: null, workoutPlanForEditWorkout: null });
     expect(response.body.aerobics).toEqual({ daily: {}, weekly: {} });
@@ -136,6 +146,7 @@ describe('Bootstrap', () => {
   // login -> add aerobics -> get bootstrap -> assert aggregated aerobics payload
   it('includes aerobics aggregates in bootstrap after adding an aerobics record', async () => {
     const loginResponse = await loginBootstrapAerobicsUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
     const addResponse = await addAerobicsRecord(
@@ -150,10 +161,12 @@ describe('Bootstrap', () => {
     );
 
     expect(addResponse.status).toBe(201);
+    expectSchema(userAerobicsResponseSchema, addResponse.body);
 
     const response = await getBootstrap(app, accessToken);
 
     expect(response.status).toBe(200);
+    expectSchema(bootstrapResponseSchema, response.body);
     expect(Object.keys(response.body.aerobics.daily)).toHaveLength(1);
     expect(Object.values(response.body.aerobics.daily)[0]).toEqual([
       expect.objectContaining({

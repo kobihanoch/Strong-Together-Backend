@@ -15,7 +15,7 @@ import { sendSystemMessageToUserWhenFirstLogin } from '../services/messagesServi
 import { AppleOAuthBody, GoogleOAuthBody } from '../types/api/oAuth/requests.ts';
 import { OAuthLoginResponse, ProceedLoginResponse } from '../types/api/oAuth/responses.ts';
 import { GoogleTokenVerificationResult } from '../types/dto/oAuth.dto.ts';
-import { isEnglishName, verifyAppleIdToken, verifyGoogleIdToken } from '../utils/oauthUtils.js';
+import { verifyAppleIdToken, verifyGoogleIdToken } from '../utils/oauthUtils.js';
 
 const validateJkt = (req: Request): string => {
   const jkt = req.headers['dpop-key-binding'] as string | undefined;

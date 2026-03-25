@@ -1,7 +1,10 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
+import { loginResponseSchema } from '../../src/validators/auth/loginResponse.schema.ts';
+import { getAllExercisesResponseSchema } from '../../src/validators/exercises/getAllExercisesResponse.schema.ts';
 import { loginTestUser } from '../helpers/auth.ts';
+import { expectSchema } from '../helpers/assertSchema.ts';
 import { getAllExercises } from '../helpers/exercises.ts';
 
 let app: ReturnType<typeof createApp>;
@@ -14,11 +17,13 @@ describe('Exercises', () => {
   // login -> get all exercises -> assert grouped map structure and known seeded exercises
   it('returns the full exercise map grouped by target muscle', async () => {
     const loginResponse = await loginTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
     const response = await getAllExercises(app, accessToken);
 
     expect(response.status).toBe(200);
+    expectSchema(getAllExercisesResponseSchema, response.body);
     expect(response.body).toBeTypeOf('object');
     expect(Object.keys(response.body).length).toBeGreaterThan(0);
     expect(response.body).toHaveProperty('Chest');

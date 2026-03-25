@@ -2,6 +2,9 @@ import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
+import { loginResponseSchema } from '../../src/validators/auth/loginResponse.schema.ts';
+import { createUserResponseSchema } from '../../src/validators/user/createUserResponse.schema.ts';
+import { userAerobicsResponseSchema } from '../../src/validators/aerobics/userAerobicsResponse.schema.ts';
 import type { UserAerobicsResponse } from '../../src/types/api/aerobics/responses.ts';
 import type { WeeklyData } from '../../src/types/dto/aerobics.dto.ts';
 import {
@@ -9,6 +12,7 @@ import {
   loginAerobicsGetUser,
   loginAerobicsTestUser,
 } from '../helpers/auth.ts';
+import { expectSchema } from '../helpers/assertSchema.ts';
 import { addAerobicsRecord, getAerobics } from '../helpers/aerobics.ts';
 import { getAerobicsRowsForUser } from '../helpers/db.ts';
 
@@ -35,17 +39,20 @@ describe('Aerobics', () => {
   // login -> get aerobics -> assert empty response
   it('returns empty aerobics data for a user with no records', async () => {
     const loginResponse = await loginAerobicsTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
     const response = await getAerobics(app, accessToken);
 
     expect(response.status).toBe(200);
+    expectSchema(userAerobicsResponseSchema, response.body);
     expect(response.body).toEqual({ daily: {}, weekly: {} });
   });
 
   // login -> add aerobics -> assert response aggregates -> assert DB row
   it('adds an aerobics record and returns it in daily and weekly aggregates', async () => {
     const loginResponse = await loginAerobicsTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
 
@@ -56,6 +63,7 @@ describe('Aerobics', () => {
     });
 
     expect(response.status).toBe(201);
+    expectSchema(userAerobicsResponseSchema, response.body);
     expect(Object.keys(response.body.daily)).toHaveLength(1);
     expect(firstDailyBucket(response.body)).toEqual([
       expect.objectContaining({
@@ -103,6 +111,7 @@ describe('Aerobics', () => {
     });
 
     expect(createResponse.status).toBe(201);
+    expectSchema(createUserResponseSchema, createResponse.body);
 
     const verifyToken = jwt.sign(
       {
@@ -124,6 +133,7 @@ describe('Aerobics', () => {
     });
 
     expect(loginResponse.status).toBe(200);
+    expectSchema(loginResponseSchema, loginResponse.body);
 
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
@@ -134,6 +144,7 @@ describe('Aerobics', () => {
       durationSec: 0,
     });
     expect(firstAddResponse.status).toBe(201);
+    expectSchema(userAerobicsResponseSchema, firstAddResponse.body);
 
     const addResponse = await addAerobicsRecord(app, accessToken, {
       type: 'Run',
@@ -142,6 +153,7 @@ describe('Aerobics', () => {
     });
 
     expect(addResponse.status).toBe(201);
+    expectSchema(userAerobicsResponseSchema, addResponse.body);
     expect(Object.keys(addResponse.body.weekly)).toHaveLength(1);
     expect(firstWeeklyBucket(addResponse.body)).toMatchObject({
       total_duration_mins: 30,
@@ -159,6 +171,7 @@ describe('Aerobics', () => {
   // login -> add aerobics -> get aerobics -> assert response matches DB row
   it('returns existing aerobics aggregates through the get endpoint', async () => {
     const loginResponse = await loginAerobicsGetUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
 
@@ -171,6 +184,7 @@ describe('Aerobics', () => {
     const response = await getAerobics(app, accessToken);
 
     expect(response.status).toBe(200);
+    expectSchema(userAerobicsResponseSchema, response.body);
     expect(Object.keys(response.body.daily)).toHaveLength(1);
     expect(firstDailyBucket(response.body)).toEqual([
       expect.objectContaining({
@@ -238,6 +252,7 @@ describe('Aerobics', () => {
   // login -> add aerobics -> get aerobics without tz -> assert default timezone path still returns data
   it('falls back to the default timezone when tz is omitted on get', async () => {
     const loginResponse = await loginAerobicsDefaultTimezoneUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
 
@@ -253,6 +268,7 @@ describe('Aerobics', () => {
     });
 
     expect(response.status).toBe(200);
+    expectSchema(userAerobicsResponseSchema, response.body);
     expect(Object.keys(response.body.daily)).toHaveLength(1);
     expect(Object.keys(response.body.weekly)).toHaveLength(1);
 
