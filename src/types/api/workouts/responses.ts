@@ -1,17 +1,10 @@
-import type { ExerciseTrackingAndStats } from '../../dto/exerciseTracking.dto.ts';
-import type { WholeUserWorkoutPlan, WorkoutSplitsMap } from '../../dto/workoutPlans.dto.ts';
+import z from 'zod';
+import { getWholeUserWorkoutPlanResponseSchema } from '../../../validators/workouts/getWholeUserWorkoutPlanResponse.schema.ts';
+import { getExerciseTrackingResponseSchema } from '../../../validators/workouts/getExerciseTrackingResponse.schema.ts';
+import { finishUserWorkoutResponseSchema } from '../../../validators/workouts/finishUserWorkoutResponse.schema.ts';
+import { addWorkoutResponseSchema } from '../../../validators/workouts/addWorkoutResponse.schema.ts';
 
-export interface GetWholeUserWorkoutPlanResponse {
-  workoutPlan: WholeUserWorkoutPlan | null;
-  workoutPlanForEditWorkout: WorkoutSplitsMap | null;
-}
-
-export interface GetExerciseTrackingResponse extends ExerciseTrackingAndStats {}
-
-export interface FinishUserWorkoutResponse extends ExerciseTrackingAndStats {}
-
-export interface AddWorkoutResponse {
-  message: string;
-  workoutPlan: WholeUserWorkoutPlan;
-  workoutPlanForEditWorkout: WorkoutSplitsMap;
-}
+export type GetWholeUserWorkoutPlanResponse = z.infer<typeof getWholeUserWorkoutPlanResponseSchema>;
+export type GetExerciseTrackingResponse = z.infer<typeof getExerciseTrackingResponseSchema>;
+export type FinishUserWorkoutResponse = z.infer<typeof finishUserWorkoutResponseSchema>;
+export type AddWorkoutResponse = z.infer<typeof addWorkoutResponseSchema>;
