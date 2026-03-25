@@ -3,10 +3,13 @@ import { z } from 'zod';
 const workoutExerciseSchema = z.object({
   id: z.number(),
   sets: z.union([z.number(), z.array(z.number())]),
-  order_index: z.number().optional(),
+  order_index: z.number(),
 });
 
-const addWorkoutSplitPayloadSchema = z.record(z.string(), z.array(workoutExerciseSchema).min(1, 'Each split must include at least one exercise'));
+const addWorkoutSplitPayloadSchema = z.record(
+  z.string(),
+  z.array(workoutExerciseSchema).min(1, 'Each split must include at least one exercise'),
+);
 
 export const addWorkoutRequest = z.object({
   body: z.object({

@@ -1,31 +1,21 @@
-import type postgres from "postgres";
-import sql from "../config/db.ts";
-import {
-  ExerciseTrackingAndStats,
-  FinishedWorkoutEntry,
-} from "../types/dto/exerciseTracking.dto.ts";
-import {
-  AddWorkoutSplitPayload,
-  WholeUserWorkoutPlan,
-  WorkoutSplitsMap,
-} from "../types/dto/workoutPlans.dto.ts";
+import type postgres from 'postgres';
+import sql from '../config/db.ts';
+import { ExerciseTrackingAndStats, FinishedWorkoutEntry } from '../types/dto/exerciseTracking.dto.ts';
+import { AddWorkoutSplitPayload, WholeUserWorkoutPlan, WorkoutSplitsMap } from '../types/dto/workoutPlans.dto.ts';
 
-export async function queryWholeUserWorkoutPlan(
-  userId: string,
-  tz: string,
-): Promise<WholeUserWorkoutPlan[]> {
+export async function queryWholeUserWorkoutPlan(userId: string, tz: string): Promise<WholeUserWorkoutPlan[]> {
   return sql<WholeUserWorkoutPlan[]>`
     SELECT
       workoutplans.*,
       -- Localized timestamp derived from timestamptz using the requested time zone
       (workoutplans.updated_at AT TIME ZONE ${tz}) AS updated_at,
       (
-        SELECT json_agg(
+        SELECT COALESCE(json_agg(
                   to_jsonb(workoutsplits.*)
                   || jsonb_build_object(
                        'exercisetoworkoutsplit',
                        (
-                         SELECT json_agg(
+                         SELECT COALESCE(json_agg(
                                   (to_jsonb(ews.*)
                                    - 'workoutsplit_id'
                                    - 'workout_id'
@@ -37,7 +27,7 @@ export async function queryWholeUserWorkoutPlan(
                                        'specifictargetmuscle', ex.specifictargetmuscle
                                      )
                                   ORDER BY ews.order_index
-                                )
+                                ), '[]'::json)
                          FROM public.v_exercisetoworkoutsplit_expanded AS ews
                          LEFT JOIN public.exercises ex ON ex.id = ews.exercise_id
                          WHERE ews.workoutsplit_id = workoutsplits.id
@@ -45,7 +35,7 @@ export async function queryWholeUserWorkoutPlan(
                        )
                      )
                   ORDER BY workoutsplits.id
-                )
+                ), '[]'::json)
         FROM public.workoutsplits
         WHERE workoutsplits.workout_id = workoutplans.id
           AND workoutsplits.is_active = TRUE                     -- filter only active splits
@@ -58,9 +48,7 @@ export async function queryWholeUserWorkoutPlan(
 }
 
 // For edit workout
-export const queryGetWorkoutSplitsObj = async (
-  workoutId: number,
-): Promise<{ splits: WorkoutSplitsMap }> => {
+export const queryGetWorkoutSplitsObj = async (workoutId: number): Promise<{ splits: WorkoutSplitsMap }> => {
   const rows = await sql<[{ splits: WorkoutSplitsMap }]>`
     SELECT jsonb_object_agg(
       ws.name,
@@ -216,7 +204,7 @@ export const queryGetWorkoutSplitsObj = async (
 export const queryGetExerciseTrackingAndStats = async (
   userId: string,
   days: number = 45,
-  tz: string = "Asia/Jerusalem",
+  tz: string = 'Asia/Jerusalem',
 ): Promise<ExerciseTrackingAndStats> => {
   const [{ data }] = await sql<[{ data: ExerciseTrackingAndStats }]>`
   with 
@@ -453,16 +441,15 @@ export const queryDeleteUserWorkout = async (userId: string): Promise<void> => {
 export const queryAddWorkout = async (
   userId: string,
   workoutData: AddWorkoutSplitPayload,
-  workoutName: string = "My Workout",
+  workoutName: string = 'My Workout',
 ): Promise<number> => {
   // Note: sql() here automatically uses the 'tx' bound by withRlsTx
   const payloadJson = Object.fromEntries(
     Object.entries(workoutData || {}).filter(([, exercises]) => Array.isArray(exercises) && exercises.length > 0),
   );
-  const payloadJsonParam =
-    payloadJson as unknown as postgres.ParameterOrFragment<never>;
+  const payloadJsonParam = payloadJson as unknown as postgres.ParameterOrFragment<never>;
   const numSplits = Object.keys(payloadJson || {}).length;
-  if (!numSplits) throw new Error("workoutData has no splits");
+  if (!numSplits) throw new Error('workoutData has no splits');
 
   let planId: number; // --- STEP 1: UPSERT the WORKOUTPLAN (Parent) and retrieve the new ID. ---
 
@@ -485,7 +472,7 @@ export const queryAddWorkout = async (
     `;
 
   if (!planResult?.[0]) {
-    throw new Error("Failed to create or retrieve workout plan ID.");
+    throw new Error('Failed to create or retrieve workout plan ID.');
   }
   planId = planResult[0].id; // --- STEP 2: UPSERT the WORKOUTSPLITS (Children) and retrieve their IDs. --- // Must be separate so RLS policies on workoutsplits can see the workoutplan row (planId).
 
