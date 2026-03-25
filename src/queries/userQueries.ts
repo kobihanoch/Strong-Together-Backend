@@ -1,4 +1,4 @@
-import { PostgresError } from 'postgres';
+import postgres from 'postgres';
 import sql from '../config/db.ts';
 import { AuthenticatedUserForUpdate } from '../types/dto/user.dto.ts';
 import { UserEntity } from '../types/entities/user.entity.ts';
@@ -83,7 +83,7 @@ export async function queryUpdateAuthenticatedUser(
         await sql`ROLLBACK TO SAVEPOINT email_probe`;
       } catch (e) {
         await sql`ROLLBACK TO SAVEPOINT email_probe`;
-        if (e instanceof PostgresError && e.code === '23505') {
+        if (e instanceof postgres.PostgresError && e.code === '23505') {
           throw e; // unique violation -> will be mapped to 409 by caller
         }
         throw e; // e.g., RLS denial, etc.
@@ -91,7 +91,7 @@ export async function queryUpdateAuthenticatedUser(
     } catch (e) {
       // If not in a transaction block (25P01), just skip the probe gracefully.
       // The final confirm will still guard with the unique index.
-      if (e instanceof PostgresError && e.code !== '25P01') throw e;
+      if (e instanceof postgres.PostgresError && e.code !== '25P01') throw e;
     }
   }
 
