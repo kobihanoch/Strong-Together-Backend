@@ -1,24 +1,12 @@
-import type { UserEntity } from '../../entities/user.entity.ts';
+import z from 'zod';
+import { userDataResponseSchema } from '../../../validators/user/userDataResponse.schema.ts';
+import { createUserResponseSchema } from '../../../validators/user/createUserResponse.schema.ts';
+import { getAuthenticatedUserByIdResponseSchema } from '../../../validators/user/getAuthenticatedUserByIdResponse.schema.ts';
+import { updateAuthenticatedUserResponseSchema } from '../../../validators/user/updateAuthenticatedUserResponse.schema.ts';
+import { setProfilePicAndUpdateDBResponseSchema } from '../../../validators/user/setProfilePicAndUpdateDBResponse.schema.ts';
 
-export interface UserDataResponse {
-  user_data: Omit<UserEntity, 'password'>;
-}
-
-export interface CreateUserResponse {
-  message: string;
-  user: Pick<UserEntity, 'id' | 'username' | 'name' | 'email' | 'gender' | 'role' | 'created_at'>;
-}
-
-export type GetAuthenticatedUserByIdResponse = UserDataResponse['user_data'];
-
-export interface UpdateAuthenticatedUserResponse {
-  message: string;
-  emailChanged: boolean;
-  user: UserDataResponse['user_data'];
-}
-
-export interface SetProfilePicAndUpdateDBResponse {
-  path: string;
-  url: string;
-  message: string;
-}
+export type UserDataResponse = z.infer<typeof userDataResponseSchema>;
+export type CreateUserResponse = z.infer<typeof createUserResponseSchema>;
+export type GetAuthenticatedUserByIdResponse = z.infer<typeof getAuthenticatedUserByIdResponseSchema>;
+export type UpdateAuthenticatedUserResponse = z.infer<typeof updateAuthenticatedUserResponseSchema>;
+export type SetProfilePicAndUpdateDBResponse = z.infer<typeof setProfilePicAndUpdateDBResponseSchema>;

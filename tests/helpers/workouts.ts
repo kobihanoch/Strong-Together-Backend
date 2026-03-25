@@ -12,7 +12,7 @@ export function getTracking(app: any, accessToken: string, tz = 'Asia/Jerusalem'
 export function addWorkoutPlan(
   app: any,
   accessToken: string,
-  workoutData: Record<string, Array<{ id: number; sets: number | number[]; order_index?: number }>>,
+  workoutData: Record<string, Array<{ id: number; sets: number[]; order_index?: number }>>,
   workoutName = 'Test Workout',
   tz = 'Asia/Jerusalem',
 ) {

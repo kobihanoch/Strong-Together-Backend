@@ -23,13 +23,13 @@ export interface ExerciseTrackingAnalysis {
 export interface TrackingMapItem extends Omit<ExerciseTrackingEntity, 'workout_summary_id'> {
   exercisetosplit_id: ExerciseToWorkoutSplitEntity['id'];
   exercise_id: ExerciseEntity['id'];
-  workoutsplit_id: WorkoutSplitEntity['id'] | null;
-  splitname: WorkoutSplitEntity['name'] | null;
-  exercise: ExerciseEntity['name'] | null;
+  workoutsplit_id: WorkoutSplitEntity['id'];
+  splitname: WorkoutSplitEntity['name'];
+  exercise: ExerciseEntity['name'];
   workoutdate: WorkoutSummaryEntity['workout_start_utc']; // YYYY-MM-DD
-  order_index: number | null;
+  order_index: ExerciseToWorkoutSplitEntity['order_index'];
   exercisetoworkoutsplit: {
-    sets: number[] | null;
+    sets: ExerciseToWorkoutSplitEntity['sets'];
     exercises: Pick<ExerciseEntity, 'targetmuscle' | 'specifictargetmuscle'>;
   };
 }
@@ -38,8 +38,8 @@ export interface ExerciseTrackingAndStats {
   exerciseTrackingAnalysis: ExerciseTrackingAnalysis;
   exerciseTrackingMaps: {
     byDate: Record<string, Array<Omit<TrackingMapItem, 'workoutdate'>>>;
-    byETSId: Record<string, TrackingMapItem[]>;
-    bySplitName: Record<string, Array<Omit<TrackingMapItem, 'splitname'>>>;
+    byETSId: Record<ExerciseToWorkoutSplitEntity['id'], TrackingMapItem[]>;
+    bySplitName: Record<WorkoutSplitEntity['name'], Array<Omit<TrackingMapItem, 'splitname'>>>;
   };
 }
 

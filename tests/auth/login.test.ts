@@ -2,6 +2,12 @@ import crypto from 'crypto';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
+import { loginResponseSchema } from '../../src/validators/auth/loginResponse.schema.ts';
+import { messageResponseSchema } from '../../src/validators/auth/messageResponse.schema.ts';
+import { refreshTokenResponseSchema } from '../../src/validators/auth/refreshTokenResponse.schema.ts';
+import { resetPasswordResponseSchema } from '../../src/validators/auth/resetPasswordResponse.schema.ts';
+import { createUserResponseSchema } from '../../src/validators/user/createUserResponse.schema.ts';
+import { getAuthenticatedUserByIdResponseSchema } from '../../src/validators/user/getAuthenticatedUserByIdResponse.schema.ts';
 import {
   authHeaders,
   createForgotPasswordToken,
@@ -10,6 +16,7 @@ import {
   logoutHeaders,
   refreshHeaders,
 } from '../helpers/auth.ts';
+import { expectSchema } from '../helpers/assertSchema.ts';
 import { getUserAuthStateByUsername } from '../helpers/db.ts';
 
 let app: ReturnType<typeof createApp>;
@@ -41,6 +48,7 @@ async function createUnverifiedUser(overrides?: {
   });
 
   expect(createResponse.status).toBe(201);
+  expectSchema(createUserResponseSchema, createResponse.body);
 
   return {
     username,
@@ -77,6 +85,7 @@ describe('Auth Login', () => {
     const response = await loginTestUser();
 
     expect(response.status).toBe(200);
+    expectSchema(loginResponseSchema, response.body);
     expect(response.body.message).toBe('Login successful');
     expect(response.body.user).toBeTypeOf('string');
     expect(response.body.accessToken).toBeTypeOf('string');
@@ -86,12 +95,14 @@ describe('Auth Login', () => {
   // login -> get authenticated user -> assert protected access works
   it('uses the access token to reach a protected route', async () => {
     const loginResponse = await loginTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
 
     const accessToken = loginResponse.body.accessToken as string;
 
     const meResponse = await request(app).get('/api/users/get').set(authHeaders(accessToken));
 
     expect(meResponse.status).toBe(200);
+    expectSchema(getAuthenticatedUserByIdResponseSchema, meResponse.body);
     expect(meResponse.body.id).toBe(loginResponse.body.user);
     expect(meResponse.body.username).toBe('auth_test_user');
   });
@@ -99,12 +110,14 @@ describe('Auth Login', () => {
   // login -> refresh tokens -> get authenticated user with new token -> assert session refresh works
   it('refreshes tokens with a valid refresh token and uses the new access token', async () => {
     const loginResponse = await loginTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
 
     const refreshToken = loginResponse.body.refreshToken as string;
 
     const refreshResponse = await request(app).post('/api/auth/refresh').set(refreshHeaders(refreshToken));
 
     expect(refreshResponse.status).toBe(200);
+    expectSchema(refreshTokenResponseSchema, refreshResponse.body);
     expect(refreshResponse.body.message).toBe('Access token refreshed');
     expect(refreshResponse.body.userId).toBe(loginResponse.body.user);
     expect(refreshResponse.body.accessToken).toBeTypeOf('string');
@@ -113,6 +126,7 @@ describe('Auth Login', () => {
     const meResponse = await request(app).get('/api/users/get').set(authHeaders(refreshResponse.body.accessToken));
 
     expect(meResponse.status).toBe(200);
+    expectSchema(getAuthenticatedUserByIdResponseSchema, meResponse.body);
     expect(meResponse.body.id).toBe(loginResponse.body.user);
     expect(meResponse.body.username).toBe('auth_test_user');
   });
@@ -120,6 +134,7 @@ describe('Auth Login', () => {
   // login -> logout -> get authenticated user with old token -> assert old session is invalidated
   it('invalidates the old session after logout', async () => {
     const loginResponse = await loginTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
 
     const accessToken = loginResponse.body.accessToken as string;
     const refreshToken = loginResponse.body.refreshToken as string;
@@ -127,6 +142,7 @@ describe('Auth Login', () => {
     const logoutResponse = await request(app).post('/api/auth/logout').set(logoutHeaders(accessToken, refreshToken));
 
     expect(logoutResponse.status).toBe(200);
+    expectSchema(messageResponseSchema, logoutResponse.body);
     expect(logoutResponse.body.message).toBe('Logged out successfully');
 
     const meResponse = await request(app).get('/api/users/get').set(authHeaders(accessToken));
@@ -200,6 +216,7 @@ describe('Auth Login', () => {
     });
 
     expect(loginResponse.status).toBe(200);
+    expectSchema(loginResponseSchema, loginResponse.body);
     expect(loginResponse.body.message).toBe('Login successful');
     expect(loginResponse.body.user).toBe(createdUser!.id);
   });
@@ -342,6 +359,7 @@ describe('Auth Login', () => {
     });
 
     expect(response.status).toBe(200);
+    expectSchema(resetPasswordResponseSchema, response.body);
     expect(response.body.ok).toBe(true);
 
     const afterResetUser = await getUserAuthStateByUsername(username);
@@ -362,6 +380,7 @@ describe('Auth Login', () => {
     });
 
     expect(newPasswordLoginResponse.status).toBe(200);
+    expectSchema(loginResponseSchema, newPasswordLoginResponse.body);
     expect(newPasswordLoginResponse.body.message).toBe('Login successful');
     expect(newPasswordLoginResponse.body.user).toBe(userId);
   });

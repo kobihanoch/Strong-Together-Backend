@@ -1,7 +1,10 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
+import { getAnalyticsResponseSchema } from '../../src/validators/analytics/getAnalyticsResponse.schema.ts';
+import { loginResponseSchema } from '../../src/validators/auth/loginResponse.schema.ts';
 import { loginAnalyticsEmptyUser, loginAnalyticsTestUser } from '../helpers/auth.ts';
+import { expectSchema } from '../helpers/assertSchema.ts';
 import { getExerciseToWorkoutSplitId, getWorkoutSummaryCount } from '../helpers/db.ts';
 import { getAnalytics } from '../helpers/analytics.ts';
 import { addWorkoutPlan, finishWorkout } from '../helpers/workouts.ts';
@@ -16,11 +19,13 @@ describe('Analytics', () => {
   // login -> get analytics -> assert empty analytics response
   it('returns empty analytics for a user with no completed workouts', async () => {
     const loginResponse = await loginAnalyticsEmptyUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
     const response = await getAnalytics(app, accessToken);
 
     expect(response.status).toBe(200);
+    expectSchema(getAnalyticsResponseSchema, response.body);
     expect(response.body).toEqual({
       _1RM: {},
       goals: {},
@@ -30,6 +35,7 @@ describe('Analytics', () => {
   // login -> add workout plan -> finish workouts -> get analytics -> assert 1RM and goals aggregates
   it('returns workout RMs and goal adherence after a real workout flow', async () => {
     const loginResponse = await loginAnalyticsTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
 
@@ -67,6 +73,7 @@ describe('Analytics', () => {
     const response = await getAnalytics(app, accessToken);
 
     expect(response.status).toBe(200);
+    expectSchema(getAnalyticsResponseSchema, response.body);
     expect(await getWorkoutSummaryCount(userId)).toBe(2);
 
     expect(response.body._1RM).toHaveProperty('20');

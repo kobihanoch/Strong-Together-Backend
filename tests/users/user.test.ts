@@ -4,7 +4,12 @@ import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
+import { loginResponseSchema } from '../../src/validators/auth/loginResponse.schema.ts';
+import { createUserResponseSchema } from '../../src/validators/user/createUserResponse.schema.ts';
+import { getAuthenticatedUserByIdResponseSchema } from '../../src/validators/user/getAuthenticatedUserByIdResponse.schema.ts';
+import { updateAuthenticatedUserResponseSchema } from '../../src/validators/user/updateAuthenticatedUserResponse.schema.ts';
 import { authHeaders, createChangeEmailToken, loginUsersTestUser } from '../helpers/auth.ts';
+import { expectSchema } from '../helpers/assertSchema.ts';
 import { getUserAuthStateByUsername, hasReminderSettings } from '../helpers/db.ts';
 
 let app: ReturnType<typeof createApp>;
@@ -29,6 +34,7 @@ describe('Users', () => {
     });
 
     expect(response.status).toBe(201);
+    expectSchema(createUserResponseSchema, response.body);
     expect(response.body.message).toBe('User created successfully!');
     expect(response.body.user.id).toBeTypeOf('string');
     expect(response.body.user.username).toBe(username);
@@ -52,11 +58,13 @@ describe('Users', () => {
   // login -> get authenticated user profile -> assert current user payload
   it('gets the authenticated user profile', async () => {
     const loginResponse = await loginUsersTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
     const response = await request(app).get('/api/users/get').set(authHeaders(accessToken));
 
     expect(response.status).toBe(200);
+    expectSchema(getAuthenticatedUserByIdResponseSchema, response.body);
     expect(response.body.id).toBe(loginResponse.body.user);
     expect(response.body.username).toBe('users_test_user');
     expect(response.body.email).toBe('users_test_user@example.com');
@@ -65,6 +73,7 @@ describe('Users', () => {
   // login -> update self -> get authenticated user profile -> assert persisted profile changes
   it('updates the authenticated user profile', async () => {
     const loginResponse = await loginUsersTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
     const updateResponse = await request(app).put('/api/users/updateself').set(authHeaders(accessToken)).send({
@@ -73,6 +82,7 @@ describe('Users', () => {
     });
 
     expect(updateResponse.status).toBe(200);
+    expectSchema(updateAuthenticatedUserResponseSchema, updateResponse.body);
     expect(updateResponse.body.message).toBe('User updated successfully');
     expect(updateResponse.body.emailChanged).toBe(false);
     expect(updateResponse.body.user.username).toBe('auth_test_u2');
@@ -81,6 +91,7 @@ describe('Users', () => {
     const getResponse = await request(app).get('/api/users/get').set(authHeaders(accessToken));
 
     expect(getResponse.status).toBe(200);
+    expectSchema(getAuthenticatedUserByIdResponseSchema, getResponse.body);
     expect(getResponse.body.username).toBe('auth_test_u2');
     expect(getResponse.body.name).toBe('Auth Test User U');
   });
@@ -101,6 +112,7 @@ describe('Users', () => {
     });
 
     expect(createResponse.status).toBe(201);
+    expectSchema(createUserResponseSchema, createResponse.body);
 
     const verifyToken = jwt.sign(
       {
@@ -122,6 +134,7 @@ describe('Users', () => {
     });
 
     expect(loginResponse.status).toBe(200);
+    expectSchema(loginResponseSchema, loginResponse.body);
 
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
@@ -134,6 +147,7 @@ describe('Users', () => {
     });
 
     expect(updateResponse.status).toBe(200);
+    expectSchema(updateAuthenticatedUserResponseSchema, updateResponse.body);
     expect(updateResponse.body.message).toBe('User updated successfully');
     expect(updateResponse.body.emailChanged).toBe(true);
     expect(updateResponse.body.user.email).toBe(beforeUpdate?.email);
@@ -176,6 +190,7 @@ describe('Users', () => {
   // login -> save push token -> get authenticated user profile -> assert persisted push token
   it('saves the authenticated user push token', async () => {
     const loginResponse = await loginUsersTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
     const pushToken = 'ExponentPushToken[test-token-123]';
 
@@ -188,6 +203,7 @@ describe('Users', () => {
     const getResponse = await request(app).get('/api/users/get').set(authHeaders(accessToken));
 
     expect(getResponse.status).toBe(200);
+    expectSchema(getAuthenticatedUserByIdResponseSchema, getResponse.body);
     expect(getResponse.body.push_token).toBe(pushToken);
   });
 
@@ -204,6 +220,7 @@ describe('Users', () => {
   // login -> update self with conflicting username -> assert 409
   it('rejects updating the authenticated user profile with a taken username', async () => {
     const loginResponse = await loginUsersTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
     const response = await request(app).put('/api/users/updateself').set(authHeaders(accessToken)).send({
@@ -218,6 +235,7 @@ describe('Users', () => {
   // login -> delete self -> get authenticated user profile -> assert access is blocked afterward
   it('deletes the authenticated user and blocks further access', async () => {
     const loginResponse = await loginUsersTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
     const deleteResponse = await request(app).delete('/api/users/deleteself').set(authHeaders(accessToken));
@@ -246,6 +264,7 @@ describe('Users', () => {
     });
 
     expect(createResponse.status).toBe(201);
+    expectSchema(createUserResponseSchema, createResponse.body);
 
     const verifyToken = jwt.sign(
       {
@@ -267,6 +286,7 @@ describe('Users', () => {
     });
 
     expect(loginDeleteResponse.status).toBe(200);
+    expectSchema(loginResponseSchema, loginDeleteResponse.body);
 
     const deleteResponse = await request(app).delete('/api/users/deleteself').set(
       authHeaders(loginDeleteResponse.body.accessToken as string),

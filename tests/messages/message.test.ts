@@ -1,7 +1,12 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
+import { loginResponseSchema } from '../../src/validators/auth/loginResponse.schema.ts';
+import { deleteMessageResponseSchema } from '../../src/validators/messages/deleteMessageResponse.schema.ts';
+import { getAllUserMessagesResponseSchema } from '../../src/validators/messages/getAllUserMessagesResponse.schema.ts';
+import { markMessageAsReadResponseSchema } from '../../src/validators/messages/markMessageAsReadResponse.schema.ts';
 import { loginAuthTestUser, loginMessagesTestUser } from '../helpers/auth.ts';
+import { expectSchema } from '../helpers/assertSchema.ts';
 import { getMessageReadState, getExerciseToWorkoutSplitId, messageExists } from '../helpers/db.ts';
 import { deleteMessage, getMessages, markMessageAsRead } from '../helpers/messages.ts';
 import { addWorkoutPlan, finishWorkout } from '../helpers/workouts.ts';
@@ -16,17 +21,20 @@ describe('Messages', () => {
   // login -> get messages -> assert empty response
   it('returns an empty messages list for a user with no messages', async () => {
     const loginResponse = await loginMessagesTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
     const response = await getMessages(app, accessToken);
 
     expect(response.status).toBe(200);
+    expectSchema(getAllUserMessagesResponseSchema, response.body);
     expect(response.body).toEqual({ messages: [] });
   });
 
   // login -> add workout plan -> finish workout -> get messages -> assert system message exists
   it('returns the workout-done system message after a real workout flow', async () => {
     const loginResponse = await loginMessagesTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
 
@@ -50,6 +58,7 @@ describe('Messages', () => {
     const response = await getMessages(app, accessToken);
 
     expect(response.status).toBe(200);
+    expectSchema(getAllUserMessagesResponseSchema, response.body);
     expect(response.body.messages).toHaveLength(1);
     expect(response.body.messages[0]).toMatchObject({
       subject: expect.any(String),
@@ -62,6 +71,7 @@ describe('Messages', () => {
   // login -> add workout plan -> finish workout -> get messages -> mark as read -> assert response and DB state
   it('marks a user message as read and updates the database state', async () => {
     const loginResponse = await loginMessagesTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
 
@@ -82,11 +92,13 @@ describe('Messages', () => {
     ]);
 
     const getResponse = await getMessages(app, accessToken);
+    expectSchema(getAllUserMessagesResponseSchema, getResponse.body);
     const messageId = getResponse.body.messages[0].id as string;
 
     const response = await markMessageAsRead(app, accessToken, messageId);
 
     expect(response.status).toBe(200);
+    expectSchema(markMessageAsReadResponseSchema, response.body);
     expect(response.body).toEqual({ id: messageId, is_read: true });
     expect(await getMessageReadState(messageId)).toBe(true);
   });
@@ -94,6 +106,7 @@ describe('Messages', () => {
   // login -> add workout plan -> finish workout -> get messages -> delete message -> assert response and DB deletion
   it('deletes a user message and removes it from the database', async () => {
     const loginResponse = await loginMessagesTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
 
@@ -114,11 +127,13 @@ describe('Messages', () => {
     ]);
 
     const getResponse = await getMessages(app, accessToken);
+    expectSchema(getAllUserMessagesResponseSchema, getResponse.body);
     const messageId = getResponse.body.messages[0].id as string;
 
     const response = await deleteMessage(app, accessToken, messageId);
 
     expect(response.status).toBe(200);
+    expectSchema(deleteMessageResponseSchema, response.body);
     expect(response.body).toEqual({ id: messageId });
     expect(await messageExists(messageId)).toBe(false);
   });
@@ -126,6 +141,7 @@ describe('Messages', () => {
   // user b creates system message -> user a marks that message as read -> assert 404 and unread state is preserved
   it('rejects marking another user message as read', async () => {
     const ownerLoginResponse = await loginMessagesTestUser();
+    expectSchema(loginResponseSchema, ownerLoginResponse.body);
     const ownerAccessToken = ownerLoginResponse.body.accessToken as string;
     const ownerUserId = ownerLoginResponse.body.user as string;
 
@@ -146,9 +162,11 @@ describe('Messages', () => {
     ]);
 
     const ownerMessagesResponse = await getMessages(app, ownerAccessToken);
+    expectSchema(getAllUserMessagesResponseSchema, ownerMessagesResponse.body);
     const messageId = ownerMessagesResponse.body.messages[0].id as string;
 
     const attackerLoginResponse = await loginAuthTestUser();
+    expectSchema(loginResponseSchema, attackerLoginResponse.body);
     const attackerAccessToken = attackerLoginResponse.body.accessToken as string;
 
     const response = await markMessageAsRead(app, attackerAccessToken, messageId);
@@ -161,6 +179,7 @@ describe('Messages', () => {
   // user b creates system message -> user a deletes that message -> assert 404 and row still exists
   it('rejects deleting another user message', async () => {
     const ownerLoginResponse = await loginMessagesTestUser();
+    expectSchema(loginResponseSchema, ownerLoginResponse.body);
     const ownerAccessToken = ownerLoginResponse.body.accessToken as string;
     const ownerUserId = ownerLoginResponse.body.user as string;
 
@@ -181,9 +200,11 @@ describe('Messages', () => {
     ]);
 
     const ownerMessagesResponse = await getMessages(app, ownerAccessToken);
+    expectSchema(getAllUserMessagesResponseSchema, ownerMessagesResponse.body);
     const messageId = ownerMessagesResponse.body.messages[0].id as string;
 
     const attackerLoginResponse = await loginAuthTestUser();
+    expectSchema(loginResponseSchema, attackerLoginResponse.body);
     const attackerAccessToken = attackerLoginResponse.body.accessToken as string;
 
     const response = await deleteMessage(app, attackerAccessToken, messageId);

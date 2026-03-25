@@ -15,7 +15,7 @@ import { sendSystemMessageToUserWhenFirstLogin } from '../services/messagesServi
 import { AppleOAuthBody, GoogleOAuthBody } from '../types/api/oAuth/requests.ts';
 import { OAuthLoginResponse, ProceedLoginResponse } from '../types/api/oAuth/responses.ts';
 import { GoogleTokenVerificationResult } from '../types/dto/oAuth.dto.ts';
-import { isEnglishName, verifyAppleIdToken, verifyGoogleIdToken } from '../utils/oauthUtils.js';
+import { verifyAppleIdToken, verifyGoogleIdToken } from '../utils/oauthUtils.js';
 
 const validateJkt = (req: Request): string => {
   const jkt = req.headers['dpop-key-binding'] as string | undefined;
@@ -74,9 +74,8 @@ export const createOrSignInWithGoogle = async (
       const username = email?.split('@')[0].toLowerCase() || null;
 
       const isValidEmail = !!email;
-      const isValidFullname = !!fullName && isEnglishName(fullName);
+      const isValidFullname = true; //!!fullName && isEnglishName(fullName);
       //const isValidGender = false;
-
       let missingFields = '';
       if (!isValidEmail) missingFields += 'email,';
       //if (!isValidGender) missingFields += "gender,"; // Always missing for now
@@ -85,7 +84,7 @@ export const createOrSignInWithGoogle = async (
       const userIdFromRegister = await queryCreateUserWithGoogleInfo(
         username,
         isValidEmail ? email : null,
-        isValidFullname ? fullName : null,
+        fullName,
         missingFields !== '' ? missingFields : null,
         googleSub,
         email,
@@ -219,7 +218,6 @@ export const createOrSignInWithApple = async (
 
       const isValidFullname = true; // Apple requested not to get full name as its coming from Apple OAuth already
       //!!candidateFullName && isEnglishName(candidateFullName);
-
       let missingFields = '';
       if (!isValidEmail) missingFields += 'email,';
       if (!isValidFullname) missingFields += 'name';
@@ -227,7 +225,7 @@ export const createOrSignInWithApple = async (
       const newUserId = await queryCreateUserWithAppleInfo(
         username,
         isValidEmail ? resolvedEmail : null,
-        isValidFullname ? candidateFullName : null,
+        candidateFullName,
         missingFields !== '' ? missingFields : null,
         appleSub,
         resolvedEmail,

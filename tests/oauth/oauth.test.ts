@@ -1,7 +1,10 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.ts';
+import { loginResponseSchema } from '../../src/validators/auth/loginResponse.schema.ts';
+import { proceedLoginResponseSchema } from '../../src/validators/oAuth/proceedLoginResponse.schema.ts';
 import { loginOAuthCompleteUser, loginOAuthIncompleteUser } from '../helpers/auth.ts';
+import { expectSchema } from '../helpers/assertSchema.ts';
 import { proceedOAuthAuth } from '../helpers/oauth.ts';
 
 let app: ReturnType<typeof createApp>;
@@ -14,11 +17,13 @@ describe('OAuth', () => {
   // login oauth-complete fixture -> proceedauth -> assert tokens are issued
   it('completes proceedauth for an oauth user with no missing fields', async () => {
     const loginResponse = await loginOAuthCompleteUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
     const response = await proceedOAuthAuth(app, accessToken);
 
     expect(response.status).toBe(200);
+    expectSchema(proceedLoginResponseSchema, response.body);
     expect(response.body.message).toBe('Login successful');
     expect(response.body.user).toBeTypeOf('string');
     expect(response.body.accessToken).toBeTypeOf('string');
@@ -28,6 +33,7 @@ describe('OAuth', () => {
   // login oauth-incomplete fixture -> proceedauth -> assert profile completion conflict
   it('rejects proceedauth when oauth profile is still incomplete', async () => {
     const loginResponse = await loginOAuthIncompleteUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
     const response = await proceedOAuthAuth(app, accessToken);

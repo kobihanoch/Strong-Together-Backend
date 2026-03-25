@@ -1,9 +1,4 @@
-import type {
-  AerobicsDailyRecord,
-  WeeklyData,
-} from "../../dto/aerobics.dto.ts";
+import z from 'zod';
+import { userAerobicsResponseSchema } from '../../../validators/aerobics/userAerobicsResponse.schema.ts';
 
-export interface UserAerobicsResponse {
-  daily: Record<string, AerobicsDailyRecord[]>;
-  weekly: Record<string, WeeklyData>;
-}
+export type UserAerobicsResponse = z.infer<typeof userAerobicsResponseSchema>;

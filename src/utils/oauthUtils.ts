@@ -57,7 +57,7 @@ export async function verifyGoogleIdToken(
     googleSub: payload.sub as string,
     email: payload.email || null,
     emailVerified: payload.email_verified === true,
-    fullName: payload.name || null,
+    fullName: payload.name || 'New User',
     picture: payload.picture || null,
     raw: payload,
   };
@@ -97,7 +97,7 @@ export async function verifyAppleIdToken({
   const email = payload.email ?? null;
   const emailVerified = payload.email_verified === 'true' || payload.email_verified === true;
 
-  const fullName = name?.givenName + ' ' + name?.familyName || null;
+  const fullName = name?.givenName + ' ' + name?.familyName || 'New User';
 
   return { appleSub, email, emailVerified, fullName, payload };
 }

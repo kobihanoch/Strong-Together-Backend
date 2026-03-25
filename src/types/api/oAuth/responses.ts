@@ -1,11 +1,6 @@
-import { LoginResponse } from "../auth/responses.ts";
+import z from 'zod';
+import { oAuthLoginResponseSchema } from '../../../validators/oAuth/oAuthLoginResponse.schema.ts';
+import { proceedLoginResponseSchema } from '../../../validators/oAuth/proceedLoginResponse.schema.ts';
 
-export interface OAuthLoginResponse extends Omit<
-  LoginResponse,
-  "refreshToken"
-> {
-  missingFields: string[] | null;
-  refreshToken: string | null;
-}
-
-export interface ProceedLoginResponse extends LoginResponse {}
+export type OAuthLoginResponse = z.infer<typeof oAuthLoginResponseSchema>;
+export type ProceedLoginResponse = z.infer<typeof proceedLoginResponseSchema>;
