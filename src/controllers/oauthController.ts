@@ -131,22 +131,22 @@ export const createOrSignInWithGoogle = async (
     { expiresIn: '5m' },
   );
 
-  const refreshToken = missingFieldsPayload
+  const refreshToken = /*missingFieldsPayload
     ? null
-    : jwt.sign(
-        {
-          id: userData.id,
-          role: userData.role,
-          tokenVer: token_version,
-          ...cnfClaim,
-        },
-        process.env.JWT_REFRESH_SECRET!,
-        { expiresIn: '14d' },
-      );
+    : */ jwt.sign(
+    {
+      id: userData.id,
+      role: userData.role,
+      tokenVer: token_version,
+      ...cnfClaim,
+    },
+    process.env.JWT_REFRESH_SECRET!,
+    { expiresIn: '14d' },
+  );
   res.set('Cache-Control', 'no-store');
   return res.status(200).json({
     message: 'Login successful',
-    user: userData?.id,
+    user: userData.id,
     missingFields: missingFieldsPayload,
     accessToken: accessToken,
     refreshToken: refreshToken,
@@ -272,23 +272,23 @@ export const createOrSignInWithApple = async (
     { expiresIn: '5m' },
   );
 
-  const refreshToken = missingFieldsPayload
+  const refreshToken = /*missingFieldsPayload
     ? null
-    : jwt.sign(
-        {
-          id: userData.id,
-          role: userData.role,
-          tokenVer: token_version,
-          ...cnfClaim,
-        },
-        process.env.JWT_REFRESH_SECRET!,
-        { expiresIn: '14d' },
-      );
+    : */ jwt.sign(
+    {
+      id: userData.id,
+      role: userData.role,
+      tokenVer: token_version,
+      ...cnfClaim,
+    },
+    process.env.JWT_REFRESH_SECRET!,
+    { expiresIn: '14d' },
+  );
 
   res.set('Cache-Control', 'no-store');
   return res.status(200).json({
     message: 'Login successful',
-    user: userData?.id,
+    user: userData.id,
     missingFields: missingFieldsPayload,
     accessToken,
     refreshToken,
@@ -361,7 +361,7 @@ export const proceedLogin = async (
   res.set('Cache-Control', 'no-store');
   return res.status(200).json({
     message: 'Login successful',
-    user: userData?.id,
+    user: userData.id,
     accessToken: accessTokenRes,
     refreshToken: refreshTokenRes,
   });
