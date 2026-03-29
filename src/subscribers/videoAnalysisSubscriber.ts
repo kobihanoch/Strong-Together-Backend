@@ -1,5 +1,6 @@
 import { createRedisSubscriber } from '../config/redisClient.js';
 import { AnalyzeVideoResultPayload, SquatRepetition } from '../types/dto/videoAnalysis.dto.ts';
+import { emitVideoAnalysisResults } from '../utils/socketUtils.ts';
 
 const VIDEO_ANALYSIS_RESULTS_CHANNEL = 'video-analysis:results';
 
@@ -10,7 +11,7 @@ export const startVideoAnalysisSubscriber = async () => {
     try {
       const payload = JSON.parse(message) as AnalyzeVideoResultPayload<SquatRepetition>;
 
-      const { jobId, userId, status, /*result*/ error } = payload;
+      const { jobId, userId, status, error } = payload;
 
       if (!jobId || !userId || !status) {
         console.error('[Video Analysis Subscriber]: Invalid payload received', payload);
@@ -22,6 +23,8 @@ export const startVideoAnalysisSubscriber = async () => {
       if (error) {
         console.error('[Video Analysis Subscriber]: Failed to process message:', error);
       }
+
+      emitVideoAnalysisResults(userId, payload, jobId);
 
       /*if (status === "completed") {
           console.log("[Video Analysis Subscriber]: Result:", result);
