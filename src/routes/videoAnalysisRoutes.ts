@@ -11,7 +11,7 @@ import { publishVideoAnalysisJobRequest } from '../validators/videoAnalysis/publ
 const router = Router();
 
 // USER
-router.get(
+router.post(
   '/getpresignedurl',
   dpopValidationMiddleware,
   protect,

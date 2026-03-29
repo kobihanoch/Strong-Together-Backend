@@ -7,7 +7,9 @@ const appleNameInput = z.object({
 
 export const appleOAuthRequest = z.object({
   body: z.object({
-    idToken: z.string(),
+    idToken: z.string({
+      error: 'Missing or invalid Apple identityToken',
+    }),
     rawNonce: z.string(),
     name: appleNameInput.optional(),
     email: z.string().email().nullable(),
