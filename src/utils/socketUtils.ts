@@ -21,7 +21,7 @@ export const emitVideoAnalysisResults = (
   jobId: string,
 ) => {
   try {
-    getIO().to(userId).emit(`video_analysis_results:${jobId}`, results);
+    getIO().to(userId).emit(`video_analysis_results${jobId}`, results);
   } catch (error) {
     if (error instanceof Error && error.message === 'Socket.IO not initialized!') {
       return;
