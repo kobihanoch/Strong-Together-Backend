@@ -1,6 +1,7 @@
-import { EnqueueAanalyzeVideoParams } from "../../types/dto/videoAnalysis.dto.ts";
-import { createLogger } from "../../config/logger.ts";
-import analyzeVideoQueue from "./analyzeVideoQueue.js";
+import * as Sentry from '@sentry/node';
+import { EnqueueAanalyzeVideoParams } from '../../types/dto/videoAnalysis.dto.ts';
+import { createLogger } from '../../config/logger.ts';
+import analyzeVideoQueue from './analyzeVideoQueue.js';
 
 const logger = createLogger('queue:analyze-video-producer', {
   queue: 'analyzeVideoQueue',
@@ -13,6 +14,10 @@ export const enqueueAnalyzeVideo = async ({
   userId,
   requestId,
 }: EnqueueAanalyzeVideoParams): Promise<string> => {
+  const traceData = Sentry.getTraceData();
+  const resolvedSentryTrace = traceData['sentry-trace'];
+  const resolvedBaggage = traceData.baggage;
+
   try {
     const job = await analyzeVideoQueue.add(
       {
@@ -20,7 +25,9 @@ export const enqueueAnalyzeVideo = async ({
         exercise,
         userId,
         expiresAt: Date.now() + 1000 * 60 * 60 * 12,
-        ...(requestId ? { requestId } : {}),
+        requestId,
+        ...(resolvedSentryTrace ? { sentryTrace: resolvedSentryTrace } : {}),
+        ...(resolvedBaggage ? { baggage: resolvedBaggage } : {}),
       },
       {
         attempts: 3,
@@ -30,14 +37,30 @@ export const enqueueAnalyzeVideo = async ({
       },
     );
     logger.info(
-      { event: 'queue.job_enqueued', jobId: String(job.id), userId, exercise, fileKey, requestId },
+      {
+        event: 'queue.job_enqueued',
+        jobId: String(job.id),
+        userId,
+        exercise,
+        fileKey,
+        requestId,
+        hasSentryTrace: Boolean(resolvedSentryTrace),
+      },
       'Analyze video job enqueued',
     );
     return String(job.id);
   } catch (e) {
     if (e instanceof Error)
       logger.error(
-        { err: e, event: 'queue.enqueue_failed', userId, exercise, fileKey, requestId },
+        {
+          err: e,
+          event: 'queue.enqueue_failed',
+          userId,
+          exercise,
+          fileKey,
+          requestId,
+          hasSentryTrace: Boolean(resolvedSentryTrace),
+        },
         'Failed to enqueue analyze video job',
       );
     throw e;

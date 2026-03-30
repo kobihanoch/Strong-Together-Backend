@@ -50,7 +50,7 @@ export const publishVideoAnalysisJob = async (
     fileKey,
     exercise,
     userId,
-    ...(req.requestId ? { requestId: req.requestId } : {}),
+    requestId: req.requestId,
   });
   requestLogger.info(
     { event: 'video_analysis.job_published', fileKey, exercise, jobId },

@@ -7,8 +7,8 @@ declare global {
       user?: AuthenticatedUser;
       dpopJkt?: string;
       dpopAth?: string;
-      requestId?: string;
-      logger?: Logger;
+      requestId: string;
+      logger: Logger;
     }
   }
 }
