@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir \
     uvicorn==0.29.0 \
     python-multipart \
     python-dotenv \
+    "sentry-sdk[fastapi]" \
     redis \
     boto3 \
     mediapipe==0.10.9 \

@@ -1,10 +1,12 @@
 import logging
 from fastapi import FastAPI
+from config.sentry_client import init_sentry
 from routes.video_routes import router
 from config.redis_client import check_redis_connection
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+init_sentry()
 
 app = FastAPI()
 
