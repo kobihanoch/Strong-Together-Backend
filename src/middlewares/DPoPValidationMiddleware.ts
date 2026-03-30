@@ -1,19 +1,23 @@
+import { NextFunction, Request, Response } from 'express';
 import createError from 'http-errors';
 import * as jose from 'jose';
+import { createLogger } from '../config/logger.ts';
 import { cacheStoreJti } from '../utils/cache.ts';
-import { NextFunction, Request, Response } from 'express';
 
 const DPOP_EXPIRATION_SECONDS = 60;
+const logger = createLogger('middleware:dpop');
 
-// Allowed production domains (hardcoded)
 const ALLOWED_BASES = [
   process.env.PUBLIC_BASE_URL!,
   process.env.PUBLIC_BASE_URL_RENDER_DEFAULT!,
   process.env.PRIVATE_BASE_URL_DEV!,
 ];
 
-export default async function dpopValidationMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
-  // Bypass for current users
+export default async function dpopValidationMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   if (process.env.DPOP_ENABLED === 'false') {
     return next();
   }
@@ -26,7 +30,6 @@ export default async function dpopValidationMiddleware(req: Request, res: Respon
   }
 
   try {
-    // 1) Verify JWS using public JWK from header
     const { payload, protectedHeader } = await jose.compactVerify(dpopProof, (h) => {
       const jwk = h.jwk;
       if (!jwk) throw createError(400, 'DPoP header must contain jwk.');
@@ -40,18 +43,15 @@ export default async function dpopValidationMiddleware(req: Request, res: Respon
 
     const claims = JSON.parse(new TextDecoder().decode(payload));
 
-    // 2) Validate typ
     if ((protectedHeader.typ || '').toLowerCase() !== 'dpop+jwt') {
       return next(createError(401, 'Invalid DPoP typ.'));
     }
 
-    // 3) Validate method
     const htm = (claims.htm || '').toUpperCase();
     if (htm !== req.method) {
       return next(createError(401, 'DPoP proof HTM mismatch.'));
     }
 
-    // 4) Validate HTU
     const proto = req.protocol;
     const host = (req.get('host') || '').trim();
     if (!host) return next(createError(400, 'Missing Host header.'));
@@ -59,32 +59,28 @@ export default async function dpopValidationMiddleware(req: Request, res: Respon
     const serverURL = new URL(`${proto}://${host}${req.originalUrl}`);
     const htuURL = new URL(claims.htu);
 
-    // Check allowed base domains
     const isAllowed = ALLOWED_BASES.some((base) => base.toLowerCase() === htuURL.origin.toLowerCase());
 
     if (!isAllowed) {
-      return next(createError(401, `DPoP request host not allowed.`));
+      return next(createError(401, 'DPoP request host not allowed.'));
     }
 
     const serverPath = serverURL.pathname.replace(/\/+$/, '').toLowerCase() || '/';
     const clientPath = htuURL.pathname.replace(/\/+$/, '').toLowerCase() || '/';
 
     if (clientPath !== serverPath) {
-      return next(createError(401, `DPoP proof HTU mismatch.`));
+      return next(createError(401, 'DPoP proof HTU mismatch.'));
     }
 
-    // 5) Validate IAT
     const now = Math.floor(Date.now() / 1000);
     if (now - claims.iat > DPOP_EXPIRATION_SECONDS || claims.iat > now + 60) {
       return next(createError(401, 'DPoP proof is expired or timestamp is invalid.'));
     }
 
-    // Check JTI blacklist
     const jti = claims.jti;
     const inserted = await cacheStoreJti('dpop', jti, DPOP_EXPIRATION_SECONDS);
     if (!inserted) throw createError(401, 'DPoP already used');
 
-    // 6) Attach JKT
     if (!protectedHeader.jwk) {
       return next(createError(400, 'DPoP header must contain jwk.'));
     }
@@ -96,7 +92,10 @@ export default async function dpopValidationMiddleware(req: Request, res: Respon
     return next();
   } catch (error) {
     if (error instanceof Error) {
-      console.error('DPoP Proof validation failed:', error?.message || error);
+      (req.logger || logger).error(
+        { err: error, event: 'dpop.validation_failed', path: req.originalUrl },
+        'DPoP proof validation failed',
+      );
       return next(createError(401, 'Invalid DPoP proof signature or format.'));
     }
   }

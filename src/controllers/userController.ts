@@ -5,6 +5,7 @@ import createError from 'http-errors';
 import mime from 'mime';
 import path from 'path';
 import sql from '../config/db.js';
+import { createLogger } from '../config/logger.ts';
 import {
   queryAuthenticatedUserById,
   queryDeleteUserById,
@@ -35,6 +36,7 @@ import { cacheStoreJti } from '../utils/cache.js';
 import { decodeChangeEmailToken } from '../utils/tokenUtils.js';
 
 //const expo = new Expo();
+const logger = createLogger('controller:user');
 
 // ---------- HELPERS -----------------
 export const getUserData = async (userId: string): Promise<{ payload: UserDataResponse['user_data'] }> => {
@@ -68,7 +70,9 @@ export const createUser = async (
 
   const created = await queryInsertUser(username!, fullName, email!, gender, hash);
 
-  await sendVerificationEmail(email as string, created.id, fullName);
+  await sendVerificationEmail(email as string, created.id, fullName, {
+    ...(req.requestId ? { requestId: req.requestId } : {}),
+  });
 
   return res.status(201).json({ message: 'User created successfully!', user: created });
 };
@@ -115,7 +119,9 @@ export const updateAuthenticatedUser = async (
 
   let emailChanged = false;
   if (candidate && candidate !== currentEmail) {
-    await sendVerificationEmailForEmailUpdate(candidate, req.user!.id, userData.name || 'there');
+    await sendVerificationEmailForEmailUpdate(candidate, req.user!.id, userData.name || 'there', {
+      ...(req.requestId ? { requestId: req.requestId } : {}),
+    });
     emailChanged = true;
   }
 
@@ -130,6 +136,7 @@ export const updateAuthenticatedUser = async (
 // @route   PUT /api/users/changeemail?token=...
 // @access  Public (link-based)
 export const updateSelfEmail = async (req: Request, res: Response): Promise<Response> => {
+  const requestLogger = req.logger || logger;
   const token = req.query?.token as string | undefined;
   if (!token)
     return res
@@ -183,14 +190,14 @@ export const updateSelfEmail = async (req: Request, res: Response): Promise<Resp
     });
   } catch (e: any) {
     if (e.code === '23505') {
-      console.error('Email already in use');
+      requestLogger.warn({ event: 'user.email_change_conflict', userId: sub }, 'Email already in use');
       return res
         .status(409)
         .type('html')
         .set('Cache-Control', 'no-store')
         .send(generateEmailChangeFailedHTML('Email already in use'));
     }
-    console.error(e.message);
+    requestLogger.error({ err: e, event: 'user.email_change_failed', userId: sub }, 'Failed to update user email');
     return res
       .status(500)
       .type('html')
@@ -255,9 +262,18 @@ export const setProfilePicAndUpdateDB = async (
 
   // Delete last image from bucket
   if (oldPath && oldPath !== newPath) {
-    deleteFromSupabase(oldPath).catch((e: any) =>
-      console.warn('Failed to delete old profile image:', e?.response?.data || e.message),
-    );
+    deleteFromSupabase(oldPath).catch((e: any) => {
+      (req.logger || logger).warn(
+        {
+          err: e,
+          event: 'user.old_profile_image_delete_failed',
+          userId,
+          oldPath,
+          responseData: e?.response?.data,
+        },
+        'Failed to delete old profile image',
+      );
+    });
   }
 
   return res.status(201).json({ path: newPath, url: publicUrl, message: 'Upload success' });

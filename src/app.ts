@@ -1,6 +1,8 @@
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
+import { createLogger, createRequestId } from './config/logger.ts';
+import { applySentryRequestContext, setupSentryErrorHandler } from './config/sentry.ts';
 import { botBlocker } from './middlewares/botBlocker.ts';
 import { checkAppVersion } from './middlewares/checkAppVersion.ts';
 import { errorHandler } from './middlewares/errorHandler.ts';
@@ -20,6 +22,7 @@ import workoutRoutes from './routes/workoutRoutes.ts';
 
 export const createApp = () => {
   const app = express();
+  const appLogger = createLogger('app');
 
   app.use(express.json());
 
@@ -47,11 +50,47 @@ export const createApp = () => {
   app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 
   app.use((req, res, next) => {
-    const username = req.headers['x-username'] ?? null;
+    const startedAt = process.hrtime.bigint();
+    const requestId = req.headers['x-request-id']?.toString() || createRequestId();
+    const appVersion = req.headers['x-app-version']?.toString() || null;
+    const username = req.headers['x-username']?.toString() || null;
 
-    console.log(
-      `[User: ${username}] [App Version: ${req.headers['x-app-version']}] ${req.method}:${req.originalUrl}`,
-    );
+    req.requestId = requestId;
+    req.logger = appLogger.child({
+      requestId,
+      method: req.method,
+      path: req.originalUrl,
+      appVersion,
+      username,
+    });
+
+    res.setHeader('X-Request-Id', requestId);
+    applySentryRequestContext(req);
+
+    req.logger.info({ event: 'request.received' }, 'request started');
+
+    res.on('finish', () => {
+      const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+      const logPayload = {
+        event: 'request.completed',
+        statusCode: res.statusCode,
+        durationMs: Number(durationMs.toFixed(2)),
+        userId: req.user?.id,
+      };
+
+      if (res.statusCode >= 500) {
+        req.logger?.error(logPayload, 'request completed with server error');
+        return;
+      }
+
+      if (res.statusCode >= 400) {
+        req.logger?.warn(logPayload, 'request completed with client error');
+        return;
+      }
+
+      req.logger?.info(logPayload, 'request completed');
+    });
+
     next();
   });
 
@@ -71,6 +110,7 @@ export const createApp = () => {
   app.use('/api/bootstrap', bootsrapRoutes);
   app.use('/api/videoanalysis', videoAnalysisRoutes);
 
+  setupSentryErrorHandler(app);
   app.use(errorHandler);
 
   return app;

@@ -9,6 +9,7 @@ export type NotificationPayload = {
   body: string;
   delay: number;
   expiresAt: number;
+  requestId?: string;
 };
 
 export type UserToHourlyReminder = {

@@ -9,7 +9,7 @@ from utils.exercise_analyzer_utils.squat_utils import *
 from utils.exercise_analyzer_utils.shared_utils import *
 from publishers.analyze_video_publisher import *
 
-def analyze_exercise_video(path, exercise, job_id=None, user_id=None):
+def analyze_exercise_video(path, exercise, job_id=None, user_id=None, request_id=None):
   if exercise == "squat":
     res = analyze_squat(path)
   elif exercise == "bench":
@@ -25,6 +25,7 @@ def analyze_exercise_video(path, exercise, job_id=None, user_id=None):
     "jobId": normalized_job_id,
     "userId": normalized_user_id,
     "exercise": exercise,
+    "requestId": request_id,
     "status": "failed" if has_error else "completed",
     "result": None if has_error else res,
     "error": res.get("error") if has_error else None,
@@ -239,4 +240,5 @@ def show_window_with_landmarks(frame, image_landmarks, debug_info=None):
   if cv2.waitKey(1) & 0xFF == ord("q"):
     return False
   return True
+
 

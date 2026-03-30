@@ -2,6 +2,7 @@ export type EnqueueAanalyzeVideoParams = {
   fileKey: string;
   exercise: string;
   userId: string;
+  requestId?: string;
 };
 
 export type AnalyzeVideoPayload = {
@@ -9,6 +10,7 @@ export type AnalyzeVideoPayload = {
   exercise: string;
   userId: string;
   expiresAt: number;
+  requestId?: string;
 };
 
 export interface SquatRepetition {
@@ -35,6 +37,7 @@ export type AnalyzeVideoResultPayload<T> = {
   jobId: string;
   userId: string;
   exercise: string;
+  requestId?: string;
 } & (
   | {
       status: "completed";

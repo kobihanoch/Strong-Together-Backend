@@ -5,6 +5,7 @@ import sql from '../config/db.js';
 import { decodeAccessToken, getAccessToken } from '../utils/tokenUtils.js';
 import { queryGetCurrentTokenVersion } from '../queries/authQueries.js';
 import * as crypto from 'crypto';
+import { applySentryRequestContext } from '../config/sentry.ts';
 
 export const protect = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const dpopJkt = req.dpopJkt;
@@ -70,6 +71,13 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
 
     // Inject to request
     req.user = user;
+    if (req.logger) {
+      req.logger = req.logger.child({
+        userId: user.id,
+        role: user.role,
+      });
+    }
+    applySentryRequestContext(req);
 
     next();
   } catch (err: any) {

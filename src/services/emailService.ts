@@ -8,11 +8,15 @@ import {
 import { generateJti } from "../utils/tokenUtils.js";
 
 const base = process.env.PUBLIC_BASE_URL;
+type EmailContext = {
+  requestId?: string;
+};
 
 export const sendVerificationEmail = async (
   email: string,
   userId: string,
   fullName: string,
+  context: EmailContext = {},
 ): Promise<void> => {
   const jti = generateJti();
   const token = jwt.sign(
@@ -33,6 +37,7 @@ export const sendVerificationEmail = async (
       to: email,
       subject: "Confirm your Strong Together account",
       html,
+      ...(context.requestId ? { requestId: context.requestId } : {}),
     },
   ]);
   /*await sendMail({
@@ -46,6 +51,7 @@ export const sendForgotPasswordEmail = async (
   email: string,
   userId: string,
   fullName: string,
+  context: EmailContext = {},
 ) => {
   const jti = generateJti();
   const token = jwt.sign(
@@ -61,7 +67,14 @@ export const sendForgotPasswordEmail = async (
     changePasswordUrl,
     logoUrl: `https://strongtogether.kobihanoch.com/appicon.png`,
   });
-  await enqueueEmails([{ to: email, subject: "Reset your password", html }]);
+  await enqueueEmails([
+    {
+      to: email,
+      subject: "Reset your password",
+      html,
+      ...(context.requestId ? { requestId: context.requestId } : {}),
+    },
+  ]);
   //await sendMail({ to: email, subject: "Reset your password", html });
 };
 
@@ -69,6 +82,7 @@ export const sendVerificationEmailForEmailUpdate = async (
   newEmail: string,
   userId: string,
   fullName: string,
+  context: EmailContext = {},
 ) => {
   const normalized = newEmail.trim().toLowerCase();
   const jti = generateJti();
@@ -100,6 +114,7 @@ export const sendVerificationEmailForEmailUpdate = async (
       to: normalized,
       subject: "Confirm your Strong Together Email",
       html,
+      ...(context.requestId ? { requestId: context.requestId } : {}),
     },
   ]);
   /*await sendMail({

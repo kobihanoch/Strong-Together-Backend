@@ -1,5 +1,8 @@
+import './instrument.ts';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db.ts';
+import { createLogger } from './config/logger.ts';
+import { flushSentry } from './config/sentry.ts';
 import { connectRedis } from './config/redisClient.ts';
 import { createIOServer } from './config/webSocket.ts';
 import { createApp } from './app.ts';
@@ -7,6 +10,7 @@ import { startVideoAnalysisSubscriber } from './subscribers/videoAnalysisSubscri
 
 // RESOURECES CONNECTIONS AND GENERAL CONFIGURATIONS  ------------------------------------------
 dotenv.config();
+const logger = createLogger('bootstrap');
 
 const app = createApp();
 
@@ -22,16 +26,16 @@ const { server } = await createIOServer(app);
 
 // LISTEN TO PORT ------------------------------------------------------------------------------------------------
 server.listen(PORT, () => {
-  console.log(`[Web Socket]: Websocket is running on port ${PORT}`);
-  console.log(`[Server]: Server is running on port ${PORT}`);
+  logger.info({ event: 'websocket.started', port: PORT }, 'WebSocket server is running');
+  logger.info({ event: 'server.started', port: PORT }, 'HTTP server is running');
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('[FATAL] Unhandled Rejection at:', promise, 'Reason:', reason);
-  process.exit(1);
+  logger.fatal({ event: 'process.unhandledRejection', promise, reason }, 'Unhandled promise rejection');
+  void flushSentry().finally(() => process.exit(1));
 });
 
 process.on('uncaughtException', (err) => {
-  console.error('[FATAL] Uncaught Exception:', err.stack);
-  process.exit(1);
+  logger.fatal({ err, event: 'process.uncaughtException' }, 'Uncaught exception');
+  void flushSentry().finally(() => process.exit(1));
 });
