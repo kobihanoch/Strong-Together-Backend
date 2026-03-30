@@ -10,6 +10,7 @@ class AnalyzeExerciseRequest(BaseModel):
     exercise: str
     jobId: str | None = None
     userId: str | None = None
+    requestId: str | None = None
 
 
 @router.post("/analyze-exercise")
@@ -19,5 +20,6 @@ async def analyze_exercise(payload: AnalyzeExerciseRequest):
         payload.exercise,
         payload.jobId,
         payload.userId,
+        payload.requestId,
     )
     return result

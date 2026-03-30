@@ -12,6 +12,7 @@ export const enqueueEmails = async (emails: EmailPayload[]): Promise<void> => {
     return;
   }
 
+  const requestIds = [...new Set(emails.map((email) => email.requestId).filter(Boolean))];
   try {
     await emailQueue.addBulk(
       emails.map((e) => ({
@@ -27,9 +28,24 @@ export const enqueueEmails = async (emails: EmailPayload[]): Promise<void> => {
         },
       })),
     );
-    logger.info({ event: 'queue.jobs_enqueued', emailCount: emails.length }, 'Emails enqueued');
+    logger.info(
+      {
+        event: 'queue.jobs_enqueued',
+        emailCount: emails.length,
+        ...(requestIds.length ? { requestIds } : {}),
+      },
+      'Emails enqueued',
+    );
   } catch (e) {
-    logger.error({ err: e, event: 'queue.enqueue_failed', emailCount: emails.length }, 'Failed to enqueue emails');
+    logger.error(
+      {
+        err: e,
+        event: 'queue.enqueue_failed',
+        emailCount: emails.length,
+        ...(requestIds.length ? { requestIds } : {}),
+      },
+      'Failed to enqueue emails',
+    );
     throw e;
   }
 };

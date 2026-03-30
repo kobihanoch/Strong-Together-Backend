@@ -70,7 +70,9 @@ export const createUser = async (
 
   const created = await queryInsertUser(username!, fullName, email!, gender, hash);
 
-  await sendVerificationEmail(email as string, created.id, fullName);
+  await sendVerificationEmail(email as string, created.id, fullName, {
+    ...(req.requestId ? { requestId: req.requestId } : {}),
+  });
 
   return res.status(201).json({ message: 'User created successfully!', user: created });
 };
@@ -117,7 +119,9 @@ export const updateAuthenticatedUser = async (
 
   let emailChanged = false;
   if (candidate && candidate !== currentEmail) {
-    await sendVerificationEmailForEmailUpdate(candidate, req.user!.id, userData.name || 'there');
+    await sendVerificationEmailForEmailUpdate(candidate, req.user!.id, userData.name || 'there', {
+      ...(req.requestId ? { requestId: req.requestId } : {}),
+    });
     emailChanged = true;
   }
 

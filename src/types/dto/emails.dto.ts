@@ -3,6 +3,7 @@ export type EmailPayload = {
   subject: string;
   html: string;
   expiresAt?: number;
+  requestId?: string;
 };
 
 export type ValidateUserEmailParams = {

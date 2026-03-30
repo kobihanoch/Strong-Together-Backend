@@ -281,7 +281,9 @@ export const sendVerificationMail = async (
     SELECT id, name, username FROM users WHERE email=${email}`;
   if (!user) return res.status(204).end();
   const { id, name } = user;
-  await sendVerificationEmail(email, id, name ?? user.username);
+  await sendVerificationEmail(email, id, name ?? user.username, {
+    ...(req.requestId ? { requestId: req.requestId } : {}),
+  });
   return res.status(204).end();
 };
 
@@ -305,7 +307,9 @@ export const changeEmailAndVerify = async (
   if (exists) throw createError(409, 'Email already in use');
 
   await sql`UPDATE users SET email = ${newEmail} WHERE id = ${user.id}::uuid`;
-  await sendVerificationEmail(newEmail, user.id, user.name ? user.name : user.username!);
+  await sendVerificationEmail(newEmail, user.id, user.name ? user.name : user.username!, {
+    ...(req.requestId ? { requestId: req.requestId } : {}),
+  });
 
   return res.status(204).end();
 };
@@ -340,7 +344,9 @@ export const sendChangePassEmail = async (
   // Don;t overshare
   if (!user) return res.status(204).end();
 
-  await sendForgotPasswordEmail(user.email, user.id, user.name ? user.name : user.username);
+  await sendForgotPasswordEmail(user.email, user.id, user.name ? user.name : user.username, {
+    ...(req.requestId ? { requestId: req.requestId } : {}),
+  });
 
   return res.status(204).end();
 };

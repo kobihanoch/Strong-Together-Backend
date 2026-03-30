@@ -25,6 +25,7 @@ export const sendDailyPush = async (req: Request, res: Response): Promise<void> 
         body: 'Ready to go workout?',
         delay: 0,
         expiresAt: 0,
+        ...(req.requestId ? { requestId: req.requestId } : {}),
       })),
     );
 
@@ -67,6 +68,7 @@ export const sendHourlyReminderPush = async (req: Request, res: Response): Promi
         } workout kicks off in ${user.reminder_offset_minutes} minutes.`,
         delay: delayMs,
         expiresAt: 0,
+        ...(req.requestId ? { requestId: req.requestId } : {}),
       });
     }
 

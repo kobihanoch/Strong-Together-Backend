@@ -10,20 +10,30 @@ export const startPushWorker = async () => {
   try {
     // Try to run the worker
     pushNotificationsQueue.process(5, async (job) => {
-      const { token, title, body } = job.data;
-      const jobLogger = logger.child({ jobId: String(job.id), token, title, attempt: job.attemptsMade + 1 });
+      const { token, title, body, requestId } = job.data;
+      const jobLogger = logger.child({ jobId: String(job.id), token, title, requestId, attempt: job.attemptsMade + 1 });
+      const startedAt = process.hrtime.bigint();
       try {
+        jobLogger.info({ event: 'job.started' }, 'Push notification job started');
         // Preventing overflowing of emails
         if (job.data.expiresAt && Date.now() > job.data.expiresAt) {
-          jobLogger.warn({ event: 'queue.job_expired' }, 'Skipping expired push notification job');
+          jobLogger.warn({ event: 'job.skipped_expired' }, 'Skipping expired push notification job');
           return;
         }
 
         await sendPushNotification(token, title, body);
-        jobLogger.info({ event: 'queue.job_sent' }, 'Push notification sent');
+        const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+        jobLogger.info(
+          { event: 'job.succeeded', durationMs: Number(durationMs.toFixed(2)) },
+          'Push notification sent',
+        );
       } catch (e) {
         if (e instanceof Error) {
-          jobLogger.error({ err: e, event: 'queue.job_failed' }, 'Failed to send push notification');
+          const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+          jobLogger.error(
+            { err: e, event: 'job.failed', durationMs: Number(durationMs.toFixed(2)) },
+            'Failed to send push notification',
+          );
         }
         throw e;
       }

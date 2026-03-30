@@ -10,20 +10,27 @@ export const startEmailWorker = async () => {
   try {
     // Try to run the worker
     emailsQueue.process(5, async (job) => {
-      const { to, subject, html } = job.data;
-      const jobLogger = logger.child({ jobId: String(job.id), to, subject, attempt: job.attemptsMade + 1 });
+      const { to, subject, html, requestId } = job.data;
+      const jobLogger = logger.child({ jobId: String(job.id), to, subject, requestId, attempt: job.attemptsMade + 1 });
+      const startedAt = process.hrtime.bigint();
       try {
+        jobLogger.info({ event: 'job.started' }, 'Email job started');
         // Preventing overflowing of emails
         if (job.data.expiresAt && Date.now() > job.data.expiresAt) {
-          jobLogger.warn({ event: 'queue.job_expired' }, 'Skipping expired email job');
+          jobLogger.warn({ event: 'job.skipped_expired' }, 'Skipping expired email job');
           return;
         }
 
         await sendMail({ to, subject, html });
-        jobLogger.info({ event: 'queue.job_sent' }, 'Email sent');
+        const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+        jobLogger.info({ event: 'job.succeeded', durationMs: Number(durationMs.toFixed(2)) }, 'Email sent');
       } catch (e) {
         if (e instanceof Error) {
-          jobLogger.error({ err: e, event: 'queue.job_failed' }, 'Failed to send email');
+          const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+          jobLogger.error(
+            { err: e, event: 'job.failed', durationMs: Number(durationMs.toFixed(2)) },
+            'Failed to send email',
+          );
         }
         throw e;
       }

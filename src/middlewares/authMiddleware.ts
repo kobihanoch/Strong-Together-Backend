@@ -70,6 +70,12 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
 
     // Inject to request
     req.user = user;
+    if (req.logger) {
+      req.logger = req.logger.child({
+        userId: user.id,
+        role: user.role,
+      });
+    }
 
     next();
   } catch (err: any) {

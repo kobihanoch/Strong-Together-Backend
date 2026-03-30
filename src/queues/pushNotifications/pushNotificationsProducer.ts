@@ -10,6 +10,7 @@ const logger = createLogger('queue:push-producer', {
 export const enqueuePushNotifications = async (
   notifications: NotificationPayload[],
 ): Promise<void> => {
+  const requestIds = [...new Set(notifications.map((notification) => notification.requestId).filter(Boolean))];
   try {
     await pushNotificationsQueue.addBulk(
       notifications.map((e) => ({
@@ -27,12 +28,21 @@ export const enqueuePushNotifications = async (
       })),
     );
     logger.info(
-      { event: 'queue.jobs_enqueued', notificationCount: notifications.length },
+      {
+        event: 'queue.jobs_enqueued',
+        notificationCount: notifications.length,
+        ...(requestIds.length ? { requestIds } : {}),
+      },
       'Push notifications enqueued',
     );
   } catch (e) {
     logger.error(
-      { err: e, event: 'queue.enqueue_failed', notificationCount: notifications.length },
+      {
+        err: e,
+        event: 'queue.enqueue_failed',
+        notificationCount: notifications.length,
+        ...(requestIds.length ? { requestIds } : {}),
+      },
       'Failed to enqueue push notifications',
     );
     throw e;

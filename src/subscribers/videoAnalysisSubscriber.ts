@@ -15,14 +15,14 @@ export const startVideoAnalysisSubscriber = async () => {
     try {
       const payload = JSON.parse(message) as AnalyzeVideoResultPayload<SquatRepetition>;
 
-      const { jobId, userId, status, error } = payload;
+      const { jobId, userId, status, error, requestId } = payload;
 
       if (!jobId || !userId || !status) {
         logger.error({ event: 'video_analysis.invalid_payload', payload }, 'Invalid video analysis payload received');
         return;
       }
 
-      const payloadLogger = logger.child({ jobId, userId, status });
+      const payloadLogger = logger.child({ jobId, userId, status, requestId });
       payloadLogger.info({ event: 'video_analysis.message_received' }, 'Video analysis result received');
 
       if (error) {
