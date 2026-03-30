@@ -39,12 +39,7 @@ describe('Video Analysis', () => {
     expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
-    const response = await publishVideoAnalysisJob(
-      app,
-      accessToken,
-      'test-user/squat.mov',
-      'Squat',
-    );
+    const response = await publishVideoAnalysisJob(app, accessToken, 'test-user/squat.mov', 'Squat');
 
     expect(response.status).toBe(200);
     expectSchema(publishVideoAnalysisJobResponseSchema, response.body);
@@ -54,12 +49,15 @@ describe('Video Analysis', () => {
 
   // get presigned url without token -> assert 401
   it('rejects presigned url access without token', async () => {
-    const response = await request(app).get('/api/videoanalysis/getpresignedurl').send({
-      fileName: 'squat.mov',
-      fileType: 'video/quicktime',
-    }).set({
-      'x-app-version': '4.5.0',
-    });
+    const response = await request(app)
+      .post('/api/videoanalysis/getpresignedurl')
+      .send({
+        fileName: 'squat.mov',
+        fileType: 'video/quicktime',
+      })
+      .set({
+        'x-app-version': '4.5.0',
+      });
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('No access token provided');
@@ -67,12 +65,15 @@ describe('Video Analysis', () => {
 
   // publish video analysis job without token -> assert 401
   it('rejects publishing a job without token', async () => {
-    const response = await request(app).post('/api/videoanalysis/publishjob').send({
-      fileKey: 'test-user/squat.mov',
-      exercise: 'Squat',
-    }).set({
-      'x-app-version': '4.5.0',
-    });
+    const response = await request(app)
+      .post('/api/videoanalysis/publishjob')
+      .send({
+        fileKey: 'test-user/squat.mov',
+        exercise: 'Squat',
+      })
+      .set({
+        'x-app-version': '4.5.0',
+      });
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('No access token provided');
@@ -97,12 +98,15 @@ describe('Video Analysis', () => {
     expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
-    const response = await request(app).post('/api/videoanalysis/publishjob').set({
-      'x-app-version': '4.5.0',
-      Authorization: `DPoP ${accessToken}`,
-    }).send({
-      fileKey: 'test-user/squat.mov',
-    });
+    const response = await request(app)
+      .post('/api/videoanalysis/publishjob')
+      .set({
+        'x-app-version': '4.5.0',
+        Authorization: `DPoP ${accessToken}`,
+      })
+      .send({
+        fileKey: 'test-user/squat.mov',
+      });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Invalid input: expected string, received undefined');

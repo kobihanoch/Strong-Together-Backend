@@ -2,7 +2,7 @@ import request from 'supertest';
 import { authHeaders } from './auth.ts';
 
 export function getPresignedUrl(app: any, accessToken: string, fileName: string, fileType: string) {
-  return request(app).get('/api/videoanalysis/getpresignedurl').set(authHeaders(accessToken)).send({
+  return request(app).post('/api/videoanalysis/getpresignedurl').set(authHeaders(accessToken)).send({
     fileName,
     fileType,
   });
