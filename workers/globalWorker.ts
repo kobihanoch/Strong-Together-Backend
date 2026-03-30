@@ -1,11 +1,25 @@
+import '../src/instrument.ts';
 import { Queue } from 'bull';
 import { createLogger } from '../src/config/logger.ts';
+import { flushSentry } from '../src/config/sentry.ts';
 import { startAnalyzVideoWorker } from './analyzeVideoWorker.js';
 import { startEmailWorker } from './emailsWorker.js';
 import { startPushWorker } from './pushNotificationsWorker.js';
 import { setupGracefulShutdown } from './utils/setupGracefulShutdown.ts';
 
 const logger = createLogger('worker:global');
+
+process.on('unhandledRejection', async (reason, promise) => {
+  logger.fatal({ event: 'worker.unhandledRejection', promise, reason }, 'Unhandled worker promise rejection');
+  await flushSentry();
+  process.exit(1);
+});
+
+process.on('uncaughtException', async (err) => {
+  logger.fatal({ err, event: 'worker.uncaughtException' }, 'Uncaught worker exception');
+  await flushSentry();
+  process.exit(1);
+});
 
 export const startGlobalWorker = async () => {
   logger.info({ event: 'worker.global_starting' }, 'Starting global worker');

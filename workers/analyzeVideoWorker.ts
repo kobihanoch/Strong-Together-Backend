@@ -1,6 +1,7 @@
 import axios from 'axios';
 import analyzeVideoQueue from '../src/queues/analyzeVideo/analyzeVideoQueue.ts';
 import { createLogger } from '../src/config/logger.ts';
+import { captureWorkerException } from '../src/config/sentry.ts';
 
 const logger = createLogger('worker:analyze-video', {
   queue: 'analyzeVideoQueue',
@@ -46,9 +47,16 @@ export const startAnalyzVideoWorker = async () => {
         );
       } catch (e) {
         if (e instanceof Error) {
+          const sentryEventId = captureWorkerException(e, {
+            worker: 'analyze-video',
+            jobId: String(job.id),
+            userId,
+            requestId,
+            queue: 'analyzeVideoQueue',
+          });
           const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
           jobLogger.error(
-            { err: e, event: 'job.failed', durationMs: Number(durationMs.toFixed(2)) },
+            { err: e, event: 'job.failed', durationMs: Number(durationMs.toFixed(2)), sentryEventId },
             'Failed to send analyze video job to analysis server',
           );
         }

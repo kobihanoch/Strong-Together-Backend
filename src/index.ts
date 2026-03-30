@@ -1,6 +1,8 @@
+import './instrument.ts';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db.ts';
 import { createLogger } from './config/logger.ts';
+import { flushSentry } from './config/sentry.ts';
 import { connectRedis } from './config/redisClient.ts';
 import { createIOServer } from './config/webSocket.ts';
 import { createApp } from './app.ts';
@@ -30,10 +32,10 @@ server.listen(PORT, () => {
 
 process.on('unhandledRejection', (reason, promise) => {
   logger.fatal({ event: 'process.unhandledRejection', promise, reason }, 'Unhandled promise rejection');
-  process.exit(1);
+  void flushSentry().finally(() => process.exit(1));
 });
 
 process.on('uncaughtException', (err) => {
   logger.fatal({ err, event: 'process.uncaughtException' }, 'Uncaught exception');
-  process.exit(1);
+  void flushSentry().finally(() => process.exit(1));
 });

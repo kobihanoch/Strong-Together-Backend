@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import { createLogger, createRequestId } from './config/logger.ts';
+import { applySentryRequestContext, setupSentryErrorHandler } from './config/sentry.ts';
 import { botBlocker } from './middlewares/botBlocker.ts';
 import { checkAppVersion } from './middlewares/checkAppVersion.ts';
 import { errorHandler } from './middlewares/errorHandler.ts';
@@ -64,6 +65,7 @@ export const createApp = () => {
     });
 
     res.setHeader('X-Request-Id', requestId);
+    applySentryRequestContext(req);
 
     req.logger.info({ event: 'request.received' }, 'request started');
 
@@ -108,6 +110,7 @@ export const createApp = () => {
   app.use('/api/bootstrap', bootsrapRoutes);
   app.use('/api/videoanalysis', videoAnalysisRoutes);
 
+  setupSentryErrorHandler(app);
   app.use(errorHandler);
 
   return app;

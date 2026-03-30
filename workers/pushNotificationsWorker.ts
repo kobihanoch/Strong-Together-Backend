@@ -1,6 +1,7 @@
 import pushNotificationsQueue from '../src/queues/pushNotifications/pushNotificationsQueue.ts';
 import { sendPushNotification } from '../src/services/pushService.ts';
 import { createLogger } from '../src/config/logger.ts';
+import { captureWorkerException } from '../src/config/sentry.ts';
 
 const logger = createLogger('worker:push-notifications', {
   queue: 'pushNotificationsQueue',
@@ -29,9 +30,15 @@ export const startPushWorker = async () => {
         );
       } catch (e) {
         if (e instanceof Error) {
+          const sentryEventId = captureWorkerException(e, {
+            worker: 'push-notifications',
+            jobId: String(job.id),
+            requestId,
+            queue: 'pushNotificationsQueue',
+          });
           const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
           jobLogger.error(
-            { err: e, event: 'job.failed', durationMs: Number(durationMs.toFixed(2)) },
+            { err: e, event: 'job.failed', durationMs: Number(durationMs.toFixed(2)), sentryEventId },
             'Failed to send push notification',
           );
         }

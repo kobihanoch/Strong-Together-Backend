@@ -1,6 +1,7 @@
 import { sendMail } from '../src/config/mailer.ts';
 import emailsQueue from '../src/queues/emails/emailsQueue.ts';
 import { createLogger } from '../src/config/logger.ts';
+import { captureWorkerException } from '../src/config/sentry.ts';
 
 const logger = createLogger('worker:emails', {
   queue: 'emailsQueue',
@@ -26,9 +27,15 @@ export const startEmailWorker = async () => {
         jobLogger.info({ event: 'job.succeeded', durationMs: Number(durationMs.toFixed(2)) }, 'Email sent');
       } catch (e) {
         if (e instanceof Error) {
+          const sentryEventId = captureWorkerException(e, {
+            worker: 'emails',
+            jobId: String(job.id),
+            requestId,
+            queue: 'emailsQueue',
+          });
           const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
           jobLogger.error(
-            { err: e, event: 'job.failed', durationMs: Number(durationMs.toFixed(2)) },
+            { err: e, event: 'job.failed', durationMs: Number(durationMs.toFixed(2)), sentryEventId },
             'Failed to send email',
           );
         }
