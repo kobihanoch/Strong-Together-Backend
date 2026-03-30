@@ -1,5 +1,10 @@
 import { EnqueueAanalyzeVideoParams } from "../../types/dto/videoAnalysis.dto.ts";
+import { createLogger } from "../../config/logger.ts";
 import analyzeVideoQueue from "./analyzeVideoQueue.js";
+
+const logger = createLogger('queue:analyze-video-producer', {
+  queue: 'analyzeVideoQueue',
+});
 
 // Add jobs to queue
 export const enqueueAnalyzeVideo = async ({
@@ -22,12 +27,16 @@ export const enqueueAnalyzeVideo = async ({
         //removeOnFail: true,
       },
     );
-    console.log(`[Analyze video producer]: Enqueued ${userId} video`);
+    logger.info(
+      { event: 'queue.job_enqueued', jobId: String(job.id), userId, exercise, fileKey },
+      'Analyze video job enqueued',
+    );
     return String(job.id);
   } catch (e) {
     if (e instanceof Error)
-      console.error(
-        `[Analyze video producer]: Failed to enqueue ${userId} video: ${e.message}`,
+      logger.error(
+        { err: e, event: 'queue.enqueue_failed', userId, exercise, fileKey },
+        'Failed to enqueue analyze video job',
       );
     throw e;
   }

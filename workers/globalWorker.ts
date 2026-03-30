@@ -1,11 +1,14 @@
 import { Queue } from 'bull';
+import { createLogger } from '../src/config/logger.ts';
 import { startAnalyzVideoWorker } from './analyzeVideoWorker.js';
 import { startEmailWorker } from './emailsWorker.js';
 import { startPushWorker } from './pushNotificationsWorker.js';
 import { setupGracefulShutdown } from './utils/setupGracefulShutdown.ts';
 
+const logger = createLogger('worker:global');
+
 export const startGlobalWorker = async () => {
-  console.log('Starting global worker...');
+  logger.info({ event: 'worker.global_starting' }, 'Starting global worker');
   const queues: Queue[] = [];
 
   // All worker types here
@@ -21,7 +24,13 @@ export const startGlobalWorker = async () => {
   // Graceful shutdown
   await setupGracefulShutdown(queues);
 
-  console.log('--------------------------------------------------');
+  logger.info(
+    {
+      event: 'worker.global_ready',
+      queues: queues.map((queue) => queue.name),
+    },
+    'Global worker is ready',
+  );
 };
 
 await startGlobalWorker();

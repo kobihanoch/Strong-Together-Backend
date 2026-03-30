@@ -1,6 +1,8 @@
 import { Resend } from 'resend';
+import { createLogger } from './logger.ts';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const logger = createLogger('config:mailer');
 
 /**
  * Returns:
@@ -41,7 +43,10 @@ export async function sendMail({ to, subject, html }: { to: string; subject: str
       }
 
       // Permanent: don't throw → job won't retry
-      console.warn(`[sendMail] Permanent error for ${to}: ${msg}`);
+      logger.warn(
+        { event: 'mail.permanent_error', provider: 'resend', to, status, reason: msg },
+        'Permanent email delivery error',
+      );
       return { ok: false, permanent: true, reason: msg };
     }
 
@@ -55,7 +60,10 @@ export async function sendMail({ to, subject, html }: { to: string; subject: str
       throw new Error(`Resend transient failure (${status ?? 'n/a'}): ${msg}`);
     }
     // If we can clearly classify as permanent (rare in catch), return non-throw
-    console.warn(`[sendMail] Non-throw permanent for ${to}: ${msg}`);
+    logger.warn(
+      { event: 'mail.non_throw_permanent_error', provider: 'resend', to, status, reason: msg },
+      'Non-retryable email delivery error',
+    );
     return { ok: false, permanent: true, reason: msg };
   }
 }

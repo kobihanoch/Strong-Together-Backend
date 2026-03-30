@@ -1,8 +1,12 @@
 import { createRedisSubscriber } from '../config/redisClient.js';
+import { createLogger } from '../config/logger.ts';
 import { AnalyzeVideoResultPayload, SquatRepetition } from '../types/dto/videoAnalysis.dto.ts';
 import { emitVideoAnalysisResults } from '../utils/socketUtils.ts';
 
 const VIDEO_ANALYSIS_RESULTS_CHANNEL = 'video-analysis:results';
+const logger = createLogger('subscriber:video-analysis', {
+  channel: VIDEO_ANALYSIS_RESULTS_CHANNEL,
+});
 
 export const startVideoAnalysisSubscriber = async () => {
   const subscriber = await createRedisSubscriber();
@@ -14,33 +18,26 @@ export const startVideoAnalysisSubscriber = async () => {
       const { jobId, userId, status, error } = payload;
 
       if (!jobId || !userId || !status) {
-        console.error('[Video Analysis Subscriber]: Invalid payload received', payload);
+        logger.error({ event: 'video_analysis.invalid_payload', payload }, 'Invalid video analysis payload received');
         return;
       }
 
-      console.log(`[Video Analysis Subscriber]: Received ${status} for job ${jobId} user ${userId}`);
+      const payloadLogger = logger.child({ jobId, userId, status });
+      payloadLogger.info({ event: 'video_analysis.message_received' }, 'Video analysis result received');
 
       if (error) {
-        console.error('[Video Analysis Subscriber]: Failed to process message:', error);
+        payloadLogger.error({ event: 'video_analysis.processing_error', error }, 'Video analysis reported an error');
       }
 
       emitVideoAnalysisResults(userId, payload, jobId);
-
-      /*if (status === "completed") {
-          console.log("[Video Analysis Subscriber]: Result:", result);
-        }
-
-        if (status === "failed") {
-          console.error("[Video Analysis Subscriber]: Error:", error);
-        }*/
     } catch (e) {
       if (e instanceof Error) {
-        console.error('[Video Analysis Subscriber]: Failed to process message:', e.message);
+        logger.error({ err: e, event: 'video_analysis.subscription_failed' }, 'Failed to process video analysis message');
       }
     }
   });
 
-  console.log(`[Video Analysis Subscriber]: Subscribed to ${VIDEO_ANALYSIS_RESULTS_CHANNEL}`);
+  logger.info({ event: 'video_analysis.subscribed' }, 'Subscribed to video analysis results channel');
 
   return subscriber;
 };

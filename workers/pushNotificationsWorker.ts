@@ -1,31 +1,37 @@
 import pushNotificationsQueue from '../src/queues/pushNotifications/pushNotificationsQueue.ts';
 import { sendPushNotification } from '../src/services/pushService.ts';
+import { createLogger } from '../src/config/logger.ts';
+
+const logger = createLogger('worker:push-notifications', {
+  queue: 'pushNotificationsQueue',
+});
 
 export const startPushWorker = async () => {
   try {
     // Try to run the worker
     pushNotificationsQueue.process(5, async (job) => {
       const { token, title, body } = job.data;
+      const jobLogger = logger.child({ jobId: String(job.id), token, title, attempt: job.attemptsMade + 1 });
       try {
         // Preventing overflowing of emails
         if (job.data.expiresAt && Date.now() > job.data.expiresAt) {
-          console.log(`Skipping expired push to ${token}`);
+          jobLogger.warn({ event: 'queue.job_expired' }, 'Skipping expired push notification job');
           return;
         }
 
         await sendPushNotification(token, title, body);
-        console.log('[Push worker]: Push sent to', token);
+        jobLogger.info({ event: 'queue.job_sent' }, 'Push notification sent');
       } catch (e) {
         if (e instanceof Error) {
-          console.error(`[Push worker]: Failed to send push to ${token}: ${e.message}`);
+          jobLogger.error({ err: e, event: 'queue.job_failed' }, 'Failed to send push notification');
         }
         throw e;
       }
     });
-    console.log('[Push worker]: Push worker is up');
+    logger.info({ event: 'worker.started', concurrency: 5 }, 'Push worker is up');
   } catch (e) {
     if (e instanceof Error) {
-      console.error('[Push worker]: Push worker failed to start:', e.message);
+      logger.error({ err: e, event: 'worker.start_failed' }, 'Push worker failed to start');
     }
     throw e;
   }

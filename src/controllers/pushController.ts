@@ -1,17 +1,21 @@
 import { Request, Response } from 'express';
+import { createLogger } from '../config/logger.ts';
 import {
   queryGetAllUsersToSendHourlyReminder,
   queryGetAllUsersWithNotificationsEnabled,
 } from '../queries/pushQueries.js';
 import { enqueuePushNotifications } from '../queues/pushNotifications/pushNotificationsProducer.ts';
-import { computeDelayFromUTC } from '../utils/pushUtils.js';
 import { NotificationPayload } from '../types/dto/notifications.dto.ts';
+import { computeDelayFromUTC } from '../utils/pushUtils.js';
+
+const logger = createLogger('controller:push');
 
 // @desc    Sends daily psuh (outside cron)
 // @route   GET /api/push/daily
 // @access  Public
 export const sendDailyPush = async (req: Request, res: Response): Promise<void> => {
   const users = await queryGetAllUsersWithNotificationsEnabled();
+  const requestLogger = req.logger || logger;
 
   try {
     await enqueuePushNotifications(
@@ -27,7 +31,10 @@ export const sendDailyPush = async (req: Request, res: Response): Promise<void> 
     res.json({ success: true, message: 'Daily notifications enqueued' });
   } catch (error) {
     if (error instanceof Error) {
-      console.error('❌ Error sending notifications:', error.message);
+      requestLogger.error(
+        { err: error, event: 'push.daily_enqueue_failed', userCount: users.length },
+        'Failed to enqueue daily notifications',
+      );
       res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -38,6 +45,7 @@ export const sendDailyPush = async (req: Request, res: Response): Promise<void> 
 // @access  Public
 export const sendHourlyReminderPush = async (req: Request, res: Response): Promise<void> => {
   const users = await queryGetAllUsersToSendHourlyReminder();
+  const requestLogger = req.logger || logger;
 
   try {
     const pushNotifications: NotificationPayload[] = [];
@@ -62,7 +70,6 @@ export const sendHourlyReminderPush = async (req: Request, res: Response): Promi
       });
     }
 
-    // enqueue all in one batch
     if (pushNotifications.length > 0) {
       await enqueuePushNotifications(pushNotifications);
     }
@@ -73,7 +80,10 @@ export const sendHourlyReminderPush = async (req: Request, res: Response): Promi
     });
   } catch (error) {
     if (error instanceof Error) {
-      console.error('❌ Error sending hourly reminders:', error.message);
+      requestLogger.error(
+        { err: error, event: 'push.hourly_enqueue_failed', userCount: users.length },
+        'Failed to enqueue hourly reminders',
+      );
       res.status(500).json({ success: false, error: error.message });
     }
   }

@@ -1,5 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import createError from 'http-errors';
+import { createLogger } from '../config/logger.ts';
+
+const logger = createLogger('middleware:bot-blocker');
 
 export const botBlocker = (req: Request, res: Response, next: NextFunction): void => {
   const userAgent = req.headers['user-agent'];
@@ -7,22 +10,23 @@ export const botBlocker = (req: Request, res: Response, next: NextFunction): voi
   const acceptHeader = req.headers['accept'] || '';
   const path = req.path;
 
-  // If sent from app continue
   if (appVersion) return next();
   if (
     path.includes('verify') ||
     path.includes('resetpassword') ||
     path.includes('daily') ||
     path.includes('changeemail')
-  )
+  ) {
     return next();
+  }
 
-  // Try to catch null user agent
   if (!userAgent) return next(createError(404, 'Not found'));
 
-  // Accept header
   if (acceptHeader.includes('text/html') || acceptHeader.includes('application/xml')) {
-    console.warn(`[BOT ALERT] Suspicious accept header: ${acceptHeader}`);
+    (req.logger || logger).warn(
+      { event: 'bot_blocker.accept_header_blocked', acceptHeader, path },
+      'Blocked suspicious accept header',
+    );
     return next(createError(404, 'Not found'));
   }
 
@@ -69,7 +73,10 @@ export const botBlocker = (req: Request, res: Response, next: NextFunction): voi
     badPaths.some((bad) => bad.test(path));
 
   if (isSuspicious) {
-    console.warn(`[BOT ALERT] Blocked suspicious UA: ${userAgent}`);
+    (req.logger || logger).warn(
+      { event: 'bot_blocker.user_agent_blocked', userAgent, path },
+      'Blocked suspicious user agent',
+    );
     return next(createError(404, 'Not found'));
   }
 

@@ -2,6 +2,7 @@ import postgres from 'postgres';
 import dns from 'dns';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { Request, Response, NextFunction } from 'express';
+import { createLogger } from './logger.ts';
 
 dns.setDefaultResultOrder('ipv4first');
 
@@ -17,6 +18,7 @@ function makeClient(): postgres.Sql {
 }
 
 let _sql = makeClient();
+const logger = createLogger('config:db');
 
 const als = new AsyncLocalStorage<{
   tx: postgres.Sql | postgres.TransactionSql;
@@ -91,9 +93,9 @@ export const withRlsTx = <ReqP, ResBody, ReqBody, ReqQuery>(
 export const connectDB = async (): Promise<void> => {
   try {
     await sql<{ connected: number }[]>`select 1 as connected`;
-    console.log('[Postgres]: Connected to Postgres.');
+    logger.info({ event: 'db.connected' }, 'Connected to Postgres');
   } catch (err: any) {
-    console.log('[Postgres]: Connection to Postgres has failed.', err.message);
+    logger.error({ err, event: 'db.connection_failed' }, 'Connection to Postgres failed');
   }
 };
 

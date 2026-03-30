@@ -1,5 +1,10 @@
 import { EmailPayload } from '../../types/dto/emails.dto.ts';
+import { createLogger } from '../../config/logger.ts';
 import emailQueue from './emailsQueue.ts';
+
+const logger = createLogger('queue:emails-producer', {
+  queue: 'emailsQueue',
+});
 
 // Add jobs to queue
 export const enqueueEmails = async (emails: EmailPayload[]): Promise<void> => {
@@ -7,7 +12,6 @@ export const enqueueEmails = async (emails: EmailPayload[]): Promise<void> => {
     return;
   }
 
-  //console.log("Email has arrived!");
   try {
     await emailQueue.addBulk(
       emails.map((e) => ({
@@ -23,6 +27,9 @@ export const enqueueEmails = async (emails: EmailPayload[]): Promise<void> => {
         },
       })),
     );
-    console.log(`[Email producer]: Enqueued ${emails.length} emails`);
-  } catch {}
+    logger.info({ event: 'queue.jobs_enqueued', emailCount: emails.length }, 'Emails enqueued');
+  } catch (e) {
+    logger.error({ err: e, event: 'queue.enqueue_failed', emailCount: emails.length }, 'Failed to enqueue emails');
+    throw e;
+  }
 };

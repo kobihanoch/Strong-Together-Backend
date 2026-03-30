@@ -1,11 +1,15 @@
 import { NotificationPayload } from "../../types/dto/notifications.dto.ts";
+import { createLogger } from "../../config/logger.ts";
 import pushNotificationsQueue from "./pushNotificationsQueue.ts";
+
+const logger = createLogger('queue:push-producer', {
+  queue: 'pushNotificationsQueue',
+});
 
 // Add jobs to queue
 export const enqueuePushNotifications = async (
   notifications: NotificationPayload[],
 ): Promise<void> => {
-  //console.log("Email has arrived!");
   try {
     await pushNotificationsQueue.addBulk(
       notifications.map((e) => ({
@@ -22,9 +26,15 @@ export const enqueuePushNotifications = async (
         },
       })),
     );
-    console.log(
-      `[Push producer]: Enqueued ${notifications.length} push notifications`,
+    logger.info(
+      { event: 'queue.jobs_enqueued', notificationCount: notifications.length },
+      'Push notifications enqueued',
     );
-  } catch {}
-  //console.log("Emails are enqueued");
+  } catch (e) {
+    logger.error(
+      { err: e, event: 'queue.enqueue_failed', notificationCount: notifications.length },
+      'Failed to enqueue push notifications',
+    );
+    throw e;
+  }
 };

@@ -1,4 +1,5 @@
 import { gunzipSync, gzipSync } from 'zlib';
+import { createLogger } from '../config/logger.ts';
 import { redis } from '../config/redisClient.js';
 
 const TRACKING_NS = 'xt:tracking:v1';
@@ -8,6 +9,7 @@ const AEROBICS_NS = 'xt:aerobics:v1';
 const USERTIMEZONE_NS = 'xt:timezone:v1';
 
 const enabled = process.env.CACHE_ENABLED === 'true';
+const logger = createLogger('utils:cache');
 const redisUnlink = redis?.unlink as ((...keys: string[]) => Promise<unknown>) | undefined;
 const redisDel = redis?.del as ((...keys: string[]) => Promise<unknown>) | undefined;
 
@@ -16,13 +18,12 @@ const numFromEnv = (name: string, def: number): number => {
   return Number.isFinite(v) && v > 0 ? v : def;
 };
 
-export const TTL_TRACKING = numFromEnv('CACHE_TTL_TRACKING_SEC', 48 * 60 * 60); // 48 Hours
-export const TTL_TIMEZONE = numFromEnv('CACHE_TTL_TIMEZONE_SEC', 48 * 60 * 60); // 48 Hours
-export const TTL_PLAN = numFromEnv('CACHE_TTL_PLAN_SEC', 48 * 60 * 60); // 48 Hours
-export const TTL_ANALYTICS = numFromEnv('CACHE_TTL_ANALYTICS_SEC', 1 * 60 * 60); // 1 Hr
-export const TTL_AEROBICS = numFromEnv('CACHE_TTL_AEROBICS_SEC', 48 * 60 * 60); // 48 Hours
+export const TTL_TRACKING = numFromEnv('CACHE_TTL_TRACKING_SEC', 48 * 60 * 60);
+export const TTL_TIMEZONE = numFromEnv('CACHE_TTL_TIMEZONE_SEC', 48 * 60 * 60);
+export const TTL_PLAN = numFromEnv('CACHE_TTL_PLAN_SEC', 48 * 60 * 60);
+export const TTL_ANALYTICS = numFromEnv('CACHE_TTL_ANALYTICS_SEC', 1 * 60 * 60);
+export const TTL_AEROBICS = numFromEnv('CACHE_TTL_AEROBICS_SEC', 48 * 60 * 60);
 
-// Key builders
 export const buildTrackingKeyStable = (userId: string, days: number, tz: string): string =>
   `${TRACKING_NS}:${userId}:${days}:${tz}`;
 export const buildPlanKeyStable = (userId: string, tz: string): string => `${PLAN_NS}:${userId}:${tz}`;
@@ -31,46 +32,37 @@ export const buildAerobicsKeyStable = (userId: string, days: number, tz: string)
   `${AEROBICS_NS}:${userId}:${days}:${tz}`;
 export const buildUserTimezoneKeyStable = (userId: string): string => `${USERTIMEZONE_NS}:${userId}`;
 
-// --- MINIMAL CHANGE: now reads compressed values, with legacy fallback ---
 export const cacheGetJSON = async <T = any>(key: string): Promise<T | null> => {
   if (!enabled || !redis) return null;
   try {
     const b64 = await redis.get(key);
     if (!b64) return null;
-    // 1) Decode Base64 to Buffer
     const gz = Buffer.from(b64, 'base64');
-    // 2) Decompress
     const json = gunzipSync(gz).toString('utf8');
-    // 3) Parse JSON
     return JSON.parse(json) as T;
   } catch (e) {
-    console.log(e);
+    logger.warn({ err: e, event: 'cache.read_failed', key }, 'Failed to read cache entry');
     return null;
   }
 };
 
-// --- MINIMAL CHANGE: now always stores compressed (gzip) ---
 export const cacheSetJSON = async <T = any>(key: string, obj: T, ttlSec: number): Promise<void> => {
   if (!enabled || !redis) return;
   try {
     const json = JSON.stringify(obj);
-    // 2) Compress to Buffer
     const gz = gzipSync(Buffer.from(json, 'utf8'));
-    // 3) Encode as Base64 so Redis stores a safe UTF-8 string
     const b64 = gz.toString('base64');
-    // 4) SET with EX
     await redis.set(key, b64, { EX: ttlSec });
   } catch {
     // ignore
   }
 };
 
-// Delete a single exact key
 export const cacheDeleteKey = async (key: string): Promise<void> => {
   if (!enabled || !redis) return;
   try {
     try {
-      await redis.unlink(key); // async non-blocking delete
+      await redis.unlink(key);
     } catch {
       await redis.del(key);
     }
@@ -79,12 +71,9 @@ export const cacheDeleteKey = async (key: string): Promise<void> => {
   }
 };
 
-// Delets other timezone key
 export const cacheDeleteOtherTimezones = async (currentKey: string): Promise<void> => {
   if (!enabled || !redis || !currentKey) return;
 
-  // --- helpers ---
-  // Normalize to string and trim invisible characters
   const normalizeKey = (k: string): string =>
     String(k)
       .normalize('NFC')
@@ -94,18 +83,16 @@ export const cacheDeleteOtherTimezones = async (currentKey: string): Promise<voi
 
   const curr = normalizeKey(currentKey);
   const lastColon = curr.lastIndexOf(':');
-  if (lastColon === -1) return; // not a base:tz structure
+  if (lastColon === -1) return;
 
   const base = curr.slice(0, lastColon);
   const tzToKeep = curr.slice(lastColon + 1);
   const pattern = `${base}:*`;
 
-  // IANA-like tz (e.g., "Asia/Jerusalem", "America/New_York")
   const looksLikeTz = (s: string) => /^[A-Za-z]+(?:[_-][A-Za-z]+)*(?:\/[A-Za-z]+(?:[_-][A-Za-z]+)*)+$/.test(s);
 
   const buf: string[] = [];
 
-  // Some clients yield a string per iteration; others yield an array (chunk).
   for await (const chunk of redis.scanIterator({
     MATCH: pattern,
     COUNT: 1000,
@@ -115,21 +102,13 @@ export const cacheDeleteOtherTimezones = async (currentKey: string): Promise<voi
     for (const rawKey of keys) {
       const k = normalizeKey(rawKey);
 
-      // Never delete the exact current key
       if (k === curr) continue;
-
-      // Only direct siblings: base:<suffix> (no extra colons)
       if (!k.startsWith(base + ':')) continue;
       const tail = k.slice(base.length + 1);
       if (tail.includes(':')) continue;
-
-      // Only keys that look like tz
       if (!looksLikeTz(tail)) continue;
-
-      // Never delete the same tz suffix
       if (tail === tzToKeep) continue;
 
-      // Push the raw key (as string) to the deletion buffer
       buf.push(String(rawKey));
 
       if (buf.length >= 500) {
@@ -157,6 +136,5 @@ export const cacheStoreJti = async (prefix: string, jti: string, ttlSec: number)
   const key = `${prefix}:jti:${jti}`;
   const res = await redis.set(key, '1', { NX: true, EX: ttlSec });
 
-  // Redis returns truthy on success (usually 'OK'), null otherwise
   return !!res;
 };

@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
 import sql from '../config/db.ts';
+import { createLogger } from '../config/logger.ts';
 import {
   queryBumpTokenVersionAndGetSelfData,
   queryBumpTokenVersionAndGetSelfDataCAS,
@@ -42,6 +43,8 @@ import {
   getRefreshToken,
 } from '../utils/tokenUtils.js';
 
+const logger = createLogger('controller:auth');
+
 // @desc    Login a user
 // @route   POST /api/auth/login
 // @access  Public
@@ -49,6 +52,7 @@ export const loginUser = async (
   req: Request<{}, LoginResponse, LoginRequestBody>,
   res: Response<LoginResponse>,
 ): Promise<Response<LoginResponse>> => {
+  const requestLogger = req.logger || logger;
   const { identifier, password } = req.body;
 
   const jkt = req.headers['dpop-key-binding'] as string | undefined;
@@ -77,7 +81,7 @@ export const loginUser = async (
     try {
       await sendSystemMessageToUserWhenFirstLogin(user.id, user.name!);
     } catch (e) {
-      console.log(e);
+      requestLogger.error({ err: e, event: 'auth.first_login_message_failed', userId: user.id }, 'Failed to send first-login message');
     }
   }
 

@@ -1,8 +1,17 @@
 import { Queue } from 'bull';
+import { createLogger } from '../../src/config/logger.ts';
+
+const logger = createLogger('worker:shutdown');
 
 export const setupGracefulShutdown = async (queues: Queue[]) => {
   const shutdown = async () => {
-    console.log('Gracefully shutting down worker...');
+    logger.info(
+      {
+        event: 'worker.shutdown_started',
+        queues: queues.map((queue) => queue.name),
+      },
+      'Gracefully shutting down worker',
+    );
     for (const queue of queues) {
       await queue.close();
     }

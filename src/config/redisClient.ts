@@ -1,8 +1,10 @@
 // redisClient.js
 import dotenv from 'dotenv';
 import { createClient, RedisClientOptions } from 'redis';
+import { createLogger } from './logger.ts';
 
 dotenv.config();
+const logger = createLogger('config:redis');
 
 const redisOptions: RedisClientOptions = {
   username: process.env.REDIS_USERNAME!,
@@ -15,7 +17,7 @@ const redisOptions: RedisClientOptions = {
 
 export const redis = createClient(redisOptions);
 
-redis.on('error', (err) => console.error('[Redis]: Redis Client Error', err));
+redis.on('error', (err) => logger.error({ err, event: 'redis.client_error' }, 'Redis client error'));
 
 export const connectRedis = async (): Promise<void> => {
   if (!redis.isOpen) {
@@ -23,15 +25,19 @@ export const connectRedis = async (): Promise<void> => {
   }
 
   const result = await redis.ping();
-  console.log('[Redis]: Redis Connected -', result);
+  logger.info({ event: 'redis.connected', ping: result }, 'Redis connected');
 };
 
 export const createRedisAdapterClients = async () => {
   const pubClient = createClient(redisOptions);
   const subClient = pubClient.duplicate();
 
-  pubClient.on('error', (err) => console.error('[Redis Adapter]: Publisher error', err));
-  subClient.on('error', (err) => console.error('[Redis Adapter]: Subscriber error', err));
+  pubClient.on('error', (err) =>
+    logger.error({ err, event: 'redis.adapter_publisher_error' }, 'Redis adapter publisher error'),
+  );
+  subClient.on('error', (err) =>
+    logger.error({ err, event: 'redis.adapter_subscriber_error' }, 'Redis adapter subscriber error'),
+  );
 
   await pubClient.connect();
   await subClient.connect();
@@ -43,7 +49,7 @@ export const createRedisSubscriber = async () => {
   const subscriber = createClient(redisOptions);
 
   subscriber.on('error', (err) => {
-    console.error('[Redis Subscriber]: Error', err);
+    logger.error({ err, event: 'redis.subscriber_error' }, 'Redis subscriber error');
   });
 
   await subscriber.connect();

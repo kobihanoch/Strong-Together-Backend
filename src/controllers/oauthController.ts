@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
 import sql from '../config/db.ts';
+import { createLogger } from '../config/logger.ts';
 import { queryBumpTokenVersionAndGetSelfData, querySetUserFirstLoginFalse } from '../queries/authQueries.ts';
 import {
   queryCreateUserWithAppleInfo,
@@ -16,6 +17,8 @@ import { AppleOAuthBody, GoogleOAuthBody } from '../types/api/oAuth/requests.ts'
 import { OAuthLoginResponse, ProceedLoginResponse } from '../types/api/oAuth/responses.ts';
 import { GoogleTokenVerificationResult } from '../types/dto/oAuth.dto.ts';
 import { verifyAppleIdToken, verifyGoogleIdToken } from '../utils/oauthUtils.js';
+
+const logger = createLogger('controller:oauth');
 
 const validateJkt = (req: Request): string => {
   const jkt = req.headers['dpop-key-binding'] as string | undefined;
@@ -35,6 +38,7 @@ export const createOrSignInWithGoogle = async (
   req: Request<{}, OAuthLoginResponse, GoogleOAuthBody>,
   res: Response<OAuthLoginResponse>,
 ): Promise<Response<OAuthLoginResponse>> => {
+  const requestLogger = req.logger || logger;
   const jkt = validateJkt(req);
   const idToken = req.body.idToken;
 
@@ -56,19 +60,22 @@ export const createOrSignInWithGoogle = async (
     // Try to link, if not register
     // If email is verified and there is a record with email in users => link user
     let isLinked = false;
-    console.log('User doesnt exist, try to link');
+    requestLogger.info(
+      { event: 'oauth.google_link_attempt_started', emailVerified },
+      'Google OAuth user not found, trying to link',
+    );
     if (emailVerified) {
       const { userId: userIdFromLink } = await queryTryToLinkUserWithEmailGoogle(email, googleSub);
       if (userIdFromLink) {
         userId = userIdFromLink;
         isLinked = true;
-        console.log('User linked succesffuly!');
+        requestLogger.info({ event: 'oauth.google_link_succeeded', userId }, 'Google OAuth user linked successfully');
       }
     }
 
     // Linking failed => Create a new user
     if (!isLinked) {
-      console.log('Linking failed - try to create a new user');
+      requestLogger.info({ event: 'oauth.google_registration_started' }, 'Google OAuth link failed, creating a new user');
       // If email is missing send a flag we need email (UX)
       // If full name is missing send a flag we need full name (UX)
       const username = email?.split('@')[0].toLowerCase() || null;
@@ -91,7 +98,7 @@ export const createOrSignInWithGoogle = async (
       );
       userId = userIdFromRegister;
 
-      console.log('User created');
+      requestLogger.info({ event: 'oauth.google_registration_completed', userId }, 'Google OAuth user created');
 
       if (missingFields !== '') missingFieldsPayload = missingFields.split(',');
     }
@@ -99,7 +106,7 @@ export const createOrSignInWithGoogle = async (
 
   const finalUserId = userId as string;
 
-  console.log('User exists in oauth => Logging in', finalUserId);
+  requestLogger.info({ event: 'oauth.google_login_completed', userId: finalUserId }, 'Google OAuth user authenticated');
 
   const rowsUserData = await queryBumpTokenVersionAndGetSelfData(finalUserId);
   const [{ token_version, user_data: userData }] = rowsUserData;
@@ -109,7 +116,10 @@ export const createOrSignInWithGoogle = async (
     try {
       await sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
     } catch (e) {
-      console.log(e);
+      requestLogger.error(
+        { err: e, event: 'oauth.google_first_login_message_failed', userId: userData.id },
+        'Failed to send Google OAuth first-login message',
+      );
     }
   }
 
@@ -160,6 +170,7 @@ export const createOrSignInWithApple = async (
   req: Request<{}, OAuthLoginResponse, AppleOAuthBody>,
   res: Response<OAuthLoginResponse>,
 ): Promise<Response<OAuthLoginResponse>> => {
+  const requestLogger = req.logger || logger;
   const jkt = validateJkt(req);
   const { idToken, rawNonce, name, email } = req.body || {};
 
@@ -250,7 +261,10 @@ export const createOrSignInWithApple = async (
     try {
       await sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
     } catch (e) {
-      console.log(e);
+      requestLogger.error(
+        { err: e, event: 'oauth.apple_first_login_message_failed', userId: userData.id },
+        'Failed to send Apple OAuth first-login message',
+      );
     }
   }
 
@@ -302,6 +316,7 @@ export const proceedLogin = async (
   req: Request<{}, ProceedLoginResponse>,
   res: Response<ProceedLoginResponse>,
 ): Promise<Response<ProceedLoginResponse>> => {
+  const requestLogger = req.logger || logger;
   const jkt = req.dpopJkt;
   if (process.env.DPOP_ENABLED === 'true' && !jkt) {
     throw createError(500, 'Internal error: DPoP JKT not found on request.');
@@ -324,7 +339,10 @@ export const proceedLogin = async (
     try {
       await sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
     } catch (e) {
-      console.log(e);
+      requestLogger.error(
+        { err: e, event: 'oauth.proceed_first_login_message_failed', userId: userData.id },
+        'Failed to send proceed-login first-login message',
+      );
     }
   }
 
