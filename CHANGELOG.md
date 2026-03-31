@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.0.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v3.0.0...v3.0.1) (2026-03-31)
+
+
+### Bug Fixes
+
+* **Python Service:** Disabled OpenCV graphic debugger initialization on dockerfile ([730f68d](https://github.com/kobihanoch/Strong-Together-Backend/commit/730f68dba89ff0962b7767000aaa7f31a52c6d3e))
+
 ## [3.0.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v2.2.0...v3.0.0) (2026-03-31)
 
 
