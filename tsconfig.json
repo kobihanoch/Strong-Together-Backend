@@ -19,8 +19,7 @@
     "noFallthroughCasesInSwitch": true,
     "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
-    "useUnknownInCatchVariables": true,
-    "types": ["vitest/globals"]
+    "useUnknownInCatchVariables": true
   },
-  "include": ["src/**/*", "workers/**/*", "scripts/**/*", "tests/**/*"]
+  "include": ["src/**/*", "workers/**/*", "scripts/**/*"]
 }
