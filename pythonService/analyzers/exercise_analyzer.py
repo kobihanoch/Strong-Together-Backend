@@ -213,7 +213,9 @@ def _draw_debug_overlay(frame, debug_info):
     )
 
 def show_window_with_landmarks(frame, image_landmarks, debug_info=None):
-  if os.getenv("DISABLE_DEBUG_WINDOW", "0") == "1":
+  # In server environments we stay headless by default and only enable the
+  # debug window when it is explicitly requested.
+  if os.getenv("ENABLE_DEBUG_WINDOW", "0") != "1":
     return True
   mp.solutions.drawing_utils.draw_landmarks(frame, image_landmarks, mp_pose.POSE_CONNECTIONS)
   if debug_info:
