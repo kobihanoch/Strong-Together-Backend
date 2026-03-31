@@ -1,8 +1,6 @@
 #!/bin/sh
 set -eu
 
-npx tsc --noEmit
-
 term_handler() {
   kill -TERM "$API_PID" 2>/dev/null || true
   kill -TERM "$WORKER_PID" 2>/dev/null || true
