@@ -1,721 +1,358 @@
 # Strong Together Backend (v3.0.0)
 
-**Strong Together** is a fitness-oriented application.  
-This repository contains the backend server that powers the app.  
-It exposes a **microservices** REST API for user registration and authentication, workout planning and tracking, messaging, exercises, push notifications, **and async video-analysis workflows**.
+This is the **microservices-based backend** for **Strong Together**.
 
-## 🚀 System Overview
+- Backend repository: [Strong-Together-Backend](https://github.com/kobihanoch/Strong-Together-Backend)
+- Frontend repository: [Strong-Together-App](https://github.com/kobihanoch/Strong-Together-App)
 
-This backend is a production-grade system that:
+It powers authentication, workout planning, progress tracking, realtime messaging, push notifications, and asynchronous exercise video analysis.
+The project combines a TypeScript API, background workers, Redis-based async infrastructure, a Python computer-vision service, and a PostgreSQL schema designed for analytics-heavy fitness flows.
 
-- Handles authentication with JWT + DPoP (proof-of-possession)
-- Processes heavy video analysis using a **Python microservice**
-- Uses **Redis queues and Pub/Sub** for async workflows
-- Streams real-time results to clients via **WebSockets**
-- Stores media in **AWS S3** with presigned uploads
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![AWS S3](https://img.shields.io/badge/AWS%20S3-569A31?style=for-the-badge&logo=amazons3&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Socket.IO](https://img.shields.io/badge/Socket.IO-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white)
+![MediaPipe](https://img.shields.io/badge/MediaPipe-FF6F00?style=for-the-badge&logo=google&logoColor=white)
+![Zod](https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=typescript&logoColor=white)
+![Sentry](https://img.shields.io/badge/Sentry-362D59?style=for-the-badge&logo=sentry&logoColor=white)
+![Pino](https://img.shields.io/badge/Pino-FFD43B?style=for-the-badge&logo=javascript&logoColor=black)
+![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)
 
-### Architecture flow (video analysis):
+## TL;DR
 
-Client → Node API → S3 upload → Redis Queue → Python Service → Redis Pub/Sub → Node → WebSocket → Client
+A backend platform with:
 
-> **Security-first note:** The authentication layer uses **JWTs bound with DPoP (Demonstration of Proof-of-Possession)**. Tokens are cryptographically tied to a client-held key and validated per request with a DPoP proof. Details and client requirements appear below.
+- async video processing using **Node.js**, **Python**, **Redis**, and **AWS S3**
+- secure authentication using **JWT**, **DPoP**, and **rate limits**
+- realtime communication using **Socket.IO**
+- a PostgreSQL schema designed for workout tracking, analytics, and reminders
 
-The backend is built with **Node.js** and **Express**, uses **PostgreSQL** as its main database, **Redis** for caching, queues, Pub/Sub, and optional Socket.IO scaling, **Socket.IO** for realtime events, **JWT** for authentication, **Zod** for schema validation, and integrates with **AWS S3**, the **Expo push notification service**, and **Resend** for transactional email.  
-It now also includes a dedicated **Python Computer Vision service** for exercise video analysis with **OpenCV** and **MediaPipe**, plus **Pino** for structured logging and **Sentry** for error tracking and tracing.
+## Highlights
 
-## What's New
+- **Microservices architecture**: a **TypeScript REST API**, **background workers**, **Redis queues / Pub/Sub**, **WebSockets**, and a dedicated **Python computer-vision microservice**.
+- **Authentication and request protection**: **JWT**, **DPoP proof-of-possession**, **rate limits**, bot blocking, token rotation, and strict request validation.
+- **Request contracts**: **Zod schemas** are used to validate request payloads at the API boundary before controller logic runs.
+- **Async media pipeline**: **direct AWS S3 uploads**, queued jobs, Python-based CV analysis, and **realtime result delivery** back to the client.
+- **Database design**: **PostgreSQL**, analytics views, normalized workout tracking, reminder intelligence, indexing strategy, and **RLS-aware** patterns.
+- **Test coverage**: **Vitest + Supertest** integration tests across auth, workouts, analytics, OAuth, websockets, and video analysis.
+- **Observability**: **Pino structured logs**, **Sentry tracing**, request IDs, and service-aware error handling.
 
-This phase introduced the biggest backend jump the project has had so far.
-Since v2.2.0, the project also went through a major backend upgrade:
+## Quick Links
 
-- full migration from JavaScript to **TypeScript**
-- **microservices-oriented** architecture for video analysis
-- **Zod-first** request validation plus **response schemas**
-- a full **integration test** suite across the main API domains
-- **Pino**-based structured logging with redaction
-- **Sentry** tracing/error monitoring in both Node and Python runtimes
-- **AWS S3** presigned uploads for media analysis files
-- A dedicated **Python service** now analyzes uploaded videos and returns results in realtime through Redis + Socket.IO
-- **Redis Pub/Sub** to bring analysis results back to the main server
-
-Overall, this was a major step forward in maintainability, reliability, observability, and scalability. The backend is now much closer to a production-grade service platform than the version represented by the older commit.
-
-#### OAuth Providers & Account Linking (Google + Apple)
-
-The backend supports **OAuth 2.0** sign-in with **Google** and **Apple** and automatically **links multiple providers** to a single internal user.
-
-The application is containerized with **Docker** and currently deployed on **Render**.  
-Previously, the project used **Supabase Client** directly from the frontend as a BaaS (Backend as a Service).  
-Migrating to this dedicated backend improved performance, introduced server-side caching, and provided a more professional and maintainable architecture.
-
----
+- [TL;DR](#tldr)
+- [Highlights](#highlights)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Middleware and Security Layer](#middleware-and-security-layer)
+- [Docker Setup](#docker-setup)
+- [API Overview](#api-overview)
+- [Database Overview](#database-overview)
+- [Run Locally](#run-locally)
+- [Testing](#testing)
+- [Schema SQL](./schema.sql)
+- [Seed SQL](./seed.sql)
+- [Exercises Seed](./exercises_seed.sql)
+- [Docker Compose](./docker-compose.yml)
 
 ## Table of Contents
 
-1. [System Overview](#-system-overview)
-2. [What's New](#whats-new)
-3. [OAuth Providers & Account Linking](#oauth-providers--account-linking-google--apple)
-4. [Technologies & Architecture](#technologies--architecture)
-5. [Project Structure](#project-structure)
-6. [Middleware & Security](#middleware--security)
-7. [Background Jobs, Queues & Microservices](#background-jobs-queues--microservices)
-8. [Observability (Pino + Sentry)](#observability-pino--sentry)
-9. [Running the Server](#running-the-server)
-10. [Testing](#testing)
-11. [API Endpoints](#api-endpoints)
-12. [Authentication](#authentication)
-13. [Users](#users)
-14. [OAuth](#oauth)
-15. [Workouts](#workouts)
-16. [Messages](#messages)
-17. [Exercises](#exercises)
-18. [Analytics](#analytics)
-19. [Bootstrap](#bootstrap)
-20. [Aerobics](#aerobics)
-21. [Push Notifications](#push-notifications)
-22. [WebSocket](#websocket)
-23. [Video Analysis](#video-analysis)
-24. [Database Models & Indexes](#database-models--indexes)
-25. [Database Schema](#database-schema)
-26. [Workout Flow](#workout-flow)
-27. [Tracking Flow](#tracking-flow)
-28. [Messages Flow](#messages-flow)
-29. [Auth Flow](#auth-flow)
-30. [Reminder Flow](#reminder-flow-new)
-31. [WebSocket Events](#websocket-events)
-32. [Connection Flow](#connection-flow)
-33. [Security Highlights](#security-highlights)
-34. [DPoP (Proof-of-Possession) Overview](#dpop-proof-of-possession-overview)
-    1. [How DPoP Works Here](#how-dpop-works-here)
-    2. [Required Headers From Client](#required-headers-from-client)
-    3. [Environment Variables](#environment-variables)
-35. [Conclusion](#conclusion)
+1. [TL;DR](#tldr)
+2. [Highlights](#highlights)
+3. [Quick Links](#quick-links)
+4. [Architecture](#architecture)
+   1. [Video Analysis Architecture](#video-analysis-architecture)
+5. [Tech Stack](#tech-stack)
+6. [Middleware and Security Layer](#middleware-and-security-layer)
+   1. [Core middlewares](#core-middlewares)
+   2. [Why it matters](#why-it-matters)
+7. [Run Locally](#run-locally)
+   1. [Docker setup](#docker-setup)
+8. [Testing](#testing)
+9. [API Overview](#api-overview)
+   1. [Main domains](#main-domains)
+   2. [API characteristics](#api-characteristics)
+10. [Database Overview](#database-overview)
+11. [Key database design choices](#key-database-design-choices)
+12. [Important tables and objects](#important-tables-and-objects)
+13. [DB files](#db-files)
+14. [Database Schema](#database-schema)
+15. [Workout tracking model](#workout-tracking-model)
+16. [Database Flows](#database-flows)
+17. [Workout Flow](#workout-flow)
+18. [Tracking Flow](#tracking-flow)
+19. [Messages Flow](#messages-flow)
+20. [Auth Flow](#auth-flow)
+21. [Reminder Flow](#reminder-flow)
 
----
+## Architecture
 
-## Technologies & Architecture
+**Video analysis flow:** Client → Node API (get presigned URL) → S3 (upload) → Redis queue → Python service (analysis) → Redis Pub/Sub → Node → Socket.IO → Client
 
-| Layer/Service                 | Purpose/Notes                                                                                                                                                                                                       |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Node.js / Express 5**       | HTTP server and routing framework. Express 5 provides promise-aware request handlers.                                                                                                                               |
-| **TypeScript**                | The Node server, routes, controllers, middlewares, queries, workers, queues, validators, DTOs, and shared runtime code were migrated to TypeScript for stronger safety and maintainability.                         |
-| **PostgreSQL**                | Primary relational database. SQL queries live in `src/queries`. The code relies on Postgres views (e.g. `v_exercisetracking_expanded`) to assemble workout plans and analytics.                                     |
-| **Redis**                     | Cache layer, queue backing store, Pub/Sub transport for video-analysis results, JTI replay protection, and optional Socket.IO Redis adapter support.                                                                |
-| **Socket.IO**                 | Secure WebSocket layer for realtime events (messages, notifications, video-analysis results). Each client must first request a short-lived **connection ticket** (`/api/ws/generateticket`) before connecting.      |
-| **AWS S3**                    | Used for video-analysis uploads through presigned URLs. Clients upload directly to S3, and the Python service downloads the media for processing.                                                                   |
-| **Supabase Storage**          | Still used for user profile pictures and related media-storage flows.                                                                                                                                               |
-| **Expo Push service**         | Sends push notifications to users’ devices. The server exposes endpoints and workers that enqueue and deliver reminders and daily pushes.                                                                           |
-| **Resend (Email)**            | Transactional email for **account verification** and **password reset** flows.                                                                                                                                      |
-| **JWT + DPoP**                | Auth uses short-lived access tokens and longer-lived refresh tokens. Tokens are **DPoP-bound** and validated per request with a DPoP proof to prevent replay with a stolen token.                                   |
-| **Zod**                       | Used for request validation and now also for **response schemas**, which help enforce API contract consistency.                                                                                                     |
-| **Pino**                      | Structured application logging with per-request context, child loggers, request IDs, and redacted sensitive fields.                                                                                                 |
-| **Sentry**                    | Error tracking and tracing for the Node server, workers, and Python analysis service. Used heavily in the video-analysis path.                                                                                      |
-| **Docker & Compose**          | Separate Dockerfiles now exist for the main server, workers, and Python service to support a more service-oriented deployment model.                                                                                |
-| **Render Deployment**         | The backend is deployed on Render for hosting and scaling.                                                                                                                                                          |
-| **Bull + Redis (Queues)**     | Handles background jobs for push notifications, transactional emails, and video-analysis dispatching.                                                                                                               |
-| **Python FastAPI service**    | Dedicated Computer Vision service that analyzes uploaded workout videos and publishes results back via Redis Pub/Sub.                                                                                               |
-| **Workout summary layer**     | New layer used to normalize per-workout metadata (`workout_start_utc`, `workout_end_utc`) and link it to `exercisetracking`. This is now the **authoritative source** for workout boundaries.                       |
-| **Reminder subsystem**        | New subsystem based on `user_split_information` + `user_reminder_settings` tables. A daily DB cron recomputes preferred weekday + estimated hour per split, and an hourly server cron turns these into Expo pushes. |
-| **Integration testing stack** | `Vitest` + `Supertest` + dedicated test DB reset tooling validate request/response contracts and end-to-end backend flows.                                                                                          |
+This flow ensures that heavy video processing does not block the API and allows the analysis service to scale independently from the request layer.
+The tradeoff is additional operational complexity: more moving parts, cross-service coordination, and more infrastructure to monitor compared with a single-process design.
 
----
+- `src/` contains the main Express API, validation, business logic, integrations, and realtime publishing.
+- `workers/` handles background jobs such as emails, push notifications, and video-analysis dispatching.
+- `pythonService/` is a separate FastAPI-based computer-vision service for exercise video processing.
+- `tests/` contains integration suites that validate real backend flows end-to-end.
 
-## Project Structure
+### Video Analysis Architecture
 
-```text
-src/
-├── app.ts           # Express app composition
-├── index.ts         # Express server entry point
-├── instrument.ts    # Sentry bootstrap
-├── aws/             # AWS S3 helpers
-├── config/          # Database, Redis, logger, Sentry, and Socket.IO configuration
-├── controllers/     # Express route controllers (business logic)
-├── middlewares/     # Custom middlewares (auth, validation, DPoP, rate-limiters, etc.)
-├── queries/         # Parameterized SQL queries — each controller has its own queries file
-├── queues/          # Queue producers and queue initializers
-│   ├── analyzeVideo/
-│   ├── emails/
-│   └── pushNotifications/
-├── routes/          # Express route definitions
-├── services/        # Domain-level services (storage, messaging, caching, etc.)
-├── subscribers/     # Redis Pub/Sub subscribers
-├── templates/       # Email HTML templates (Resend)
-├── types/           # API request/response types, DTOs, entities, Express extensions
-├── utils/           # General-purpose utilities (tokens, Redis helpers, sockets, etc.)
-├── validators/      # Zod schemas for validating incoming requests and responses
-└── index.ts         # Express server entry point
+![Video analysis architecture](https://github.com/user-attachments/assets/e8c8d6fc-1d50-4adb-98f3-701bb570c069)
 
-workers/
-├── utils/
-│   └── setupGracefulShutdown.ts
-├── analyzeVideoWorker.ts
-├── emailsWorker.ts
-├── pushNotificationsWorker.ts
-└── globalWorker.ts
+## Tech Stack
 
-pythonService/
-├── analyzers/       # Computer Vision / exercise analysis logic
-├── aws/
-├── config/
-├── publishers/      # Redis publishers for analysis results
-├── routes/
-├── services/
-├── utils/
-└── main.py          # Python FastAPI entry point
+| Layer                | Main Tools                         |
+| -------------------- | ---------------------------------- |
+| API                  | Node.js, Express 5, TypeScript     |
+| Database             | PostgreSQL                         |
+| Async infrastructure | Redis, Bull, Pub/Sub               |
+| Realtime             | Socket.IO                          |
+| Storage              | AWS S3, Supabase Storage           |
+| Auth & validation    | JWT, DPoP, Zod, bcrypt             |
+| Notifications        | Expo Push, Resend                  |
+| Observability        | Pino, Sentry                       |
+| Testing              | Vitest, Supertest                  |
+| Video analysis       | Python, FastAPI, OpenCV, MediaPipe |
 
-tests/
-├── aerobics/
-├── analytics/
-├── auth/
-├── bootstrap/
-├── exercises/
-├── messages/
-├── oauth/
-├── users/
-├── videoanalysis/
-├── websockets/
-├── workouts/
-├── helpers/
-└── setup/
-```
+Redis is used for queues and Pub/Sub so heavy workloads can be processed asynchronously instead of blocking the API request cycle.
+Socket.IO is used to push analysis results and other realtime events back to the client without polling.
+PostgreSQL holds both operational data and analytics-oriented structures such as views, indexes, and reminder-related tables.
 
----
+## Middleware and Security Layer
 
-## Middleware & Security
+The request pipeline is structured through layered middleware to handle security, validation, and request lifecycle concerns.
 
-| Middleware                          | Purpose                                                                                                                 |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **cors**                            | Configured for the application’s allowed origins.                                                                       |
-| **express.json**                    | Parses JSON bodies.                                                                                                     |
-| **helmet**                          | Adds security headers.                                                                                                  |
-| **generalLimiter**                  | Rate-limits incoming requests.                                                                                          |
-| **botBlocker**                      | Blocks malicious bots and scanners.                                                                                     |
-| **checkAppVersion**                 | Enforces minimum app version via `MIN_APP_VERSION`.                                                                     |
-| **dpopValidationMiddleware**        | Verifies DPoP proof: signature, `typ`, `htm`, strict origin+path validation, short `iat` window, and replay protection. |
-| **asyncHandler**                    | Wraps handlers and forwards errors.                                                                                     |
-| **authMiddleware (protect)**        | Verifies JWT, checks `tokenVersion`, and **matches the token’s DPoP confirmation** with the live proof.                 |
-| **roleMiddleware (authorizeRoles)** | Restricts routes by roles (currently mostly unused).                                                                    |
-| **withRlsTx**                       | Manages RLS + transaction per request (sets role/claims, wraps multi-query ops atomically).                             |
-| **validate**                        | Validates `req.body`, `req.query`, and `req.params` with Zod schemas.                                                   |
-| **uploadImage**                     | Handles multipart uploads (images ≤10 MB, only JPEG/JPG/PNG/WebP).                                                      |
-| **errorHandler**                    | Central error handler with JSON responses.                                                                              |
+### Core middlewares
 
-**Other Security Measures:**
+| Middleware                  | Role in the system                                                                     |
+| --------------------------- | -------------------------------------------------------------------------------------- |
+| `express.json()`            | Parses JSON request bodies for the API layer                                           |
+| `cors()`                    | Restricts allowed origins and request metadata                                         |
+| `helmet()`                  | Applies hardened HTTP security headers                                                 |
+| `generalLimiter`            | Applies general request rate limiting                                                  |
+| `botBlocker`                | Blocks malicious bot and scanner traffic patterns                                      |
+| `checkAppVersion`           | Enforces minimum supported mobile app versions                                         |
+| request logger + request ID | Attaches correlation metadata for logs and tracing                                     |
+| `dpopValidationMiddleware`  | Verifies DPoP proofs including signature, request binding, and replay-sensitive fields |
+| `protect`                   | Validates JWT access tokens and authenticated user context                             |
+| `validate(...)`             | Enforces request contract validation with Zod                                          |
+| `withRlsTx(...)`            | Wraps handlers in a transaction-aware DB execution flow aligned with RLS patterns      |
+| `asyncHandler`              | Centralizes async error forwarding for route handlers                                  |
+| `errorHandler`              | Standardizes API error responses at the edge                                           |
 
-- **Atomic CAS Refresh:** `POST /auth/refresh` validates current `tokenVersion`, issues new tokens, and increments the version atomically.
-- **Short-lived access tokens** and **longer-lived refresh tokens**.
-- **Single-device sessions via `tokenVersion`.**
-- **Bot/Scanner blocker** and **rate limiting** on public endpoints.
-- **Password hashing** with bcrypt.
-- **Strict input validation** with Zod.
-- **Response contract coverage** with Zod response schemas in tests and shared validators.
-- **Replay protection** for DPoP JTIs via Redis-backed caching.
-- **Request correlation** through request IDs and structured logs.
+### Why it matters
 
----
+- **Security is enforced before business logic**: authentication, DPoP verification, **rate limits**, bot filtering, and version checks all happen at the request boundary.
+- **Validation is explicit**: route inputs are validated with Zod before controller execution, which makes request contracts clearer and safer.
+- **Database access is controlled**: protected flows are executed through `withRlsTx(...)`, giving the backend a clean bridge between API identity and DB-level authorization patterns.
+- **Operational debugging is easier**: request IDs, structured logs, and Sentry context make production issues significantly easier to trace.
 
-## Background Jobs, Queues & Microservices
+## Run Locally
 
-The backend uses **Redis** and **Bull** to manage background job processing for notifications, emails, and video-analysis dispatching.
+### Docker setup
 
-### Queues (Producers)
+The repository includes multiple Docker entry points to match both the current deployment model and future service separation.
 
-| Queue               | Purpose                                                                              | Producer Path                                               |
-| ------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
-| `pushNotifications` | Enqueues push notification jobs to be sent via the **Expo Push API**.                | `src/queues/pushNotifications/pushNotificationsProducer.ts` |
-| `emails`            | Enqueues transactional email jobs (verification, password reset) via **Resend API**. | `src/queues/emails/emailsProducer.ts`                       |
-| `analyzeVideo`      | Enqueues video-analysis jobs that are later dispatched to the Python service.        | `src/queues/analyzeVideo/analyzeVideoProducer.ts`           |
+- The root `Dockerfile` is the main container currently used on **Render**. It runs `start.sh`, which starts both the **Node API** and the **background workers** inside the same VM.
+- Separate Dockerfiles also exist for `src/Dockerfile` and `workers/Dockerfile`. They are kept to support a more modular deployment model where the API and workers can be split into independent services later.
+- `pythonService/Dockerfile` is dedicated to the computer-vision service and is intended to run as a **private service** on Render.
 
-Each producer encapsulates the logic of creating a job and adding it to the corresponding queue instance.
+This setup keeps the current deployment simple while leaving room to separate services further as operational needs grow.
 
-### Workers (Consumers)
-
-| Worker                    | Purpose                                                                              | Worker Path                              |
-| ------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------- |
-| `pushNotificationsWorker` | Processes push jobs and delivers messages to Expo Push service.                      | `workers/pushNotificationsWorker.ts`     |
-| `emailsWorker`            | Processes email jobs using the **Resend API**.                                       | `workers/emailsWorker.ts`                |
-| `analyzeVideoWorker`      | Consumes video-analysis queue jobs and forwards them to the Python analysis service. | `workers/analyzeVideoWorker.ts`          |
-| `globalWorker`            | Initializes all queues together (for local or container deployment).                 | `workers/globalWorker.ts`                |
-| `setupGracefulShutdown`   | Handles safe shutdown for workers to close connections cleanly.                      | `workers/utils/setupGracefulShutdown.ts` |
-
-### Microservice video-analysis flow
-
-1. The client requests a presigned upload URL from `POST /api/videoanalysis/getpresignedurl`.
-2. The Node server generates an **AWS S3** upload URL and returns a `fileKey`.
-3. The client uploads the video directly to S3.
-4. The client calls `POST /api/videoanalysis/publishjob`.
-5. The main backend enqueues an `analyzeVideo` job in Redis.
-6. `workers/analyzeVideoWorker.ts` consumes the job and calls the Python service.
-7. The **Python FastAPI service** downloads the video from S3, analyzes the exercise, and deletes the file afterwards.
-8. The Python service publishes the result to Redis Pub/Sub channel `video-analysis:results`.
-9. The Node backend subscribes to that channel and emits the result to the correct user through Socket.IO.
-
-![diagram](https://github.com/user-attachments/assets/e8c8d6fc-1d50-4adb-98f3-701bb570c069)
-
-### Python analysis service
-
-The project now includes a dedicated **Python FastAPI service** for exercise-video analysis.
-
-This service is responsible for:
-
-- downloading the uploaded video from **AWS S3**
-- processing the video frames
-- running pose / movement analysis
-- publishing the analysis result back to Redis Pub/Sub
-- cleaning up the video file after processing
-
-For the analysis pipeline I used:
-
-- **OpenCV** for frame/video processing
-- **MediaPipe** for pose landmark detection
-
-At the moment, the only supported exercise is:
-
-- **Squat**
-
-The current flow is:
-
-1. The Python service downloads the video from S3 using the provided `fileKey`.
-2. The video is read frame-by-frame.
-3. Pose landmarks are extracted with **MediaPipe**.
-4. The analysis logic uses those landmarks to evaluate squat movement and repetitions.
-5. A result payload is generated and published back through Redis Pub/Sub.
-6. The Node backend receives that payload and emits it to the correct user over Socket.IO.
-
-### Why are the benefits of microservices here and why use AWS S3?
-
-- heavy Computer Vision work doesn't blocks the main API process
-- media upload is offloaded to S3 instead of pushing large files through the Node server
-- result delivery is now async and realtime
-- the architecture is easier to scale independently by service type
-
----
-
-## Observability (Pino + Sentry)
-
-### Pino
-
-The backend now uses **Pino** for structured logging.
-
-- JSON logs in production
-- pretty local output in development
-- child loggers per module / request / worker / job
-- request IDs attached to API traffic
-- sensitive fields automatically redacted, including tokens, cookies, passwords, push tokens, and email-related fields
-
-### Sentry
-
-**Sentry** is now integrated in both the Node backend and the Python analysis service.
-
-- request context is attached for API errors
-- worker failures are captured with queue/job metadata
-- video-analysis flow propagates trace context across services
-- fatal shutdown paths flush pending telemetry before exit
-
-This makes debugging much easier than before, especially around async jobs and cross-service failures.
-
----
-
-## Running the Server
-
-1. Create `.env` with values for:
+1. Create `.env` with the required infrastructure secrets and URLs:
 
 ```env
-PORT=...
-DATABASE_URL=postgres://...
-REDIS_HOST=...
-REDIS_PORT=...
-REDIS_USERNAME=...
-REDIS_PASSWORD=...
-JWT_ACCESS_SECRET=...
-JWT_REFRESH_SECRET=...
-JWT_SOCKET_SECRET=...
-SUPABASE_URL=...
-SUPABASE_SERVICE_ROLE=...
-BUCKET_NAME=...
-AWS_REGION=...
-AWS_ACCESS_KEY_ID=...
-AWS_SECRET_ACCESS_KEY=...
-AWS_BUCKET_NAME=...
-ANALYSIS_SERVER_URL=...
-SYSTEM_USER_ID=...
-CACHE_ENABLED=true
-CACHE_TTL_TRACKING_SEC=...
-CACHE_TTL_PLAN_SEC=...
-MIN_APP_VERSION=...
-SENTRY_DSN=...
-
-# DPoP settings
+PORT=
+DATABASE_URL=
+REDIS_HOST=
+REDIS_PORT=
+REDIS_USERNAME=
+REDIS_PASSWORD=
+JWT_ACCESS_SECRET=
+JWT_REFRESH_SECRET=
+JWT_SOCKET_SECRET=
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE=
+AWS_REGION=
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_BUCKET_NAME=
+ANALYSIS_SERVER_URL=
+SYSTEM_USER_ID=
+MIN_APP_VERSION=
+SENTRY_DSN=
 DPOP_ENABLED=true
-PUBLIC_BASE_URL=https://<prod-host>
-PUBLIC_BASE_URL_RENDER_DEFAULT=https://<render-host>
+PUBLIC_BASE_URL=
+PUBLIC_BASE_URL_RENDER_DEFAULT=
 PRIVATE_BASE_URL_DEV=http://localhost:5000
 ```
 
-2. Install dependencies and run the main server:
+2. Install dependencies and start the API:
 
 ```bash
 npm install
 npm run start:server
 ```
 
-3. Run workers:
+3. Start background workers:
 
 ```bash
 npm run start:workers
 ```
 
-4. Or run the services with Docker:
+4. Or run the stack with Docker:
 
 ```bash
 docker compose up --build
 ```
 
-Current compose setup includes:
-
-- `main-server`
-- `background-workers`
-- `python-service`
-
----
-
 ## Testing
 
-The project now includes a dedicated **integration test** layer using **Vitest** + **Supertest**, along with a resettable Postgres test database.
+The project includes integration tests for the main product flows:
 
-### Test suites
+- Authentication
+- Users
+- Workouts
+- Bootstrap
+- Messages
+- Aerobics
+- Analytics
+- Exercises
+- OAuth
+- Video analysis
+- WebSockets
 
-| Suite          | File                                        |
-| -------------- | ------------------------------------------- |
-| Auth           | `tests/auth/login.test.ts`                  |
-| Users          | `tests/users/user.test.ts`                  |
-| Workouts       | `tests/workouts/workout.test.ts`            |
-| Bootstrap      | `tests/bootstrap/bootstrap.test.ts`         |
-| Messages       | `tests/messages/message.test.ts`            |
-| Aerobics       | `tests/aerobics/aerobics.test.ts`           |
-| Analytics      | `tests/analytics/analytics.test.ts`         |
-| Exercises      | `tests/exercises/exercises.test.ts`         |
-| OAuth          | `tests/oauth/oauth.test.ts`                 |
-| Video Analysis | `tests/videoanalysis/videoanalysis.test.ts` |
-| WebSockets     | `tests/websockets/websockets.test.ts`       |
-
-### Useful commands
+Useful commands:
 
 ```bash
 npm run test:db:reset
-npm run test:auth
-npm run test:users
-npm run test:workouts
-npm run test:bootstrap
-npm run test:messages
-npm run test:aerobics
-npm run test:analytics
-npm run test:exercises
-npm run test:oauth
-npm run test:videoanalysis
-npm run test:websockets
 npm run test:all
 ```
 
-### What these tests cover
+You can also run domain-specific suites such as `npm run test:auth`, `npm run test:workouts`, or `npm run test:videoanalysis`.
 
-- request/response schemas
-- auth and token flows
-- user lifecycle operations
-- workout creation/tracking flows
-- bootstrap aggregation
-- messaging behavior
-- aerobics and analytics endpoints
-- OAuth login flows
-- video-analysis presigned URL and job publishing flows
-- WebSocket ticket generation
-
----
-
-## API Endpoints
+## API Overview
 
 Base path: `/api`
 
-### System
+### Main domains
 
-| Method | Endpoint  | Auth | Description  |
-| ------ | --------- | ---- | ------------ |
-| GET    | `/`       | No   | Server ping  |
-| GET    | `/health` | No   | Health check |
+| Domain         | Key endpoints                                                                               |
+| -------------- | ------------------------------------------------------------------------------------------- |
+| Auth           | `/auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/verify`                              |
+| Users          | `/users/create`, `/users/get`, `/users/updateself`, `/users/deleteself`                     |
+| OAuth          | `/oauth/google`, `/oauth/apple`, `/oauth/proceedauth`                                       |
+| Workouts       | `/workouts/getworkout`, `/workouts/gettracking`, `/workouts/finishworkout`, `/workouts/add` |
+| Messages       | `/messages/getmessages`, `/messages/markasread/:id`, `/messages/delete/:id`                 |
+| Exercises      | `/exercises/getall`                                                                         |
+| Analytics      | `/analytics/get`                                                                            |
+| Bootstrap      | `/bootstrap/get`                                                                            |
+| Aerobics       | `/aerobics/get`, `/aerobics/add`                                                            |
+| Push           | `/push/daily`, `/push/hourlyreminder`                                                       |
+| WebSocket      | `/ws/generateticket`                                                                        |
+| Video Analysis | `/videoanalysis/getpresignedurl`, `/videoanalysis/publishjob`                               |
 
-### Authentication
+### API characteristics
 
-| Method | Endpoint                          | Auth | Description                                                     |
-| ------ | --------------------------------- | ---- | --------------------------------------------------------------- |
-| POST   | `/api/auth/login`                 | No   | Login with `identifier` + `password`; supports DPoP key binding |
-| POST   | `/api/auth/refresh`               | No   | Rotate access/refresh tokens                                    |
-| GET    | `/api/auth/verify`                | No   | Consume email verification token                                |
-| POST   | `/api/auth/sendverificationemail` | No   | Send verification email                                         |
-| PUT    | `/api/auth/changeemailverify`     | No   | Change email before verification and resend verification mail   |
-| GET    | `/api/auth/checkuserverify`       | No   | Check whether a username is verified                            |
-| POST   | `/api/auth/forgotpassemail`       | No   | Send password reset mail                                        |
-| PUT    | `/api/auth/resetpassword`         | No   | Reset password using token                                      |
-| POST   | `/api/auth/logout`                | Yes  | Logout and invalidate the session version                       |
+- Protected routes use DPoP-aware authentication when enabled.
+- Request validation is enforced with Zod.
+- WebSocket access is gated through a signed connection ticket.
+- Heavy media work is offloaded from the API thread into workers and the Python service.
 
-### Users
+## Database Overview
 
-| Method | Endpoint                      | Auth | Description                              |
-| ------ | ----------------------------- | ---- | ---------------------------------------- |
-| POST   | `/api/users/create`           | No   | Register a new app user                  |
-| GET    | `/api/users/get`              | Yes  | Get the authenticated user profile       |
-| PUT    | `/api/users/updateself`       | Yes  | Update username, full name, and/or email |
-| PUT    | `/api/users/pushtoken`        | Yes  | Save Expo push token                     |
-| PUT    | `/api/users/setprofilepic`    | Yes  | Upload and set profile picture           |
-| DELETE | `/api/users/deleteprofilepic` | Yes  | Delete current profile picture           |
-| DELETE | `/api/users/deleteself`       | Yes  | Delete the authenticated user            |
-| GET    | `/api/users/changeemail`      | No   | Confirm deferred email change via token  |
+PostgreSQL is the system of record. The schema is used not only for storage, but also for workout modeling, analytics-oriented views, reminder-related computation, and access-control-aware query design.
 
-### OAuth
+### Key database design choices
 
-| Method | Endpoint                 | Auth | Description                                   |
-| ------ | ------------------------ | ---- | --------------------------------------------- |
-| POST   | `/api/oauth/google`      | No   | Sign in / sign up with Google                 |
-| POST   | `/api/oauth/apple`       | No   | Sign in / sign up with Apple                  |
-| POST   | `/api/oauth/proceedauth` | Yes  | Finalize OAuth login once profile is complete |
+- **Normalized workout tracking**: workout timing lives in `workout_summary`, while set-level records point to it through `workout_summary_id`.
+- **Analytics-friendly views**: views such as `v_exercisetracking_expanded` rebuild rich workout history without duplicating business logic in the API layer.
+- **Reminder intelligence**: `user_split_information` and `user_reminder_settings` support personalized workout reminders based on actual training behavior.
+- **Retention housekeeping**: `housekeeping_compact_old_workouts()` keeps workout history compact based on workout-day boundaries.
+- **Indexing for real usage**: the schema includes targeted indexes for reminders, tracking lookups, and workout time queries.
+- **Security-aware DB design**: the exported schema includes Row Level Security policies for user-owned data.
 
-### Workouts
+### Important tables and objects
 
-| Method | Endpoint                      | Auth | Description                              |
-| ------ | ----------------------------- | ---- | ---------------------------------------- |
-| GET    | `/api/workouts/getworkout`    | Yes  | Get the user's workout plan              |
-| GET    | `/api/workouts/gettracking`   | Yes  | Get workout tracking / analytics payload |
-| POST   | `/api/workouts/finishworkout` | Yes  | Save a finished workout                  |
-| POST   | `/api/workouts/add`           | Yes  | Create or update workout plan data       |
+| Object                                                    | Purpose                                                      |
+| --------------------------------------------------------- | ------------------------------------------------------------ |
+| `users`                                                   | user identity, profile data, and session versioning          |
+| `messages`                                                | inbox-style system/user messaging                            |
+| `workoutplans`, `workoutsplits`, `exercisetoworkoutsplit` | workout-program structure                                    |
+| `workout_summary`                                         | authoritative workout start/end window per completed workout |
+| `exercisetracking`                                        | set-by-set execution records linked to `workout_summary`     |
+| `aerobictracking`                                         | cardio / aerobic activity tracking                           |
+| `user_reminder_settings`                                  | reminder preferences per user                                |
+| `user_split_information`                                  | inferred preferred split timing and weekday                  |
+| `v_exercisetracking_expanded`, `v_prs`                    | reporting and analytics views                                |
 
-### Messages
+### DB files
 
-| Method | Endpoint                       | Auth | Description            |
-| ------ | ------------------------------ | ---- | ---------------------- |
-| GET    | `/api/messages/getmessages`    | Yes  | Get all user messages  |
-| PUT    | `/api/messages/markasread/:id` | Yes  | Mark a message as read |
-| DELETE | `/api/messages/delete/:id`     | Yes  | Delete a message       |
-
-### Exercises
-
-| Method | Endpoint                | Auth | Description       |
-| ------ | ----------------------- | ---- | ----------------- |
-| GET    | `/api/exercises/getall` | Yes  | Get all exercises |
-
-### Analytics
-
-| Method | Endpoint             | Auth | Description        |
-| ------ | -------------------- | ---- | ------------------ |
-| GET    | `/api/analytics/get` | Yes  | Get user analytics |
-
-### Bootstrap
-
-| Method | Endpoint             | Auth | Description                        |
-| ------ | -------------------- | ---- | ---------------------------------- |
-| GET    | `/api/bootstrap/get` | Yes  | Get the combined bootstrap payload |
-
-### Aerobics
-
-| Method | Endpoint            | Auth | Description           |
-| ------ | ------------------- | ---- | --------------------- |
-| GET    | `/api/aerobics/get` | Yes  | Get aerobics data     |
-| POST   | `/api/aerobics/add` | Yes  | Add aerobics activity |
-
-### Push
-
-| Method | Endpoint                   | Auth | Description                      |
-| ------ | -------------------------- | ---- | -------------------------------- |
-| GET    | `/api/push/daily`          | No   | Trigger daily push notifications |
-| GET    | `/api/push/hourlyreminder` | No   | Trigger reminder pushes          |
-
-### WebSocket
-
-| Method | Endpoint                 | Auth | Description                        |
-| ------ | ------------------------ | ---- | ---------------------------------- |
-| POST   | `/api/ws/generateticket` | Yes  | Generate a signed WebSocket ticket |
-
-### Video Analysis
-
-| Method | Endpoint                             | Auth | Description                                      |
-| ------ | ------------------------------------ | ---- | ------------------------------------------------ |
-| POST   | `/api/videoanalysis/getpresignedurl` | Yes  | Get an AWS S3 presigned upload URL and `fileKey` |
-| POST   | `/api/videoanalysis/publishjob`      | Yes  | Publish a video-analysis job to the queue        |
-
-### API contract notes
-
-- Protected routes use `Authorization: DPoP <accessToken>` when DPoP is enabled.
-- Login and OAuth flows use `DPoP-Key-Binding` when DPoP binding is enabled.
-- Most protected routes also pass through Zod validation before controller logic.
-
----
-
-## Database Models & Indexes
-
-- Uses **Postgres** with parameterised queries.
-- Views: `v_exercisetoworkoutsplit_expanded`, `v_exercisetracking_expanded`, `v_exercisetracking_set_simple`, `v_prs` – **all of these join `exercise_tracking` → `workout_summary` and re-expose `user_id` and the workout timestamps.** The physical table `exercise_tracking` no longer stores `user_id` or `workout_time_utc`; the summary is the source of truth.
-- Unique constraints on `username` and `email`.
-- Column **`users.tokenVersion`** (int, default 0) – embedded into JWTs to enforce single-device sessions and to kill stale tokens on demand.
-- **UPSERT-friendly uniqueness** for workout structures:
-  - `workoutplans`: a single active plan per user (e.g., partial unique index on `(user_id)` where `is_active = TRUE`).
-  - `workoutsplits`: unique per plan on `(workout_id, name)` to allow idempotent updates.
-  - `exercisetoworkoutsplit`: unique per split on `(workoutsplit_id, exercise_id)` (plus `order_index` as data) to enable upserts.
-- **Table `workout_summary`** – normalized table to capture per-workout start/end and link all `exercise_tracking` rows for that workout. This makes the summary the single source of truth for timestamps.
-- Table **`user_split_information`** – filled by the daily DB cron to store per-user+split preferred weekday and **estimated_time_utc** plus a confidence level.
-- Table **`user_reminder_settings`** – controls whether reminders are enabled and how many minutes before to remind. Defaults: `workout_reminders_enabled = true`, `reminder_offset_minutes = 60`.
-- Table **`aerobictracking`** – logs aerobic/cardio sessions.
-- Soft-deletes / toggling: `is_active` is used on splits and ETS rows to deactivate removed items during plan updates.
-- **Housekeeping function** `public.housekeeping_compact_old_workouts()` relies on **`workout_summary` dates** instead of raw `exercisetracking.workout_time_utc`, so old workouts are deleted per **workout-day** and not per single set.
+- Full schema: [schema.sql](./schema.sql)
+- Base seed data: [seed.sql](./seed.sql)
+- Exercise seed data: [exercises_seed.sql](./exercises_seed.sql)
 
 ### Database Schema
 
-The backend uses PostgreSQL as its primary datastore. The schema defines tables for users, messages, workout plans, splits, exercises and tracking logs, **including aerobic sessions via `aerobictracking`** and now **workout summaries** for better time analytics.
+![Database schema overview](https://github.com/user-attachments/assets/9e518921-8f86-4882-8d05-96bbbd0c8d47)
 
----
+### Workout tracking model
+
+1. A completed workout creates a row in `workout_summary`.
+2. Each tracked set is written into `exercisetracking` with a `workout_summary_id`.
+3. Analytics queries read from views that join tracking data back to the workout summary.
+4. Reminder and housekeeping jobs rely on that normalized structure instead of duplicated timestamps.
+
+## Database Flows
 
 ### Workout Flow
 
-> 🖼 **DB Workout Flow diagram**
-
 ![Database workout flow](https://github.com/user-attachments/assets/7a634d62-9c30-4546-b24e-46df64781a6a)
 
-1. **Create or Update Plan (UPSERT)** – One active `workoutplans` row per user. Updating a plan keeps the same plan row and bumps metadata (name, number of splits).
-2. **UPSERT Splits** – Incoming split keys are upserted by `(workout_id, name)`. Splits not present in the payload are set `is_active = FALSE`.
-3. **UPSERT Exercises per Split** – Each `(workoutsplit_id, exercise_id)` is upserted with the latest `sets` and `order_index`. Missing exercises are set `is_active = FALSE`.
-4. **Cache invalidation** – After a successful update, the user’s cache-version increments so clients fetch fresh data.
-
----
+1. A user creates or updates a workout plan.
+2. Splits are stored in `workoutsplits`.
+3. Exercises are attached through `exercisetoworkoutsplit`.
+4. Reminder metadata can later be derived from actual user activity.
 
 ### Tracking Flow
 
-> 🖼 **DB Tracking Flow diagram**
+![Database tracking flow](https://github.com/user-attachments/assets/be800fc7-5411-40f5-9740-2395af151f08)
 
-![Database workout tracking flow – with workout_summary](https://github.com/user-attachments/assets/be800fc7-5411-40f5-9740-2395af151f08)
-
-1. **Start / Finish workout** – App calls `/workouts/finishworkout` → server creates a row in **`workout_summary`** with `user_id`, `workout_start_utc`, `workout_end_utc` (or the trigger fills defaults). All tracking rows for this workout point to this summary via `workout_summary_id`.
-2. **Record sets** – Each set is inserted into `exercisetracking` and must include `workout_summary_id` (created in step 1). **The user and the workout timestamps are taken from `workout_summary`, not from the tracking row.**
-3. **Analytics aggregation** – Views (`v_exercisetracking_expanded`, `v_exercisetracking_set_simple`, `v_prs`) read from `exercisetracking` **and** join `workout_summary` to know the real workout window. This is what powers `/workouts/gettracking` 45-day analytics.
-4. **Housekeeping** – `public.housekeeping_compact_old_workouts()` keeps only the most recent 35 workout-days per user and deletes tracking of older days based on **`workout_summary.workout_start_utc`**.
-
----
+1. Finishing a workout creates a `workout_summary` row.
+2. Each performed set is saved in `exercisetracking`.
+3. Analytics views join tracking rows back to `workout_summary`.
+4. Retention logic works on workout-day boundaries rather than per-set timestamps.
 
 ### Messages Flow
 
-> 🖼 **DB Messages Flow diagram**
-
 ![Database messages flow](https://github.com/user-attachments/assets/9a87b874-be46-403e-bfbc-c3709175767f)
 
-1. **Compose Message** – System inserts message.
-2. **Receive & Read** – Users fetch inbox, mark read.
-3. **Delete** – Delete request marks record as deleted.
-
----
+1. The system creates a message.
+2. The user fetches and reads it.
+3. The message can be deleted from the user-facing inbox flow.
 
 ### Auth Flow
 
-> 🖼 **DB Auth Flow diagram**
+![Database auth flow](https://github.com/user-attachments/assets/eb0c0c2a-84bc-4409-9b7a-b7019c1ebd27)
 
-![Database authentication flow](https://github.com/user-attachments/assets/eb0c0c2a-84bc-4409-9b7a-b7019c1ebd27)
+1. The user authenticates with credentials or OAuth.
+2. The backend issues access and refresh tokens.
+3. Protected requests can be bound to DPoP proofs.
+4. Session invalidation is handled through token versioning.
 
-1. **Login & Token Issuance** – Access + refresh tokens created; when DPoP is enabled, tokens include a confirmation claim bound to the client key.
-2. **Access Control** – All protected API requests require access token + DPoP proof.
-3. **Token Refresh** – Refresh rotates both tokens; the request must include a valid DPoP proof whose key material matches the token’s confirmation.
+### Reminder Flow
 
----
+![Reminder flow](https://github.com/user-attachments/assets/39a0c9fb-aba8-4e27-8c6d-2568167e546c)
 
-### Reminder flow (New)
-
-> 🖼 **DB Auth Flow diagram**
-
-![Database authentication flow](https://github.com/user-attachments/assets/39a0c9fb-aba8-4e27-8c6d-2568167e546c)
-
-This feature connects the **DB-level daily computation** with the **API-level hourly push** to deliver **personalized workout reminders**.
-
-- **Tables involved:**
-  - `public.user_reminder_settings` – per-user settings (enabled, offset minutes). Defaults are auto-filled.
-  - `public.user_split_information` – per user+split estimated UTC time + preferred weekday + confidence. Filled by the daily cron.
-  - `public.workoutsplits` – to get the actual split name for the push.
-  - `public.exercisetracking` + `public.workout_summary` – source events for the daily computation.
-
----
-
-## WebSocket Events
-
-The backend uses **Socket.IO** to deliver realtime events such as new messages, system notifications, and video-analysis results.  
-Each authenticated user is assigned to a **dedicated room** named after their `userId`, enabling targeted event delivery.
-
-### Connection model
-
-1. **Client-side ticket minting**
-   - The app requests a short-lived **connection ticket** via `POST /api/ws/generateticket`.
-   - The server issues a signed JWT (audience: `socket`, issuer: `strong-together`) valid for **~1.5 hours**.
-   - Ticket payload includes `{ id, username, jti }`.
-2. **Handshake authentication**
-   - Client connects to `/socket.io` with `auth.ticket`.
-   - The backend validates the ticket and attaches the authenticated user to the socket.
-3. **Room assignment**
-   - After validation, each socket joins a private room named by `userId`.
-4. **Event lifecycle**
-   - On new message: server emits `new_message`.
-   - On video-analysis result: server emits `video_analysis_results<jobId>`.
-   - On disconnect: the reason is logged and the client can reconnect with a refreshed ticket when needed.
-
-### Current emitted events
-
-| Event                           | Description                                                     |
-| ------------------------------- | --------------------------------------------------------------- |
-| `new_message`                   | Emitted when a new message is delivered to a user               |
-| `video_analysis_results<jobId>` | Emitted when a video-analysis result arrives for a specific job |
-
-### Scaling support
-
-When `ENABLE_SOCKET_REDIS_ADAPTER=true`, Socket.IO can use Redis adapter clients for multi-instance broadcasting.
-
----
-
-## DPoP (Proof-of-Possession) Overview
-
-**Goal:** Bind JWTs to a client-held asymmetric key so that a stolen token alone is **not enough** to call the API.
-
-- **Key:** Client keeps an **EC P‑256** key pair (ES256).
-- **Binding at login:** Client sends a public-key thumbprint (`DPoP-Key-Binding`). The server embeds it as a confirmation claim in both tokens.
-- **Per-request proof:** For protected routes (and for `/auth/refresh`), client sends a **DPoP** proof (compact JWS) in the `DPoP` header. The proof includes the HTTP method, absolute URL, issued-at, and the public JWK for verification.
-- **Server checks:** Signature and header type; method and path equality; strict origin/path validation against server configuration; a short issued-at window; and JTI replay protection.
-- **JTI blacklisting / replay prevention:** Uses Redis-backed caching to detect reuse and block replay attacks.
-
-### How DPoP Works Here
-
-1. Client generates and stores a P‑256 key pair.
-2. **Login** → send credentials + `DPoP-Key-Binding` (public key thumbprint). Server issues DPoP-bound tokens.
-3. **Protected requests** → send `Authorization: DPoP <accessToken>` and `DPoP: <proof>`.
-4. Middleware validates the proof, confirms it matches the token, and authorizes the request.
-
-### Required Headers From Client
-
-```text
-# Protected routes
-Authorization: DPoP <accessToken>
-DPoP: <compact-JWS-proof>
-
-# Login only
-DPoP-Key-Binding: <public-key-thumbprint>
-```
-
-### Environment Variables
-
-- `DPOP_ENABLED=true|false`
-- `PUBLIC_BASE_URL`
-- `PUBLIC_BASE_URL_RENDER_DEFAULT`
-- `PRIVATE_BASE_URL_DEV`
-
-> The server validates DPoP `htu` against its configured origins and enforces exact path matching.
-
----
-
-## Conclusion
-
-The backend provides a secure, modular API for the **Strong Together** fitness app.  
-Built with **Node.js**, **TypeScript**, **Postgres**, **Redis**, **JWT (DPoP-bound)**, **Socket.IO**, **Zod**, **Pino**, and **Sentry**.  
-It now also includes a **microservices-oriented video-analysis pipeline** with **AWS S3**, background workers, **Redis Pub/Sub**, and a dedicated **Python Computer Vision service**.  
-Security: short-lived access tokens, atomic refresh rotation, DPoP proof-of-possession, bcrypt, rate limiting, structured validation, and request correlation.  
-Quality: typed request/response contracts and broad integration test coverage.  
-Performance and scalability: Redis caching, async workers, direct S3 uploads, and separation between API traffic and heavy media processing.  
-Containerized, extensible, and much closer to production-grade than the earlier backend version.
+1. `refresh_user_split_information()` computes reminder timing from training history.
+2. The backend reads reminder settings and upcoming split timing.
+3. Push notifications are queued and delivered to the user device.
