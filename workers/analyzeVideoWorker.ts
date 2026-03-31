@@ -48,7 +48,7 @@ export const startAnalyzVideoWorker = async () => {
               const endpointUrl =
                 process.env.NODE_ENV === 'development'
                   ? 'http://python-service:8000/analyze-exercise'
-                  : process.env.ANALYSIS_SERVER_URL!;
+                  : `${process.env.ANALYSIS_SERVER_URL!}/analyze-exercise`;
               const workerTraceData = Sentry.getTraceData({ span });
               await axios.post(
                 endpointUrl,

@@ -30,7 +30,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DISABLE_DEBUG_WINDOW: "1"
+      ENABLE_DEBUG_WINDOW: "0"
     volumes:
       - ./pythonService/main.py:/app/main.py
       - ./pythonService/config:/app/config
