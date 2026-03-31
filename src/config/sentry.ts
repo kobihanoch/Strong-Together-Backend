@@ -6,6 +6,7 @@ const environment = process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'd
 const release = process.env.SENTRY_RELEASE || process.env.npm_package_version;
 const tracesSampleRate = Number(process.env.SENTRY_TRACES_SAMPLE_RATE || '0');
 const profilesSampleRate = Number(process.env.SENTRY_PROFILES_SAMPLE_RATE || '0');
+const isTestEnv = process.env.NODE_ENV === 'test';
 
 let initialized = false;
 
@@ -14,10 +15,10 @@ const parseStatusCode = (event: Sentry.Event): number | null => {
   return typeof statusCode === 'number' ? statusCode : null;
 };
 
-export const isSentryEnabled = (): boolean => Boolean(dsn);
+export const isSentryEnabled = (): boolean => !isTestEnv && Boolean(dsn);
 
 export const initSentry = (serviceName: string): void => {
-  if (initialized || !dsn) {
+  if (initialized || !isSentryEnabled()) {
     return;
   }
 

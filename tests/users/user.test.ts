@@ -10,7 +10,7 @@ import { getAuthenticatedUserByIdResponseSchema } from '../../src/validators/use
 import { updateAuthenticatedUserResponseSchema } from '../../src/validators/user/updateAuthenticatedUserResponse.schema.ts';
 import { authHeaders, createChangeEmailToken, loginUsersTestUser } from '../helpers/auth.ts';
 import { expectSchema } from '../helpers/assertSchema.ts';
-import { getUserAuthStateByUsername, hasReminderSettings } from '../helpers/db.ts';
+import { getUserAuthStateByUsername, hasReminderSettings, waitForUserDeletionByUsername } from '../helpers/db.ts';
 
 let app: ReturnType<typeof createApp>;
 
@@ -293,7 +293,7 @@ describe('Users', () => {
     );
 
     expect(deleteResponse.status).toBe(200);
-    expect(await getUserAuthStateByUsername(username)).toBeNull();
+    expect(await waitForUserDeletionByUsername(username)).toBeNull();
   });
 
   // create user with taken username -> assert conflict is rejected before insert

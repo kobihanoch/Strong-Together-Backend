@@ -14,7 +14,7 @@
     "test:analytics": "npm run test:db:reset && vitest run tests/analytics/analytics.test.ts --silent",
     "test:exercises": "npm run test:db:reset && vitest run tests/exercises/exercises.test.ts --silent",
     "test:oauth": "npm run test:db:reset && vitest run tests/oauth/oauth.test.ts --silent",
-    "test:all": "npm run test:db:reset && vitest run --silent --reporter=verbose",
+    "test:all": "npm run test:auth && npm run test:users && npm run test:workouts && npm run test:bootstrap && npm run test:messages && npm run test:aerobics && npm run test:analytics && npm run test:exercises && npm run test:oauth && npm run test:videoanalysis && npm run test:websockets",
     "test": "vitest run --silent",
     "test:watch": "vitest",
     "test:videoanalysis": "npm run test:db:reset && vitest run tests/videoanalysis/videoanalysis.test.ts",

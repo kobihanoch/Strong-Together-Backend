@@ -3,6 +3,7 @@ import pino, { type Bindings, type Logger } from 'pino';
 
 const serviceName = process.env.LOG_SERVICE_NAME || 'strong-together-server';
 const isDevelopment = process.env.NODE_ENV !== 'production';
+const isTestEnv = process.env.NODE_ENV === 'test';
 const developmentTransport = isDevelopment
   ? {
       transport: {
@@ -18,6 +19,7 @@ const developmentTransport = isDevelopment
   : {};
 
 export const logger = pino({
+  enabled: !isTestEnv,
   level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
   timestamp: pino.stdTimeFunctions.isoTime,
   ...developmentTransport,

@@ -211,6 +211,22 @@ export async function getUserAuthStateByUsername(username: string) {
   return row ?? null;
 }
 
+export async function waitForUserDeletionByUsername(username: string) {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const row = await getUserAuthStateByUsername(username);
+
+    if (!row) {
+      return null;
+    }
+
+    if (attempt < 9) {
+      await wait(25);
+    }
+  }
+
+  return getUserAuthStateByUsername(username);
+}
+
 export async function hasReminderSettings(userId: string) {
   const [row] = await sql<{ count: string }[]>`
     SELECT COUNT(*)::text AS count
