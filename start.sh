@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+npx tsc --noEmit
+
 term_handler() {
   kill -TERM "$API_PID" 2>/dev/null || true
   kill -TERM "$WORKER_PID" 2>/dev/null || true
@@ -9,10 +11,10 @@ term_handler() {
 }
 trap term_handler INT TERM
 
-node src/index.js &
+npm run start:server &
 API_PID=$!
 
-node src/workers/globalWorker.js &
+npm run start:workers &
 WORKER_PID=$!
 
 wait -n

@@ -1,0 +1,68 @@
+import * as Sentry from '@sentry/node';
+import { EnqueueAanalyzeVideoParams } from '../../types/dto/videoAnalysis.dto.ts';
+import { createLogger } from '../../config/logger.ts';
+import analyzeVideoQueue from './analyzeVideoQueue.js';
+
+const logger = createLogger('queue:analyze-video-producer', {
+  queue: 'analyzeVideoQueue',
+});
+
+// Add jobs to queue
+export const enqueueAnalyzeVideo = async ({
+  fileKey,
+  exercise,
+  userId,
+  requestId,
+}: EnqueueAanalyzeVideoParams): Promise<string> => {
+  const traceData = Sentry.getTraceData();
+  const resolvedSentryTrace = traceData['sentry-trace'];
+  const resolvedBaggage = traceData.baggage;
+
+  try {
+    const job = await analyzeVideoQueue.add(
+      {
+        fileKey,
+        exercise,
+        userId,
+        expiresAt: Date.now() + 1000 * 60 * 60 * 12,
+        requestId,
+        ...(resolvedSentryTrace ? { sentryTrace: resolvedSentryTrace } : {}),
+        ...(resolvedBaggage ? { baggage: resolvedBaggage } : {}),
+      },
+      {
+        attempts: 3,
+        backoff: 5000,
+        removeOnComplete: true,
+        //removeOnFail: true,
+      },
+    );
+    logger.info(
+      {
+        event: 'queue.job_enqueued',
+        jobId: String(job.id),
+        userId,
+        exercise,
+        fileKey,
+        requestId,
+        hasSentryTrace: Boolean(resolvedSentryTrace),
+      },
+      'Analyze video job enqueued',
+    );
+    return String(job.id);
+  } catch (e) {
+    if (e instanceof Error)
+      logger.error(
+        {
+          err: e,
+          event: 'queue.enqueue_failed',
+          userId,
+          exercise,
+          fileKey,
+          requestId,
+          hasSentryTrace: Boolean(resolvedSentryTrace),
+        },
+        'Failed to enqueue analyze video job',
+      );
+    throw e;
+  }
+};

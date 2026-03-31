@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.0.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v2.2.0...v3.0.0) (2026-03-31)
+
+
+### Features
+
+* **Analyze Video:** Added a Python micro-service for video analysis ([6359cb9](https://github.com/kobihanoch/Strong-Together-Backend/commit/6359cb975c3998f03efb7259162a102ae3d3e246))
+* **AnalyzeVideo:** Added an on-person focus system ([9e125d1](https://github.com/kobihanoch/Strong-Together-Backend/commit/9e125d155942e6d50ae0aa896b8de3e0a16ed94a))
+* **AnalyzeVIdeo:** Implement exercise video analysis with pose detection ([50131c5](https://github.com/kobihanoch/Strong-Together-Backend/commit/50131c5cec7a434c86b93674e43f2486db864eb7))
+* **AnalyzeVideo:** Implement video analysis queue and worker for processing user videos ([1765f1e](https://github.com/kobihanoch/Strong-Together-Backend/commit/1765f1e22a9d69b089dde816682cfc4e433ccf57))
+* **AnalyzeVideo:** Refactor squat analysis logic and add utility functions for dominant side detection ([0d7582e](https://github.com/kobihanoch/Strong-Together-Backend/commit/0d7582ef10695970a7bcee193f728b73a3d38a42))
+* **AnalyzeVideo:** Remove video after analyzing ([808d436](https://github.com/kobihanoch/Strong-Together-Backend/commit/808d43623b09e71b379e162d03a550d0078b81c9))
+* **AnalyzeVIdeo:** Squat rep counter is implemented ([b77a85b](https://github.com/kobihanoch/Strong-Together-Backend/commit/b77a85b7655b3579e7ed62f329e7061300dce230))
+* **AnalyzeVideo:** Update analyze_exercise endpoint to accept dynamic exercise input ([55a7356](https://github.com/kobihanoch/Strong-Together-Backend/commit/55a73560c8be824caec4a657719164b76fe28085))
+* **AnalyzeVideo:** Video upload is functional ([37bd60f](https://github.com/kobihanoch/Strong-Together-Backend/commit/37bd60f788ef1f5887e8455aff8587ee183f5a23))
+* **ExerciseAnalyzer:** Enhance squat analysis with camera angle detection and refined rep evaluation ([7eb9ec3](https://github.com/kobihanoch/Strong-Together-Backend/commit/7eb9ec3add7c670f6d1469ad0ef6f383ab26fc28))
+* **Node:** Added route for video analysis and endpoints for presigned url from S3, and publish job to Redis ([a7cfe70](https://github.com/kobihanoch/Strong-Together-Backend/commit/a7cfe7067b20aa57d94a60b577d0beb0746a79d9))
+* **Node:** Added S3 get presigned url endpoint and started using TypeScript ([1375589](https://github.com/kobihanoch/Strong-Together-Backend/commit/1375589c216949a7db3d886b9b01506af662c0ac))
+* **Observability:** Added Pino and Sentry ([2dff5e6](https://github.com/kobihanoch/Strong-Together-Backend/commit/2dff5e69f8c25d07157f413ba95df142412015d1))
+* **Observability:** Integrate Sentry for tracing and performance monitoring in video analysis workflow ([0a07137](https://github.com/kobihanoch/Strong-Together-Backend/commit/0a071375848bb821d4e4a39cfa6f3951774d9904))
+* **Python:** Added python service ([161219f](https://github.com/kobihanoch/Strong-Together-Backend/commit/161219f9512e3385a855e14a6312a52207591430))
+* **Python:** Added s3 media download util ([cf4a2b6](https://github.com/kobihanoch/Strong-Together-Backend/commit/cf4a2b6174b651b8a40b3dc5e284522ed79b5a5b))
+* **Python:** Enhance video procsing with S3 integration and update routes ([c3d6b60](https://github.com/kobihanoch/Strong-Together-Backend/commit/c3d6b60191f42dd5960793aca8fa7097e1ad6ed1))
+* **Python:** Implement exercise video analysis and processing endpoints architecture ([cad5fd8](https://github.com/kobihanoch/Strong-Together-Backend/commit/cad5fd867a26b63ddebf13b0438bf752d875cbc1))
+* **Python:** Refactor video processing to use fileKey instead of s3Path and update related routes ([d2d40ac](https://github.com/kobihanoch/Strong-Together-Backend/commit/d2d40ac4f84f1eb10798252e734a02107a0d5d48))
+* **Redis:** Added Redis Pub/Sub system for Python service and Node ([2f81ba9](https://github.com/kobihanoch/Strong-Together-Backend/commit/2f81ba91a2836962b44ad8292205a9f6a5240076))
+* **Redis:** Added Redis subscriber to Node server for analyze video ([68ee17e](https://github.com/kobihanoch/Strong-Together-Backend/commit/68ee17e26ffe81fdfa9a872e1f1a36cfdaf22dd6))
+* **Redis:** Created Redis adapter ([f0907a8](https://github.com/kobihanoch/Strong-Together-Backend/commit/f0907a8ea5644e4ca704573d1e8ca7ac541387f8))
+* **Redis:** Created Redis publisher for analyze video in Python service ([5e27958](https://github.com/kobihanoch/Strong-Together-Backend/commit/5e2795894bc4d36ae41504749d6e1443bc53c935))
+* **Redis:** Enhance video analysis functionality with Redis pub sub ([a661733](https://github.com/kobihanoch/Strong-Together-Backend/commit/a6617335f6386d44632cc63b1d628df3504d7a8e))
+* **SquatAnalyzer:** Enhance squat analysis with improved camera angle detection, refined rep evaluation, and added debug overlay ([1332993](https://github.com/kobihanoch/Strong-Together-Backend/commit/13329934a3e3de88888a36da77675ff2bf1a9a0f))
+
+
+### Code Refactoring
+
+* **DB and entities types:** Reduced nullable fields inside DB schema ([97bba3f](https://github.com/kobihanoch/Strong-Together-Backend/commit/97bba3f1522d25f4cb3818d89c9dba14b5cfb8ef))
+* **Server:** Refactored project's services' dockerfiles to be prepared for future micro-services deployment ([ca4bfca](https://github.com/kobihanoch/Strong-Together-Backend/commit/ca4bfca6b6649bba0128b77610926f22bd96617c))
+* **TypeScript:** Refactored backend repo to TypeScript ([bc4cb68](https://github.com/kobihanoch/Strong-Together-Backend/commit/bc4cb68caf0b36b603b9e0b3b212ae2024c6c902))
+* **Zod:** Each API requests goes through zod-first schemas ([1725108](https://github.com/kobihanoch/Strong-Together-Backend/commit/1725108b7d1ad6a26b6dea58c9cd3ef172841aed))
+* **Zod:** Each API response goes through zod-first schemas ([c56387f](https://github.com/kobihanoch/Strong-Together-Backend/commit/c56387fde420db4634efb0150f37a9bd21a782ae))
+
 ## [2.2.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v2.1.2...v2.2.0) (2025-11-06)
 
 

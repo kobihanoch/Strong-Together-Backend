@@ -1,0 +1,60 @@
+import { Request, Response } from 'express';
+import { getUploadUrl } from '../aws/s3/s3Utils.ts';
+import { createLogger } from '../config/logger.ts';
+import { enqueueAnalyzeVideo } from '../queues/analyzeVideo/analyzeVideoProducer.js';
+
+import { GetPresignedUrlFromS3Body, PublishVideoAnalysisJobBody } from '../types/api/videoAnalysis/requests.ts';
+import {
+  GetPresignedUrlFromS3Response,
+  PublishVideoAnalysisJobResponse,
+} from '../types/api/videoAnalysis/responses.ts';
+
+const logger = createLogger('controller:video-analysis');
+
+// @desc    Get presigned URL from AWS S3
+// @route   POST /api/videoanalysis/getpresignedurl
+// @access  Private
+export const getPresignedUrlFromS3 = async (
+  req: Request<{}, GetPresignedUrlFromS3Response, GetPresignedUrlFromS3Body>,
+  res: Response<GetPresignedUrlFromS3Response>,
+): Promise<Response<GetPresignedUrlFromS3Response>> => {
+  const { fileName, fileType } = req.body;
+  const userId = req.user!.id;
+  const fileKey = `${userId}/${Date.now()}-${fileName}`;
+  const requestLogger = req.logger || logger;
+
+  const uploadUrl = await getUploadUrl(fileKey, fileType);
+  requestLogger.info(
+    { event: 'video_analysis.upload_url_generated', fileKey, fileType },
+    'Generated presigned upload URL for video analysis',
+  );
+
+  return res.status(200).json({
+    uploadUrl,
+    fileKey,
+  });
+};
+
+// @desc    Publish job to redis queue
+// @route   POST /api/videoanalysis/publishjob
+// @access  Private
+export const publishVideoAnalysisJob = async (
+  req: Request<{}, PublishVideoAnalysisJobResponse, PublishVideoAnalysisJobBody>,
+  res: Response<PublishVideoAnalysisJobResponse>,
+): Promise<Response<PublishVideoAnalysisJobResponse>> => {
+  const userId = req.user!.id;
+  const { fileKey, exercise } = req.body;
+  const requestLogger = req.logger || logger;
+
+  const jobId = await enqueueAnalyzeVideo({
+    fileKey,
+    exercise,
+    userId,
+    requestId: req.requestId,
+  });
+  requestLogger.info(
+    { event: 'video_analysis.job_published', fileKey, exercise, jobId },
+    'Published video analysis job',
+  );
+  return res.status(200).json({ jobId });
+};
