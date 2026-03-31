@@ -34,6 +34,7 @@ A backend platform with:
 - secure authentication using **JWT**, **DPoP**, and **rate limits**
 - realtime communication using **Socket.IO**
 - a PostgreSQL schema designed for workout tracking, analytics, and reminders
+- **GitHub Actions CI pipeline** that runs the automated test suite on pushes and pull requests targeting `main`.
 
 ## Highlights
 
@@ -57,6 +58,7 @@ A backend platform with:
 - [Database Overview](#database-overview)
 - [Run Locally](#run-locally)
 - [Testing](#testing)
+- [CI](#ci)
 - [Schema SQL](./schema.sql)
 - [Test Seed SQL](./test-seeds/test-seed.sql)
 - [Test Exercises Seed](./test-seeds/test-exercises_seed.sql)
@@ -76,6 +78,7 @@ A backend platform with:
 7. [Run Locally](#run-locally)
    1. [Docker setup](#docker-setup)
 8. [Testing](#testing)
+   1. [CI](#ci)
 9. [API Overview](#api-overview)
    1. [Main domains](#main-domains)
    2. [API characteristics](#api-characteristics)
@@ -279,6 +282,10 @@ npm run test:all
 ```
 
 You can also run domain-specific suites such as `npm run test:auth`, `npm run test:workouts`, or `npm run test:videoanalysis`.
+
+### CI
+
+GitHub Actions can run the full test suite on every push and pull request to `main` via [`.github/workflows/ci.yml`](./.github/workflows/ci.yml). For CI, store the full `.env.test` contents in a repository secret named `ENV_TEST_FILE`.
 
 ## API Overview
 
