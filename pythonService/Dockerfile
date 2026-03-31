@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir \
     redis \
     boto3 \
     mediapipe==0.10.9 \
-    opencv-python \
+    opencv-python-headless \
     numpy
 
 COPY pythonService /app
