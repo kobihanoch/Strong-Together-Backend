@@ -10,10 +10,12 @@ const rootDir = path.resolve(__dirname, '..');
 const dockerComposeFile = path.join(rootDir, 'docker-compose.test.yml');
 const schemaPath = path.join(rootDir, 'schema.sql');
 const seedPath = path.join(rootDir, 'seed.sql');
+const envTestPath = path.join(rootDir, '.env.test');
 
 const containerName = 'strongtogether_postgres_test';
 const dbName = 'strongtogether_test';
 const dbUser = 'postgres';
+const testSystemUserId = readEnvValue(envTestPath, 'SYSTEM_USER_ID');
 
 const authTestUserHash = '$2b$10$ZpjAscThaAj5E5T5bkhktudfz1BfRNW0yIvYaKcYWpMMqWRR33TCi';
 const authTestUserSql = `
@@ -522,6 +524,51 @@ function readSqlFile(filePath) {
   return buffer.toString('utf8');
 }
 
+function readEnvValue(filePath, key) {
+  const content = readFileSync(filePath, 'utf8');
+  const line = content
+    .split(/\r?\n/)
+    .find((entry) => entry.trim().startsWith(`${key}=`));
+
+  if (!line) {
+    throw new Error(`Missing ${key} in ${path.basename(filePath)}`);
+  }
+
+  return line.slice(line.indexOf('=') + 1).trim();
+}
+
+function getSeedSystemUserId() {
+  const seedSql = readSqlFile(seedPath);
+  const match = seedSql.match(/INSERT INTO public\.users[\s\S]*?VALUES\s*\(\s*'([^']+)'[\s\S]*?'system_bot'/i);
+
+  if (!match) {
+    throw new Error('Could not find system_bot user id in seed.sql');
+  }
+
+  return match[1];
+}
+
+function syncTestMessagePolicy() {
+  const seedSystemUserId = getSeedSystemUserId();
+
+  if (seedSystemUserId !== testSystemUserId) {
+    throw new Error(
+      `SYSTEM_USER_ID mismatch between .env.test (${testSystemUserId}) and seed.sql (${seedSystemUserId})`,
+    );
+  }
+
+  runWithRetry(() =>
+    runPsql(`
+DROP POLICY IF EXISTS "Enable insert for auth users on messages" ON public.messages;
+CREATE POLICY "Enable insert for auth users on messages"
+ON public.messages
+FOR INSERT
+TO authenticated
+WITH CHECK (((auth.uid() = sender_id) OR (sender_id = '${testSystemUserId}'::uuid)));
+`),
+  );
+}
+
 function execFileInPsql(filePath) {
   const sqlText = readSqlFile(filePath);
   return run('docker', ['exec', '-i', containerName, 'psql', '-U', dbUser, '-d', dbName], {
@@ -574,6 +621,9 @@ function main() {
 
   console.log('[test-db] Loading seed.sql...');
   runWithRetry(() => execFileInPsql(seedPath));
+
+  console.log('[test-db] Syncing messages policy to .env.test SYSTEM_USER_ID...');
+  syncTestMessagePolicy();
 
   console.log('[test-db] Verifying public.users exists...');
   runWithRetry(() => runPsql('SELECT COUNT(*) FROM public.users;'));
