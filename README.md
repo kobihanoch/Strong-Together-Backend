@@ -1,5 +1,7 @@
 # Strong Together Backend (v3.0.0)
 
+[![CI](https://github.com/kobihanoch/Strong-Together-Backend/actions/workflows/ci.yml/badge.svg)](https://github.com/kobihanoch/Strong-Together-Backend/actions)
+
 This is the **microservices-based backend** for **Strong Together**.
 
 - Backend repository: [Strong-Together-Backend](https://github.com/kobihanoch/Strong-Together-Backend)
