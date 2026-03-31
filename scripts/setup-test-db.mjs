@@ -6,10 +6,11 @@ import { spawnSync } from 'node:child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
+const testSeedsDir = path.join(rootDir, 'test-seeds');
 
 const dockerComposeFile = path.join(rootDir, 'docker-compose.test.yml');
 const schemaPath = path.join(rootDir, 'schema.sql');
-const seedPath = path.join(rootDir, 'seed.sql');
+const seedPath = path.join(testSeedsDir, 'test-seed.sql');
 const envTestPath = path.join(rootDir, '.env.test');
 
 const containerName = 'strongtogether_postgres_test';
@@ -542,7 +543,7 @@ function getSeedSystemUserId() {
   const match = seedSql.match(/INSERT INTO public\.users[\s\S]*?VALUES\s*\(\s*'([^']+)'[\s\S]*?'system_bot'/i);
 
   if (!match) {
-    throw new Error('Could not find system_bot user id in seed.sql');
+    throw new Error('Could not find system_bot user id in test-seeds/test-seed.sql');
   }
 
   return match[1];
@@ -553,7 +554,7 @@ function syncTestMessagePolicy() {
 
   if (seedSystemUserId !== testSystemUserId) {
     throw new Error(
-      `SYSTEM_USER_ID mismatch between .env.test (${testSystemUserId}) and seed.sql (${seedSystemUserId})`,
+      `SYSTEM_USER_ID mismatch between .env.test (${testSystemUserId}) and test-seeds/test-seed.sql (${seedSystemUserId})`,
     );
   }
 
@@ -619,7 +620,7 @@ function main() {
   console.log('[test-db] Loading schema.sql...');
   runWithRetry(() => execFileInPsql(schemaPath));
 
-  console.log('[test-db] Loading seed.sql...');
+  console.log('[test-db] Loading test-seeds/test-seed.sql...');
   runWithRetry(() => execFileInPsql(seedPath));
 
   console.log('[test-db] Syncing messages policy to .env.test SYSTEM_USER_ID...');

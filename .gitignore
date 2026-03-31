@@ -5,6 +5,3 @@ node_modules/
 pythonService/.venv/
 __pycache__/
 *.pyc
-schema.sql
-exercises_seed.sql
-seed.sql

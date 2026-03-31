@@ -58,8 +58,8 @@ A backend platform with:
 - [Run Locally](#run-locally)
 - [Testing](#testing)
 - [Schema SQL](./schema.sql)
-- [Seed SQL](./seed.sql)
-- [Exercises Seed](./exercises_seed.sql)
+- [Test Seed SQL](./test-seeds/test-seed.sql)
+- [Test Exercises Seed](./test-seeds/test-exercises_seed.sql)
 - [Docker Compose](./docker-compose.yml)
 
 ## Table of Contents
@@ -338,8 +338,9 @@ PostgreSQL is the system of record. The schema is used not only for storage, but
 ### DB files
 
 - Full schema: [schema.sql](./schema.sql)
-- Base seed data: [seed.sql](./seed.sql)
-- Exercise seed data: [exercises_seed.sql](./exercises_seed.sql)
+- Base test seed data: [test-seeds/test-seed.sql](./test-seeds/test-seed.sql)
+- Exercise test seed data: [test-seeds/test-exercises_seed.sql](./test-seeds/test-exercises_seed.sql)
+- All files under `test-seeds/` are demo-only testing fixtures, and all data in them is fake.
 
 ### Database Schema
 
