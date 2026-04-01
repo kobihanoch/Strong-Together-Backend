@@ -1,13 +1,9 @@
 import { Request, Response } from 'express';
 import { getUploadUrl } from '../aws/s3/s3Utils.ts';
 import { createLogger } from '../config/logger.ts';
-import { enqueueAnalyzeVideo } from '../queues/analyzeVideo/analyzeVideoProducer.js';
 
-import { GetPresignedUrlFromS3Body, PublishVideoAnalysisJobBody } from '../types/api/videoAnalysis/requests.ts';
-import {
-  GetPresignedUrlFromS3Response,
-  PublishVideoAnalysisJobResponse,
-} from '../types/api/videoAnalysis/responses.ts';
+import { GetPresignedUrlFromS3Body } from '../types/api/videoAnalysis/requests.ts';
+import { GetPresignedUrlFromS3Response } from '../types/api/videoAnalysis/responses.ts';
 
 const logger = createLogger('controller:video-analysis');
 
@@ -33,28 +29,4 @@ export const getPresignedUrlFromS3 = async (
     uploadUrl,
     fileKey,
   });
-};
-
-// @desc    Publish job to redis queue
-// @route   POST /api/videoanalysis/publishjob
-// @access  Private
-export const publishVideoAnalysisJob = async (
-  req: Request<{}, PublishVideoAnalysisJobResponse, PublishVideoAnalysisJobBody>,
-  res: Response<PublishVideoAnalysisJobResponse>,
-): Promise<Response<PublishVideoAnalysisJobResponse>> => {
-  const userId = req.user!.id;
-  const { fileKey, exercise } = req.body;
-  const requestLogger = req.logger || logger;
-
-  const jobId = await enqueueAnalyzeVideo({
-    fileKey,
-    exercise,
-    userId,
-    requestId: req.requestId,
-  });
-  requestLogger.info(
-    { event: 'video_analysis.job_published', fileKey, exercise, jobId },
-    'Published video analysis job',
-  );
-  return res.status(200).json({ jobId });
 };
