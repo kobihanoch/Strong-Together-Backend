@@ -1,7 +1,6 @@
 import os
 
 import sentry_sdk
-from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
 
@@ -20,10 +19,7 @@ def init_sentry() -> bool:
         traces_sample_rate=traces_sample_rate,
         profiles_sample_rate=profiles_sample_rate,
         send_default_pii=False,
-        integrations=[
-            FastApiIntegration(),
-            LoggingIntegration(level=None, event_level=None),
-        ],
+        integrations=[LoggingIntegration(level=None, event_level=None)],
     )
     return True
 
