@@ -14,9 +14,9 @@ export const getPresignedUrlFromS3 = async (
   req: Request<{}, GetPresignedUrlFromS3Response, GetPresignedUrlFromS3Body>,
   res: Response<GetPresignedUrlFromS3Response>,
 ): Promise<Response<GetPresignedUrlFromS3Response>> => {
-  const { fileName, fileType } = req.body;
+  const { exercise, fileType } = req.body;
   const userId = req.user!.id;
-  const fileKey = `${userId}/${Date.now()}-${fileName}`;
+  const fileKey = `${exercise}_${userId}_${Date.now()}`;
   const requestLogger = req.logger || logger;
 
   const uploadUrl = await getUploadUrl(fileKey, fileType);
