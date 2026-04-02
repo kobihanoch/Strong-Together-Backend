@@ -20,7 +20,7 @@ The project combines a TypeScript API, background workers, Redis-based async inf
 ![Socket.IO](https://img.shields.io/badge/Socket.IO-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Amazon SQS](https://img.shields.io/badge/Amazon%20SQS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white)
 ![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white)
 ![MediaPipe](https://img.shields.io/badge/MediaPipe-FF6F00?style=for-the-badge&logo=google&logoColor=white)
 ![Zod](https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=typescript&logoColor=white)
@@ -40,7 +40,7 @@ A backend platform with:
 
 ## Highlights
 
-- **Microservices architecture**: a **TypeScript REST API**, **background workers**, **Redis queues / Pub/Sub**, **WebSockets**, and a dedicated **Python computer-vision microservice**.
+- **Microservices architecture**: a **TypeScript REST API**, **background workers**, **Redis Pub/Sub**, **SQS**, **WebSockets**, and a dedicated **Python computer-vision worker**.
 - **Authentication and request protection**: **JWT**, **DPoP proof-of-possession**, **rate limits**, bot blocking, token rotation, and strict request validation.
 - **Request contracts**: **Zod schemas** are used to validate request payloads at the API boundary before controller logic runs.
 - **Async media pipeline**: **direct AWS S3 uploads**, queued jobs, Python-based CV analysis, and **realtime result delivery** back to the client.
@@ -106,7 +106,7 @@ The tradeoff is additional operational complexity: more moving parts, cross-serv
 
 - `src/` contains the main Express API, validation, business logic, integrations, and realtime publishing.
 - `workers/` handles background jobs such as emails, push notifications, and video-analysis dispatching.
-- `pythonService/` is a separate FastAPI-based computer-vision service for exercise video processing.
+- `pythonService/` is a dedicated Python SQS worker for exercise video processing.
 - `tests/` contains integration suites that validate real backend flows end-to-end.
 
 ### Video Analysis Architecture
@@ -119,16 +119,16 @@ The tradeoff is additional operational complexity: more moving parts, cross-serv
 | -------------------- | ---------------------------------- |
 | API                  | Node.js, Express 5, TypeScript     |
 | Database             | PostgreSQL                         |
-| Async infrastructure | Redis, Bull, Pub/Sub               |
+| Async infrastructure | Redis, Bull, SQS, Pub/Sub          |
 | Realtime             | Socket.IO                          |
 | Storage              | AWS S3, Supabase Storage           |
 | Auth & validation    | JWT, DPoP, Zod, bcrypt             |
 | Notifications        | Expo Push, Resend                  |
 | Observability        | Pino, Sentry                       |
 | Testing              | Vitest, Supertest                  |
-| Video analysis       | Python, FastAPI, OpenCV, MediaPipe |
+| Video analysis       | Python, boto3, SQS, OpenCV, MediaPipe |
 
-Redis is used for queues and Pub/Sub so heavy workloads can be processed asynchronously instead of blocking the API request cycle.
+Redis is used for Pub/Sub and selected internal queues, while SQS is used to dispatch video-analysis jobs to the Python worker.
 Socket.IO is used to push analysis results and other realtime events back to the client without polling.
 PostgreSQL holds both operational data and analytics-oriented structures such as views, indexes, and reminder-related tables.
 
@@ -236,8 +236,11 @@ RESEND_API_KEY=
 # Constants
 SYSTEM_USER_ID=
 
-# Python service
-ANALYSIS_SERVER_URL=
+# Python worker
+ANALYSIS_SQS_QUEUE_URL=
+ANALYSIS_SQS_WAIT_TIME_SECONDS=
+ANALYSIS_SQS_VISIBILITY_TIMEOUT=
+ANALYSIS_WORKER_IDLE_SLEEP_MS=
 
 ```
 

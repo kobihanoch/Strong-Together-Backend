@@ -1,7 +1,6 @@
 import os
 
 import sentry_sdk
-from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
 
@@ -20,15 +19,12 @@ def init_sentry() -> bool:
         traces_sample_rate=traces_sample_rate,
         profiles_sample_rate=profiles_sample_rate,
         send_default_pii=False,
-        integrations=[
-            FastApiIntegration(),
-            LoggingIntegration(level=None, event_level=None),
-        ],
+        integrations=[LoggingIntegration(level=None, event_level=None)],
     )
     return True
 
 
-def set_sentry_context(*, request_id=None, user_id=None, job_id=None, exercise=None):
+def set_sentry_context(*, request_id=None, user_id=None, job_id=None, exercise=None, sentry_trace=None, baggage=None):
     if request_id:
         sentry_sdk.set_tag("requestId", request_id)
     if job_id:
@@ -37,6 +33,10 @@ def set_sentry_context(*, request_id=None, user_id=None, job_id=None, exercise=N
         sentry_sdk.set_tag("exercise", exercise)
     if user_id:
         sentry_sdk.set_user({"id": str(user_id)})
+    if sentry_trace:
+        sentry_sdk.set_extra("sentryTrace", sentry_trace)
+    if baggage:
+        sentry_sdk.set_extra("baggage", baggage)
 
 
 def capture_exception(error: Exception, **context):
@@ -45,6 +45,8 @@ def capture_exception(error: Exception, **context):
         user_id = context.get("user_id")
         job_id = context.get("job_id")
         exercise = context.get("exercise")
+        sentry_trace = context.get("sentry_trace")
+        baggage = context.get("baggage")
 
         if request_id:
             scope.set_tag("requestId", request_id)
@@ -58,5 +60,9 @@ def capture_exception(error: Exception, **context):
         if exercise:
             scope.set_tag("exercise", str(exercise))
             scope.set_extra("exercise", exercise)
+        if sentry_trace:
+            scope.set_extra("sentryTrace", sentry_trace)
+        if baggage:
+            scope.set_extra("baggage", baggage)
 
         return sentry_sdk.capture_exception(error)

@@ -29,10 +29,13 @@ export const startVideoAnalysisSubscriber = async () => {
         payloadLogger.error({ event: 'video_analysis.processing_error', error }, 'Video analysis reported an error');
       }
 
-      emitVideoAnalysisResults(userId, payload, jobId);
+      emitVideoAnalysisResults(userId, payload);
     } catch (e) {
       if (e instanceof Error) {
-        logger.error({ err: e, event: 'video_analysis.subscription_failed' }, 'Failed to process video analysis message');
+        logger.error(
+          { err: e, event: 'video_analysis.subscription_failed' },
+          'Failed to process video analysis message',
+        );
       }
     }
   });

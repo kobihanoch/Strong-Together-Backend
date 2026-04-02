@@ -64,7 +64,7 @@ export const createApp = () => {
       username,
     });
 
-    res.setHeader('X-Request-Id', requestId);
+    res.setHeader('x-request-id', requestId);
     applySentryRequestContext(req);
 
     req.logger.info({ event: 'request.received' }, 'request started');
