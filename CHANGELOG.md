@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v3.0.1...v3.1.0) (2026-04-03)
+
+
+### Code Refactoring
+
+* **API:** Removed publish job endpoint ([b455723](https://github.com/kobihanoch/Strong-Together-Backend/commit/b45572325f2e882439581a77da3fca029b350a63))
+* **Video Analysis:** Changed architucture to use python worker Boto3 with SQS integration ([e6dcc2a](https://github.com/kobihanoch/Strong-Together-Backend/commit/e6dcc2ab3144aa96f377d60c8968ff240d121ac0))
+
 ### [3.0.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v3.0.0...v3.0.1) (2026-03-31)
 
 
