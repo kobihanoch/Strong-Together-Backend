@@ -1,4 +1,4 @@
-# Strong Together Backend (v3.0.1)
+# Strong Together Backend (v3.1.0)
 
 [![CI](https://github.com/kobihanoch/Strong-Together-Backend/actions/workflows/ci.yml/badge.svg)](https://github.com/kobihanoch/Strong-Together-Backend/actions)
 
@@ -32,7 +32,7 @@ The project combines a TypeScript API, background workers, Redis-based async inf
 
 A backend platform with:
 
-- async video processing using **Node.js**, **Python**, **Redis**, and **AWS S3**
+- async video processing using **Node.js**, **Python**, **Redis**, and **AWS S3** using **SQS**
 - secure authentication using **JWT**, **DPoP**, and **rate limits**
 - realtime communication using **Socket.IO**
 - a PostgreSQL schema designed for workout tracking, analytics, and reminders
@@ -43,7 +43,7 @@ A backend platform with:
 - **Microservices architecture**: a **TypeScript REST API**, **background workers**, **Redis Pub/Sub**, **SQS**, **WebSockets**, and a dedicated **Python computer-vision worker**.
 - **Authentication and request protection**: **JWT**, **DPoP proof-of-possession**, **rate limits**, bot blocking, token rotation, and strict request validation.
 - **Request contracts**: **Zod schemas** are used to validate request payloads at the API boundary before controller logic runs.
-- **Async media pipeline**: **direct AWS S3 uploads**, queued jobs, Python-based CV analysis, and **realtime result delivery** back to the client.
+- **Async media pipeline**: **direct AWS S3 uploads**, **S3 event-driven SQS dispatch**, Python-based CV analysis, **trace-aware async orchestration**, and **realtime result delivery** back to the client.
 - **Database design**: **PostgreSQL**, analytics views, normalized workout tracking, reminder intelligence, indexing strategy, and **RLS-aware** patterns.
 - **Test coverage**: **Vitest + Supertest** integration tests across auth, workouts, analytics, OAuth, websockets, and video analysis.
 - **Observability**: **Pino structured logs**, **Sentry tracing**, request IDs, and service-aware error handling.
@@ -99,36 +99,43 @@ A backend platform with:
 
 ## Architecture
 
-**Video analysis flow:** Client → Node API (get presigned URL) → S3 (upload) → Redis queue → Python service (analysis) → Redis Pub/Sub → Node → Socket.IO → Client
+**Video analysis flow:** Client -> Node API (`getpresignedurl`) -> presigned S3 upload -> S3 event notification -> SQS (with DLQ) -> Python analysis worker -> Redis Pub/Sub -> Node subscriber -> Socket.IO -> Client
 
-This flow ensures that heavy video processing does not block the API and allows the analysis service to scale independently from the request layer.
-The tradeoff is additional operational complexity: more moving parts, cross-service coordination, and more infrastructure to monitor compared with a single-process design.
+This flow keeps large uploads and pose-analysis work out of the API request thread while allowing the Python worker to scale independently from the Node request layer.
+It also carries `jobId`, `requestId`, and Sentry trace headers through S3 object metadata so the async pipeline can be monitored across service boundaries.
+
+**Why the architecture was changed**
+
+- The older design depended on an explicit publish step after upload, which could drift from the actual uploaded object lifecycle.
+- Moving to an S3 event -> SQS trigger made the upload itself the source of truth for starting analysis.
+- Persisting `jobId`, `requestId`, and Sentry trace metadata with the uploaded object made cross-service debugging and async trace correlation much more reliable.
+- The new design trades some infrastructure simplicity for better resilience, cleaner job orchestration, and stronger observability for long-running media work.
 
 - `src/` contains the main Express API, validation, business logic, integrations, and realtime publishing.
-- `workers/` handles background jobs such as emails, push notifications, and video-analysis dispatching.
-- `pythonService/` is a dedicated Python SQS worker for exercise video processing.
+- `workers/` handles background jobs such as emails and push notifications.
+- `pythonService/` is a dedicated Python SQS worker for exercise video processing triggered by S3 upload events.
 - `tests/` contains integration suites that validate real backend flows end-to-end.
 
 ### Video Analysis Architecture
 
-![Video analysis architecture](https://github.com/user-attachments/assets/e8c8d6fc-1d50-4adb-98f3-701bb570c069)
+![Video analysis architecture](https://github.com/user-attachments/assets/62af4f0e-5dd1-45bc-8334-712721f92990)
 
 ## Tech Stack
 
-| Layer                | Main Tools                         |
-| -------------------- | ---------------------------------- |
-| API                  | Node.js, Express 5, TypeScript     |
-| Database             | PostgreSQL                         |
-| Async infrastructure | Redis, Bull, SQS, Pub/Sub          |
-| Realtime             | Socket.IO                          |
-| Storage              | AWS S3, Supabase Storage           |
-| Auth & validation    | JWT, DPoP, Zod, bcrypt             |
-| Notifications        | Expo Push, Resend                  |
-| Observability        | Pino, Sentry                       |
-| Testing              | Vitest, Supertest                  |
+| Layer                | Main Tools                            |
+| -------------------- | ------------------------------------- |
+| API                  | Node.js, Express 5, TypeScript        |
+| Database             | PostgreSQL                            |
+| Async infrastructure | Redis, Bull, SQS, Pub/Sub             |
+| Realtime             | Socket.IO                             |
+| Storage              | AWS S3, Supabase Storage              |
+| Auth & validation    | JWT, DPoP, Zod, bcrypt                |
+| Notifications        | Expo Push, Resend                     |
+| Observability        | Pino, Sentry                          |
+| Testing              | Vitest, Supertest                     |
 | Video analysis       | Python, boto3, SQS, OpenCV, MediaPipe |
 
-Redis is used for Pub/Sub and selected internal queues, while SQS is used to dispatch video-analysis jobs to the Python worker.
+Redis is used for Pub/Sub and selected internal queues, while SQS is used as the event-driven bridge between S3 uploads and the Python video-analysis worker.
 Socket.IO is used to push analysis results and other realtime events back to the client without polling.
 PostgreSQL holds both operational data and analytics-oriented structures such as views, indexes, and reminder-related tables.
 
@@ -311,14 +318,14 @@ Base path: `/api`
 | Aerobics       | `/aerobics/get`, `/aerobics/add`                                                            |
 | Push           | `/push/daily`, `/push/hourlyreminder`                                                       |
 | WebSocket      | `/ws/generateticket`                                                                        |
-| Video Analysis | `/videoanalysis/getpresignedurl`, `/videoanalysis/publishjob`                               |
+| Video Analysis | `/videoanalysis/getpresignedurl`                                                            |
 
 ### API characteristics
 
 - Protected routes use DPoP-aware authentication when enabled.
 - Request validation is enforced with Zod.
 - WebSocket access is gated through a signed connection ticket.
-- Heavy media work is offloaded from the API thread into workers and the Python service.
+- Heavy media work is offloaded from the API thread into S3-triggered async processing and the Python service.
 
 ## Database Overview
 
