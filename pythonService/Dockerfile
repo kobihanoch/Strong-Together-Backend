@@ -7,11 +7,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir \
-    fastapi==0.110.0 \
-    uvicorn==0.29.0 \
-    python-multipart \
     python-dotenv \
-    "sentry-sdk[fastapi]" \
+    sentry-sdk \
     redis \
     boto3 \
     mediapipe==0.10.9 \
@@ -20,6 +17,4 @@ RUN pip install --no-cache-dir \
 
 COPY pythonService /app
 
-EXPOSE 8000
-
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "main.py"]

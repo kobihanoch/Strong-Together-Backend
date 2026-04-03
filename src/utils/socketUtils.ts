@@ -18,10 +18,9 @@ export const emitNewMessage = (userId: string, msg: MessageAfterSendResponse) =>
 export const emitVideoAnalysisResults = (
   userId: UserEntity['id'],
   results: AnalyzeVideoResultPayload<SquatRepetition>,
-  jobId: string,
 ) => {
   try {
-    getIO().to(userId).emit(`video_analysis_results${jobId}`, results);
+    getIO().to(userId).emit(`video_analysis_results`, results);
   } catch (error) {
     if (error instanceof Error && error.message === 'Socket.IO not initialized!') {
       return;

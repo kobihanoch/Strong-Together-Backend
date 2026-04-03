@@ -31,6 +31,21 @@ def download_video_from_s3(file_key):
     return None
 
 
+def get_video_metadata(file_key):
+  s3 = _create_s3_client()
+  bucket_name = os.getenv("AWS_BUCKET_NAME")
+
+  try:
+    logger.info(f"[S3]: Reading metadata for {file_key}")
+    response = s3.head_object(Bucket=bucket_name, Key=file_key)
+    metadata = response.get("Metadata") or {}
+    logger.info(f"[S3]: Loaded metadata keys for {file_key}: {list(metadata.keys())}")
+    return metadata
+  except Exception as e:
+    logger.exception(f"[S3]: Error reading metadata from S3: {e}")
+    return {}
+
+
 def delete_video_from_s3(file_key):
   s3 = _create_s3_client()
   bucket_name = os.getenv("AWS_BUCKET_NAME")
