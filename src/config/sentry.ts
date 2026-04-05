@@ -44,6 +44,13 @@ export const initSentry = (serviceName: string): void => {
 
       return event;
     },
+    beforeSendTransaction(event) {
+      if (event.tags?.botBlocked === 'true') {
+        return null;
+      }
+
+      return event;
+    },
   });
 
   initialized = true;
@@ -60,6 +67,15 @@ export const applySentryRequestContext = (req: Request): void => {
     Sentry.setUser({ id: req.user.id });
     Sentry.setTag('userId', req.user.id);
   }
+};
+
+export const markSentryBotBlocked = (reason: string): void => {
+  if (!initialized) {
+    return;
+  }
+
+  Sentry.setTag('botBlocked', 'true');
+  Sentry.setTag('botBlockedReason', reason);
 };
 
 export const setupSentryErrorHandler = (app: Express): void => {

@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import createError from 'http-errors';
 import { createLogger } from '../config/logger.ts';
+import { markSentryBotBlocked } from '../config/sentry.ts';
 
 const logger = createLogger('middleware:bot-blocker');
 
@@ -20,9 +21,13 @@ export const botBlocker = (req: Request, res: Response, next: NextFunction): voi
     return next();
   }
 
-  if (!userAgent) return next(createError(404, 'Not found'));
+  if (!userAgent) {
+    markSentryBotBlocked('missing_user_agent');
+    return next(createError(404, 'Not found'));
+  }
 
   if (acceptHeader.includes('text/html') || acceptHeader.includes('application/xml')) {
+    markSentryBotBlocked('suspicious_accept_header');
     (req.logger || logger).warn(
       { event: 'bot_blocker.accept_header_blocked', acceptHeader, path },
       'Blocked suspicious accept header',
@@ -73,6 +78,7 @@ export const botBlocker = (req: Request, res: Response, next: NextFunction): voi
     badPaths.some((bad) => bad.test(path));
 
   if (isSuspicious) {
+    markSentryBotBlocked('suspicious_user_agent_or_path');
     (req.logger || logger).warn(
       { event: 'bot_blocker.user_agent_blocked', userAgent, path },
       'Blocked suspicious user agent',
