@@ -8,7 +8,7 @@ import {
   cacheSetJSON,
   TTL_TIMEZONE,
 } from '../utils/cache.js';
-import { getAerobicsData } from './aerobicsController.js';
+import { getAerobicsData } from '../services/aerobicsService.ts';
 import { getAllMessagesData } from './messageController.js';
 import { getUserData, updateUsersReminderSettingsTimezone } from './userController.js';
 import { getExerciseTrackingData, getWorkoutPlanData } from './workoutController.js';
