@@ -10,12 +10,20 @@ const USERTIMEZONE_NS = 'xt:timezone:v1';
 
 const enabled = process.env.CACHE_ENABLED === 'true';
 const logger = createLogger('utils:cache');
-const redisUnlink = redis?.unlink as ((...keys: string[]) => Promise<unknown>) | undefined;
-const redisDel = redis?.del as ((...keys: string[]) => Promise<unknown>) | undefined;
 
 const numFromEnv = (name: string, def: number): number => {
   const v = Number(process.env[name]);
   return Number.isFinite(v) && v > 0 ? v : def;
+};
+
+const deleteRedisKeys = async (keys: string[]): Promise<void> => {
+  if (!enabled || !redis || keys.length === 0) return;
+
+  try {
+    await redis.unlink(keys);
+  } catch {
+    await redis.del(keys);
+  }
 };
 
 export const TTL_TRACKING = numFromEnv('CACHE_TTL_TRACKING_SEC', 48 * 60 * 60);
@@ -61,11 +69,7 @@ export const cacheSetJSON = async <T = any>(key: string, obj: T, ttlSec: number)
 export const cacheDeleteKey = async (key: string): Promise<void> => {
   if (!enabled || !redis) return;
   try {
-    try {
-      await redis.unlink(key);
-    } catch {
-      await redis.del(key);
-    }
+    await deleteRedisKeys([key]);
   } catch {
     // ignore
   }
@@ -113,9 +117,9 @@ export const cacheDeleteOtherTimezones = async (currentKey: string): Promise<voi
 
       if (buf.length >= 500) {
         try {
-          await redisUnlink?.(...buf);
+          await deleteRedisKeys(buf);
         } catch {
-          await redisDel?.(...buf);
+          // ignore
         }
         buf.length = 0;
       }
@@ -123,9 +127,9 @@ export const cacheDeleteOtherTimezones = async (currentKey: string): Promise<voi
   }
   if (buf.length) {
     try {
-      await redisUnlink?.(...buf);
+      await deleteRedisKeys(buf);
     } catch {
-      await redisDel?.(...buf);
+      // ignore
     }
   }
 };
