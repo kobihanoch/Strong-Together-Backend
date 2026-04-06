@@ -1,19 +1,20 @@
-import { NextFunction, Request, Response } from 'express';
-import { HttpError } from 'http-errors';
+import { ErrorRequestHandler, Response } from 'express';
 import { createLogger } from '../config/logger.ts';
 
 const logger = createLogger('middleware:error-handler');
 
-export const errorHandler = (
-  err: HttpError,
-  req: Request,
-  res: Response,
-  next: NextFunction,
+export const errorHandler: ErrorRequestHandler = (
+  err,
+  req,
+  res,
+  next,
 ): Response<{ success: boolean; message: string }> => {
   // Log to dev console error stack
   // Log to prod console error message
   const statusCode = err.statusCode || 500;
   const requestLogger = req.logger || logger;
+
+  // Log
   requestLogger.error(
     {
       err,

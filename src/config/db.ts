@@ -1,7 +1,7 @@
-import postgres from 'postgres';
 import dns from 'dns';
+import { RequestHandler } from 'express';
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { Request, Response, NextFunction } from 'express';
+import postgres from 'postgres';
 import { createLogger } from './logger.ts';
 
 dns.setDefaultResultOrder('ipv4first');
@@ -17,76 +17,71 @@ function makeClient(): postgres.Sql {
   });
 }
 
+// SQL Instance and logger
 let _sql = makeClient();
 const logger = createLogger('config:db');
 
+// Async local storage for inner handler
 const als = new AsyncLocalStorage<{
   tx: postgres.Sql | postgres.TransactionSql;
   userId?: string;
 }>();
 
+// Cיheck if TransientConnError
 function isTransientConnError(err: any): boolean {
   const msg = String(err?.message || '');
   return /CONNECTION_ENDED|ECONNRESET|terminat(ed|ion)/i.test(msg);
 }
 
 // Global tagged template: prefers the request-bound tx when present
-const sql = ((strings: TemplateStringsArray, ...values: any[]) => {
-  const store = als.getStore();
+const sql = (async (strings: TemplateStringsArray, ...values: any[]) => {
+  // Check if exists running transaction
+  const store = als.getStore(); //
   const runner = store?.tx || _sql;
-
-  return runner(strings, ...values).catch(async (err) => {
+  try {
+    return await runner(strings, ...values);
+  } catch (err) {
+    // If eror is not due connection throw to error handler (any SQL errors or server errors)
     if (!isTransientConnError(err) || store?.tx) throw err;
+
+    // If eror is due connection try to create a new instance
     try {
       await _sql.end({ timeout: 1 });
     } catch {}
     _sql = makeClient();
     return _sql(strings, ...values);
-  });
+  }
 }) as postgres.Sql;
 
+// Nested transactions
 (sql as any).begin = async (fn: (tx: postgres.TransactionSql) => Promise<any>) => {
   const store = als.getStore();
-  const runner = (store?.tx || _sql) as postgres.Sql;
-  return runner.begin(fn as any);
+  const runner = store?.tx || _sql;
+  return runner.begin(fn);
 };
 
 // Wrap a protected route with a single tx + injected claims (RLS)
-export const withRlsTx = <ReqP, ResBody, ReqBody, ReqQuery>(
-  handler: (
-    req: Request<ReqP, ResBody, ReqBody, ReqQuery>,
-    res: Response<ResBody>,
-    next: NextFunction,
-  ) => Promise<void | Response<ResBody>>,
-): ((
-  req: Request<ReqP, ResBody, ReqBody, ReqQuery>,
-  res: Response<ResBody>,
-  next: NextFunction,
-) => Promise<void | Response<ResBody>>) => {
+export const withRlsTx = (handler: RequestHandler): RequestHandler => {
   return async (req, res, next) => {
-    const userId = (req as any).user?.id;
+    // If not authed
+    const userId = req.user?.id;
     if (!userId) {
       return handler(req, res, next);
     }
-
-    try {
-      return await _sql.begin(async (tx) => {
-        const claims = JSON.stringify({
-          sub: userId,
-          role: 'authenticated',
-          aud: 'authenticated',
-        });
-        await tx`select set_config('request.jwt.claims', ${claims}, true)`;
-        await tx`SET LOCAL ROLE authenticated`;
-
-        return als.run({ tx }, async () => {
-          return handler(req, res, next);
-        });
+    // If authed
+    return await _sql.begin(async (tx) => {
+      const claims = JSON.stringify({
+        sub: userId,
+        role: 'authenticated',
+        aud: 'authenticated',
       });
-    } catch (e) {
-      next(e);
-      return;
-    }
+      await tx`select set_config('request.jwt.claims', ${claims}, true)`;
+      await tx`SET LOCAL ROLE authenticated`;
+
+      return als.run({ tx }, async () => {
+        return handler(req, res, next);
+      });
+    });
   };
 };
 
