@@ -1,23 +1,15 @@
-import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
-//import { Expo } from 'expo-server-sdk';
-import createError from 'http-errors';
-import mime from 'mime';
-import path from 'path';
-import sql from '../config/db.js';
 import { createLogger } from '../config/logger.ts';
 import {
-  queryAuthenticatedUserById,
-  queryDeleteUserById,
-  queryGetUserProfilePicURL,
-  queryInsertUser,
-  queryUpdateAuthenticatedUser,
-  queryUpdateUserProfilePicURL,
-  queryUserExistsByUsernameOrEmail,
-} from '../queries/userQueries.js';
-import { sendVerificationEmail, sendVerificationEmailForEmailUpdate } from '../services/emailService.js';
-import { deleteFromSupabase, uploadBufferToSupabase } from '../services/supabaseStorageService.js';
-import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from '../templates/responseHTMLTemplates.js';
+  createUserData,
+  deleteSelfUserData,
+  deleteUserProfilePicData,
+  getUserData,
+  saveUserPushTokenData,
+  setProfilePicAndUpdateDBData,
+  updateAuthenticatedUserData,
+  updateSelfEmailData,
+} from '../services/userService.ts';
 import {
   CreateUserBody,
   DeleteUserProfilePicBody,
@@ -29,57 +21,35 @@ import {
   GetAuthenticatedUserByIdResponse,
   SetProfilePicAndUpdateDBResponse,
   UpdateAuthenticatedUserResponse,
-  UserDataResponse,
 } from '../types/api/user/responses.ts';
-import { ChangeEmailTokenPayload } from '../types/dto/user.dto.ts';
-import { cacheStoreJti } from '../utils/cache.js';
-import { decodeChangeEmailToken } from '../utils/tokenUtils.js';
 
-//const expo = new Expo();
 const logger = createLogger('controller:user');
 
-// ---------- HELPERS -----------------
-export const getUserData = async (userId: string): Promise<{ payload: UserDataResponse['user_data'] }> => {
-  const rows = await queryAuthenticatedUserById(userId);
-  const [user] = rows;
-  if (!user) throw createError(404, 'User not found');
-  return { payload: user.user_data };
-};
-
-export const updateUsersReminderSettingsTimezone = async (userId: string, tz: string): Promise<void> => {
-  await sql`update public.user_reminder_settings urs set timezone=${tz}::text where urs.user_id = ${userId}::uuid and urs.timezone is distinct from ${tz}::text;`;
-};
-
-// -----------------------------------------------------------
-
-// @desc    Create a new user
-// @route   POST /api/users/create
-// @access  Public
+/**
+ * Register a new local user account.
+ *
+ * Creates the user, initializes default reminder settings, and sends the first
+ * verification email.
+ *
+ * Route: POST /api/users/create
+ * Access: Public
+ */
 export const createUser = async (
   req: Request<{}, CreateUserResponse, CreateUserBody>,
   res: Response<CreateUserResponse>,
 ): Promise<void | Response> => {
-  const { username, fullName, email, password, gender } = req.body;
-  // Check if user already exists
-  const rowsExists = await queryUserExistsByUsernameOrEmail(username, email);
-  const [user] = rowsExists;
-  if (user) throw createError(400, 'User already exists');
-
-  const salt = await bcrypt.genSalt(10);
-  const hash = await bcrypt.hash(password, salt);
-
-  const created = await queryInsertUser(username!, fullName, email!, gender, hash);
-
-  await sendVerificationEmail(email as string, created.id, fullName, {
-    ...(req.requestId ? { requestId: req.requestId } : {}),
-  });
-
-  return res.status(201).json({ message: 'User created successfully!', user: created });
+  const payload = await createUserData(req.body, req.requestId);
+  return res.status(201).json(payload);
 };
 
-// @desc    Get authenticated user by ID
-// @route   GET /api/users/get
-// @access  Private
+/**
+ * Get the authenticated user's profile.
+ *
+ * Returns the current user's persisted profile payload.
+ *
+ * Route: GET /api/users/get
+ * Access: User
+ */
 export const getAuthenticatedUserById = async (
   req: Request<{}, GetAuthenticatedUserByIdResponse>,
   res: Response<GetAuthenticatedUserByIdResponse>,
@@ -88,206 +58,104 @@ export const getAuthenticatedUserById = async (
   return res.status(200).json(payload);
 };
 
-// @desc    Update authenticated user
-// @route   PUT /api/users/updateself
-// @access  Private
+/**
+ * Update the authenticated user's profile details.
+ *
+ * Persists allowed profile fields and sends an email-verification flow when
+ * the submitted email differs from the current one.
+ *
+ * Route: PUT /api/users/updateself
+ * Access: User
+ */
 export const updateAuthenticatedUser = async (
   req: Request<{}, UpdateAuthenticatedUserResponse, UpdateUserBody>,
   res: Response<UpdateAuthenticatedUserResponse>,
 ): Promise<Response<UpdateAuthenticatedUserResponse>> => {
-  const { username, fullName, email } = req.body;
-  const { payload: currentUser } = await getUserData(req.user!.id);
+  const payload = await updateAuthenticatedUserData(req.user!.id, req.body, req.requestId);
 
-  let rowsUpdated: UserDataResponse[];
-  try {
-    rowsUpdated = await queryUpdateAuthenticatedUser(req.user!.id, { username, fullName, email });
-  } catch (e: any) {
-    if (e.code === '23505') {
-      throw createError(409, 'Username or email already in use');
-    }
-    throw e;
+  if (payload.message === 'User not found') {
+    return res.status(404).json(payload as any);
   }
 
-  const [updated] = rowsUpdated;
-
-  if (!updated) return res.status(404).json({ message: 'User not found' } as any);
-
-  const { user_data: userData } = updated;
-
-  const currentEmail = (currentUser.email || '').trim().toLowerCase();
-  const candidate = (email || '').trim().toLowerCase();
-
-  let emailChanged = false;
-  if (candidate && candidate !== currentEmail) {
-    await sendVerificationEmailForEmailUpdate(candidate, req.user!.id, userData.name || 'there', {
-      ...(req.requestId ? { requestId: req.requestId } : {}),
-    });
-    emailChanged = true;
-  }
-
-  return res.status(200).json({
-    message: 'User updated successfully',
-    emailChanged,
-    user: updated.user_data,
-  });
+  return res.status(200).json(payload);
 };
 
-// @desc    Confirm email change (via link)
-// @route   PUT /api/users/changeemail?token=...
-// @access  Public (link-based)
+/**
+ * Confirm a pending email change from a signed email link.
+ *
+ * Validates the signed change-email token, enforces one-time use, updates the
+ * email address, and returns an HTML result page.
+ *
+ * Route: GET /api/users/changeemail
+ * Access: Public
+ */
 export const updateSelfEmail = async (req: Request, res: Response): Promise<Response> => {
   const requestLogger = req.logger || logger;
-  const token = req.query?.token as string | undefined;
-  if (!token)
-    return res
-      .status(401)
-      .type('html')
-      .set('Cache-Control', 'no-store')
-      .send(generateEmailChangeFailedHTML('Missing token'));
+  const { statusCode, html } = await updateSelfEmailData(req.query?.token as string | undefined, requestLogger);
 
-  const decoded = decodeChangeEmailToken(token) as ChangeEmailTokenPayload | null;
-  if (!decoded)
-    return res
-      .status(401)
-      .type('html')
-      .set('Cache-Control', 'no-store')
-      .send(generateEmailChangeFailedHTML('Invalid or expired link'));
-
-  const { jti, sub, newEmail, exp, iss, typ } = decoded;
-
-  // basic claim validation
-  if (iss !== 'strong-together' || typ !== 'email-confirm' || !jti || !sub || !newEmail || !exp) {
-    return res
-      .status(400)
-      .type('html')
-      .set('Cache-Control', 'no-store')
-      .send(generateEmailChangeFailedHTML('Malformed token'));
-  }
-
-  // compute remaining TTL from exp (JWT 'exp' is seconds since epoch)
-  const nowSec = Math.floor(Date.now() / 1000);
-  const ttlSec = Math.max(1, exp - nowSec);
-
-  // JTI single-use allow-list
-  const inserted = await cacheStoreJti('emailchange', jti, ttlSec);
-  if (!inserted) {
-    return res
-      .status(401)
-      .type('html')
-      .set('Cache-Control', 'no-store')
-      .send(generateEmailChangeFailedHTML('URL already used or expired'));
-  }
-
-  const normalized = newEmail.trim().toLowerCase();
-
-  try {
-    await sql.begin(async (trx) => {
-      await trx`
-        UPDATE users
-        SET email = ${normalized}
-        WHERE id = ${sub}::uuid
-      `;
-    });
-  } catch (e: any) {
-    if (e.code === '23505') {
-      requestLogger.warn({ event: 'user.email_change_conflict', userId: sub }, 'Email already in use');
-      return res
-        .status(409)
-        .type('html')
-        .set('Cache-Control', 'no-store')
-        .send(generateEmailChangeFailedHTML('Email already in use'));
-    }
-    requestLogger.error({ err: e, event: 'user.email_change_failed', userId: sub }, 'Failed to update user email');
-    return res
-      .status(500)
-      .type('html')
-      .set('Cache-Control', 'no-store')
-      .send(generateEmailChangeFailedHTML('Server error'));
-  }
-
-  // return HTML 200 (not 204)
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  return res.status(200).type('html').set('Cache-Control', 'no-store').send(generateEmailChangeSuccessHTML());
+  return res.status(statusCode).type('html').set('Cache-Control', 'no-store').send(html);
 };
 
-// @desc    Delete a user by ID
-// @route   DELETE /api/users/deleteself
-// @access  Private/Admin
+/**
+ * Delete the authenticated user's account.
+ *
+ * Removes the current user's account and returns a success message.
+ *
+ * Route: DELETE /api/users/deleteself
+ * Access: User
+ */
 export const deleteSelfUser = async (req: Request, res: Response): Promise<Response> => {
-  await queryDeleteUserById(req.user!.id);
+  await deleteSelfUserData(req.user!.id);
   return res.json({ message: 'User deleted successfully' });
 };
 
-// @desc    Save user's expo push token to DB
-// @route   PUT /api/users/pushtoken
-// @access  Private
+/**
+ * Save or update the authenticated user's push notification token.
+ *
+ * Persists the submitted device push token for future notification delivery.
+ *
+ * Route: PUT /api/users/pushtoken
+ * Access: User
+ */
 export const saveUserPushToken = async (
   req: Request<{}, {}, SaveUserPushTokenBody>,
   res: Response,
 ): Promise<Response> => {
-  await sql`UPDATE users SET push_token=${req.body.token} WHERE id=${req.user!.id}::uuid`;
+  await saveUserPushTokenData(req.user!.id, req.body);
   return res.status(204).end();
 };
 
-// @desc    Stores profile pic in bucket, and updates user DB to profile pic new URL
-// @route   PUT /api/users/setprofilepic
-// @access  Private
+/**
+ * Upload a new profile image for the authenticated user.
+ *
+ * Stores the uploaded image in Supabase Storage, updates the user's profile
+ * image path, and schedules cleanup of the previous image when applicable.
+ *
+ * Route: PUT /api/users/setprofilepic
+ * Access: User
+ */
 export const setProfilePicAndUpdateDB = async (
   req: Request<{}, SetProfilePicAndUpdateDBResponse> & { file?: any },
   res: Response<SetProfilePicAndUpdateDBResponse>,
 ): Promise<Response<SetProfilePicAndUpdateDBResponse>> => {
-  if (!req.file) {
-    throw createError(400, 'No file provided');
-  }
-
-  const userId = req.user!.id;
-
-  // Media params
-  const ext = path.extname(req.file.originalname) || `.${mime.getExtension(req.file.mimetype) || 'jpg'}`;
-  const key = `${userId}/${Date.now()}${ext}`;
-
-  const { path: newPath, publicUrl } = await uploadBufferToSupabase(
-    process.env.BUCKET_NAME as string,
-    key,
-    req.file.buffer,
-    req.file.mimetype,
-  );
-
-  // Get last profile pic url to delete
-  const [row] = await queryGetUserProfilePicURL(userId);
-  const oldPath = row?.profile_image_url;
-
-  // Update user profile url
-  await queryUpdateUserProfilePicURL(userId, newPath);
-
-  // Delete last image from bucket
-  if (oldPath && oldPath !== newPath) {
-    deleteFromSupabase(oldPath).catch((e: any) => {
-      (req.logger || logger).warn(
-        {
-          err: e,
-          event: 'user.old_profile_image_delete_failed',
-          userId,
-          oldPath,
-          responseData: e?.response?.data,
-        },
-        'Failed to delete old profile image',
-      );
-    });
-  }
-
-  return res.status(201).json({ path: newPath, url: publicUrl, message: 'Upload success' });
+  const payload = await setProfilePicAndUpdateDBData(req.user!.id, req.file, req.logger || logger);
+  return res.status(201).json(payload);
 };
 
-// @desc    Deletes a pic from bucket and from user DB
-// @route   DELETE /api/users/deleteprofilepic
-// @access  Private
+/**
+ * Delete the authenticated user's profile image.
+ *
+ * Removes the stored image from object storage and clears the profile image
+ * reference from the user's record.
+ *
+ * Route: DELETE /api/users/deleteprofilepic
+ * Access: User
+ */
 export const deleteUserProfilePic = async (
   req: Request<{}, {}, DeleteUserProfilePicBody>,
   res: Response,
 ): Promise<Response> => {
-  await deleteFromSupabase(req.body.path);
-  // Update user profile url
-  await queryUpdateUserProfilePicURL(req.user!.id, null);
+  await deleteUserProfilePicData(req.user!.id, req.body);
   return res.status(200).end();
 };

@@ -1,5 +1,9 @@
 import axios from "axios";
 import createError from "http-errors";
+import { queryGetAllUsersToSendHourlyReminder, queryGetAllUsersWithNotificationsEnabled } from '../queries/pushQueries.js';
+import { enqueuePushNotifications } from '../queues/pushNotifications/pushNotificationsProducer.ts';
+import type { NotificationPayload } from '../types/dto/notifications.dto.ts';
+import { computeDelayFromUTC } from '../utils/pushUtils.js';
 
 // Returns { ok: true, id? } OR { ok: false, permanent: true, reason }
 export async function sendPushNotification(token: string, title: string, body: string) {
@@ -59,3 +63,57 @@ function isExpoTransientCode(code = "") {
     c.includes("server")
   );
 }
+
+export const sendDailyPushData = async (requestId?: string): Promise<{ success: true; message: string; userCount: number }> => {
+  const users = await queryGetAllUsersWithNotificationsEnabled();
+
+  await enqueuePushNotifications(
+    users.map((user) => ({
+      token: user.push_token!,
+      title: `Hello, ${user.name!.split(' ')[0]}!`,
+      body: 'Ready to go workout?',
+      delay: 0,
+      expiresAt: 0,
+      ...(requestId ? { requestId } : {}),
+    })),
+  );
+
+  return { success: true, message: 'Daily notifications enqueued', userCount: users.length };
+};
+
+export const sendHourlyReminderPushData = async (
+  requestId?: string,
+): Promise<{ success: true; message: string; userCount: number }> => {
+  const users = await queryGetAllUsersToSendHourlyReminder();
+  const pushNotifications: NotificationPayload[] = [];
+  const now = new Date();
+
+  for (const user of users) {
+    const delayMs = computeDelayFromUTC(now, user.estimated_time_utc, user.reminder_offset_minutes);
+
+    if (delayMs === null) {
+      continue;
+    }
+
+    pushNotifications.push({
+      token: user.push_token!,
+      title: 'Workout Reminder',
+      body: `${user.name!.split(' ')[0]}, get ready! Your ${
+        user.split_name
+      } workout kicks off in ${user.reminder_offset_minutes} minutes.`,
+      delay: delayMs,
+      expiresAt: 0,
+      ...(requestId ? { requestId } : {}),
+    });
+  }
+
+  if (pushNotifications.length > 0) {
+    await enqueuePushNotifications(pushNotifications);
+  }
+
+  return {
+    success: true,
+    message: `Enqueued ${pushNotifications.length} workout reminders`,
+    userCount: users.length,
+  };
+};

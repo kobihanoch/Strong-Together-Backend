@@ -1,27 +1,21 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import { generateTicketData } from '../services/webSocketsService.ts';
 import { GenerateTicketBody } from '../types/api/webSockets/requests.ts';
 import { GenerateTicketResponse } from '../types/api/webSockets/responses.ts';
 
-// @desc    Generates a ticket for websocket connection
-// @route   POST /api/ws/generateticket
-// @access  Private
+/**
+ * Generate a signed WebSocket connection ticket for the authenticated user.
+ *
+ * Returns a short-lived signed token that the client can use to establish a
+ * Socket.IO session.
+ *
+ * Route: POST /api/ws/generateticket
+ * Access: User
+ */
 export const generateTicket = async (
   req: Request<{}, GenerateTicketResponse, GenerateTicketBody>,
   res: Response<GenerateTicketResponse>,
 ): Promise<Response<GenerateTicketResponse>> => {
-  const usernameFromBody = req.body.username; // optional, server can also look up
-  const payload = {
-    id: req.user!.id,
-    username: usernameFromBody,
-    jti: crypto.randomUUID(), // optional: store in Redis for one-time use
-  };
-
-  const ticket = jwt.sign(payload, process.env.JWT_SOCKET_SECRET || '', {
-    expiresIn: '5400s', // 1:30 Hrs
-    issuer: 'strong-together',
-    audience: 'socket',
-  });
-
-  return res.status(201).json({ ticket });
+  const payload = await generateTicketData(req.user!.id, req.body.username);
+  return res.status(201).json(payload);
 };

@@ -1,14 +1,20 @@
-import { Request, Response } from "express";
-import { queryGetExerciseMapByMuscle } from "../queries/exercisesQueries.js";
-import { GetAllExercisesResponse } from "../types/api/exercises/responses.ts";
+import { Request, Response } from 'express';
+import { getAllExercisesData } from '../services/exercisesService.ts';
+import { GetAllExercisesResponse } from '../types/api/exercises/responses.ts';
 
-// @desc    Get all exercises
-// @route   GET /api/exercises/getall
-// @access  Private
+/**
+ * Get the exercise catalog grouped for workout-building flows.
+ *
+ * Returns the full exercise map used by the client when composing or editing
+ * workout plans.
+ *
+ * Route: GET /api/exercises/getall
+ * Access: User
+ */
 export const getAllExercises = async (
   req: Request<{}, GetAllExercisesResponse>,
   res: Response<GetAllExercisesResponse>,
 ): Promise<Response<GetAllExercisesResponse>> => {
-  const data = await queryGetExerciseMapByMuscle();
+  const data = await getAllExercisesData();
   return res.status(200).json(data);
 };

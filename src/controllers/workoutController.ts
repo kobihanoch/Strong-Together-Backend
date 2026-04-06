@@ -1,31 +1,16 @@
 import type { Request, Response } from 'express';
-import createError from 'http-errors';
 import {
-  queryAddWorkout,
-  queryGetExerciseTrackingAndStats,
-  queryGetWorkoutSplitsObj,
-  queryInsertUserFinishedWorkout,
-  queryWholeUserWorkoutPlan,
-} from '../queries/workoutQueries.js';
-import { sendSystemMessageToUserWorkoutDone } from '../services/messagesService.ts';
-import {
-  buildAnalyticsKeyStable,
-  buildPlanKeyStable,
-  buildTrackingKeyStable,
-  cacheDeleteKey,
-  cacheDeleteOtherTimezones,
-  cacheGetJSON,
-  cacheSetJSON,
-  TTL_PLAN,
-  TTL_TRACKING,
-} from '../utils/cache.ts';
+  addWorkoutData,
+  finishUserWorkoutData,
+  getExerciseTrackingData,
+  getWorkoutPlanData,
+} from '../services/workoutService.ts';
 import type {
-  GetExerciseTrackingResponse,
-  GetWholeUserWorkoutPlanResponse,
   AddWorkoutResponse,
   FinishUserWorkoutResponse,
+  GetExerciseTrackingResponse,
+  GetWholeUserWorkoutPlanResponse,
 } from '../types/api/workouts/responses.ts';
-import type { ExerciseTrackingAndStats } from '../types/dto/exerciseTracking.dto.ts';
 import {
   AddWorkoutBody,
   FinishUserWorkoutBody,
@@ -33,68 +18,15 @@ import {
   GetWholeUserWorkoutPlanQuery,
 } from '../types/api/workouts/requests.ts';
 
-/** ---------------------------
- * Pure helpers (no req/res)
- * ---------------------------*/
-
-// Returns { payload, cacheHit }
-export const getWorkoutPlanData = async (
-  userId: string,
-  fromCache: boolean = true,
-  tz: string = 'Asia/Jerusalem',
-): Promise<{ payload: GetWholeUserWorkoutPlanResponse; cacheHit: boolean }> => {
-  const planKey = buildPlanKeyStable(userId, tz);
-  if (fromCache) {
-    await cacheDeleteOtherTimezones(planKey);
-    const cached = await cacheGetJSON<GetWholeUserWorkoutPlanResponse>(planKey);
-    if (cached) {
-      return { payload: cached, cacheHit: true };
-    }
-  }
-
-  const rows = await queryWholeUserWorkoutPlan(userId, tz);
-  const [plan] = rows;
-  if (!plan) {
-    const empty = { workoutPlan: null, workoutPlanForEditWorkout: null };
-    await cacheSetJSON(planKey, empty, TTL_PLAN);
-    return { payload: empty, cacheHit: false };
-  }
-
-  const { splits } = await queryGetWorkoutSplitsObj(rows[0].id);
-  const payload = { workoutPlan: plan, workoutPlanForEditWorkout: splits };
-  await cacheSetJSON(planKey, payload, TTL_PLAN);
-  return { payload, cacheHit: false };
-};
-
-// Returns { payload, cacheHit }
-export const getExerciseTrackingData = async (
-  userId: string,
-  days: number = 45,
-  fromCache: boolean = true,
-  tz: string,
-): Promise<{ payload: ExerciseTrackingAndStats; cacheHit: boolean }> => {
-  const key = buildTrackingKeyStable(userId, days, tz);
-  if (fromCache) {
-    await cacheDeleteOtherTimezones(key);
-    const cached = await cacheGetJSON(key);
-    if (cached) {
-      return { payload: cached, cacheHit: true };
-    }
-  }
-
-  const data = await queryGetExerciseTrackingAndStats(userId, days, tz);
-  const payload = data;
-  await cacheSetJSON(key, payload, TTL_TRACKING);
-  return { payload, cacheHit: false };
-};
-
-/** ---------------------------
- * Express handlers (use helpers)
- * ---------------------------*/
-
-// @desc    Get authenticated user workout (plan, splits, and exercises)
-// @route   GET /api/workouts/getworkout
-// @access  Private
+/**
+ * Get the authenticated user's active workout plan.
+ *
+ * Returns the current workout plan and editable split structure for the
+ * requested timezone, and sets `X-Cache` to reflect cache usage.
+ *
+ * Route: GET /api/workouts/getworkout
+ * Access: User
+ */
 export const getWholeUserWorkoutPlan = async (
   req: Request<{}, GetWholeUserWorkoutPlanResponse, {}, GetWholeUserWorkoutPlanQuery>,
   res: Response<GetWholeUserWorkoutPlanResponse>,
@@ -106,9 +38,15 @@ export const getWholeUserWorkoutPlan = async (
   return res.status(200).json(payload);
 };
 
-// @desc    Get authenticated user exercise tracking (Past 45 days only)
-// @route   GET /api/workouts/gettracking
-// @access  Private
+/**
+ * Get the authenticated user's recent exercise tracking history.
+ *
+ * Returns tracking analytics and grouped tracking maps for the last 45 days in
+ * the requested timezone, and sets `X-Cache` to reflect cache usage.
+ *
+ * Route: GET /api/workouts/gettracking
+ * Access: User
+ */
 export const getExerciseTracking = async (
   req: Request<{}, GetExerciseTrackingResponse, {}, GetExerciseTrackingQuery>,
   res: Response<GetExerciseTrackingResponse>,
@@ -121,80 +59,48 @@ export const getExerciseTracking = async (
   return res.status(200).json(payload);
 };
 
-// @desc    Finish user workout
-// @route   POST /api/workouts/finishworkout
-// @access  Private
+/**
+ * Persist a completed workout for the authenticated user.
+ *
+ * Stores the submitted workout summary and tracking rows, refreshes tracking
+ * cache state, and returns the updated tracking payload.
+ *
+ * Route: POST /api/workouts/finishworkout
+ * Access: User
+ */
 export const finishUserWorkout = async (
   req: Request<{}, FinishUserWorkoutResponse, FinishUserWorkoutBody>,
   res: Response<FinishUserWorkoutResponse>,
 ): Promise<Response<FinishUserWorkoutResponse>> => {
-  const workoutArray = req.body.workout;
-  const tz = req.body.tz || 'Asia/Jerusalem';
-  const workoutStartUtc = req.body.workout_start_utc || null;
-  const workoutEndUtc = req.body.workout_end_utc || null;
-
-  if (!Array.isArray(workoutArray) || workoutArray.length === 0) {
-    throw createError(400, 'Not a valid workout');
-  }
-
-  const userId = req.user!.id;
-
-  const startIso = workoutStartUtc;
-  const endIso = workoutEndUtc;
-
-  await queryInsertUserFinishedWorkout(userId, workoutArray, startIso, endIso);
-
-  // refresh tracking cache
-  const { payload } = await getExerciseTrackingData(userId, 45, false, tz);
-  await cacheSetJSON(buildTrackingKeyStable(userId, 45, tz), payload, TTL_TRACKING);
-
-  sendSystemMessageToUserWorkoutDone(userId);
+  const payload = await finishUserWorkoutData(req.user!.id, req.body);
   return res.status(200).json(payload);
 };
 
-// @desc    Delete user's workout
-// @route   DELETE /api/workouts/delete
-// @access  Private
+/**
+ * Delete a workout owned by the authenticated user.
+ *
+ * This handler is currently a placeholder and does not perform any action.
+ *
+ * Route: DELETE /api/workouts/delete
+ * Access: User
+ */
 export const deleteUserWorkout = async (req: Request, res: Response): Promise<void> => {
   return;
 };
 
-// @desc    Add workout
-// @route   POST /api/workouts/add
-// @access  Private
+/**
+ * Create or replace the authenticated user's workout plan.
+ *
+ * Persists the submitted workout structure, invalidates related caches,
+ * rebuilds the plan snapshot, and returns the updated plan payload.
+ *
+ * Route: POST /api/workouts/add
+ * Access: User
+ */
 export const addWorkout = async (
   req: Request<{}, AddWorkoutResponse, AddWorkoutBody>,
   res: Response<AddWorkoutResponse>,
 ): Promise<Response<AddWorkoutResponse>> => {
-  const userId = req.user!.id;
-  const { workoutData, workoutName, tz } = req.body;
-
-  await queryAddWorkout(userId, workoutData, workoutName);
-
-  const planKey = buildPlanKeyStable(userId, tz);
-  const analyticsKey = buildAnalyticsKeyStable(userId);
-  await cacheDeleteKey(analyticsKey);
-  await cacheDeleteKey(planKey);
-
-  // Rebuild plan and cache
-  const rows = await queryWholeUserWorkoutPlan(userId, tz);
-  const [plan] = rows;
-  const { splits } = await queryGetWorkoutSplitsObj(plan.id);
-
-  const payload = {
-    message: 'Workout created successfully!',
-    workoutPlan: plan,
-    workoutPlanForEditWorkout: splits,
-  };
-
-  await cacheSetJSON(
-    buildPlanKeyStable(userId, tz),
-    {
-      workoutPlan: plan,
-      workoutPlanForEditWorkout: splits,
-    },
-    TTL_PLAN,
-  );
-
+  const payload = await addWorkoutData(req.user!.id, req.body);
   return res.status(200).json(payload);
 };
