@@ -1,6 +1,6 @@
-import { deleteMessageRequest } from '../../../validators/messages/deleteMessageRequest.schema.ts';
-import { markMessageAsReadRequest } from '../../../validators/messages/markMessageAsReadRequest.schema.ts';
-import { getAllMessagesRequest } from './../../../validators/messages/getAllUserMessagesRequest.schema.ts';
+import { deleteMessageRequest } from '../../../features/messages/deleteMessageRequest.schema.ts';
+import { markMessageAsReadRequest } from '../../../features/messages/markMessageAsReadRequest.schema.ts';
+import { getAllMessagesRequest } from './../../../features/messages/getAllUserMessagesRequest.schema.ts';
 import z from 'zod';
 
 export type GetAllUserMessagesQuery = z.infer<typeof getAllMessagesRequest.shape.query>;

@@ -1,8 +1,8 @@
 import z from 'zod';
-import { createUserRequest } from '../../../validators/user/createUserRequest.schema.ts';
-import { saveUserPushTokenRequest } from '../../../validators/user/saveUserPushTokenRequest.schema.ts';
-import { updateUserRequest } from '../../../validators/user/updateUserRequest.schema.ts';
-import { deleteProfilePicRequest } from '../../../validators/user/deleteUserProfilePicRequest.schema.ts';
+import { createUserRequest } from '../../../features/user/createUserRequest.schema.ts';
+import { saveUserPushTokenRequest } from '../../../features/user/saveUserPushTokenRequest.schema.ts';
+import { updateUserRequest } from '../../../features/user/updateUserRequest.schema.ts';
+import { deleteProfilePicRequest } from '../../../features/user/deleteUserProfilePicRequest.schema.ts';
 
 export type CreateUserBody = z.infer<typeof createUserRequest.shape.body>;
 export type UpdateUserBody = z.infer<typeof updateUserRequest.shape.body>;

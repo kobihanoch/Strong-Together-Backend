@@ -1,11 +1,11 @@
 import z from 'zod';
-import { loginRequest } from '../../../validators/auth/loginRequest.schema.ts';
-import { verifyAccountRequest } from '../../../validators/auth/verifyUserAccountRequest.schema.ts';
-import { sendVerificationMailRequest } from '../../../validators/auth/sendVerificationMailRequest.schema.ts';
-import { changeEmailAndVerifyRequest } from '../../../validators/auth/changeEmailAndVerifyRequest.schema.ts';
-import { checkUserVerifyRequest } from '../../../validators/auth/checkUserVerifyRequest.schema.ts';
-import { sendChangePassEmailRequest } from '../../../validators/auth/sendChangePassEmailRequest.schema.ts';
-import { resetPasswordRequest } from '../../../validators/auth/resetPasswordRequest.schema.ts';
+import { loginRequest } from '../../../features/auth/loginRequest.schema.ts';
+import { verifyAccountRequest } from '../../../features/auth/verifyUserAccountRequest.schema.ts';
+import { sendVerificationMailRequest } from '../../../features/auth/sendVerificationMailRequest.schema.ts';
+import { changeEmailAndVerifyRequest } from '../../../features/auth/changeEmailAndVerifyRequest.schema.ts';
+import { checkUserVerifyRequest } from '../../../features/auth/checkUserVerifyRequest.schema.ts';
+import { sendChangePassEmailRequest } from '../../../features/auth/sendChangePassEmailRequest.schema.ts';
+import { resetPasswordRequest } from '../../../features/auth/resetPasswordRequest.schema.ts';
 
 export type LoginRequestBody = z.infer<typeof loginRequest.shape.body>;
 export type VerifyUserAccountQuery = z.infer<typeof verifyAccountRequest.shape.query>;

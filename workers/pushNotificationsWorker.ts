@@ -1,5 +1,5 @@
 import pushNotificationsQueue from '../src/queues/pushNotifications/pushNotificationsQueue.ts';
-import { sendPushNotification } from '../src/services/pushService.ts';
+import { sendPushNotification } from '../src/features/push/pushService.ts';
 import { createLogger } from '../src/config/logger.ts';
 import { captureWorkerException } from '../src/config/sentry.ts';
 

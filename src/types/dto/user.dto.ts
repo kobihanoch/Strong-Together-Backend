@@ -1,5 +1,5 @@
 import z from 'zod';
-import { updateUserRequest } from '../../validators/user/updateUserRequest.schema.ts';
+import { updateUserRequest } from '../../features/user/updateUserRequest.schema.ts';
 
 export interface ChangeEmailTokenPayload {
   jti: string;
