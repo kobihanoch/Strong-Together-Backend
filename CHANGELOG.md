@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.1.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v3.1.0...v3.1.1) (2026-04-06)
+
+
+### Bug Fixes
+
+* **Cache:** Fixed Redis key deletion logic caused errors on timezones changes ([ee351ea](https://github.com/kobihanoch/Strong-Together-Backend/commit/ee351eac8969e14f084e3139feaea4f0a39255f0))
+* **Sentry:** Sentry now will not trace bots requests ([d983628](https://github.com/kobihanoch/Strong-Together-Backend/commit/d98362875094023ba5d9c3655e168639ad2a504d))
+
+
+### Code Refactoring
+
+* **Sentry:** Exported logging and Sentry middleware into middlewares ([ac161cb](https://github.com/kobihanoch/Strong-Together-Backend/commit/ac161cba3f0c6b50a4aff079cdb625af67c076e8))
+
 ## [3.1.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v3.0.1...v3.1.0) (2026-04-03)
 
 
