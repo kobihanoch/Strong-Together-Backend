@@ -14,7 +14,7 @@ import {
 } from '../helpers/auth.ts';
 import { expectSchema } from '../helpers/assertSchema.ts';
 import { addAerobicsRecord, getAerobics } from '../helpers/aerobics.ts';
-import { getAerobicsRowsForUser } from '../helpers/db.ts';
+import { waitForAerobicsRowsForUser } from '../helpers/db.ts';
 
 let app: ReturnType<typeof createApp>;
 
@@ -87,7 +87,7 @@ describe('Aerobics', () => {
       ],
     });
 
-    const rows = await getAerobicsRowsForUser(userId);
+    const rows = await waitForAerobicsRowsForUser(userId, 1);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
       type: 'Walk',
@@ -161,7 +161,7 @@ describe('Aerobics', () => {
     });
     expect(firstWeeklyBucket(addResponse.body).records).toHaveLength(2);
 
-    const rows = await getAerobicsRowsForUser(userId);
+    const rows = await waitForAerobicsRowsForUser(userId, 2);
     expect(rows).toHaveLength(2);
     expect(rows.map((row) => row.type)).toEqual(['Walk', 'Run']);
     expect(rows.reduce((sum, row) => sum + row.duration_mins, 0)).toBe(30);
@@ -194,7 +194,7 @@ describe('Aerobics', () => {
       }),
     ]);
 
-    const rows = await getAerobicsRowsForUser(userId);
+    const rows = await waitForAerobicsRowsForUser(userId, 1);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
       type: 'Bike',
@@ -272,7 +272,7 @@ describe('Aerobics', () => {
     expect(Object.keys(response.body.daily)).toHaveLength(1);
     expect(Object.keys(response.body.weekly)).toHaveLength(1);
 
-    const rows = await getAerobicsRowsForUser(userId);
+    const rows = await waitForAerobicsRowsForUser(userId, 1);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
       type: 'Walk',

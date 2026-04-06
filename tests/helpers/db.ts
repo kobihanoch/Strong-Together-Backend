@@ -198,6 +198,22 @@ export async function getAerobicsRowsForUser(userId: string) {
   }));
 }
 
+export async function waitForAerobicsRowsForUser(userId: string, expectedCount: number) {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const rows = await getAerobicsRowsForUser(userId);
+
+    if (rows.length === expectedCount) {
+      return rows;
+    }
+
+    if (attempt < 9) {
+      await wait(25);
+    }
+  }
+
+  return getAerobicsRowsForUser(userId);
+}
+
 export async function getUserAuthStateByUsername(username: string) {
   const [row] = await sql<
     Pick<UserEntity, 'id' | 'username' | 'email' | 'name' | 'gender' | 'role' | 'password' | 'is_verified'>[]
