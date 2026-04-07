@@ -1,7 +1,9 @@
 import { z } from 'zod';
-import { userDataSchema, exerciseTrackingAndStatsSchema, userAerobicsResponseSchema } from '../../validators/shared/response-schemas.ts';
+import { userAerobicsResponseSchema } from '../aerobics/aerobics.schemas.ts';
 import { getAllUserMessagesResponseSchema } from '../messages/messages.schemas.ts';
+import { userDataSchema } from '../user/update/update.schemas.ts';
 import { getWholeUserWorkoutPlanResponseSchema } from '../workout/plan/plan.schemas.ts';
+import { exerciseTrackingAndStatsSchema } from '../workout/tracking/tracking.schemas.ts';
 
 export const bootstrapRequest = z.object({
   query: z.object({

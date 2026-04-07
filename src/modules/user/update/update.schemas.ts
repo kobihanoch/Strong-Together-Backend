@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { userDataSchema } from '../../../validators/shared/response-schemas.ts';
 
 export const updateUserRequest = z.object({
   body: z
@@ -27,6 +26,22 @@ export const deleteProfilePicRequest = z.object({
   body: z.object({
     path: z.string(),
   }),
+});
+
+export const userDataSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  email: z.string().nullable(),
+  name: z.string(),
+  gender: z.string(),
+  created_at: z.string(),
+  profile_image_url: z.string().nullable(),
+  push_token: z.string().nullable(),
+  role: z.string(),
+  is_first_login: z.boolean(),
+  token_version: z.number(),
+  is_verified: z.boolean(),
+  auth_provider: z.string(),
 });
 
 export const userDataResponseSchema = z.object({

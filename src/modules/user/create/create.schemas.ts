@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { createUserUserSchema } from '../../../validators/shared/response-schemas.ts';
 
 export const createUserRequest = z.object({
   body: z.object({
@@ -33,6 +32,16 @@ export const createUserRequest = z.object({
       z.enum(['Male', 'Female', 'Other', 'Unknown']),
     ),
   }),
+});
+
+export const createUserUserSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  name: z.string(),
+  email: z.string().nullable(),
+  gender: z.string(),
+  role: z.string(),
+  created_at: z.string(),
 });
 
 export const createUserResponseSchema = z.object({

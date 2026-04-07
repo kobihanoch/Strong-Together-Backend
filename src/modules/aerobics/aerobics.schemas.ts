@@ -1,5 +1,4 @@
 import z from 'zod';
-import { userAerobicsResponseSchema } from '../../validators/shared/response-schemas.ts';
 
 const addAerobicInput = z.object({
   durationMins: z.number(),
@@ -20,4 +19,23 @@ export const getAerobicsRequest = z.object({
   }),
 });
 
-export { userAerobicsResponseSchema };
+export const aerobicsDailyRecordSchema = z.object({
+  type: z.string(),
+  duration_sec: z.number(),
+  duration_mins: z.number(),
+});
+
+export const aerobicsWeeklyRecordSchema = aerobicsDailyRecordSchema.extend({
+  workout_time_utc: z.string(),
+});
+
+export const weeklyDataSchema = z.object({
+  records: z.array(aerobicsWeeklyRecordSchema),
+  total_duration_sec: z.number(),
+  total_duration_mins: z.number(),
+});
+
+export const userAerobicsResponseSchema = z.object({
+  daily: z.record(z.string(), z.array(aerobicsDailyRecordSchema)),
+  weekly: z.record(z.string(), weeklyDataSchema),
+});

@@ -1,3 +1,12 @@
-import { getAllExercisesResponseSchema } from '../../validators/shared/response-schemas.ts';
+import { z } from 'zod';
 
-export { getAllExercisesResponseSchema };
+export const getAllExercisesResponseSchema = z.record(
+  z.string(),
+  z.array(
+    z.object({
+      id: z.number(),
+      name: z.string(),
+      specificTargetMuscle: z.string(),
+    }),
+  ),
+);
