@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { loginResponseSchema } from '../auth/session/auth.session.schemas.ts';
+import { loginResponseSchema } from '../auth/session/session.schemas.ts';
 
 export const oAuthLoginResponseSchema = z.object({
   message: z.string(),

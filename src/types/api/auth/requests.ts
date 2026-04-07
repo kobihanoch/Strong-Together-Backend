@@ -1,15 +1,15 @@
 import z from 'zod';
-import { loginRequest } from '../../../modules/auth/session/auth.session.schemas.ts';
+import { loginRequest } from '../../../modules/auth/session/session.schemas.ts';
 import {
   verifyAccountRequest,
   sendVerificationMailRequest,
   changeEmailAndVerifyRequest,
   checkUserVerifyRequest,
-} from '../../../modules/auth/verification/auth.verification.schemas.ts';
+} from '../../../modules/auth/verification/verification.schemas.ts';
 import {
   sendChangePassEmailRequest,
   resetPasswordRequest,
-} from '../../../modules/auth/password/auth.password.schemas.ts';
+} from '../../../modules/auth/password/password.schemas.ts';
 
 export type LoginRequestBody = z.infer<typeof loginRequest.shape.body>;
 export type VerifyUserAccountQuery = z.infer<typeof verifyAccountRequest.shape.query>;

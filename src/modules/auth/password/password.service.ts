@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import createError from 'http-errors';
 import sql from '../../../config/db.ts';
-import { queryBumpTokenVersionAndGetSelfData, queryUpdateUserPassword } from './auth.password.queries.ts';
+import { queryBumpTokenVersionAndGetSelfData, queryUpdateUserPassword } from './password.queries.ts';
 import { sendForgotPasswordEmail } from '../../../services/emailService.ts';
 import type { SendChangePassEmailBody } from '../../../types/api/auth/requests.ts';
 import type { ResetPasswordResponse } from '../../../types/api/auth/responses.ts';

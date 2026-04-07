@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { queryAddWorkout, queryGetWorkoutSplitsObj, queryWholeUserWorkoutPlan } from './workout.plan.queries.ts';
+import { queryAddWorkout, queryGetWorkoutSplitsObj, queryWholeUserWorkoutPlan } from './plan.queries.ts';
 import type { AddWorkoutBody } from '../../../types/api/workouts/requests.ts';
 import type { AddWorkoutResponse, GetWholeUserWorkoutPlanResponse } from '../../../types/api/workouts/responses.ts';
 import {

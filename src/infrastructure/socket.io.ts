@@ -2,7 +2,7 @@ import { createServer, Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { decodeSocketToken } from '../utils/tokenUtils.ts';
 import createError from 'http-errors';
-import { createRedisAdapterClients } from './redisClient.ts';
+import { createRedisAdapterClients } from './redis.client.ts';
 import { Express } from 'express';
 import { createLogger } from './logger.ts';
 

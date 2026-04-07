@@ -8,7 +8,7 @@ import { ResetPasswordResponse } from '../../../types/api/auth/responses.ts';
 import {
   resetPasswordData,
   sendChangePassEmailData,
-} from './auth.password.service.ts';
+} from './password.service.ts';
 
 /**
  * Send a password-reset email when the submitted identifier matches an app user.

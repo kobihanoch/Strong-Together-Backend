@@ -3,8 +3,8 @@ import {
   loginResponseSchema,
   messageResponseSchema,
   refreshTokenResponseSchema,
-} from '../../../modules/auth/session/auth.session.schemas.ts';
-import { resetPasswordResponseSchema } from '../../../modules/auth/password/auth.password.schemas.ts';
+} from '../../../modules/auth/session/session.schemas.ts';
+import { resetPasswordResponseSchema } from '../../../modules/auth/password/password.schemas.ts';
 
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
 export type RefreshTokenResponse = z.infer<typeof refreshTokenResponseSchema>;

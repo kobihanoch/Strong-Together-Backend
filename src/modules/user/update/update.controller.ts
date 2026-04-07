@@ -7,7 +7,7 @@ import {
   setProfilePicAndUpdateDBData,
   updateAuthenticatedUserData,
   updateSelfEmailData,
-} from './user.update.service.ts';
+} from './update.service.ts';
 import { DeleteUserProfilePicBody, UpdateUserBody } from '../../../types/api/user/requests.ts';
 import {
   GetAuthenticatedUserByIdResponse,

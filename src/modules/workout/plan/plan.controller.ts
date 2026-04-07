@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import {
   addWorkoutData,
   getWorkoutPlanData,
-} from './workout.plan.service.ts';
+} from './plan.service.ts';
 import type {
   AddWorkoutResponse,
   GetWholeUserWorkoutPlanResponse,

@@ -1,5 +1,5 @@
-import { createRedisSubscriber } from '../config/redisClient.js';
-import { createLogger } from '../config/logger.ts';
+import { createRedisSubscriber } from '../infrastructure/redis.client.ts';
+import { createLogger } from '../infrastructure/logger.ts';
 import { AnalyzeVideoResultPayload, SquatRepetition } from '../types/dto/videoAnalysis.dto.ts';
 import { emitVideoAnalysisResults } from '../utils/socketUtils.ts';
 

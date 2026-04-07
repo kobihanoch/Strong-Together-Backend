@@ -4,7 +4,7 @@ import {
   checkUserVerifyData,
   sendVerificationMailData,
   verifyUserAccountData,
-} from './auth.verification.service.ts';
+} from './verification.service.ts';
 import {
   ChangeEmailAndVerifyBody,
   CheckUserVerifyQuery,

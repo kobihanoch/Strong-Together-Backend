@@ -1,11 +1,11 @@
 import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
-import { queryBumpTokenVersionAndGetSelfData, querySetUserFirstLoginFalse } from '../../auth/session/auth.session.queries.ts';
+import { queryBumpTokenVersionAndGetSelfData, querySetUserFirstLoginFalse } from '../../auth/session/session.queries.ts';
 import {
   queryCreateUserWithAppleInfo,
   queryFindUserIdWithAppleUserId,
   queryTryToLinkUserWithEmailApple,
-} from './oauth.apple.queries.ts';
+} from './apple.queries.ts';
 import { buildCnfClaim } from '../oauth.service.ts';
 import { sendSystemMessageToUserWhenFirstLogin } from '../../../services/messagesService.ts';
 import type { AppleOAuthBody } from '../../../types/api/oAuth/requests.ts';

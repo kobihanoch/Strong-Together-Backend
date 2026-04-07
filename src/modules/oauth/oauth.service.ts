@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
 import sql from '../../config/db.ts';
-import { queryBumpTokenVersionAndGetSelfData, querySetUserFirstLoginFalse } from '../auth/session/auth.session.queries.ts';
+import { queryBumpTokenVersionAndGetSelfData, querySetUserFirstLoginFalse } from '../auth/session/session.queries.ts';
 import { sendSystemMessageToUserWhenFirstLogin } from '../../services/messagesService.ts';
 import type { ProceedLoginResponse } from '../../types/api/oAuth/responses.ts';
 

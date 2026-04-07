@@ -1,11 +1,11 @@
 import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
-import { queryBumpTokenVersionAndGetSelfData, querySetUserFirstLoginFalse } from '../../auth/session/auth.session.queries.ts';
+import { queryBumpTokenVersionAndGetSelfData, querySetUserFirstLoginFalse } from '../../auth/session/session.queries.ts';
 import {
   queryCreateUserWithGoogleInfo,
   queryFindUserIdWithGoogleUserId,
   queryTryToLinkUserWithEmailGoogle,
-} from './oauth.google.queries.ts';
+} from './google.queries.ts';
 import { buildCnfClaim } from '../oauth.service.ts';
 import { sendSystemMessageToUserWhenFirstLogin } from '../../../services/messagesService.ts';
 import type { GoogleOAuthBody } from '../../../types/api/oAuth/requests.ts';

@@ -5,16 +5,16 @@ import {
   checkUserVerify,
   sendVerificationMail,
   verifyUserAccount,
-} from './verification/auth.verification.controller.ts';
+} from './verification/verification.controller.ts';
 import {
   loginUser,
   logoutUser,
   refreshAccessToken,
-} from './session/auth.session.controller.ts';
+} from './session/session.controller.ts';
 import {
   resetPassword,
   sendChangePassEmail,
-} from './password/auth.password.controller.ts';
+} from './password/password.controller.ts';
 import dpopValidationMiddleware from '../../middlewares/DPoPValidationMiddleware.ts';
 import { asyncHandler } from '../../middlewares/asyncHandler.ts';
 import { protect } from '../../middlewares/authMiddleware.ts';
@@ -32,12 +32,12 @@ import {
   checkUserVerifyRequest,
   sendVerificationMailRequest,
   verifyAccountRequest,
-} from './verification/auth.verification.schemas.ts';
-import { loginRequest } from './session/auth.session.schemas.ts';
+} from './verification/verification.schemas.ts';
+import { loginRequest } from './session/session.schemas.ts';
 import {
   resetPasswordRequest,
   sendChangePassEmailRequest,
-} from './password/auth.password.schemas.ts';
+} from './password/password.schemas.ts';
 
 const router = Router();
 

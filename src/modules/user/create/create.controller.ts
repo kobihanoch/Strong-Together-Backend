@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createUserData } from './user.create.service.ts';
+import { createUserData } from './create.service.ts';
 import { CreateUserBody } from '../../../types/api/user/requests.ts';
 import { CreateUserResponse } from '../../../types/api/user/responses.ts';
 

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { withRlsTx } from '../../config/db.ts';
-import { finishUserWorkout, getExerciseTracking } from './tracking/workout.tracking.controller.ts';
-import { addWorkout, getWholeUserWorkoutPlan } from './plan/workout.plan.controller.ts';
+import { finishUserWorkout, getExerciseTracking } from './tracking/tracking.controller.ts';
+import { addWorkout, getWholeUserWorkoutPlan } from './plan/plan.controller.ts';
 import { asyncHandler } from '../../middlewares/asyncHandler.ts';
 import { protect } from '../../middlewares/authMiddleware.ts';
 import dpopValidationMiddleware from '../../middlewares/DPoPValidationMiddleware.ts';
@@ -9,11 +9,11 @@ import { validate } from '../../middlewares/validateRequest.ts';
 import {
   addWorkoutRequest,
   getWholeWorkoutPlanRequest,
-} from './plan/workout.plan.schemas.ts';
+} from './plan/plan.schemas.ts';
 import {
   finishWorkoutRequest,
   getExerciseTrackingRequest,
-} from './tracking/workout.tracking.schemas.ts';
+} from './tracking/tracking.schemas.ts';
 
 const router = Router();
 

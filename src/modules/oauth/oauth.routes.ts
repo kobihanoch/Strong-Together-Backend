@@ -1,15 +1,15 @@
 import { Router } from 'express';
 import { withRlsTx } from '../../config/db.ts';
 import { proceedLogin } from './oauth.controller.ts';
-import { createOrSignInWithApple } from './apple/oauth.apple.controller.ts';
-import { createOrSignInWithGoogle } from './google/oauth.google.controller.ts';
+import { createOrSignInWithApple } from './apple/apple.controller.ts';
+import { createOrSignInWithGoogle } from './google/google.controller.ts';
 import { asyncHandler } from '../../middlewares/asyncHandler.ts';
 import { loginLimiter } from '../../middlewares/rateLimiter.ts';
 import dpopValidationMiddleware from '../../middlewares/DPoPValidationMiddleware.ts';
 import { protect } from '../../middlewares/authMiddleware.ts';
 import { validate } from '../../middlewares/validateRequest.ts';
-import { appleOAuthRequest } from './apple/oauth.apple.schemas.ts';
-import { googleOAuthRequest } from './google/oauth.google.schemas.ts';
+import { appleOAuthRequest } from './apple/apple.schemas.ts';
+import { googleOAuthRequest } from './google/google.schemas.ts';
 
 const router = Router();
 

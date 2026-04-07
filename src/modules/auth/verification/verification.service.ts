@@ -1,8 +1,8 @@
 import bcrypt from 'bcryptjs';
 import createError from 'http-errors';
 import sql from '../../../config/db.ts';
-import { queryUpdateUserVerficiationStatus, queryUserByUsername } from './auth.verification.queries.ts';
-import { queryUserExistsByUsernameOrEmail } from '../../user/create/user.create.queries.ts';
+import { queryUpdateUserVerficiationStatus, queryUserByUsername } from './verification.queries.ts';
+import { queryUserExistsByUsernameOrEmail } from '../../user/create/create.queries.ts';
 import { sendVerificationEmail } from '../../../services/emailService.ts';
 import { generateVerificationFailedHTML, generateVerifiedHTML } from '../../../templates/responseHTMLTemplates.ts';
 import type { ChangeEmailAndVerifyBody, SendVerifcationMailBody } from '../../../types/api/auth/requests.ts';

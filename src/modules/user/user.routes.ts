@@ -7,18 +7,18 @@ import {
   updateSelfEmail,
   deleteSelfUser,
   deleteUserProfilePic,
-} from './update/user.update.controller.ts';
-import { createUser } from './create/user.create.controller.ts';
-import { saveUserPushToken } from './push-tokens/user.push-tokens.controller.ts';
+} from './update/update.controller.ts';
+import { createUser } from './create/create.controller.ts';
+import { saveUserPushToken } from './push-tokens/push-tokens.controller.ts';
 import { asyncHandler } from '../../middlewares/asyncHandler.ts';
 import { protect } from '../../middlewares/authMiddleware.ts';
 import dpopValidationMiddleware from '../../middlewares/DPoPValidationMiddleware.ts';
 import { updateUserLimiter, updateUserLimiterDaily } from '../../middlewares/rateLimiter.ts';
 import { uploadImage } from '../../middlewares/uploadImage.ts';
 import { validate } from '../../middlewares/validateRequest.ts';
-import { createUserRequest } from './create/user.create.schemas.ts';
-import { deleteProfilePicRequest, updateUserRequest } from './update/user.update.schemas.ts';
-import { saveUserPushTokenRequest } from './push-tokens/user.push-tokens.schemas.ts';
+import { createUserRequest } from './create/create.schemas.ts';
+import { deleteProfilePicRequest, updateUserRequest } from './update/update.schemas.ts';
+import { saveUserPushTokenRequest } from './push-tokens/push-tokens.schemas.ts';
 
 const router = Router();
 

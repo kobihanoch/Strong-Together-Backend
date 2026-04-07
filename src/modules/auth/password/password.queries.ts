@@ -1,5 +1,5 @@
 import sql from '../../../config/db.ts';
-import { queryBumpTokenVersionAndGetSelfData } from '../session/auth.session.queries.ts';
+import { queryBumpTokenVersionAndGetSelfData } from '../session/session.queries.ts';
 
 export { queryBumpTokenVersionAndGetSelfData };
 

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { saveUserPushTokenData } from './user.push-tokens.service.ts';
+import { saveUserPushTokenData } from './push-tokens.service.ts';
 import { SaveUserPushTokenBody } from '../../../types/api/user/requests.ts';
 
 /**

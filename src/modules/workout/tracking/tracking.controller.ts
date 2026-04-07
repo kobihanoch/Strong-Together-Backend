@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { finishUserWorkoutData, getExerciseTrackingData } from './workout.tracking.service.ts';
+import { finishUserWorkoutData, getExerciseTrackingData } from './tracking.service.ts';
 import type { FinishUserWorkoutResponse, GetExerciseTrackingResponse } from '../../../types/api/workouts/responses.ts';
 import { FinishUserWorkoutBody, GetExerciseTrackingQuery } from '../../../types/api/workouts/requests.ts';
 

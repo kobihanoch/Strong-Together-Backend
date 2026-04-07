@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import {
   queryGetExerciseTrackingAndStats,
   queryInsertUserFinishedWorkout,
-} from './workout.tracking.queries.ts';
+} from './tracking.queries.ts';
 import { sendSystemMessageToUserWorkoutDone } from '../../../services/messagesService.ts';
 import type { FinishUserWorkoutBody } from '../../../types/api/workouts/requests.ts';
 import type { FinishUserWorkoutResponse } from '../../../types/api/workouts/responses.ts';

@@ -8,7 +8,7 @@ import {
   queryGetUserProfilePicURL,
   queryUpdateAuthenticatedUser,
   queryUpdateUserProfilePicURL,
-} from './user.update.queries.ts';
+} from './update.queries.ts';
 import { sendVerificationEmailForEmailUpdate } from '../../../services/emailService.ts';
 import { deleteFromSupabase, uploadBufferToSupabase } from '../../../services/supabaseStorageService.ts';
 import {

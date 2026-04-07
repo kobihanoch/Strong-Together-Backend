@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { createLogger } from '../../../config/logger.ts';
-import { loginUserData, logoutUserData, refreshAccessTokenData } from './auth.session.service.ts';
+import { loginUserData, logoutUserData, refreshAccessTokenData } from './session.service.ts';
 import { LoginRequestBody } from '../../../types/api/auth/requests.ts';
 import { LoginResponse, MessageResponse, RefreshTokenResponse } from '../../../types/api/auth/responses.ts';
 import { getRefreshToken } from '../../../utils/tokenUtils.ts';

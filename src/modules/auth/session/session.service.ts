@@ -7,7 +7,7 @@ import {
   querySetUserFirstLoginFalse,
   queryUpdateExpoPushTokenToNull,
   queryUserByIdentifierForLogin,
-} from './auth.session.queries.ts';
+} from './session.queries.ts';
 import { sendSystemMessageToUserWhenFirstLogin } from '../../../services/messagesService.ts';
 import type { LoginResponse, RefreshTokenResponse } from '../../../types/api/auth/responses.ts';
 import type { AccessTokenPayload } from '../../../types/dto/auth.dto.ts';

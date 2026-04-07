@@ -2,9 +2,9 @@ import type { BootstrapResponse } from '../../types/api/bootstrap/responses.ts';
 import { buildUserTimezoneKeyStable, cacheGetJSON, cacheSetJSON, TTL_TIMEZONE } from '../../utils/cache.ts';
 import { getAerobicsData } from '../aerobics/aerobics.service.ts';
 import { getAllMessagesData } from '../messages/messages.service.ts';
-import { getUserData, updateUsersReminderSettingsTimezone } from '../user/update/user.update.service.ts';
-import { getWorkoutPlanData } from '../workout/plan/workout.plan.service.ts';
-import { getExerciseTrackingData } from '../workout/tracking/workout.tracking.service.ts';
+import { getUserData, updateUsersReminderSettingsTimezone } from '../user/update/update.service.ts';
+import { getWorkoutPlanData } from '../workout/plan/plan.service.ts';
+import { getExerciseTrackingData } from '../workout/tracking/tracking.service.ts';
 
 export const getBootstrapDataPayload = async (
   userId: string,
