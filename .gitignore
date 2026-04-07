@@ -1,6 +1,6 @@
 node_modules/
-.env
 .env.*
+.env
 .venv/
 pythonService/.venv/
 __pycache__/

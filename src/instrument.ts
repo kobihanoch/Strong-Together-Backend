@@ -1,3 +1,3 @@
-import { initSentry } from './config/sentry.ts';
+import { initSentry } from './infrastructure/sentry.ts';
 
 initSentry('strong-together-server');
