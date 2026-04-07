@@ -1,5 +1,5 @@
 import pushNotificationsQueue from '../src/queues/pushNotifications/pushNotificationsQueue.ts';
-import { sendPushNotification } from '../src/features/push/push.service.ts';
+import { sendPushNotification } from '../src/modules/push/push.service.ts';
 import { createLogger } from '../src/config/logger.ts';
 import { captureWorkerException } from '../src/config/sentry.ts';
 
@@ -24,10 +24,7 @@ export const startPushWorker = async () => {
 
         await sendPushNotification(token, title, body);
         const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
-        jobLogger.info(
-          { event: 'job.succeeded', durationMs: Number(durationMs.toFixed(2)) },
-          'Push notification sent',
-        );
+        jobLogger.info({ event: 'job.succeeded', durationMs: Number(durationMs.toFixed(2)) }, 'Push notification sent');
       } catch (e) {
         if (e instanceof Error) {
           const sentryEventId = captureWorkerException(e, {

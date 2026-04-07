@@ -1,9 +1,11 @@
 import z from 'zod';
-import { userDataResponseSchema } from '../../../features/user/userDataResponse.schema.ts';
-import { createUserResponseSchema } from '../../../features/user/createUserResponse.schema.ts';
-import { getAuthenticatedUserByIdResponseSchema } from '../../../features/user/getAuthenticatedUserByIdResponse.schema.ts';
-import { updateAuthenticatedUserResponseSchema } from '../../../features/user/updateAuthenticatedUserResponse.schema.ts';
-import { setProfilePicAndUpdateDBResponseSchema } from '../../../features/user/setProfilePicAndUpdateDBResponse.schema.ts';
+import { createUserResponseSchema } from '../../../modules/user/create/user.create.schemas.ts';
+import {
+  userDataResponseSchema,
+  getAuthenticatedUserByIdResponseSchema,
+  updateAuthenticatedUserResponseSchema,
+  setProfilePicAndUpdateDBResponseSchema,
+} from '../../../modules/user/update/user.update.schemas.ts';
 
 export type UserDataResponse = z.infer<typeof userDataResponseSchema>;
 export type CreateUserResponse = z.infer<typeof createUserResponseSchema>;

@@ -1,8 +1,12 @@
 import z from 'zod';
-import { getWholeUserWorkoutPlanResponseSchema } from '../../../features/workout/getWholeUserWorkoutPlanResponse.schema.ts';
-import { getExerciseTrackingResponseSchema } from '../../../features/workout/getExerciseTrackingResponse.schema.ts';
-import { finishUserWorkoutResponseSchema } from '../../../features/workout/finishUserWorkoutResponse.schema.ts';
-import { addWorkoutResponseSchema } from '../../../features/workout/addWorkoutResponse.schema.ts';
+import {
+  addWorkoutResponseSchema,
+  getWholeUserWorkoutPlanResponseSchema,
+} from '../../../modules/workout/plan/workout.plan.schemas.ts';
+import {
+  finishUserWorkoutResponseSchema,
+  getExerciseTrackingResponseSchema,
+} from '../../../modules/workout/tracking/workout.tracking.schemas.ts';
 
 export type GetWholeUserWorkoutPlanResponse = z.infer<typeof getWholeUserWorkoutPlanResponseSchema>;
 export type GetExerciseTrackingResponse = z.infer<typeof getExerciseTrackingResponseSchema>;

@@ -1,8 +1,10 @@
 import z from 'zod';
-import { loginResponseSchema } from '../../../features/auth/loginResponse.schema.ts';
-import { refreshTokenResponseSchema } from '../../../features/auth/refreshTokenResponse.schema.ts';
-import { messageResponseSchema } from '../../../features/auth/messageResponse.schema.ts';
-import { resetPasswordResponseSchema } from '../../../features/auth/resetPasswordResponse.schema.ts';
+import {
+  loginResponseSchema,
+  messageResponseSchema,
+  refreshTokenResponseSchema,
+} from '../../../modules/auth/session/auth.session.schemas.ts';
+import { resetPasswordResponseSchema } from '../../../modules/auth/password/auth.password.schemas.ts';
 
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
 export type RefreshTokenResponse = z.infer<typeof refreshTokenResponseSchema>;

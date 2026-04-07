@@ -1,4 +1,4 @@
 import z from 'zod';
-import { generateTicketResponseSchema } from '../../../features/webSockets/generateTicketResponse.schema.ts';
+import { generateTicketResponseSchema } from '../../../modules/webSockets/webSockets.schemas.ts';
 
 export type GenerateTicketResponse = z.infer<typeof generateTicketResponseSchema>;

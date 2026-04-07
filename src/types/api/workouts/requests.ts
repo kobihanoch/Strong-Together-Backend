@@ -1,8 +1,9 @@
 import z from 'zod';
-import { addWorkoutRequest } from '../../../features/workout/addWorkoutRequest.schema.ts';
-import { finishWorkoutRequest } from '../../../features/workout/finishUserWorkoutRequest.schema.ts';
-import { getExerciseTrackingRequest } from '../../../features/workout/getExerciseTrackingRequest.schema.ts';
-import { getWholeWorkoutPlanRequest } from '../../../features/workout/getWholeUserWorkoutPlanRequest.schema.ts';
+import { addWorkoutRequest, getWholeWorkoutPlanRequest } from '../../../modules/workout/plan/workout.plan.schemas.ts';
+import {
+  finishWorkoutRequest,
+  getExerciseTrackingRequest,
+} from '../../../modules/workout/tracking/workout.tracking.schemas.ts';
 
 export type GetWholeUserWorkoutPlanQuery = z.infer<typeof getWholeWorkoutPlanRequest.shape.query>;
 export type GetExerciseTrackingQuery = z.infer<typeof getExerciseTrackingRequest.shape.query>;

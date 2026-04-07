@@ -1,4 +1,4 @@
 import z from 'zod';
-import { userAerobicsResponseSchema } from '../../../features/aerobics/userAerobicsResponse.schema.ts';
+import { userAerobicsResponseSchema } from '../../../modules/aerobics/aerobics.schemas.ts';
 
 export type UserAerobicsResponse = z.infer<typeof userAerobicsResponseSchema>;
