@@ -2,9 +2,9 @@ import '../src/instrument.ts';
 import { Queue } from 'bull';
 import { createLogger } from '../src/infrastructure/logger.ts';
 import { flushSentry } from '../src/infrastructure/sentry.ts';
-import { startEmailWorker } from './emailsWorker.js';
-import { startPushWorker } from './pushNotificationsWorker.js';
-import { setupGracefulShutdown } from './utils/setupGracefulShutdown.ts';
+import { startEmailWorker } from './emails-worker.js';
+import { startPushWorker } from './push-notifications-worker.js';
+import { setupGracefulShutdown } from './utils/setup-graceful-shutdown.ts';
 
 const logger = createLogger('worker:global');
 
