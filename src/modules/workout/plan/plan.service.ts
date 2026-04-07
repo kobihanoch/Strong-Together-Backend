@@ -1,7 +1,10 @@
 import createError from 'http-errors';
 import { queryAddWorkout, queryGetWorkoutSplitsObj, queryWholeUserWorkoutPlan } from './plan.queries.ts';
-import type { AddWorkoutBody } from '../../../types/api/workouts/requests.ts';
-import type { AddWorkoutResponse, GetWholeUserWorkoutPlanResponse } from '../../../types/api/workouts/responses.ts';
+import type { AddWorkoutBody } from '../../../shared/types/api/workouts/requests.ts';
+import type {
+  AddWorkoutResponse,
+  GetWholeUserWorkoutPlanResponse,
+} from '../../../shared/types/api/workouts/responses.ts';
 import {
   buildAnalyticsKeyStable,
   buildPlanKeyStable,
@@ -10,7 +13,7 @@ import {
   cacheGetJSON,
   cacheSetJSON,
   TTL_PLAN,
-} from '../../../utils/cache.ts';
+} from '../../../shared/utils/cache.ts';
 
 export const getWorkoutPlanData = async (
   userId: string,

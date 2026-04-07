@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import mime from 'mime';
 import path from 'path';
-import sql from '../../../config/db.ts';
+import sql from '../../../infrastructure/db.client.ts';
 import {
   queryAuthenticatedUserById,
   queryDeleteUserById,
@@ -9,21 +9,21 @@ import {
   queryUpdateAuthenticatedUser,
   queryUpdateUserProfilePicURL,
 } from './update.queries.ts';
-import { sendVerificationEmailForEmailUpdate } from '../../../services/emailService.ts';
-import { deleteFromSupabase, uploadBufferToSupabase } from '../../../services/supabaseStorageService.ts';
+import { sendVerificationEmailForEmailUpdate } from '../../../shared/services/emailService.ts';
+import { deleteFromSupabase, uploadBufferToSupabase } from '../../../shared/services/supabaseStorageService.ts';
 import {
   generateEmailChangeFailedHTML,
   generateEmailChangeSuccessHTML,
-} from '../../../templates/responseHTMLTemplates.ts';
-import type { DeleteUserProfilePicBody, UpdateUserBody } from '../../../types/api/user/requests.ts';
+} from '../../../shared/templates/responseHTMLTemplates.ts';
+import type { DeleteUserProfilePicBody, UpdateUserBody } from '../../../shared/types/api/user/requests.ts';
 import type {
   SetProfilePicAndUpdateDBResponse,
   UpdateAuthenticatedUserResponse,
   UserDataResponse,
-} from '../../../types/api/user/responses.ts';
-import type { ChangeEmailTokenPayload } from '../../../types/dto/user.dto.ts';
-import { cacheStoreJti } from '../../../utils/cache.ts';
-import { decodeChangeEmailToken } from '../../../utils/tokenUtils.ts';
+} from '../../../shared/types/api/user/responses.ts';
+import type { ChangeEmailTokenPayload } from '../../../shared/types/dto/user.dto.ts';
+import { cacheStoreJti } from '../../../shared/utils/cache.ts';
+import { decodeChangeEmailToken } from '../../../shared/utils/tokenUtils.ts';
 
 export const getUserData = async (userId: string): Promise<{ payload: UserDataResponse['user_data'] }> => {
   const rows = await queryAuthenticatedUserById(userId);

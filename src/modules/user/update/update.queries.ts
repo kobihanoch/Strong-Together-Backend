@@ -1,7 +1,7 @@
 import postgres from 'postgres';
-import sql from '../../../config/db.ts';
-import { AuthenticatedUserForUpdate } from '../../../types/dto/user.dto.ts';
-import { UserEntity } from '../../../types/entities/user.entity.ts';
+import sql from '../../../infrastructure/db.client.ts';
+import { AuthenticatedUserForUpdate } from '../../../shared/types/dto/user.dto.ts';
+import { UserEntity } from '../../../shared/types/entities/user.entity.ts';
 
 export async function queryAuthenticatedUserById(
   userId: string,

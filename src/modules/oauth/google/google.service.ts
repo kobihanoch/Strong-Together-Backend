@@ -1,17 +1,20 @@
 import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
-import { queryBumpTokenVersionAndGetSelfData, querySetUserFirstLoginFalse } from '../../auth/session/session.queries.ts';
+import {
+  queryBumpTokenVersionAndGetSelfData,
+  querySetUserFirstLoginFalse,
+} from '../../auth/session/session.queries.ts';
 import {
   queryCreateUserWithGoogleInfo,
   queryFindUserIdWithGoogleUserId,
   queryTryToLinkUserWithEmailGoogle,
 } from './google.queries.ts';
 import { buildCnfClaim } from '../oauth.service.ts';
-import { sendSystemMessageToUserWhenFirstLogin } from '../../../services/messagesService.ts';
-import type { GoogleOAuthBody } from '../../../types/api/oAuth/requests.ts';
-import type { OAuthLoginResponse } from '../../../types/api/oAuth/responses.ts';
-import type { GoogleTokenVerificationResult } from '../../../types/dto/oAuth.dto.ts';
-import { verifyGoogleIdToken } from '../../../utils/oauthUtils.ts';
+import { sendSystemMessageToUserWhenFirstLogin } from '../../../shared/services/messagesService.ts';
+import type { GoogleOAuthBody } from '../../../shared/types/api/oAuth/requests.ts';
+import type { OAuthLoginResponse } from '../../../shared/types/api/oAuth/responses.ts';
+import type { GoogleTokenVerificationResult } from '../../../shared/types/dto/oAuth.dto.ts';
+import { verifyGoogleIdToken } from '../../../shared/utils/oauthUtils.ts';
 
 export const createOrSignInWithGoogleData = async (
   body: GoogleOAuthBody,

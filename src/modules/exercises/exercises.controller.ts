@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { getAllExercisesData } from './exercises.service.ts';
-import { GetAllExercisesResponse } from '../../types/api/exercises/responses.ts';
+import { GetAllExercisesResponse } from '../../shared/types/api/exercises/responses.ts';
 
 /**
  * Get the exercise catalog grouped for workout-building flows.

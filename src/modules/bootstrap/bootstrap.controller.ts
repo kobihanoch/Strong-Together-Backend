@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import { createLogger } from '../../config/logger.ts';
+import { createLogger } from '../../infrastructure/logger.ts';
 import { getBootstrapDataPayload } from './bootstrap.service.ts';
-import { BootstrapRequestQuery } from '../../types/api/bootstrap/requests.ts';
-import { BootstrapResponse } from '../../types/api/bootstrap/responses.ts';
+import { BootstrapRequestQuery } from '../../shared/types/api/bootstrap/requests.ts';
+import { BootstrapResponse } from '../../shared/types/api/bootstrap/responses.ts';
 
 const logger = createLogger('controller:bootstrap');
 

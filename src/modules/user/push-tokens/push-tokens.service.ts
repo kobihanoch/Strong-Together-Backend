@@ -1,4 +1,4 @@
-import type { SaveUserPushTokenBody } from '../../../types/api/user/requests.ts';
+import type { SaveUserPushTokenBody } from '../../../shared/types/api/user/requests.ts';
 import { querySaveUserPushToken } from './push-tokens.queries.ts';
 
 export const saveUserPushTokenData = async (userId: string, body: SaveUserPushTokenBody): Promise<void> => {

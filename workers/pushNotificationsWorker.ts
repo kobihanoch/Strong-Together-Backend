@@ -1,7 +1,7 @@
-import pushNotificationsQueue from '../src/queues/pushNotifications/pushNotificationsQueue.ts';
+import pushNotificationsQueue from '../src/shared/queues/pushNotifications/pushNotificationsQueue.ts';
 import { sendPushNotification } from '../src/modules/push/push.service.ts';
-import { createLogger } from '../src/config/logger.ts';
-import { captureWorkerException } from '../src/config/sentry.ts';
+import { createLogger } from '../src/infrastructure/logger.ts';
+import { captureWorkerException } from '../src/infrastructure/sentry.ts';
 
 const logger = createLogger('worker:push-notifications', {
   queue: 'pushNotificationsQueue',

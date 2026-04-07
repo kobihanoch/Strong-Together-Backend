@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node';
 import { getUploadUrl } from '../../infrastructure/aws/s3.service.ts';
-import type { GetPresignedUrlFromS3Response } from '../../types/api/videoAnalysis/responses.ts';
+import type { GetPresignedUrlFromS3Response } from '../../shared/types/api/videoAnalysis/responses.ts';
 
 export const normalizeHeaderValue = (value: string | string[] | undefined): string => {
   if (Array.isArray(value)) {

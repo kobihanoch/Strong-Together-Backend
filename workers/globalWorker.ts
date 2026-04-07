@@ -1,7 +1,7 @@
 import '../src/instrument.ts';
 import { Queue } from 'bull';
-import { createLogger } from '../src/config/logger.ts';
-import { flushSentry } from '../src/config/sentry.ts';
+import { createLogger } from '../src/infrastructure/logger.ts';
+import { flushSentry } from '../src/infrastructure/sentry.ts';
 import { startEmailWorker } from './emailsWorker.js';
 import { startPushWorker } from './pushNotificationsWorker.js';
 import { setupGracefulShutdown } from './utils/setupGracefulShutdown.ts';

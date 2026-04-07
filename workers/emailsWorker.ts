@@ -1,7 +1,7 @@
-import { sendMail } from '../src/config/mailer.ts';
-import emailsQueue from '../src/queues/emails/emailsQueue.ts';
-import { createLogger } from '../src/config/logger.ts';
-import { captureWorkerException } from '../src/config/sentry.ts';
+import { sendMail } from '../src/infrastructure/mailer.service.ts';
+import emailsQueue from '../src/shared/queues/emails/emailsQueue.ts';
+import { createLogger } from '../src/infrastructure/logger.ts';
+import { captureWorkerException } from '../src/infrastructure/sentry.ts';
 
 const logger = createLogger('worker:emails', {
   queue: 'emailsQueue',

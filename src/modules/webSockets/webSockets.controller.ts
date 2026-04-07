@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { generateTicketData } from './webSockets.service.ts';
-import { GenerateTicketBody } from '../../types/api/webSockets/requests.ts';
-import { GenerateTicketResponse } from '../../types/api/webSockets/responses.ts';
+import { GenerateTicketBody } from '../../shared/types/api/webSockets/requests.ts';
+import { GenerateTicketResponse } from '../../shared/types/api/webSockets/responses.ts';
 
 /**
  * Generate a signed WebSocket connection ticket for the authenticated user.

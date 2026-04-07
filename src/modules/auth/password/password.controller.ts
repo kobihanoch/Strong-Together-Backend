@@ -3,12 +3,9 @@ import {
   ResetPasswordBody,
   ResetPasswordQuery,
   SendChangePassEmailBody,
-} from '../../../types/api/auth/requests.ts';
-import { ResetPasswordResponse } from '../../../types/api/auth/responses.ts';
-import {
-  resetPasswordData,
-  sendChangePassEmailData,
-} from './password.service.ts';
+} from '../../../shared/types/api/auth/requests.ts';
+import { ResetPasswordResponse } from '../../../shared/types/api/auth/responses.ts';
+import { resetPasswordData, sendChangePassEmailData } from './password.service.ts';
 
 /**
  * Send a password-reset email when the submitted identifier matches an app user.

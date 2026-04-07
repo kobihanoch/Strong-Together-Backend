@@ -1,6 +1,6 @@
 import { createServer, Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
-import { decodeSocketToken } from '../utils/tokenUtils.ts';
+import { decodeSocketToken } from '../shared/utils/tokenUtils.ts';
 import createError from 'http-errors';
 import { createRedisAdapterClients } from './redis.client.ts';
 import { Express } from 'express';

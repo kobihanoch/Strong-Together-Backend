@@ -1,5 +1,5 @@
-import sql from '../../config/db.ts';
-import { UserToHourlyReminder, UserWithNotificationsEnabled } from '../../types/dto/notifications.dto.ts';
+import sql from '../../infrastructure/db.client.ts';
+import { UserToHourlyReminder, UserWithNotificationsEnabled } from '../../shared/types/dto/notifications.dto.ts';
 
 export const queryGetAllUsersWithNotificationsEnabled = async (): Promise<UserWithNotificationsEnabled[]> => {
   const rows = await sql<UserWithNotificationsEnabled[]>`

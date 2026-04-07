@@ -1,11 +1,6 @@
 import { queryGetWorkoutRMs, queryGoalAdherence } from './analytics.queries.ts';
-import type { GetAnalyticsResponse } from '../../types/api/analytics/responses.ts';
-import {
-  buildAnalyticsKeyStable,
-  cacheGetJSON,
-  cacheSetJSON,
-  TTL_ANALYTICS,
-} from '../../utils/cache.ts';
+import type { GetAnalyticsResponse } from '../../shared/types/api/analytics/responses.ts';
+import { buildAnalyticsKeyStable, cacheGetJSON, cacheSetJSON, TTL_ANALYTICS } from '../../shared/utils/cache.ts';
 
 export const getAnalyticsData = async (
   userId: string,

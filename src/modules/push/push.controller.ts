@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createLogger } from '../../config/logger.ts';
+import { createLogger } from '../../infrastructure/logger.ts';
 import { sendDailyPushData, sendHourlyReminderPushData } from './push.service.ts';
 
 const logger = createLogger('controller:push');

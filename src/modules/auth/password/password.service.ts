@@ -1,12 +1,12 @@
 import bcrypt from 'bcryptjs';
 import createError from 'http-errors';
-import sql from '../../../config/db.ts';
+import sql from '../../../infrastructure/db.client.ts';
 import { queryBumpTokenVersionAndGetSelfData, queryUpdateUserPassword } from './password.queries.ts';
-import { sendForgotPasswordEmail } from '../../../services/emailService.ts';
-import type { SendChangePassEmailBody } from '../../../types/api/auth/requests.ts';
-import type { ResetPasswordResponse } from '../../../types/api/auth/responses.ts';
-import { cacheStoreJti } from '../../../utils/cache.ts';
-import { decodeForgotPasswordToken } from '../../../utils/tokenUtils.ts';
+import { sendForgotPasswordEmail } from '../../../shared/services/emailService.ts';
+import type { SendChangePassEmailBody } from '../../../shared/types/api/auth/requests.ts';
+import type { ResetPasswordResponse } from '../../../shared/types/api/auth/responses.ts';
+import { cacheStoreJti } from '../../../shared/utils/cache.ts';
+import { decodeForgotPasswordToken } from '../../../shared/utils/tokenUtils.ts';
 
 export const sendChangePassEmailData = async (body: SendChangePassEmailBody, requestId?: string): Promise<void> => {
   const { identifier } = body;

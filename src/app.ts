@@ -1,12 +1,12 @@
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
-import { setupSentryErrorHandler } from './config/sentry.ts';
-import { botBlocker } from './middlewares/botBlocker.ts';
-import { checkAppVersion } from './middlewares/checkAppVersion.ts';
-import { errorHandler } from './middlewares/errorHandler.ts';
-import { generalLimiter } from './middlewares/rateLimiter.ts';
-import { requestLogger } from './middlewares/requestLogger.ts';
+import { setupSentryErrorHandler } from './infrastructure/sentry.ts';
+import { botBlocker } from './shared/middlewares/botBlocker.ts';
+import { checkAppVersion } from './shared/middlewares/checkAppVersion.ts';
+import { errorHandler } from './shared/middlewares/errorHandler.ts';
+import { generalLimiter } from './shared/middlewares/rateLimiter.ts';
+import { requestLogger } from './shared/middlewares/requestLogger.ts';
 import aerobicsRoutes from './modules/aerobics/aerobics.routes.ts';
 import analyticsRoutes from './modules/analytics/analytics.routes.ts';
 import authRoutes from './modules/auth/auth.routes.ts';

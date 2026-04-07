@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createLogger } from '../../../config/logger.ts';
+import { createLogger } from '../../../infrastructure/logger.ts';
 import {
   deleteSelfUserData,
   deleteUserProfilePicData,
@@ -8,12 +8,12 @@ import {
   updateAuthenticatedUserData,
   updateSelfEmailData,
 } from './update.service.ts';
-import { DeleteUserProfilePicBody, UpdateUserBody } from '../../../types/api/user/requests.ts';
+import { DeleteUserProfilePicBody, UpdateUserBody } from '../../../shared/types/api/user/requests.ts';
 import {
   GetAuthenticatedUserByIdResponse,
   SetProfilePicAndUpdateDBResponse,
   UpdateAuthenticatedUserResponse,
-} from '../../../types/api/user/responses.ts';
+} from '../../../shared/types/api/user/responses.ts';
 
 const logger = createLogger('controller:user');
 

@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { generateTicket } from './webSockets.controller.ts';
-import dpopValidationMiddleware from '../../middlewares/DPoPValidationMiddleware.ts';
-import { asyncHandler } from '../../middlewares/asyncHandler.ts';
-import { protect } from '../../middlewares/authMiddleware.ts';
+import dpopValidationMiddleware from '../../shared/middlewares/DPoPValidationMiddleware.ts';
+import { asyncHandler } from '../../shared/middlewares/asyncHandler.ts';
+import { protect } from '../../shared/middlewares/authMiddleware.ts';
 import { generateTicketRequest } from './webSockets.schemas.ts';
-import { validate } from '../../middlewares/validateRequest.ts';
+import { validate } from '../../shared/middlewares/validateRequest.ts';
 
 const router = Router();
 

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { withRlsTx } from '../../config/db.ts';
+import { withRlsTx } from '../../infrastructure/db.client.ts';
 import {
   getAuthenticatedUserById,
   setProfilePicAndUpdateDB,
@@ -10,12 +10,12 @@ import {
 } from './update/update.controller.ts';
 import { createUser } from './create/create.controller.ts';
 import { saveUserPushToken } from './push-tokens/push-tokens.controller.ts';
-import { asyncHandler } from '../../middlewares/asyncHandler.ts';
-import { protect } from '../../middlewares/authMiddleware.ts';
-import dpopValidationMiddleware from '../../middlewares/DPoPValidationMiddleware.ts';
-import { updateUserLimiter, updateUserLimiterDaily } from '../../middlewares/rateLimiter.ts';
-import { uploadImage } from '../../middlewares/uploadImage.ts';
-import { validate } from '../../middlewares/validateRequest.ts';
+import { asyncHandler } from '../../shared/middlewares/asyncHandler.ts';
+import { protect } from '../../shared/middlewares/authMiddleware.ts';
+import dpopValidationMiddleware from '../../shared/middlewares/DPoPValidationMiddleware.ts';
+import { updateUserLimiter, updateUserLimiterDaily } from '../../shared/middlewares/rateLimiter.ts';
+import { uploadImage } from '../../shared/middlewares/uploadImage.ts';
+import { validate } from '../../shared/middlewares/validateRequest.ts';
 import { createUserRequest } from './create/create.schemas.ts';
 import { deleteProfilePicRequest, updateUserRequest } from './update/update.schemas.ts';
 import { saveUserPushTokenRequest } from './push-tokens/push-tokens.schemas.ts';

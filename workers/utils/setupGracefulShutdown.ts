@@ -1,5 +1,5 @@
 import { Queue } from 'bull';
-import { createLogger } from '../../src/config/logger.ts';
+import { createLogger } from '../../src/infrastructure/logger.ts';
 
 const logger = createLogger('worker:shutdown');
 

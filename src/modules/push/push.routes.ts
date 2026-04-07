@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { sendDailyPush, sendHourlyReminderPush } from './push.controller.ts';
-import { withRlsTx } from '../../config/db.ts';
-import { asyncHandler } from '../../middlewares/asyncHandler.ts';
+import { withRlsTx } from '../../infrastructure/db.client.ts';
+import { asyncHandler } from '../../shared/middlewares/asyncHandler.ts';
 
 const router = Router();
 

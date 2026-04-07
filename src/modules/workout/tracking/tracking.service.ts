@@ -1,19 +1,16 @@
 import createError from 'http-errors';
-import {
-  queryGetExerciseTrackingAndStats,
-  queryInsertUserFinishedWorkout,
-} from './tracking.queries.ts';
-import { sendSystemMessageToUserWorkoutDone } from '../../../services/messagesService.ts';
-import type { FinishUserWorkoutBody } from '../../../types/api/workouts/requests.ts';
-import type { FinishUserWorkoutResponse } from '../../../types/api/workouts/responses.ts';
-import type { ExerciseTrackingAndStats } from '../../../types/dto/exerciseTracking.dto.ts';
+import { queryGetExerciseTrackingAndStats, queryInsertUserFinishedWorkout } from './tracking.queries.ts';
+import { sendSystemMessageToUserWorkoutDone } from '../../../shared/services/messagesService.ts';
+import type { FinishUserWorkoutBody } from '../../../shared/types/api/workouts/requests.ts';
+import type { FinishUserWorkoutResponse } from '../../../shared/types/api/workouts/responses.ts';
+import type { ExerciseTrackingAndStats } from '../../../shared/types/dto/exerciseTracking.dto.ts';
 import {
   buildTrackingKeyStable,
   cacheDeleteOtherTimezones,
   cacheGetJSON,
   cacheSetJSON,
   TTL_TRACKING,
-} from '../../../utils/cache.ts';
+} from '../../../shared/utils/cache.ts';
 
 export const getExerciseTrackingData = async (
   userId: string,

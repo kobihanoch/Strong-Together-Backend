@@ -8,10 +8,10 @@ import {
   queryUpdateExpoPushTokenToNull,
   queryUserByIdentifierForLogin,
 } from './session.queries.ts';
-import { sendSystemMessageToUserWhenFirstLogin } from '../../../services/messagesService.ts';
-import type { LoginResponse, RefreshTokenResponse } from '../../../types/api/auth/responses.ts';
-import type { AccessTokenPayload } from '../../../types/dto/auth.dto.ts';
-import { decodeRefreshToken } from '../../../utils/tokenUtils.ts';
+import { sendSystemMessageToUserWhenFirstLogin } from '../../../shared/services/messagesService.ts';
+import type { LoginResponse, RefreshTokenResponse } from '../../../shared/types/api/auth/responses.ts';
+import type { AccessTokenPayload } from '../../../shared/types/dto/auth.dto.ts';
+import { decodeRefreshToken } from '../../../shared/utils/tokenUtils.ts';
 
 export const loginUserData = async (
   identifier: string,

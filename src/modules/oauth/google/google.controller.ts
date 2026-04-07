@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import { createLogger } from '../../../config/logger.ts';
+import { createLogger } from '../../../infrastructure/logger.ts';
 import { createOrSignInWithGoogleData } from './google.service.ts';
 import { validateJkt } from '../oauth.service.ts';
-import { GoogleOAuthBody } from '../../../types/api/oAuth/requests.ts';
-import { OAuthLoginResponse } from '../../../types/api/oAuth/responses.ts';
+import { GoogleOAuthBody } from '../../../shared/types/api/oAuth/requests.ts';
+import { OAuthLoginResponse } from '../../../shared/types/api/oAuth/responses.ts';
 const logger = createLogger('controller:oauth');
 
 /**

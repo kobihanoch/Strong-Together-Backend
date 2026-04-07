@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { asyncHandler } from '../../middlewares/asyncHandler.ts';
-import { protect } from '../../middlewares/authMiddleware.ts';
+import { asyncHandler } from '../../shared/middlewares/asyncHandler.ts';
+import { protect } from '../../shared/middlewares/authMiddleware.ts';
 import { getAllExercises } from './exercises.controller.ts';
-import { withRlsTx } from '../../config/db.ts';
-import dpopValidationMiddleware from '../../middlewares/DPoPValidationMiddleware.ts';
+import { withRlsTx } from '../../infrastructure/db.client.ts';
+import dpopValidationMiddleware from '../../shared/middlewares/DPoPValidationMiddleware.ts';
 
 const router = Router();
 

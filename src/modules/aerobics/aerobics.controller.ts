@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { addUserAerobicsRecord, getAerobicsData } from './aerobics.service.ts';
-import { AddUserAerobicsBody, GetUserAerobicsQuery } from '../../types/api/aerobics/requests.ts';
-import { UserAerobicsResponse } from '../../types/api/aerobics/responses.ts';
+import { AddUserAerobicsBody, GetUserAerobicsQuery } from '../../shared/types/api/aerobics/requests.ts';
+import { UserAerobicsResponse } from '../../shared/types/api/aerobics/responses.ts';
 
 /**
  * Get the authenticated user's aerobics history for the last 45 days.

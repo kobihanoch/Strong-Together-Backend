@@ -1,10 +1,7 @@
 import jwt from 'jsonwebtoken';
-import type { GenerateTicketResponse } from '../../types/api/webSockets/responses.ts';
+import type { GenerateTicketResponse } from '../../shared/types/api/webSockets/responses.ts';
 
-export const generateTicketData = async (
-  userId: string,
-  username?: string,
-): Promise<GenerateTicketResponse> => {
+export const generateTicketData = async (userId: string, username?: string): Promise<GenerateTicketResponse> => {
   const payload = {
     id: userId,
     username,

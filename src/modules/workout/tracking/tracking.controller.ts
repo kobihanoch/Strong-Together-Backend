@@ -1,7 +1,10 @@
 import type { Request, Response } from 'express';
 import { finishUserWorkoutData, getExerciseTrackingData } from './tracking.service.ts';
-import type { FinishUserWorkoutResponse, GetExerciseTrackingResponse } from '../../../types/api/workouts/responses.ts';
-import { FinishUserWorkoutBody, GetExerciseTrackingQuery } from '../../../types/api/workouts/requests.ts';
+import type {
+  FinishUserWorkoutResponse,
+  GetExerciseTrackingResponse,
+} from '../../../shared/types/api/workouts/responses.ts';
+import { FinishUserWorkoutBody, GetExerciseTrackingQuery } from '../../../shared/types/api/workouts/requests.ts';
 
 /**
  * Get the authenticated user's recent exercise tracking history.

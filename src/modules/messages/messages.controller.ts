@@ -4,12 +4,12 @@ import {
   DeleteMessageParams,
   GetAllUserMessagesQuery,
   MarkMessageAsReadParams,
-} from '../../types/api/messages/requests.ts';
+} from '../../shared/types/api/messages/requests.ts';
 import {
   DeleteMessageResponse,
   GetAllUserMessagesResponse,
   MarkMessageAsReadResponse,
-} from '../../types/api/messages/responses.ts';
+} from '../../shared/types/api/messages/responses.ts';
 
 /**
  * Get the authenticated user's message inbox.

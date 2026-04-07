@@ -1,16 +1,19 @@
 import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
-import { queryBumpTokenVersionAndGetSelfData, querySetUserFirstLoginFalse } from '../../auth/session/session.queries.ts';
+import {
+  queryBumpTokenVersionAndGetSelfData,
+  querySetUserFirstLoginFalse,
+} from '../../auth/session/session.queries.ts';
 import {
   queryCreateUserWithAppleInfo,
   queryFindUserIdWithAppleUserId,
   queryTryToLinkUserWithEmailApple,
 } from './apple.queries.ts';
 import { buildCnfClaim } from '../oauth.service.ts';
-import { sendSystemMessageToUserWhenFirstLogin } from '../../../services/messagesService.ts';
-import type { AppleOAuthBody } from '../../../types/api/oAuth/requests.ts';
-import type { OAuthLoginResponse } from '../../../types/api/oAuth/responses.ts';
-import { verifyAppleIdToken } from '../../../utils/oauthUtils.ts';
+import { sendSystemMessageToUserWhenFirstLogin } from '../../../shared/services/messagesService.ts';
+import type { AppleOAuthBody } from '../../../shared/types/api/oAuth/requests.ts';
+import type { OAuthLoginResponse } from '../../../shared/types/api/oAuth/responses.ts';
+import { verifyAppleIdToken } from '../../../shared/utils/oauthUtils.ts';
 
 export const createOrSignInWithAppleData = async (
   body: AppleOAuthBody,

@@ -10,7 +10,7 @@ import {
   CheckUserVerifyQuery,
   SendVerifcationMailBody,
   VerifyUserAccountQuery,
-} from '../../../types/api/auth/requests.ts';
+} from '../../../shared/types/api/auth/requests.ts';
 
 /**
  * Complete account verification from an email verification link.

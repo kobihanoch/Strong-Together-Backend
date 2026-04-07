@@ -1,12 +1,8 @@
-import sql from "../../config/db.ts";
-import type {
-  ExercisesMapByMuscle,
-  QueryGetExerciseMapByMuscleRow,
-} from "../../types/dto/exercises.dto.ts";
+import sql from '../../infrastructure/db.client.ts';
+import type { ExercisesMapByMuscle, QueryGetExerciseMapByMuscleRow } from '../../shared/types/dto/exercises.dto.ts';
 
-export const queryGetExerciseMapByMuscle =
-  async (): Promise<ExercisesMapByMuscle> => {
-    const rows = (await sql`
+export const queryGetExerciseMapByMuscle = async (): Promise<ExercisesMapByMuscle> => {
+  const rows = (await sql`
     SELECT jsonb_build_object(
       'map',
       jsonb_object_agg(t.targetmuscle, t.ex_list)
@@ -27,6 +23,6 @@ export const queryGetExerciseMapByMuscle =
     ) AS t
   `) as QueryGetExerciseMapByMuscleRow[];
 
-    // postgres.js returns an array of rows; we selected a single column aliased as "result"
-    return rows[0]?.result?.map ?? {};
-  };
+  // postgres.js returns an array of rows; we selected a single column aliased as "result"
+  return rows[0]?.result?.map ?? {};
+};

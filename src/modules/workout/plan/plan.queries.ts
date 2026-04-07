@@ -1,6 +1,10 @@
 import type postgres from 'postgres';
-import sql from '../../../config/db.ts';
-import { AddWorkoutSplitPayload, WholeUserWorkoutPlan, WorkoutSplitsMap } from '../../../types/dto/workoutPlans.dto.ts';
+import sql from '../../../infrastructure/db.client.ts';
+import {
+  AddWorkoutSplitPayload,
+  WholeUserWorkoutPlan,
+  WorkoutSplitsMap,
+} from '../../../shared/types/dto/workoutPlans.dto.ts';
 
 export async function queryWholeUserWorkoutPlan(userId: string, tz: string): Promise<WholeUserWorkoutPlan[]> {
   return sql<WholeUserWorkoutPlan[]>`

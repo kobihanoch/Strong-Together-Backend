@@ -1,8 +1,5 @@
-import sql from "../../config/db.ts";
-import {
-  GoalAdherenceResponse,
-  WorkoutRMsResponse,
-} from "../../types/dto/analytics.dto.ts";
+import sql from '../../infrastructure/db.client.ts';
+import { GoalAdherenceResponse, WorkoutRMsResponse } from '../../shared/types/dto/analytics.dto.ts';
 
 /**
  * {
@@ -14,9 +11,7 @@ import {
  *        } , .....
  * }
  */
-export const queryGetWorkoutRMs = async (
-  userId: string,
-): Promise<WorkoutRMsResponse> => {
+export const queryGetWorkoutRMs = async (userId: string): Promise<WorkoutRMsResponse> => {
   const [{ result }] = await sql<{ result: WorkoutRMsResponse }[]>`
     with
     -- All workouts for this user (authoritative source)
@@ -118,9 +113,7 @@ export const queryGetWorkoutRMs = async (
  * }
  */
 
-export const queryGoalAdherence = async (
-  userId: string,
-): Promise<GoalAdherenceResponse> => {
+export const queryGoalAdherence = async (userId: string): Promise<GoalAdherenceResponse> => {
   const [{ result }] = await sql<{ result: GoalAdherenceResponse }[]>`
     with
     -- Planned volume per split+exercise from the user's active plans

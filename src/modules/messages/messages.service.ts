@@ -4,7 +4,7 @@ import type {
   DeleteMessageResponse,
   GetAllUserMessagesResponse,
   MarkMessageAsReadResponse,
-} from '../../types/api/messages/responses.ts';
+} from '../../shared/types/api/messages/responses.ts';
 
 export const getAllMessagesData = async (
   userId: string,

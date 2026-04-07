@@ -1,4 +1,4 @@
-import sql from '../../../config/db.ts';
+import sql from '../../../infrastructure/db.client.ts';
 import { queryBumpTokenVersionAndGetSelfData } from '../session/session.queries.ts';
 
 export { queryBumpTokenVersionAndGetSelfData };

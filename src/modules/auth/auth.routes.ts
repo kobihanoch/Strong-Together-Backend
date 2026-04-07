@@ -1,23 +1,16 @@
 import { Router } from 'express';
-import { withRlsTx } from '../../config/db.ts';
+import { withRlsTx } from '../../infrastructure/db.client.ts';
 import {
   changeEmailAndVerify,
   checkUserVerify,
   sendVerificationMail,
   verifyUserAccount,
 } from './verification/verification.controller.ts';
-import {
-  loginUser,
-  logoutUser,
-  refreshAccessToken,
-} from './session/session.controller.ts';
-import {
-  resetPassword,
-  sendChangePassEmail,
-} from './password/password.controller.ts';
-import dpopValidationMiddleware from '../../middlewares/DPoPValidationMiddleware.ts';
-import { asyncHandler } from '../../middlewares/asyncHandler.ts';
-import { protect } from '../../middlewares/authMiddleware.ts';
+import { loginUser, logoutUser, refreshAccessToken } from './session/session.controller.ts';
+import { resetPassword, sendChangePassEmail } from './password/password.controller.ts';
+import dpopValidationMiddleware from '../../shared/middlewares/DPoPValidationMiddleware.ts';
+import { asyncHandler } from '../../shared/middlewares/asyncHandler.ts';
+import { protect } from '../../shared/middlewares/authMiddleware.ts';
 import {
   changeVerificationEmailLimiter,
   changeVerificationEmailLimiterDaily,
@@ -25,8 +18,8 @@ import {
   loginLimiter,
   resetPasswordEmailLimiter,
   restPasswordEmailLimiterDaily,
-} from '../../middlewares/rateLimiter.ts';
-import { validate } from '../../middlewares/validateRequest.ts';
+} from '../../shared/middlewares/rateLimiter.ts';
+import { validate } from '../../shared/middlewares/validateRequest.ts';
 import {
   changeEmailAndVerifyRequest,
   checkUserVerifyRequest,
@@ -34,10 +27,7 @@ import {
   verifyAccountRequest,
 } from './verification/verification.schemas.ts';
 import { loginRequest } from './session/session.schemas.ts';
-import {
-  resetPasswordRequest,
-  sendChangePassEmailRequest,
-} from './password/password.schemas.ts';
+import { resetPasswordRequest, sendChangePassEmailRequest } from './password/password.schemas.ts';
 
 const router = Router();
 

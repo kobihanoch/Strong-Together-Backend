@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import { createLogger } from '../../../config/logger.ts';
+import { createLogger } from '../../../infrastructure/logger.ts';
 import { loginUserData, logoutUserData, refreshAccessTokenData } from './session.service.ts';
-import { LoginRequestBody } from '../../../types/api/auth/requests.ts';
-import { LoginResponse, MessageResponse, RefreshTokenResponse } from '../../../types/api/auth/responses.ts';
-import { getRefreshToken } from '../../../utils/tokenUtils.ts';
+import { LoginRequestBody } from '../../../shared/types/api/auth/requests.ts';
+import { LoginResponse, MessageResponse, RefreshTokenResponse } from '../../../shared/types/api/auth/responses.ts';
+import { getRefreshToken } from '../../../shared/utils/tokenUtils.ts';
 
 const logger = createLogger('controller:auth');
 

@@ -1,9 +1,9 @@
 import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
-import sql from '../../config/db.ts';
+import sql from '../../infrastructure/db.client.ts';
 import { queryBumpTokenVersionAndGetSelfData, querySetUserFirstLoginFalse } from '../auth/session/session.queries.ts';
-import { sendSystemMessageToUserWhenFirstLogin } from '../../services/messagesService.ts';
-import type { ProceedLoginResponse } from '../../types/api/oAuth/responses.ts';
+import { sendSystemMessageToUserWhenFirstLogin } from '../../shared/services/messagesService.ts';
+import type { ProceedLoginResponse } from '../../shared/types/api/oAuth/responses.ts';
 
 export const validateJkt = (jkt: string | undefined): string => {
   if (process.env.DPOP_ENABLED === 'true') {

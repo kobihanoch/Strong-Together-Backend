@@ -1,5 +1,5 @@
-import sql from '../../../config/db.ts';
-import { UserEntity } from '../../../types/entities/user.entity.ts';
+import sql from '../../../infrastructure/db.client.ts';
+import { UserEntity } from '../../../shared/types/entities/user.entity.ts';
 
 export async function queryUserExistsByUsernameOrEmail(
   username: string | null,

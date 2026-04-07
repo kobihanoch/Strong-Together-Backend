@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { deleteMessage, getAllUserMessages, markUserMessageAsRead } from './messages.controller.ts';
-import { asyncHandler } from '../../middlewares/asyncHandler.ts';
-import { protect } from '../../middlewares/authMiddleware.ts';
-import { withRlsTx } from '../../config/db.ts';
-import dpopValidationMiddleware from '../../middlewares/DPoPValidationMiddleware.ts';
+import { asyncHandler } from '../../shared/middlewares/asyncHandler.ts';
+import { protect } from '../../shared/middlewares/authMiddleware.ts';
+import { withRlsTx } from '../../infrastructure/db.client.ts';
+import dpopValidationMiddleware from '../../shared/middlewares/DPoPValidationMiddleware.ts';
 import { getAllMessagesRequest, markMessageAsReadRequest, deleteMessageRequest } from './messages.schemas.ts';
-import { validate } from '../../middlewares/validateRequest.ts';
+import { validate } from '../../shared/middlewares/validateRequest.ts';
 
 const router = Router();
 

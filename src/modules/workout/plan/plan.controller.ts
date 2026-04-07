@@ -1,16 +1,10 @@
 import type { Request, Response } from 'express';
-import {
-  addWorkoutData,
-  getWorkoutPlanData,
-} from './plan.service.ts';
+import { addWorkoutData, getWorkoutPlanData } from './plan.service.ts';
 import type {
   AddWorkoutResponse,
   GetWholeUserWorkoutPlanResponse,
-} from '../../../types/api/workouts/responses.ts';
-import {
-  AddWorkoutBody,
-  GetWholeUserWorkoutPlanQuery,
-} from '../../../types/api/workouts/requests.ts';
+} from '../../../shared/types/api/workouts/responses.ts';
+import { AddWorkoutBody, GetWholeUserWorkoutPlanQuery } from '../../../shared/types/api/workouts/requests.ts';
 
 /**
  * Get the authenticated user's active workout plan.
