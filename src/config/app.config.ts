@@ -17,5 +17,3 @@ export const appConfig = {
   privateBaseUrlDev: process.env.PRIVATE_BASE_URL_DEV,
   systemUserId: process.env.SYSTEM_USER_ID as string,
 };
-
-console.log(appConfig);
