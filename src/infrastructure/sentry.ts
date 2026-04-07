@@ -1,12 +1,14 @@
 import * as Sentry from '@sentry/node';
 import type { Express, Request } from 'express';
+import { appConfig } from '../config/app.config.ts';
+import { sentryConfig } from '../config/sentry.config.ts';
 
-const dsn = process.env.SENTRY_DSN;
-const environment = process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'development';
-const release = process.env.SENTRY_RELEASE || process.env.npm_package_version;
-const tracesSampleRate = Number(process.env.SENTRY_TRACES_SAMPLE_RATE || '0');
-const profilesSampleRate = Number(process.env.SENTRY_PROFILES_SAMPLE_RATE || '0');
-const isTestEnv = process.env.NODE_ENV === 'test';
+const dsn = sentryConfig.dsn;
+const environment = sentryConfig.environment;
+const release = sentryConfig.release;
+const tracesSampleRate = sentryConfig.tracesSampleRate;
+const profilesSampleRate = sentryConfig.profilesSampleRate;
+const isTestEnv = appConfig.isTest;
 
 let initialized = false;
 

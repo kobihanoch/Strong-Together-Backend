@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { createUserUserSchema } from '../../../validators/shared/responseSchemas.ts';
+import { createUserUserSchema } from '../../../validators/shared/response-schemas.ts';
 
 export const createUserRequest = z.object({
   body: z.object({

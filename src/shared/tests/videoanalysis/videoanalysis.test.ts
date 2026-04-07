@@ -2,9 +2,9 @@ import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../../app.ts';
 import { loginResponseSchema } from '../../../modules/auth/session/session.schemas.ts';
-import { getPresignedUrlFromS3ResponseSchema } from '../../../modules/videoAnalysis/videoAnalysis.schemas.ts';
+import { getPresignedUrlFromS3ResponseSchema } from '../../../modules/video-analysis/video-analysis.schemas.ts';
 import { loginBootstrapTestUser } from '../helpers/auth.ts';
-import { expectSchema } from '../helpers/assertSchema.ts';
+import { expectSchema } from '../helpers/assert-schema.ts';
 import { getPresignedUrl } from '../helpers/videoanalysis.ts';
 
 let app: ReturnType<typeof createApp>;

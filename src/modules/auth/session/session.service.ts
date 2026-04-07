@@ -8,10 +8,12 @@ import {
   queryUpdateExpoPushTokenToNull,
   queryUserByIdentifierForLogin,
 } from './session.queries.ts';
-import { sendSystemMessageToUserWhenFirstLogin } from '../../../shared/services/messagesService.ts';
+import { appConfig } from '../../../config/app.config.ts';
+import { authConfig } from '../../../config/auth.config.ts';
+import { sendSystemMessageToUserWhenFirstLogin } from '../../../shared/services/messages-service.ts';
 import type { LoginResponse, RefreshTokenResponse } from '../../../shared/types/api/auth/responses.ts';
 import type { AccessTokenPayload } from '../../../shared/types/dto/auth.dto.ts';
-import { decodeRefreshToken } from '../../../shared/utils/tokenUtils.ts';
+import { decodeRefreshToken } from '../../../shared/utils/token-utils.ts';
 
 export const loginUserData = async (
   identifier: string,
@@ -19,7 +21,7 @@ export const loginUserData = async (
   jkt: string | undefined,
   requestLogger: { error: (...args: any[]) => void },
 ): Promise<LoginResponse> => {
-  if (process.env.DPOP_ENABLED === 'true') {
+  if (appConfig.dpopEnabled) {
     if (!jkt) {
       throw createError(400, 'DPoP-Key-Binding header is missing.');
     }
@@ -65,7 +67,7 @@ export const loginUserData = async (
       tokenVer: token_version,
       ...cnfClaim,
     },
-    process.env.JWT_ACCESS_SECRET!,
+    authConfig.jwtAccessSecret,
     { expiresIn: '5m' },
   );
 
@@ -76,7 +78,7 @@ export const loginUserData = async (
       tokenVer: token_version,
       ...cnfClaim,
     },
-    process.env.JWT_REFRESH_SECRET!,
+    authConfig.jwtRefreshSecret,
     { expiresIn: '14d' },
   );
 
@@ -103,7 +105,7 @@ export const refreshAccessTokenData = async (
   refreshToken: string | null | undefined,
   dpopJkt: string | null | undefined,
 ): Promise<RefreshTokenResponse> => {
-  if (process.env.DPOP_ENABLED === 'true') {
+  if (appConfig.dpopEnabled) {
     if (!dpopJkt) {
       throw createError(500, 'Internal error: DPoP JKT not found on request.');
     }
@@ -114,7 +116,7 @@ export const refreshAccessTokenData = async (
   const decoded = decodeRefreshToken(refreshToken ?? null) as AccessTokenPayload | null;
   if (!decoded) throw createError(401, 'Invalid or expired refresh token');
 
-  if (process.env.DPOP_ENABLED === 'true') {
+  if (appConfig.dpopEnabled) {
     const tokenJkt = decoded.cnf?.jkt;
     if (tokenJkt && tokenJkt !== dpopJkt) {
       throw createError(401, 'Proof-of-Possession failed (JKT mismatch).');
@@ -141,7 +143,7 @@ export const refreshAccessTokenData = async (
       tokenVer: token_version,
       ...cnfClaim,
     },
-    process.env.JWT_ACCESS_SECRET!,
+    authConfig.jwtAccessSecret,
     { expiresIn: '5m' },
   );
 
@@ -152,7 +154,7 @@ export const refreshAccessTokenData = async (
       tokenVer: token_version,
       ...cnfClaim,
     },
-    process.env.JWT_REFRESH_SECRET!,
+    authConfig.jwtRefreshSecret,
     { expiresIn: '14d' },
   );
 

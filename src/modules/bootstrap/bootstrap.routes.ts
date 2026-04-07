@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { asyncHandler } from '../../shared/middlewares/asyncHandler.ts';
-import { protect } from '../../shared/middlewares/authMiddleware.ts';
+import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
+import { protect } from '../../shared/middlewares/auth-middleware.ts';
 import { getBootstrapData } from './bootstrap.controller.ts';
 import { withRlsTx } from '../../infrastructure/db.client.ts';
-import dpopValidationMiddleware from '../../shared/middlewares/DPoPValidationMiddleware.ts';
+import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
 import { bootstrapRequest } from './bootstrap.schemas.ts';
-import { validate } from '../../shared/middlewares/validateRequest.ts';
+import { validate } from '../../shared/middlewares/validate-request.ts';
 
 const router = Router();
 

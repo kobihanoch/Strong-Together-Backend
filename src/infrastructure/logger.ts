@@ -1,9 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import pino, { type Bindings, type Logger } from 'pino';
+import { appConfig } from '../config/app.config.ts';
+import { loggerConfig } from '../config/logger.config.ts';
 
-const serviceName = process.env.LOG_SERVICE_NAME || 'strong-together-server';
-const isDevelopment = process.env.NODE_ENV !== 'production';
-const isTestEnv = process.env.NODE_ENV === 'test';
+const serviceName = loggerConfig.serviceName;
+const isDevelopment = !appConfig.isProduction;
+const isTestEnv = appConfig.isTest;
 const developmentTransport = isDevelopment
   ? {
       transport: {
@@ -20,12 +22,12 @@ const developmentTransport = isDevelopment
 
 export const logger = pino({
   enabled: !isTestEnv,
-  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+  level: loggerConfig.level,
   timestamp: pino.stdTimeFunctions.isoTime,
   ...developmentTransport,
   base: {
     service: serviceName,
-    env: process.env.NODE_ENV || 'development',
+    env: appConfig.nodeEnv,
   },
   formatters: {
     level: (label) => ({ level: label }),

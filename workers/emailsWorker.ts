@@ -1,5 +1,5 @@
 import { sendMail } from '../src/infrastructure/mailer.service.ts';
-import emailsQueue from '../src/shared/queues/emails/emailsQueue.ts';
+import emailsQueue from '../src/shared/queues/emails/emails-queue.ts';
 import { createLogger } from '../src/infrastructure/logger.ts';
 import { captureWorkerException } from '../src/infrastructure/sentry.ts';
 

@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { authConfig } from '../../../config/auth.config.ts';
 import { createApp } from '../../../app.ts';
 import { loginResponseSchema } from '../../../modules/auth/session/session.schemas.ts';
 import { createUserResponseSchema } from '../../../modules/user/create/create.schemas.ts';
@@ -8,7 +9,7 @@ import { userAerobicsResponseSchema } from '../../../modules/aerobics/aerobics.s
 import type { UserAerobicsResponse } from '../../types/api/aerobics/responses.ts';
 import type { WeeklyData } from '../../types/dto/aerobics.dto.ts';
 import { loginAerobicsDefaultTimezoneUser, loginAerobicsGetUser, loginAerobicsTestUser } from '../helpers/auth.ts';
-import { expectSchema } from '../helpers/assertSchema.ts';
+import { expectSchema } from '../helpers/assert-schema.ts';
 import { addAerobicsRecord, getAerobics } from '../helpers/aerobics.ts';
 import { waitForAerobicsRowsForUser } from '../helpers/db.ts';
 
@@ -116,7 +117,7 @@ describe('Aerobics', () => {
         jti: `verify-${suffix}`,
         iss: 'strong-together',
       },
-      process.env.JWT_VERIFY_SECRET || '',
+      authConfig.jwtVerifySecret,
       { expiresIn: '1h' },
     );
 

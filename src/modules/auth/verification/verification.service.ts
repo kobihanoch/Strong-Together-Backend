@@ -3,14 +3,14 @@ import createError from 'http-errors';
 import sql from '../../../infrastructure/db.client.ts';
 import { queryUpdateUserVerficiationStatus, queryUserByUsername } from './verification.queries.ts';
 import { queryUserExistsByUsernameOrEmail } from '../../user/create/create.queries.ts';
-import { sendVerificationEmail } from '../../../shared/services/emailService.ts';
+import { sendVerificationEmail } from '../../../shared/services/email-service.ts';
 import {
   generateVerificationFailedHTML,
   generateVerifiedHTML,
-} from '../../../shared/templates/responseHTMLTemplates.ts';
+} from '../../../shared/templates/response-html-templates.ts';
 import type { ChangeEmailAndVerifyBody, SendVerifcationMailBody } from '../../../shared/types/api/auth/requests.ts';
 import { cacheStoreJti } from '../../../shared/utils/cache.ts';
-import { decodeVerifyToken } from '../../../shared/utils/tokenUtils.ts';
+import { decodeVerifyToken } from '../../../shared/utils/token-utils.ts';
 
 export const verifyUserAccountData = async (
   token: string | undefined,

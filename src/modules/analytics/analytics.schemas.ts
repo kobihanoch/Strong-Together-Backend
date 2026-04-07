@@ -1,3 +1,3 @@
-import { getAnalyticsResponseSchema } from '../../validators/shared/responseSchemas.ts';
+import { getAnalyticsResponseSchema } from '../../validators/shared/response-schemas.ts';
 
 export { getAnalyticsResponseSchema };

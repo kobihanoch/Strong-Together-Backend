@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { exerciseTrackingAndStatsSchema } from '../../../validators/shared/responseSchemas.ts';
+import { exerciseTrackingAndStatsSchema } from '../../../validators/shared/response-schemas.ts';
 
 const finishedExerciseEntry = z.object({
   exercisetosplit_id: z.number(),

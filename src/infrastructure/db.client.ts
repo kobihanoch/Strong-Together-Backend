@@ -2,16 +2,18 @@ import postgres from 'postgres';
 import dns from 'dns';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { Request, Response, NextFunction } from 'express';
+import { appConfig } from '../config/app.config.ts';
+import { databaseConfig } from '../config/database.config.ts';
 import { createLogger } from './logger.ts';
 
 dns.setDefaultResultOrder('ipv4first');
 
-const connectionString = process.env.DATABASE_URL;
+const connectionString = databaseConfig.url;
 
 // Base pool client (PgBouncer safe)
 function makeClient(): postgres.Sql {
   return postgres(connectionString!, {
-    ssl: process.env.NODE_ENV === 'test' ? false : 'require',
+    ssl: appConfig.isTest ? false : 'require',
     prepare: false,
     connect_timeout: 30,
   });

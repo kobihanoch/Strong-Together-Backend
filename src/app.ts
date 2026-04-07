@@ -2,11 +2,11 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import { setupSentryErrorHandler } from './infrastructure/sentry.ts';
-import { botBlocker } from './shared/middlewares/botBlocker.ts';
-import { checkAppVersion } from './shared/middlewares/checkAppVersion.ts';
-import { errorHandler } from './shared/middlewares/errorHandler.ts';
-import { generalLimiter } from './shared/middlewares/rateLimiter.ts';
-import { requestLogger } from './shared/middlewares/requestLogger.ts';
+import { botBlocker } from './shared/middlewares/bot-blocker.ts';
+import { checkAppVersion } from './shared/middlewares/check-app-version.ts';
+import { errorHandler } from './shared/middlewares/error-handler.ts';
+import { generalLimiter } from './shared/middlewares/rate-limiter.ts';
+import { requestLogger } from './shared/middlewares/request-logger.ts';
 import aerobicsRoutes from './modules/aerobics/aerobics.routes.ts';
 import analyticsRoutes from './modules/analytics/analytics.routes.ts';
 import authRoutes from './modules/auth/auth.routes.ts';
@@ -16,8 +16,8 @@ import messagesRoutes from './modules/messages/messages.routes.ts';
 import oauthRoutes from './modules/oauth/oauth.routes.ts';
 import pushRoutes from './modules/push/push.routes.ts';
 import userRoutes from './modules/user/user.routes.ts';
-import videoAnalysisRoutes from './modules/videoAnalysis/videoAnalysis.routes.ts';
-import webSocketsRoutes from './modules/webSockets/webSockets.routes.ts';
+import videoAnalysisRoutes from './modules/video-analysis/video-analysis.routes.ts';
+import webSocketsRoutes from './modules/web-sockets/web-sockets.routes.ts';
 import workoutRoutes from './modules/workout/workout.routes.ts';
 
 export const createApp = () => {

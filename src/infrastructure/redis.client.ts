@@ -1,17 +1,18 @@
 // redisClient.js
 import dotenv from 'dotenv';
 import { createClient, RedisClientOptions } from 'redis';
+import { redisConfig } from '../config/redis.config.ts';
 import { createLogger } from './logger.ts';
 
 dotenv.config();
 const logger = createLogger('config:redis');
 
 const redisOptions: RedisClientOptions = {
-  username: process.env.REDIS_USERNAME!,
-  password: process.env.REDIS_PASSWORD!,
+  ...(redisConfig.username ? { username: redisConfig.username } : {}),
+  ...(redisConfig.password ? { password: redisConfig.password } : {}),
   socket: {
-    host: process.env.REDIS_HOST!,
-    port: Number(process.env.REDIS_PORT!),
+    host: redisConfig.host,
+    port: redisConfig.port,
   },
 };
 

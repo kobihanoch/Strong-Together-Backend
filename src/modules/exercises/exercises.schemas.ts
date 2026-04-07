@@ -1,3 +1,3 @@
-import { getAllExercisesResponseSchema } from '../../validators/shared/responseSchemas.ts';
+import { getAllExercisesResponseSchema } from '../../validators/shared/response-schemas.ts';
 
 export { getAllExercisesResponseSchema };

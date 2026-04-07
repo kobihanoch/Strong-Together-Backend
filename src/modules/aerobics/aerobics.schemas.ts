@@ -1,5 +1,5 @@
 import z from 'zod';
-import { userAerobicsResponseSchema } from '../../validators/shared/responseSchemas.ts';
+import { userAerobicsResponseSchema } from '../../validators/shared/response-schemas.ts';
 
 const addAerobicInput = z.object({
   durationMins: z.number(),

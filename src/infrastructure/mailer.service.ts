@@ -1,7 +1,8 @@
 import { Resend } from 'resend';
+import { emailConfig } from '../config/email.config.ts';
 import { createLogger } from './logger.ts';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(emailConfig.resendApiKey);
 const logger = createLogger('config:mailer');
 
 /**

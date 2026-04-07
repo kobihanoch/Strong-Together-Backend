@@ -1,5 +1,6 @@
 import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
+import { authConfig } from '../../../config/auth.config.ts';
 import {
   queryBumpTokenVersionAndGetSelfData,
   querySetUserFirstLoginFalse,
@@ -10,11 +11,11 @@ import {
   queryTryToLinkUserWithEmailGoogle,
 } from './google.queries.ts';
 import { buildCnfClaim } from '../oauth.service.ts';
-import { sendSystemMessageToUserWhenFirstLogin } from '../../../shared/services/messagesService.ts';
-import type { GoogleOAuthBody } from '../../../shared/types/api/oAuth/requests.ts';
-import type { OAuthLoginResponse } from '../../../shared/types/api/oAuth/responses.ts';
-import type { GoogleTokenVerificationResult } from '../../../shared/types/dto/oAuth.dto.ts';
-import { verifyGoogleIdToken } from '../../../shared/utils/oauthUtils.ts';
+import { sendSystemMessageToUserWhenFirstLogin } from '../../../shared/services/messages-service.ts';
+import type { GoogleOAuthBody } from '../../../shared/types/api/oauth/requests.ts';
+import type { OAuthLoginResponse } from '../../../shared/types/api/oauth/responses.ts';
+import type { GoogleTokenVerificationResult } from '../../../shared/types/dto/oauth.dto.ts';
+import { verifyGoogleIdToken } from '../../../shared/utils/oauth-utils.ts';
 
 export const createOrSignInWithGoogleData = async (
   body: GoogleOAuthBody,
@@ -102,7 +103,7 @@ export const createOrSignInWithGoogleData = async (
       tokenVer: token_version,
       ...cnfClaim,
     },
-    process.env.JWT_ACCESS_SECRET!,
+    authConfig.jwtAccessSecret,
     { expiresIn: '5m' },
   );
 
@@ -113,7 +114,7 @@ export const createOrSignInWithGoogleData = async (
       tokenVer: token_version,
       ...cnfClaim,
     },
-    process.env.JWT_REFRESH_SECRET!,
+    authConfig.jwtRefreshSecret,
     { expiresIn: '14d' },
   );
 

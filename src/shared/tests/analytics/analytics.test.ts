@@ -4,7 +4,7 @@ import { createApp } from '../../../app.ts';
 import { getAnalyticsResponseSchema } from '../../../modules/analytics/analytics.schemas.ts';
 import { loginResponseSchema } from '../../../modules/auth/session/session.schemas.ts';
 import { loginAnalyticsEmptyUser, loginAnalyticsTestUser } from '../helpers/auth.ts';
-import { expectSchema } from '../helpers/assertSchema.ts';
+import { expectSchema } from '../helpers/assert-schema.ts';
 import { getExerciseToWorkoutSplitId, getWorkoutSummaryCount } from '../helpers/db.ts';
 import { getAnalytics } from '../helpers/analytics.ts';
 import { addWorkoutPlan, finishWorkout } from '../helpers/workouts.ts';

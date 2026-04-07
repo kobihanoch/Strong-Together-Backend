@@ -1,12 +1,14 @@
 import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
+import { appConfig } from '../../config/app.config.ts';
+import { authConfig } from '../../config/auth.config.ts';
 import sql from '../../infrastructure/db.client.ts';
 import { queryBumpTokenVersionAndGetSelfData, querySetUserFirstLoginFalse } from '../auth/session/session.queries.ts';
-import { sendSystemMessageToUserWhenFirstLogin } from '../../shared/services/messagesService.ts';
-import type { ProceedLoginResponse } from '../../shared/types/api/oAuth/responses.ts';
+import { sendSystemMessageToUserWhenFirstLogin } from '../../shared/services/messages-service.ts';
+import type { ProceedLoginResponse } from '../../shared/types/api/oauth/responses.ts';
 
 export const validateJkt = (jkt: string | undefined): string => {
-  if (process.env.DPOP_ENABLED === 'true') {
+  if (appConfig.dpopEnabled) {
     if (!jkt) {
       throw createError(400, 'DPoP-Key-Binding header is missing.');
     }
@@ -26,7 +28,7 @@ export const proceedLoginData = async (
   dpopJkt: string | undefined,
   requestLogger: { error: (...args: any[]) => void },
 ): Promise<ProceedLoginResponse> => {
-  if (process.env.DPOP_ENABLED === 'true' && !dpopJkt) {
+  if (appConfig.dpopEnabled && !dpopJkt) {
     throw createError(500, 'Internal error: DPoP JKT not found on request.');
   }
 
@@ -60,7 +62,7 @@ export const proceedLoginData = async (
       tokenVer: token_version,
       ...cnfClaim,
     },
-    process.env.JWT_ACCESS_SECRET!,
+    authConfig.jwtAccessSecret,
     { expiresIn: '5m' },
   );
 
@@ -71,7 +73,7 @@ export const proceedLoginData = async (
       tokenVer: token_version,
       ...cnfClaim,
     },
-    process.env.JWT_REFRESH_SECRET!,
+    authConfig.jwtRefreshSecret,
     { expiresIn: '14d' },
   );
 

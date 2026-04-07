@@ -8,7 +8,7 @@ import { loginBootstrapAerobicsUser, loginBootstrapFlowUser, loginBootstrapTestU
 import { addAerobicsRecord } from '../helpers/aerobics.ts';
 import { getBootstrap } from '../helpers/bootstrap.ts';
 import { getExerciseToWorkoutSplitId, getUserReminderTimezone } from '../helpers/db.ts';
-import { expectSchema } from '../helpers/assertSchema.ts';
+import { expectSchema } from '../helpers/assert-schema.ts';
 import { addWorkoutPlan, finishWorkout } from '../helpers/workouts.ts';
 
 let app: ReturnType<typeof createApp>;

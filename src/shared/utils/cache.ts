@@ -1,4 +1,6 @@
 import { gunzipSync, gzipSync } from 'zlib';
+import { appConfig } from '../../config/app.config.ts';
+import { redisConfig } from '../../config/redis.config.ts';
 import { createLogger } from '../../infrastructure/logger.ts';
 import { redis } from '../../infrastructure/redis.client.ts';
 
@@ -8,13 +10,8 @@ const ANALYTICS_NS = 'xt:analytics:v1';
 const AEROBICS_NS = 'xt:aerobics:v1';
 const USERTIMEZONE_NS = 'xt:timezone:v1';
 
-const enabled = process.env.CACHE_ENABLED === 'true';
+const enabled = appConfig.cacheEnabled;
 const logger = createLogger('utils:cache');
-
-const numFromEnv = (name: string, def: number): number => {
-  const v = Number(process.env[name]);
-  return Number.isFinite(v) && v > 0 ? v : def;
-};
 
 const deleteRedisKeys = async (keys: string[]): Promise<void> => {
   if (!enabled || !redis || keys.length === 0) return;
@@ -26,11 +23,11 @@ const deleteRedisKeys = async (keys: string[]): Promise<void> => {
   }
 };
 
-export const TTL_TRACKING = numFromEnv('CACHE_TTL_TRACKING_SEC', 48 * 60 * 60);
-export const TTL_TIMEZONE = numFromEnv('CACHE_TTL_TIMEZONE_SEC', 48 * 60 * 60);
-export const TTL_PLAN = numFromEnv('CACHE_TTL_PLAN_SEC', 48 * 60 * 60);
-export const TTL_ANALYTICS = numFromEnv('CACHE_TTL_ANALYTICS_SEC', 1 * 60 * 60);
-export const TTL_AEROBICS = numFromEnv('CACHE_TTL_AEROBICS_SEC', 48 * 60 * 60);
+export const TTL_TRACKING = redisConfig.cacheTtls.trackingSec;
+export const TTL_TIMEZONE = redisConfig.cacheTtls.timezoneSec;
+export const TTL_PLAN = redisConfig.cacheTtls.planSec;
+export const TTL_ANALYTICS = redisConfig.cacheTtls.analyticsSec;
+export const TTL_AEROBICS = redisConfig.cacheTtls.aerobicsSec;
 
 export const buildTrackingKeyStable = (userId: string, days: number, tz: string): string =>
   `${TRACKING_NS}:${userId}:${days}:${tz}`;

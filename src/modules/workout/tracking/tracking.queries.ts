@@ -1,6 +1,6 @@
 import type postgres from 'postgres';
 import sql from '../../../infrastructure/db.client.ts';
-import { ExerciseTrackingAndStats, FinishedWorkoutEntry } from '../../../shared/types/dto/exerciseTracking.dto.ts';
+import { ExerciseTrackingAndStats, FinishedWorkoutEntry } from '../../../shared/types/dto/exercise-tracking.dto.ts';
 
 export const queryGetExerciseTrackingAndStats = async (
   userId: string,

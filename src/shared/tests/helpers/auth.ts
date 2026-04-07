@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
+import { authConfig } from '../../../config/auth.config.ts';
 import { createApp } from '../../../app.ts';
 
 async function login(identifier: string) {
@@ -84,7 +85,7 @@ export function createVerifyToken(userId: string) {
       jti: `verify-${crypto.randomUUID()}`,
       iss: 'strong-together',
     },
-    process.env.JWT_VERIFY_SECRET || '',
+    authConfig.jwtVerifySecret,
     { expiresIn: '1h' },
   );
 }
@@ -97,7 +98,7 @@ export function createForgotPasswordToken(userId: string) {
       jti: `forgot-${crypto.randomUUID()}`,
       iss: 'strong-together',
     },
-    process.env.JWT_FORGOT_PASSWORD_SECRET || '',
+    authConfig.jwtForgotPasswordSecret,
     { expiresIn: '5m' },
   );
 }
@@ -111,7 +112,7 @@ export function createChangeEmailToken(userId: string, newEmail: string) {
       jti: `email-change-${crypto.randomUUID()}`,
       iss: 'strong-together',
     },
-    process.env.CHANGE_EMAIL_SECRET || '',
+    authConfig.changeEmailSecret,
     { expiresIn: '10m' },
   );
 }

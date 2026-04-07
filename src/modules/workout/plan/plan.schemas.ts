@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { wholeUserWorkoutPlanSchema, workoutSplitsMapSchema } from '../../../validators/shared/responseSchemas.ts';
+import { wholeUserWorkoutPlanSchema, workoutSplitsMapSchema } from '../../../validators/shared/response-schemas.ts';
 
 const workoutExerciseSchema = z.object({
   id: z.number(),

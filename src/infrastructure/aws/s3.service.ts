@@ -1,11 +1,12 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { awsConfig } from '../../config/storage.config.ts';
 
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION || '',
+  region: awsConfig.region,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+    accessKeyId: awsConfig.accessKeyId,
+    secretAccessKey: awsConfig.secretAccessKey,
   },
 });
 
@@ -15,7 +16,7 @@ export async function getUploadUrl(
   metadata: Record<string, string>,
 ): Promise<string> {
   const command = new PutObjectCommand({
-    Bucket: process.env.AWS_BUCKET_NAME,
+    Bucket: awsConfig.bucketName,
     Key: fileKey,
     ContentType: fileType,
     Metadata: metadata,

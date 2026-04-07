@@ -2,10 +2,10 @@ import { Router } from 'express';
 import { withRlsTx } from '../../infrastructure/db.client.ts';
 import { finishUserWorkout, getExerciseTracking } from './tracking/tracking.controller.ts';
 import { addWorkout, getWholeUserWorkoutPlan } from './plan/plan.controller.ts';
-import { asyncHandler } from '../../shared/middlewares/asyncHandler.ts';
-import { protect } from '../../shared/middlewares/authMiddleware.ts';
-import dpopValidationMiddleware from '../../shared/middlewares/DPoPValidationMiddleware.ts';
-import { validate } from '../../shared/middlewares/validateRequest.ts';
+import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
+import { protect } from '../../shared/middlewares/auth-middleware.ts';
+import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
+import { validate } from '../../shared/middlewares/validate-request.ts';
 import { addWorkoutRequest, getWholeWorkoutPlanRequest } from './plan/plan.schemas.ts';
 import { finishWorkoutRequest, getExerciseTrackingRequest } from './tracking/tracking.schemas.ts';
 

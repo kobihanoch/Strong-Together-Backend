@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { allUserMessageSchema, deletedMessageSchema, messageAsReadSchema } from '../../validators/shared/responseSchemas.ts';
+import { allUserMessageSchema, deletedMessageSchema, messageAsReadSchema } from '../../validators/shared/response-schemas.ts';
 
 export const getAllMessagesRequest = z.object({
   query: z.object({

@@ -1,6 +1,7 @@
 import { createServer, Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
-import { decodeSocketToken } from '../shared/utils/tokenUtils.ts';
+import { redisConfig } from '../config/redis.config.ts';
+import { decodeSocketToken } from '../shared/utils/token-utils.ts';
 import createError from 'http-errors';
 import { createRedisAdapterClients } from './redis.client.ts';
 import { Express } from 'express';
@@ -36,7 +37,7 @@ export const createIOServer = async (app: Express): Promise<{ io: Server; server
     },
   });
 
-  if (process.env.ENABLE_SOCKET_REDIS_ADAPTER === 'true') {
+  if (redisConfig.enableSocketAdapter) {
     try {
       const { createAdapter } = await import('@socket.io/redis-adapter');
       const { pubClient, subClient } = await createRedisAdapterClients();

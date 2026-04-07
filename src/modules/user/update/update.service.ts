@@ -1,6 +1,7 @@
 import createError from 'http-errors';
 import mime from 'mime';
 import path from 'path';
+import { supabaseConfig } from '../../../config/storage.config.ts';
 import sql from '../../../infrastructure/db.client.ts';
 import {
   queryAuthenticatedUserById,
@@ -9,12 +10,12 @@ import {
   queryUpdateAuthenticatedUser,
   queryUpdateUserProfilePicURL,
 } from './update.queries.ts';
-import { sendVerificationEmailForEmailUpdate } from '../../../shared/services/emailService.ts';
-import { deleteFromSupabase, uploadBufferToSupabase } from '../../../shared/services/supabaseStorageService.ts';
+import { sendVerificationEmailForEmailUpdate } from '../../../shared/services/email-service.ts';
+import { deleteFromSupabase, uploadBufferToSupabase } from '../../../shared/services/supabase-storage-service.ts';
 import {
   generateEmailChangeFailedHTML,
   generateEmailChangeSuccessHTML,
-} from '../../../shared/templates/responseHTMLTemplates.ts';
+} from '../../../shared/templates/response-html-templates.ts';
 import type { DeleteUserProfilePicBody, UpdateUserBody } from '../../../shared/types/api/user/requests.ts';
 import type {
   SetProfilePicAndUpdateDBResponse,
@@ -23,7 +24,7 @@ import type {
 } from '../../../shared/types/api/user/responses.ts';
 import type { ChangeEmailTokenPayload } from '../../../shared/types/dto/user.dto.ts';
 import { cacheStoreJti } from '../../../shared/utils/cache.ts';
-import { decodeChangeEmailToken } from '../../../shared/utils/tokenUtils.ts';
+import { decodeChangeEmailToken } from '../../../shared/utils/token-utils.ts';
 
 export const getUserData = async (userId: string): Promise<{ payload: UserDataResponse['user_data'] }> => {
   const rows = await queryAuthenticatedUserById(userId);
@@ -136,7 +137,7 @@ export const setProfilePicAndUpdateDBData = async (
   const key = `${userId}/${Date.now()}${ext}`;
 
   const { path: newPath, publicUrl } = await uploadBufferToSupabase(
-    process.env.BUCKET_NAME as string,
+    supabaseConfig.bucketName,
     key,
     file.buffer,
     file.mimetype,

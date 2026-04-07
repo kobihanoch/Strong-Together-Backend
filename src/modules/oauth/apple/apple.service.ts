@@ -1,5 +1,6 @@
 import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
+import { authConfig } from '../../../config/auth.config.ts';
 import {
   queryBumpTokenVersionAndGetSelfData,
   querySetUserFirstLoginFalse,
@@ -10,10 +11,10 @@ import {
   queryTryToLinkUserWithEmailApple,
 } from './apple.queries.ts';
 import { buildCnfClaim } from '../oauth.service.ts';
-import { sendSystemMessageToUserWhenFirstLogin } from '../../../shared/services/messagesService.ts';
-import type { AppleOAuthBody } from '../../../shared/types/api/oAuth/requests.ts';
-import type { OAuthLoginResponse } from '../../../shared/types/api/oAuth/responses.ts';
-import { verifyAppleIdToken } from '../../../shared/utils/oauthUtils.ts';
+import { sendSystemMessageToUserWhenFirstLogin } from '../../../shared/services/messages-service.ts';
+import type { AppleOAuthBody } from '../../../shared/types/api/oauth/requests.ts';
+import type { OAuthLoginResponse } from '../../../shared/types/api/oauth/responses.ts';
+import { verifyAppleIdToken } from '../../../shared/utils/oauth-utils.ts';
 
 export const createOrSignInWithAppleData = async (
   body: AppleOAuthBody,
@@ -110,7 +111,7 @@ export const createOrSignInWithAppleData = async (
       tokenVer: token_version,
       ...cnfClaim,
     },
-    process.env.JWT_ACCESS_SECRET!,
+    authConfig.jwtAccessSecret,
     { expiresIn: '5m' },
   );
 
@@ -121,7 +122,7 @@ export const createOrSignInWithAppleData = async (
       tokenVer: token_version,
       ...cnfClaim,
     },
-    process.env.JWT_REFRESH_SECRET!,
+    authConfig.jwtRefreshSecret,
     { expiresIn: '14d' },
   );
 

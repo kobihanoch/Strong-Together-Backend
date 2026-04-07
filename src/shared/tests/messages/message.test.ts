@@ -8,7 +8,7 @@ import {
   markMessageAsReadResponseSchema,
 } from '../../../modules/messages/messages.schemas.ts';
 import { loginAuthTestUser, loginMessagesTestUser } from '../helpers/auth.ts';
-import { expectSchema } from '../helpers/assertSchema.ts';
+import { expectSchema } from '../helpers/assert-schema.ts';
 import { getMessageReadState, getExerciseToWorkoutSplitId, messageExists } from '../helpers/db.ts';
 import { deleteMessage, getMessages, markMessageAsRead } from '../helpers/messages.ts';
 import { addWorkoutPlan, finishWorkout } from '../helpers/workouts.ts';

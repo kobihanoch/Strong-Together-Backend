@@ -1,9 +1,9 @@
 import axios from 'axios';
 import createError from 'http-errors';
 import { queryGetAllUsersToSendHourlyReminder, queryGetAllUsersWithNotificationsEnabled } from './push.queries.ts';
-import { enqueuePushNotifications } from '../../shared/queues/pushNotifications/pushNotificationsProducer.ts';
+import { enqueuePushNotifications } from '../../shared/queues/push-notifications/push-notifications-producer.ts';
 import type { NotificationPayload } from '../../shared/types/dto/notifications.dto.ts';
-import { computeDelayFromUTC } from '../../shared/utils/pushUtils.ts';
+import { computeDelayFromUTC } from '../../shared/utils/push-utils.ts';
 
 // Returns { ok: true, id? } OR { ok: false, permanent: true, reason }
 export async function sendPushNotification(token: string, title: string, body: string) {

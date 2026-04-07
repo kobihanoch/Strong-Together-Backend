@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { asyncHandler } from '../../shared/middlewares/asyncHandler.ts';
-import { protect } from '../../shared/middlewares/authMiddleware.ts';
+import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
+import { protect } from '../../shared/middlewares/auth-middleware.ts';
 import { addUserAerobics, getUserAerobics } from './aerobics.controller.ts';
 import { withRlsTx } from '../../infrastructure/db.client.ts';
-import dpopValidationMiddleware from '../../shared/middlewares/DPoPValidationMiddleware.ts';
-import { validate } from '../../shared/middlewares/validateRequest.ts';
+import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
+import { validate } from '../../shared/middlewares/validate-request.ts';
 import { getAerobicsRequest, addAerobicsRequest } from './aerobics.schemas.ts';
 
 const router = Router();

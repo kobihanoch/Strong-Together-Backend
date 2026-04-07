@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import createError from 'http-errors';
 import { queryInsertUser, queryUserExistsByUsernameOrEmail } from './create.queries.ts';
-import { sendVerificationEmail } from '../../../shared/services/emailService.ts';
+import { sendVerificationEmail } from '../../../shared/services/email-service.ts';
 import type { CreateUserBody } from '../../../shared/types/api/user/requests.ts';
 import type { CreateUserResponse } from '../../../shared/types/api/user/responses.ts';
 

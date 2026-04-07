@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { userDataSchema, exerciseTrackingAndStatsSchema, userAerobicsResponseSchema } from '../../validators/shared/responseSchemas.ts';
+import { userDataSchema, exerciseTrackingAndStatsSchema, userAerobicsResponseSchema } from '../../validators/shared/response-schemas.ts';
 import { getAllUserMessagesResponseSchema } from '../messages/messages.schemas.ts';
 import { getWholeUserWorkoutPlanResponseSchema } from '../workout/plan/plan.schemas.ts';
 

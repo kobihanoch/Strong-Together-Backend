@@ -4,7 +4,7 @@ import {
   AddWorkoutSplitPayload,
   WholeUserWorkoutPlan,
   WorkoutSplitsMap,
-} from '../../../shared/types/dto/workoutPlans.dto.ts';
+} from '../../../shared/types/dto/workout-plans.dto.ts';
 
 export async function queryWholeUserWorkoutPlan(userId: string, tz: string): Promise<WholeUserWorkoutPlan[]> {
   return sql<WholeUserWorkoutPlan[]>`

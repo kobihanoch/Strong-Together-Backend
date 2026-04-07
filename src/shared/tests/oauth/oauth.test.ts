@@ -4,7 +4,7 @@ import { createApp } from '../../../app.ts';
 import { loginResponseSchema } from '../../../modules/auth/session/session.schemas.ts';
 import { proceedLoginResponseSchema } from '../../../modules/oauth/oauth.schemas.ts';
 import { loginOAuthCompleteUser, loginOAuthIncompleteUser } from '../helpers/auth.ts';
-import { expectSchema } from '../helpers/assertSchema.ts';
+import { expectSchema } from '../helpers/assert-schema.ts';
 import { proceedOAuthAuth } from '../helpers/oauth.ts';
 
 let app: ReturnType<typeof createApp>;

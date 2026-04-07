@@ -1,7 +1,7 @@
 import { UserEntity } from '../entities/user.entity.ts';
-import { UserReminderSettingsEntity } from '../entities/userReminderSettings.entity.ts';
-import { UserSplitInformationEntity } from '../entities/userSplitInformation.entity.ts';
-import { WorkoutSplitEntity } from '../entities/workoutSplit.entity.ts';
+import { UserReminderSettingsEntity } from '../entities/user-reminder-settings.entity.ts';
+import { UserSplitInformationEntity } from '../entities/user-split-information.entity.ts';
+import { WorkoutSplitEntity } from '../entities/workout-split.entity.ts';
 
 export type NotificationPayload = {
   token: string;

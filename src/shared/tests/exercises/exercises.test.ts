@@ -4,7 +4,7 @@ import { createApp } from '../../../app.ts';
 import { loginResponseSchema } from '../../../modules/auth/session/session.schemas.ts';
 import { getAllExercisesResponseSchema } from '../../../modules/exercises/exercises.schemas.ts';
 import { loginTestUser } from '../helpers/auth.ts';
-import { expectSchema } from '../helpers/assertSchema.ts';
+import { expectSchema } from '../helpers/assert-schema.ts';
 import { getAllExercises } from '../helpers/exercises.ts';
 
 let app: ReturnType<typeof createApp>;

@@ -18,7 +18,7 @@ import {
   logoutHeaders,
   refreshHeaders,
 } from '../helpers/auth.ts';
-import { expectSchema } from '../helpers/assertSchema.ts';
+import { expectSchema } from '../helpers/assert-schema.ts';
 import { getUserAuthStateByUsername } from '../helpers/db.ts';
 
 let app: ReturnType<typeof createApp>;

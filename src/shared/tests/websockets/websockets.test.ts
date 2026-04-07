@@ -1,11 +1,12 @@
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { authConfig } from '../../../config/auth.config.ts';
 import { createApp } from '../../../app.ts';
 import { loginResponseSchema } from '../../../modules/auth/session/session.schemas.ts';
-import { generateTicketResponseSchema } from '../../../modules/webSockets/webSockets.schemas.ts';
+import { generateTicketResponseSchema } from '../../../modules/web-sockets/web-sockets.schemas.ts';
 import { loginTestUser } from '../helpers/auth.ts';
-import { expectSchema } from '../helpers/assertSchema.ts';
+import { expectSchema } from '../helpers/assert-schema.ts';
 import { generateWebSocketTicket } from '../helpers/websockets.ts';
 
 let app: ReturnType<typeof createApp>;
@@ -28,7 +29,7 @@ describe('WebSockets', () => {
     expectSchema(generateTicketResponseSchema, response.body);
     expect(response.body.ticket).toBeTypeOf('string');
 
-    const decoded = jwt.verify(response.body.ticket, process.env.JWT_SOCKET_SECRET || '', {
+    const decoded = jwt.verify(response.body.ticket, authConfig.jwtSocketSecret, {
       issuer: 'strong-together',
       audience: 'socket',
     }) as jwt.JwtPayload;

@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { authConfig } from '../../../config/auth.config.ts';
 import { createApp } from '../../../app.ts';
 import {
   addWorkoutResponseSchema,
@@ -13,7 +14,7 @@ import {
 import { loginResponseSchema } from '../../../modules/auth/session/session.schemas.ts';
 import { createUserResponseSchema } from '../../../modules/user/create/create.schemas.ts';
 import { authHeaders, loginAuthTestUser, loginWorkoutsTestUser } from '../helpers/auth.ts';
-import { expectSchema } from '../helpers/assertSchema.ts';
+import { expectSchema } from '../helpers/assert-schema.ts';
 import {
   getActiveWorkoutSplitNames,
   getExerciseToWorkoutSplitId,
@@ -417,7 +418,7 @@ describe('Workouts', () => {
         jti: `verify-${suffix}`,
         iss: 'strong-together',
       },
-      process.env.JWT_VERIFY_SECRET || '',
+      authConfig.jwtVerifySecret,
       { expiresIn: '1h' },
     );
 

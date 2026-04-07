@@ -10,12 +10,12 @@ import {
 } from './update/update.controller.ts';
 import { createUser } from './create/create.controller.ts';
 import { saveUserPushToken } from './push-tokens/push-tokens.controller.ts';
-import { asyncHandler } from '../../shared/middlewares/asyncHandler.ts';
-import { protect } from '../../shared/middlewares/authMiddleware.ts';
-import dpopValidationMiddleware from '../../shared/middlewares/DPoPValidationMiddleware.ts';
-import { updateUserLimiter, updateUserLimiterDaily } from '../../shared/middlewares/rateLimiter.ts';
-import { uploadImage } from '../../shared/middlewares/uploadImage.ts';
-import { validate } from '../../shared/middlewares/validateRequest.ts';
+import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
+import { protect } from '../../shared/middlewares/auth-middleware.ts';
+import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
+import { updateUserLimiter, updateUserLimiterDaily } from '../../shared/middlewares/rate-limiter.ts';
+import { uploadImage } from '../../shared/middlewares/upload-image.ts';
+import { validate } from '../../shared/middlewares/validate-request.ts';
 import { createUserRequest } from './create/create.schemas.ts';
 import { deleteProfilePicRequest, updateUserRequest } from './update/update.schemas.ts';
 import { saveUserPushTokenRequest } from './push-tokens/push-tokens.schemas.ts';
