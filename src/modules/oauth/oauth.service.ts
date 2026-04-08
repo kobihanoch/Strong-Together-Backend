@@ -5,7 +5,7 @@ import { authConfig } from '../../config/auth.config.ts';
 import sql from '../../infrastructure/db.client.ts';
 import { queryBumpTokenVersionAndGetSelfData, querySetUserFirstLoginFalse } from '../auth/session/session.queries.ts';
 import { sendSystemMessageToUserWhenFirstLogin } from '../../shared/services/messages-service.ts';
-import type { ProceedLoginResponse } from '../../shared/types/api/oauth/responses.ts';
+import type { ProceedLoginResponse } from '../../shared/types/api/oAuth/responses.ts';
 
 export const validateJkt = (jkt: string | undefined): string => {
   if (appConfig.dpopEnabled) {

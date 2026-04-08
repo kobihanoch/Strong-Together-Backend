@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { createLogger } from '../../infrastructure/logger.ts';
 import { proceedLoginData } from './oauth.service.ts';
-import { ProceedLoginResponse } from '../../shared/types/api/oauth/responses.ts';
+import { ProceedLoginResponse } from '../../shared/types/api/oAuth/responses.ts';
 const logger = createLogger('controller:oauth');
 
 /**

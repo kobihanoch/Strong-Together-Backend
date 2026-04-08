@@ -12,8 +12,8 @@ import {
 } from './apple.queries.ts';
 import { buildCnfClaim } from '../oauth.service.ts';
 import { sendSystemMessageToUserWhenFirstLogin } from '../../../shared/services/messages-service.ts';
-import type { AppleOAuthBody } from '../../../shared/types/api/oauth/requests.ts';
-import type { OAuthLoginResponse } from '../../../shared/types/api/oauth/responses.ts';
+import type { AppleOAuthBody } from '../../../shared/types/api/oAuth/requests.ts';
+import type { OAuthLoginResponse } from '../../../shared/types/api/oAuth/responses.ts';
 import { verifyAppleIdToken } from '../../../shared/utils/oauth-utils.ts';
 
 export const createOrSignInWithAppleData = async (

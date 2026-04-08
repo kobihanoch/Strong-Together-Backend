@@ -4,7 +4,7 @@ import type postgres from 'postgres';
 import createError from 'http-errors';
 import * as jose from 'jose';
 import { authConfig } from '../../config/auth.config.ts';
-import type { AppleTokenVerificationResult, GoogleTokenVerificationResult } from '../types/dto/oauth.dto.ts';
+import type { AppleTokenVerificationResult, GoogleTokenVerificationResult } from '../types/dto/oAuth.dto.ts';
 
 interface GoogleJwtPayload extends JWTPayload {
   email?: string | null;

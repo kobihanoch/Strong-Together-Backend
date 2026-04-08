@@ -1,5 +1,5 @@
 import { ErrorRequestHandler, Response } from 'express';
-import { createLogger } from '../config/logger.ts';
+import { createLogger } from '../../infrastructure/logger.ts';
 
 const logger = createLogger('middleware:error-handler');
 
