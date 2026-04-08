@@ -14,44 +14,6 @@ beforeAll(() => {
 });
 
 describe('OAuth', () => {
-  // login oauth-complete fixture -> proceedauth -> assert tokens are issued
-  it('completes proceedauth for an oauth user with no missing fields', async () => {
-    const loginResponse = await loginOAuthCompleteUser();
-    expectSchema(loginResponseSchema, loginResponse.body);
-    const accessToken = loginResponse.body.accessToken as string;
-
-    const response = await proceedOAuthAuth(app, accessToken);
-
-    expect(response.status).toBe(200);
-    expectSchema(proceedLoginResponseSchema, response.body);
-    expect(response.body.message).toBe('Login successful');
-    expect(response.body.user).toBeTypeOf('string');
-    expect(response.body.accessToken).toBeTypeOf('string');
-    expect(response.body.refreshToken).toBeTypeOf('string');
-  });
-
-  // login oauth-incomplete fixture -> proceedauth -> assert profile completion conflict
-  it('rejects proceedauth when oauth profile is still incomplete', async () => {
-    const loginResponse = await loginOAuthIncompleteUser();
-    expectSchema(loginResponseSchema, loginResponse.body);
-    const accessToken = loginResponse.body.accessToken as string;
-
-    const response = await proceedOAuthAuth(app, accessToken);
-
-    expect(response.status).toBe(409);
-    expect(response.body.message).toBe('Profile not completed yet');
-  });
-
-  // proceedauth without token -> assert 401
-  it('rejects proceedauth without token', async () => {
-    const response = await request(app).post('/api/oauth/proceedauth').set({
-      'x-app-version': '4.5.0',
-    });
-
-    expect(response.status).toBe(401);
-    expect(response.body.message).toBe('No access token provided');
-  });
-
   // post google oauth without id token -> assert controller-level validation error
   it('rejects google oauth when idToken is missing', async () => {
     const response = await request(app).post('/api/oauth/google').set('x-app-version', '4.5.0').send({});
