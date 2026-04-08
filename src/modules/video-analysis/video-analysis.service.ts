@@ -1,6 +1,9 @@
 import * as Sentry from '@sentry/node';
 import { getUploadUrl } from '../../infrastructure/aws/s3.service.ts';
 import type { GetPresignedUrlFromS3Response } from '../../shared/types/api/video-analysis/responses.ts';
+import { UserEntity } from '../../shared/types/entities/user.entity.ts';
+import { AnalyzeVideoResultPayload, SquatRepetition } from '../../shared/types/dto/video-analysis.dto.ts';
+import { getIO } from '../../infrastructure/socket.io.ts';
 
 export const normalizeHeaderValue = (value: string | string[] | undefined): string => {
   if (Array.isArray(value)) {
@@ -58,4 +61,19 @@ export const getPresignedUrlData = async ({
     },
     fileKey,
   };
+};
+
+export const emitVideoAnalysisResults = (
+  userId: UserEntity['id'],
+  results: AnalyzeVideoResultPayload<SquatRepetition>,
+) => {
+  try {
+    getIO().to(userId).emit(`video_analysis_results`, results);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Socket.IO not initialized!') {
+      return;
+    }
+
+    throw error;
+  }
 };

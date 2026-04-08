@@ -3,7 +3,7 @@ import { createLogger } from '../../../infrastructure/logger.ts';
 import { loginUserData, logoutUserData, refreshAccessTokenData } from './session.service.ts';
 import { LoginRequestBody } from '../../../shared/types/api/auth/requests.ts';
 import { LoginResponse, MessageResponse, RefreshTokenResponse } from '../../../shared/types/api/auth/responses.ts';
-import { getRefreshToken } from '../../../shared/utils/token-utils.ts';
+import { getRefreshToken } from './session.utils.ts';
 
 const logger = createLogger('controller:auth');
 

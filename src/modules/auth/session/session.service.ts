@@ -13,7 +13,7 @@ import { authConfig } from '../../../config/auth.config.ts';
 import { sendSystemMessageToUserWhenFirstLogin } from '../../../shared/services/messages-service.ts';
 import type { LoginResponse, RefreshTokenResponse } from '../../../shared/types/api/auth/responses.ts';
 import type { AccessTokenPayload } from '../../../shared/types/dto/auth.dto.ts';
-import { decodeRefreshToken } from '../../../shared/utils/token-utils.ts';
+import { decodeRefreshToken } from './session.utils.ts';
 
 export const loginUserData = async (
   identifier: string,

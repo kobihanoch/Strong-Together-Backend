@@ -1,13 +1,8 @@
 import { queryAddAerobicTracking, queryGetUserAerobicsForNDays } from './aerobics.queries.ts';
 import type { UserAerobicsResponse } from '../../shared/types/api/aerobics/responses.ts';
 import type { AddUserAerobicsBody } from '../../shared/types/api/aerobics/requests.ts';
-import {
-  buildAerobicsKeyStable,
-  cacheDeleteOtherTimezones,
-  cacheGetJSON,
-  cacheSetJSON,
-  TTL_AEROBICS,
-} from '../../shared/utils/cache.ts';
+import { buildAerobicsKeyStable, TTL_AEROBICS } from './aerobics.cache.ts';
+import { cacheDeleteOtherTimezones, cacheGetJSON, cacheSetJSON } from '../../shared/cache/redis.cache.ts';
 
 export const getAerobicsData = async (
   userId: string,

@@ -9,8 +9,8 @@ import {
   generateVerifiedHTML,
 } from '../../../shared/templates/response-html-templates.ts';
 import type { ChangeEmailAndVerifyBody, SendVerifcationMailBody } from '../../../shared/types/api/auth/requests.ts';
-import { cacheStoreJti } from '../../../shared/utils/cache.ts';
-import { decodeVerifyToken } from '../../../shared/utils/token-utils.ts';
+import { cacheStoreJti } from '../../../shared/cache/redis.cache.ts';
+import { decodeVerifyToken } from './verification.utils.ts';
 
 export const verifyUserAccountData = async (
   token: string | undefined,

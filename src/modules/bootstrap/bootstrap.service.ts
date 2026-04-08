@@ -1,10 +1,11 @@
+import { cacheGetJSON, cacheSetJSON } from '../../shared/cache/redis.cache.ts';
 import type { BootstrapResponse } from '../../shared/types/api/bootstrap/responses.ts';
-import { buildUserTimezoneKeyStable, cacheGetJSON, cacheSetJSON, TTL_TIMEZONE } from '../../shared/utils/cache.ts';
 import { getAerobicsData } from '../aerobics/aerobics.service.ts';
 import { getAllMessagesData } from '../messages/messages.service.ts';
 import { getUserData, updateUsersReminderSettingsTimezone } from '../user/update/update.service.ts';
 import { getWorkoutPlanData } from '../workout/plan/plan.service.ts';
 import { getExerciseTrackingData } from '../workout/tracking/tracking.service.ts';
+import { buildUserTimezoneKeyStable, TTL_TIMEZONE } from './bootstrap.cache.ts';
 
 export const getBootstrapDataPayload = async (
   userId: string,

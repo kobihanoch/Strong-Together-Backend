@@ -5,6 +5,8 @@ import type {
   GetAllUserMessagesResponse,
   MarkMessageAsReadResponse,
 } from '../../shared/types/api/messages/responses.ts';
+import { getIO } from '../../infrastructure/socket.io.ts';
+import { MessageAfterSendResponse } from '../../shared/types/dto/messages.dto.ts';
 
 export const getAllMessagesData = async (
   userId: string,
@@ -36,4 +38,16 @@ export const deleteMessageData = async (messageId: string, userId: string): Prom
   }
 
   return rows[0];
+};
+
+export const emitNewMessage = (userId: string, msg: MessageAfterSendResponse) => {
+  try {
+    getIO().to(userId).emit('new_message', msg);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Socket.IO not initialized!') {
+      return;
+    }
+
+    throw error;
+  }
 };

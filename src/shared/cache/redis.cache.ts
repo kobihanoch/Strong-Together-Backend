@@ -1,14 +1,7 @@
 import { gunzipSync, gzipSync } from 'zlib';
 import { appConfig } from '../../config/app.config.ts';
-import { redisConfig } from '../../config/redis.config.ts';
 import { createLogger } from '../../infrastructure/logger.ts';
 import { redis } from '../../infrastructure/redis.client.ts';
-
-const TRACKING_NS = 'xt:tracking:v1';
-const PLAN_NS = 'xt:workoutplan:v1';
-const ANALYTICS_NS = 'xt:analytics:v1';
-const AEROBICS_NS = 'xt:aerobics:v1';
-const USERTIMEZONE_NS = 'xt:timezone:v1';
 
 const enabled = appConfig.cacheEnabled;
 const logger = createLogger('utils:cache');
@@ -22,20 +15,6 @@ const deleteRedisKeys = async (keys: string[]): Promise<void> => {
     await redis.del(keys);
   }
 };
-
-export const TTL_TRACKING = redisConfig.cacheTtls.trackingSec;
-export const TTL_TIMEZONE = redisConfig.cacheTtls.timezoneSec;
-export const TTL_PLAN = redisConfig.cacheTtls.planSec;
-export const TTL_ANALYTICS = redisConfig.cacheTtls.analyticsSec;
-export const TTL_AEROBICS = redisConfig.cacheTtls.aerobicsSec;
-
-export const buildTrackingKeyStable = (userId: string, days: number, tz: string): string =>
-  `${TRACKING_NS}:${userId}:${days}:${tz}`;
-export const buildPlanKeyStable = (userId: string, tz: string): string => `${PLAN_NS}:${userId}:${tz}`;
-export const buildAnalyticsKeyStable = (userId: string): string => `${ANALYTICS_NS}:${userId}`;
-export const buildAerobicsKeyStable = (userId: string, days: number, tz: string): string =>
-  `${AEROBICS_NS}:${userId}:${days}:${tz}`;
-export const buildUserTimezoneKeyStable = (userId: string): string => `${USERTIMEZONE_NS}:${userId}`;
 
 export const cacheGetJSON = async <T = any>(key: string): Promise<T | null> => {
   if (!enabled || !redis) return null;

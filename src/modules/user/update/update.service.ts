@@ -23,8 +23,8 @@ import type {
   UserDataResponse,
 } from '../../../shared/types/api/user/responses.ts';
 import type { ChangeEmailTokenPayload } from '../../../shared/types/dto/user.dto.ts';
-import { cacheStoreJti } from '../../../shared/utils/cache.ts';
-import { decodeChangeEmailToken } from '../../../shared/utils/token-utils.ts';
+import { cacheStoreJti } from '../../../shared/cache/redis.cache.ts';
+import { decodeChangeEmailToken } from './update.utils.ts';
 
 export const getUserData = async (userId: string): Promise<{ payload: UserDataResponse['user_data'] }> => {
   const rows = await queryAuthenticatedUserById(userId);

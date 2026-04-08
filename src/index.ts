@@ -6,7 +6,7 @@ import { connectRedis } from './infrastructure/redis.client.ts';
 import { createIOServer } from './infrastructure/socket.io.ts';
 import { createApp } from './app.ts';
 import { appConfig } from './config/app.config.ts';
-import { startVideoAnalysisSubscriber } from './shared/subscribers/video-analysis-subscriber.ts';
+import { startVideoAnalysisSubscriber } from './modules/video-analysis/video-analysis-subscriber.ts';
 
 // RESOURECES CONNECTIONS AND GENERAL CONFIGURATIONS  ------------------------------------------
 const logger = createLogger('bootstrap');

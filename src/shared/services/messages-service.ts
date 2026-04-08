@@ -2,7 +2,7 @@ import { MessageAfterSendResponse } from './../types/dto/messages.dto.ts';
 import { appConfig } from '../../config/app.config.ts';
 import sql from '../../infrastructure/db.client.ts';
 import { getEndOfWorkoutMessage, getFirstLoginMessage } from '../templates/message-templates.ts';
-import { emitNewMessage } from '../utils/socket-utils.js';
+import { emitNewMessage } from '../../modules/messages/messages.service.ts';
 
 export const sendSystemMessageToUserWorkoutDone = async (receiverId: string): Promise<void> => {
   const msg = getEndOfWorkoutMessage();

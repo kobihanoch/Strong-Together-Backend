@@ -3,7 +3,7 @@ import { Response, NextFunction, Request } from 'express';
 import createError from 'http-errors';
 import { appConfig } from '../../config/app.config.ts';
 import sql from '../../infrastructure/db.client.ts';
-import { decodeAccessToken, getAccessToken } from '../utils/token-utils.js';
+import { decodeAccessToken, getAccessToken } from '../authentication/authentication.utils.ts';
 import { queryGetCurrentTokenVersion } from '../../modules/auth/session/session.queries.ts';
 import * as crypto from 'crypto';
 import { applySentryRequestContext } from '../../infrastructure/sentry.ts';

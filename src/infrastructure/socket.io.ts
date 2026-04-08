@@ -1,11 +1,11 @@
 import { createServer, Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { redisConfig } from '../config/redis.config.ts';
-import { decodeSocketToken } from '../shared/utils/token-utils.ts';
 import createError from 'http-errors';
 import { createRedisAdapterClients } from './redis.client.ts';
 import { Express } from 'express';
 import { createLogger } from './logger.ts';
+import { decodeSocketToken } from '../modules/web-sockets/web-sockets.utils.ts';
 
 type SocketUser = {
   id: string;

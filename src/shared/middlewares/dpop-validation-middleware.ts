@@ -3,7 +3,7 @@ import createError from 'http-errors';
 import * as jose from 'jose';
 import { appConfig } from '../../config/app.config.ts';
 import { createLogger } from '../../infrastructure/logger.ts';
-import { cacheStoreJti } from '../utils/cache.ts';
+import { cacheStoreJti } from '../cache/redis.cache.ts';
 
 const DPOP_EXPIRATION_SECONDS = 60;
 const logger = createLogger('middleware:dpop');
@@ -14,11 +14,7 @@ const ALLOWED_BASES = [
   appConfig.privateBaseUrlDev,
 ].filter((value): value is string => Boolean(value));
 
-export default async function dpopValidationMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> {
+export default async function dpopValidationMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
   if (!appConfig.dpopEnabled) {
     return next();
   }

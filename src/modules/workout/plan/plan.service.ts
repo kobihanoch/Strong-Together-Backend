@@ -5,15 +5,15 @@ import type {
   AddWorkoutResponse,
   GetWholeUserWorkoutPlanResponse,
 } from '../../../shared/types/api/workouts/responses.ts';
+
+import { buildPlanKeyStable, TTL_PLAN } from './plan.cache.ts';
 import {
-  buildAnalyticsKeyStable,
-  buildPlanKeyStable,
   cacheDeleteKey,
   cacheDeleteOtherTimezones,
   cacheGetJSON,
   cacheSetJSON,
-  TTL_PLAN,
-} from '../../../shared/utils/cache.ts';
+} from '../../../shared/cache/redis.cache.ts';
+import { buildAnalyticsKeyStable } from '../../analytics/analytics.cache.ts';
 
 export const getWorkoutPlanData = async (
   userId: string,

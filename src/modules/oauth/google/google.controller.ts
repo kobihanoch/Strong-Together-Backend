@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { createLogger } from '../../../infrastructure/logger.ts';
 import { createOrSignInWithGoogleData } from './google.service.ts';
-import { validateJkt } from '../oauth.service.ts';
+import { validateJkt } from '../oauth.utils.ts';
 import { GoogleOAuthBody } from '../../../shared/types/api/oAuth/requests.ts';
 import { OAuthLoginResponse } from '../../../shared/types/api/oAuth/responses.ts';
 const logger = createLogger('controller:oauth');
@@ -20,7 +20,7 @@ export const createOrSignInWithGoogle = async (
   res: Response<OAuthLoginResponse>,
 ): Promise<Response<OAuthLoginResponse>> => {
   const requestLogger = req.logger || logger;
-  const jkt = validateJkt(req.headers['dpop-key-binding'] as string | undefined);
+  const jkt = validateJkt(req);
   const payload = await createOrSignInWithGoogleData(req.body, jkt, requestLogger);
 
   res.set('Cache-Control', 'no-store');

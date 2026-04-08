@@ -5,8 +5,8 @@ import { queryBumpTokenVersionAndGetSelfData, queryUpdateUserPassword } from './
 import { sendForgotPasswordEmail } from '../../../shared/services/email-service.ts';
 import type { SendChangePassEmailBody } from '../../../shared/types/api/auth/requests.ts';
 import type { ResetPasswordResponse } from '../../../shared/types/api/auth/responses.ts';
-import { cacheStoreJti } from '../../../shared/utils/cache.ts';
-import { decodeForgotPasswordToken } from '../../../shared/utils/token-utils.ts';
+import { decodeForgotPasswordToken } from './password.utils.ts';
+import { cacheStoreJti } from '../../../shared/cache/redis.cache.ts';
 
 export const sendChangePassEmailData = async (body: SendChangePassEmailBody, requestId?: string): Promise<void> => {
   const { identifier } = body;

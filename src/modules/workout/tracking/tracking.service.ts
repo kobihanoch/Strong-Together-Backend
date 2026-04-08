@@ -4,13 +4,8 @@ import { sendSystemMessageToUserWorkoutDone } from '../../../shared/services/mes
 import type { FinishUserWorkoutBody } from '../../../shared/types/api/workouts/requests.ts';
 import type { FinishUserWorkoutResponse } from '../../../shared/types/api/workouts/responses.ts';
 import type { ExerciseTrackingAndStats } from '../../../shared/types/dto/exercise-tracking.dto.ts';
-import {
-  buildTrackingKeyStable,
-  cacheDeleteOtherTimezones,
-  cacheGetJSON,
-  cacheSetJSON,
-  TTL_TRACKING,
-} from '../../../shared/utils/cache.ts';
+import { buildTrackingKeyStable, TTL_TRACKING } from './tracking.cache.ts';
+import { cacheDeleteOtherTimezones, cacheGetJSON, cacheSetJSON } from '../../../shared/cache/redis.cache.ts';
 
 export const getExerciseTrackingData = async (
   userId: string,

@@ -1,6 +1,7 @@
-import { queryGetWorkoutRMs, queryGoalAdherence } from './analytics.queries.ts';
+import { cacheGetJSON, cacheSetJSON } from '../../shared/cache/redis.cache.ts';
 import type { GetAnalyticsResponse } from '../../shared/types/api/analytics/responses.ts';
-import { buildAnalyticsKeyStable, cacheGetJSON, cacheSetJSON, TTL_ANALYTICS } from '../../shared/utils/cache.ts';
+import { buildAnalyticsKeyStable, TTL_ANALYTICS } from './analytics.cache.ts';
+import { queryGetWorkoutRMs, queryGoalAdherence } from './analytics.queries.ts';
 
 export const getAnalyticsData = async (
   userId: string,

@@ -1,6 +1,6 @@
 import type postgres from 'postgres';
 import sql from '../../../infrastructure/db.client.ts';
-import { ensureUniqueUsername } from '../../../shared/utils/oauth-utils.ts';
+import { ensureUniqueUsername } from '../oauth.utils.ts';
 
 interface OAuthLookupResult {
   userId: string | null;
