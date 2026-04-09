@@ -4,7 +4,7 @@ import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
 import { protect } from '../../shared/middlewares/auth-middleware.ts';
 import { withRlsTx } from '../../infrastructure/db.client.ts';
 import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
-import { getAllMessagesRequest, markMessageAsReadRequest, deleteMessageRequest } from './messages.schemas.ts';
+import { getAllMessagesRequest, markMessageAsReadRequest, deleteMessageRequest } from '@strong-together/shared';
 import { validate } from '../../shared/middlewares/validate-request.ts';
 
 const router = Router();

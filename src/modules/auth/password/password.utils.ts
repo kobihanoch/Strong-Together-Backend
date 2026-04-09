@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { ForgotPasswordPayload } from '../../../shared/types/dto/auth.dto.ts';
+import type { ForgotPasswordPayload } from '@strong-together/shared';
 import { authConfig } from '../../../config/auth.config.ts';
 
 export const decodeForgotPasswordToken = (forgotPasswordToken: string): ForgotPasswordPayload | null => {

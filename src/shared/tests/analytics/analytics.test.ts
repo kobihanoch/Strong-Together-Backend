@@ -1,8 +1,7 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../../app.ts';
-import { getAnalyticsResponseSchema } from '../../../modules/analytics/analytics.schemas.ts';
-import { loginResponseSchema } from '../../../modules/auth/session/session.schemas.ts';
+import { getAnalyticsResponseSchema, loginResponseSchema } from '@strong-together/shared';
 import { loginAnalyticsEmptyUser, loginAnalyticsTestUser } from '../helpers/auth.ts';
 import { expectSchema } from '../helpers/assert-schema.ts';
 import { getExerciseToWorkoutSplitId, getWorkoutSummaryCount } from '../helpers/db.ts';

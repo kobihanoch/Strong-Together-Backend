@@ -1,9 +1,7 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../../app.ts';
-import { bootstrapResponseSchema } from '../../../modules/bootstrap/bootstrap.schemas.ts';
-import { userAerobicsResponseSchema } from '../../../modules/aerobics/aerobics.schemas.ts';
-import { loginResponseSchema } from '../../../modules/auth/session/session.schemas.ts';
+import { bootstrapResponseSchema, userAerobicsResponseSchema, loginResponseSchema } from '@strong-together/shared';
 import { loginBootstrapAerobicsUser, loginBootstrapFlowUser, loginBootstrapTestUser } from '../helpers/auth.ts';
 import { addAerobicsRecord } from '../helpers/aerobics.ts';
 import { getBootstrap } from '../helpers/bootstrap.ts';

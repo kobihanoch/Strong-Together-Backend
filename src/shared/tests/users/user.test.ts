@@ -5,12 +5,11 @@ import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { authConfig } from '../../../config/auth.config.ts';
 import { createApp } from '../../../app.ts';
-import { loginResponseSchema } from '../../../modules/auth/session/session.schemas.ts';
-import { createUserResponseSchema } from '../../../modules/user/create/create.schemas.ts';
+import { loginResponseSchema, createUserResponseSchema } from '@strong-together/shared';
 import {
   getAuthenticatedUserByIdResponseSchema,
   updateAuthenticatedUserResponseSchema,
-} from '../../../modules/user/update/update.schemas.ts';
+} from '@strong-together/shared';
 import { authHeaders, createChangeEmailToken, loginUsersTestUser } from '../helpers/auth.ts';
 import { expectSchema } from '../helpers/assert-schema.ts';
 import { getUserAuthStateByUsername, hasReminderSettings, waitForUserDeletionByUsername } from '../helpers/db.ts';

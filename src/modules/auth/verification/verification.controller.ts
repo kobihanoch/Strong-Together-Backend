@@ -1,16 +1,16 @@
 import { Request, Response } from 'express';
+import type {
+  ChangeEmailAndVerifyBody,
+  CheckUserVerifyQuery,
+  SendVerifcationMailBody,
+  VerifyUserAccountQuery,
+} from '@strong-together/shared';
 import {
   changeEmailAndVerifyData,
   checkUserVerifyData,
   sendVerificationMailData,
   verifyUserAccountData,
 } from './verification.service.ts';
-import {
-  ChangeEmailAndVerifyBody,
-  CheckUserVerifyQuery,
-  SendVerifcationMailBody,
-  VerifyUserAccountQuery,
-} from '../../../shared/types/api/auth/requests.ts';
 
 /**
  * Complete account verification from an email verification link.

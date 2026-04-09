@@ -4,9 +4,9 @@ import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
 import { loginLimiter } from '../../shared/middlewares/rate-limiter.ts';
 import { validate } from '../../shared/middlewares/validate-request.ts';
 import { createOrSignInWithApple } from './apple/apple.controller.ts';
-import { appleOAuthRequest } from './apple/apple.schemas.ts';
+import { appleOAuthRequest } from '@strong-together/shared';
 import { createOrSignInWithGoogle } from './google/google.controller.ts';
-import { googleOAuthRequest } from './google/google.schemas.ts';
+import { googleOAuthRequest } from '@strong-together/shared';
 
 const router = Router();
 

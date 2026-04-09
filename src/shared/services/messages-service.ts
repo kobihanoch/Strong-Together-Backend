@@ -1,4 +1,4 @@
-import { MessageAfterSendResponse } from './../types/dto/messages.dto.ts';
+import type { MessageAfterSendResponse } from '@strong-together/shared';
 import { appConfig } from '../../config/app.config.ts';
 import sql from '../../infrastructure/db.client.ts';
 import { getEndOfWorkoutMessage, getFirstLoginMessage } from '../templates/message-templates.ts';

@@ -4,9 +4,9 @@ import type {
   DeleteMessageResponse,
   GetAllUserMessagesResponse,
   MarkMessageAsReadResponse,
-} from '../../shared/types/api/messages/responses.ts';
+  MessageAfterSendResponse,
+} from '@strong-together/shared';
 import { getIO } from '../../infrastructure/socket.io.ts';
-import { MessageAfterSendResponse } from '../../shared/types/dto/messages.dto.ts';
 
 export const getAllMessagesData = async (
   userId: string,

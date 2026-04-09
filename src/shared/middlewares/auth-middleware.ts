@@ -1,4 +1,5 @@
-import { AccessTokenPayload, AuthenticatedUser } from './../types/dto/auth.dto.ts';
+import type { AccessTokenPayload } from '@strong-together/shared';
+import { AuthenticatedUser } from './../types/dto/auth.dto.ts';
 import { Response, NextFunction, Request } from 'express';
 import createError from 'http-errors';
 import { appConfig } from '../../config/app.config.ts';

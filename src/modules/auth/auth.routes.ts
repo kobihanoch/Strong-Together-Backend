@@ -25,9 +25,8 @@ import {
   checkUserVerifyRequest,
   sendVerificationMailRequest,
   verifyAccountRequest,
-} from './verification/verification.schemas.ts';
-import { loginRequest } from './session/session.schemas.ts';
-import { resetPasswordRequest, sendChangePassEmailRequest } from './password/password.schemas.ts';
+} from '@strong-together/shared';
+import { loginRequest, resetPasswordRequest, sendChangePassEmailRequest } from '@strong-together/shared';
 
 const router = Router();
 

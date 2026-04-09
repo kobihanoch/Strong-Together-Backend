@@ -1,5 +1,5 @@
 import sql from '../../../infrastructure/db.client.ts';
-import type { AerobicEntity } from '../../types/entities/aerobic.entity.ts';
+import type { AerobicEntity } from '@strong-together/shared';
 import type { UserEntity } from '../../types/entities/user.entity.ts';
 
 async function wait(ms: number) {

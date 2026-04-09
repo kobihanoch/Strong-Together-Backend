@@ -8,7 +8,7 @@ import {
   generateVerificationFailedHTML,
   generateVerifiedHTML,
 } from '../../../shared/templates/response-html-templates.ts';
-import type { ChangeEmailAndVerifyBody, SendVerifcationMailBody } from '../../../shared/types/api/auth/requests.ts';
+import type { ChangeEmailAndVerifyBody, SendVerifcationMailBody } from '@strong-together/shared';
 import { cacheStoreJti } from '../../../shared/cache/redis.cache.ts';
 import { decodeVerifyToken } from './verification.utils.ts';
 

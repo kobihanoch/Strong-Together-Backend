@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
+import type { LoginRequestBody, LoginResponse } from '@strong-together/shared';
 import { createLogger } from '../../../infrastructure/logger.ts';
 import { loginUserData, logoutUserData, refreshAccessTokenData } from './session.service.ts';
-import { LoginRequestBody } from '../../../shared/types/api/auth/requests.ts';
-import { LoginResponse, MessageResponse, RefreshTokenResponse } from '../../../shared/types/api/auth/responses.ts';
+import { MessageResponse, RefreshTokenResponse } from '../../../shared/types/api/auth/responses.ts';
 import { getRefreshToken } from './session.utils.ts';
 
 const logger = createLogger('controller:auth');

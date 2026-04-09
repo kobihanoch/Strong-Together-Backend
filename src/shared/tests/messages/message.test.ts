@@ -1,12 +1,12 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../../app.ts';
-import { loginResponseSchema } from '../../../modules/auth/session/session.schemas.ts';
+import { loginResponseSchema } from '@strong-together/shared';
 import {
   deleteMessageResponseSchema,
   getAllUserMessagesResponseSchema,
   markMessageAsReadResponseSchema,
-} from '../../../modules/messages/messages.schemas.ts';
+} from '@strong-together/shared';
 import { loginAuthTestUser, loginMessagesTestUser } from '../helpers/auth.ts';
 import { expectSchema } from '../helpers/assert-schema.ts';
 import { getMessageReadState, getExerciseToWorkoutSplitId, messageExists } from '../helpers/db.ts';

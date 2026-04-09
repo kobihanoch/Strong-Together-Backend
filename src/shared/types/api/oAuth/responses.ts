@@ -1,5 +1,7 @@
-import z from 'zod';
-import { oAuthLoginResponseSchema, proceedLoginResponseSchema } from '../../../../modules/oauth/oauth.schemas.ts';
-
-export type OAuthLoginResponse = z.infer<typeof oAuthLoginResponseSchema>;
-export type ProceedLoginResponse = z.infer<typeof proceedLoginResponseSchema>;
+export type OAuthLoginResponse = {
+  message: string;
+  user: string;
+  accessToken: string;
+  refreshToken: string | null;
+  missingFields: string[] | null;
+};

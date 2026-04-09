@@ -1,9 +1,28 @@
 import type { NextFunction, Request, Response } from 'express';
 import createError from 'http-errors';
-import type { ZodType } from 'zod';
+
+type ParseSuccess = {
+  success: true;
+  data: {
+    body?: unknown;
+    query?: unknown;
+    params?: unknown;
+  };
+};
+
+type ParseFailure = {
+  success: false;
+  error: {
+    issues?: Array<{ message?: string }>;
+  };
+};
+
+type CompatibleSchema = {
+  safeParse(input: unknown): ParseSuccess | ParseFailure;
+};
 
 export const validate =
-  (schema: ZodType) =>
+  (schema: CompatibleSchema) =>
   (req: Request, res: Response, next: NextFunction): void => {
     const result = schema.safeParse({
       body: req.body,
@@ -12,7 +31,7 @@ export const validate =
     });
 
     if (!result.success) {
-      throw createError(400, result.error.issues[0]?.message || 'Invalid Input');
+      throw createError(400, result.error.issues?.[0]?.message || 'Invalid Input');
     }
 
     const data = result.data as {

@@ -16,9 +16,7 @@ import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-m
 import { updateUserLimiter, updateUserLimiterDaily } from '../../shared/middlewares/rate-limiter.ts';
 import { uploadImage } from '../../shared/middlewares/upload-image.ts';
 import { validate } from '../../shared/middlewares/validate-request.ts';
-import { createUserRequest } from './create/create.schemas.ts';
-import { deleteProfilePicRequest, updateUserRequest } from './update/update.schemas.ts';
-import { saveUserPushTokenRequest } from './push-tokens/push-tokens.schemas.ts';
+import { createUserRequest, deleteProfilePicRequest, updateUserRequest, saveUserPushTokenRequest } from '@strong-together/shared';
 
 const router = Router();
 

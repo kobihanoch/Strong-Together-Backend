@@ -1,5 +1,5 @@
 import { cacheGetJSON, cacheSetJSON } from '../../shared/cache/redis.cache.ts';
-import type { BootstrapResponse } from '../../shared/types/api/bootstrap/responses.ts';
+import type { BootstrapResponse } from '@strong-together/shared';
 import { getAerobicsData } from '../aerobics/aerobics.service.ts';
 import { getAllMessagesData } from '../messages/messages.service.ts';
 import { getUserData, updateUsersReminderSettingsTimezone } from '../user/update/update.service.ts';

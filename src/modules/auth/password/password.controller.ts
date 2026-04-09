@@ -1,10 +1,5 @@
 import { Request, Response } from 'express';
-import {
-  ResetPasswordBody,
-  ResetPasswordQuery,
-  SendChangePassEmailBody,
-} from '../../../shared/types/api/auth/requests.ts';
-import { ResetPasswordResponse } from '../../../shared/types/api/auth/responses.ts';
+import type { ResetPasswordBody, ResetPasswordQuery, ResetPasswordResponse, SendChangePassEmailBody } from '@strong-together/shared';
 import { resetPasswordData, sendChangePassEmailData } from './password.service.ts';
 
 /**

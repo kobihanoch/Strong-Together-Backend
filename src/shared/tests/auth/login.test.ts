@@ -6,10 +6,12 @@ import {
   loginResponseSchema,
   messageResponseSchema,
   refreshTokenResponseSchema,
-} from '../../../modules/auth/session/session.schemas.ts';
-import { resetPasswordResponseSchema } from '../../../modules/auth/password/password.schemas.ts';
-import { createUserResponseSchema } from '../../../modules/user/create/create.schemas.ts';
-import { getAuthenticatedUserByIdResponseSchema } from '../../../modules/user/update/update.schemas.ts';
+} from '@strong-together/shared';
+import {
+  resetPasswordResponseSchema,
+  createUserResponseSchema,
+  getAuthenticatedUserByIdResponseSchema,
+} from '@strong-together/shared';
 import {
   authHeaders,
   createForgotPasswordToken,

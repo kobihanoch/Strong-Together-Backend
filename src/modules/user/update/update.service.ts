@@ -16,13 +16,14 @@ import {
   generateEmailChangeFailedHTML,
   generateEmailChangeSuccessHTML,
 } from '../../../shared/templates/response-html-templates.ts';
-import type { DeleteUserProfilePicBody, UpdateUserBody } from '../../../shared/types/api/user/requests.ts';
 import type {
+  ChangeEmailTokenPayload,
+  DeleteUserProfilePicBody,
   SetProfilePicAndUpdateDBResponse,
+  UpdateUserBody,
   UpdateAuthenticatedUserResponse,
   UserDataResponse,
-} from '../../../shared/types/api/user/responses.ts';
-import type { ChangeEmailTokenPayload } from '../../../shared/types/dto/user.dto.ts';
+} from '@strong-together/shared';
 import { cacheStoreJti } from '../../../shared/cache/redis.cache.ts';
 import { decodeChangeEmailToken } from './update.utils.ts';
 

@@ -6,13 +6,12 @@ import { createApp } from '../../../app.ts';
 import {
   addWorkoutResponseSchema,
   getWholeUserWorkoutPlanResponseSchema,
-} from '../../../modules/workout/plan/plan.schemas.ts';
+} from '@strong-together/shared';
 import {
   finishUserWorkoutResponseSchema,
   getExerciseTrackingResponseSchema,
-} from '../../../modules/workout/tracking/tracking.schemas.ts';
-import { loginResponseSchema } from '../../../modules/auth/session/session.schemas.ts';
-import { createUserResponseSchema } from '../../../modules/user/create/create.schemas.ts';
+} from '@strong-together/shared';
+import { loginResponseSchema, createUserResponseSchema } from '@strong-together/shared';
 import { authHeaders, loginAuthTestUser, loginWorkoutsTestUser } from '../helpers/auth.ts';
 import { expectSchema } from '../helpers/assert-schema.ts';
 import {

@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { Request } from 'express';
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../../config/auth.config.ts';
-import { AccessTokenPayload } from '../types/dto/auth.dto.ts';
+import type { AccessTokenPayload } from '@strong-together/shared';
 
 /*
  * Extracts a Bearer token from a header string safely.

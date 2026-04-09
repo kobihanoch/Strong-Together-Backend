@@ -1,9 +1,7 @@
 import createError from 'http-errors';
 import { queryGetExerciseTrackingAndStats, queryInsertUserFinishedWorkout } from './tracking.queries.ts';
 import { sendSystemMessageToUserWorkoutDone } from '../../../shared/services/messages-service.ts';
-import type { FinishUserWorkoutBody } from '../../../shared/types/api/workouts/requests.ts';
-import type { FinishUserWorkoutResponse } from '../../../shared/types/api/workouts/responses.ts';
-import type { ExerciseTrackingAndStats } from '../../../shared/types/dto/exercise-tracking.dto.ts';
+import type { ExerciseTrackingAndStats, FinishUserWorkoutBody, FinishUserWorkoutResponse } from '@strong-together/shared';
 import { buildTrackingKeyStable, TTL_TRACKING } from './tracking.cache.ts';
 import { cacheDeleteOtherTimezones, cacheGetJSON, cacheSetJSON } from '../../../shared/cache/redis.cache.ts';
 

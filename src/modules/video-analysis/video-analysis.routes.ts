@@ -5,7 +5,7 @@ import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
 import { protect } from '../../shared/middlewares/auth-middleware.ts';
 import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
 import { validate } from '../../shared/middlewares/validate-request.ts';
-import { getPresignedUrlS3Request } from './video-analysis.schemas.ts';
+import { getPresignedUrlS3Request } from '@strong-together/shared';
 
 const router = Router();
 

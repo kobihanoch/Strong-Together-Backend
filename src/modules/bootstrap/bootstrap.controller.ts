@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
 import { createLogger } from '../../infrastructure/logger.ts';
 import { getBootstrapDataPayload } from './bootstrap.service.ts';
-import { BootstrapRequestQuery } from '../../shared/types/api/bootstrap/requests.ts';
-import { BootstrapResponse } from '../../shared/types/api/bootstrap/responses.ts';
+import type { BootstrapRequestQuery, BootstrapResponse } from '@strong-together/shared';
 
 const logger = createLogger('controller:bootstrap');
 

@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../../config/auth.config.ts';
-import type { GenerateTicketResponse } from '../../shared/types/api/web-sockets/responses.ts';
+import type { GenerateTicketResponse } from '@strong-together/shared';
 
 export const generateTicketData = async (userId: string, username?: string): Promise<GenerateTicketResponse> => {
   const payload = {

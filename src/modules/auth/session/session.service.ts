@@ -11,8 +11,8 @@ import {
 import { appConfig } from '../../../config/app.config.ts';
 import { authConfig } from '../../../config/auth.config.ts';
 import { sendSystemMessageToUserWhenFirstLogin } from '../../../shared/services/messages-service.ts';
-import type { LoginResponse, RefreshTokenResponse } from '../../../shared/types/api/auth/responses.ts';
-import type { AccessTokenPayload } from '../../../shared/types/dto/auth.dto.ts';
+import type { AccessTokenPayload, LoginResponse } from '@strong-together/shared';
+import type { RefreshTokenResponse } from '../../../shared/types/api/auth/responses.ts';
 import { decodeRefreshToken } from './session.utils.ts';
 
 export const loginUserData = async (

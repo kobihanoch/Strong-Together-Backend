@@ -1,6 +1,5 @@
 import sql from '../../infrastructure/db.client.ts';
-import { UserAerobicsResponse } from '../../shared/types/api/aerobics/responses.ts';
-import { AddAerobicInput } from '../../shared/types/dto/aerobics.dto.ts';
+import type { AddAerobicInput, UserAerobicsResponse } from '@strong-together/shared';
 
 // Gets all records from last 45 days mapped by dates
 /**

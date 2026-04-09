@@ -1,5 +1,5 @@
 import sql from '../../infrastructure/db.client.ts';
-import { GoalAdherenceResponse, WorkoutRMsResponse } from '../../shared/types/dto/analytics.dto.ts';
+import type { GoalAdherenceResponse, WorkoutRMsResponse } from '@strong-together/shared';
 
 /**
  * {

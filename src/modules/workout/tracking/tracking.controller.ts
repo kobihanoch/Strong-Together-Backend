@@ -3,8 +3,9 @@ import { finishUserWorkoutData, getExerciseTrackingData } from './tracking.servi
 import type {
   FinishUserWorkoutResponse,
   GetExerciseTrackingResponse,
-} from '../../../shared/types/api/workouts/responses.ts';
-import { FinishUserWorkoutBody, GetExerciseTrackingQuery } from '../../../shared/types/api/workouts/requests.ts';
+  FinishUserWorkoutBody,
+  GetExerciseTrackingQuery,
+} from '@strong-together/shared';
 
 /**
  * Get the authenticated user's recent exercise tracking history.
