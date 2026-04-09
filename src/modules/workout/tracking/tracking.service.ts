@@ -3,7 +3,7 @@ import { queryGetExerciseTrackingAndStats, queryInsertUserFinishedWorkout } from
 import { sendSystemMessageToUserWorkoutDone } from '../../messages/system-messages/system-messages.service.ts';
 import type { ExerciseTrackingAndStats, FinishUserWorkoutBody, FinishUserWorkoutResponse } from '@strong-together/shared';
 import { buildTrackingKeyStable, TTL_TRACKING } from './tracking.cache.ts';
-import { cacheDeleteOtherTimezones, cacheGetJSON, cacheSetJSON } from '../../../shared/cache/redis.cache.ts';
+import { cacheDeleteOtherTimezones, cacheGetJSON, cacheSetJSON } from '../../../infrastructure/cache/redis.cache.ts';
 
 export const getExerciseTrackingData = async (
   userId: string,

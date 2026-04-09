@@ -1,4 +1,4 @@
-import { cacheGetJSON, cacheSetJSON } from '../../shared/cache/redis.cache.ts';
+import { cacheGetJSON, cacheSetJSON } from '../../infrastructure/cache/redis.cache.ts';
 import type { BootstrapResponse } from '@strong-together/shared';
 import { getAerobicsData } from '../aerobics/aerobics.service.ts';
 import { getAllMessagesData } from '../messages/messages.service.ts';

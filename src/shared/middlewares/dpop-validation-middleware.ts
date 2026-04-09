@@ -3,7 +3,7 @@ import createError from 'http-errors';
 import * as jose from 'jose';
 import { appConfig } from '../../config/app.config.ts';
 import { createLogger } from '../../infrastructure/logger.ts';
-import { cacheStoreJti } from '../cache/redis.cache.ts';
+import { cacheStoreJti } from '../../infrastructure/cache/redis.cache.ts';
 
 const DPOP_EXPIRATION_SECONDS = 60;
 const logger = createLogger('middleware:dpop');

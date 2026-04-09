@@ -5,7 +5,7 @@ import { queryBumpTokenVersionAndGetSelfData, queryUpdateUserPassword } from './
 import { sendForgotPasswordEmail } from './password-emails/password-emails.service.ts';
 import type { ResetPasswordResponse, SendChangePassEmailBody } from '@strong-together/shared';
 import { decodeForgotPasswordToken } from './password.utils.ts';
-import { cacheStoreJti } from '../../../shared/cache/redis.cache.ts';
+import { cacheStoreJti } from '../../../infrastructure/cache/redis.cache.ts';
 
 export const sendChangePassEmailData = async (body: SendChangePassEmailBody, requestId?: string): Promise<void> => {
   const { identifier } = body;

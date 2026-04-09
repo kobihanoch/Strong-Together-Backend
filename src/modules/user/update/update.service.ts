@@ -24,7 +24,7 @@ import type {
   UpdateAuthenticatedUserResponse,
   UserDataResponse,
 } from '@strong-together/shared';
-import { cacheStoreJti } from '../../../shared/cache/redis.cache.ts';
+import { cacheStoreJti } from '../../../infrastructure/cache/redis.cache.ts';
 import { decodeChangeEmailToken } from './update.utils.ts';
 
 export const getUserData = async (userId: string): Promise<{ payload: UserDataResponse['user_data'] }> => {

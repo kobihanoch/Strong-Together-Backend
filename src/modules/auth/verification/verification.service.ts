@@ -9,7 +9,7 @@ import {
   generateVerifiedHTML,
 } from './verification.views.ts';
 import type { ChangeEmailAndVerifyBody, SendVerifcationMailBody } from '@strong-together/shared';
-import { cacheStoreJti } from '../../../shared/cache/redis.cache.ts';
+import { cacheStoreJti } from '../../../infrastructure/cache/redis.cache.ts';
 import { decodeVerifyToken } from './verification.utils.ts';
 
 export const verifyUserAccountData = async (

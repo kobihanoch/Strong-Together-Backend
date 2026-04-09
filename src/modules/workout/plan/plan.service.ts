@@ -12,7 +12,7 @@ import {
   cacheDeleteOtherTimezones,
   cacheGetJSON,
   cacheSetJSON,
-} from '../../../shared/cache/redis.cache.ts';
+} from '../../../infrastructure/cache/redis.cache.ts';
 import { buildAnalyticsKeyStable } from '../../analytics/analytics.cache.ts';
 
 export const getWorkoutPlanData = async (
