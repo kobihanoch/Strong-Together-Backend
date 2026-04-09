@@ -1,4 +1,0 @@
-import z from 'zod';
-import { bootstrapResponseSchema } from '../../../validators/bootstrap/bootstrapResponse.schema.ts';
-
-export type BootstrapResponse = z.infer<typeof bootstrapResponseSchema>;

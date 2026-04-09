@@ -4,7 +4,9 @@ services:
       context: .
       dockerfile: src/Dockerfile
     env_file:
-      - .env
+      - .env.${NODE_ENV}
+    environment:
+      NODE_ENV: ${NODE_ENV}
     ports:
       - '5000:5000'
     volumes:
@@ -16,7 +18,9 @@ services:
       context: .
       dockerfile: workers/Dockerfile
     env_file:
-      - .env
+      - .env.${NODE_ENV}
+    environment:
+      NODE_ENV: ${NODE_ENV}
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
@@ -26,8 +30,9 @@ services:
       context: .
       dockerfile: pythonService/Dockerfile
     env_file:
-      - .env
+      - .env.${NODE_ENV}
     environment:
+      NODE_ENV: ${NODE_ENV}
       ENABLE_DEBUG_WINDOW: '0'
     volumes:
       - ./pythonService/main.py:/app/main.py

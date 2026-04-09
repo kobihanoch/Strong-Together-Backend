@@ -1,8 +1,8 @@
-# Strong Together Backend (v3.1.1)
+# Strong Together Backend (v3.2.0)
 
 [![CI](https://github.com/kobihanoch/Strong-Together-Backend/actions/workflows/ci.yml/badge.svg)](https://github.com/kobihanoch/Strong-Together-Backend/actions)
 
-This is the **microservices-based backend** for **Strong Together**.
+This is the backend for **Strong Together**.
 
 - Backend repository: [Strong-Together-Backend](https://github.com/kobihanoch/Strong-Together-Backend)
 - Frontend repository: [Strong-Together-App](https://github.com/kobihanoch/Strong-Together-App)
@@ -40,9 +40,10 @@ A backend platform with:
 
 ## Highlights
 
-- **Microservices architecture**: a **TypeScript REST API**, **background workers**, **Redis Pub/Sub**, **SQS**, **WebSockets**, and a dedicated **Python computer-vision worker**.
+- **Vertical-slice server architecture**: the Node backend is organized by feature domains such as auth, users, workouts, messages, OAuth, and video analysis, each with its own routes, controller, service, query, and feature-local support files.
+- **Supporting services around the API**: background workers, Redis Pub/Sub, SQS, WebSockets, and a dedicated Python computer-vision worker.
 - **Authentication and request protection**: **JWT**, **DPoP proof-of-possession**, **rate limits**, bot blocking, token rotation, and strict request validation.
-- **Request contracts**: **Zod schemas** are used to validate request payloads at the API boundary before controller logic runs.
+- **Request contracts**: request schemas are consumed from the shared package and validated at the API boundary before controller logic runs.
 - **Async media pipeline**: **direct AWS S3 uploads**, **S3 event-driven SQS dispatch**, Python-based CV analysis, **trace-aware async orchestration**, and **realtime result delivery** back to the client.
 - **Database design**: **PostgreSQL**, analytics views, normalized workout tracking, reminder intelligence, indexing strategy, and **RLS-aware** patterns.
 - **Test coverage**: **Vitest + Supertest** integration tests across auth, workouts, analytics, OAuth, websockets, and video analysis.
@@ -53,6 +54,7 @@ A backend platform with:
 - [TL;DR](#tldr)
 - [Highlights](#highlights)
 - [Architecture](#architecture)
+- [Folder Tree](#folder-tree)
 - [Tech Stack](#tech-stack)
 - [Middleware and Security Layer](#middleware-and-security-layer)
 - [Docker Setup](#docker-setup)
@@ -62,8 +64,8 @@ A backend platform with:
 - [Testing](#testing)
 - [CI](#ci)
 - [Schema SQL](./schema.sql)
-- [Test Seed SQL](./test-seeds/test-seed.sql)
-- [Test Exercises Seed](./test-seeds/test-exercises_seed.sql)
+- [Test Seed SQL](./src/shared/test-seeds/test-seed.sql)
+- [Test Exercises Seed](./src/shared/test-seeds/test-exercises_seed.sql)
 - [Docker Compose](./docker-compose.yml)
 
 ## Table of Contents
@@ -73,52 +75,120 @@ A backend platform with:
 3. [Quick Links](#quick-links)
 4. [Architecture](#architecture)
    1. [Video Analysis Architecture](#video-analysis-architecture)
-5. [Tech Stack](#tech-stack)
-6. [Middleware and Security Layer](#middleware-and-security-layer)
+5. [Folder Tree](#folder-tree)
+6. [Tech Stack](#tech-stack)
+7. [Middleware and Security Layer](#middleware-and-security-layer)
    1. [Core middlewares](#core-middlewares)
    2. [Why it matters](#why-it-matters)
-7. [Run Locally](#run-locally)
+8. [Run Locally](#run-locally)
    1. [Docker setup](#docker-setup)
-8. [Testing](#testing)
+9. [Testing](#testing)
    1. [CI](#ci)
-9. [API Overview](#api-overview)
-   1. [Main domains](#main-domains)
-   2. [API characteristics](#api-characteristics)
-10. [Database Overview](#database-overview)
-11. [Key database design choices](#key-database-design-choices)
-12. [Important tables and objects](#important-tables-and-objects)
-13. [DB files](#db-files)
-14. [Database Schema](#database-schema)
-15. [Workout tracking model](#workout-tracking-model)
-16. [Database Flows](#database-flows)
-17. [Workout Flow](#workout-flow)
-18. [Tracking Flow](#tracking-flow)
-19. [Messages Flow](#messages-flow)
-20. [Auth Flow](#auth-flow)
-21. [Reminder Flow](#reminder-flow)
+10. [API Overview](#api-overview)
+11. [Main domains](#main-domains)
+12. [API characteristics](#api-characteristics)
+13. [Database Overview](#database-overview)
+14. [Key database design choices](#key-database-design-choices)
+15. [Important tables and objects](#important-tables-and-objects)
+16. [DB files](#db-files)
+17. [Database Schema](#database-schema)
+18. [Workout tracking model](#workout-tracking-model)
+19. [Database Flows](#database-flows)
+20. [Workout Flow](#workout-flow)
+21. [Tracking Flow](#tracking-flow)
+22. [Messages Flow](#messages-flow)
+23. [Auth Flow](#auth-flow)
+24. [Reminder Flow](#reminder-flow)
 
 ## Architecture
+
+The Node server is now structured as a **modular monolith built with vertical slices**.
 
 **Video analysis flow:** Client -> Node API (`getpresignedurl`) -> presigned S3 upload -> S3 event notification -> SQS (with DLQ) -> Python analysis worker -> Redis Pub/Sub -> Node subscriber -> Socket.IO -> Client
 
 This flow keeps large uploads and pose-analysis work out of the API request thread while allowing the Python worker to scale independently from the Node request layer.
 It also carries `jobId`, `requestId`, and Sentry trace headers through S3 object metadata so the async pipeline can be monitored across service boundaries.
 
-**Why the architecture was changed**
-
-- The older design depended on an explicit publish step after upload, which could drift from the actual uploaded object lifecycle.
-- Moving to an S3 event -> SQS trigger made the upload itself the source of truth for starting analysis.
-- Persisting `jobId`, `requestId`, and Sentry trace metadata with the uploaded object made cross-service debugging and async trace correlation much more reliable.
-- The new design trades some infrastructure simplicity for better resilience, cleaner job orchestration, and stronger observability for long-running media work.
-
-- `src/` contains the main Express API, validation, business logic, integrations, and realtime publishing.
-- `workers/` handles background jobs such as emails and push notifications.
-- `pythonService/` is a dedicated Python SQS worker for exercise video processing triggered by S3 upload events.
-- `tests/` contains integration suites that validate real backend flows end-to-end.
-
 ### Video Analysis Architecture
 
 ![Video analysis architecture](https://github.com/user-attachments/assets/62af4f0e-5dd1-45bc-8334-712721f92990)
+
+## Folder Tree
+
+```text
+.
+|-- src
+|   |-- app.ts
+|   |-- index.ts
+|   |-- instrument.ts
+|   |-- config
+|   |   |-- app.config.ts
+|   |   |-- auth.config.ts
+|   |   |-- database.config.ts
+|   |   |-- email.config.ts
+|   |   |-- logger.config.ts
+|   |   |-- redis.config.ts
+|   |   |-- sentry.config.ts
+|   |   `-- storage.config.ts
+|   |-- infrastructure
+|   |   |-- db.client.ts
+|   |   |-- logger.ts
+|   |   |-- mailer.service.ts
+|   |   |-- redis.client.ts
+|   |   |-- sentry.ts
+|   |   |-- socket.io.ts
+|   |   |-- cache
+|   |   |-- queues
+|   |   |-- supabase
+|   |   `-- aws
+|   |       `-- s3.service.ts
+|   |-- modules
+|   |   |-- aerobics
+|   |   |-- analytics
+|   |   |-- auth
+|   |   |   |-- auth.routes.ts
+|   |   |   |-- password
+|   |   |   |-- session
+|   |   |   `-- verification
+|   |   |-- bootstrap
+|   |   |-- exercises
+|   |   |-- messages
+|   |   |-- oauth
+|   |   |   |-- oauth.routes.ts
+|   |   |   |-- oauth.utils.ts
+|   |   |   |-- apple
+|   |   |   `-- google
+|   |   |-- push
+|   |   |-- user
+|   |   |   |-- user.routes.ts
+|   |   |   |-- create
+|   |   |   |-- push-tokens
+|   |   |   `-- update
+|   |   |-- video-analysis
+|   |   |-- web-sockets
+|   |   `-- workout
+|   |       |-- workout.routes.ts
+|   |       |-- plan
+|   |       `-- tracking
+|   |-- shared
+|   |   |-- authentication
+|   |   |-- middlewares
+|   |   |-- test-seeds
+|   |   |-- tests
+|   |   `-- types
+|-- workers
+|   |-- emails-worker.ts
+|   |-- global-worker.ts
+|   |-- push-notifications-worker.ts
+|   `-- utils
+|       `-- setup-graceful-shutdown.ts
+|-- pythonService
+|-- scripts
+|-- schema.sql
+|-- docker-compose.yml
+|-- docker-compose.test.yml
+`-- README.md
+```
 
 ## Tech Stack
 
@@ -129,7 +199,7 @@ It also carries `jobId`, `requestId`, and Sentry trace headers through S3 object
 | Async infrastructure | Redis, Bull, SQS, Pub/Sub             |
 | Realtime             | Socket.IO                             |
 | Storage              | AWS S3, Supabase Storage              |
-| Auth & validation    | JWT, DPoP, Zod, bcrypt                |
+| Auth & validation    | JWT, DPoP, Zod shared schemas, bcrypt |
 | Notifications        | Expo Push, Resend                     |
 | Observability        | Pino, Sentry                          |
 | Testing              | Vitest, Supertest                     |
@@ -145,26 +215,26 @@ The request pipeline is structured through layered middleware to handle security
 
 ### Core middlewares
 
-| Middleware                  | Role in the system                                                                     |
-| --------------------------- | -------------------------------------------------------------------------------------- |
-| `express.json()`            | Parses JSON request bodies for the API layer                                           |
-| `cors()`                    | Restricts allowed origins and request metadata                                         |
-| `helmet()`                  | Applies hardened HTTP security headers                                                 |
-| `generalLimiter`            | Applies general request rate limiting                                                  |
-| `botBlocker`                | Blocks malicious bot and scanner traffic patterns                                      |
-| `checkAppVersion`           | Enforces minimum supported mobile app versions                                         |
-| request logger + request ID | Attaches correlation metadata for logs and tracing                                     |
-| `dpopValidationMiddleware`  | Verifies DPoP proofs including signature, request binding, and replay-sensitive fields |
-| `protect`                   | Validates JWT access tokens and authenticated user context                             |
-| `validate(...)`             | Enforces request contract validation with Zod                                          |
-| `withRlsTx(...)`            | Wraps handlers in a transaction-aware DB execution flow aligned with RLS patterns      |
-| `asyncHandler`              | Centralizes async error forwarding for route handlers                                  |
-| `errorHandler`              | Standardizes API error responses at the edge                                           |
+| Middleware                   | Role in the system                                                                        |
+| ---------------------------- | ----------------------------------------------------------------------------------------- |
+| `express.json()`             | Parses JSON request bodies for the API layer                                              |
+| `cors()`                     | Restricts allowed origins and request metadata                                            |
+| `helmet()`                   | Applies hardened HTTP security headers                                                    |
+| `generalLimiter`             | Applies general request rate limiting                                                     |
+| `botBlocker`                 | Blocks malicious bot and scanner traffic patterns                                         |
+| `checkAppVersion`            | Enforces minimum supported mobile app versions                                            |
+| request logger + request ID  | Attaches correlation metadata for logs and tracing                                        |
+| `dpopValidationMiddleware`   | Verifies DPoP proofs including signature, request binding, and replay-sensitive fields    |
+| `authenticate` + `authorize` | Validates JWT access tokens and enforces role-based access for protected routes           |
+| `validate(...)`              | Enforces request contract validation with schemas imported from `@strong-together/shared` |
+| `withRlsTx(...)`             | Wraps handlers in a transaction-aware DB execution flow aligned with RLS patterns         |
+| `asyncHandler`               | Centralizes async error forwarding for route handlers                                     |
+| `errorHandler`               | Standardizes API error responses at the edge                                              |
 
 ### Why it matters
 
 - **Security is enforced before business logic**: authentication, DPoP verification, **rate limits**, bot filtering, and version checks all happen at the request boundary.
-- **Validation is explicit**: route inputs are validated with Zod before controller execution, which makes request contracts clearer and safer.
+- **Validation is explicit**: route inputs are validated before controller execution, which keeps request contracts clearer and safer across the backend and shared package.
 - **Database access is controlled**: protected flows are executed through `withRlsTx(...)`, giving the backend a clean bridge between API identity and DB-level authorization patterns.
 - **Operational debugging is easier**: request IDs, structured logs, and Sentry context make production issues significantly easier to trace.
 
@@ -175,14 +245,15 @@ The request pipeline is structured through layered middleware to handle security
 The repository includes multiple Docker entry points to match both the current deployment model and future service separation.
 
 - The root `Dockerfile` is the main container currently used on **Render**. It runs `start.sh`, which starts both the **Node API** and the **background workers** inside the same VM.
-- Separate Dockerfiles also exist for `src/Dockerfile` and `workers/Dockerfile`. They are kept to support a more modular deployment model where the API and workers can be split into independent services later.
+- Separate Dockerfiles also exist for `src/Dockerfile` and `workers/Dockerfile`. They support a more modular deployment model where the API and workers can be split into independent services later.
 - `pythonService/Dockerfile` is dedicated to the computer-vision service and is intended to run as a **private service** on Render.
 
 This setup keeps the current deployment simple while leaving room to separate services further as operational needs grow.
 
-1. Create `.env` with the required infrastructure secrets and URLs:
+1. Create `.env.development` for local work, or `.env.production` for production-style runs:
 
 ```env
+PORT=
 NODE_ENV=
 DPOP_ENABLED=
 CACHE_ENABLED=
@@ -233,6 +304,7 @@ APPLE_ALLOWED_AUDS=
 
 # Cache TTLS
 CACHE_TTL_TRACKING_SEC=
+CACHE_TTL_TIMEZONE_SEC=
 CACHE_TTL_PLAN_SEC=
 CACHE_TTL_AEROBICS_SEC=
 CACHE_TTL_ANALYTICS_SEC=
@@ -264,11 +336,13 @@ npm run start:server
 npm run start:workers
 ```
 
-4. Or run the stack with Docker:
+4. Or run the stack with Docker Compose through the environment-specific scripts:
 
 ```bash
-docker compose up --build
+npm run compose:up:dev
 ```
+
+Use `npm run compose:up:prod` when you want Compose to load `.env.production`.
 
 ## Testing
 
@@ -309,7 +383,7 @@ Base path: `/api`
 | -------------- | ------------------------------------------------------------------------------------------- |
 | Auth           | `/auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/verify`                              |
 | Users          | `/users/create`, `/users/get`, `/users/updateself`, `/users/deleteself`                     |
-| OAuth          | `/oauth/google`, `/oauth/apple`, `/oauth/proceedauth`                                       |
+| OAuth          | `/oauth/google`, `/oauth/apple`                                                             |
 | Workouts       | `/workouts/getworkout`, `/workouts/gettracking`, `/workouts/finishworkout`, `/workouts/add` |
 | Messages       | `/messages/getmessages`, `/messages/markasread/:id`, `/messages/delete/:id`                 |
 | Exercises      | `/exercises/getall`                                                                         |
@@ -323,7 +397,7 @@ Base path: `/api`
 ### API characteristics
 
 - Protected routes use DPoP-aware authentication when enabled.
-- Request validation is enforced with Zod.
+- Request validation is enforced through schemas shared with the app via `@strong-together/shared`.
 - WebSocket access is gated through a signed connection ticket.
 - Heavy media work is offloaded from the API thread into S3-triggered async processing and the Python service.
 
@@ -357,9 +431,9 @@ PostgreSQL is the system of record. The schema is used not only for storage, but
 ### DB files
 
 - Full schema: [schema.sql](./schema.sql)
-- Base test seed data: [test-seeds/test-seed.sql](./test-seeds/test-seed.sql)
-- Exercise test seed data: [test-seeds/test-exercises_seed.sql](./test-seeds/test-exercises_seed.sql)
-- All files under `test-seeds/` are demo-only testing fixtures, and all data in them is fake.
+- Base test seed data: [src/shared/test-seeds/test-seed.sql](./src/shared/test-seeds/test-seed.sql)
+- Exercise test seed data: [src/shared/test-seeds/test-exercises_seed.sql](./src/shared/test-seeds/test-exercises_seed.sql)
+- All files under `src/shared/test-seeds/` are demo-only testing fixtures, and all data in them is fake.
 
 ### Database Schema
 

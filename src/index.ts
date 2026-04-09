@@ -1,21 +1,20 @@
 import './instrument.ts';
-import dotenv from 'dotenv';
-import { connectDB } from './config/db.ts';
-import { createLogger } from './config/logger.ts';
-import { flushSentry } from './config/sentry.ts';
-import { connectRedis } from './config/redisClient.ts';
-import { createIOServer } from './config/webSocket.ts';
+import { connectDB } from './infrastructure/db.client.ts';
+import { createLogger } from './infrastructure/logger.ts';
+import { flushSentry } from './infrastructure/sentry.ts';
+import { connectRedis } from './infrastructure/redis.client.ts';
+import { createIOServer } from './infrastructure/socket.io.ts';
 import { createApp } from './app.ts';
-import { startVideoAnalysisSubscriber } from './subscribers/videoAnalysisSubscriber.ts';
+import { appConfig } from './config/app.config.ts';
+import { startVideoAnalysisSubscriber } from './modules/video-analysis/video-analysis-subscriber.ts';
 
 // RESOURECES CONNECTIONS AND GENERAL CONFIGURATIONS  ------------------------------------------
-dotenv.config();
 const logger = createLogger('bootstrap');
 
 const app = createApp();
 
 // Define port
-const PORT = process.env.PORT || 5000;
+const PORT = appConfig.port;
 
 await connectDB(); // Connect to PostgreSQL
 await connectRedis(); // Connect to Redis
