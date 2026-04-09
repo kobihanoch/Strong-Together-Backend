@@ -5,7 +5,11 @@ import { authConfig } from '../../config/auth.config.ts';
 import { createApp } from '../../app.ts';
 import { loginResponseSchema, createUserResponseSchema, userAerobicsResponseSchema } from '@strong-together/shared';
 import type { UserAerobicsResponse, WeeklyData } from '@strong-together/shared';
-import { loginAerobicsDefaultTimezoneUser, loginAerobicsGetUser, loginAerobicsTestUser } from '../../shared/tests/helpers/auth.ts';
+import {
+  loginAerobicsDefaultTimezoneUser,
+  loginAerobicsGetUser,
+  loginAerobicsTestUser,
+} from '../../shared/tests/helpers/auth.ts';
 import { expectSchema } from '../../shared/tests/helpers/assert-schema.ts';
 import { addAerobicsRecord, getAerobics } from '../../shared/tests/helpers/aerobics.ts';
 import { waitForAerobicsRowsForUser } from '../../shared/tests/helpers/db.ts';
@@ -249,7 +253,7 @@ describe('Aerobics', () => {
       });
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Invalid input: expected number, received string');
+    expect(response.body.message).toBe('Expected number, received string');
   });
 
   // login -> add aerobics -> get aerobics without tz -> assert default timezone path still returns data
@@ -286,4 +290,3 @@ describe('Aerobics', () => {
     });
   });
 });
-
