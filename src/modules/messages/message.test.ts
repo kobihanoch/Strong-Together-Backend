@@ -239,7 +239,7 @@ describe('Messages', () => {
       });
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Invalid input: expected string, received undefined');
+    expect(response.body.message).toBe('Required');
   });
 
   // login -> mark missing message as read -> assert 404
@@ -264,4 +264,3 @@ describe('Messages', () => {
     expect(response.body.message).toBe('Message not found.');
   });
 });
-
