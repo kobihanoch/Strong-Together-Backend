@@ -1,6 +1,5 @@
 import sql from '../../../infrastructure/db.client.ts';
-import type { AerobicEntity } from '@strong-together/shared';
-import type { UserEntity } from '../../types/entities/user.entity.ts';
+import type { AerobicEntity, UserEntity } from '@strong-together/shared';
 
 async function wait(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -180,9 +179,7 @@ export async function messageExists(messageId: string) {
 }
 
 export async function getAerobicsRowsForUser(userId: string) {
-  const rows = await sql<
-    Pick<AerobicEntity, 'id' | 'type' | 'duration_mins' | 'duration_sec' | 'workout_time_utc'>[]
-  >`
+  const rows = await sql<Pick<AerobicEntity, 'id' | 'type' | 'duration_mins' | 'duration_sec' | 'workout_time_utc'>[]>`
     SELECT at.id, at.type, at.duration_mins, at.duration_sec, at.workout_time_utc
     FROM public.aerobictracking at
     WHERE at.user_id = ${userId}::uuid

@@ -1,5 +1,4 @@
 import type { AccessTokenPayload } from '@strong-together/shared';
-import { AuthenticatedUser } from './../types/dto/auth.dto.ts';
 import { Response, NextFunction, Request } from 'express';
 import createError from 'http-errors';
 import { appConfig } from '../../config/app.config.ts';
@@ -8,6 +7,13 @@ import { decodeAccessToken, getAccessToken } from '../authentication/authenticat
 import { queryGetCurrentTokenVersion } from '../../modules/auth/session/session.queries.ts';
 import * as crypto from 'crypto';
 import { applySentryRequestContext } from '../../infrastructure/sentry.ts';
+import type { UserEntity } from '@strong-together/shared';
+
+interface AuthenticatedUser {
+  id: UserEntity['id'];
+  role: UserEntity['role'];
+  is_verified: UserEntity['is_verified'];
+}
 
 export const protect = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const dpopJkt = req.dpopJkt;

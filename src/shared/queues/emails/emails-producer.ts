@@ -1,4 +1,4 @@
-import { EmailPayload } from '../../types/dto/emails.dto.ts';
+import { EmailPayload } from './emails.dtos.ts';
 import { appConfig } from '../../../config/app.config.ts';
 import { createLogger } from '../../../infrastructure/logger.ts';
 import emailQueue from './emails-queue.ts';

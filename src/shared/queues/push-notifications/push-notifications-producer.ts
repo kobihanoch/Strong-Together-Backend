@@ -1,15 +1,13 @@
-import { NotificationPayload } from "../../types/dto/notifications.dto.ts";
+import { NotificationPayload } from '../../../modules/push/push.dtos.ts';
 import { createLogger } from '../../../infrastructure/logger.ts';
-import pushNotificationsQueue from "./push-notifications-queue.ts";
+import pushNotificationsQueue from './push-notifications-queue.ts';
 
 const logger = createLogger('queue:push-producer', {
   queue: 'pushNotificationsQueue',
 });
 
 // Add jobs to queue
-export const enqueuePushNotifications = async (
-  notifications: NotificationPayload[],
-): Promise<void> => {
+export const enqueuePushNotifications = async (notifications: NotificationPayload[]): Promise<void> => {
   const requestIds = [...new Set(notifications.map((notification) => notification.requestId).filter(Boolean))];
   try {
     await pushNotificationsQueue.addBulk(

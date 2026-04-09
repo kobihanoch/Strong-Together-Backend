@@ -1,15 +1,23 @@
-import {
-  ConfirmEmailChangeParams,
-  ForgotPasswordEmailParams,
-  ValidateUserEmailParams,
-} from "../types/dto/emails.dto.ts";
+type ValidateUserEmailParams = {
+  fullName: string;
+  verifyUrl: string;
+  logoUrl: string;
+};
+
+type ForgotPasswordEmailParams = {
+  fullName: string;
+  changePasswordUrl: string;
+  logoUrl: string;
+};
+
+type ConfirmEmailChangeParams = {
+  fullName: string;
+  confirmUrl: string;
+  logoUrl: string;
+};
 
 // English comments only inside the code
-export const generateValidateUserEmail = ({
-  fullName,
-  verifyUrl,
-  logoUrl,
-}: ValidateUserEmailParams): string => `
+export const generateValidateUserEmail = ({ fullName, verifyUrl, logoUrl }: ValidateUserEmailParams): string => `
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -152,11 +160,7 @@ export const generateForgotPasswordEmail = ({
 </html>
 `;
 
-export const generateConfirmEmailChange = ({
-  fullName,
-  confirmUrl,
-  logoUrl,
-}: ConfirmEmailChangeParams): string => `
+export const generateConfirmEmailChange = ({ fullName, confirmUrl, logoUrl }: ConfirmEmailChangeParams): string => `
 <!DOCTYPE html>
 <html lang="en">
   <head>

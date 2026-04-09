@@ -5,7 +5,7 @@ import type {
   SquatRepetition,
 } from '@strong-together/shared';
 import { getUploadUrl } from '../../infrastructure/aws/s3.service.ts';
-import { UserEntity } from '../../shared/types/entities/user.entity.ts';
+import { UserEntity } from '@strong-together/shared';
 import { getIO } from '../../infrastructure/socket.io.ts';
 
 export const normalizeHeaderValue = (value: string | string[] | undefined): string => {

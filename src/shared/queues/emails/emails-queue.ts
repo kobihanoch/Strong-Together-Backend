@@ -1,7 +1,7 @@
+import { EmailPayload } from './emails.dtos.ts';
 import Bull, { Queue } from 'bull';
 import { appConfig } from '../../../config/app.config.ts';
 import { redisConfig } from '../../../config/redis.config.ts';
-import { EmailPayload } from '../../types/dto/emails.dto.ts';
 
 declare global {
   var emailsQueue: Queue<EmailPayload> | undefined;

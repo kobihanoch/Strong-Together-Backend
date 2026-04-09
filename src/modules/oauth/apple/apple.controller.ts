@@ -3,7 +3,7 @@ import { createLogger } from '../../../infrastructure/logger.ts';
 import { createOrSignInWithAppleData } from './apple.service.ts';
 import { validateJkt } from '../oauth.utils.ts';
 import type { AppleOAuthBody } from '@strong-together/shared';
-import type { OAuthLoginResponse } from '../../../shared/types/api/oAuth/responses.ts';
+import type { OAuthLoginResponse } from '@strong-together/shared';
 const logger = createLogger('controller:oauth');
 
 /**

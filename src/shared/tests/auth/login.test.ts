@@ -2,11 +2,7 @@ import crypto from 'crypto';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../../app.ts';
-import {
-  loginResponseSchema,
-  messageResponseSchema,
-  refreshTokenResponseSchema,
-} from '@strong-together/shared';
+import { loginResponseSchema, logoutResponseSchema, refreshTokenResponseSchema } from '@strong-together/shared';
 import {
   resetPasswordResponseSchema,
   createUserResponseSchema,
@@ -146,7 +142,7 @@ describe('Auth Login', () => {
     const logoutResponse = await request(app).post('/api/auth/logout').set(logoutHeaders(accessToken, refreshToken));
 
     expect(logoutResponse.status).toBe(200);
-    expectSchema(messageResponseSchema, logoutResponse.body);
+    expectSchema(logoutResponseSchema, logoutResponse.body);
     expect(logoutResponse.body.message).toBe('Logged out successfully');
 
     const meResponse = await request(app).get('/api/users/get').set(authHeaders(accessToken));

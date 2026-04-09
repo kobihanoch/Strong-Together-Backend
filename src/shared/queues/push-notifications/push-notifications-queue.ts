@@ -1,7 +1,7 @@
+import { NotificationPayload } from '../../../modules/push/push.dtos.ts';
 import Bull, { Queue } from 'bull';
 import { appConfig } from '../../../config/app.config.ts';
 import { redisConfig } from '../../../config/redis.config.ts';
-import { NotificationPayload } from '../../types/dto/notifications.dto.ts';
 
 declare global {
   var pushNotificationsQueue: Queue<NotificationPayload> | undefined;
@@ -25,10 +25,7 @@ switch (appConfig.nodeEnv) {
 }
 
 if (!pushNotificationsQueue) {
-  pushNotificationsQueue = new Bull<NotificationPayload>(
-    `${prefix}:pushNotificationsQueue`,
-    redisConfig.url,
-  );
+  pushNotificationsQueue = new Bull<NotificationPayload>(`${prefix}:pushNotificationsQueue`, redisConfig.url);
   globalThis.pushNotificationsQueue = pushNotificationsQueue;
 }
 
