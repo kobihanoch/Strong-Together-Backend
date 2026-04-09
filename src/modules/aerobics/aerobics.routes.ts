@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
-import { protect } from '../../shared/middlewares/auth-middleware.ts';
+import { authenticate } from '../../shared/middlewares/authentication.ts';
+import { authorize } from '../../shared/middlewares/authorization.ts';
 import { addUserAerobics, getUserAerobics } from './aerobics.controller.ts';
 import { withRlsTx } from '../../infrastructure/db.client.ts';
 import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
@@ -13,14 +14,16 @@ const router = Router();
 router.get(
   '/get',
   dpopValidationMiddleware,
-  protect,
+  authenticate,
+  authorize('user'),
   validate(getAerobicsRequest),
   asyncHandler(withRlsTx(getUserAerobics)),
 ); // Gets user's aerobics (45 days)
 router.post(
   '/add',
   dpopValidationMiddleware,
-  protect,
+  authenticate,
+  authorize('user'),
   validate(addAerobicsRequest),
   asyncHandler(withRlsTx(addUserAerobics)),
 ); // Adds an aerobics activity for user

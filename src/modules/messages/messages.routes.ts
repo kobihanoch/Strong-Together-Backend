@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { deleteMessage, getAllUserMessages, markUserMessageAsRead } from './messages.controller.ts';
 import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
-import { protect } from '../../shared/middlewares/auth-middleware.ts';
+import { authenticate } from '../../shared/middlewares/authentication.ts';
+import { authorize } from '../../shared/middlewares/authorization.ts';
 import { withRlsTx } from '../../infrastructure/db.client.ts';
 import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
 import { getAllMessagesRequest, markMessageAsReadRequest, deleteMessageRequest } from '@strong-together/shared';
@@ -13,21 +14,24 @@ const router = Router();
 router.get(
   '/getmessages',
   dpopValidationMiddleware,
-  protect,
+  authenticate,
+  authorize('user'),
   validate(getAllMessagesRequest),
   asyncHandler(withRlsTx(getAllUserMessages)),
 ); // Gets user messages
 router.put(
   '/markasread/:id',
   dpopValidationMiddleware,
-  protect,
+  authenticate,
+  authorize('user'),
   validate(markMessageAsReadRequest),
   asyncHandler(withRlsTx(markUserMessageAsRead)),
 ); // Gets user messages
 router.delete(
   '/delete/:id',
   dpopValidationMiddleware,
-  protect,
+  authenticate,
+  authorize('user'),
   validate(deleteMessageRequest),
   asyncHandler(withRlsTx(deleteMessage)),
 ); // Deletes a user's message

@@ -1,21 +1,15 @@
 import type { AccessTokenPayload } from '@strong-together/shared';
-import { Response, NextFunction, Request } from 'express';
+import * as crypto from 'crypto';
+import { NextFunction, Request, Response } from 'express';
 import createError from 'http-errors';
 import { appConfig } from '../../config/app.config.ts';
 import sql from '../../infrastructure/db.client.ts';
-import { decodeAccessToken, getAccessToken } from '../authentication/authentication.utils.ts';
-import { queryGetCurrentTokenVersion } from '../../modules/auth/session/session.queries.ts';
-import * as crypto from 'crypto';
 import { applySentryRequestContext } from '../../infrastructure/sentry.ts';
-import type { UserEntity } from '@strong-together/shared';
+import { queryGetCurrentTokenVersion } from '../../modules/auth/session/session.queries.ts';
+import { decodeAccessToken, getAccessToken } from '../authentication/authentication.utils.ts';
+import { AuthenticatedUser } from '../types/express.js';
 
-interface AuthenticatedUser {
-  id: UserEntity['id'];
-  role: UserEntity['role'];
-  is_verified: UserEntity['is_verified'];
-}
-
-export const protect = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const dpopJkt = req.dpopJkt;
   try {
     if (appConfig.dpopEnabled) {

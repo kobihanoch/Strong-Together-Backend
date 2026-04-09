@@ -10,7 +10,8 @@ import { loginUser, logoutUser, refreshAccessToken } from './session/session.con
 import { resetPassword, sendChangePassEmail } from './password/password.controller.ts';
 import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
 import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
-import { protect } from '../../shared/middlewares/auth-middleware.ts';
+import { authenticate } from '../../shared/middlewares/authentication.ts';
+import { authorize } from '../../shared/middlewares/authorization.ts';
 import {
   changeVerificationEmailLimiter,
   changeVerificationEmailLimiterDaily,
@@ -61,6 +62,6 @@ router.post(
 router.put('/resetpassword', validate(resetPasswordRequest), asyncHandler(withRlsTx(resetPassword))); // Reset password
 
 // User routes
-router.post('/logout', dpopValidationMiddleware, protect, asyncHandler(withRlsTx(logoutUser))); // Logging out a user
+router.post('/logout', dpopValidationMiddleware, authenticate, authorize('user'), asyncHandler(withRlsTx(logoutUser))); // Logging out a user
 
 export default router;

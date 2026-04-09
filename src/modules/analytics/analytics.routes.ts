@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { getAnalytics } from './analytics.controller.ts';
 import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
-import { protect } from '../../shared/middlewares/auth-middleware.ts';
+import { authenticate } from '../../shared/middlewares/authentication.ts';
+import { authorize } from '../../shared/middlewares/authorization.ts';
 import { withRlsTx } from '../../infrastructure/db.client.ts';
 import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
 
 const router = Router();
 
 // User
-router.get('/get', dpopValidationMiddleware, protect, asyncHandler(withRlsTx(getAnalytics))); // Get user's analytics
+router.get('/get', dpopValidationMiddleware, authenticate, authorize('user'), asyncHandler(withRlsTx(getAnalytics))); // Get user's analytics
 
 export default router;

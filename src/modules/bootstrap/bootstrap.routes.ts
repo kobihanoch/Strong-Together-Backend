@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
-import { protect } from '../../shared/middlewares/auth-middleware.ts';
+import { authenticate } from '../../shared/middlewares/authentication.ts';
+import { authorize } from '../../shared/middlewares/authorization.ts';
 import { getBootstrapData } from './bootstrap.controller.ts';
 import { withRlsTx } from '../../infrastructure/db.client.ts';
 import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
@@ -13,7 +14,8 @@ const router = Router();
 router.get(
   '/get',
   dpopValidationMiddleware,
-  protect,
+  authenticate,
+  authorize('user'),
   validate(bootstrapRequest),
   asyncHandler(withRlsTx(getBootstrapData)),
 ); // Gets all exercises
