@@ -470,7 +470,7 @@ describe('Workouts', () => {
     );
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Invalid input: expected string, received null');
+    expect(response.body.message).toBe('Expected string, received null');
   });
 });
 
