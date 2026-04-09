@@ -10,12 +10,12 @@ import {
   queryUpdateAuthenticatedUser,
   queryUpdateUserProfilePicURL,
 } from './update.queries.ts';
-import { sendVerificationEmailForEmailUpdate } from '../../../shared/services/email-service.ts';
-import { deleteFromSupabase, uploadBufferToSupabase } from '../../../shared/services/supabase-storage-service.ts';
+import { sendVerificationEmailForEmailUpdate } from './update-emails/update-emails.service.ts';
+import { deleteFromSupabase, uploadBufferToSupabase } from '../../../infrastructure/supabase/supabase-storage.service.ts';
 import {
   generateEmailChangeFailedHTML,
   generateEmailChangeSuccessHTML,
-} from '../../../shared/templates/response-html-templates.ts';
+} from './update.views.ts';
 import type {
   ChangeEmailTokenPayload,
   DeleteUserProfilePicBody,
@@ -170,3 +170,4 @@ export const deleteUserProfilePicData = async (userId: string, body: DeleteUserP
   await deleteFromSupabase(body.path);
   await queryUpdateUserProfilePicURL(userId, null);
 };
+

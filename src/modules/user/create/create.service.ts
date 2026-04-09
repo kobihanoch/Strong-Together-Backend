@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import createError from 'http-errors';
 import { queryInsertUser, queryUserExistsByUsernameOrEmail } from './create.queries.ts';
-import { sendVerificationEmail } from '../../../shared/services/email-service.ts';
+import { sendVerificationEmail } from '../../auth/verification/verification-emails/verification-emails.service.ts';
 import type { CreateUserBody, CreateUserResponse } from '@strong-together/shared';
 
 export const createUserData = async (body: CreateUserBody, requestId?: string): Promise<CreateUserResponse> => {
@@ -21,3 +21,4 @@ export const createUserData = async (body: CreateUserBody, requestId?: string): 
 
   return { message: 'User created successfully!', user: created };
 };
+

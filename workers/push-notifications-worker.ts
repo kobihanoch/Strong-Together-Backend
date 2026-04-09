@@ -1,4 +1,4 @@
-import pushNotificationsQueue from '../src/shared/queues/push-notifications/push-notifications-queue.ts';
+import pushNotificationsQueue from '../src/infrastructure/queues/push-notifications/push-notifications-queue.ts';
 import { sendPushNotification } from '../src/modules/push/push.service.ts';
 import { createLogger } from '../src/infrastructure/logger.ts';
 import { captureWorkerException } from '../src/infrastructure/sentry.ts';

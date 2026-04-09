@@ -10,7 +10,7 @@ import {
   queryFindUserIdWithGoogleUserId,
   queryTryToLinkUserWithEmailGoogle,
 } from './google.queries.ts';
-import { sendSystemMessageToUserWhenFirstLogin } from '../../../shared/services/messages-service.ts';
+import { sendSystemMessageToUserWhenFirstLogin } from '../../messages/system-messages/system-messages.service.ts';
 import type { GoogleOAuthBody, GoogleTokenVerificationResult } from '@strong-together/shared';
 import type { OAuthLoginResponse } from '@strong-together/shared';
 import { verifyGoogleIdToken } from './google.utils.ts';
@@ -124,3 +124,4 @@ export const createOrSignInWithGoogleData = async (
     refreshToken,
   };
 };
+

@@ -1,6 +1,6 @@
 import createError from 'http-errors';
 import { queryGetExerciseTrackingAndStats, queryInsertUserFinishedWorkout } from './tracking.queries.ts';
-import { sendSystemMessageToUserWorkoutDone } from '../../../shared/services/messages-service.ts';
+import { sendSystemMessageToUserWorkoutDone } from '../../messages/system-messages/system-messages.service.ts';
 import type { ExerciseTrackingAndStats, FinishUserWorkoutBody, FinishUserWorkoutResponse } from '@strong-together/shared';
 import { buildTrackingKeyStable, TTL_TRACKING } from './tracking.cache.ts';
 import { cacheDeleteOtherTimezones, cacheGetJSON, cacheSetJSON } from '../../../shared/cache/redis.cache.ts';
@@ -47,3 +47,4 @@ export const finishUserWorkoutData = async (
   sendSystemMessageToUserWorkoutDone(userId);
   return payload;
 };
+

@@ -3,11 +3,11 @@ import createError from 'http-errors';
 import sql from '../../../infrastructure/db.client.ts';
 import { queryUpdateUserVerficiationStatus, queryUserByUsername } from './verification.queries.ts';
 import { queryUserExistsByUsernameOrEmail } from '../../user/create/create.queries.ts';
-import { sendVerificationEmail } from '../../../shared/services/email-service.ts';
+import { sendVerificationEmail } from './verification-emails/verification-emails.service.ts';
 import {
   generateVerificationFailedHTML,
   generateVerifiedHTML,
-} from '../../../shared/templates/response-html-templates.ts';
+} from './verification.views.ts';
 import type { ChangeEmailAndVerifyBody, SendVerifcationMailBody } from '@strong-together/shared';
 import { cacheStoreJti } from '../../../shared/cache/redis.cache.ts';
 import { decodeVerifyToken } from './verification.utils.ts';
@@ -72,3 +72,4 @@ export const checkUserVerifyData = async (username: string): Promise<{ isVerifie
   const [user] = await sql<{ is_verified: boolean }[]>`SELECT is_verified FROM users WHERE username=${username}`;
   return { isVerified: user?.is_verified ?? false };
 };
+

@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import createError from 'http-errors';
 import sql from '../../../infrastructure/db.client.ts';
 import { queryBumpTokenVersionAndGetSelfData, queryUpdateUserPassword } from './password.queries.ts';
-import { sendForgotPasswordEmail } from '../../../shared/services/email-service.ts';
+import { sendForgotPasswordEmail } from './password-emails/password-emails.service.ts';
 import type { ResetPasswordResponse, SendChangePassEmailBody } from '@strong-together/shared';
 import { decodeForgotPasswordToken } from './password.utils.ts';
 import { cacheStoreJti } from '../../../shared/cache/redis.cache.ts';
@@ -50,3 +50,4 @@ export const resetPasswordData = async (
   await Promise.all([queryUpdateUserPassword(sub, hash), queryBumpTokenVersionAndGetSelfData(sub)]);
   return { ok: true };
 };
+
