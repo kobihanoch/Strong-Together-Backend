@@ -1,5 +1,6 @@
 import sql from '../../../infrastructure/db.client.ts';
-import { TokenVersionResult, UserAfterBump, UserByIndetifier } from '../../../shared/types/dto/auth.dto.ts';
+import type { TokenVersionResult, UserAfterBump } from '@strong-together/shared';
+import { UserByIndetifier } from '@strong-together/shared';
 
 export async function queryUserByIdentifierForLogin(identifier: string): Promise<UserByIndetifier[]> {
   return sql<UserByIndetifier[]>`

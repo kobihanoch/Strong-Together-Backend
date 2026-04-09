@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import type { JWTPayload } from 'jose';
 import * as jose from 'jose';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
-import type { GoogleTokenVerificationResult } from '../../../shared/types/dto/oAuth.dto.ts';
+import type { GoogleTokenVerificationResult } from '@strong-together/shared';
 
 interface GoogleJwtPayload extends JWTPayload {
   email?: string | null;

@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
 import { createLogger } from '../../infrastructure/logger.ts';
 import { getPresignedUrlData, normalizeHeaderValue } from './video-analysis.service.ts';
-import { GetPresignedUrlFromS3Body } from '../../shared/types/api/video-analysis/requests.ts';
-import { GetPresignedUrlFromS3Response } from '../../shared/types/api/video-analysis/responses.ts';
+import type { GetPresignedUrlFromS3Body, GetPresignedUrlFromS3Response } from '@strong-together/shared';
 
 const logger = createLogger('controller:video-analysis');
 

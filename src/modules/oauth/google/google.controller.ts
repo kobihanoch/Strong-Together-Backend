@@ -2,8 +2,8 @@ import { Request, Response } from 'express';
 import { createLogger } from '../../../infrastructure/logger.ts';
 import { createOrSignInWithGoogleData } from './google.service.ts';
 import { validateJkt } from '../oauth.utils.ts';
-import { GoogleOAuthBody } from '../../../shared/types/api/oAuth/requests.ts';
-import { OAuthLoginResponse } from '../../../shared/types/api/oAuth/responses.ts';
+import type { GoogleOAuthBody } from '@strong-together/shared';
+import type { OAuthLoginResponse } from '@strong-together/shared';
 const logger = createLogger('controller:oauth');
 
 /**

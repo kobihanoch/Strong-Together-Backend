@@ -1,7 +1,12 @@
 import { expect } from 'vitest';
-import type { ZodTypeAny } from 'zod';
 
-export function expectSchema<TSchema extends ZodTypeAny>(schema: TSchema, data: unknown): void {
+type CompatibleSchema = {
+  safeParse(input: unknown):
+    | { success: true; data: unknown }
+    | { success: false; error: { flatten(): unknown } };
+};
+
+export function expectSchema(schema: CompatibleSchema, data: unknown): void {
   const parsed = schema.safeParse(data);
   expect(
     parsed.success,

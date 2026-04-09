@@ -1,10 +1,10 @@
 import createError from 'http-errors';
 import { queryAddWorkout, queryGetWorkoutSplitsObj, queryWholeUserWorkoutPlan } from './plan.queries.ts';
-import type { AddWorkoutBody } from '../../../shared/types/api/workouts/requests.ts';
 import type {
+  AddWorkoutBody,
   AddWorkoutResponse,
   GetWholeUserWorkoutPlanResponse,
-} from '../../../shared/types/api/workouts/responses.ts';
+} from '@strong-together/shared';
 
 import { buildPlanKeyStable, TTL_PLAN } from './plan.cache.ts';
 import {
@@ -12,7 +12,7 @@ import {
   cacheDeleteOtherTimezones,
   cacheGetJSON,
   cacheSetJSON,
-} from '../../../shared/cache/redis.cache.ts';
+} from '../../../infrastructure/cache/redis.cache.ts';
 import { buildAnalyticsKeyStable } from '../../analytics/analytics.cache.ts';
 
 export const getWorkoutPlanData = async (

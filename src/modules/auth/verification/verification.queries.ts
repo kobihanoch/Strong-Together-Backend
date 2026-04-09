@@ -1,5 +1,5 @@
 import sql from '../../../infrastructure/db.client.ts';
-import { UserByIndetifier } from '../../../shared/types/dto/auth.dto.ts';
+import { UserByIndetifier } from '@strong-together/shared';
 
 export async function queryUserByUsername(username: string): Promise<UserByIndetifier[]> {
   return sql<UserByIndetifier[]>`

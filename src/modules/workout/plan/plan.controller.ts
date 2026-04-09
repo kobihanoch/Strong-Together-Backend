@@ -3,8 +3,9 @@ import { addWorkoutData, getWorkoutPlanData } from './plan.service.ts';
 import type {
   AddWorkoutResponse,
   GetWholeUserWorkoutPlanResponse,
-} from '../../../shared/types/api/workouts/responses.ts';
-import { AddWorkoutBody, GetWholeUserWorkoutPlanQuery } from '../../../shared/types/api/workouts/requests.ts';
+  AddWorkoutBody,
+  GetWholeUserWorkoutPlanQuery,
+} from '@strong-together/shared';
 
 /**
  * Get the authenticated user's active workout plan.

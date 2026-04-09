@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { saveUserPushTokenData } from './push-tokens.service.ts';
-import { SaveUserPushTokenBody } from '../../../shared/types/api/user/requests.ts';
+import type { SaveUserPushTokenBody } from '@strong-together/shared';
 
 /**
  * Save or update the authenticated user's push notification token.

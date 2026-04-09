@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { createLogger } from '../../infrastructure/logger.ts';
 import { getAnalyticsData } from './analytics.service.ts';
-import { GetAnalyticsResponse } from '../../shared/types/api/analytics/responses.ts';
+import type { GetAnalyticsResponse } from '@strong-together/shared';
 
 const logger = createLogger('controller:analytics');
 

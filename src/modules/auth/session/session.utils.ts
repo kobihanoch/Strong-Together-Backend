@@ -1,6 +1,6 @@
 import { Request } from 'express';
+import type { AccessTokenPayload } from '@strong-together/shared';
 import { authConfig } from '../../../config/auth.config.ts';
-import { AccessTokenPayload } from '../../../shared/types/dto/auth.dto.ts';
 import jwt from 'jsonwebtoken';
 import { extractBearerToken, extractDpopToken } from '../../../shared/authentication/authentication.utils.ts';
 

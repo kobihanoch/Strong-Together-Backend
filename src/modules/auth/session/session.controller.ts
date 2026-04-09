@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
+import type { LoginRequestBody, LoginResponse, LogOutResponse, RefreshTokenResponse } from '@strong-together/shared';
 import { createLogger } from '../../../infrastructure/logger.ts';
 import { loginUserData, logoutUserData, refreshAccessTokenData } from './session.service.ts';
-import { LoginRequestBody } from '../../../shared/types/api/auth/requests.ts';
-import { LoginResponse, MessageResponse, RefreshTokenResponse } from '../../../shared/types/api/auth/responses.ts';
 import { getRefreshToken } from './session.utils.ts';
 
 const logger = createLogger('controller:auth');
@@ -40,9 +39,9 @@ export const loginUser = async (
  * Access: User
  */
 export const logoutUser = async (
-  req: Request<{}, MessageResponse>,
-  res: Response<MessageResponse>,
-): Promise<Response<MessageResponse>> => {
+  req: Request<{}, LogOutResponse>,
+  res: Response<LogOutResponse>,
+): Promise<Response<LogOutResponse>> => {
   const refreshToken = getRefreshToken(req);
   await logoutUserData(refreshToken);
   return res.status(200).json({ message: 'Logged out successfully' });

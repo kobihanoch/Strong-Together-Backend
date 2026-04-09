@@ -1,5 +1,5 @@
 import sql from '../../infrastructure/db.client.ts';
-import { AllUserMessages, DeletedMessage, MessageAsRead } from '../../shared/types/dto/messages.dto.ts';
+import type { AllUserMessages, DeletedMessage, MessageAsRead } from '@strong-together/shared';
 
 // Returns sender's username, full name and profile image path too
 /*

@@ -1,5 +1,5 @@
-import { cacheGetJSON, cacheSetJSON } from '../../shared/cache/redis.cache.ts';
-import type { GetAnalyticsResponse } from '../../shared/types/api/analytics/responses.ts';
+import { cacheGetJSON, cacheSetJSON } from '../../infrastructure/cache/redis.cache.ts';
+import type { GetAnalyticsResponse } from '@strong-together/shared';
 import { buildAnalyticsKeyStable, TTL_ANALYTICS } from './analytics.cache.ts';
 import { queryGetWorkoutRMs, queryGoalAdherence } from './analytics.queries.ts';
 

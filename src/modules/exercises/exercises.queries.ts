@@ -1,5 +1,5 @@
 import sql from '../../infrastructure/db.client.ts';
-import type { ExercisesMapByMuscle, QueryGetExerciseMapByMuscleRow } from '../../shared/types/dto/exercises.dto.ts';
+import type { ExercisesMapByMuscle, QueryGetExerciseMapByMuscleRow } from '@strong-together/shared';
 
 export const queryGetExerciseMapByMuscle = async (): Promise<ExercisesMapByMuscle> => {
   const rows = (await sql`

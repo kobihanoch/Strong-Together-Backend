@@ -1,4 +1,11 @@
 import { Request, Response } from 'express';
+import type {
+  DeleteUserProfilePicBody,
+  GetAuthenticatedUserByIdResponse,
+  SetProfilePicAndUpdateDBResponse,
+  UpdateAuthenticatedUserResponse,
+  UpdateUserBody,
+} from '@strong-together/shared';
 import { createLogger } from '../../../infrastructure/logger.ts';
 import {
   deleteSelfUserData,
@@ -8,12 +15,6 @@ import {
   updateAuthenticatedUserData,
   updateSelfEmailData,
 } from './update.service.ts';
-import { DeleteUserProfilePicBody, UpdateUserBody } from '../../../shared/types/api/user/requests.ts';
-import {
-  GetAuthenticatedUserByIdResponse,
-  SetProfilePicAndUpdateDBResponse,
-  UpdateAuthenticatedUserResponse,
-} from '../../../shared/types/api/user/responses.ts';
 
 const logger = createLogger('controller:user');
 

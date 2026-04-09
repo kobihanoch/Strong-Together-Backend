@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { createUserData } from './create.service.ts';
-import { CreateUserBody } from '../../../shared/types/api/user/requests.ts';
-import { CreateUserResponse } from '../../../shared/types/api/user/responses.ts';
+import type { CreateUserBody, CreateUserResponse } from '@strong-together/shared';
 
 /**
  * Register a new local user account.

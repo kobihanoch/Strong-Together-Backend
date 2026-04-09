@@ -3,7 +3,7 @@ import { generateTicket } from './web-sockets.controller.ts';
 import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
 import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
 import { protect } from '../../shared/middlewares/auth-middleware.ts';
-import { generateTicketRequest } from './web-sockets.schemas.ts';
+import { generateTicketRequest } from '@strong-together/shared';
 import { validate } from '../../shared/middlewares/validate-request.ts';
 
 const router = Router();

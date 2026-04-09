@@ -2,8 +2,8 @@ import { Request, Response } from 'express';
 import { createLogger } from '../../../infrastructure/logger.ts';
 import { createOrSignInWithAppleData } from './apple.service.ts';
 import { validateJkt } from '../oauth.utils.ts';
-import { AppleOAuthBody } from '../../../shared/types/api/oAuth/requests.ts';
-import { OAuthLoginResponse } from '../../../shared/types/api/oAuth/responses.ts';
+import type { AppleOAuthBody } from '@strong-together/shared';
+import type { OAuthLoginResponse } from '@strong-together/shared';
 const logger = createLogger('controller:oauth');
 
 /**

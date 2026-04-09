@@ -11,9 +11,9 @@ import {
   queryTryToLinkUserWithEmailApple,
 } from './apple.queries.ts';
 import { buildCnfClaim } from '../oauth.utils.ts';
-import { sendSystemMessageToUserWhenFirstLogin } from '../../../shared/services/messages-service.ts';
-import type { AppleOAuthBody } from '../../../shared/types/api/oAuth/requests.ts';
-import type { OAuthLoginResponse } from '../../../shared/types/api/oAuth/responses.ts';
+import { sendSystemMessageToUserWhenFirstLogin } from '../../messages/system-messages/system-messages.service.ts';
+import type { AppleOAuthBody } from '@strong-together/shared';
+import type { OAuthLoginResponse } from '@strong-together/shared';
 import { verifyAppleIdToken } from './apple.utils.ts';
 
 export const createOrSignInWithAppleData = async (
@@ -134,3 +134,4 @@ export const createOrSignInWithAppleData = async (
     refreshToken,
   };
 };
+

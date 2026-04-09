@@ -1,6 +1,6 @@
 import { createRedisSubscriber } from '../../infrastructure/redis.client.ts';
 import { createLogger } from '../../infrastructure/logger.ts';
-import { AnalyzeVideoResultPayload, SquatRepetition } from '../../shared/types/dto/video-analysis.dto.ts';
+import type { AnalyzeVideoResultPayload, SquatRepetition } from '@strong-together/shared';
 import { emitVideoAnalysisResults } from './video-analysis.service.ts';
 
 const VIDEO_ANALYSIS_RESULTS_CHANNEL = 'video-analysis:results';

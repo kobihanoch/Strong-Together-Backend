@@ -1,15 +1,13 @@
 import { Request, Response } from 'express';
 import { deleteMessageData, getAllMessagesData, markUserMessageAsReadData } from './messages.service.ts';
-import {
+import type {
   DeleteMessageParams,
-  GetAllUserMessagesQuery,
-  MarkMessageAsReadParams,
-} from '../../shared/types/api/messages/requests.ts';
-import {
   DeleteMessageResponse,
+  GetAllUserMessagesQuery,
   GetAllUserMessagesResponse,
+  MarkMessageAsReadParams,
   MarkMessageAsReadResponse,
-} from '../../shared/types/api/messages/responses.ts';
+} from '@strong-together/shared';
 
 /**
  * Get the authenticated user's message inbox.

@@ -10,10 +10,9 @@ import {
   queryFindUserIdWithGoogleUserId,
   queryTryToLinkUserWithEmailGoogle,
 } from './google.queries.ts';
-import { sendSystemMessageToUserWhenFirstLogin } from '../../../shared/services/messages-service.ts';
-import type { GoogleOAuthBody } from '../../../shared/types/api/oAuth/requests.ts';
-import type { OAuthLoginResponse } from '../../../shared/types/api/oAuth/responses.ts';
-import type { GoogleTokenVerificationResult } from '../../../shared/types/dto/oAuth.dto.ts';
+import { sendSystemMessageToUserWhenFirstLogin } from '../../messages/system-messages/system-messages.service.ts';
+import type { GoogleOAuthBody, GoogleTokenVerificationResult } from '@strong-together/shared';
+import type { OAuthLoginResponse } from '@strong-together/shared';
 import { verifyGoogleIdToken } from './google.utils.ts';
 import { buildCnfClaim } from '../oauth.utils.ts';
 export const createOrSignInWithGoogleData = async (
@@ -125,3 +124,4 @@ export const createOrSignInWithGoogleData = async (
     refreshToken,
   };
 };
+
