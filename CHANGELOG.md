@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.2.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v3.1.1...v3.2.0) (2026-04-09)
+
+
+### Features
+
+* **Middlewares:** Added authorization middleware ([780c071](https://github.com/kobihanoch/Strong-Together-Backend/commit/780c0716561b74281e7f2c7bcda4c5752d3c7adc))
+
+
+### Code Refactoring
+
+* Created a NPM library for types ([bcc2d72](https://github.com/kobihanoch/Strong-Together-Backend/commit/bcc2d720451f343a8fe7aa5ef8d96543f5ab34f4))
+* Refactored code readability of async handler, error handler and db client ([40a4c4e](https://github.com/kobihanoch/Strong-Together-Backend/commit/40a4c4e3347da56884e84e44e3347f959cc6c963))
+* Refactored project into vertical slices ([dfaea5d](https://github.com/kobihanoch/Strong-Together-Backend/commit/dfaea5dafb5053a4613aab967dca6bbe46ed7401))
+
 ### [3.1.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v3.1.0...v3.1.1) (2026-04-06)
 
 
