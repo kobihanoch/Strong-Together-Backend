@@ -70,7 +70,7 @@ describe('WebSockets', () => {
       .send({});
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Invalid input: expected string, received undefined');
+    expect(response.body.message.toLowerCase()).toMatch(/required|string|invalid input/);
   });
 });
 

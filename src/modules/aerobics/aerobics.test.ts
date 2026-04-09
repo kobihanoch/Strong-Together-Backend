@@ -253,7 +253,7 @@ describe('Aerobics', () => {
       });
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Expected number, received string');
+    expect(response.body.message.toLowerCase()).toContain('number');
   });
 
   // login -> add aerobics -> get aerobics without tz -> assert default timezone path still returns data

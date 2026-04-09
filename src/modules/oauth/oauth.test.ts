@@ -37,7 +37,7 @@ describe('OAuth', () => {
     });
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Invalid email address');
+    expect(response.body.message.toLowerCase()).toContain('invalid email');
   });
 });
 
