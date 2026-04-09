@@ -40,10 +40,10 @@ A backend platform with:
 
 ## Highlights
 
-- **Vertical-slice server architecture**: the Node backend is organized by feature domains such as auth, users, workouts, messages, OAuth, and video analysis, each with its own routes, controller, service, query, and schema files.
+- **Vertical-slice server architecture**: the Node backend is organized by feature domains such as auth, users, workouts, messages, OAuth, and video analysis, each with its own routes, controller, service, query, and feature-local support files.
 - **Supporting services around the API**: background workers, Redis Pub/Sub, SQS, WebSockets, and a dedicated Python computer-vision worker.
 - **Authentication and request protection**: **JWT**, **DPoP proof-of-possession**, **rate limits**, bot blocking, token rotation, and strict request validation.
-- **Request contracts**: **Zod schemas** are used to validate request payloads at the API boundary before controller logic runs.
+- **Request contracts**: request schemas are consumed from the shared package and validated at the API boundary before controller logic runs.
 - **Async media pipeline**: **direct AWS S3 uploads**, **S3 event-driven SQS dispatch**, Python-based CV analysis, **trace-aware async orchestration**, and **realtime result delivery** back to the client.
 - **Database design**: **PostgreSQL**, analytics views, normalized workout tracking, reminder intelligence, indexing strategy, and **RLS-aware** patterns.
 - **Test coverage**: **Vitest + Supertest** integration tests across auth, workouts, analytics, OAuth, websockets, and video analysis.
@@ -137,6 +137,9 @@ It also carries `jobId`, `requestId`, and Sentry trace headers through S3 object
 |   |   |-- redis.client.ts
 |   |   |-- sentry.ts
 |   |   |-- socket.io.ts
+|   |   |-- cache
+|   |   |-- queues
+|   |   |-- supabase
 |   |   `-- aws
 |   |       `-- s3.service.ts
 |   |-- modules
@@ -152,7 +155,6 @@ It also carries `jobId`, `requestId`, and Sentry trace headers through S3 object
 |   |   |-- messages
 |   |   |-- oauth
 |   |   |   |-- oauth.routes.ts
-|   |   |   |-- oauth.schemas.ts
 |   |   |   |-- oauth.utils.ts
 |   |   |   |-- apple
 |   |   |   `-- google
@@ -170,13 +172,7 @@ It also carries `jobId`, `requestId`, and Sentry trace headers through S3 object
 |   |       `-- tracking
 |   |-- shared
 |   |   |-- authentication
-|   |   |-- cache
 |   |   |-- middlewares
-|   |   |-- queues
-|   |   |   |-- emails
-|   |   |   `-- push-notifications
-|   |   |-- services
-|   |   |-- templates
 |   |   |-- test-seeds
 |   |   |-- tests
 |   |   `-- types
@@ -203,7 +199,7 @@ It also carries `jobId`, `requestId`, and Sentry trace headers through S3 object
 | Async infrastructure | Redis, Bull, SQS, Pub/Sub             |
 | Realtime             | Socket.IO                             |
 | Storage              | AWS S3, Supabase Storage              |
-| Auth & validation    | JWT, DPoP, Zod, bcrypt                |
+| Auth & validation    | JWT, DPoP, Zod shared schemas, bcrypt |
 | Notifications        | Expo Push, Resend                     |
 | Observability        | Pino, Sentry                          |
 | Testing              | Vitest, Supertest                     |
@@ -219,26 +215,26 @@ The request pipeline is structured through layered middleware to handle security
 
 ### Core middlewares
 
-| Middleware                  | Role in the system                                                                     |
-| --------------------------- | -------------------------------------------------------------------------------------- |
-| `express.json()`            | Parses JSON request bodies for the API layer                                           |
-| `cors()`                    | Restricts allowed origins and request metadata                                         |
-| `helmet()`                  | Applies hardened HTTP security headers                                                 |
-| `generalLimiter`            | Applies general request rate limiting                                                  |
-| `botBlocker`                | Blocks malicious bot and scanner traffic patterns                                      |
-| `checkAppVersion`           | Enforces minimum supported mobile app versions                                         |
-| request logger + request ID | Attaches correlation metadata for logs and tracing                                     |
-| `dpopValidationMiddleware`  | Verifies DPoP proofs including signature, request binding, and replay-sensitive fields |
-| `protect`                   | Validates JWT access tokens and authenticated user context                             |
-| `validate(...)`             | Enforces request contract validation with Zod                                          |
-| `withRlsTx(...)`            | Wraps handlers in a transaction-aware DB execution flow aligned with RLS patterns      |
-| `asyncHandler`              | Centralizes async error forwarding for route handlers                                  |
-| `errorHandler`              | Standardizes API error responses at the edge                                           |
+| Middleware                   | Role in the system                                                                        |
+| ---------------------------- | ----------------------------------------------------------------------------------------- |
+| `express.json()`             | Parses JSON request bodies for the API layer                                              |
+| `cors()`                     | Restricts allowed origins and request metadata                                            |
+| `helmet()`                   | Applies hardened HTTP security headers                                                    |
+| `generalLimiter`             | Applies general request rate limiting                                                     |
+| `botBlocker`                 | Blocks malicious bot and scanner traffic patterns                                         |
+| `checkAppVersion`            | Enforces minimum supported mobile app versions                                            |
+| request logger + request ID  | Attaches correlation metadata for logs and tracing                                        |
+| `dpopValidationMiddleware`   | Verifies DPoP proofs including signature, request binding, and replay-sensitive fields    |
+| `authenticate` + `authorize` | Validates JWT access tokens and enforces role-based access for protected routes           |
+| `validate(...)`              | Enforces request contract validation with schemas imported from `@strong-together/shared` |
+| `withRlsTx(...)`             | Wraps handlers in a transaction-aware DB execution flow aligned with RLS patterns         |
+| `asyncHandler`               | Centralizes async error forwarding for route handlers                                     |
+| `errorHandler`               | Standardizes API error responses at the edge                                              |
 
 ### Why it matters
 
 - **Security is enforced before business logic**: authentication, DPoP verification, **rate limits**, bot filtering, and version checks all happen at the request boundary.
-- **Validation is explicit**: route inputs are validated with Zod before controller execution, which makes request contracts clearer and safer.
+- **Validation is explicit**: route inputs are validated before controller execution, which keeps request contracts clearer and safer across the backend and shared package.
 - **Database access is controlled**: protected flows are executed through `withRlsTx(...)`, giving the backend a clean bridge between API identity and DB-level authorization patterns.
 - **Operational debugging is easier**: request IDs, structured logs, and Sentry context make production issues significantly easier to trace.
 
@@ -254,9 +250,10 @@ The repository includes multiple Docker entry points to match both the current d
 
 This setup keeps the current deployment simple while leaving room to separate services further as operational needs grow.
 
-1. Create `.env` with the required infrastructure secrets and URLs:
+1. Create `.env.development` for local work, or `.env.production` for production-style runs:
 
 ```env
+PORT=
 NODE_ENV=
 DPOP_ENABLED=
 CACHE_ENABLED=
@@ -307,6 +304,7 @@ APPLE_ALLOWED_AUDS=
 
 # Cache TTLS
 CACHE_TTL_TRACKING_SEC=
+CACHE_TTL_TIMEZONE_SEC=
 CACHE_TTL_PLAN_SEC=
 CACHE_TTL_AEROBICS_SEC=
 CACHE_TTL_ANALYTICS_SEC=
@@ -338,11 +336,13 @@ npm run start:server
 npm run start:workers
 ```
 
-4. Or run the stack with Docker:
+4. Or run the stack with Docker Compose through the environment-specific scripts:
 
 ```bash
-docker compose up --build
+npm run compose:up:dev
 ```
+
+Use `npm run compose:up:prod` when you want Compose to load `.env.production`.
 
 ## Testing
 
@@ -397,7 +397,7 @@ Base path: `/api`
 ### API characteristics
 
 - Protected routes use DPoP-aware authentication when enabled.
-- Request validation is enforced with Zod.
+- Request validation is enforced through schemas shared with the app via `@strong-together/shared`.
 - WebSocket access is gated through a signed connection ticket.
 - Heavy media work is offloaded from the API thread into S3-triggered async processing and the Python service.
 
