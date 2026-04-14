@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
-import { authenticate } from '../../shared/middlewares/authentication.ts';
+import { authenticate } from '../../common/guards/authentication.ts';
 import { authorize } from '../../shared/middlewares/authorization.ts';
 import { getBootstrapData } from './bootstrap.controller.ts';
 import { withRlsTx } from '../../infrastructure/db.client.ts';

@@ -10,7 +10,7 @@ import { loginUser, logoutUser, refreshAccessToken } from './session/session.con
 import { resetPassword, sendChangePassEmail } from './password/password.controller.ts';
 import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
 import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
-import { authenticate } from '../../shared/middlewares/authentication.ts';
+import { authenticate } from '../../common/guards/authentication.ts';
 import { authorize } from '../../shared/middlewares/authorization.ts';
 import {
   changeVerificationEmailLimiter,
