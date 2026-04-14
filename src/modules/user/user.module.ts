@@ -12,7 +12,7 @@ import { createUser } from './create/create.controller.ts';
 import { saveUserPushToken } from './push-tokens/push-tokens.controller.ts';
 import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
 import { authenticate } from '../../common/guards/authentication.ts';
-import { authorize } from '../../shared/middlewares/authorization.ts';
+import { authorize } from '../../common/guards/authorization.ts';
 import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
 import { updateUserLimiter, updateUserLimiterDaily } from '../../shared/middlewares/rate-limiter.ts';
 import { uploadImage } from '../../shared/middlewares/upload-image.ts';

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
 import { authenticate } from '../../common/guards/authentication.ts';
-import { authorize } from '../../shared/middlewares/authorization.ts';
+import { authorize } from '../../common/guards/authorization.ts';
 import { addUserAerobics, getUserAerobics } from './aerobics.controller.ts';
 import { withRlsTx } from '../../infrastructure/db.client.ts';
 import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';

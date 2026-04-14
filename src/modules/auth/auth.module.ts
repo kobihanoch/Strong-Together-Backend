@@ -11,7 +11,7 @@ import { resetPassword, sendChangePassEmail } from './password/password.controll
 import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
 import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
 import { authenticate } from '../../common/guards/authentication.ts';
-import { authorize } from '../../shared/middlewares/authorization.ts';
+import { authorize } from '../../common/guards/authorization.ts';
 import {
   changeVerificationEmailLimiter,
   changeVerificationEmailLimiterDaily,

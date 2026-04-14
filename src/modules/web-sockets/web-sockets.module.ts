@@ -3,7 +3,7 @@ import { generateTicket } from './web-sockets.controller.ts';
 import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
 import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
 import { authenticate } from '../../common/guards/authentication.ts';
-import { authorize } from '../../shared/middlewares/authorization.ts';
+import { authorize } from '../../common/guards/authorization.ts';
 import { generateTicketRequest } from '@strong-together/shared';
 import { validate } from '../../shared/middlewares/validate-request.ts';
 
