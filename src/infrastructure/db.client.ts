@@ -29,7 +29,7 @@ const als = new AsyncLocalStorage<{
   userId?: string;
 }>();
 
-// Cיheck if TransientConnError
+// Check if TransientConnError
 function isTransientConnError(err: any): boolean {
   const msg = String(err?.message || '');
   return /CONNECTION_ENDED|ECONNRESET|terminat(ed|ion)/i.test(msg);
@@ -62,29 +62,28 @@ const sql = (async (strings: TemplateStringsArray, ...values: any[]) => {
   return runner.begin(fn);
 };
 
-// Wrap a protected route with a single tx + injected claims (RLS)
-export const withRlsTx = <P, Res, Req, Q>(handler: RequestHandler<P, Res, Req, Q>): RequestHandler<P, Res, Req, Q> => {
-  return async (req, res, next) => {
-    // If not authed
-    const userId = req.user?.id;
-    if (!userId) {
-      return handler(req, res, next);
-    }
-    // If authed
-    return await _sql.begin(async (tx) => {
-      const claims = JSON.stringify({
-        sub: userId,
-        role: 'authenticated',
-        aud: 'authenticated',
-      });
-      await tx`select set_config('request.jwt.claims', ${claims}, true)`;
-      await tx`SET LOCAL ROLE authenticated`;
+// Run code inside a single tx + injected claims (RLS)
+export const runWithRlsTx = async <T>(userId: string | undefined, fn: () => Promise<T>): Promise<T> => {
+  // If not authed
+  if (!userId) {
+    return fn();
+  }
 
-      return als.run({ tx }, async () => {
-        return handler(req, res, next);
-      });
+  // If authed
+  return (await _sql.begin(async (tx) => {
+    const claims = JSON.stringify({
+      sub: userId,
+      role: 'authenticated',
+      aud: 'authenticated',
     });
-  };
+
+    await tx`select set_config('request.jwt.claims', ${claims}, true)`;
+    await tx`SET LOCAL ROLE authenticated`;
+
+    return als.run({ tx, userId }, async () => {
+      return fn();
+    });
+  })) as T;
 };
 
 export const connectDB = async (): Promise<void> => {
