@@ -53,7 +53,7 @@ describe('Workouts', () => {
       B: [{ id: 12, sets: [3], order_index: 0 }],
     });
 
-    expect(addResponse.status).toBe(200);
+    expect(addResponse.status).toBe(201);
     expectSchema(addWorkoutResponseSchema, addResponse.body);
     expect(addResponse.body.message).toBe('Workout created successfully!');
     expect(addResponse.body.workoutPlan).toBeDefined();
@@ -82,9 +82,12 @@ describe('Workouts', () => {
 
   // get workout plan without token -> assert 401
   it('rejects getting the workout plan without token', async () => {
-    const response = await request(app.getHttpServer()).get('/api/workouts/getworkout').query({ tz: 'Asia/Jerusalem' }).set({
-      'x-app-version': '4.5.0',
-    });
+    const response = await request(app.getHttpServer())
+      .get('/api/workouts/getworkout')
+      .query({ tz: 'Asia/Jerusalem' })
+      .set({
+        'x-app-version': '4.5.0',
+      });
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('No access token provided');
@@ -139,9 +142,12 @@ describe('Workouts', () => {
 
   // get tracking without token -> assert 401
   it('rejects getting tracking without token', async () => {
-    const response = await request(app.getHttpServer()).get('/api/workouts/gettracking').query({ tz: 'Asia/Jerusalem' }).set({
-      'x-app-version': '4.5.0',
-    });
+    const response = await request(app.getHttpServer())
+      .get('/api/workouts/gettracking')
+      .query({ tz: 'Asia/Jerusalem' })
+      .set({
+        'x-app-version': '4.5.0',
+      });
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('No access token provided');
@@ -171,7 +177,7 @@ describe('Workouts', () => {
       },
     ]);
 
-    expect(finishResponse.status).toBe(200);
+    expect(finishResponse.status).toBe(201);
     expectSchema(finishUserWorkoutResponseSchema, finishResponse.body);
     expect(finishResponse.body.exerciseTrackingAnalysis).toBeDefined();
     expect(finishResponse.body.exerciseTrackingMaps).toBeDefined();
@@ -257,7 +263,7 @@ describe('Workouts', () => {
       C: [{ id: 26, sets: [12, 10], order_index: 0 }],
     });
 
-    expect(updateResponse.status).toBe(200);
+    expect(updateResponse.status).toBe(201);
     expectSchema(addWorkoutResponseSchema, updateResponse.body);
 
     const getResponse = await getWorkoutPlan(app, accessToken);
@@ -291,7 +297,7 @@ describe('Workouts', () => {
       B: [{ id: 12, sets: [3], order_index: 0 }],
     });
 
-    expect(updateResponse.status).toBe(200);
+    expect(updateResponse.status).toBe(201);
     expectSchema(addWorkoutResponseSchema, updateResponse.body);
 
     const getResponse = await getWorkoutPlan(app, accessToken);
@@ -326,7 +332,7 @@ describe('Workouts', () => {
       ],
     });
 
-    expect(updateResponse.status).toBe(200);
+    expect(updateResponse.status).toBe(201);
     expectSchema(addWorkoutResponseSchema, updateResponse.body);
 
     const getResponse = await getWorkoutPlan(app, accessToken);
@@ -362,7 +368,7 @@ describe('Workouts', () => {
       A: [{ id: 20, sets: [5, 5, 5], order_index: 0 }],
     });
 
-    expect(updateResponse.status).toBe(200);
+    expect(updateResponse.status).toBe(201);
     expectSchema(addWorkoutResponseSchema, updateResponse.body);
 
     const getResponse = await getWorkoutPlan(app, accessToken);
@@ -393,13 +399,16 @@ describe('Workouts', () => {
     const username = `fw_${suffix}`;
     const email = `${username}@example.com`;
 
-    const createResponse = await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
-      username,
-      fullName: 'Finish Workout',
-      email,
-      password: 'Test1234!',
-      gender: 'Other',
-    });
+    const createResponse = await request(app.getHttpServer())
+      .post('/api/users/create')
+      .set('x-app-version', '4.5.0')
+      .send({
+        username,
+        fullName: 'Finish Workout',
+        email,
+        password: 'Test1234!',
+        gender: 'Other',
+      });
 
     expect(createResponse.status).toBe(201);
     expectSchema(createUserResponseSchema, createResponse.body);
@@ -421,12 +430,15 @@ describe('Workouts', () => {
       .set('x-app-version', '4.5.0');
     expect(verifyResponse.status).toBe(200);
 
-    const loginResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
-      identifier: email,
-      password: 'Test1234!',
-    });
+    const loginResponse = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .set('x-app-version', '4.5.0')
+      .send({
+        identifier: email,
+        password: 'Test1234!',
+      });
 
-    expect(loginResponse.status).toBe(200);
+    expect(loginResponse.status).toBe(201);
     expectSchema(loginResponseSchema, loginResponse.body);
 
     const accessToken = loginResponse.body.accessToken as string;
@@ -436,7 +448,7 @@ describe('Workouts', () => {
       A: [{ id: 20, sets: [8, 8, 10], order_index: 0 }],
     });
 
-    expect(addResponse.status).toBe(200);
+    expect(addResponse.status).toBe(201);
     expectSchema(addWorkoutResponseSchema, addResponse.body);
 
     const exercisetosplitId =

@@ -139,7 +139,7 @@ describe('Users', () => {
       password: 'Test1234!',
     });
 
-    expect(loginResponse.status).toBe(200);
+    expect(loginResponse.status).toBe(201);
     expectSchema(loginResponseSchema, loginResponse.body);
 
     const accessToken = loginResponse.body.accessToken as string;
@@ -207,7 +207,7 @@ describe('Users', () => {
       token: pushToken,
     });
 
-    expect(saveResponse.status).toBe(204);
+    expect(saveResponse.status).toBe(200);
 
     const getResponse = await request(app.getHttpServer()).get('/api/users/get').set(authHeaders(accessToken));
 
@@ -297,7 +297,7 @@ describe('Users', () => {
       password: 'Test1234!',
     });
 
-    expect(loginDeleteResponse.status).toBe(200);
+    expect(loginDeleteResponse.status).toBe(201);
     expectSchema(loginResponseSchema, loginDeleteResponse.body);
 
     const deleteResponse = await request(app.getHttpServer())

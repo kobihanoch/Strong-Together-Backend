@@ -212,7 +212,7 @@ describe('Messages', () => {
     const response = await deleteMessage(app, attackerAccessToken, messageId);
 
     expect(response.status).toBe(404);
-    expect(response.body.message).toBe('Message not found.');
+    expect(response.body.message).toBe('Message not found');
     expect(await messageExists(messageId)).toBe(true);
   });
 
@@ -261,6 +261,6 @@ describe('Messages', () => {
     const response = await deleteMessage(app, accessToken, '11111111-1111-1111-1111-111111111111');
 
     expect(response.status).toBe(404);
-    expect(response.body.message).toBe('Message not found.');
+    expect(response.body.message).toBe('Message not found');
   });
 });

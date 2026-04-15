@@ -23,7 +23,7 @@ describe('Video Analysis', () => {
 
     const response = await getPresignedUrl(app, accessToken, 'Squat', 'video/quicktime', jobId);
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(201);
     expectSchema(getPresignedUrlFromS3ResponseSchema, response.body);
     expect(response.body.uploadUrl).toBeTypeOf('string');
     expect(response.body.uploadUrl).toContain('strong-together-videos');

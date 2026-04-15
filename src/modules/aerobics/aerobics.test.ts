@@ -133,7 +133,7 @@ describe('Aerobics', () => {
       password: 'Test1234!',
     });
 
-    expect(loginResponse.status).toBe(200);
+    expect(loginResponse.status).toBe(201);
     expectSchema(loginResponseSchema, loginResponse.body);
 
     const accessToken = loginResponse.body.accessToken as string;

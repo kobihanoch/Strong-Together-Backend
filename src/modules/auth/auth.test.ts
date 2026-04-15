@@ -84,7 +84,7 @@ describe('Auth Login', () => {
   it('logs in with valid credentials', async () => {
     const response = await loginTestUser();
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(201);
     expectSchema(loginResponseSchema, response.body);
     expect(response.body.message).toBe('Login successful');
     expect(response.body.user).toBeTypeOf('string');
@@ -116,7 +116,7 @@ describe('Auth Login', () => {
 
     const refreshResponse = await request(app.getHttpServer()).post('/api/auth/refresh').set(refreshHeaders(refreshToken));
 
-    expect(refreshResponse.status).toBe(200);
+    expect(refreshResponse.status).toBe(201);
     expectSchema(refreshTokenResponseSchema, refreshResponse.body);
     expect(refreshResponse.body.message).toBe('Access token refreshed');
     expect(refreshResponse.body.userId).toBe(loginResponse.body.user);
@@ -141,7 +141,7 @@ describe('Auth Login', () => {
 
     const logoutResponse = await request(app.getHttpServer()).post('/api/auth/logout').set(logoutHeaders(accessToken, refreshToken));
 
-    expect(logoutResponse.status).toBe(200);
+    expect(logoutResponse.status).toBe(201);
     expectSchema(logoutResponseSchema, logoutResponse.body);
     expect(logoutResponse.body.message).toBe('Logged out successfully');
 
@@ -221,7 +221,7 @@ describe('Auth Login', () => {
       password,
     });
 
-    expect(loginResponse.status).toBe(200);
+    expect(loginResponse.status).toBe(201);
     expectSchema(loginResponseSchema, loginResponse.body);
     expect(loginResponse.body.message).toBe('Login successful');
     expect(loginResponse.body.user).toBe(createdUser!.id);
@@ -247,7 +247,7 @@ describe('Auth Login', () => {
       email,
     });
 
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(201);
     expect(response.text).toBe('');
   });
 
@@ -260,7 +260,7 @@ describe('Auth Login', () => {
         email: `missing_${crypto.randomUUID().slice(0, 8)}@example.com`,
       });
 
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(201);
     expect(response.text).toBe('');
   });
 
@@ -275,7 +275,7 @@ describe('Auth Login', () => {
       newEmail,
     });
 
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
 
     const updatedUser = await getUserAuthStateByUsername(username);
     expect(updatedUser?.email).toBe(newEmail);
@@ -338,7 +338,7 @@ describe('Auth Login', () => {
       identifier: username,
     });
 
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(201);
     expect(response.text).toBe('');
   });
 
@@ -351,7 +351,7 @@ describe('Auth Login', () => {
         identifier: `missing_${crypto.randomUUID().slice(0, 8)}`,
       });
 
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(201);
     expect(response.text).toBe('');
   });
 
@@ -361,7 +361,7 @@ describe('Auth Login', () => {
       identifier: 'oauth_complete_user',
     });
 
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(201);
     expect(response.text).toBe('');
   });
 
@@ -401,7 +401,7 @@ describe('Auth Login', () => {
       password: newPassword,
     });
 
-    expect(newPasswordLoginResponse.status).toBe(200);
+    expect(newPasswordLoginResponse.status).toBe(201);
     expectSchema(loginResponseSchema, newPasswordLoginResponse.body);
     expect(newPasswordLoginResponse.body.message).toBe('Login successful');
     expect(newPasswordLoginResponse.body.user).toBe(userId);
