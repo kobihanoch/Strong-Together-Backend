@@ -7,11 +7,7 @@ import type {
   MarkMessageAsReadParams,
   MarkMessageAsReadResponse,
 } from '@strong-together/shared';
-import {
-  deleteMessageRequest,
-  getAllMessagesRequest,
-  markMessageAsReadRequest,
-} from '@strong-together/shared';
+import { deleteMessageRequest, getAllMessagesRequest, markMessageAsReadRequest } from '@strong-together/shared';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.ts';
 import { RequestData } from '../../common/decorators/request-data.decorator.ts';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
@@ -19,7 +15,7 @@ import { AuthenticationGuard } from '../../common/guards/authentication.guard.ts
 import { AuthorizationGuard, Roles } from '../../common/guards/authorization.guard.ts';
 import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
 import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe.ts';
-import type { AuthenticatedUser } from '../../shared/types/express.js';
+import type { AuthenticatedUser } from '../../common/types/express.js';
 import { MessagesService } from './messages.service.ts';
 
 /**
@@ -39,15 +35,15 @@ import { MessagesService } from './messages.service.ts';
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
-/**
- * Get the authenticated user's message inbox.
- *
- * Returns all messages for the current user, localized to the requested
- * timezone.
- *
- * Route: GET /api/messages/getmessages
- * Access: User
- */
+  /**
+   * Get the authenticated user's message inbox.
+   *
+   * Returns all messages for the current user, localized to the requested
+   * timezone.
+   *
+   * Route: GET /api/messages/getmessages
+   * Access: User
+   */
   @Get('getmessages')
   async getAllUserMessages(
     @RequestData(new ValidateRequestPipe(getAllMessagesRequest))
@@ -60,17 +56,17 @@ export class MessagesController {
     return payload;
   }
 
-// -----------------------------------
+  // -----------------------------------
 
-/**
- * Mark a message as read for the authenticated user.
- *
- * Updates the target message only when it belongs to the current user and
- * returns the updated read state.
- *
- * Route: PUT /api/messages/markasread/:id
- * Access: User
- */
+  /**
+   * Mark a message as read for the authenticated user.
+   *
+   * Updates the target message only when it belongs to the current user and
+   * returns the updated read state.
+   *
+   * Route: PUT /api/messages/markasread/:id
+   * Access: User
+   */
   @Put('markasread/:id')
   async markUserMessageAsRead(
     @RequestData(new ValidateRequestPipe(markMessageAsReadRequest))
@@ -81,15 +77,15 @@ export class MessagesController {
     return payload;
   }
 
-/**
- * Delete a message visible to the authenticated user.
- *
- * Removes the target message when the current user is allowed to access it and
- * returns the deleted message identifier.
- *
- * Route: DELETE /api/messages/delete/:id
- * Access: User
- */
+  /**
+   * Delete a message visible to the authenticated user.
+   *
+   * Removes the target message when the current user is allowed to access it and
+   * returns the deleted message identifier.
+   *
+   * Route: DELETE /api/messages/delete/:id
+   * Access: User
+   */
   @Delete('delete/:id')
   async deleteMessage(
     @RequestData(new ValidateRequestPipe(deleteMessageRequest))

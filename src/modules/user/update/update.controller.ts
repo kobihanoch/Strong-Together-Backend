@@ -37,7 +37,7 @@ import { imageUploadOptions } from '../../../common/interceptors/image-upload.co
 import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor.ts';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe.ts';
 import type { AppLogger } from '../../../infrastructure/logger.ts';
-import type { AuthenticatedUser } from '../../../shared/types/express.js';
+import type { AuthenticatedUser } from '../../../common/types/express.js';
 import { UpdateUserService } from './update.service.ts';
 
 /**

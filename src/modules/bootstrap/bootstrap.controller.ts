@@ -8,7 +8,7 @@ import { AuthorizationGuard, Roles } from '../../common/guards/authorization.gua
 import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
 import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe.ts';
 import type { AppLogger } from '../../infrastructure/logger.ts';
-import { AuthenticatedUser } from '../../shared/types/express.js';
+import { AuthenticatedUser } from '../../common/types/express.js';
 import { BootstrapService } from './bootstrap.service.ts';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
 

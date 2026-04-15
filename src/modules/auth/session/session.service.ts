@@ -1,7 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { AccessTokenPayload, LoginResponse, RefreshTokenResponse } from '@strong-together/shared';
 import bcrypt from 'bcryptjs';
-import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
 import { appConfig } from '../../../config/app.config.ts';
 import { authConfig } from '../../../config/auth.config.ts';
@@ -28,18 +27,18 @@ export class SessionService {
   ): Promise<LoginResponse> {
     if (appConfig.dpopEnabled) {
       if (!jkt) {
-        throw createError(400, 'DPoP-Key-Binding header is missing.');
+        throw new BadRequestException('DPoP-Key-Binding header is missing.');
       }
     }
 
     const [user = null] = await queryUserByIdentifierForLogin(identifier);
-    if (!user) throw createError(401, 'Invalid credentials');
+    if (!user) throw new UnauthorizedException('Invalid credentials');
 
     const isMatch = await bcrypt.compare(password, user.password!);
-    if (!isMatch) throw createError(401, 'Invalid credentials');
+    if (!isMatch) throw new UnauthorizedException('Invalid credentials');
 
     if (!user.is_verified) {
-      throw createError(401, 'You need to verify you account');
+      throw new UnauthorizedException('You need to verify you account');
     }
 
     if (user.is_first_login) {
@@ -112,24 +111,24 @@ export class SessionService {
   ): Promise<RefreshTokenResponse> {
     if (appConfig.dpopEnabled) {
       if (!dpopJkt) {
-        throw createError(500, 'Internal error: DPoP JKT not found on request.');
+        throw new UnauthorizedException('Invalid credentials');
       }
     }
 
-    if (!refreshToken) throw createError(401, 'No refresh token provided');
+    if (!refreshToken) throw new UnauthorizedException('No refresh token provided');
 
     const decoded = decodeRefreshToken(refreshToken ?? null) as AccessTokenPayload | null;
-    if (!decoded) throw createError(401, 'Invalid or expired refresh token');
+    if (!decoded) throw new UnauthorizedException('Invalid or expired refresh token');
 
     if (appConfig.dpopEnabled) {
       const tokenJkt = decoded.cnf?.jkt;
       if (tokenJkt && tokenJkt !== dpopJkt) {
-        throw createError(401, 'Proof-of-Possession failed (JKT mismatch).');
+        throw new UnauthorizedException('Proof-of-Possession failed (JKT mismatch).');
       }
     }
 
     const [user = null] = await queryBumpTokenVersionAndGetSelfDataCAS(decoded.id, decoded.tokenVer);
-    if (!user) throw createError(401, 'New login required');
+    if (!user) throw new UnauthorizedException('New login required');
 
     const { token_version, user_data: userData } = user;
 

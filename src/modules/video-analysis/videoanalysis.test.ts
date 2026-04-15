@@ -2,14 +2,14 @@ import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../app.ts';
 import { loginResponseSchema, getPresignedUrlFromS3ResponseSchema } from '@strong-together/shared';
-import { loginBootstrapTestUser } from '../../shared/tests/helpers/auth.ts';
-import { expectSchema } from '../../shared/tests/helpers/assert-schema.ts';
-import { getPresignedUrl } from '../../shared/tests/helpers/videoanalysis.ts';
+import { loginBootstrapTestUser } from '../../common/tests/helpers/auth.ts';
+import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
+import { getPresignedUrl } from '../../common/tests/helpers/videoanalysis.ts';
 
-let app: ReturnType<typeof createApp>;
+let app: Awaited<ReturnType<typeof createApp>>;
 
-beforeAll(() => {
-  app = createApp();
+beforeAll(async () => {
+  app = await createApp();
 });
 
 describe('Video Analysis', () => {
@@ -35,7 +35,7 @@ describe('Video Analysis', () => {
 
   // get presigned url without token -> assert 401
   it('rejects presigned url access without token', async () => {
-    const response = await request(app)
+    const response = await request(app.getHttpServer())
       .post('/api/videoanalysis/getpresignedurl')
       .send({
         exercise: 'Squat',
@@ -56,7 +56,7 @@ describe('Video Analysis', () => {
     expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
-    const response = await request(app)
+    const response = await request(app.getHttpServer())
       .post('/api/videoanalysis/getpresignedurl')
       .set({
         'x-app-version': '4.5.0',
@@ -71,4 +71,3 @@ describe('Video Analysis', () => {
     expect(response.body.message.toLowerCase()).toMatch(/required|string|invalid input/);
   });
 });
-

@@ -1,18 +1,17 @@
-import { Injectable } from '@nestjs/common';
-import bcrypt from 'bcryptjs';
-import createError from 'http-errors';
-import sql from '../../../infrastructure/db.client.ts';
-import { queryBumpTokenVersionAndGetSelfData, queryUpdateUserPassword } from './password.queries.ts';
-import { sendForgotPasswordEmail } from './password-emails/password-emails.service.ts';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import type { ResetPasswordResponse, SendChangePassEmailBody } from '@strong-together/shared';
-import { decodeForgotPasswordToken } from './password.utils.ts';
+import bcrypt from 'bcryptjs';
 import { cacheStoreJti } from '../../../infrastructure/cache/redis.cache.ts';
+import sql from '../../../infrastructure/db.client.ts';
+import { sendForgotPasswordEmail } from './password-emails/password-emails.service.ts';
+import { queryBumpTokenVersionAndGetSelfData, queryUpdateUserPassword } from './password.queries.ts';
+import { decodeForgotPasswordToken } from './password.utils.ts';
 
 @Injectable()
 export class PasswordService {
   async sendChangePassEmailData(body: SendChangePassEmailBody, requestId?: string): Promise<void> {
     const { identifier } = body;
-    if (!identifier) throw createError(400, 'Please fill username or email');
+    if (!identifier) throw new BadRequestException('Please fill username or email');
     const [user = null] = await sql<
       { id: string; email: string; name: string; username: string }[]
     >`SELECT id, email, name, username FROM users WHERE 
@@ -26,15 +25,15 @@ export class PasswordService {
   }
 
   async resetPasswordData(token: string | undefined, newPassword: string): Promise<ResetPasswordResponse> {
-    if (!token) throw createError(400, 'Missing token');
+    if (!token) throw new BadRequestException('Missing token');
     const decoded = decodeForgotPasswordToken(token);
     if (!decoded) {
-      throw createError(400, 'Verfication token is not valid');
+      throw new BadRequestException('Verfication token is not valid');
     }
 
     const { jti, sub, exp, iss, typ } = decoded;
     if (iss !== 'strong-together' || typ !== 'forgot-pass' || !jti || !sub) {
-      throw createError(400, 'Verfication token is not valid');
+      throw new BadRequestException('Verfication token is not valid');
     }
 
     const nowSec = Math.floor(Date.now() / 1000);
@@ -42,7 +41,7 @@ export class PasswordService {
 
     const inserted = await cacheStoreJti('forgotpassword', jti, ttlSec);
     if (!inserted) {
-      throw createError(400, 'URL already used or expired');
+      throw new BadRequestException('URL already used or expired');
     }
 
     const salt = await bcrypt.genSalt(10);

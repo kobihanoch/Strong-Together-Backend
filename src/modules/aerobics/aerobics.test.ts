@@ -9,12 +9,12 @@ import {
   loginAerobicsDefaultTimezoneUser,
   loginAerobicsGetUser,
   loginAerobicsTestUser,
-} from '../../shared/tests/helpers/auth.ts';
-import { expectSchema } from '../../shared/tests/helpers/assert-schema.ts';
-import { addAerobicsRecord, getAerobics } from '../../shared/tests/helpers/aerobics.ts';
-import { waitForAerobicsRowsForUser } from '../../shared/tests/helpers/db.ts';
+} from '../../common/tests/helpers/auth.ts';
+import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
+import { addAerobicsRecord, getAerobics } from '../../common/tests/helpers/aerobics.ts';
+import { waitForAerobicsRowsForUser } from '../../common/tests/helpers/db.ts';
 
-let app: ReturnType<typeof createApp>;
+let app: Awaited<ReturnType<typeof createApp>>;
 
 function firstDailyBucket(body: UserAerobicsResponse) {
   return Object.values(body.daily)[0] ?? [];
@@ -29,8 +29,8 @@ function firstWeeklyBucket(body: UserAerobicsResponse): WeeklyData {
   return bucket;
 }
 
-beforeAll(() => {
-  app = createApp();
+beforeAll(async () => {
+  app = await createApp();
 });
 
 describe('Aerobics', () => {
@@ -100,7 +100,7 @@ describe('Aerobics', () => {
     const username = `aggr_${suffix}`;
     const email = `${username}@example.com`;
 
-    const createResponse = await request(app).post('/api/users/create').set('x-app-version', '4.5.0').send({
+    const createResponse = await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
       username,
       fullName: 'Aerobics Aggregate',
       email,
@@ -122,13 +122,13 @@ describe('Aerobics', () => {
       { expiresIn: '1h' },
     );
 
-    const verifyResponse = await request(app)
+    const verifyResponse = await request(app.getHttpServer())
       .get('/api/auth/verify')
       .query({ token: verifyToken })
       .set('x-app-version', '4.5.0');
     expect(verifyResponse.status).toBe(200);
 
-    const loginResponse = await request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+    const loginResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
       identifier: email,
       password: 'Test1234!',
     });
@@ -206,7 +206,7 @@ describe('Aerobics', () => {
 
   // get aerobics without token -> assert 401
   it('rejects getting aerobics without token', async () => {
-    const response = await request(app).get('/api/aerobics/get').query({ tz: 'Asia/Jerusalem' }).set({
+    const response = await request(app.getHttpServer()).get('/api/aerobics/get').query({ tz: 'Asia/Jerusalem' }).set({
       'x-app-version': '4.5.0',
     });
 
@@ -216,7 +216,7 @@ describe('Aerobics', () => {
 
   // add aerobics without token -> assert 401
   it('rejects adding aerobics without token', async () => {
-    const response = await request(app)
+    const response = await request(app.getHttpServer())
       .post('/api/aerobics/add')
       .set('x-app-version', '4.5.0')
       .send({
@@ -237,7 +237,7 @@ describe('Aerobics', () => {
     const loginResponse = await loginAerobicsTestUser();
     const accessToken = loginResponse.body.accessToken as string;
 
-    const response = await request(app)
+    const response = await request(app.getHttpServer())
       .post('/api/aerobics/add')
       .set({
         'x-app-version': '4.5.0',
@@ -269,7 +269,7 @@ describe('Aerobics', () => {
       durationSec: 0,
     });
 
-    const response = await request(app)
+    const response = await request(app.getHttpServer())
       .get('/api/aerobics/get')
       .set({
         'x-app-version': '4.5.0',

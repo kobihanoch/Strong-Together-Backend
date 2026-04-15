@@ -6,8 +6,8 @@ import { appConfig } from '../../config/app.config.ts';
 import sql from '../../infrastructure/db.client.ts';
 import { applySentryRequestContext } from '../../infrastructure/sentry.ts';
 import { queryGetCurrentTokenVersion } from '../../modules/auth/session/session.queries.ts';
-import { decodeAccessToken, getAccessToken } from '../../shared/authentication/authentication.utils.ts';
-import { AuthenticatedUser } from '../../shared/types/express.js';
+import { decodeAccessToken, getAccessToken } from '../authentication/authentication.utils.ts';
+import { AuthenticatedUser } from '../types/express.js';
 
 @Injectable()
 export class AuthenticationGuard implements CanActivate {

@@ -1,5 +1,4 @@
 import dns from 'dns';
-import { RequestHandler } from 'express';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import postgres from 'postgres';
 import { createLogger } from './logger.ts';

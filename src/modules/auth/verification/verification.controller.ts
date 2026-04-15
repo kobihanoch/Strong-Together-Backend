@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Query, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Put, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import type {
   ChangeEmailAndVerifyBody,

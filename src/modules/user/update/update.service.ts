@@ -1,5 +1,4 @@
-import { Injectable } from '@nestjs/common';
-import createError from 'http-errors';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import mime from 'mime';
 import path from 'path';
 import { supabaseConfig } from '../../../config/storage.config.ts';
@@ -34,7 +33,7 @@ export class UpdateUserService {
   async getUserData(userId: string): Promise<{ payload: UserDataResponse['user_data'] }> {
     const rows = await queryAuthenticatedUserById(userId);
     const [user] = rows;
-    if (!user) throw createError(404, 'User not found');
+    if (!user) throw new NotFoundException('User not found');
     return { payload: user.user_data };
   }
 
@@ -55,7 +54,7 @@ export class UpdateUserService {
       rowsUpdated = await queryUpdateAuthenticatedUser(userId, { username, fullName, email });
     } catch (e: any) {
       if (e.code === '23505') {
-        throw createError(409, 'Username or email already in use');
+        throw new ConflictException('Username or email already in use');
       }
       throw e;
     }
@@ -133,7 +132,7 @@ export class UpdateUserService {
     file: Express.Multer.File | undefined,
     requestLogger: AppLogger,
   ): Promise<SetProfilePicAndUpdateDBResponse> {
-    if (!file) throw createError(400, 'No file provided');
+    if (!file) throw new BadRequestException('No file provided');
 
     const ext = path.extname(file.originalname) || `.${mime.getExtension(file.mimetype) || 'jpg'}`;
     const key = `${userId}/${Date.now()}${ext}`;

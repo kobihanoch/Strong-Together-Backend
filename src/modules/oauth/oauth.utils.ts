@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import createError from 'http-errors';
+import { BadRequestException } from '@nestjs/common';
 import type postgres from 'postgres';
 import { appConfig } from '../../config/app.config.ts';
 
@@ -30,7 +30,7 @@ export const validateJkt = (req: Request): string => {
   const jkt = req.headers['dpop-key-binding'] as string | undefined;
   if (appConfig.dpopEnabled) {
     if (!jkt) {
-      throw createError(400, 'DPoP-Key-Binding header is missing.');
+      throw new BadRequestException('DPoP-Key-Binding header is missing.');
     }
   }
 

@@ -2,16 +2,16 @@ import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../app.ts';
 import { getAnalyticsResponseSchema, loginResponseSchema } from '@strong-together/shared';
-import { loginAnalyticsEmptyUser, loginAnalyticsTestUser } from '../../shared/tests/helpers/auth.ts';
-import { expectSchema } from '../../shared/tests/helpers/assert-schema.ts';
-import { getExerciseToWorkoutSplitId, getWorkoutSummaryCount } from '../../shared/tests/helpers/db.ts';
-import { getAnalytics } from '../../shared/tests/helpers/analytics.ts';
-import { addWorkoutPlan, finishWorkout } from '../../shared/tests/helpers/workouts.ts';
+import { loginAnalyticsEmptyUser, loginAnalyticsTestUser } from '../../common/tests/helpers/auth.ts';
+import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
+import { getExerciseToWorkoutSplitId, getWorkoutSummaryCount } from '../../common/tests/helpers/db.ts';
+import { getAnalytics } from '../../common/tests/helpers/analytics.ts';
+import { addWorkoutPlan, finishWorkout } from '../../common/tests/helpers/workouts.ts';
 
-let app: ReturnType<typeof createApp>;
+let app: Awaited<ReturnType<typeof createApp>>;
 
-beforeAll(() => {
-  app = createApp();
+beforeAll(async () => {
+  app = await createApp();
 });
 
 describe('Analytics', () => {
@@ -92,7 +92,7 @@ describe('Analytics', () => {
 
   // get analytics without token -> assert 401
   it('rejects analytics access without token', async () => {
-    const response = await request(app).get('/api/analytics/get').set({
+    const response = await request(app.getHttpServer()).get('/api/analytics/get').set({
       'x-app-version': '4.5.0',
     });
 
@@ -100,4 +100,3 @@ describe('Analytics', () => {
     expect(response.body.message).toBe('No access token provided');
   });
 });
-

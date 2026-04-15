@@ -1,5 +1,5 @@
 import { authConfig } from '../../../../config/auth.config.ts';
-import { generateJti } from '../../../../shared/authentication/authentication.utils.ts';
+import { generateJti } from '../../../../common/authentication/authentication.utils.ts';
 import { enqueueEmails } from '../../../../infrastructure/queues/emails/emails-producer.ts';
 import { generateForgotPasswordEmail } from './password-emails.templates.ts';
 import jwt from 'jsonwebtoken';

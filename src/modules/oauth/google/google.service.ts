@@ -1,6 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import type { GoogleOAuthBody, GoogleTokenVerificationResult, OAuthLoginResponse } from '@strong-together/shared';
-import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../../../config/auth.config.ts';
 import type { AppLogger } from '../../../infrastructure/logger.ts';
@@ -27,7 +26,7 @@ export class GoogleService {
   ): Promise<OAuthLoginResponse> {
     const idToken = body.idToken;
 
-    if (!idToken) throw createError(400, 'Missing google id token');
+    if (!idToken) throw new BadRequestException('Missing google id token');
     const { googleSub, email, emailVerified, fullName } = (await verifyGoogleIdToken(
       idToken,
     )) as GoogleTokenVerificationResult;

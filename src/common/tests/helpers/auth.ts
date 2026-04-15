@@ -5,9 +5,9 @@ import { authConfig } from '../../../config/auth.config.ts';
 import { createApp } from '../../../app.ts';
 
 async function login(identifier: string) {
-  const app = createApp();
+  const app = await createApp();
 
-  return request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+  return request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
     identifier,
     password: 'Test1234!',
   });

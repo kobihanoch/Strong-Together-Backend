@@ -1,6 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
-import createError from 'http-errors';
 import { queryInsertUser, queryUserExistsByUsernameOrEmail } from './create.queries.ts';
 import { sendVerificationEmail } from '../../auth/verification/verification-emails/verification-emails.service.ts';
 import type { CreateUserBody, CreateUserResponse } from '@strong-together/shared';
@@ -11,7 +10,7 @@ export class CreateUserService {
     const { username, fullName, email, password, gender } = body;
     const rowsExists = await queryUserExistsByUsernameOrEmail(username, email);
     const [user] = rowsExists;
-    if (user) throw createError(400, 'User already exists');
+    if (user) throw new BadRequestException('User already exists');
 
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);

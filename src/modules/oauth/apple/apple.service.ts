@@ -1,6 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import type { AppleOAuthBody, OAuthLoginResponse } from '@strong-together/shared';
-import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../../../config/auth.config.ts';
 import type { AppLogger } from '../../../infrastructure/logger.ts';
@@ -29,10 +28,10 @@ export class AppleService {
     const { idToken, rawNonce, name, email } = body || {};
 
     if (!idToken || typeof idToken !== 'string') {
-      throw createError(400, 'Missing or invalid Apple identityToken');
+      throw new BadRequestException('Missing or invalid Apple identityToken');
     }
     if (!rawNonce || typeof rawNonce !== 'string') {
-      throw createError(400, 'Missing rawNonce');
+      throw new BadRequestException('Missing rawNonce');
     }
 
     const {

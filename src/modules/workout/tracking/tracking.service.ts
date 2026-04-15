@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import type {
   ExerciseTrackingAndStats,
   FinishUserWorkoutBody,
   FinishUserWorkoutResponse,
 } from '@strong-together/shared';
-import createError from 'http-errors';
 import { cacheDeleteOtherTimezones, cacheGetJSON, cacheSetJSON } from '../../../infrastructure/cache/redis.cache.ts';
 import { buildTrackingKeyStable, TTL_TRACKING } from './tracking.cache.ts';
 import { queryGetExerciseTrackingAndStats, queryInsertUserFinishedWorkout } from './tracking.queries.ts';
@@ -42,7 +41,7 @@ export class WorkoutTrackingService {
     const workoutEndUtc = body.workout_end_utc || null;
 
     if (!Array.isArray(workoutArray) || workoutArray.length === 0) {
-      throw createError(400, 'Not a valid workout');
+      throw new BadRequestException('Not a valid workout');
     }
 
     await queryInsertUserFinishedWorkout(userId, workoutArray, workoutStartUtc, workoutEndUtc);

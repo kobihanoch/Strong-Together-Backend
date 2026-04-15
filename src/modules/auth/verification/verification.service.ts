@@ -1,6 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
-import createError from 'http-errors';
 import sql from '../../../infrastructure/db.client.ts';
 import { queryUpdateUserVerficiationStatus, queryUserByUsername } from './verification.queries.ts';
 import { queryUserExistsByUsernameOrEmail } from '../../user/create/create.queries.ts';
@@ -13,7 +12,7 @@ import { decodeVerifyToken } from './verification.utils.ts';
 @Injectable()
 export class VerificationService {
   async verifyUserAccountData(token: string | undefined): Promise<{ statusCode: number; html: string }> {
-    if (!token) throw createError(400, 'Missing token');
+    if (!token) throw new BadRequestException('Missing token');
     const decoded = decodeVerifyToken(token);
     if (!decoded) {
       return { statusCode: 401, html: generateVerificationFailedHTML() };
@@ -51,14 +50,14 @@ export class VerificationService {
     const { username, password, newEmail } = body;
 
     const [user = null] = await queryUserByUsername(username);
-    if (!user) throw createError(401, 'Invalid credentials');
+    if (!user) throw new UnauthorizedException('Invalid credentials');
     const ok = await bcrypt.compare(password, user.password!);
-    if (!ok) throw createError(401, 'Invalid credentials');
+    if (!ok) throw new UnauthorizedException('Invalid credentials');
 
-    if (user.is_verified) throw createError(400, 'Account already verified');
+    if (user.is_verified) throw new BadRequestException('Account already verified');
 
     const [exists] = await queryUserExistsByUsernameOrEmail(null, newEmail);
-    if (exists) throw createError(409, 'Email already in use');
+    if (exists) throw new ConflictException('Email already in use');
 
     await sql`UPDATE users SET email = ${newEmail} WHERE id = ${user.id}::uuid`;
     await sendVerificationEmail(newEmail, user.id, user.name ? user.name : user.username!, {

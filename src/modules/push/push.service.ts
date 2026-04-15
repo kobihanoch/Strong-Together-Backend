@@ -1,6 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import axios from 'axios';
-import createError from 'http-errors';
 import { queryGetAllUsersToSendHourlyReminder, queryGetAllUsersWithNotificationsEnabled } from './push.queries.ts';
 import { enqueuePushNotifications } from '../../infrastructure/queues/push-notifications/push-notifications-producer.ts';
 import type { NotificationPayload } from './push.dtos.ts';
@@ -31,7 +30,7 @@ export async function sendPushNotification(token: string, title: string, body: s
 
   // HTTP transport-level
   if (res.status >= 500 || res.status === 429) {
-    throw createError(503, `Expo HTTP transient ${res.status}`);
+    throw new ServiceUnavailableException(`Expo HTTP transient ${res.status}`);
   }
   if (res.status >= 400) {
     return { ok: false, permanent: true, reason: `Expo HTTP ${res.status}` };
@@ -46,7 +45,7 @@ export async function sendPushNotification(token: string, title: string, body: s
   const reason = ticket?.message || code;
 
   if (isExpoTransientCode(code)) {
-    throw createError(503, `Expo transient: ${code} - ${reason}`);
+    throw new ServiceUnavailableException(`Expo transient: ${code} - ${reason}`);
   }
 
   if (code === 'DeviceNotRegistered') {

@@ -1,5 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import type { AnalyzeVideoResultPayload, SquatRepetition } from '@strong-together/shared';
+import { appConfig } from '../../config/app.config.ts';
 import { closeRedisSubscriber, createRedisSubscriber } from '../../infrastructure/redis.client.ts';
 import { createLogger } from '../../infrastructure/logger.ts';
 import { VideoAnalysisService } from './video-analysis.service.ts';
@@ -47,6 +48,10 @@ export class VideoAnalysisSubscriber implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
+    if (appConfig.isTest) {
+      return;
+    }
+
     const subscriberClient = await createRedisSubscriber();
     this.subscriberClient = subscriberClient;
 

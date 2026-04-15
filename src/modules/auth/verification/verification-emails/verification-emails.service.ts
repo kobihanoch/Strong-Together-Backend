@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { appConfig } from '../../../../config/app.config.ts';
 import { authConfig } from '../../../../config/auth.config.ts';
-import { generateJti } from '../../../../shared/authentication/authentication.utils.ts';
+import { generateJti } from '../../../../common/authentication/authentication.utils.ts';
 import { enqueueEmails } from '../../../../infrastructure/queues/emails/emails-producer.ts';
 import { generateValidateUserEmail } from './verification-emails.templates.ts';
 

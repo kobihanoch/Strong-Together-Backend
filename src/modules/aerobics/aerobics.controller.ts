@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
 import type { AddUserAerobicsBody, GetUserAerobicsQuery, UserAerobicsResponse } from '@strong-together/shared';
-import type { AuthenticatedUser } from '../../shared/types/express.js';
+import type { AuthenticatedUser } from '../../common/types/express.js';
 import { addAerobicsRequest, getAerobicsRequest } from '@strong-together/shared';
 import { AerobicsService } from './aerobics.service.ts';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';

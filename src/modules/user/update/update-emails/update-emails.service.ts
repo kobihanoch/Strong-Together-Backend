@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { generateJti } from '../../../../shared/authentication/authentication.utils.ts';
+import { generateJti } from '../../../../common/authentication/authentication.utils.ts';
 import { authConfig } from '../../../../config/auth.config.ts';
 import { appConfig } from '../../../../config/app.config.ts';
 import { generateConfirmEmailChange } from './update-emails.templates.ts';

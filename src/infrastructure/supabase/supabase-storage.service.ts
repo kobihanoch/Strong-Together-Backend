@@ -1,6 +1,6 @@
 // supbaseStorageService
+import { InternalServerErrorException } from '@nestjs/common';
 import axios from "axios";
-import createError from "http-errors";
 import { supabaseConfig } from "../../config/storage.config.ts";
 
 const base = supabaseConfig.url;
@@ -28,7 +28,7 @@ export async function uploadBufferToSupabase(
       maxBodyLength: Infinity,
     });
   } catch (e) {
-    throw createError(500, "Internal server error");
+    throw new InternalServerErrorException("Internal server error");
   }
 
   // Return the path of image (store in DB) and the public url
@@ -45,6 +45,6 @@ export async function deleteFromSupabase(path: string): Promise<void> {
       headers: { Authorization: `Bearer ${svc}`, apikey: svc },
     });
   } catch (e) {
-    throw createError(500, "Internal server error");
+    throw new InternalServerErrorException("Internal server error");
   }
 }

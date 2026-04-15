@@ -7,16 +7,16 @@ import {
   getAllUserMessagesResponseSchema,
   markMessageAsReadResponseSchema,
 } from '@strong-together/shared';
-import { loginAuthTestUser, loginMessagesTestUser } from '../../shared/tests/helpers/auth.ts';
-import { expectSchema } from '../../shared/tests/helpers/assert-schema.ts';
-import { getMessageReadState, getExerciseToWorkoutSplitId, messageExists } from '../../shared/tests/helpers/db.ts';
-import { deleteMessage, getMessages, markMessageAsRead } from '../../shared/tests/helpers/messages.ts';
-import { addWorkoutPlan, finishWorkout } from '../../shared/tests/helpers/workouts.ts';
+import { loginAuthTestUser, loginMessagesTestUser } from '../../common/tests/helpers/auth.ts';
+import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
+import { getMessageReadState, getExerciseToWorkoutSplitId, messageExists } from '../../common/tests/helpers/db.ts';
+import { deleteMessage, getMessages, markMessageAsRead } from '../../common/tests/helpers/messages.ts';
+import { addWorkoutPlan, finishWorkout } from '../../common/tests/helpers/workouts.ts';
 
-let app: ReturnType<typeof createApp>;
+let app: Awaited<ReturnType<typeof createApp>>;
 
-beforeAll(() => {
-  app = createApp();
+beforeAll(async () => {
+  app = await createApp();
 });
 
 describe('Messages', () => {
@@ -218,7 +218,7 @@ describe('Messages', () => {
 
   // get messages without token -> assert 401
   it('rejects getting messages without token', async () => {
-    const response = await request(app).get('/api/messages/getmessages').query({ tz: 'Asia/Jerusalem' }).set({
+    const response = await request(app.getHttpServer()).get('/api/messages/getmessages').query({ tz: 'Asia/Jerusalem' }).set({
       'x-app-version': '4.5.0',
     });
 
@@ -231,7 +231,7 @@ describe('Messages', () => {
     const loginResponse = await loginMessagesTestUser();
     const accessToken = loginResponse.body.accessToken as string;
 
-    const response = await request(app)
+    const response = await request(app.getHttpServer())
       .get('/api/messages/getmessages')
       .set({
         'x-app-version': '4.5.0',

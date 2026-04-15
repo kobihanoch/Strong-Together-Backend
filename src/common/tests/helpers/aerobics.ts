@@ -1,8 +1,10 @@
 import request from 'supertest';
 import { authHeaders } from './auth.ts';
 
+const httpServer = (app: any) => app.getHttpServer();
+
 export function getAerobics(app: any, accessToken: string, tz = 'Asia/Jerusalem') {
-  return request(app).get('/api/aerobics/get').query({ tz }).set(authHeaders(accessToken));
+  return request(httpServer(app)).get('/api/aerobics/get').query({ tz }).set(authHeaders(accessToken));
 }
 
 export function addAerobicsRecord(
@@ -11,7 +13,7 @@ export function addAerobicsRecord(
   record: { type: string; durationMins: number; durationSec: number },
   tz = 'Asia/Jerusalem',
 ) {
-  return request(app).post('/api/aerobics/add').set(authHeaders(accessToken)).send({
+  return request(httpServer(app)).post('/api/aerobics/add').set(authHeaders(accessToken)).send({
     tz,
     record,
   });

@@ -1,5 +1,4 @@
-import { Injectable } from '@nestjs/common';
-import createError from 'http-errors';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { queryAddWorkout, queryGetWorkoutSplitsObj, queryWholeUserWorkoutPlan } from './plan.queries.ts';
 import type {
   AddWorkoutBody,
@@ -59,7 +58,7 @@ export class WorkoutPlanService {
     const rows = await queryWholeUserWorkoutPlan(userId, tz);
     const [plan] = rows;
     if (!plan) {
-      throw createError(500, 'Workout plan was not created');
+      throw new InternalServerErrorException('Workout plan was not created');
     }
     const { splits } = await queryGetWorkoutSplitsObj(plan.id);
 

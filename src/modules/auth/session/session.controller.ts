@@ -2,7 +2,6 @@ import { Controller, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/
 import type { Request, Response } from 'express';
 import type { LoginRequestBody, LoginResponse, LogOutResponse, RefreshTokenResponse } from '@strong-together/shared';
 import { loginRequest } from '@strong-together/shared';
-import { createLogger } from '../../../infrastructure/logger.ts';
 import type { AppLogger } from '../../../infrastructure/logger.ts';
 import { getRefreshToken } from './session.utils.ts';
 import { SessionService } from './session.service.ts';

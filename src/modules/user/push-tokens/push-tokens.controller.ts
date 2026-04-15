@@ -8,7 +8,7 @@ import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard.ts';
 import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor.ts';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe.ts';
-import type { AuthenticatedUser } from '../../../shared/types/express.js';
+import type { AuthenticatedUser } from '../../../common/types/express.js';
 import { PushTokensService } from './push-tokens.service.ts';
 
 /**

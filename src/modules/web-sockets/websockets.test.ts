@@ -4,14 +4,14 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { authConfig } from '../../config/auth.config.ts';
 import { createApp } from '../../app.ts';
 import { loginResponseSchema, generateTicketResponseSchema } from '@strong-together/shared';
-import { loginTestUser } from '../../shared/tests/helpers/auth.ts';
-import { expectSchema } from '../../shared/tests/helpers/assert-schema.ts';
-import { generateWebSocketTicket } from '../../shared/tests/helpers/websockets.ts';
+import { loginTestUser } from '../../common/tests/helpers/auth.ts';
+import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
+import { generateWebSocketTicket } from '../../common/tests/helpers/websockets.ts';
 
-let app: ReturnType<typeof createApp>;
+let app: Awaited<ReturnType<typeof createApp>>;
 
-beforeAll(() => {
-  app = createApp();
+beforeAll(async () => {
+  app = await createApp();
 });
 
 describe('WebSockets', () => {
@@ -43,7 +43,7 @@ describe('WebSockets', () => {
 
   // generate ticket without token -> assert 401 from auth middleware
   it('rejects websocket ticket generation without token', async () => {
-    const response = await request(app)
+    const response = await request(app.getHttpServer())
       .post('/api/ws/generateticket')
       .set({
         'x-app-version': '4.5.0',
@@ -61,7 +61,7 @@ describe('WebSockets', () => {
     const loginResponse = await loginTestUser();
     const accessToken = loginResponse.body.accessToken as string;
 
-    const response = await request(app)
+    const response = await request(app.getHttpServer())
       .post('/api/ws/generateticket')
       .set({
         'x-app-version': '4.5.0',
@@ -73,4 +73,3 @@ describe('WebSockets', () => {
     expect(response.body.message.toLowerCase()).toMatch(/required|string|invalid input/);
   });
 });
-

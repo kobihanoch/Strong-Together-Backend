@@ -3,17 +3,11 @@ import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { authConfig } from '../../config/auth.config.ts';
 import { createApp } from '../../app.ts';
-import {
-  addWorkoutResponseSchema,
-  getWholeUserWorkoutPlanResponseSchema,
-} from '@strong-together/shared';
-import {
-  finishUserWorkoutResponseSchema,
-  getExerciseTrackingResponseSchema,
-} from '@strong-together/shared';
+import { addWorkoutResponseSchema, getWholeUserWorkoutPlanResponseSchema } from '@strong-together/shared';
+import { finishUserWorkoutResponseSchema, getExerciseTrackingResponseSchema } from '@strong-together/shared';
 import { loginResponseSchema, createUserResponseSchema } from '@strong-together/shared';
-import { authHeaders, loginAuthTestUser, loginWorkoutsTestUser } from '../../shared/tests/helpers/auth.ts';
-import { expectSchema } from '../../shared/tests/helpers/assert-schema.ts';
+import { authHeaders, loginAuthTestUser, loginWorkoutsTestUser } from '../../common/tests/helpers/auth.ts';
+import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
 import {
   getActiveWorkoutSplitNames,
   getExerciseToWorkoutSplitId,
@@ -22,13 +16,13 @@ import {
   getInactiveExercisesForSplit,
   getInactiveWorkoutSplitNames,
   getWorkoutSummaryCount,
-} from '../../shared/tests/helpers/db.ts';
-import { addWorkoutPlan, finishWorkout, getTracking, getWorkoutPlan } from '../../shared/tests/helpers/workouts.ts';
+} from '../../common/tests/helpers/db.ts';
+import { addWorkoutPlan, finishWorkout, getTracking, getWorkoutPlan } from '../../common/tests/helpers/workouts.ts';
 
-let app: ReturnType<typeof createApp>;
+let app: Awaited<ReturnType<typeof createApp>>;
 
-beforeAll(() => {
-  app = createApp();
+beforeAll(async () => {
+  app = await createApp();
 });
 
 describe('Workouts', () => {
@@ -88,7 +82,7 @@ describe('Workouts', () => {
 
   // get workout plan without token -> assert 401
   it('rejects getting the workout plan without token', async () => {
-    const response = await request(app).get('/api/workouts/getworkout').query({ tz: 'Asia/Jerusalem' }).set({
+    const response = await request(app.getHttpServer()).get('/api/workouts/getworkout').query({ tz: 'Asia/Jerusalem' }).set({
       'x-app-version': '4.5.0',
     });
 
@@ -124,7 +118,7 @@ describe('Workouts', () => {
     expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
-    const response = await request(app)
+    const response = await request(app.getHttpServer())
       .get('/api/workouts/gettracking')
       .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(accessToken));
@@ -145,7 +139,7 @@ describe('Workouts', () => {
 
   // get tracking without token -> assert 401
   it('rejects getting tracking without token', async () => {
-    const response = await request(app).get('/api/workouts/gettracking').query({ tz: 'Asia/Jerusalem' }).set({
+    const response = await request(app.getHttpServer()).get('/api/workouts/gettracking').query({ tz: 'Asia/Jerusalem' }).set({
       'x-app-version': '4.5.0',
     });
 
@@ -399,7 +393,7 @@ describe('Workouts', () => {
     const username = `fw_${suffix}`;
     const email = `${username}@example.com`;
 
-    const createResponse = await request(app).post('/api/users/create').set('x-app-version', '4.5.0').send({
+    const createResponse = await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
       username,
       fullName: 'Finish Workout',
       email,
@@ -421,13 +415,13 @@ describe('Workouts', () => {
       { expiresIn: '1h' },
     );
 
-    const verifyResponse = await request(app)
+    const verifyResponse = await request(app.getHttpServer())
       .get('/api/auth/verify')
       .query({ token: verifyToken })
       .set('x-app-version', '4.5.0');
     expect(verifyResponse.status).toBe(200);
 
-    const loginResponse = await request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+    const loginResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
       identifier: email,
       password: 'Test1234!',
     });
@@ -473,4 +467,3 @@ describe('Workouts', () => {
     expect(response.body.message).toBe('Expected string, received null');
   });
 });
-

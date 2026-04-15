@@ -2,17 +2,21 @@ import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../app.ts';
 import { bootstrapResponseSchema, userAerobicsResponseSchema, loginResponseSchema } from '@strong-together/shared';
-import { loginBootstrapAerobicsUser, loginBootstrapFlowUser, loginBootstrapTestUser } from '../../shared/tests/helpers/auth.ts';
-import { addAerobicsRecord } from '../../shared/tests/helpers/aerobics.ts';
-import { getBootstrap } from '../../shared/tests/helpers/bootstrap.ts';
-import { getExerciseToWorkoutSplitId, getUserReminderTimezone } from '../../shared/tests/helpers/db.ts';
-import { expectSchema } from '../../shared/tests/helpers/assert-schema.ts';
-import { addWorkoutPlan, finishWorkout } from '../../shared/tests/helpers/workouts.ts';
+import {
+  loginBootstrapAerobicsUser,
+  loginBootstrapFlowUser,
+  loginBootstrapTestUser,
+} from '../../common/tests/helpers/auth.ts';
+import { addAerobicsRecord } from '../../common/tests/helpers/aerobics.ts';
+import { getBootstrap } from '../../common/tests/helpers/bootstrap.ts';
+import { getExerciseToWorkoutSplitId, getUserReminderTimezone } from '../../common/tests/helpers/db.ts';
+import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
+import { addWorkoutPlan, finishWorkout } from '../../common/tests/helpers/workouts.ts';
 
-let app: ReturnType<typeof createApp>;
+let app: Awaited<ReturnType<typeof createApp>>;
 
-beforeAll(() => {
-  app = createApp();
+beforeAll(async () => {
+  app = await createApp();
 });
 
 describe('Bootstrap', () => {
@@ -126,7 +130,7 @@ describe('Bootstrap', () => {
     const accessToken = loginResponse.body.accessToken as string;
     const userId = loginResponse.body.user as string;
 
-    const response = await request(app)
+    const response = await request(app.getHttpServer())
       .get('/api/bootstrap/get')
       .set({
         'x-app-version': '4.5.0',
@@ -191,7 +195,7 @@ describe('Bootstrap', () => {
 
   // get bootstrap without token -> assert 401
   it('rejects bootstrap access without token', async () => {
-    const response = await request(app).get('/api/bootstrap/get').query({ tz: 'Asia/Jerusalem' }).set({
+    const response = await request(app.getHttpServer()).get('/api/bootstrap/get').query({ tz: 'Asia/Jerusalem' }).set({
       'x-app-version': '4.5.0',
     });
 
@@ -199,4 +203,3 @@ describe('Bootstrap', () => {
     expect(response.body.message).toBe('No access token provided');
   });
 });
-

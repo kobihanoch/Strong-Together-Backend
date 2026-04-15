@@ -1,9 +1,8 @@
-import { createServer, Server as HttpServer } from 'http';
+import { Server as HttpServer } from 'http';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { redisConfig } from '../config/redis.config.ts';
-import createError from 'http-errors';
 import { createRedisAdapterClients } from './redis.client.ts';
-import { Express } from 'express';
 import { createLogger } from './logger.ts';
 import { decodeSocketToken } from '../modules/web-sockets/web-sockets.utils.ts';
 
@@ -26,8 +25,7 @@ export const setIO = (val: Server): void => {
   io = val;
 };
 
-export const createIOServer = async (app: Express): Promise<{ io: Server; server: HttpServer }> => {
-  const server = createServer(app);
+export const createIOServer = async (server: HttpServer): Promise<{ io: Server; server: HttpServer }> => {
   io = new Server(server, {
     path: '/socket.io',
     transports: ['websocket', 'polling'],
@@ -58,15 +56,15 @@ export const createIOServer = async (app: Express): Promise<{ io: Server; server
 
     try {
       const ticket = authedSocket.handshake?.auth?.ticket;
-      if (!ticket) return next(createError(400, 'Missing ticket'));
+      if (!ticket) return next(new BadRequestException('Missing ticket'));
 
       const payload = decodeSocketToken(ticket);
-      if (!payload) return next(createError(401, 'Invalid or expired ticket'));
+      if (!payload) return next(new UnauthorizedException('Invalid or expired ticket'));
 
       authedSocket.user = { id: payload.id, username: payload.username };
       return next();
     } catch {
-      return next(createError(401, 'Unauthorized'));
+      return next(new UnauthorizedException('Unauthorized'));
     }
   });
 

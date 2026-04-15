@@ -2,14 +2,14 @@ import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../app.ts';
 import { loginResponseSchema, getAllExercisesResponseSchema } from '@strong-together/shared';
-import { loginTestUser } from '../../shared/tests/helpers/auth.ts';
-import { expectSchema } from '../../shared/tests/helpers/assert-schema.ts';
-import { getAllExercises } from '../../shared/tests/helpers/exercises.ts';
+import { loginTestUser } from '../../common/tests/helpers/auth.ts';
+import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
+import { getAllExercises } from '../../common/tests/helpers/exercises.ts';
 
-let app: ReturnType<typeof createApp>;
+let app: Awaited<ReturnType<typeof createApp>>;
 
-beforeAll(() => {
-  app = createApp();
+beforeAll(async () => {
+  app = await createApp();
 });
 
 describe('Exercises', () => {
@@ -44,7 +44,7 @@ describe('Exercises', () => {
 
   // get all exercises without token -> assert 401
   it('rejects exercises access without token', async () => {
-    const response = await request(app).get('/api/exercises/getall').set({
+    const response = await request(app.getHttpServer()).get('/api/exercises/getall').set({
       'x-app-version': '4.5.0',
     });
 
@@ -52,4 +52,3 @@ describe('Exercises', () => {
     expect(response.body.message).toBe('No access token provided');
   });
 });
-
