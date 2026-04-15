@@ -1,7 +1,7 @@
+import { MessagesService } from './../messages/messages.service.ts';
 import { cacheGetJSON, cacheSetJSON } from '../../infrastructure/cache/redis.cache.ts';
 import type { AppLogger } from '../../infrastructure/logger.ts';
 import type { BootstrapResponse } from '@strong-together/shared';
-import { getAllMessagesData } from '../messages/messages.service.ts';
 import { getUserData, updateUsersReminderSettingsTimezone } from '../user/update/update.service.ts';
 import { getWorkoutPlanData } from '../workout/plan/plan.service.ts';
 import { getExerciseTrackingData } from '../workout/tracking/tracking.service.ts';
@@ -11,20 +11,19 @@ import { AerobicsService } from '../aerobics/aerobics.service.ts';
 
 @Injectable()
 export class BootstrapService {
-  constructor(private readonly aerobicsService: AerobicsService) {}
+  constructor(
+    private readonly aerobicsService: AerobicsService,
+    private readonly messagesService: MessagesService,
+  ) {}
 
-  async getBootstrapDataPayload(
-    userId: string,
-    tz: string,
-    requestLogger: AppLogger,
-  ): Promise<BootstrapResponse> {
+  async getBootstrapDataPayload(userId: string, tz: string, requestLogger: AppLogger): Promise<BootstrapResponse> {
     const { tz: cachedTz = null } = (await cacheGetJSON<{ tz: string }>(buildUserTimezoneKeyStable(userId))) || {};
 
     const promises = [
       getUserData(userId),
       getWorkoutPlanData(userId, true, tz),
       getExerciseTrackingData(userId, 45, true, tz),
-      getAllMessagesData(userId, tz),
+      this.messagesService.getAllMessagesData(userId, tz),
       this.aerobicsService.getAerobicsData(userId, 45, true, tz),
     ] as const;
 

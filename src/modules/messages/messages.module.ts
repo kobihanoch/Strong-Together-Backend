@@ -1,39 +1,14 @@
-import { Router } from 'express';
-import { deleteMessage, getAllUserMessages, markUserMessageAsRead } from './messages.controller.ts';
-import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
-import { authenticate } from '../../common/guards/authentication.guard.ts';
-import { authorize } from '../../common/guards/authorization.guard.ts';
-import { withRlsTx } from '../../infrastructure/db.client.ts';
-import dpopValidationMiddleware from '../../common/guards/dpop-validation.guard.ts';
-import { getAllMessagesRequest, markMessageAsReadRequest, deleteMessageRequest } from '@strong-together/shared';
-import { validate } from '../../common/pipes/validate-request.pipe.ts';
+import { Module } from '@nestjs/common';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
+import { AuthenticationGuard } from '../../common/guards/authentication.guard.ts';
+import { AuthorizationGuard } from '../../common/guards/authorization.guard.ts';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
+import { MessagesController } from './messages.controller.ts';
+import { MessagesService } from './messages.service.ts';
 
-const router = Router();
-
-// User Routes
-router.get(
-  '/getmessages',
-  dpopValidationMiddleware,
-  authenticate,
-  authorize('user'),
-  validate(getAllMessagesRequest),
-  asyncHandler(withRlsTx(getAllUserMessages)),
-); // Gets user messages
-router.put(
-  '/markasread/:id',
-  dpopValidationMiddleware,
-  authenticate,
-  authorize('user'),
-  validate(markMessageAsReadRequest),
-  asyncHandler(withRlsTx(markUserMessageAsRead)),
-); // Gets user messages
-router.delete(
-  '/delete/:id',
-  dpopValidationMiddleware,
-  authenticate,
-  authorize('user'),
-  validate(deleteMessageRequest),
-  asyncHandler(withRlsTx(deleteMessage)),
-); // Deletes a user's message
-
-export default router;
+@Module({
+  controllers: [MessagesController],
+  providers: [MessagesService, DpopGuard, AuthenticationGuard, AuthorizationGuard, RlsTxInterceptor],
+  exports: [MessagesService],
+})
+export class MessagesModule {}
