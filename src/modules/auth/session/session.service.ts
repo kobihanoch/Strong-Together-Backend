@@ -10,6 +10,7 @@ import {
   queryUserByIdentifierForLogin,
 } from './session.queries.ts';
 import { appConfig } from '../../../config/app.config.ts';
+import type { AppLogger } from '../../../infrastructure/logger.ts';
 import { authConfig } from '../../../config/auth.config.ts';
 import { sendSystemMessageToUserWhenFirstLogin } from '../../messages/system-messages/system-messages.service.ts';
 import type { AccessTokenPayload, LoginResponse, RefreshTokenResponse } from '@strong-together/shared';
@@ -21,7 +22,7 @@ export class SessionService {
     identifier: string,
     password: string,
     jkt: string | undefined,
-    requestLogger: { error: (...args: any[]) => void },
+    requestLogger: AppLogger,
   ): Promise<LoginResponse> {
     if (appConfig.dpopEnabled) {
       if (!jkt) {

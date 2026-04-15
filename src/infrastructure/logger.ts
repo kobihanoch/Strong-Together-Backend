@@ -56,3 +56,5 @@ export const createLogger = (module: string, bindings: Bindings = {}): Logger =>
   logger.child({ module, ...bindings });
 
 export const createRequestId = (): string => randomUUID();
+
+export type AppLogger = Logger;

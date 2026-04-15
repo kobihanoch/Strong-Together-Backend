@@ -1,44 +1,51 @@
 import { cacheGetJSON, cacheSetJSON } from '../../infrastructure/cache/redis.cache.ts';
+import type { AppLogger } from '../../infrastructure/logger.ts';
 import type { BootstrapResponse } from '@strong-together/shared';
-import { getAerobicsData } from '../aerobics/aerobics.service.ts';
 import { getAllMessagesData } from '../messages/messages.service.ts';
 import { getUserData, updateUsersReminderSettingsTimezone } from '../user/update/update.service.ts';
 import { getWorkoutPlanData } from '../workout/plan/plan.service.ts';
 import { getExerciseTrackingData } from '../workout/tracking/tracking.service.ts';
 import { buildUserTimezoneKeyStable, TTL_TIMEZONE } from './bootstrap.cache.ts';
+import { Injectable } from '@nestjs/common';
+import { AerobicsService } from '../aerobics/aerobics.service.ts';
 
-export const getBootstrapDataPayload = async (
-  userId: string,
-  tz: string,
-  requestLogger: { info: (...args: any[]) => void },
-): Promise<BootstrapResponse> => {
-  const { tz: cachedTz = null } = (await cacheGetJSON<{ tz: string }>(buildUserTimezoneKeyStable(userId))) || {};
+@Injectable()
+export class BootstrapService {
+  constructor(private readonly aerobicsService: AerobicsService) {}
 
-  const promises = [
-    getUserData(userId),
-    getWorkoutPlanData(userId, true, tz),
-    getExerciseTrackingData(userId, 45, true, tz),
-    getAllMessagesData(userId, tz),
-    getAerobicsData(userId, 45, true, tz),
-  ] as const;
+  async getBootstrapDataPayload(
+    userId: string,
+    tz: string,
+    requestLogger: AppLogger,
+  ): Promise<BootstrapResponse> {
+    const { tz: cachedTz = null } = (await cacheGetJSON<{ tz: string }>(buildUserTimezoneKeyStable(userId))) || {};
 
-  const timezoneUpdatePromise = cachedTz !== tz ? updateUsersReminderSettingsTimezone(userId, tz) : Promise.resolve();
+    const promises = [
+      getUserData(userId),
+      getWorkoutPlanData(userId, true, tz),
+      getExerciseTrackingData(userId, 45, true, tz),
+      getAllMessagesData(userId, tz),
+      this.aerobicsService.getAerobicsData(userId, 45, true, tz),
+    ] as const;
 
-  requestLogger.info(
-    { event: 'bootstrap.timezone_resolved', userId, cachedTz, requestedTz: tz },
-    'Resolved bootstrap timezone state',
-  );
+    const timezoneUpdatePromise = cachedTz !== tz ? updateUsersReminderSettingsTimezone(userId, tz) : Promise.resolve();
 
-  const [ud, wp, et, msg, aer] = await Promise.all(promises);
-  await timezoneUpdatePromise;
+    requestLogger.info(
+      { event: 'bootstrap.timezone_resolved', userId, cachedTz, requestedTz: tz },
+      'Resolved bootstrap timezone state',
+    );
 
-  await cacheSetJSON<{ tz: string }>(buildUserTimezoneKeyStable(userId), { tz }, TTL_TIMEZONE);
+    const [ud, wp, et, msg, aer] = await Promise.all(promises);
+    await timezoneUpdatePromise;
 
-  return {
-    user: ud.payload,
-    workout: wp.payload,
-    tracking: et.payload,
-    aerobics: aer.payload,
-    messages: msg.payload,
-  };
-};
+    await cacheSetJSON<{ tz: string }>(buildUserTimezoneKeyStable(userId), { tz }, TTL_TIMEZONE);
+
+    return {
+      user: ud.payload,
+      workout: wp.payload,
+      tracking: et.payload,
+      aerobics: aer.payload,
+      messages: msg.payload,
+    };
+  }
+}

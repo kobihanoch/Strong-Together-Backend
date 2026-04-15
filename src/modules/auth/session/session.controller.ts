@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import type { LoginRequestBody, LoginResponse, LogOutResponse, RefreshTokenResponse } from '@strong-together/shared';
 import { loginRequest } from '@strong-together/shared';
 import { createLogger } from '../../../infrastructure/logger.ts';
+import type { AppLogger } from '../../../infrastructure/logger.ts';
 import { getRefreshToken } from './session.utils.ts';
 import { SessionService } from './session.service.ts';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard.ts';
@@ -14,11 +15,10 @@ import {
   loginIpRateLimit,
   loginRateLimit,
 } from '../../../common/guards/rate-limit.guard.ts';
+import { CurrentLogger } from '../../../common/decorators/current-logger.decorator.ts';
 import { RequestData } from '../../../common/decorators/request-data.decorator.ts';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe.ts';
 import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor.ts';
-
-const logger = createLogger('controller:auth');
 
 @Controller('api/auth')
 @UseInterceptors(RlsTxInterceptor)
@@ -42,9 +42,9 @@ export class SessionController {
     @RequestData(new ValidateRequestPipe(loginRequest))
     data: { body: LoginRequestBody },
     @Req() req: Request,
+    @CurrentLogger() requestLogger: AppLogger,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResponse> {
-    const requestLogger = req.logger || logger;
     const { identifier, password } = data.body;
     const jkt = req.headers['dpop-key-binding'] as string | undefined;
     const payload = await this.sessionService.loginUserData(identifier, password, jkt, requestLogger);

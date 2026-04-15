@@ -9,5 +9,6 @@ import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.t
 @Module({
   controllers: [AerobicsController],
   providers: [AerobicsService, DpopGuard, AuthenticationGuard, AuthorizationGuard, RlsTxInterceptor],
+  exports: [AerobicsService],
 })
 export class AerobicsModule {}
