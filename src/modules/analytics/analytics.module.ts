@@ -1,14 +1,13 @@
-import { Router } from 'express';
-import { getAnalytics } from './analytics.controller.ts';
-import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
-import { authenticate } from '../../common/guards/authentication.guard.ts';
-import { authorize } from '../../common/guards/authorization.guard.ts';
-import { withRlsTx } from '../../infrastructure/db.client.ts';
-import dpopValidationMiddleware from '../../common/guards/dpop-validation.guard.ts';
+import { Module } from '@nestjs/common';
+import { AnalyticsController } from './analytics.controller.ts';
+import { AnalyticsService } from './analytics.service.ts';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
+import { AuthenticationGuard } from '../../common/guards/authentication.guard.ts';
+import { AuthorizationGuard } from '../../common/guards/authorization.guard.ts';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
 
-const router = Router();
-
-// User
-router.get('/get', dpopValidationMiddleware, authenticate, authorize('user'), asyncHandler(withRlsTx(getAnalytics))); // Get user's analytics
-
-export default router;
+@Module({
+  controllers: [AnalyticsController],
+  providers: [AnalyticsService, DpopGuard, AuthenticationGuard, AuthorizationGuard, RlsTxInterceptor],
+})
+export class AnalyticsModule {}
