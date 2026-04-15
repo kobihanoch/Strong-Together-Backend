@@ -1,12 +1,10 @@
-import { Router } from 'express';
-import { sendDailyPush, sendHourlyReminderPush } from './push.controller.ts';
-import { withRlsTx } from '../../infrastructure/db.client.ts';
-import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
+import { Module } from '@nestjs/common';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
+import { PushController } from './push.controller.ts';
+import { PushService } from './push.service.ts';
 
-const router = Router();
-
-router.get('/daily', asyncHandler(withRlsTx(sendDailyPush))); // Send daily push
-
-router.get('/hourlyreminder', asyncHandler(withRlsTx(sendHourlyReminderPush))); // Send daily push
-
-export default router;
+@Module({
+  controllers: [PushController],
+  providers: [PushService, RlsTxInterceptor],
+})
+export class PushModule {}

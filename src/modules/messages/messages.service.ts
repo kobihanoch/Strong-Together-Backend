@@ -9,6 +9,18 @@ import type {
 } from '@strong-together/shared';
 import { getIO } from '../../infrastructure/socket.io.ts';
 
+export function emitNewMessage(userId: string, msg: MessageAfterSendResponse): void {
+  try {
+    getIO().to(userId).emit('new_message', msg);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Socket.IO not initialized!') {
+      return;
+    }
+
+    throw error;
+  }
+}
+
 @Injectable()
 export class MessagesService {
   async getAllMessagesData(
@@ -44,14 +56,6 @@ export class MessagesService {
   }
 
   emitNewMessage(userId: string, msg: MessageAfterSendResponse): void {
-    try {
-      getIO().to(userId).emit('new_message', msg);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Socket.IO not initialized!') {
-        return;
-      }
-
-      throw error;
-    }
+    emitNewMessage(userId, msg);
   }
 }

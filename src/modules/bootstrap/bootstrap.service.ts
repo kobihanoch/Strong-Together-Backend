@@ -2,32 +2,34 @@ import { MessagesService } from './../messages/messages.service.ts';
 import { cacheGetJSON, cacheSetJSON } from '../../infrastructure/cache/redis.cache.ts';
 import type { AppLogger } from '../../infrastructure/logger.ts';
 import type { BootstrapResponse } from '@strong-together/shared';
-import { getUserData, updateUsersReminderSettingsTimezone } from '../user/update/update.service.ts';
 import { getWorkoutPlanData } from '../workout/plan/plan.service.ts';
 import { getExerciseTrackingData } from '../workout/tracking/tracking.service.ts';
 import { buildUserTimezoneKeyStable, TTL_TIMEZONE } from './bootstrap.cache.ts';
 import { Injectable } from '@nestjs/common';
 import { AerobicsService } from '../aerobics/aerobics.service.ts';
+import { UpdateUserService } from '../user/update/update.service.ts';
 
 @Injectable()
 export class BootstrapService {
   constructor(
     private readonly aerobicsService: AerobicsService,
     private readonly messagesService: MessagesService,
+    private readonly updateUserService: UpdateUserService,
   ) {}
 
   async getBootstrapDataPayload(userId: string, tz: string, requestLogger: AppLogger): Promise<BootstrapResponse> {
     const { tz: cachedTz = null } = (await cacheGetJSON<{ tz: string }>(buildUserTimezoneKeyStable(userId))) || {};
 
     const promises = [
-      getUserData(userId),
+      this.updateUserService.getUserData(userId),
       getWorkoutPlanData(userId, true, tz),
       getExerciseTrackingData(userId, 45, true, tz),
       this.messagesService.getAllMessagesData(userId, tz),
       this.aerobicsService.getAerobicsData(userId, 45, true, tz),
     ] as const;
 
-    const timezoneUpdatePromise = cachedTz !== tz ? updateUsersReminderSettingsTimezone(userId, tz) : Promise.resolve();
+    const timezoneUpdatePromise =
+      cachedTz !== tz ? this.updateUserService.updateUsersReminderSettingsTimezone(userId, tz) : Promise.resolve();
 
     requestLogger.info(
       { event: 'bootstrap.timezone_resolved', userId, cachedTz, requestedTz: tz },

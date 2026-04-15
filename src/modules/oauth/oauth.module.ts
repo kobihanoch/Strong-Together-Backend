@@ -1,18 +1,13 @@
-import { Router } from 'express';
-import { withRlsTx } from '../../infrastructure/db.client.ts';
-import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
-import { loginLimiter } from '../../common/guards/rate-limit.guard.ts';
-import { validate } from '../../common/pipes/validate-request.pipe.ts';
-import { createOrSignInWithApple } from './apple/apple.controller.ts';
-import { appleOAuthRequest } from '@strong-together/shared';
-import { createOrSignInWithGoogle } from './google/google.controller.ts';
-import { googleOAuthRequest } from '@strong-together/shared';
+import { Module } from '@nestjs/common';
+import { RateLimitGuard } from '../../common/guards/rate-limit.guard.ts';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
+import { AppleController } from './apple/apple.controller.ts';
+import { AppleService } from './apple/apple.service.ts';
+import { GoogleController } from './google/google.controller.ts';
+import { GoogleService } from './google/google.service.ts';
 
-const router = Router();
-
-// No authentication required
-router.post('/apple', loginLimiter, validate(appleOAuthRequest), asyncHandler(withRlsTx(createOrSignInWithApple))); // Logging in a user and returns tokens and user id
-
-router.post('/google', loginLimiter, validate(googleOAuthRequest), asyncHandler(withRlsTx(createOrSignInWithGoogle))); // Logging in a user and returns tokens and user id
-
-export default router;
+@Module({
+  controllers: [AppleController, GoogleController],
+  providers: [AppleService, GoogleService, RateLimitGuard, RlsTxInterceptor],
+})
+export class OAuthModule {}
