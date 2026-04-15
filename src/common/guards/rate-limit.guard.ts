@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import { appConfig } from '../../config/app.config.ts';
 
-type RateLimitOptions = {
+export type RateLimitOptions = {
   windowMs: number;
   max: number;
   message: string;
@@ -17,7 +17,7 @@ type Bucket = {
 
 const RATE_LIMIT_KEY = 'rate_limit';
 
-export const RateLimit = (options: RateLimitOptions) => SetMetadata(RATE_LIMIT_KEY, options);
+export const RateLimit = (...options: RateLimitOptions[]) => SetMetadata(RATE_LIMIT_KEY, options);
 
 @Injectable()
 export class RateLimitGuard implements CanActivate {
@@ -31,41 +31,52 @@ export class RateLimitGuard implements CanActivate {
       return true;
     }
 
-    const options = this.reflector.getAllAndOverride<RateLimitOptions>(RATE_LIMIT_KEY, [
+    const optionsList = this.reflector.getAllAndOverride<RateLimitOptions[]>(RATE_LIMIT_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
     // If the route has no rate-limit metadata, allow it
-    if (!options) {
+    if (!optionsList?.length) {
       return true;
     }
 
     const req = context.switchToHttp().getRequest<Request>();
-    const key = this.getRateLimitKey(req, options.bodyKey);
     const now = Date.now();
 
-    // Scope by route + resolved identity key so each route has isolated buckets
-    const routeKey = `${context.getClass().name}:${context.getHandler().name}:${key}`;
-    const current = this.store.get(routeKey);
+    for (const options of optionsList) {
+      const key = this.getRateLimitKey(req, options.bodyKey);
 
-    // Create a fresh bucket when missing or expired
-    if (!current || current.resetAt <= now) {
-      this.store.set(routeKey, {
-        count: 1,
-        resetAt: now + options.windowMs,
-      });
-      return true;
+      // Scope by route + resolved identity key + limiter config so each limiter stays isolated
+      const routeKey = [
+        context.getClass().name,
+        context.getHandler().name,
+        options.bodyKey ?? 'none',
+        String(options.windowMs),
+        String(options.max),
+        key,
+      ].join(':');
+
+      const current = this.store.get(routeKey);
+
+      // Create a fresh bucket when missing or expired
+      if (!current || current.resetAt <= now) {
+        this.store.set(routeKey, {
+          count: 1,
+          resetAt: now + options.windowMs,
+        });
+        continue;
+      }
+
+      // Reject when the bucket is already full
+      if (current.count >= options.max) {
+        throw new HttpException(options.message, HttpStatus.TOO_MANY_REQUESTS);
+      }
+
+      // Otherwise increment and allow
+      current.count += 1;
+      this.store.set(routeKey, current);
     }
-
-    // Reject when the bucket is already full
-    if (current.count >= options.max) {
-      throw new HttpException(options.message, HttpStatus.TOO_MANY_REQUESTS);
-    }
-
-    // Otherwise increment and allow
-    current.count += 1;
-    this.store.set(routeKey, current);
 
     return true;
   }
@@ -84,7 +95,7 @@ export class RateLimitGuard implements CanActivate {
       }
     }
 
-    // 3. If client sent a stable device id header (Not implemented for now)
+    // 3. If client sent a stable device id header
     const clientId = req.headers['x-client-id'];
     if (typeof clientId === 'string' && clientId) {
       return `client:${clientId}`;
