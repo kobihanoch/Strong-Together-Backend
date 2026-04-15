@@ -1,7 +1,8 @@
 import * as Sentry from '@sentry/node';
-import type { Express, Request } from 'express';
+import type { Express } from 'express';
 import { appConfig } from '../config/app.config.ts';
 import { sentryConfig } from '../config/sentry.config.ts';
+import type { AppRequest } from '../common/types/express.ts';
 
 const dsn = sentryConfig.dsn;
 const environment = sentryConfig.environment;
@@ -58,7 +59,7 @@ export const initSentry = (serviceName: string): void => {
   initialized = true;
 };
 
-export const applySentryRequestContext = (req: Request): void => {
+export const applySentryRequestContext = (req: AppRequest): void => {
   if (!initialized) {
     return;
   }

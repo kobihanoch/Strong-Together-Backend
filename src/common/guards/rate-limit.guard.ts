@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable, SetMetadata } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { Request } from 'express';
 import { appConfig } from '../../config/app.config.ts';
+import type { AppRequest } from '../types/express.ts';
 
 export type RateLimitOptions = {
   windowMs: number;
@@ -41,7 +41,7 @@ export class RateLimitGuard implements CanActivate {
       return true;
     }
 
-    const req = context.switchToHttp().getRequest<Request>();
+    const req = context.switchToHttp().getRequest<AppRequest>();
     const now = Date.now();
 
     for (const options of optionsList) {
@@ -81,7 +81,7 @@ export class RateLimitGuard implements CanActivate {
     return true;
   }
 
-  private getRateLimitKey(req: Request, bodyKey?: string): string {
+  private getRateLimitKey(req: AppRequest, bodyKey?: string): string {
     // 1. If user is authenticated, prefer user id
     if (req.user?.id) {
       return `user:${req.user.id}`;

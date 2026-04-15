@@ -1,13 +1,14 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
-import type { NextFunction, Request, Response } from 'express';
+import type { NextFunction, Response } from 'express';
 import { createLogger, createRequestId } from '../../infrastructure/logger.ts';
 import { applySentryRequestContext } from '../../infrastructure/sentry.ts';
+import type { AppRequest } from '../types/express.ts';
 
 @Injectable()
 export class RequestLoggerMiddleware implements NestMiddleware {
   private readonly appLogger = createLogger('app');
 
-  use(req: Request, res: Response, next: NextFunction): void {
+  use(req: AppRequest, res: Response, next: NextFunction): void {
     const startedAt = process.hrtime.bigint();
     const requestId = req.headers['x-request-id']?.toString() || createRequestId();
     const appVersion = req.headers['x-app-version']?.toString() || null;

@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     environment: 'node',
-    setupFiles: ['./src/shared/tests/setup/test-setup.ts'],
+    setupFiles: ['./src/common/tests/setup/test-setup.ts'],
     include: ['src/modules/**/*.test.ts'],
     globals: true,
     pool: 'threads',

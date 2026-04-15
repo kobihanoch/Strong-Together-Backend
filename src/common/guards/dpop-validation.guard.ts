@@ -1,9 +1,9 @@
 import { BadRequestException, CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { Request } from 'express';
 import * as jose from 'jose';
 import { appConfig } from '../../config/app.config.ts';
 import { cacheStoreJti } from '../../infrastructure/cache/redis.cache.ts';
 import { createLogger } from '../../infrastructure/logger.ts';
+import type { AppRequest } from '../types/express.ts';
 
 const DPOP_EXPIRATION_SECONDS = 60;
 
@@ -22,7 +22,7 @@ export class DpopGuard implements CanActivate {
       return true;
     }
 
-    const req = context.switchToHttp().getRequest<Request>();
+    const req = context.switchToHttp().getRequest<AppRequest>();
     const rawDpop = req.headers['dpop'];
     const dpopProof = Array.isArray(rawDpop) ? rawDpop[0] : rawDpop;
 

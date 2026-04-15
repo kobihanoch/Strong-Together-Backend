@@ -1,7 +1,7 @@
 import { Controller, Get, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
 import type { GetAnalyticsResponse } from '@strong-together/shared';
-import type { AuthenticatedUser } from '../../common/types/express.js';
+import type { AuthenticatedUser } from '../../common/types/express.ts';
 import { createLogger } from '../../infrastructure/logger.ts';
 import { AnalyticsService } from './analytics.service.ts';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';

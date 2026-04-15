@@ -1,6 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { createLogger } from '../../infrastructure/logger.ts';
+import type { AppRequest } from '../types/express.ts';
 
 const logger = createLogger('filter:error-handler');
 
@@ -9,7 +10,7 @@ const logger = createLogger('filter:error-handler');
 export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
-    const req = ctx.getRequest<Request>();
+    const req = ctx.getRequest<AppRequest>();
     const res = ctx.getResponse<Response>();
 
     const requestLogger = req.logger || logger;

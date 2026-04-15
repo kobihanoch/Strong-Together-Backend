@@ -1,3 +1,4 @@
+import './instrument.ts';
 import { createNestApp } from './app.ts';
 import { appConfig } from './config/app.config.ts';
 import { connectDB } from './infrastructure/db.client.ts';
@@ -5,7 +6,6 @@ import { createLogger } from './infrastructure/logger.ts';
 import { connectRedis } from './infrastructure/redis.client.ts';
 import { flushSentry } from './infrastructure/sentry.ts';
 import { createIOServer } from './infrastructure/socket.io.ts';
-import './instrument.ts';
 
 const logger = createLogger('bootstrap');
 const PORT = appConfig.port;

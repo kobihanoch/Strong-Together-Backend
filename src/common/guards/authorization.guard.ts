@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Request } from 'express';
+import type { AppRequest } from '../types/express.ts';
 
 type Role = 'user' | 'admin';
 
@@ -24,7 +24,7 @@ export class AuthorizationGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    const req = context.switchToHttp().getRequest<Request>();
+    const req = context.switchToHttp().getRequest<AppRequest>();
     const userRole = req.user?.role?.toLowerCase();
 
     if (!userRole) {

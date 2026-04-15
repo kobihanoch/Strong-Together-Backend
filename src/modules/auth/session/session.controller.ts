@@ -1,5 +1,5 @@
 import { Controller, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import type { LoginRequestBody, LoginResponse, LogOutResponse, RefreshTokenResponse } from '@strong-together/shared';
 import { loginRequest } from '@strong-together/shared';
 import type { AppLogger } from '../../../infrastructure/logger.ts';
@@ -18,6 +18,7 @@ import { CurrentLogger } from '../../../common/decorators/current-logger.decorat
 import { RequestData } from '../../../common/decorators/request-data.decorator.ts';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe.ts';
 import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor.ts';
+import type { AppRequest } from '../../../common/types/express.ts';
 
 @Controller('api/auth')
 @UseInterceptors(RlsTxInterceptor)
@@ -40,7 +41,7 @@ export class SessionController {
   async loginUser(
     @RequestData(new ValidateRequestPipe(loginRequest))
     data: { body: LoginRequestBody },
-    @Req() req: Request,
+    @Req() req: AppRequest,
     @CurrentLogger() requestLogger: AppLogger,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResponse> {
@@ -64,7 +65,7 @@ export class SessionController {
   @Post('logout')
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
   @Roles('user')
-  async logoutUser(@Req() req: Request): Promise<LogOutResponse> {
+  async logoutUser(@Req() req: AppRequest): Promise<LogOutResponse> {
     const refreshToken = getRefreshToken(req);
     await this.sessionService.logoutUserData(refreshToken);
     return { message: 'Logged out successfully' };
@@ -83,7 +84,7 @@ export class SessionController {
   @Post('refresh')
   @UseGuards(DpopGuard)
   async refreshAccessToken(
-    @Req() req: Request,
+    @Req() req: AppRequest,
     @Res({ passthrough: true }) res: Response,
   ): Promise<RefreshTokenResponse> {
     const dpopJkt = req.dpopJkt;

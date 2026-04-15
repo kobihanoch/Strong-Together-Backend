@@ -1,18 +1,17 @@
 import { CanActivate, ExecutionContext, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import type { AccessTokenPayload } from '@strong-together/shared';
 import * as crypto from 'crypto';
-import { Request } from 'express';
 import { appConfig } from '../../config/app.config.ts';
 import sql from '../../infrastructure/db.client.ts';
 import { applySentryRequestContext } from '../../infrastructure/sentry.ts';
 import { queryGetCurrentTokenVersion } from '../../modules/auth/session/session.queries.ts';
 import { decodeAccessToken, getAccessToken } from '../authentication/authentication.utils.ts';
-import { AuthenticatedUser } from '../types/express.js';
+import type { AppRequest, AuthenticatedUser } from '../types/express.ts';
 
 @Injectable()
 export class AuthenticationGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req = context.switchToHttp().getRequest<Request>();
+    const req = context.switchToHttp().getRequest<AppRequest>();
     const dpopJkt = req.dpopJkt;
 
     if (appConfig.dpopEnabled) {

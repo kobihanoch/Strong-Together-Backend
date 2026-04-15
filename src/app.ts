@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { Controller, Get, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import helmet from 'helmet';
 import { APP_FILTER } from '@nestjs/core';

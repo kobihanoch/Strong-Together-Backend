@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Put, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import type {
   ChangeEmailAndVerifyBody,
   CheckUserVerifyQuery,
@@ -22,6 +22,7 @@ import {
 import { RequestData } from '../../../common/decorators/request-data.decorator.ts';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe.ts';
 import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor.ts';
+import type { AppRequest } from '../../../common/types/express.ts';
 
 @Controller('api/auth')
 @UseInterceptors(RlsTxInterceptor)
@@ -63,7 +64,7 @@ export class VerificationController {
   async sendVerificationMail(
     @RequestData(new ValidateRequestPipe(sendVerificationMailRequest))
     data: { body: SendVerifcationMailBody },
-    @Req() req: Request,
+    @Req() req: AppRequest,
   ): Promise<void> {
     await this.verificationService.sendVerificationMailData(data.body, req.requestId);
   }
@@ -84,7 +85,7 @@ export class VerificationController {
   async changeEmailAndVerify(
     @RequestData(new ValidateRequestPipe(changeEmailAndVerifyRequest))
     data: { body: ChangeEmailAndVerifyBody },
-    @Req() req: Request,
+    @Req() req: AppRequest,
   ): Promise<void> {
     await this.verificationService.changeEmailAndVerifyData(data.body, req.requestId);
   }

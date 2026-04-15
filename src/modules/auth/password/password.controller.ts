@@ -1,5 +1,4 @@
 import { Controller, Post, Put, Req, UseGuards, UseInterceptors } from '@nestjs/common';
-import type { Request } from 'express';
 import type {
   ResetPasswordBody,
   ResetPasswordQuery,
@@ -17,6 +16,7 @@ import {
 import { RequestData } from '../../../common/decorators/request-data.decorator.ts';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe.ts';
 import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor.ts';
+import type { AppRequest } from '../../../common/types/express.ts';
 
 @Controller('api/auth')
 @UseInterceptors(RlsTxInterceptor)
@@ -38,7 +38,7 @@ export class PasswordController {
   async sendChangePassEmail(
     @RequestData(new ValidateRequestPipe(sendChangePassEmailRequest))
     data: { body: SendChangePassEmailBody },
-    @Req() req: Request,
+    @Req() req: AppRequest,
   ): Promise<void> {
     await this.passwordService.sendChangePassEmailData(data.body, req.requestId);
   }

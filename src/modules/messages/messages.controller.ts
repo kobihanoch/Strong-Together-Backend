@@ -15,7 +15,7 @@ import { AuthenticationGuard } from '../../common/guards/authentication.guard.ts
 import { AuthorizationGuard, Roles } from '../../common/guards/authorization.guard.ts';
 import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
 import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe.ts';
-import type { AuthenticatedUser } from '../../common/types/express.js';
+import type { AuthenticatedUser } from '../../common/types/express.ts';
 import { MessagesService } from './messages.service.ts';
 
 /**

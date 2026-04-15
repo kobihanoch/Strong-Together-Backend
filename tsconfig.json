@@ -23,5 +23,5 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src/**/*", "workers/**/*", "scripts/**/*"]
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "workers/**/*", "scripts/**/*"]
 }
