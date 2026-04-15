@@ -1,23 +1,14 @@
-import { Router } from 'express';
-import { withRlsTx } from '../../infrastructure/db.client.ts';
-import { getPresignedUrlFromS3 } from './video-analysis.controller.ts';
-import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
-import { authenticate } from '../../common/guards/authentication.guard.ts';
-import { authorize } from '../../common/guards/authorization.guard.ts';
-import dpopValidationMiddleware from '../../common/guards/dpop-validation.guard.ts';
-import { validate } from '../../common/pipes/validate-request.pipe.ts';
-import { getPresignedUrlS3Request } from '@strong-together/shared';
+import { Module } from '@nestjs/common';
+import { AuthenticationGuard } from '../../common/guards/authentication.guard.ts';
+import { AuthorizationGuard } from '../../common/guards/authorization.guard.ts';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
+import { VideoAnalysisController } from './video-analysis.controller.ts';
+import { VideoAnalysisSubscriber } from './video-analysis-subscriber.ts';
+import { VideoAnalysisService } from './video-analysis.service.ts';
 
-const router = Router();
-
-// USER
-router.post(
-  '/getpresignedurl',
-  dpopValidationMiddleware,
-  authenticate,
-  authorize('user'),
-  validate(getPresignedUrlS3Request),
-  asyncHandler(withRlsTx(getPresignedUrlFromS3)),
-); // Gets presigned URL from s3
-
-export default router;
+@Module({
+  controllers: [VideoAnalysisController],
+  providers: [VideoAnalysisService, VideoAnalysisSubscriber, DpopGuard, AuthenticationGuard, AuthorizationGuard, RlsTxInterceptor],
+})
+export class VideoAnalysisModule {}

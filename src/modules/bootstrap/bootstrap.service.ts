@@ -2,12 +2,12 @@ import { MessagesService } from './../messages/messages.service.ts';
 import { cacheGetJSON, cacheSetJSON } from '../../infrastructure/cache/redis.cache.ts';
 import type { AppLogger } from '../../infrastructure/logger.ts';
 import type { BootstrapResponse } from '@strong-together/shared';
-import { getWorkoutPlanData } from '../workout/plan/plan.service.ts';
-import { getExerciseTrackingData } from '../workout/tracking/tracking.service.ts';
 import { buildUserTimezoneKeyStable, TTL_TIMEZONE } from './bootstrap.cache.ts';
 import { Injectable } from '@nestjs/common';
 import { AerobicsService } from '../aerobics/aerobics.service.ts';
 import { UpdateUserService } from '../user/update/update.service.ts';
+import { WorkoutPlanService } from '../workout/plan/plan.service.ts';
+import { WorkoutTrackingService } from '../workout/tracking/tracking.service.ts';
 
 @Injectable()
 export class BootstrapService {
@@ -15,6 +15,8 @@ export class BootstrapService {
     private readonly aerobicsService: AerobicsService,
     private readonly messagesService: MessagesService,
     private readonly updateUserService: UpdateUserService,
+    private readonly workoutPlanService: WorkoutPlanService,
+    private readonly workoutTrackingService: WorkoutTrackingService,
   ) {}
 
   async getBootstrapDataPayload(userId: string, tz: string, requestLogger: AppLogger): Promise<BootstrapResponse> {
@@ -22,8 +24,8 @@ export class BootstrapService {
 
     const promises = [
       this.updateUserService.getUserData(userId),
-      getWorkoutPlanData(userId, true, tz),
-      getExerciseTrackingData(userId, 45, true, tz),
+      this.workoutPlanService.getWorkoutPlanData(userId, true, tz),
+      this.workoutTrackingService.getExerciseTrackingData(userId, 45, true, tz),
       this.messagesService.getAllMessagesData(userId, tz),
       this.aerobicsService.getAerobicsData(userId, 45, true, tz),
     ] as const;

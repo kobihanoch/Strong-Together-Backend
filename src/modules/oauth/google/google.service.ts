@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { GoogleOAuthBody, GoogleTokenVerificationResult, OAuthLoginResponse } from '@strong-together/shared';
 import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../../../config/auth.config.ts';
@@ -7,18 +8,18 @@ import {
   queryBumpTokenVersionAndGetSelfData,
   querySetUserFirstLoginFalse,
 } from '../../auth/session/session.queries.ts';
+import { SystemMessagesService } from '../../messages/system-messages/system-messages.service.ts';
+import { buildCnfClaim } from '../oauth.utils.ts';
 import {
   queryCreateUserWithGoogleInfo,
   queryFindUserIdWithGoogleUserId,
   queryTryToLinkUserWithEmailGoogle,
 } from './google.queries.ts';
-import { sendSystemMessageToUserWhenFirstLogin } from '../../messages/system-messages/system-messages.service.ts';
-import type { GoogleOAuthBody, GoogleTokenVerificationResult } from '@strong-together/shared';
-import type { OAuthLoginResponse } from '@strong-together/shared';
 import { verifyGoogleIdToken } from './google.utils.ts';
-import { buildCnfClaim } from '../oauth.utils.ts';
 @Injectable()
 export class GoogleService {
+  constructor(private readonly systemMessagesService: SystemMessagesService) {}
+
   async createOrSignInWithGoogleData(
     body: GoogleOAuthBody,
     jkt: string,
@@ -81,14 +82,17 @@ export class GoogleService {
     }
 
     const finalUserId = userId as string;
-    requestLogger.info({ event: 'oauth.google_login_completed', userId: finalUserId }, 'Google OAuth user authenticated');
+    requestLogger.info(
+      { event: 'oauth.google_login_completed', userId: finalUserId },
+      'Google OAuth user authenticated',
+    );
 
     const rowsUserData = await queryBumpTokenVersionAndGetSelfData(finalUserId);
     const [{ token_version, user_data: userData }] = rowsUserData;
     if (userData.is_first_login && !missingFieldsPayload) {
       await querySetUserFirstLoginFalse(finalUserId);
       try {
-        await sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
+        await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
       } catch (e) {
         requestLogger.error(
           { err: e, event: 'oauth.google_first_login_message_failed', userId: userData.id },
@@ -129,4 +133,3 @@ export class GoogleService {
     };
   }
 }
-

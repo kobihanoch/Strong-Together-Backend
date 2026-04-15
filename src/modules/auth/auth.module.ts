@@ -10,8 +10,10 @@ import { AuthenticationGuard } from '../../common/guards/authentication.guard.ts
 import { AuthorizationGuard } from '../../common/guards/authorization.guard.ts';
 import { RateLimitGuard } from '../../common/guards/rate-limit.guard.ts';
 import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
+import { MessagesModule } from '../messages/messages.module.ts';
 
 @Module({
+  imports: [MessagesModule],
   controllers: [SessionController, VerificationController, PasswordController],
   providers: [
     SessionService,

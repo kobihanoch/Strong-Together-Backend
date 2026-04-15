@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import type { AccessTokenPayload, LoginResponse, RefreshTokenResponse } from '@strong-together/shared';
 import bcrypt from 'bcryptjs';
 import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
+import { appConfig } from '../../../config/app.config.ts';
+import { authConfig } from '../../../config/auth.config.ts';
+import type { AppLogger } from '../../../infrastructure/logger.ts';
+import { SystemMessagesService } from '../../messages/system-messages/system-messages.service.ts';
 import {
   queryBumpTokenVersionAndGetSelfData,
   queryBumpTokenVersionAndGetSelfDataCAS,
@@ -9,15 +14,12 @@ import {
   queryUpdateExpoPushTokenToNull,
   queryUserByIdentifierForLogin,
 } from './session.queries.ts';
-import { appConfig } from '../../../config/app.config.ts';
-import type { AppLogger } from '../../../infrastructure/logger.ts';
-import { authConfig } from '../../../config/auth.config.ts';
-import { sendSystemMessageToUserWhenFirstLogin } from '../../messages/system-messages/system-messages.service.ts';
-import type { AccessTokenPayload, LoginResponse, RefreshTokenResponse } from '@strong-together/shared';
 import { decodeRefreshToken } from './session.utils.ts';
 
 @Injectable()
 export class SessionService {
+  constructor(private readonly systemMessagesService: SystemMessagesService) {}
+
   async loginUserData(
     identifier: string,
     password: string,
@@ -43,7 +45,7 @@ export class SessionService {
     if (user.is_first_login) {
       await querySetUserFirstLoginFalse(user.id);
       try {
-        await sendSystemMessageToUserWhenFirstLogin(user.id, user.name!);
+        await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(user.id, user.name!);
       } catch (e) {
         requestLogger.error(
           { err: e, event: 'auth.first_login_message_failed', userId: user.id },

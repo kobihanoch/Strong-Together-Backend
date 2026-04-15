@@ -6,11 +6,12 @@ import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.t
 import { AerobicsModule } from '../aerobics/aerobics.module.ts';
 import { MessagesModule } from '../messages/messages.module.ts';
 import { UserModule } from '../user/user.module.ts';
+import { WorkoutModule } from '../workout/workout.module.ts';
 import { BootstrapController } from './bootstrap.controller.ts';
 import { BootstrapService } from './bootstrap.service.ts';
 
 @Module({
-  imports: [AerobicsModule, MessagesModule, UserModule],
+  imports: [AerobicsModule, MessagesModule, UserModule, WorkoutModule],
   controllers: [BootstrapController],
   providers: [BootstrapService, DpopGuard, AuthenticationGuard, AuthorizationGuard, RlsTxInterceptor],
 })

@@ -11,7 +11,6 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { Response } from 'express';
 import type {
   DeleteUserProfilePicBody,
   GetAuthenticatedUserByIdResponse,
@@ -20,6 +19,7 @@ import type {
   UpdateUserBody,
 } from '@strong-together/shared';
 import { deleteProfilePicRequest, updateUserRequest } from '@strong-together/shared';
+import type { Response } from 'express';
 import { CurrentLogger } from '../../../common/decorators/current-logger.decorator.ts';
 import { CurrentRequestId } from '../../../common/decorators/current-request-id.decorator.ts';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator.ts';
@@ -39,7 +39,6 @@ import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe
 import type { AppLogger } from '../../../infrastructure/logger.ts';
 import type { AuthenticatedUser } from '../../../shared/types/express.js';
 import { UpdateUserService } from './update.service.ts';
-import { NotFound } from '@aws-sdk/client-s3';
 
 /**
  * User profile-management routes.
@@ -89,8 +88,7 @@ export class UpdateUserController {
   @RateLimit(updateUserRateLimitDaily, updateUserRateLimit)
   @Roles('user')
   async updateAuthenticatedUser(
-    @RequestData(new ValidateRequestPipe(updateUserRequest))
-    data: { body: UpdateUserBody },
+    @RequestData(new ValidateRequestPipe(updateUserRequest)) data: { body: UpdateUserBody },
     @CurrentUser() user: AuthenticatedUser,
     @CurrentRequestId() requestId: string | undefined,
     @Res({ passthrough: true }) res: Response,

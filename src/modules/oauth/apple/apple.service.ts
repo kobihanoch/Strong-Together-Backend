@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { AppleOAuthBody, OAuthLoginResponse } from '@strong-together/shared';
 import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../../../config/auth.config.ts';
@@ -7,19 +8,19 @@ import {
   queryBumpTokenVersionAndGetSelfData,
   querySetUserFirstLoginFalse,
 } from '../../auth/session/session.queries.ts';
+import { buildCnfClaim } from '../oauth.utils.ts';
 import {
   queryCreateUserWithAppleInfo,
   queryFindUserIdWithAppleUserId,
   queryTryToLinkUserWithEmailApple,
 } from './apple.queries.ts';
-import { buildCnfClaim } from '../oauth.utils.ts';
-import { sendSystemMessageToUserWhenFirstLogin } from '../../messages/system-messages/system-messages.service.ts';
-import type { AppleOAuthBody } from '@strong-together/shared';
-import type { OAuthLoginResponse } from '@strong-together/shared';
 import { verifyAppleIdToken } from './apple.utils.ts';
+import { SystemMessagesService } from '../../messages/system-messages/system-messages.service.ts';
 
 @Injectable()
 export class AppleService {
+  constructor(private readonly systemMessagesService: SystemMessagesService) {}
+
   async createOrSignInWithAppleData(
     body: AppleOAuthBody,
     jkt: string,
@@ -98,7 +99,7 @@ export class AppleService {
     if (userData.is_first_login && !missingFieldsPayload) {
       await querySetUserFirstLoginFalse(finalUserId);
       try {
-        await sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
+        await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
       } catch (e) {
         requestLogger.error(
           { err: e, event: 'oauth.apple_first_login_message_failed', userId: userData.id },
@@ -139,4 +140,3 @@ export class AppleService {
     };
   }
 }
-

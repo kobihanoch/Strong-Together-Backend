@@ -1,57 +1,88 @@
-import type { Request, Response } from 'express';
-import { addWorkoutData, getWorkoutPlanData } from './plan.service.ts';
+import { Controller, Get, Post, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import type { Response } from 'express';
 import type {
   AddWorkoutResponse,
   GetWholeUserWorkoutPlanResponse,
   AddWorkoutBody,
   GetWholeUserWorkoutPlanQuery,
 } from '@strong-together/shared';
+import { addWorkoutRequest, getWholeWorkoutPlanRequest } from '@strong-together/shared';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator.ts';
+import { RequestData } from '../../../common/decorators/request-data.decorator.ts';
+import { AuthenticationGuard } from '../../../common/guards/authentication.guard.ts';
+import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.guard.ts';
+import { DpopGuard } from '../../../common/guards/dpop-validation.guard.ts';
+import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor.ts';
+import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe.ts';
+import type { AuthenticatedUser } from '../../../shared/types/express.js';
+import { WorkoutPlanService } from './plan.service.ts';
 
 /**
- * Get the authenticated user's active workout plan.
+ * Workout-plan routes for authenticated users.
  *
- * Returns the current workout plan and editable split structure for the
- * requested timezone, and sets `X-Cache` to reflect cache usage.
+ * Preserves the existing route paths and behavior from the Express version:
+ * - GET /api/workouts/getworkout
+ * - POST /api/workouts/add
  *
- * Route: GET /api/workouts/getworkout
  * Access: User
  */
-export const getWholeUserWorkoutPlan = async (
-  req: Request<{}, GetWholeUserWorkoutPlanResponse, {}, GetWholeUserWorkoutPlanQuery>,
-  res: Response<GetWholeUserWorkoutPlanResponse>,
-): Promise<Response<GetWholeUserWorkoutPlanResponse>> => {
-  const userId = req.user!.id;
-  const tz = req.query.tz as string;
-  const { payload, cacheHit } = await getWorkoutPlanData(userId, true, tz);
-  res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
-  return res.status(200).json(payload);
-};
+@Controller('api/workouts')
+@UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
+@UseInterceptors(RlsTxInterceptor)
+@Roles('user')
+export class WorkoutPlanController {
+  constructor(private readonly workoutPlanService: WorkoutPlanService) {}
 
-/**
- * Delete a workout owned by the authenticated user.
- *
- * This handler is currently a placeholder and does not perform any action.
- *
- * Route: DELETE /api/workouts/delete
- * Access: User
- */
-export const deleteUserWorkout = async (req: Request, res: Response): Promise<void> => {
-  return;
-};
+  /**
+   * Get the authenticated user's active workout plan.
+   *
+   * Returns the current workout plan and editable split structure for the
+   * requested timezone, and sets `X-Cache` to reflect cache usage.
+   *
+   * Route: GET /api/workouts/getworkout
+   * Access: User
+   */
+  @Get('getworkout')
+  async getWholeUserWorkoutPlan(
+    @RequestData(new ValidateRequestPipe(getWholeWorkoutPlanRequest))
+    data: { query: GetWholeUserWorkoutPlanQuery },
+    @CurrentUser() user: AuthenticatedUser,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<GetWholeUserWorkoutPlanResponse> {
+    const tz = data.query.tz;
+    const { payload, cacheHit } = await this.workoutPlanService.getWorkoutPlanData(user.id, true, tz);
+    res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
+    return payload;
+  }
 
-/**
- * Create or replace the authenticated user's workout plan.
- *
- * Persists the submitted workout structure, invalidates related caches,
- * rebuilds the plan snapshot, and returns the updated plan payload.
- *
- * Route: POST /api/workouts/add
- * Access: User
- */
-export const addWorkout = async (
-  req: Request<{}, AddWorkoutResponse, AddWorkoutBody>,
-  res: Response<AddWorkoutResponse>,
-): Promise<Response<AddWorkoutResponse>> => {
-  const payload = await addWorkoutData(req.user!.id, req.body);
-  return res.status(200).json(payload);
-};
+  /**
+   * Delete a workout owned by the authenticated user.
+   *
+   * This handler is currently a placeholder and does not perform any action.
+   *
+   * Route: DELETE /api/workouts/delete
+   * Access: User
+   */
+  async deleteUserWorkout(): Promise<void> {
+    return;
+  }
+
+  /**
+   * Create or replace the authenticated user's workout plan.
+   *
+   * Persists the submitted workout structure, invalidates related caches,
+   * rebuilds the plan snapshot, and returns the updated plan payload.
+   *
+   * Route: POST /api/workouts/add
+   * Access: User
+   */
+  @Post('add')
+  async addWorkout(
+    @RequestData(new ValidateRequestPipe(addWorkoutRequest))
+    data: { body: AddWorkoutBody },
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<AddWorkoutResponse> {
+    const payload = await this.workoutPlanService.addWorkoutData(user.id, data.body);
+    return payload;
+  }
+}

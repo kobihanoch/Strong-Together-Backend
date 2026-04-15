@@ -1,53 +1,25 @@
-import { Router } from 'express';
-import { withRlsTx } from '../../infrastructure/db.client.ts';
-import { finishUserWorkout, getExerciseTracking } from './tracking/tracking.controller.ts';
-import { addWorkout, getWholeUserWorkoutPlan } from './plan/plan.controller.ts';
-import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
-import { authenticate } from '../../common/guards/authentication.guard.ts';
-import { authorize } from '../../common/guards/authorization.guard.ts';
-import dpopValidationMiddleware from '../../common/guards/dpop-validation.guard.ts';
-import { validate } from '../../common/pipes/validate-request.pipe.ts';
-import {
-  addWorkoutRequest,
-  finishWorkoutRequest,
-  getExerciseTrackingRequest,
-  getWholeWorkoutPlanRequest,
-} from '@strong-together/shared';
+import { Module } from '@nestjs/common';
+import { AuthenticationGuard } from '../../common/guards/authentication.guard.ts';
+import { AuthorizationGuard } from '../../common/guards/authorization.guard.ts';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
+import { MessagesModule } from '../messages/messages.module.ts';
+import { WorkoutPlanController } from './plan/plan.controller.ts';
+import { WorkoutPlanService } from './plan/plan.service.ts';
+import { WorkoutTrackingController } from './tracking/tracking.controller.ts';
+import { WorkoutTrackingService } from './tracking/tracking.service.ts';
 
-const router = Router();
-
-// User Routes
-router.get(
-  '/getworkout',
-  dpopValidationMiddleware,
-  authenticate,
-  authorize('user'),
-  validate(getWholeWorkoutPlanRequest),
-  asyncHandler(withRlsTx(getWholeUserWorkoutPlan)),
-); // Gets workout plan (whole)
-router.get(
-  '/gettracking',
-  dpopValidationMiddleware,
-  authenticate,
-  authorize('user'),
-  validate(getExerciseTrackingRequest),
-  asyncHandler(withRlsTx(getExerciseTracking)),
-); // Gets exercise tracking
-router.post(
-  '/finishworkout',
-  dpopValidationMiddleware,
-  authenticate,
-  authorize('user'),
-  validate(finishWorkoutRequest),
-  asyncHandler(withRlsTx(finishUserWorkout)),
-); // Save user's finished workout
-router.post(
-  '/add',
-  dpopValidationMiddleware,
-  authenticate,
-  authorize('user'),
-  validate(addWorkoutRequest),
-  asyncHandler(withRlsTx(addWorkout)),
-); // Add new workout
-
-export default router;
+@Module({
+  imports: [MessagesModule],
+  controllers: [WorkoutPlanController, WorkoutTrackingController],
+  providers: [
+    WorkoutPlanService,
+    WorkoutTrackingService,
+    DpopGuard,
+    AuthenticationGuard,
+    AuthorizationGuard,
+    RlsTxInterceptor,
+  ],
+  exports: [WorkoutPlanService, WorkoutTrackingService],
+})
+export class WorkoutModule {}

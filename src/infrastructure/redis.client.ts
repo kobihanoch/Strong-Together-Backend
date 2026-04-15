@@ -56,3 +56,8 @@ export const createRedisSubscriber = async () => {
   await subscriber.connect();
   return subscriber;
 };
+
+export const closeRedisSubscriber = async (subscriberClient: any) => {
+  await subscriberClient.quit();
+  logger.info('Redis subscriber connection closed');
+};
