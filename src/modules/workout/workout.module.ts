@@ -3,10 +3,10 @@ import { withRlsTx } from '../../infrastructure/db.client.ts';
 import { finishUserWorkout, getExerciseTracking } from './tracking/tracking.controller.ts';
 import { addWorkout, getWholeUserWorkoutPlan } from './plan/plan.controller.ts';
 import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
-import { authenticate } from '../../common/guards/authentication.ts';
-import { authorize } from '../../common/guards/authorization.ts';
-import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
-import { validate } from '../../shared/middlewares/validate-request.ts';
+import { authenticate } from '../../common/guards/authentication.guard.ts';
+import { authorize } from '../../common/guards/authorization.guard.ts';
+import dpopValidationMiddleware from '../../common/guards/dpop-validation.guard.ts';
+import { validate } from '../../common/pipes/validate-request.pipe.ts';
 import {
   addWorkoutRequest,
   finishWorkoutRequest,

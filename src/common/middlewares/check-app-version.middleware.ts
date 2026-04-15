@@ -1,7 +1,5 @@
-// English comments only inside the code
-
+import { HttpException, Injectable, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
-import createError from 'http-errors';
 import { appConfig } from '../../config/app.config.ts';
 
 // Public endpoints that should bypass the version gate (extend as needed)
@@ -35,24 +33,27 @@ function compareVersions(a: string, b: string): number {
   return 0;
 }
 
-export const checkAppVersion = (req: Request, res: Response, next: NextFunction) => {
-  // Skip exempt paths (prefix-based)
-  if (EXEMPT_PREFIXES.some((p) => req.path.startsWith(p))) return next();
+@Injectable()
+export class CheckAppVersionMiddleware implements NestMiddleware {
+  use(req: Request, res: Response, next: NextFunction) {
+    // Skip exempt paths (prefix-based)
+    if (EXEMPT_PREFIXES.some((p) => req.path.startsWith(p))) return next();
 
-  // Read current version and minimum allowed
-  const current = req.headers['x-app-version'] as string; // case-insensitive
-  const min = appConfig.minAppVersion;
+    // Read current version and minimum allowed
+    const current = req.headers['x-app-version'] as string; // case-insensitive
+    const min = appConfig.minAppVersion;
 
-  // If header missing
-  if (!current) {
-    //res.setHeader('x-min-version', min);
-    return next(createError(426, `Please update the app on AppStore`));
+    // If header missing
+    if (!current) {
+      //res.setHeader('x-min-version', min);
+      throw new HttpException(`Please update the app on AppStore`, 426);
+    }
+
+    // Compare semver-like (major -> minor -> patch)
+    if (compareVersions(current, min) < 0) {
+      //res.setHeader('x-min-Version', min);
+      throw new HttpException(`Please update the app on AppStore`, 426);
+    }
+    next();
   }
-
-  // Compare semver-like (major -> minor -> patch)
-  if (compareVersions(current, min) < 0) {
-    res.setHeader('x-min-Version', min);
-    return next(createError(426, `Please update the app on AppStore`));
-  }
-  return next();
-};
+}

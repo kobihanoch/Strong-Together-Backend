@@ -8,10 +8,10 @@ import {
 } from './verification/verification.controller.ts';
 import { loginUser, logoutUser, refreshAccessToken } from './session/session.controller.ts';
 import { resetPassword, sendChangePassEmail } from './password/password.controller.ts';
-import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
+import dpopValidationMiddleware from '../../common/guards/dpop-validation.guard.ts';
 import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
-import { authenticate } from '../../common/guards/authentication.ts';
-import { authorize } from '../../common/guards/authorization.ts';
+import { authenticate } from '../../common/guards/authentication.guard.ts';
+import { authorize } from '../../common/guards/authorization.guard.ts';
 import {
   changeVerificationEmailLimiter,
   changeVerificationEmailLimiterDaily,
@@ -19,8 +19,8 @@ import {
   loginLimiter,
   resetPasswordEmailLimiter,
   restPasswordEmailLimiterDaily,
-} from '../../shared/middlewares/rate-limiter.ts';
-import { validate } from '../../shared/middlewares/validate-request.ts';
+} from '../../common/guards/rate-limit.guard.ts';
+import { validate } from '../../common/pipes/validate-request.pipe.ts';
 import {
   changeEmailAndVerifyRequest,
   checkUserVerifyRequest,

@@ -11,12 +11,12 @@ import {
 import { createUser } from './create/create.controller.ts';
 import { saveUserPushToken } from './push-tokens/push-tokens.controller.ts';
 import { asyncHandler } from '../../shared/middlewares/async-handler.ts';
-import { authenticate } from '../../common/guards/authentication.ts';
-import { authorize } from '../../common/guards/authorization.ts';
-import dpopValidationMiddleware from '../../shared/middlewares/dpop-validation-middleware.ts';
-import { updateUserLimiter, updateUserLimiterDaily } from '../../shared/middlewares/rate-limiter.ts';
+import { authenticate } from '../../common/guards/authentication.guard.ts';
+import { authorize } from '../../common/guards/authorization.guard.ts';
+import dpopValidationMiddleware from '../../common/guards/dpop-validation.guard.ts';
+import { updateUserLimiter, updateUserLimiterDaily } from '../../common/guards/rate-limit.guard.ts';
 import { uploadImage } from '../../shared/middlewares/upload-image.ts';
-import { validate } from '../../shared/middlewares/validate-request.ts';
+import { validate } from '../../common/pipes/validate-request.pipe.ts';
 import {
   createUserRequest,
   deleteProfilePicRequest,
