@@ -1,1 +1,4 @@
 export const REDIS_CLIENT = Symbol('REDIS_CLIENT');
+export const REDIS_SUBSCRIBER = Symbol('REDIS_SUBSCRIBER');
+export const REDIS_OPTIONS = Symbol('REDIS_OPTIONS');
+export const SOCKET_ADAPTER_CLIENTS = Symbol('SOCKET_ADAPTER_CLIENTS');
