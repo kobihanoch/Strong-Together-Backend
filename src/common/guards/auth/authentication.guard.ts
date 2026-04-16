@@ -2,12 +2,12 @@ import { CanActivate, ExecutionContext, Inject, Injectable, NotFoundException, U
 import type { AccessTokenPayload } from '@strong-together/shared';
 import * as crypto from 'crypto';
 import type postgres from 'postgres';
-import { appConfig } from '../../config/app.config.ts';
-import { SQL } from '../../infrastructure/db/db.tokens.ts';
-import { applySentryRequestContext } from '../../infrastructure/sentry.ts';
-import { SessionQueries } from '../../modules/auth/session/session.queries.ts';
-import { decodeAccessToken, getAccessToken } from '../authentication/authentication.utils.ts';
-import type { AppRequest, AuthenticatedUser } from '../types/express.ts';
+import { appConfig } from '../../../config/app.config.ts';
+import { SQL } from '../../../infrastructure/db/db.tokens.ts';
+import { applySentryRequestContext } from '../../../infrastructure/sentry.ts';
+import { SessionQueries } from '../../../modules/auth/session/session.queries.ts';
+import { decodeAccessToken, getAccessToken } from '../../authentication/authentication.utils.ts';
+import type { AppRequest, AuthenticatedUser } from '../../types/express.ts';
 
 @Injectable()
 export class AuthenticationGuard implements CanActivate {

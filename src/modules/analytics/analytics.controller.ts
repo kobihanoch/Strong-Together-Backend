@@ -5,8 +5,8 @@ import type { AuthenticatedUser } from '../../common/types/express.ts';
 import { createLogger } from '../../infrastructure/logger.ts';
 import { AnalyticsService } from './analytics.service.ts';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
-import { AuthenticationGuard } from '../../common/guards/authentication.guard.ts';
-import { AuthorizationGuard, Roles } from '../../common/guards/authorization.guard.ts';
+import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard.ts';
+import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard.ts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.ts';
 import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
 

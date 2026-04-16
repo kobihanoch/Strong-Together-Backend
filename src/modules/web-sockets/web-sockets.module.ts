@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
-import { AuthenticationGuard } from '../../common/guards/authentication.guard.ts';
-import { AuthorizationGuard } from '../../common/guards/authorization.guard.ts';
+import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module.ts';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
-import { SessionQueries } from '../auth/session/session.queries.ts';
 import { WebSocketsController } from './web-sockets.controller.ts';
 import { WebSocketsService } from './web-sockets.service.ts';
 
 @Module({
+  imports: [AuthGuardsModule],
   controllers: [WebSocketsController],
-  providers: [WebSocketsService, SessionQueries, DpopGuard, AuthenticationGuard, AuthorizationGuard],
+  providers: [WebSocketsService, DpopGuard],
 })
 export class WebSocketsModule {}
