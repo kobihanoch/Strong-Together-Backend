@@ -1,6 +1,6 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import axios from 'axios';
-import { queryGetAllUsersToSendHourlyReminder, queryGetAllUsersWithNotificationsEnabled } from './push.queries.ts';
+import { PushQueries } from './push.queries.ts';
 import { enqueuePushNotifications } from '../../infrastructure/queues/push-notifications/push-notifications-producer.ts';
 import type { NotificationPayload } from './push.dtos.ts';
 import { computeDelayFromUTC } from './push.utils.ts';
@@ -68,12 +68,14 @@ function isExpoTransientCode(code = '') {
 
 @Injectable()
 export class PushService {
+  constructor(private readonly pushQueries: PushQueries) {}
+
   async sendPushNotification(token: string, title: string, body: string) {
     return sendPushNotification(token, title, body);
   }
 
   async sendDailyPushData(requestId?: string): Promise<PushBatchResponse> {
-    const users = await queryGetAllUsersWithNotificationsEnabled();
+    const users = await this.pushQueries.queryGetAllUsersWithNotificationsEnabled();
 
     await enqueuePushNotifications(
       users.map((user) => ({
@@ -90,7 +92,7 @@ export class PushService {
   }
 
   async sendHourlyReminderPushData(requestId?: string): Promise<PushBatchResponse> {
-    const users = await queryGetAllUsersToSendHourlyReminder();
+    const users = await this.pushQueries.queryGetAllUsersToSendHourlyReminder();
     const pushNotifications: NotificationPayload[] = [];
     const now = new Date();
 

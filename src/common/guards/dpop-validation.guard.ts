@@ -1,7 +1,7 @@
 import { BadRequestException, CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as jose from 'jose';
 import { appConfig } from '../../config/app.config.ts';
-import { cacheStoreJti } from '../../infrastructure/cache/redis.cache.ts';
+import { cacheStoreJti } from '../../infrastructure/cache/cache.service.ts';
 import { createLogger } from '../../infrastructure/logger.ts';
 import type { AppRequest } from '../types/express.ts';
 

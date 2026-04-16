@@ -4,14 +4,17 @@ import type {
   FinishUserWorkoutBody,
   FinishUserWorkoutResponse,
 } from '@strong-together/shared';
-import { cacheDeleteOtherTimezones, cacheGetJSON, cacheSetJSON } from '../../../infrastructure/cache/redis.cache.ts';
+import { cacheDeleteOtherTimezones, cacheGetJSON, cacheSetJSON } from '../../../infrastructure/cache/cache.service.ts';
 import { buildTrackingKeyStable, TTL_TRACKING } from './tracking.cache.ts';
-import { queryGetExerciseTrackingAndStats, queryInsertUserFinishedWorkout } from './tracking.queries.ts';
+import { WorkoutTrackingQueries } from './tracking.queries.ts';
 import { SystemMessagesService } from '../../messages/system-messages/system-messages.service.ts';
 
 @Injectable()
 export class WorkoutTrackingService {
-  constructor(private readonly systemMessagesService: SystemMessagesService) {}
+  constructor(
+    private readonly systemMessagesService: SystemMessagesService,
+    private readonly workoutTrackingQueries: WorkoutTrackingQueries,
+  ) {}
 
   async getExerciseTrackingData(
     userId: string,
@@ -28,7 +31,7 @@ export class WorkoutTrackingService {
       }
     }
 
-    const data = await queryGetExerciseTrackingAndStats(userId, days, tz);
+    const data = await this.workoutTrackingQueries.queryGetExerciseTrackingAndStats(userId, days, tz);
     const payload = data;
     await cacheSetJSON(key, payload, TTL_TRACKING);
     return { payload, cacheHit: false };
@@ -44,7 +47,7 @@ export class WorkoutTrackingService {
       throw new BadRequestException('Not a valid workout');
     }
 
-    await queryInsertUserFinishedWorkout(userId, workoutArray, workoutStartUtc, workoutEndUtc);
+    await this.workoutTrackingQueries.queryInsertUserFinishedWorkout(userId, workoutArray, workoutStartUtc, workoutEndUtc);
 
     const { payload } = await this.getExerciseTrackingData(userId, 45, false, tz);
     await cacheSetJSON(buildTrackingKeyStable(userId, 45, tz), payload, TTL_TRACKING);

@@ -3,13 +3,14 @@ import { appConfig } from '../../config/app.config.ts';
 import { createLogger } from '../logger.ts';
 import { Inject, Injectable } from '@nestjs/common';
 import { RedisClientType } from 'redis';
+import { REDIS_CLIENT } from '../redis/redis.tokens.ts';
 
 @Injectable()
 export class CacheService {
   private readonly enabled = appConfig.cacheEnabled;
   private readonly logger = createLogger('utils:cache');
 
-  constructor(@Inject('REDIS_CLIENT') private readonly redis: RedisClientType) {}
+  constructor(@Inject(REDIS_CLIENT) private readonly redis: RedisClientType) {}
 
   async deleteRedisKeys(keys: string[]): Promise<void> {
     if (!this.enabled || !this.redis || keys.length === 0) return;

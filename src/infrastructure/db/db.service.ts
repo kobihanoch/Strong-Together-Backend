@@ -86,6 +86,7 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
     return proxy;
   }
 
+  // Later exposed as SQL token tag
   get sql(): postgres.Sql {
     return this.sqlInstance;
   }

@@ -1,18 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { MessageAfterSendResponse } from '@strong-together/shared';
+import type postgres from 'postgres';
 import { appConfig } from '../../../config/app.config.ts';
-import sql from '../../../infrastructure/db.client.ts';
+import { SQL } from '../../../infrastructure/db/db.tokens.ts';
 import { MessagesService } from '../messages.service.ts';
 import { getEndOfWorkoutMessage, getFirstLoginMessage } from './system-messages.templates.ts';
 
 @Injectable()
 export class SystemMessagesService {
-  constructor(private readonly messagesService: MessagesService) {}
+  constructor(
+    private readonly messagesService: MessagesService,
+    @Inject(SQL) private readonly sql: postgres.Sql,
+  ) {}
 
   private async createAndSend(receiverId: string, msg: { header: string; text: string }) {
     const senderId = appConfig.systemUserId as string;
 
-    const [row] = await sql<[MessageAfterSendResponse]>`
+    const [row] = await this.sql<[MessageAfterSendResponse]>`
       WITH inserted AS (
         INSERT INTO messages (sender_id, receiver_id, subject, msg)
         VALUES (${senderId}::uuid, ${receiverId}::uuid, ${msg.header}, ${msg.text})

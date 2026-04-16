@@ -5,8 +5,8 @@ import type {
   GetPresignedUrlFromS3Response,
   SquatRepetition,
 } from '@strong-together/shared';
-import { getUploadUrl } from '../../infrastructure/aws/s3.service.ts';
 import { UserEntity } from '@strong-together/shared';
+import { S3Service } from '../../infrastructure/aws/s3/s3.service.ts';
 import { getIO } from '../../infrastructure/socket.io.ts';
 
 export const normalizeHeaderValue = (value: string | string[] | undefined): string => {
@@ -19,6 +19,8 @@ export const normalizeHeaderValue = (value: string | string[] | undefined): stri
 
 @Injectable()
 export class VideoAnalysisService {
+  constructor(private readonly s3Service: S3Service) {}
+
   async getPresignedUrlData({
     exercise,
     fileType,
@@ -57,7 +59,7 @@ export class VideoAnalysisService {
       'video.exercise': exercise,
     });
 
-    const uploadUrl = await getUploadUrl(fileKey, fileType, metadata);
+    const uploadUrl = await this.s3Service.getUploadUrl(fileKey, fileType, metadata);
 
     return {
       payload: {

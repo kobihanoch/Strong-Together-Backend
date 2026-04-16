@@ -1,4 +1,4 @@
-import sql from '../../../infrastructure/db.client.ts';
+import sql from '../../../infrastructure/db/db.service.ts';
 import type { AerobicEntity, UserEntity } from '@strong-together/shared';
 
 async function wait(ms: number) {

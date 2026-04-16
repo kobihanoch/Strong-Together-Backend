@@ -1,5 +1,5 @@
 import { MessagesService } from './../messages/messages.service.ts';
-import { cacheGetJSON, cacheSetJSON } from '../../infrastructure/cache/redis.cache.ts';
+import { cacheGetJSON, cacheSetJSON } from '../../infrastructure/cache/cache.service.ts';
 import type { AppLogger } from '../../infrastructure/logger.ts';
 import type { BootstrapResponse } from '@strong-together/shared';
 import { buildUserTimezoneKeyStable, TTL_TIMEZONE } from './bootstrap.cache.ts';

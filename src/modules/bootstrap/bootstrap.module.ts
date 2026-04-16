@@ -9,10 +9,11 @@ import { UserModule } from '../user/user.module.ts';
 import { WorkoutModule } from '../workout/workout.module.ts';
 import { BootstrapController } from './bootstrap.controller.ts';
 import { BootstrapService } from './bootstrap.service.ts';
+import { SessionQueries } from '../auth/session/session.queries.ts';
 
 @Module({
   imports: [AerobicsModule, MessagesModule, UserModule, WorkoutModule],
   controllers: [BootstrapController],
-  providers: [BootstrapService, DpopGuard, AuthenticationGuard, AuthorizationGuard, RlsTxInterceptor],
+  providers: [BootstrapService, SessionQueries, DpopGuard, AuthenticationGuard, AuthorizationGuard, RlsTxInterceptor],
 })
 export class BootstrapModule {}

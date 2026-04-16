@@ -3,21 +3,18 @@ import type { GoogleOAuthBody, GoogleTokenVerificationResult, OAuthLoginResponse
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../../../config/auth.config.ts';
 import type { AppLogger } from '../../../infrastructure/logger.ts';
-import {
-  queryBumpTokenVersionAndGetSelfData,
-  querySetUserFirstLoginFalse,
-} from '../../auth/session/session.queries.ts';
+import { SessionQueries } from '../../auth/session/session.queries.ts';
 import { SystemMessagesService } from '../../messages/system-messages/system-messages.service.ts';
 import { buildCnfClaim } from '../oauth.utils.ts';
-import {
-  queryCreateUserWithGoogleInfo,
-  queryFindUserIdWithGoogleUserId,
-  queryTryToLinkUserWithEmailGoogle,
-} from './google.queries.ts';
+import { GoogleQueries } from './google.queries.ts';
 import { verifyGoogleIdToken } from './google.utils.ts';
 @Injectable()
 export class GoogleService {
-  constructor(private readonly systemMessagesService: SystemMessagesService) {}
+  constructor(
+    private readonly systemMessagesService: SystemMessagesService,
+    private readonly sessionQueries: SessionQueries,
+    private readonly googleQueries: GoogleQueries,
+  ) {}
 
   async createOrSignInWithGoogleData(
     body: GoogleOAuthBody,
@@ -31,7 +28,7 @@ export class GoogleService {
       idToken,
     )) as GoogleTokenVerificationResult;
 
-    let { userId, missing_fields } = await queryFindUserIdWithGoogleUserId(googleSub);
+    let { userId, missing_fields } = await this.googleQueries.queryFindUserIdWithGoogleUserId(googleSub);
     const userExistOnOAuthUsers = !!userId;
     let missingFieldsPayload = null;
     if (userExistOnOAuthUsers && missing_fields) missingFieldsPayload = missing_fields.split(',');
@@ -43,7 +40,7 @@ export class GoogleService {
         'Google OAuth user not found, trying to link',
       );
       if (emailVerified) {
-        const { userId: userIdFromLink } = await queryTryToLinkUserWithEmailGoogle(email, googleSub);
+        const { userId: userIdFromLink } = await this.googleQueries.queryTryToLinkUserWithEmailGoogle(email, googleSub);
         if (userIdFromLink) {
           userId = userIdFromLink;
           isLinked = true;
@@ -64,7 +61,7 @@ export class GoogleService {
         if (!isValidEmail) missingFields += 'email,';
         if (!isValidFullname) missingFields += 'name';
 
-        const userIdFromRegister = await queryCreateUserWithGoogleInfo(
+        const userIdFromRegister = await this.googleQueries.queryCreateUserWithGoogleInfo(
           username,
           isValidEmail ? email : null,
           fullName,
@@ -86,10 +83,10 @@ export class GoogleService {
       'Google OAuth user authenticated',
     );
 
-    const rowsUserData = await queryBumpTokenVersionAndGetSelfData(finalUserId);
+    const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(finalUserId);
     const [{ token_version, user_data: userData }] = rowsUserData;
     if (userData.is_first_login && !missingFieldsPayload) {
-      await querySetUserFirstLoginFalse(finalUserId);
+      await this.sessionQueries.querySetUserFirstLoginFalse(finalUserId);
       try {
         await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
       } catch (e) {

@@ -3,22 +3,19 @@ import type { AppleOAuthBody, OAuthLoginResponse } from '@strong-together/shared
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../../../config/auth.config.ts';
 import type { AppLogger } from '../../../infrastructure/logger.ts';
-import {
-  queryBumpTokenVersionAndGetSelfData,
-  querySetUserFirstLoginFalse,
-} from '../../auth/session/session.queries.ts';
+import { SessionQueries } from '../../auth/session/session.queries.ts';
 import { buildCnfClaim } from '../oauth.utils.ts';
-import {
-  queryCreateUserWithAppleInfo,
-  queryFindUserIdWithAppleUserId,
-  queryTryToLinkUserWithEmailApple,
-} from './apple.queries.ts';
+import { AppleQueries } from './apple.queries.ts';
 import { verifyAppleIdToken } from './apple.utils.ts';
 import { SystemMessagesService } from '../../messages/system-messages/system-messages.service.ts';
 
 @Injectable()
 export class AppleService {
-  constructor(private readonly systemMessagesService: SystemMessagesService) {}
+  constructor(
+    private readonly systemMessagesService: SystemMessagesService,
+    private readonly sessionQueries: SessionQueries,
+    private readonly appleQueries: AppleQueries,
+  ) {}
 
   async createOrSignInWithAppleData(
     body: AppleOAuthBody,
@@ -47,7 +44,7 @@ export class AppleService {
 
     const resolvedEmail = tokenEmail ?? email ?? null;
 
-    let { userId, missing_fields } = await queryFindUserIdWithAppleUserId(appleSub);
+    let { userId, missing_fields } = await this.appleQueries.queryFindUserIdWithAppleUserId(appleSub);
     const userExistOnOAuthUsers = !!userId;
 
     let missingFieldsPayload = null;
@@ -59,7 +56,7 @@ export class AppleService {
       let isLinked = false;
 
       if (emailVerified && resolvedEmail) {
-        const { userId: linkedId } = await queryTryToLinkUserWithEmailApple(resolvedEmail, appleSub);
+        const { userId: linkedId } = await this.appleQueries.queryTryToLinkUserWithEmailApple(resolvedEmail, appleSub);
         if (linkedId) {
           userId = linkedId;
           isLinked = true;
@@ -75,7 +72,7 @@ export class AppleService {
         if (!isValidEmail) missingFields += 'email,';
         if (!isValidFullname) missingFields += 'name';
 
-        const newUserId = await queryCreateUserWithAppleInfo(
+        const newUserId = await this.appleQueries.queryCreateUserWithAppleInfo(
           username,
           isValidEmail ? resolvedEmail : null,
           candidateFullName,
@@ -92,11 +89,11 @@ export class AppleService {
     }
 
     const finalUserId = userId as string;
-    const rowsUserData = await queryBumpTokenVersionAndGetSelfData(finalUserId);
+    const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(finalUserId);
     const [{ token_version, user_data: userData }] = rowsUserData;
 
     if (userData.is_first_login && !missingFieldsPayload) {
-      await querySetUserFirstLoginFalse(finalUserId);
+      await this.sessionQueries.querySetUserFirstLoginFalse(finalUserId);
       try {
         await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
       } catch (e) {

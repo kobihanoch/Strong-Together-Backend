@@ -6,9 +6,20 @@ import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.t
 import { VideoAnalysisController } from './video-analysis.controller.ts';
 import { VideoAnalysisSubscriber } from './video-analysis-subscriber.ts';
 import { VideoAnalysisService } from './video-analysis.service.ts';
+import { AWSModule } from '../../infrastructure/aws/aws.module.ts';
+import { SessionQueries } from '../auth/session/session.queries.ts';
 
 @Module({
+  imports: [AWSModule],
   controllers: [VideoAnalysisController],
-  providers: [VideoAnalysisService, VideoAnalysisSubscriber, DpopGuard, AuthenticationGuard, AuthorizationGuard, RlsTxInterceptor],
+  providers: [
+    VideoAnalysisService,
+    VideoAnalysisSubscriber,
+    SessionQueries,
+    DpopGuard,
+    AuthenticationGuard,
+    AuthorizationGuard,
+    RlsTxInterceptor,
+  ],
 })
 export class VideoAnalysisModule {}
