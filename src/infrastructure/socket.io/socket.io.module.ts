@@ -16,6 +16,7 @@ import { SOCKET_IO } from './socket.io.tokens.ts';
         const io = new Server(httpServer, {
           path: '/socket.io',
           cors: { origin: '*', credentials: true },
+          transports: ['websocket', 'polling'],
         });
         return io;
       },
