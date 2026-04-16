@@ -4,10 +4,10 @@ import type postgres from 'postgres';
 import { SQL } from '../../../infrastructure/db/db.tokens.ts';
 import { VerificationQueries } from './verification.queries.ts';
 import { CreateUserQueries } from '../../user/create/create.queries.ts';
-import { sendVerificationEmail } from './verification-emails/verification-emails.service.ts';
+import { VerificationEmailsService } from './verification-emails/verification-emails.service.ts';
 import { generateVerificationFailedHTML, generateVerifiedHTML } from './verification.views.ts';
 import type { ChangeEmailAndVerifyBody, SendVerifcationMailBody } from '@strong-together/shared';
-import { cacheStoreJti } from '../../../infrastructure/cache/cache.service.ts';
+import { CacheService } from '../../../infrastructure/cache/cache.service.ts';
 import { decodeVerifyToken } from './verification.utils.ts';
 
 @Injectable()
@@ -16,6 +16,8 @@ export class VerificationService {
     @Inject(SQL) private readonly sql: postgres.Sql,
     private readonly verificationQueries: VerificationQueries,
     private readonly createUserQueries: CreateUserQueries,
+    private readonly verificationEmailsService: VerificationEmailsService,
+    private readonly cacheSerice: CacheService,
   ) {}
 
   async verifyUserAccountData(token: string | undefined): Promise<{ statusCode: number; html: string }> {
@@ -33,7 +35,7 @@ export class VerificationService {
     const nowSec = Math.floor(Date.now() / 1000);
     const ttlSec = Math.max(1, exp - nowSec);
 
-    const inserted = await cacheStoreJti('accountverify', jti, ttlSec);
+    const inserted = await this.cacheSerice.cacheStoreJti('accountverify', jti, ttlSec);
     if (!inserted) {
       return { statusCode: 401, html: generateVerificationFailedHTML() };
     }
@@ -48,7 +50,7 @@ export class VerificationService {
       SELECT id, name, username FROM users WHERE email=${email}`;
     if (!user) return;
     const { id, name } = user;
-    await sendVerificationEmail(email, id, name ?? user.username, {
+    await this.verificationEmailsService.sendVerificationEmail(email, id, name ?? user.username, {
       ...(requestId ? { requestId } : {}),
     });
   }
@@ -67,9 +69,14 @@ export class VerificationService {
     if (exists) throw new ConflictException('Email already in use');
 
     await this.sql`UPDATE users SET email = ${newEmail} WHERE id = ${user.id}::uuid`;
-    await sendVerificationEmail(newEmail, user.id, user.name ? user.name : user.username!, {
-      ...(requestId ? { requestId } : {}),
-    });
+    await this.verificationEmailsService.sendVerificationEmail(
+      newEmail,
+      user.id,
+      user.name ? user.name : user.username!,
+      {
+        ...(requestId ? { requestId } : {}),
+      },
+    );
   }
 
   async checkUserVerifyData(username: string): Promise<{ isVerified: boolean }> {

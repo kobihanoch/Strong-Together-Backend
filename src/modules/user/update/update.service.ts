@@ -6,7 +6,6 @@ import { supabaseConfig } from '../../../config/storage.config.ts';
 import type { AppLogger } from '../../../infrastructure/logger.ts';
 import { SQL } from '../../../infrastructure/db/db.tokens.ts';
 import { UpdateUserQueries } from './update.queries.ts';
-import { sendVerificationEmailForEmailUpdate } from './update-emails/update-emails.service.ts';
 import {
   deleteFromSupabase,
   uploadBufferToSupabase,
@@ -20,14 +19,17 @@ import type {
   UpdateAuthenticatedUserResponse,
   UserDataResponse,
 } from '@strong-together/shared';
-import { cacheStoreJti } from '../../../infrastructure/cache/cache.service.ts';
 import { decodeChangeEmailToken } from './update.utils.ts';
+import { UpdateEmailsService } from './update-emails/update-emails.service.ts';
+import { CacheService } from '../../../infrastructure/cache/cache.service.ts';
 
 @Injectable()
 export class UpdateUserService {
   constructor(
     @Inject(SQL) private readonly sql: postgres.Sql,
     private readonly updateUserQueries: UpdateUserQueries,
+    private readonly updateEmailsService: UpdateEmailsService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async getUserData(userId: string): Promise<{ payload: UserDataResponse['user_data'] }> {
@@ -38,7 +40,8 @@ export class UpdateUserService {
   }
 
   async updateUsersReminderSettingsTimezone(userId: string, tz: string): Promise<void> {
-    await this.sql`update public.user_reminder_settings urs set timezone=${tz}::text where urs.user_id = ${userId}::uuid and urs.timezone is distinct from ${tz}::text;`;
+    await this
+      .sql`update public.user_reminder_settings urs set timezone=${tz}::text where urs.user_id = ${userId}::uuid and urs.timezone is distinct from ${tz}::text;`;
   }
 
   async updateAuthenticatedUserData(
@@ -68,7 +71,7 @@ export class UpdateUserService {
 
     let emailChanged = false;
     if (candidate && candidate !== currentEmail) {
-      await sendVerificationEmailForEmailUpdate(candidate, userId, userData.name || 'there', {
+      await this.updateEmailsService.sendVerificationEmailForEmailUpdate(candidate, userId, userData.name || 'there', {
         ...(requestId ? { requestId } : {}),
       });
       emailChanged = true;
@@ -99,7 +102,7 @@ export class UpdateUserService {
 
     const nowSec = Math.floor(Date.now() / 1000);
     const ttlSec = Math.max(1, exp - nowSec);
-    const inserted = await cacheStoreJti('emailchange', jti, ttlSec);
+    const inserted = await this.cacheService.cacheStoreJti('emailchange', jti, ttlSec);
     if (!inserted) {
       return { statusCode: 401, html: generateEmailChangeFailedHTML('URL already used or expired') };
     }

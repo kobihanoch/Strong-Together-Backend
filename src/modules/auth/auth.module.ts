@@ -14,9 +14,12 @@ import { CreateUserQueries } from '../user/create/create.queries.ts';
 import { PasswordQueries } from './password/password.queries.ts';
 import { SessionQueries } from './session/session.queries.ts';
 import { VerificationQueries } from './verification/verification.queries.ts';
+import { VerificationEmailsService } from './verification/verification-emails/verification-emails.service.ts';
+import { PasswordEmailsService } from './password/password-emails/password-emails.service.ts';
+import { EmailsModule } from '../../infrastructure/queues/emails/emails.module.ts';
 
 @Module({
-  imports: [AuthGuardsModule, MessagesModule],
+  imports: [AuthGuardsModule, MessagesModule, EmailsModule],
   controllers: [SessionController, VerificationController, PasswordController],
   providers: [
     SessionQueries,
@@ -29,6 +32,9 @@ import { VerificationQueries } from './verification/verification.queries.ts';
     DpopGuard,
     RateLimitGuard,
     RlsTxInterceptor,
+    VerificationEmailsService,
+    PasswordEmailsService,
   ],
+  exports: [VerificationEmailsService],
 })
 export class AuthModule {}

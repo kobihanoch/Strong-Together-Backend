@@ -8,17 +8,42 @@ const logger = createLogger('bootstrap');
 const PORT = appConfig.port;
 
 const app = await createNestApp();
+app.enableShutdownHooks();
 
-app.listen(PORT, () => {
+await app.listen(PORT, () => {
   logger.info({ event: 'server.started', port: PORT }, 'HTTP server is running');
+});
+
+let shuttingDown = false;
+
+const closeApiResources = async (signal?: string, exitCode = 0) => {
+  if (shuttingDown) {
+    return;
+  }
+
+  shuttingDown = true;
+  logger.info({ event: 'process.shutdown_started', signal }, 'Shutting down API resources');
+
+  await app.close();
+
+  await flushSentry();
+  process.exit(exitCode);
+};
+
+process.once('SIGINT', () => {
+  void closeApiResources('SIGINT');
+});
+
+process.once('SIGTERM', () => {
+  void closeApiResources('SIGTERM');
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   logger.fatal({ event: 'process.unhandledRejection', promise, reason }, 'Unhandled promise rejection');
-  void flushSentry().finally(() => process.exit(1));
+  void closeApiResources('unhandledRejection', 1);
 });
 
 process.on('uncaughtException', (err) => {
   logger.fatal({ err, event: 'process.uncaughtException' }, 'Uncaught exception');
-  void flushSentry().finally(() => process.exit(1));
+  void closeApiResources('uncaughtException', 1);
 });

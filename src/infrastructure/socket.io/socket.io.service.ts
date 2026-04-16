@@ -73,7 +73,13 @@ export class SocketIOService implements OnModuleInit {
       });
 
       // Join per-user room
-      socket.join(userId!);
+      if (!userId) {
+        socketLogger.warn({ event: 'websocket.missing_user_id' }, 'WebSocket connection missing authenticated user id');
+        socket.disconnect(true);
+        return;
+      }
+
+      socket.join(userId);
 
       socketLogger.info({ event: 'websocket.user_connected' }, 'WebSocket user connected');
 

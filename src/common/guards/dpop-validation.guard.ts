@@ -1,7 +1,7 @@
 import { BadRequestException, CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as jose from 'jose';
 import { appConfig } from '../../config/app.config.ts';
-import { cacheStoreJti } from '../../infrastructure/cache/cache.service.ts';
+import { CacheService } from '../../infrastructure/cache/cache.service.ts';
 import { createLogger } from '../../infrastructure/logger.ts';
 import type { AppRequest } from '../types/express.ts';
 
@@ -16,6 +16,7 @@ const ALLOWED_BASES = [
 @Injectable()
 export class DpopGuard implements CanActivate {
   private readonly logger = createLogger('middleware:dpop');
+  constructor(private readonly cacheService: CacheService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     if (!appConfig.dpopEnabled) {
@@ -92,7 +93,7 @@ export class DpopGuard implements CanActivate {
         throw new UnauthorizedException('DPoP proof missing jti.');
       }
 
-      const inserted = await cacheStoreJti('dpop', jti, DPOP_EXPIRATION_SECONDS);
+      const inserted = await this.cacheService.cacheStoreJti('dpop', jti, DPOP_EXPIRATION_SECONDS);
       if (!inserted) {
         throw new UnauthorizedException('DPoP already used');
       }

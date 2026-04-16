@@ -1,13 +1,13 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { ResetPasswordResponse, SendChangePassEmailBody } from '@strong-together/shared';
 import bcrypt from 'bcryptjs';
-import { cacheStoreJti } from '../../../infrastructure/cache/cache.service.ts';
-import type postgres from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens.ts';
-import { sendForgotPasswordEmail } from './password-emails/password-emails.service.ts';
 import { PasswordQueries } from './password.queries.ts';
 import { SessionQueries } from '../session/session.queries.ts';
 import { decodeForgotPasswordToken } from './password.utils.ts';
+import { SQL } from '../../../infrastructure/db/db.tokens.ts';
+import { PasswordEmailsService } from './password-emails/password-emails.service.ts';
+import postgres from 'postgres';
+import { CacheService } from '../../../infrastructure/cache/cache.service.ts';
 
 @Injectable()
 export class PasswordService {
@@ -15,6 +15,8 @@ export class PasswordService {
     @Inject(SQL) private readonly sql: postgres.Sql,
     private readonly passwordQueries: PasswordQueries,
     private readonly sessionQueries: SessionQueries,
+    private readonly passwordEmailsService: PasswordEmailsService,
+    private readonly cacheService: CacheService,
   ) {}
 
   async sendChangePassEmailData(body: SendChangePassEmailBody, requestId?: string): Promise<void> {
@@ -27,9 +29,14 @@ export class PasswordService {
         AND (username=${identifier} OR email=${identifier}) LIMIT 1`;
     if (!user) return;
 
-    await sendForgotPasswordEmail(user.email, user.id, user.name ? user.name : user.username, {
-      ...(requestId ? { requestId } : {}),
-    });
+    await this.passwordEmailsService.sendForgotPasswordEmail(
+      user.email,
+      user.id,
+      user.name ? user.name : user.username,
+      {
+        ...(requestId ? { requestId } : {}),
+      },
+    );
   }
 
   async resetPasswordData(token: string | undefined, newPassword: string): Promise<ResetPasswordResponse> {
@@ -47,7 +54,7 @@ export class PasswordService {
     const nowSec = Math.floor(Date.now() / 1000);
     const ttlSec = Math.max(1, exp - nowSec);
 
-    const inserted = await cacheStoreJti('forgotpassword', jti, ttlSec);
+    const inserted = await this.cacheService.cacheStoreJti('forgotpassword', jti, ttlSec);
     if (!inserted) {
       throw new BadRequestException('URL already used or expired');
     }
