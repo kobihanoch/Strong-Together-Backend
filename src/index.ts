@@ -1,25 +1,15 @@
-import './instrument.ts';
 import { createNestApp } from './app.ts';
 import { appConfig } from './config/app.config.ts';
-import { connectDB } from './infrastructure/db.client.ts';
 import { createLogger } from './infrastructure/logger.ts';
-import { connectRedis } from './infrastructure/redis.client.ts';
 import { flushSentry } from './infrastructure/sentry.ts';
-import { createIOServer } from './infrastructure/socket.io.ts';
+import './instrument.ts';
 
 const logger = createLogger('bootstrap');
 const PORT = appConfig.port;
 
-await connectDB(); // Connect to PostgreSQL
-await connectRedis(); // Connect to Redis
-
 const app = await createNestApp();
-await app.init();
 
-const { server } = await createIOServer(app.getHttpServer());
-
-server.listen(PORT, () => {
-  logger.info({ event: 'websocket.started', port: PORT }, 'WebSocket server is running');
+app.listen(PORT, () => {
   logger.info({ event: 'server.started', port: PORT }, 'HTTP server is running');
 });
 

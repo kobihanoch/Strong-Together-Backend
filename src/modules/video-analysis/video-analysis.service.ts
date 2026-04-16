@@ -7,7 +7,7 @@ import type {
 } from '@strong-together/shared';
 import { UserEntity } from '@strong-together/shared';
 import { S3Service } from '../../infrastructure/aws/s3/s3.service.ts';
-import { getIO } from '../../infrastructure/socket.io.ts';
+import { SocketIOService } from './../../infrastructure/socket.io/socket.io.service.ts';
 
 export const normalizeHeaderValue = (value: string | string[] | undefined): string => {
   if (Array.isArray(value)) {
@@ -19,7 +19,10 @@ export const normalizeHeaderValue = (value: string | string[] | undefined): stri
 
 @Injectable()
 export class VideoAnalysisService {
-  constructor(private readonly s3Service: S3Service) {}
+  constructor(
+    private readonly socketIOService: SocketIOService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   async getPresignedUrlData({
     exercise,
@@ -72,15 +75,7 @@ export class VideoAnalysisService {
   }
 
   emitVideoAnalysisResults = (userId: UserEntity['id'], results: AnalyzeVideoResultPayload<SquatRepetition>) => {
-    try {
-      getIO().to(userId).emit(`video_analysis_results`, results);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Socket.IO not initialized!') {
-        return;
-      }
-
-      throw error;
-    }
+    this.socketIOService.emitToUser(userId, `video_analysis_results`, results);
   };
 
   normalizeHeaderValue = normalizeHeaderValue;

@@ -22,6 +22,10 @@ import { GeneralRateLimitMiddleware } from './common/middlewares/general-rate-li
 import { RequestLoggerMiddleware } from './common/middlewares/request-logger.middleware.ts';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter.ts';
 import { setupSentryErrorHandler } from './infrastructure/sentry.ts';
+import { RedisModule } from './infrastructure/redis/redis.module.ts';
+import { DBModule } from './infrastructure/db/db.module.ts';
+import { SocketIOModule } from './infrastructure/socket.io/socket.io.module.ts';
+import { AWSModule } from './infrastructure/aws/aws.module.ts';
 
 @Controller()
 class AppController {
@@ -38,6 +42,10 @@ class AppController {
 
 @Module({
   imports: [
+    RedisModule,
+    DBModule,
+    SocketIOModule,
+    AWSModule,
     AerobicsModule,
     AnalyticsModule,
     AuthModule,
@@ -64,12 +72,7 @@ class AppController {
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer
-      .apply(
-        GeneralRateLimitMiddleware,
-        RequestLoggerMiddleware,
-        BotBlockerMiddleware,
-        CheckAppVersionMiddleware,
-      )
+      .apply(GeneralRateLimitMiddleware, RequestLoggerMiddleware, BotBlockerMiddleware, CheckAppVersionMiddleware)
       .forRoutes('*');
   }
 }

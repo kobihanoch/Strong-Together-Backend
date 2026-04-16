@@ -5,12 +5,15 @@ import type {
   MarkMessageAsReadResponse,
   MessageAfterSendResponse,
 } from '@strong-together/shared';
-import { getIO } from '../../infrastructure/socket.io.ts';
+import { SocketIOService } from '../../infrastructure/socket.io/socket.io.service.ts';
 import { MessagesQueries } from './messages.queries.ts';
 
 @Injectable()
 export class MessagesService {
-  constructor(private readonly messagesQueries: MessagesQueries) {}
+  constructor(
+    private readonly socketIOService: SocketIOService,
+    private readonly messagesQueries: MessagesQueries,
+  ) {}
 
   async getAllMessagesData(
     userId: string,
@@ -42,14 +45,6 @@ export class MessagesService {
   }
 
   emitNewMessage(userId: string, msg: MessageAfterSendResponse): void {
-    try {
-      getIO().to(userId).emit('new_message', msg);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Socket.IO not initialized!') {
-        return;
-      }
-
-      throw error;
-    }
+    this.socketIOService.emitToUser(userId, 'new_message', msg);
   }
 }
