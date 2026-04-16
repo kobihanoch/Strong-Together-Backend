@@ -26,6 +26,7 @@ import { RedisModule } from './infrastructure/redis/redis.module.ts';
 import { DBModule } from './infrastructure/db/db.module.ts';
 import { SocketIOModule } from './infrastructure/socket.io/socket.io.module.ts';
 import { AWSModule } from './infrastructure/aws/aws.module.ts';
+import { CacheModule } from './infrastructure/cache/cache.module.ts';
 
 @Controller()
 class AppController {
@@ -46,6 +47,7 @@ class AppController {
     DBModule,
     SocketIOModule,
     AWSModule,
+    CacheModule,
     AerobicsModule,
     AnalyticsModule,
     AuthModule,

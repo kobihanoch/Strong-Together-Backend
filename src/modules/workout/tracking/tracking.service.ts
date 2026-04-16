@@ -4,7 +4,7 @@ import type {
   FinishUserWorkoutBody,
   FinishUserWorkoutResponse,
 } from '@strong-together/shared';
-import { cacheDeleteOtherTimezones, cacheGetJSON, cacheSetJSON } from '../../../infrastructure/cache/cache.service.ts';
+import { CacheService } from '../../../infrastructure/cache/cache.service.ts';
 import { buildTrackingKeyStable, TTL_TRACKING } from './tracking.cache.ts';
 import { WorkoutTrackingQueries } from './tracking.queries.ts';
 import { SystemMessagesService } from '../../messages/system-messages/system-messages.service.ts';
@@ -12,6 +12,7 @@ import { SystemMessagesService } from '../../messages/system-messages/system-mes
 @Injectable()
 export class WorkoutTrackingService {
   constructor(
+    private readonly cacheService: CacheService,
     private readonly systemMessagesService: SystemMessagesService,
     private readonly workoutTrackingQueries: WorkoutTrackingQueries,
   ) {}
@@ -24,8 +25,8 @@ export class WorkoutTrackingService {
   ): Promise<{ payload: ExerciseTrackingAndStats; cacheHit: boolean }> {
     const key = buildTrackingKeyStable(userId, days, tz);
     if (fromCache) {
-      await cacheDeleteOtherTimezones(key);
-      const cached = await cacheGetJSON(key);
+      await this.cacheService.cacheDeleteOtherTimezones(key);
+      const cached = await this.cacheService.cacheGetJSON(key);
       if (cached) {
         return { payload: cached, cacheHit: true };
       }
@@ -33,7 +34,7 @@ export class WorkoutTrackingService {
 
     const data = await this.workoutTrackingQueries.queryGetExerciseTrackingAndStats(userId, days, tz);
     const payload = data;
-    await cacheSetJSON(key, payload, TTL_TRACKING);
+    await this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING);
     return { payload, cacheHit: false };
   }
 
@@ -50,7 +51,7 @@ export class WorkoutTrackingService {
     await this.workoutTrackingQueries.queryInsertUserFinishedWorkout(userId, workoutArray, workoutStartUtc, workoutEndUtc);
 
     const { payload } = await this.getExerciseTrackingData(userId, 45, false, tz);
-    await cacheSetJSON(buildTrackingKeyStable(userId, 45, tz), payload, TTL_TRACKING);
+    await this.cacheService.cacheSetJSON(buildTrackingKeyStable(userId, 45, tz), payload, TTL_TRACKING);
 
     this.systemMessagesService.sendSystemMessageToUserWorkoutDone(userId);
     return payload;

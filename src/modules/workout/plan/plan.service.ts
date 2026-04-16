@@ -1,19 +1,17 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { CacheService } from '../../../infrastructure/cache/cache.service.ts';
 import { WorkoutPlanQueries } from './plan.queries.ts';
 import type { AddWorkoutBody, AddWorkoutResponse, GetWholeUserWorkoutPlanResponse } from '@strong-together/shared';
 
 import { buildPlanKeyStable, TTL_PLAN } from './plan.cache.ts';
-import {
-  cacheDeleteKey,
-  cacheDeleteOtherTimezones,
-  cacheGetJSON,
-  cacheSetJSON,
-} from '../../../infrastructure/cache/cache.service.ts';
 import { buildAnalyticsKeyStable } from '../../analytics/analytics.cache.ts';
 
 @Injectable()
 export class WorkoutPlanService {
-  constructor(private readonly workoutPlanQueries: WorkoutPlanQueries) {}
+  constructor(
+    private readonly workoutPlanQueries: WorkoutPlanQueries,
+    private readonly cacheService: CacheService,
+  ) {}
 
   async getWorkoutPlanData(
     userId: string,
@@ -22,8 +20,8 @@ export class WorkoutPlanService {
   ): Promise<{ payload: GetWholeUserWorkoutPlanResponse; cacheHit: boolean }> {
     const planKey = buildPlanKeyStable(userId, tz);
     if (fromCache) {
-      await cacheDeleteOtherTimezones(planKey);
-      const cached = await cacheGetJSON<GetWholeUserWorkoutPlanResponse>(planKey);
+      await this.cacheService.cacheDeleteOtherTimezones(planKey);
+      const cached = await this.cacheService.cacheGetJSON<GetWholeUserWorkoutPlanResponse>(planKey);
       if (cached) {
         return { payload: cached, cacheHit: true };
       }
@@ -33,13 +31,13 @@ export class WorkoutPlanService {
     const [plan] = rows;
     if (!plan) {
       const empty = { workoutPlan: null, workoutPlanForEditWorkout: null };
-      await cacheSetJSON(planKey, empty, TTL_PLAN);
+      await this.cacheService.cacheSetJSON(planKey, empty, TTL_PLAN);
       return { payload: empty, cacheHit: false };
     }
 
     const { splits } = await this.workoutPlanQueries.queryGetWorkoutSplitsObj(rows[0].id);
     const payload = { workoutPlan: plan, workoutPlanForEditWorkout: splits };
-    await cacheSetJSON(planKey, payload, TTL_PLAN);
+    await this.cacheService.cacheSetJSON(planKey, payload, TTL_PLAN);
     return { payload, cacheHit: false };
   }
 
@@ -50,8 +48,8 @@ export class WorkoutPlanService {
 
     const planKey = buildPlanKeyStable(userId, tz);
     const analyticsKey = buildAnalyticsKeyStable(userId);
-    await cacheDeleteKey(analyticsKey);
-    await cacheDeleteKey(planKey);
+    await this.cacheService.cacheDeleteKey(analyticsKey);
+    await this.cacheService.cacheDeleteKey(planKey);
 
     const rows = await this.workoutPlanQueries.queryWholeUserWorkoutPlan(userId, tz);
     const [plan] = rows;
@@ -66,7 +64,7 @@ export class WorkoutPlanService {
       workoutPlanForEditWorkout: splits,
     };
 
-    await cacheSetJSON(
+    await this.cacheService.cacheSetJSON(
       buildPlanKeyStable(userId, tz),
       {
         workoutPlan: plan,

@@ -1,5 +1,5 @@
 import { MessagesService } from './../messages/messages.service.ts';
-import { cacheGetJSON, cacheSetJSON } from '../../infrastructure/cache/cache.service.ts';
+import { CacheService } from '../../infrastructure/cache/cache.service.ts';
 import type { AppLogger } from '../../infrastructure/logger.ts';
 import type { BootstrapResponse } from '@strong-together/shared';
 import { buildUserTimezoneKeyStable, TTL_TIMEZONE } from './bootstrap.cache.ts';
@@ -13,6 +13,7 @@ import { WorkoutTrackingService } from '../workout/tracking/tracking.service.ts'
 export class BootstrapService {
   constructor(
     private readonly aerobicsService: AerobicsService,
+    private readonly cacheService: CacheService,
     private readonly messagesService: MessagesService,
     private readonly updateUserService: UpdateUserService,
     private readonly workoutPlanService: WorkoutPlanService,
@@ -20,7 +21,8 @@ export class BootstrapService {
   ) {}
 
   async getBootstrapDataPayload(userId: string, tz: string, requestLogger: AppLogger): Promise<BootstrapResponse> {
-    const { tz: cachedTz = null } = (await cacheGetJSON<{ tz: string }>(buildUserTimezoneKeyStable(userId))) || {};
+    const { tz: cachedTz = null } =
+      (await this.cacheService.cacheGetJSON<{ tz: string }>(buildUserTimezoneKeyStable(userId))) || {};
 
     const promises = [
       this.updateUserService.getUserData(userId),
@@ -41,7 +43,7 @@ export class BootstrapService {
     const [ud, wp, et, msg, aer] = await Promise.all(promises);
     await timezoneUpdatePromise;
 
-    await cacheSetJSON<{ tz: string }>(buildUserTimezoneKeyStable(userId), { tz }, TTL_TIMEZONE);
+    await this.cacheService.cacheSetJSON<{ tz: string }>(buildUserTimezoneKeyStable(userId), { tz }, TTL_TIMEZONE);
 
     return {
       user: ud.payload,
