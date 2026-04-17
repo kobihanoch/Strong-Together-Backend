@@ -15,9 +15,15 @@ import { UpdateEmailsService } from './update/update-emails/update-emails.servic
 import { UpdateUserController } from './update/update.controller.ts';
 import { UpdateUserQueries } from './update/update.queries.ts';
 import { UpdateUserService } from './update/update.service.ts';
+import { SupabaseModule } from '../../infrastructure/supabase/supabase.module.ts';
 
 @Module({
-  imports: [AuthGuardsModule, EmailsModule, AuthModule /* For verification mails */],
+  imports: [
+    AuthGuardsModule,
+    EmailsModule,
+    AuthModule /* For verification mails */,
+    SupabaseModule /* For profile pics updating */,
+  ],
   controllers: [CreateUserController, PushTokensController, UpdateUserController],
   providers: [
     CreateUserQueries,

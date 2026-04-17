@@ -6,10 +6,6 @@ import { supabaseConfig } from '../../../config/storage.config.ts';
 import type { AppLogger } from '../../../infrastructure/logger.ts';
 import { SQL } from '../../../infrastructure/db/db.tokens.ts';
 import { UpdateUserQueries } from './update.queries.ts';
-import {
-  deleteFromSupabase,
-  uploadBufferToSupabase,
-} from '../../../infrastructure/supabase/supabase-storage.service.ts';
 import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from './update.views.ts';
 import type {
   ChangeEmailTokenPayload,
@@ -22,6 +18,7 @@ import type {
 import { decodeChangeEmailToken } from './update.utils.ts';
 import { UpdateEmailsService } from './update-emails/update-emails.service.ts';
 import { CacheService } from '../../../infrastructure/cache/cache.service.ts';
+import { SupabaseStorageService } from '../../../infrastructure/supabase/storage/supabase-storage.service.ts';
 
 @Injectable()
 export class UpdateUserService {
@@ -29,6 +26,7 @@ export class UpdateUserService {
     @Inject(SQL) private readonly sql: postgres.Sql,
     private readonly updateUserQueries: UpdateUserQueries,
     private readonly updateEmailsService: UpdateEmailsService,
+    private readonly supabaseStorageService: SupabaseStorageService,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -143,7 +141,7 @@ export class UpdateUserService {
     const ext = path.extname(file.originalname) || `.${mime.getExtension(file.mimetype) || 'jpg'}`;
     const key = `${userId}/${Date.now()}${ext}`;
 
-    const { path: newPath, publicUrl } = await uploadBufferToSupabase(
+    const { path: newPath, publicUrl } = await this.supabaseStorageService.uploadBufferToSupabase(
       supabaseConfig.bucketName,
       key,
       file.buffer,
@@ -155,7 +153,7 @@ export class UpdateUserService {
     await this.updateUserQueries.queryUpdateUserProfilePicURL(userId, newPath);
 
     if (oldPath && oldPath !== newPath) {
-      deleteFromSupabase(oldPath).catch((e: any) => {
+      this.supabaseStorageService.deleteFromSupabase(oldPath).catch((e: any) => {
         requestLogger.warn(
           {
             err: e,
@@ -173,7 +171,7 @@ export class UpdateUserService {
   }
 
   async deleteUserProfilePicData(userId: string, body: DeleteUserProfilePicBody): Promise<void> {
-    await deleteFromSupabase(body.path);
+    await this.supabaseStorageService.deleteFromSupabase(body.path);
     await this.updateUserQueries.queryUpdateUserProfilePicURL(userId, null);
   }
 }
