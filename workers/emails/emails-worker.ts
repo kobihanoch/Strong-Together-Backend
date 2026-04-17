@@ -1,6 +1,6 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { createLogger } from '../../src/infrastructure/logger.ts';
-import { sendMail } from '../../src/infrastructure/mailer.service.ts';
+import { MailerService } from '../../src/infrastructure/mailer/mailer.service.ts';
 import { EmailsQueueService } from '../../src/infrastructure/queues/emails/emails-queue.ts';
 import { captureWorkerException } from '../../src/infrastructure/sentry.ts';
 
@@ -10,7 +10,10 @@ const logger = createLogger('worker:emails', {
 
 @Injectable()
 export class EmailsWorkerService implements OnModuleInit, OnModuleDestroy {
-  constructor(@Inject(EmailsQueueService) private readonly emailsQueueService: EmailsQueueService) {}
+  constructor(
+    @Inject(EmailsQueueService) private readonly emailsQueueService: EmailsQueueService,
+    @Inject(MailerService) private readonly mailerService: MailerService,
+  ) {}
 
   async onModuleInit() {
     await this.runWorker();
@@ -45,7 +48,7 @@ export class EmailsWorkerService implements OnModuleInit, OnModuleDestroy {
             return;
           }
 
-          await sendMail({ to, subject, html });
+          await this.mailerService.sendMail({ to, subject, html });
           const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
           jobLogger.info({ event: 'job.succeeded', durationMs: Number(durationMs.toFixed(2)) }, 'Email sent');
         } catch (e) {
