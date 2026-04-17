@@ -5,9 +5,9 @@ import type {
   GetPresignedUrlFromS3Response,
   SquatRepetition,
 } from '@strong-together/shared';
-import { getUploadUrl } from '../../infrastructure/aws/s3.service.ts';
 import { UserEntity } from '@strong-together/shared';
-import { getIO } from '../../infrastructure/socket.io.ts';
+import { S3Service } from '../../infrastructure/aws/s3/s3.service.ts';
+import { SocketIOService } from './../../infrastructure/socket.io/socket.io.service.ts';
 
 export const normalizeHeaderValue = (value: string | string[] | undefined): string => {
   if (Array.isArray(value)) {
@@ -19,6 +19,11 @@ export const normalizeHeaderValue = (value: string | string[] | undefined): stri
 
 @Injectable()
 export class VideoAnalysisService {
+  constructor(
+    private readonly socketIOService: SocketIOService,
+    private readonly s3Service: S3Service,
+  ) {}
+
   async getPresignedUrlData({
     exercise,
     fileType,
@@ -57,7 +62,7 @@ export class VideoAnalysisService {
       'video.exercise': exercise,
     });
 
-    const uploadUrl = await getUploadUrl(fileKey, fileType, metadata);
+    const uploadUrl = await this.s3Service.getUploadUrl(fileKey, fileType, metadata);
 
     return {
       payload: {
@@ -70,15 +75,7 @@ export class VideoAnalysisService {
   }
 
   emitVideoAnalysisResults = (userId: UserEntity['id'], results: AnalyzeVideoResultPayload<SquatRepetition>) => {
-    try {
-      getIO().to(userId).emit(`video_analysis_results`, results);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Socket.IO not initialized!') {
-        return;
-      }
-
-      throw error;
-    }
+    this.socketIOService.emitToUser(userId, `video_analysis_results`, results);
   };
 
   normalizeHeaderValue = normalizeHeaderValue;

@@ -3,8 +3,8 @@ import { bootstrapRequest, type BootstrapRequestQuery, type BootstrapResponse } 
 import { CurrentLogger } from '../../common/decorators/current-logger.decorator.ts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator.ts';
 import { RequestData } from '../../common/decorators/request-data.decorator.ts';
-import { AuthenticationGuard } from '../../common/guards/authentication.guard.ts';
-import { AuthorizationGuard, Roles } from '../../common/guards/authorization.guard.ts';
+import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard.ts';
+import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard.ts';
 import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
 import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe.ts';
 import type { AppLogger } from '../../infrastructure/logger.ts';

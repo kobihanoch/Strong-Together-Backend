@@ -6,18 +6,15 @@ import { appConfig } from '../../../config/app.config.ts';
 import { authConfig } from '../../../config/auth.config.ts';
 import type { AppLogger } from '../../../infrastructure/logger.ts';
 import { SystemMessagesService } from '../../messages/system-messages/system-messages.service.ts';
-import {
-  queryBumpTokenVersionAndGetSelfData,
-  queryBumpTokenVersionAndGetSelfDataCAS,
-  querySetUserFirstLoginFalse,
-  queryUpdateExpoPushTokenToNull,
-  queryUserByIdentifierForLogin,
-} from './session.queries.ts';
+import { SessionQueries } from './session.queries.ts';
 import { decodeRefreshToken } from './session.utils.ts';
 
 @Injectable()
 export class SessionService {
-  constructor(private readonly systemMessagesService: SystemMessagesService) {}
+  constructor(
+    private readonly systemMessagesService: SystemMessagesService,
+    private readonly sessionQueries: SessionQueries,
+  ) {}
 
   async loginUserData(
     identifier: string,
@@ -31,7 +28,7 @@ export class SessionService {
       }
     }
 
-    const [user = null] = await queryUserByIdentifierForLogin(identifier);
+    const [user = null] = await this.sessionQueries.queryUserByIdentifierForLogin(identifier);
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
     const isMatch = await bcrypt.compare(password, user.password!);
@@ -42,7 +39,7 @@ export class SessionService {
     }
 
     if (user.is_first_login) {
-      await querySetUserFirstLoginFalse(user.id);
+      await this.sessionQueries.querySetUserFirstLoginFalse(user.id);
       try {
         await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(user.id, user.name!);
       } catch (e) {
@@ -53,7 +50,7 @@ export class SessionService {
       }
     }
 
-    const rowsUserData = await queryBumpTokenVersionAndGetSelfData(user.id);
+    const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(user.id);
     const [{ token_version, user_data: userData }] = rowsUserData;
 
     const cnfClaim = jkt
@@ -99,8 +96,8 @@ export class SessionService {
 
     if (decodedRefresh) {
       await Promise.all([
-        queryUpdateExpoPushTokenToNull(decodedRefresh.id),
-        queryBumpTokenVersionAndGetSelfData(decodedRefresh.id),
+        this.sessionQueries.queryUpdateExpoPushTokenToNull(decodedRefresh.id),
+        this.sessionQueries.queryBumpTokenVersionAndGetSelfData(decodedRefresh.id),
       ]);
     }
   }
@@ -127,7 +124,7 @@ export class SessionService {
       }
     }
 
-    const [user = null] = await queryBumpTokenVersionAndGetSelfDataCAS(decoded.id, decoded.tokenVer);
+    const [user = null] = await this.sessionQueries.queryBumpTokenVersionAndGetSelfDataCAS(decoded.id, decoded.tokenVer);
     if (!user) throw new UnauthorizedException('New login required');
 
     const { token_version, user_data: userData } = user;

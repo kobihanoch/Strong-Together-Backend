@@ -1,16 +1,25 @@
-import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
-import sql from '../../../infrastructure/db.client.ts';
-import { queryUpdateUserVerficiationStatus, queryUserByUsername } from './verification.queries.ts';
-import { queryUserExistsByUsernameOrEmail } from '../../user/create/create.queries.ts';
-import { sendVerificationEmail } from './verification-emails/verification-emails.service.ts';
+import type postgres from 'postgres';
+import { SQL } from '../../../infrastructure/db/db.tokens.ts';
+import { VerificationQueries } from './verification.queries.ts';
+import { CreateUserQueries } from '../../user/create/create.queries.ts';
+import { VerificationEmailsService } from './verification-emails/verification-emails.service.ts';
 import { generateVerificationFailedHTML, generateVerifiedHTML } from './verification.views.ts';
 import type { ChangeEmailAndVerifyBody, SendVerifcationMailBody } from '@strong-together/shared';
-import { cacheStoreJti } from '../../../infrastructure/cache/redis.cache.ts';
+import { CacheService } from '../../../infrastructure/cache/cache.service.ts';
 import { decodeVerifyToken } from './verification.utils.ts';
 
 @Injectable()
 export class VerificationService {
+  constructor(
+    @Inject(SQL) private readonly sql: postgres.Sql,
+    private readonly verificationQueries: VerificationQueries,
+    private readonly createUserQueries: CreateUserQueries,
+    private readonly verificationEmailsService: VerificationEmailsService,
+    private readonly cacheSerice: CacheService,
+  ) {}
+
   async verifyUserAccountData(token: string | undefined): Promise<{ statusCode: number; html: string }> {
     if (!token) throw new BadRequestException('Missing token');
     const decoded = decodeVerifyToken(token);
@@ -26,22 +35,22 @@ export class VerificationService {
     const nowSec = Math.floor(Date.now() / 1000);
     const ttlSec = Math.max(1, exp - nowSec);
 
-    const inserted = await cacheStoreJti('accountverify', jti, ttlSec);
+    const inserted = await this.cacheSerice.cacheStoreJti('accountverify', jti, ttlSec);
     if (!inserted) {
       return { statusCode: 401, html: generateVerificationFailedHTML() };
     }
 
-    await queryUpdateUserVerficiationStatus(sub, true);
+    await this.verificationQueries.queryUpdateUserVerficiationStatus(sub, true);
     return { statusCode: 200, html: generateVerifiedHTML() };
   }
 
   async sendVerificationMailData(body: SendVerifcationMailBody, requestId?: string): Promise<void> {
     const { email } = body;
-    const [user = null] = await sql<{ id: string; name: string | null; username: string }[]>`
+    const [user = null] = await this.sql<{ id: string; name: string | null; username: string }[]>`
       SELECT id, name, username FROM users WHERE email=${email}`;
     if (!user) return;
     const { id, name } = user;
-    await sendVerificationEmail(email, id, name ?? user.username, {
+    await this.verificationEmailsService.sendVerificationEmail(email, id, name ?? user.username, {
       ...(requestId ? { requestId } : {}),
     });
   }
@@ -49,24 +58,29 @@ export class VerificationService {
   async changeEmailAndVerifyData(body: ChangeEmailAndVerifyBody, requestId?: string): Promise<void> {
     const { username, password, newEmail } = body;
 
-    const [user = null] = await queryUserByUsername(username);
+    const [user = null] = await this.verificationQueries.queryUserByUsername(username);
     if (!user) throw new UnauthorizedException('Invalid credentials');
     const ok = await bcrypt.compare(password, user.password!);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
 
     if (user.is_verified) throw new BadRequestException('Account already verified');
 
-    const [exists] = await queryUserExistsByUsernameOrEmail(null, newEmail);
+    const [exists] = await this.createUserQueries.queryUserExistsByUsernameOrEmail(null, newEmail);
     if (exists) throw new ConflictException('Email already in use');
 
-    await sql`UPDATE users SET email = ${newEmail} WHERE id = ${user.id}::uuid`;
-    await sendVerificationEmail(newEmail, user.id, user.name ? user.name : user.username!, {
-      ...(requestId ? { requestId } : {}),
-    });
+    await this.sql`UPDATE users SET email = ${newEmail} WHERE id = ${user.id}::uuid`;
+    await this.verificationEmailsService.sendVerificationEmail(
+      newEmail,
+      user.id,
+      user.name ? user.name : user.username!,
+      {
+        ...(requestId ? { requestId } : {}),
+      },
+    );
   }
 
   async checkUserVerifyData(username: string): Promise<{ isVerified: boolean }> {
-    const [user] = await sql<{ is_verified: boolean }[]>`SELECT is_verified FROM users WHERE username=${username}`;
+    const [user] = await this.sql<{ is_verified: boolean }[]>`SELECT is_verified FROM users WHERE username=${username}`;
     return { isVerified: user?.is_verified ?? false };
   }
 }

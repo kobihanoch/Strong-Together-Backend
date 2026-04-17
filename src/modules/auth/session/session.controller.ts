@@ -6,8 +6,8 @@ import type { AppLogger } from '../../../infrastructure/logger.ts';
 import { getRefreshToken } from './session.utils.ts';
 import { SessionService } from './session.service.ts';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard.ts';
-import { AuthenticationGuard } from '../../../common/guards/authentication.guard.ts';
-import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.guard.ts';
+import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard.ts';
+import { AuthorizationGuard, Roles } from '../../../common/guards/auth/authorization.guard.ts';
 import {
   RateLimit,
   RateLimitGuard,
