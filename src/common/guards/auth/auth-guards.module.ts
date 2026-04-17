@@ -5,6 +5,6 @@ import { AuthorizationGuard } from './authorization.guard.ts';
 
 @Module({
   providers: [SessionQueries, AuthenticationGuard, AuthorizationGuard],
-  exports: [AuthenticationGuard, AuthorizationGuard],
+  exports: [SessionQueries, AuthenticationGuard, AuthorizationGuard],
 })
 export class AuthGuardsModule {}

@@ -28,6 +28,8 @@ import { SocketIOModule } from './infrastructure/socket.io/socket.io.module.ts';
 import { AWSModule } from './infrastructure/aws/aws.module.ts';
 import { CacheModule } from './infrastructure/cache/cache.module.ts';
 
+let testAppPromise: Promise<NestExpressApplication> | null = null;
+
 @Controller()
 class AppController {
   @Get()
@@ -81,6 +83,7 @@ export class AppModule implements NestModule {
 
 export const createNestApp = async () => {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    abortOnError: false,
     logger: false,
   });
 
@@ -100,6 +103,19 @@ export const createNestApp = async () => {
 };
 
 export const createApp = async (): Promise<NestExpressApplication> => {
+  if (process.env.NODE_ENV === 'test') {
+    testAppPromise ??= (async () => {
+      const app = await createNestApp();
+      await app.init();
+      return app;
+    })().catch((error) => {
+      testAppPromise = null;
+      throw error;
+    });
+
+    return testAppPromise;
+  }
+
   const app = await createNestApp();
   await app.init();
   return app;

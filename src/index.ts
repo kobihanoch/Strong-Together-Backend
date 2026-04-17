@@ -28,7 +28,13 @@ const closeApiResources = async (signal?: string, exitCode = 0) => {
   shuttingDown = true;
   logger.info({ event: 'process.shutdown_started', signal }, 'Shutting down API resources');
 
-  await app.close();
+  try {
+    await app.close();
+    logger.info({ event: 'process.shutdown_completed', signal }, 'API resources are closed');
+  } catch (err) {
+    logger.error({ err, event: 'process.shutdown_failed', signal }, 'API shutdown failed');
+    exitCode = 1;
+  }
 
   await flushSentry();
   process.exit(exitCode);
