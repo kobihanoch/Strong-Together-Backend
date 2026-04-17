@@ -6,18 +6,19 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { authConfig } from '../../config/auth.config.ts';
 import { createApp } from '../../app.ts';
 import { loginResponseSchema, createUserResponseSchema } from '@strong-together/shared';
+import { getAuthenticatedUserByIdResponseSchema, updateAuthenticatedUserResponseSchema } from '@strong-together/shared';
+import { authHeaders, createChangeEmailToken, loginUsersTestUser } from '../../common/tests/helpers/auth.ts';
+import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
 import {
-  getAuthenticatedUserByIdResponseSchema,
-  updateAuthenticatedUserResponseSchema,
-} from '@strong-together/shared';
-import { authHeaders, createChangeEmailToken, loginUsersTestUser } from '../../shared/tests/helpers/auth.ts';
-import { expectSchema } from '../../shared/tests/helpers/assert-schema.ts';
-import { getUserAuthStateByUsername, hasReminderSettings, waitForUserDeletionByUsername } from '../../shared/tests/helpers/db.ts';
+  getUserAuthStateByUsername,
+  hasReminderSettings,
+  waitForUserDeletionByUsername,
+} from '../../common/tests/helpers/db.ts';
 
-let app: ReturnType<typeof createApp>;
+let app: Awaited<ReturnType<typeof createApp>>;
 
-beforeAll(() => {
-  app = createApp();
+beforeAll(async () => {
+  app = await createApp();
 });
 
 describe('Users', () => {
@@ -27,7 +28,7 @@ describe('Users', () => {
     const username = `user_${suffix}`;
     const email = `user_${suffix}@example.com`;
 
-    const response = await request(app).post('/api/users/create').set('x-app-version', '4.5.0').send({
+    const response = await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
       username,
       fullName: '',
       email,
@@ -63,7 +64,7 @@ describe('Users', () => {
     expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
-    const response = await request(app).get('/api/users/get').set(authHeaders(accessToken));
+    const response = await request(app.getHttpServer()).get('/api/users/get').set(authHeaders(accessToken));
 
     expect(response.status).toBe(200);
     expectSchema(getAuthenticatedUserByIdResponseSchema, response.body);
@@ -78,7 +79,7 @@ describe('Users', () => {
     expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
-    const updateResponse = await request(app).put('/api/users/updateself').set(authHeaders(accessToken)).send({
+    const updateResponse = await request(app.getHttpServer()).put('/api/users/updateself').set(authHeaders(accessToken)).send({
       username: 'auth_test_u2',
       fullName: 'Auth Test User U',
     });
@@ -90,7 +91,7 @@ describe('Users', () => {
     expect(updateResponse.body.user.username).toBe('auth_test_u2');
     expect(updateResponse.body.user.name).toBe('Auth Test User U');
 
-    const getResponse = await request(app).get('/api/users/get').set(authHeaders(accessToken));
+    const getResponse = await request(app.getHttpServer()).get('/api/users/get').set(authHeaders(accessToken));
 
     expect(getResponse.status).toBe(200);
     expectSchema(getAuthenticatedUserByIdResponseSchema, getResponse.body);
@@ -105,7 +106,7 @@ describe('Users', () => {
     const email = `${username}@example.com`;
     const newEmail = `updated_${suffix}@example.com`;
 
-    const createResponse = await request(app).post('/api/users/create').set('x-app-version', '4.5.0').send({
+    const createResponse = await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
       username,
       fullName: 'Email Update',
       email,
@@ -127,18 +128,18 @@ describe('Users', () => {
       { expiresIn: '1h' },
     );
 
-    const verifyResponse = await request(app)
+    const verifyResponse = await request(app.getHttpServer())
       .get('/api/auth/verify')
       .query({ token: verifyToken })
       .set('x-app-version', '4.5.0');
     expect(verifyResponse.status).toBe(200);
 
-    const loginResponse = await request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+    const loginResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
       identifier: email,
       password: 'Test1234!',
     });
 
-    expect(loginResponse.status).toBe(200);
+    expect(loginResponse.status).toBe(201);
     expectSchema(loginResponseSchema, loginResponse.body);
 
     const accessToken = loginResponse.body.accessToken as string;
@@ -147,7 +148,7 @@ describe('Users', () => {
     const beforeUpdate = await getUserAuthStateByUsername(username);
     expect(beforeUpdate).not.toBeNull();
 
-    const updateResponse = await request(app).put('/api/users/updateself').set(authHeaders(accessToken)).send({
+    const updateResponse = await request(app.getHttpServer()).put('/api/users/updateself').set(authHeaders(accessToken)).send({
       email: newEmail,
     });
 
@@ -161,7 +162,7 @@ describe('Users', () => {
     expect(afterRequest?.email).toBe(beforeUpdate?.email);
 
     const token = createChangeEmailToken(userId, newEmail);
-    const confirmResponse = await request(app)
+    const confirmResponse = await request(app.getHttpServer())
       .get('/api/users/changeemail')
       .query({ token })
       .set('x-app-version', '4.5.0');
@@ -175,7 +176,7 @@ describe('Users', () => {
 
   // get authenticated user profile without token -> assert 401
   it('rejects getting the authenticated user profile without token', async () => {
-    const response = await request(app).get('/api/users/get').set('x-app-version', '4.5.0');
+    const response = await request(app.getHttpServer()).get('/api/users/get').set('x-app-version', '4.5.0');
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('No access token provided');
@@ -186,7 +187,7 @@ describe('Users', () => {
     const loginResponse = await loginUsersTestUser();
     const accessToken = loginResponse.body.accessToken as string;
 
-    const response = await request(app).put('/api/users/updateself').set(authHeaders(accessToken)).send({
+    const response = await request(app.getHttpServer()).put('/api/users/updateself').set(authHeaders(accessToken)).send({
       username: 'ab',
       fullName: 'Auth Test User',
     });
@@ -202,13 +203,13 @@ describe('Users', () => {
     const accessToken = loginResponse.body.accessToken as string;
     const pushToken = 'ExponentPushToken[test-token-123]';
 
-    const saveResponse = await request(app).put('/api/users/pushtoken').set(authHeaders(accessToken)).send({
+    const saveResponse = await request(app.getHttpServer()).put('/api/users/pushtoken').set(authHeaders(accessToken)).send({
       token: pushToken,
     });
 
-    expect(saveResponse.status).toBe(204);
+    expect(saveResponse.status).toBe(200);
 
-    const getResponse = await request(app).get('/api/users/get').set(authHeaders(accessToken));
+    const getResponse = await request(app.getHttpServer()).get('/api/users/get').set(authHeaders(accessToken));
 
     expect(getResponse.status).toBe(200);
     expectSchema(getAuthenticatedUserByIdResponseSchema, getResponse.body);
@@ -217,7 +218,7 @@ describe('Users', () => {
 
   // save push token without token -> assert 401
   it('rejects saving push token without access token', async () => {
-    const response = await request(app).put('/api/users/pushtoken').set('x-app-version', '4.5.0').send({
+    const response = await request(app.getHttpServer()).put('/api/users/pushtoken').set('x-app-version', '4.5.0').send({
       token: 'ExponentPushToken[test-token-123]',
     });
 
@@ -231,7 +232,7 @@ describe('Users', () => {
     expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
-    const response = await request(app).put('/api/users/updateself').set(authHeaders(accessToken)).send({
+    const response = await request(app.getHttpServer()).put('/api/users/updateself').set(authHeaders(accessToken)).send({
       username: 'conflict_user',
       fullName: 'Auth Test User',
     });
@@ -246,12 +247,12 @@ describe('Users', () => {
     expectSchema(loginResponseSchema, loginResponse.body);
     const accessToken = loginResponse.body.accessToken as string;
 
-    const deleteResponse = await request(app).delete('/api/users/deleteself').set(authHeaders(accessToken));
+    const deleteResponse = await request(app.getHttpServer()).delete('/api/users/deleteself').set(authHeaders(accessToken));
 
     expect(deleteResponse.status).toBe(200);
     expect(deleteResponse.body.message).toBe('User deleted successfully');
 
-    const getResponse = await request(app).get('/api/users/get').set(authHeaders(accessToken));
+    const getResponse = await request(app.getHttpServer()).get('/api/users/get').set(authHeaders(accessToken));
 
     expect([401, 404]).toContain(getResponse.status);
     expect(['New login required', 'User not found']).toContain(getResponse.body.message);
@@ -263,7 +264,7 @@ describe('Users', () => {
     const username = `delete_${suffix}`;
     const email = `${username}@example.com`;
 
-    const createResponse = await request(app).post('/api/users/create').set('x-app-version', '4.5.0').send({
+    const createResponse = await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
       username,
       fullName: 'Delete Me',
       email,
@@ -285,21 +286,21 @@ describe('Users', () => {
       { expiresIn: '1h' },
     );
 
-    const verifyResponse = await request(app)
+    const verifyResponse = await request(app.getHttpServer())
       .get('/api/auth/verify')
       .query({ token: verifyToken })
       .set('x-app-version', '4.5.0');
     expect(verifyResponse.status).toBe(200);
 
-    const loginDeleteResponse = await request(app).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+    const loginDeleteResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
       identifier: email,
       password: 'Test1234!',
     });
 
-    expect(loginDeleteResponse.status).toBe(200);
+    expect(loginDeleteResponse.status).toBe(201);
     expectSchema(loginResponseSchema, loginDeleteResponse.body);
 
-    const deleteResponse = await request(app)
+    const deleteResponse = await request(app.getHttpServer())
       .delete('/api/users/deleteself')
       .set(authHeaders(loginDeleteResponse.body.accessToken as string));
 
@@ -309,7 +310,7 @@ describe('Users', () => {
 
   // create user with taken username -> assert conflict is rejected before insert
   it('rejects creating a user with an existing username', async () => {
-    const response = await request(app).post('/api/users/create').set('x-app-version', '4.5.0').send({
+    const response = await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
       username: 'auth_test_user',
       fullName: 'Duplicate User',
       email: 'duplicate_create_user@example.com',
@@ -321,4 +322,3 @@ describe('Users', () => {
     expect(response.body.message).toBe('User already exists');
   });
 });
-

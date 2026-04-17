@@ -1,40 +1,59 @@
-import './instrument.ts';
-import { connectDB } from './infrastructure/db.client.ts';
+import { createNestApp } from './app.ts';
+import { appConfig } from './config/app.config.ts';
 import { createLogger } from './infrastructure/logger.ts';
 import { flushSentry } from './infrastructure/sentry.ts';
-import { connectRedis } from './infrastructure/redis.client.ts';
-import { createIOServer } from './infrastructure/socket.io.ts';
-import { createApp } from './app.ts';
-import { appConfig } from './config/app.config.ts';
-import { startVideoAnalysisSubscriber } from './modules/video-analysis/video-analysis-subscriber.ts';
+import './instrument.ts';
 
-// RESOURECES CONNECTIONS AND GENERAL CONFIGURATIONS  ------------------------------------------
 const logger = createLogger('bootstrap');
-
-const app = createApp();
-
-// Define port
 const PORT = appConfig.port;
 
-await connectDB(); // Connect to PostgreSQL
-await connectRedis(); // Connect to Redis
-await startVideoAnalysisSubscriber(); // Start subscriber
+logger.info({ event: 'server.bootstrap_started', env: appConfig.nodeEnv }, 'Starting HTTP bootstrap');
 
-// SOCKET CONNECTIONS ---------------------------------------------------------------------------------------------
-const { server } = await createIOServer(app);
+const app = await createNestApp();
+logger.info({ event: 'server.nest_created' }, 'Nest application created');
+app.enableShutdownHooks();
 
-// LISTEN TO PORT ------------------------------------------------------------------------------------------------
-server.listen(PORT, () => {
-  logger.info({ event: 'websocket.started', port: PORT }, 'WebSocket server is running');
+logger.info({ event: 'server.listen_starting', port: PORT }, 'Starting HTTP listener');
+await app.listen(PORT, () => {
   logger.info({ event: 'server.started', port: PORT }, 'HTTP server is running');
+});
+
+let shuttingDown = false;
+
+const closeApiResources = async (signal?: string, exitCode = 0) => {
+  if (shuttingDown) {
+    return;
+  }
+
+  shuttingDown = true;
+  logger.info({ event: 'process.shutdown_started', signal }, 'Shutting down API resources');
+
+  try {
+    await app.close();
+    logger.info({ event: 'process.shutdown_completed', signal }, 'API resources are closed');
+  } catch (err) {
+    logger.error({ err, event: 'process.shutdown_failed', signal }, 'API shutdown failed');
+    exitCode = 1;
+  }
+
+  await flushSentry();
+  process.exit(exitCode);
+};
+
+process.once('SIGINT', () => {
+  void closeApiResources('SIGINT');
+});
+
+process.once('SIGTERM', () => {
+  void closeApiResources('SIGTERM');
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   logger.fatal({ event: 'process.unhandledRejection', promise, reason }, 'Unhandled promise rejection');
-  void flushSentry().finally(() => process.exit(1));
+  void closeApiResources('unhandledRejection', 1);
 });
 
 process.on('uncaughtException', (err) => {
   logger.fatal({ err, event: 'process.uncaughtException' }, 'Uncaught exception');
-  void flushSentry().finally(() => process.exit(1));
+  void closeApiResources('uncaughtException', 1);
 });

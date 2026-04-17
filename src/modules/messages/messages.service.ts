@@ -1,53 +1,50 @@
-import createError from 'http-errors';
-import { queryAllUserMessages, queryDeleteMessage, queryMarkUserMessageAsRead } from './messages.queries.ts';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import type {
   DeleteMessageResponse,
   GetAllUserMessagesResponse,
   MarkMessageAsReadResponse,
   MessageAfterSendResponse,
 } from '@strong-together/shared';
-import { getIO } from '../../infrastructure/socket.io.ts';
+import { SocketIOService } from '../../infrastructure/socket.io/socket.io.service.ts';
+import { MessagesQueries } from './messages.queries.ts';
 
-export const getAllMessagesData = async (
-  userId: string,
-  tz: string = 'Asia/Jerusalem',
-): Promise<{ payload: GetAllUserMessagesResponse }> => {
-  const rows = await queryAllUserMessages(userId, tz);
+@Injectable()
+export class MessagesService {
+  constructor(
+    private readonly socketIOService: SocketIOService,
+    private readonly messagesQueries: MessagesQueries,
+  ) {}
 
-  return {
-    payload: { messages: rows },
-  };
-};
+  async getAllMessagesData(
+    userId: string,
+    tz: string = 'Asia/Jerusalem',
+  ): Promise<{ payload: GetAllUserMessagesResponse }> {
+    const rows = await this.messagesQueries.queryAllUserMessages(userId, tz);
 
-export const markUserMessageAsReadData = async (
-  messageId: string,
-  userId: string,
-): Promise<MarkMessageAsReadResponse> => {
-  const rows = await queryMarkUserMessageAsRead(messageId, userId);
-  if (!rows.length) {
-    throw createError(404, 'Message not found');
+    return {
+      payload: { messages: rows },
+    };
   }
 
-  return rows[0];
-};
-
-export const deleteMessageData = async (messageId: string, userId: string): Promise<DeleteMessageResponse> => {
-  const rows = await queryDeleteMessage(messageId, userId);
-  if (!rows.length) {
-    throw createError(404, 'Message not found.');
-  }
-
-  return rows[0];
-};
-
-export const emitNewMessage = (userId: string, msg: MessageAfterSendResponse) => {
-  try {
-    getIO().to(userId).emit('new_message', msg);
-  } catch (error) {
-    if (error instanceof Error && error.message === 'Socket.IO not initialized!') {
-      return;
+  async markUserMessageAsReadData(messageId: string, userId: string): Promise<MarkMessageAsReadResponse> {
+    const rows = await this.messagesQueries.queryMarkUserMessageAsRead(messageId, userId);
+    if (!rows.length) {
+      throw new NotFoundException('Message not found');
     }
 
-    throw error;
+    return rows[0];
   }
-};
+
+  async deleteMessageData(messageId: string, userId: string): Promise<DeleteMessageResponse> {
+    const rows = await this.messagesQueries.queryDeleteMessage(messageId, userId);
+    if (!rows.length) {
+      throw new NotFoundException('Message not found');
+    }
+
+    return rows[0];
+  }
+
+  emitNewMessage(userId: string, msg: MessageAfterSendResponse): void {
+    this.socketIOService.emitToUser(userId, 'new_message', msg);
+  }
+}

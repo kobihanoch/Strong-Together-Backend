@@ -1,12 +1,13 @@
+import { Injectable } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import type {
   AnalyzeVideoResultPayload,
   GetPresignedUrlFromS3Response,
   SquatRepetition,
 } from '@strong-together/shared';
-import { getUploadUrl } from '../../infrastructure/aws/s3.service.ts';
 import { UserEntity } from '@strong-together/shared';
-import { getIO } from '../../infrastructure/socket.io.ts';
+import { S3Service } from '../../infrastructure/aws/s3/s3.service.ts';
+import { SocketIOService } from './../../infrastructure/socket.io/socket.io.service.ts';
 
 export const normalizeHeaderValue = (value: string | string[] | undefined): string => {
   if (Array.isArray(value)) {
@@ -16,67 +17,66 @@ export const normalizeHeaderValue = (value: string | string[] | undefined): stri
   return value || '';
 };
 
-export const getPresignedUrlData = async ({
-  exercise,
-  fileType,
-  jobId,
-  userId,
-  requestId,
-  sentryTrace,
-  baggage,
-}: {
-  exercise: string;
-  fileType: string;
-  jobId: string;
-  userId: string;
-  requestId?: string;
-  sentryTrace: string;
-  baggage: string;
-}): Promise<{ payload: GetPresignedUrlFromS3Response; fileKey: string }> => {
-  const fileKey = `${exercise}_${userId}_${Date.now()}`;
-  const resolvedRequestId = requestId || '';
+@Injectable()
+export class VideoAnalysisService {
+  constructor(
+    private readonly socketIOService: SocketIOService,
+    private readonly s3Service: S3Service,
+  ) {}
 
-  const metadata = {
-    sentry_trace: sentryTrace,
-    baggage,
-    job_id: jobId || 'unknown',
-    request_id: resolvedRequestId,
-    user_id: userId,
+  async getPresignedUrlData({
     exercise,
-  };
+    fileType,
+    jobId,
+    userId,
+    requestId,
+    sentryTrace,
+    baggage,
+  }: {
+    exercise: string;
+    fileType: string;
+    jobId: string;
+    userId: string;
+    requestId?: string;
+    sentryTrace: string;
+    baggage: string;
+  }): Promise<{ payload: GetPresignedUrlFromS3Response; fileKey: string }> {
+    const fileKey = `${exercise}_${userId}_${Date.now()}`;
+    const resolvedRequestId = requestId || '';
 
-  Sentry.getActiveSpan()?.setAttributes({
-    'video_analysis.job_id': jobId,
-    'http.request_id': requestId,
-    'enduser.id': userId,
-    'file.key': fileKey,
-    'file.type': fileType,
-    'video.exercise': exercise,
-  });
+    const metadata = {
+      sentry_trace: sentryTrace,
+      baggage,
+      job_id: jobId || 'unknown',
+      request_id: resolvedRequestId,
+      user_id: userId,
+      exercise,
+    };
 
-  const uploadUrl = await getUploadUrl(fileKey, fileType, metadata);
+    Sentry.getActiveSpan()?.setAttributes({
+      'video_analysis.job_id': jobId,
+      'http.request_id': requestId,
+      'enduser.id': userId,
+      'file.key': fileKey,
+      'file.type': fileType,
+      'video.exercise': exercise,
+    });
 
-  return {
-    payload: {
-      uploadUrl,
+    const uploadUrl = await this.s3Service.getUploadUrl(fileKey, fileType, metadata);
+
+    return {
+      payload: {
+        uploadUrl,
+        fileKey,
+        requestId: resolvedRequestId,
+      },
       fileKey,
-      requestId: resolvedRequestId,
-    },
-    fileKey,
-  };
-};
-
-export const emitVideoAnalysisResults = (
-  userId: UserEntity['id'],
-  results: AnalyzeVideoResultPayload<SquatRepetition>,
-) => {
-  try {
-    getIO().to(userId).emit(`video_analysis_results`, results);
-  } catch (error) {
-    if (error instanceof Error && error.message === 'Socket.IO not initialized!') {
-      return;
-    }
-
-    throw error;
+    };
   }
-};
+
+  emitVideoAnalysisResults = (userId: UserEntity['id'], results: AnalyzeVideoResultPayload<SquatRepetition>) => {
+    this.socketIOService.emitToUser(userId, `video_analysis_results`, results);
+  };
+
+  normalizeHeaderValue = normalizeHeaderValue;
+}

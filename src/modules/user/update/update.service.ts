@@ -1,21 +1,12 @@
-import createError from 'http-errors';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import mime from 'mime';
 import path from 'path';
+import type postgres from 'postgres';
 import { supabaseConfig } from '../../../config/storage.config.ts';
-import sql from '../../../infrastructure/db.client.ts';
-import {
-  queryAuthenticatedUserById,
-  queryDeleteUserById,
-  queryGetUserProfilePicURL,
-  queryUpdateAuthenticatedUser,
-  queryUpdateUserProfilePicURL,
-} from './update.queries.ts';
-import { sendVerificationEmailForEmailUpdate } from './update-emails/update-emails.service.ts';
-import { deleteFromSupabase, uploadBufferToSupabase } from '../../../infrastructure/supabase/supabase-storage.service.ts';
-import {
-  generateEmailChangeFailedHTML,
-  generateEmailChangeSuccessHTML,
-} from './update.views.ts';
+import type { AppLogger } from '../../../infrastructure/logger.ts';
+import { SQL } from '../../../infrastructure/db/db.tokens.ts';
+import { UpdateUserQueries } from './update.queries.ts';
+import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from './update.views.ts';
 import type {
   ChangeEmailTokenPayload,
   DeleteUserProfilePicBody,
@@ -24,150 +15,163 @@ import type {
   UpdateAuthenticatedUserResponse,
   UserDataResponse,
 } from '@strong-together/shared';
-import { cacheStoreJti } from '../../../infrastructure/cache/redis.cache.ts';
 import { decodeChangeEmailToken } from './update.utils.ts';
+import { UpdateEmailsService } from './update-emails/update-emails.service.ts';
+import { CacheService } from '../../../infrastructure/cache/cache.service.ts';
+import { SupabaseStorageService } from '../../../infrastructure/supabase/storage/supabase-storage.service.ts';
 
-export const getUserData = async (userId: string): Promise<{ payload: UserDataResponse['user_data'] }> => {
-  const rows = await queryAuthenticatedUserById(userId);
-  const [user] = rows;
-  if (!user) throw createError(404, 'User not found');
-  return { payload: user.user_data };
-};
+@Injectable()
+export class UpdateUserService {
+  constructor(
+    @Inject(SQL) private readonly sql: postgres.Sql,
+    private readonly updateUserQueries: UpdateUserQueries,
+    private readonly updateEmailsService: UpdateEmailsService,
+    private readonly supabaseStorageService: SupabaseStorageService,
+    private readonly cacheService: CacheService,
+  ) {}
 
-export const updateUsersReminderSettingsTimezone = async (userId: string, tz: string): Promise<void> => {
-  await sql`update public.user_reminder_settings urs set timezone=${tz}::text where urs.user_id = ${userId}::uuid and urs.timezone is distinct from ${tz}::text;`;
-};
+  async getUserData(userId: string): Promise<{ payload: UserDataResponse['user_data'] }> {
+    const rows = await this.updateUserQueries.queryAuthenticatedUserById(userId);
+    const [user] = rows;
+    if (!user) throw new NotFoundException('User not found');
+    return { payload: user.user_data };
+  }
 
-export const updateAuthenticatedUserData = async (
-  userId: string,
-  body: UpdateUserBody,
-  requestId?: string,
-): Promise<UpdateAuthenticatedUserResponse> => {
-  const { username, fullName, email } = body;
-  const { payload: currentUser } = await getUserData(userId);
+  async updateUsersReminderSettingsTimezone(userId: string, tz: string): Promise<void> {
+    await this
+      .sql`update public.user_reminder_settings urs set timezone=${tz}::text where urs.user_id = ${userId}::uuid and urs.timezone is distinct from ${tz}::text;`;
+  }
 
-  let rowsUpdated: UserDataResponse[];
-  try {
-    rowsUpdated = await queryUpdateAuthenticatedUser(userId, { username, fullName, email });
-  } catch (e: any) {
-    if (e.code === '23505') {
-      throw createError(409, 'Username or email already in use');
+  async updateAuthenticatedUserData(
+    userId: string,
+    body: UpdateUserBody,
+    requestId?: string,
+  ): Promise<UpdateAuthenticatedUserResponse> {
+    const { username, fullName, email } = body;
+    const { payload: currentUser } = await this.getUserData(userId);
+
+    let rowsUpdated: UserDataResponse[];
+    try {
+      rowsUpdated = await this.updateUserQueries.queryUpdateAuthenticatedUser(userId, { username, fullName, email });
+    } catch (e: any) {
+      if (e.code === '23505') {
+        throw new ConflictException('Username or email already in use');
+      }
+      throw e;
     }
-    throw e;
-  }
 
-  const [updated] = rowsUpdated;
-  if (!updated) return { message: 'User not found' } as any;
+    const [updated] = rowsUpdated;
+    if (!updated) return { message: 'User not found' } as any;
 
-  const { user_data: userData } = updated;
-  const currentEmail = (currentUser.email || '').trim().toLowerCase();
-  const candidate = (email || '').trim().toLowerCase();
+    const { user_data: userData } = updated;
+    const currentEmail = (currentUser.email || '').trim().toLowerCase();
+    const candidate = (email || '').trim().toLowerCase();
 
-  let emailChanged = false;
-  if (candidate && candidate !== currentEmail) {
-    await sendVerificationEmailForEmailUpdate(candidate, userId, userData.name || 'there', {
-      ...(requestId ? { requestId } : {}),
-    });
-    emailChanged = true;
-  }
-
-  return {
-    message: 'User updated successfully',
-    emailChanged,
-    user: updated.user_data,
-  };
-};
-
-export const updateSelfEmailData = async (
-  token: string | undefined,
-  requestLogger: { warn: (...args: any[]) => void; error: (...args: any[]) => void },
-): Promise<{ statusCode: number; html: string }> => {
-  if (!token) return { statusCode: 401, html: generateEmailChangeFailedHTML('Missing token') };
-
-  const decoded = decodeChangeEmailToken(token) as ChangeEmailTokenPayload | null;
-  if (!decoded) {
-    return { statusCode: 401, html: generateEmailChangeFailedHTML('Invalid or expired link') };
-  }
-
-  const { jti, sub, newEmail, exp, iss, typ } = decoded;
-  if (iss !== 'strong-together' || typ !== 'email-confirm' || !jti || !sub || !newEmail || !exp) {
-    return { statusCode: 400, html: generateEmailChangeFailedHTML('Malformed token') };
-  }
-
-  const nowSec = Math.floor(Date.now() / 1000);
-  const ttlSec = Math.max(1, exp - nowSec);
-  const inserted = await cacheStoreJti('emailchange', jti, ttlSec);
-  if (!inserted) {
-    return { statusCode: 401, html: generateEmailChangeFailedHTML('URL already used or expired') };
-  }
-
-  const normalized = newEmail.trim().toLowerCase();
-
-  try {
-    await sql.begin(async (trx) => {
-      await trx`
-        UPDATE users
-        SET email = ${normalized}
-        WHERE id = ${sub}::uuid
-      `;
-    });
-  } catch (e: any) {
-    if (e.code === '23505') {
-      requestLogger.warn({ event: 'user.email_change_conflict', userId: sub }, 'Email already in use');
-      return { statusCode: 409, html: generateEmailChangeFailedHTML('Email already in use') };
+    let emailChanged = false;
+    if (candidate && candidate !== currentEmail) {
+      await this.updateEmailsService.sendVerificationEmailForEmailUpdate(candidate, userId, userData.name || 'there', {
+        ...(requestId ? { requestId } : {}),
+      });
+      emailChanged = true;
     }
-    requestLogger.error({ err: e, event: 'user.email_change_failed', userId: sub }, 'Failed to update user email');
-    return { statusCode: 500, html: generateEmailChangeFailedHTML('Server error') };
+
+    return {
+      message: 'User updated successfully',
+      emailChanged,
+      user: updated.user_data,
+    };
   }
 
-  return { statusCode: 200, html: generateEmailChangeSuccessHTML() };
-};
+  async updateSelfEmailData(
+    token: string | undefined,
+    requestLogger: AppLogger,
+  ): Promise<{ statusCode: number; html: string }> {
+    if (!token) return { statusCode: 401, html: generateEmailChangeFailedHTML('Missing token') };
 
-export const deleteSelfUserData = async (userId: string): Promise<void> => {
-  await queryDeleteUserById(userId);
-};
+    const decoded = decodeChangeEmailToken(token) as ChangeEmailTokenPayload | null;
+    if (!decoded) {
+      return { statusCode: 401, html: generateEmailChangeFailedHTML('Invalid or expired link') };
+    }
 
-export const setProfilePicAndUpdateDBData = async (
-  userId: string,
-  file: any,
-  requestLogger: { warn: (...args: any[]) => void },
-): Promise<SetProfilePicAndUpdateDBResponse> => {
-  if (!file) throw createError(400, 'No file provided');
+    const { jti, sub, newEmail, exp, iss, typ } = decoded;
+    if (iss !== 'strong-together' || typ !== 'email-confirm' || !jti || !sub || !newEmail || !exp) {
+      return { statusCode: 400, html: generateEmailChangeFailedHTML('Malformed token') };
+    }
 
-  const ext = path.extname(file.originalname) || `.${mime.getExtension(file.mimetype) || 'jpg'}`;
-  const key = `${userId}/${Date.now()}${ext}`;
+    const nowSec = Math.floor(Date.now() / 1000);
+    const ttlSec = Math.max(1, exp - nowSec);
+    const inserted = await this.cacheService.cacheStoreJti('emailchange', jti, ttlSec);
+    if (!inserted) {
+      return { statusCode: 401, html: generateEmailChangeFailedHTML('URL already used or expired') };
+    }
 
-  const { path: newPath, publicUrl } = await uploadBufferToSupabase(
-    supabaseConfig.bucketName,
-    key,
-    file.buffer,
-    file.mimetype,
-  );
+    const normalized = newEmail.trim().toLowerCase();
 
-  const [row] = await queryGetUserProfilePicURL(userId);
-  const oldPath = row?.profile_image_url;
-  await queryUpdateUserProfilePicURL(userId, newPath);
+    try {
+      await this.sql.begin(async (trx) => {
+        await trx`
+          UPDATE users
+          SET email = ${normalized}
+          WHERE id = ${sub}::uuid
+        `;
+      });
+    } catch (e: any) {
+      if (e.code === '23505') {
+        requestLogger.warn({ event: 'user.email_change_conflict', userId: sub }, 'Email already in use');
+        return { statusCode: 409, html: generateEmailChangeFailedHTML('Email already in use') };
+      }
+      requestLogger.error({ err: e, event: 'user.email_change_failed', userId: sub }, 'Failed to update user email');
+      return { statusCode: 500, html: generateEmailChangeFailedHTML('Server error') };
+    }
 
-  if (oldPath && oldPath !== newPath) {
-    deleteFromSupabase(oldPath).catch((e: any) => {
-      requestLogger.warn(
-        {
-          err: e,
-          event: 'user.old_profile_image_delete_failed',
-          userId,
-          oldPath,
-          responseData: e?.response?.data,
-        },
-        'Failed to delete old profile image',
-      );
-    });
+    return { statusCode: 200, html: generateEmailChangeSuccessHTML() };
   }
 
-  return { path: newPath, url: publicUrl, message: 'Upload success' };
-};
+  async deleteSelfUserData(userId: string): Promise<void> {
+    await this.updateUserQueries.queryDeleteUserById(userId);
+  }
 
-export const deleteUserProfilePicData = async (userId: string, body: DeleteUserProfilePicBody): Promise<void> => {
-  await deleteFromSupabase(body.path);
-  await queryUpdateUserProfilePicURL(userId, null);
-};
+  async setProfilePicAndUpdateDBData(
+    userId: string,
+    file: Express.Multer.File | undefined,
+    requestLogger: AppLogger,
+  ): Promise<SetProfilePicAndUpdateDBResponse> {
+    if (!file) throw new BadRequestException('No file provided');
 
+    const ext = path.extname(file.originalname) || `.${mime.getExtension(file.mimetype) || 'jpg'}`;
+    const key = `${userId}/${Date.now()}${ext}`;
+
+    const { path: newPath, publicUrl } = await this.supabaseStorageService.uploadBufferToSupabase(
+      supabaseConfig.bucketName,
+      key,
+      file.buffer,
+      file.mimetype,
+    );
+
+    const [row] = await this.updateUserQueries.queryGetUserProfilePicURL(userId);
+    const oldPath = row?.profile_image_url;
+    await this.updateUserQueries.queryUpdateUserProfilePicURL(userId, newPath);
+
+    if (oldPath && oldPath !== newPath) {
+      this.supabaseStorageService.deleteFromSupabase(oldPath).catch((e: any) => {
+        requestLogger.warn(
+          {
+            err: e,
+            event: 'user.old_profile_image_delete_failed',
+            userId,
+            oldPath,
+            responseData: e?.response?.data,
+          },
+          'Failed to delete old profile image',
+        );
+      });
+    }
+
+    return { path: newPath, url: publicUrl, message: 'Upload success' };
+  }
+
+  async deleteUserProfilePicData(userId: string, body: DeleteUserProfilePicBody): Promise<void> {
+    await this.supabaseStorageService.deleteFromSupabase(body.path);
+    await this.updateUserQueries.queryUpdateUserProfilePicURL(userId, null);
+  }
+}

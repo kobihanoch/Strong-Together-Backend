@@ -1,5 +1,7 @@
-import sql from '../../infrastructure/db.client.ts';
+import { Inject, Injectable } from '@nestjs/common';
 import type { AllUserMessages, DeletedMessage, MessageAsRead } from '@strong-together/shared';
+import type postgres from 'postgres';
+import { SQL } from '../../infrastructure/db/db.tokens.ts';
 
 // Returns sender's username, full name and profile image path too
 /*
@@ -16,39 +18,44 @@ import type { AllUserMessages, DeletedMessage, MessageAsRead } from '@strong-tog
  *   is_read: true/false
  * }
  */
-export async function queryAllUserMessages(userId: string, tz: string = 'Asia/Jerusalem'): Promise<AllUserMessages[]> {
-  const rows = await sql<AllUserMessages[]>`
-    SELECT 
-      m.id AS id,
-      m.subject AS subject,
-      m.msg AS msg,
-      m.sent_at AT TIME ZONE ${tz} AS sent_at,
-      m.is_read AS is_read,
-      u.name AS sender_full_name,
-      u.profile_image_url AS sender_profile_image_url
-    FROM messages m
-    INNER JOIN users u
-      ON u.id = m.sender_id
-    WHERE m.receiver_id = ${userId}::uuid
-    ORDER BY sent_at DESC
-  `;
+@Injectable()
+export class MessagesQueries {
+  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
-  return rows;
-}
+  async queryAllUserMessages(userId: string, tz: string = 'Asia/Jerusalem'): Promise<AllUserMessages[]> {
+    const rows = await this.sql<AllUserMessages[]>`
+      SELECT 
+        m.id AS id,
+        m.subject AS subject,
+        m.msg AS msg,
+        m.sent_at AT TIME ZONE ${tz} AS sent_at,
+        m.is_read AS is_read,
+        u.name AS sender_full_name,
+        u.profile_image_url AS sender_profile_image_url
+      FROM messages m
+      INNER JOIN users u
+        ON u.id = m.sender_id
+      WHERE m.receiver_id = ${userId}::uuid
+      ORDER BY sent_at DESC
+    `;
 
-export async function queryMarkUserMessageAsRead(messageId: string, userId: string): Promise<MessageAsRead[]> {
-  return sql<MessageAsRead[]>`
-    UPDATE messages AS m
-    SET is_read = TRUE
-    WHERE m.id=${messageId}::uuid AND m.receiver_id=${userId}::uuid
-    RETURNING id, is_read
-  `;
-}
+    return rows;
+  }
 
-export async function queryDeleteMessage(messageId: string, userId: string): Promise<DeletedMessage[]> {
-  return sql<DeletedMessage[]>`
-    DELETE FROM messages AS m
-    WHERE m.id=${messageId}::uuid AND (m.receiver_id=${userId}::uuid OR m.sender_id=${userId}::uuid)
-    RETURNING id
-  `;
+  async queryMarkUserMessageAsRead(messageId: string, userId: string): Promise<MessageAsRead[]> {
+    return this.sql<MessageAsRead[]>`
+      UPDATE messages AS m
+      SET is_read = TRUE
+      WHERE m.id=${messageId}::uuid AND m.receiver_id=${userId}::uuid
+      RETURNING id, is_read
+    `;
+  }
+
+  async queryDeleteMessage(messageId: string, userId: string): Promise<DeletedMessage[]> {
+    return this.sql<DeletedMessage[]>`
+      DELETE FROM messages AS m
+      WHERE m.id=${messageId}::uuid AND (m.receiver_id=${userId}::uuid OR m.sender_id=${userId}::uuid)
+      RETURNING id
+    `;
+  }
 }

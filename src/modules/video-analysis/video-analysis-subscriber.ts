@@ -1,46 +1,64 @@
-import { createRedisSubscriber } from '../../infrastructure/redis.client.ts';
-import { createLogger } from '../../infrastructure/logger.ts';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import type { AnalyzeVideoResultPayload, SquatRepetition } from '@strong-together/shared';
-import { emitVideoAnalysisResults } from './video-analysis.service.ts';
+import { RedisClientType } from 'redis';
+import { appConfig } from '../../config/app.config.ts';
+import { createLogger } from '../../infrastructure/logger.ts';
+import { REDIS_SUBSCRIBER } from '../../infrastructure/redis/redis.tokens.ts';
+import { VideoAnalysisService } from './video-analysis.service.ts';
 
-const VIDEO_ANALYSIS_RESULTS_CHANNEL = 'video-analysis:results';
-const logger = createLogger('subscriber:video-analysis', {
-  channel: VIDEO_ANALYSIS_RESULTS_CHANNEL,
-});
+@Injectable()
+export class VideoAnalysisSubscriber implements OnModuleInit {
+  private readonly videoAnalysisResultsChannel = 'video-analysis:results';
+  private readonly logger = createLogger('subscriber:video-analysis', {
+    channel: this.videoAnalysisResultsChannel,
+  });
 
-export const startVideoAnalysisSubscriber = async () => {
-  const subscriber = await createRedisSubscriber();
+  constructor(
+    @Inject(REDIS_SUBSCRIBER) private subscriberClient: RedisClientType,
+    private readonly videoAnalysisService: VideoAnalysisService,
+  ) {}
 
-  await subscriber.subscribe(VIDEO_ANALYSIS_RESULTS_CHANNEL, async (message: string) => {
+  private async handleMessage(message: string): Promise<void> {
     try {
       const payload = JSON.parse(message) as AnalyzeVideoResultPayload<SquatRepetition>;
 
       const { jobId, userId, status, error, requestId } = payload;
 
       if (!jobId || !userId || !status) {
-        logger.error({ event: 'video_analysis.invalid_payload', payload }, 'Invalid video analysis payload received');
+        this.logger.error(
+          { event: 'video_analysis.invalid_payload', payload },
+          'Invalid video analysis payload received',
+        );
         return;
       }
 
-      const payloadLogger = logger.child({ jobId, userId, status, requestId });
+      const payloadLogger = this.logger.child({ jobId, userId, status, requestId });
       payloadLogger.info({ event: 'video_analysis.message_received' }, 'Video analysis result received');
 
       if (error) {
         payloadLogger.error({ event: 'video_analysis.processing_error', error }, 'Video analysis reported an error');
       }
 
-      emitVideoAnalysisResults(userId, payload);
+      this.videoAnalysisService.emitVideoAnalysisResults(userId, payload);
     } catch (e) {
       if (e instanceof Error) {
-        logger.error(
+        this.logger.error(
           { err: e, event: 'video_analysis.subscription_failed' },
           'Failed to process video analysis message',
         );
       }
     }
-  });
+  }
 
-  logger.info({ event: 'video_analysis.subscribed' }, 'Subscribed to video analysis results channel');
+  async onModuleInit() {
+    if (appConfig.isTest) {
+      return;
+    }
 
-  return subscriber;
-};
+    await this.subscriberClient.subscribe(this.videoAnalysisResultsChannel, async (message: string) => {
+      await this.handleMessage(message);
+    });
+
+    this.logger.info({ event: 'video_analysis.subscribed' }, 'Subscribed to video analysis results channel');
+  }
+}

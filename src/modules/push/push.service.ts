@@ -1,9 +1,15 @@
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import axios from 'axios';
-import createError from 'http-errors';
-import { queryGetAllUsersToSendHourlyReminder, queryGetAllUsersWithNotificationsEnabled } from './push.queries.ts';
-import { enqueuePushNotifications } from '../../infrastructure/queues/push-notifications/push-notifications-producer.ts';
+import { PushNotificationsProducerService } from '../../infrastructure/queues/push-notifications/push-notifications-producer.ts';
+import { PushQueries } from './push.queries.ts';
 import type { NotificationPayload } from './push.dtos.ts';
 import { computeDelayFromUTC } from './push.utils.ts';
+
+export type PushBatchResponse = {
+  success: true;
+  message: string;
+  userCount: number;
+};
 
 // Returns { ok: true, id? } OR { ok: false, permanent: true, reason }
 export async function sendPushNotification(token: string, title: string, body: string) {
@@ -24,7 +30,7 @@ export async function sendPushNotification(token: string, title: string, body: s
 
   // HTTP transport-level
   if (res.status >= 500 || res.status === 429) {
-    throw createError(503, `Expo HTTP transient ${res.status}`);
+    throw new ServiceUnavailableException(`Expo HTTP transient ${res.status}`);
   }
   if (res.status >= 400) {
     return { ok: false, permanent: true, reason: `Expo HTTP ${res.status}` };
@@ -39,7 +45,7 @@ export async function sendPushNotification(token: string, title: string, body: s
   const reason = ticket?.message || code;
 
   if (isExpoTransientCode(code)) {
-    throw createError(503, `Expo transient: ${code} - ${reason}`);
+    throw new ServiceUnavailableException(`Expo transient: ${code} - ${reason}`);
   }
 
   if (code === 'DeviceNotRegistered') {
@@ -60,58 +66,66 @@ function isExpoTransientCode(code = '') {
   );
 }
 
-export const sendDailyPushData = async (
-  requestId?: string,
-): Promise<{ success: true; message: string; userCount: number }> => {
-  const users = await queryGetAllUsersWithNotificationsEnabled();
+@Injectable()
+export class PushService {
+  constructor(
+    private readonly pushQueries: PushQueries,
+    private readonly pushNotificationsProducerService: PushNotificationsProducerService,
+  ) {}
 
-  await enqueuePushNotifications(
-    users.map((user) => ({
-      token: user.push_token!,
-      title: `Hello, ${user.name!.split(' ')[0]}!`,
-      body: 'Ready to go workout?',
-      delay: 0,
-      expiresAt: 0,
-      ...(requestId ? { requestId } : {}),
-    })),
-  );
+  async sendPushNotification(token: string, title: string, body: string) {
+    return sendPushNotification(token, title, body);
+  }
 
-  return { success: true, message: 'Daily notifications enqueued', userCount: users.length };
-};
+  async sendDailyPushData(requestId?: string): Promise<PushBatchResponse> {
+    const users = await this.pushQueries.queryGetAllUsersWithNotificationsEnabled();
 
-export const sendHourlyReminderPushData = async (
-  requestId?: string,
-): Promise<{ success: true; message: string; userCount: number }> => {
-  const users = await queryGetAllUsersToSendHourlyReminder();
-  const pushNotifications: NotificationPayload[] = [];
-  const now = new Date();
+    await this.pushNotificationsProducerService.enqueuePushNotifications(
+      users.map((user) => ({
+        token: user.push_token!,
+        title: `Hello, ${user.name!.split(' ')[0]}!`,
+        body: 'Ready to go workout?',
+        delay: 0,
+        expiresAt: 0,
+        ...(requestId ? { requestId } : {}),
+      })),
+    );
 
-  for (const user of users) {
-    const delayMs = computeDelayFromUTC(now, user.estimated_time_utc, user.reminder_offset_minutes);
+    return { success: true, message: 'Daily notifications enqueued', userCount: users.length };
+  }
 
-    if (delayMs === null) {
-      continue;
+  async sendHourlyReminderPushData(requestId?: string): Promise<PushBatchResponse> {
+    const users = await this.pushQueries.queryGetAllUsersToSendHourlyReminder();
+    const pushNotifications: NotificationPayload[] = [];
+    const now = new Date();
+
+    for (const user of users) {
+      const delayMs = computeDelayFromUTC(now, user.estimated_time_utc, user.reminder_offset_minutes);
+
+      if (delayMs === null) {
+        continue;
+      }
+
+      pushNotifications.push({
+        token: user.push_token!,
+        title: 'Workout Reminder',
+        body: `${user.name!.split(' ')[0]}, get ready! Your ${
+          user.split_name
+        } workout kicks off in ${user.reminder_offset_minutes} minutes.`,
+        delay: delayMs,
+        expiresAt: 0,
+        ...(requestId ? { requestId } : {}),
+      });
     }
 
-    pushNotifications.push({
-      token: user.push_token!,
-      title: 'Workout Reminder',
-      body: `${user.name!.split(' ')[0]}, get ready! Your ${
-        user.split_name
-      } workout kicks off in ${user.reminder_offset_minutes} minutes.`,
-      delay: delayMs,
-      expiresAt: 0,
-      ...(requestId ? { requestId } : {}),
-    });
-  }
+    if (pushNotifications.length > 0) {
+      await this.pushNotificationsProducerService.enqueuePushNotifications(pushNotifications);
+    }
 
-  if (pushNotifications.length > 0) {
-    await enqueuePushNotifications(pushNotifications);
+    return {
+      success: true,
+      message: `Enqueued ${pushNotifications.length} workout reminders`,
+      userCount: users.length,
+    };
   }
-
-  return {
-    success: true,
-    message: `Enqueued ${pushNotifications.length} workout reminders`,
-    userCount: users.length,
-  };
-};
+}

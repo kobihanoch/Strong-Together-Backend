@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
-const testSeedsDir = path.join(rootDir, 'src', 'shared', 'test-seeds');
+const testSeedsDir = path.join(rootDir, 'src', 'common', 'test-seeds');
 
 const dockerComposeFile = path.join(rootDir, 'docker-compose.test.yml');
 const schemaPath = path.join(rootDir, 'schema.sql');
@@ -527,9 +527,7 @@ function readSqlFile(filePath) {
 
 function readEnvValue(filePath, key) {
   const content = readFileSync(filePath, 'utf8');
-  const line = content
-    .split(/\r?\n/)
-    .find((entry) => entry.trim().startsWith(`${key}=`));
+  const line = content.split(/\r?\n/).find((entry) => entry.trim().startsWith(`${key}=`));
 
   if (!line) {
     throw new Error(`Missing ${key} in ${path.basename(filePath)}`);
@@ -543,7 +541,7 @@ function getSeedSystemUserId() {
   const match = seedSql.match(/INSERT INTO public\.users[\s\S]*?VALUES\s*\(\s*'([^']+)'[\s\S]*?'system_bot'/i);
 
   if (!match) {
-    throw new Error('Could not find system_bot user id in src/shared/test-seeds/test-seed.sql');
+    throw new Error('Could not find system_bot user id in src/common/test-seeds/test-seed.sql');
   }
 
   return match[1];
@@ -554,7 +552,7 @@ function syncTestMessagePolicy() {
 
   if (seedSystemUserId !== testSystemUserId) {
     throw new Error(
-      `SYSTEM_USER_ID mismatch between .env.test (${testSystemUserId}) and src/shared/test-seeds/test-seed.sql (${seedSystemUserId})`,
+      `SYSTEM_USER_ID mismatch between .env.test (${testSystemUserId}) and src/common/test-seeds/test-seed.sql (${seedSystemUserId})`,
     );
   }
 
@@ -620,7 +618,7 @@ function main() {
   console.log('[test-db] Loading schema.sql...');
   runWithRetry(() => execFileInPsql(schemaPath));
 
-  console.log('[test-db] Loading src/shared/test-seeds/test-seed.sql...');
+  console.log('[test-db] Loading src/common/test-seeds/test-seed.sql...');
   runWithRetry(() => execFileInPsql(seedPath));
 
   console.log('[test-db] Syncing messages policy to .env.test SYSTEM_USER_ID...');

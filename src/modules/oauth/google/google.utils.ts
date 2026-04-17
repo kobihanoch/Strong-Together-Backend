@@ -1,4 +1,4 @@
-import createError from 'http-errors';
+import { BadRequestException } from '@nestjs/common';
 import type { JWTPayload } from 'jose';
 import * as jose from 'jose';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
@@ -31,7 +31,7 @@ export async function verifyGoogleIdToken(
 
   // Strict audience check
   if (!payload.aud || !GOOGLE_ALLOWED_AUDIENCES.has(payload.aud as string)) {
-    throw createError(400, 'Invalid audience for Google ID token');
+    throw new BadRequestException('Invalid audience for Google ID token');
   }
 
   // Extract useful fields
