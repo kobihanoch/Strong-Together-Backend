@@ -1,7 +1,5 @@
-import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { authConfig } from '../../config/auth.config.ts';
 import { createApp } from '../../app.ts';
 import { loginResponseSchema, createUserResponseSchema, userAerobicsResponseSchema } from '@strong-together/shared';
 import type { AerobicEntity, UserAerobicsResponse, WeeklyData } from '@strong-together/shared';
@@ -13,6 +11,7 @@ import {
 import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
 import { addAerobicsRecord, getAerobics } from '../../common/tests/helpers/aerobics.ts';
 import { waitForAerobicsRowsForUser } from '../../common/tests/helpers/db.ts';
+import { createAppUser, loginWithCredentials, verifyAppUser } from '../../common/tests/helpers/users.ts';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 
@@ -100,38 +99,21 @@ describe('Aerobics', () => {
     const username = `aggr_${suffix}`;
     const email = `${username}@example.com`;
 
-    const createResponse = await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
+    const createResponse = await createAppUser(app, {
       username,
       fullName: 'Aerobics Aggregate',
       email,
       password: 'Test1234!',
       gender: 'Other',
-    });
+    }).then((result) => result.response);
 
     expect(createResponse.status).toBe(201);
     expectSchema(createUserResponseSchema, createResponse.body);
 
-    const verifyToken = jwt.sign(
-      {
-        sub: createResponse.body.user.id,
-        typ: 'email-verify',
-        jti: `verify-${suffix}`,
-        iss: 'strong-together',
-      },
-      authConfig.jwtVerifySecret,
-      { expiresIn: '1h' },
-    );
-
-    const verifyResponse = await request(app.getHttpServer())
-      .get('/api/auth/verify')
-      .query({ token: verifyToken })
-      .set('x-app-version', '4.5.0');
+    const verifyResponse = await verifyAppUser(app, createResponse.body.user.id);
     expect(verifyResponse.status).toBe(200);
 
-    const loginResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
-      identifier: email,
-      password: 'Test1234!',
-    });
+    const loginResponse = await loginWithCredentials(app, email, 'Test1234!');
 
     expect(loginResponse.status).toBe(201);
     expectSchema(loginResponseSchema, loginResponse.body);
