@@ -21,7 +21,6 @@ export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDes
   }
 
   async onModuleDestroy() {
-    await this.closeWorker();
     logger.info({ event: 'worker.closed', concurrency: 5 }, 'Push worker is closed');
   }
 
@@ -77,9 +76,5 @@ export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDes
       }
       throw e;
     }
-  }
-
-  private async closeWorker() {
-    await this.pushNotificationsQueueService.pushNotificationsQueue.close();
   }
 }

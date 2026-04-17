@@ -21,7 +21,6 @@ export class EmailsWorkerService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    await this.closeWorker();
     logger.info({ event: 'worker.closed', concurrency: 5 }, 'Email worker is closed');
   }
 
@@ -74,9 +73,5 @@ export class EmailsWorkerService implements OnModuleInit, OnModuleDestroy {
       }
       throw e;
     }
-  }
-
-  private async closeWorker() {
-    await this.emailsQueueService.emailsQueue.close();
   }
 }

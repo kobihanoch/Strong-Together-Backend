@@ -7,9 +7,13 @@ import './instrument.ts';
 const logger = createLogger('bootstrap');
 const PORT = appConfig.port;
 
+logger.info({ event: 'server.bootstrap_started', env: appConfig.nodeEnv }, 'Starting HTTP bootstrap');
+
 const app = await createNestApp();
+logger.info({ event: 'server.nest_created' }, 'Nest application created');
 app.enableShutdownHooks();
 
+logger.info({ event: 'server.listen_starting', port: PORT }, 'Starting HTTP listener');
 await app.listen(PORT, () => {
   logger.info({ event: 'server.started', port: PORT }, 'HTTP server is running');
 });
