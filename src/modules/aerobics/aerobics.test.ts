@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { authConfig } from '../../config/auth.config.ts';
 import { createApp } from '../../app.ts';
 import { loginResponseSchema, createUserResponseSchema, userAerobicsResponseSchema } from '@strong-together/shared';
-import type { UserAerobicsResponse, WeeklyData } from '@strong-together/shared';
+import type { AerobicEntity, UserAerobicsResponse, WeeklyData } from '@strong-together/shared';
 import {
   loginAerobicsDefaultTimezoneUser,
   loginAerobicsGetUser,
@@ -164,9 +164,9 @@ describe('Aerobics', () => {
 
     const rows = await waitForAerobicsRowsForUser(userId, 2);
     expect(rows).toHaveLength(2);
-    expect(rows.map((row) => row.type)).toEqual(['Walk', 'Run']);
-    expect(rows.reduce((sum, row) => sum + row.duration_mins, 0)).toBe(30);
-    expect(rows.reduce((sum, row) => sum + row.duration_sec, 0)).toBe(30);
+    expect(rows.map((row: Pick<AerobicEntity, 'type'>) => row.type)).toEqual(['Walk', 'Run']);
+    expect(rows.reduce((sum: number, row: Pick<AerobicEntity, 'duration_mins'>) => sum + row.duration_mins, 0)).toBe(30);
+    expect(rows.reduce((sum: number, row: Pick<AerobicEntity, 'duration_sec'>) => sum + row.duration_sec, 0)).toBe(30);
   });
 
   // login -> add aerobics -> get aerobics -> assert response matches DB row

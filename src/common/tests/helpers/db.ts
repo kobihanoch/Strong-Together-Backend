@@ -1,5 +1,13 @@
-import sql from '../../../infrastructure/db/db.service.ts';
+import postgres from 'postgres';
 import type { AerobicEntity, UserEntity } from '@strong-together/shared';
+import { appConfig } from '../../../config/app.config.ts';
+import { databaseConfig } from '../../../config/database.config.ts';
+
+const sql = postgres(databaseConfig.url, {
+  ssl: appConfig.isTest ? false : 'require',
+  prepare: false,
+  connect_timeout: 30,
+});
 
 async function wait(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -34,7 +42,7 @@ export async function getActiveWorkoutSplitNames(userId: string) {
     ORDER BY ws.id
   `;
 
-  return rows.map((row) => row.name);
+  return rows.map((row: { name: string | null }) => row.name);
 }
 
 export async function getInactiveWorkoutSplitNames(userId: string) {
@@ -48,7 +56,7 @@ export async function getInactiveWorkoutSplitNames(userId: string) {
     ORDER BY ws.id
   `;
 
-  return rows.map((row) => row.name);
+  return rows.map((row: { name: string | null }) => row.name);
 }
 
 export async function getExercisesForSplit(userId: string, splitName: string) {
@@ -65,9 +73,9 @@ export async function getExercisesForSplit(userId: string, splitName: string) {
     ORDER BY ets.order_index
   `;
 
-  return rows.map((row) => ({
+  return rows.map((row: { exercise_id: number | null; sets: number[] | null; order_index: number | null }) => ({
     exerciseId: row.exercise_id === null ? null : Number(row.exercise_id),
-    sets: row.sets?.map((set) => Number(set)) ?? null,
+    sets: row.sets?.map((set: number) => Number(set)) ?? null,
     orderIndex: row.order_index === null ? null : Number(row.order_index),
   }));
 }
@@ -85,7 +93,7 @@ export async function getInactiveExercisesForSplit(userId: string, splitName: st
     ORDER BY ets.id
   `;
 
-  return rows.map((row) => (row.exercise_id === null ? null : Number(row.exercise_id)));
+  return rows.map((row: { exercise_id: number | null }) => (row.exercise_id === null ? null : Number(row.exercise_id)));
 }
 
 export async function getWorkoutSummaryCount(userId: string) {
@@ -186,7 +194,7 @@ export async function getAerobicsRowsForUser(userId: string) {
     ORDER BY at.id ASC
   `;
 
-  return rows.map((row) => ({
+  return rows.map((row: Pick<AerobicEntity, 'id' | 'type' | 'duration_mins' | 'duration_sec' | 'workout_time_utc'>) => ({
     id: Number(row.id),
     type: row.type,
     duration_mins: Number(row.duration_mins),
