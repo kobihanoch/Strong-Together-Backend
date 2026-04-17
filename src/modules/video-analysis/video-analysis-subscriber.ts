@@ -14,8 +14,8 @@ export class VideoAnalysisSubscriber implements OnModuleInit {
   });
 
   constructor(
-    private readonly videoAnalysisService: VideoAnalysisService,
     @Inject(REDIS_SUBSCRIBER) private subscriberClient: RedisClientType,
+    private readonly videoAnalysisService: VideoAnalysisService,
   ) {}
 
   private async handleMessage(message: string): Promise<void> {

@@ -3,14 +3,14 @@ import { MessageAfterSendResponse } from '@strong-together/shared';
 import type postgres from 'postgres';
 import { appConfig } from '../../../config/app.config.ts';
 import { SQL } from '../../../infrastructure/db/db.tokens.ts';
-import { MessagesService } from '../messages.service.ts';
 import { getEndOfWorkoutMessage, getFirstLoginMessage } from './system-messages.templates.ts';
+import { MessagesService } from '../messages.service.ts';
 
 @Injectable()
 export class SystemMessagesService {
   constructor(
-    private readonly messagesService: MessagesService,
     @Inject(SQL) private readonly sql: postgres.Sql,
+    private readonly messagesService: MessagesService,
   ) {}
 
   private async createAndSend(receiverId: string, msg: { header: string; text: string }) {

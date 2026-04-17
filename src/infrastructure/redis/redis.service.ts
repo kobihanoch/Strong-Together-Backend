@@ -6,6 +6,7 @@ import { REDIS_CLIENT, REDIS_SUBSCRIBER, SOCKET_ADAPTER_CLIENTS } from './redis.
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private logger = createLogger('config:redis');
+  private clientsUp = 0;
 
   constructor(
     @Inject(REDIS_CLIENT) private readonly redisClient: RedisClientType,
@@ -18,12 +19,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    try {
-      const result = await this.redisClient.ping();
-      this.logger.info({ event: 'redis.connected', ping: result }, 'Redis is ready and responding');
-    } catch (err) {
-      this.logger.error({ err }, 'Redis ping failed during initialization');
-    }
+    await this.connectAllCLients();
   }
 
   async onModuleDestroy() {
@@ -34,7 +30,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       clients.push(this.socketAdapter.pubClient, this.socketAdapter.subClient);
     }
 
-    await Promise.all(clients.map((c) => c.quit().catch(() => {})));
+    await Promise.all(clients.map((c) => c.quit()));
     this.logger.info('All connections closed');
   }
 
@@ -51,5 +47,40 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       this.socketAdapter.pubClient.on('error', (err) => this.logger.error({ err }, 'Adapter Pub Error'));
       this.socketAdapter.subClient.on('error', (err) => this.logger.error({ err }, 'Adapter Sub Error'));
     }
+  }
+
+  private async connectAllCLients() {
+    try {
+      this.logger.info('Attempting to connect redis client...');
+      await this.redisClient.connect();
+      this.clientsUp++;
+      this.logger.info('Redis client connected successfully!');
+
+      this.logger.info('Attempting to connect redis subscriber client...');
+      await this.redisSubscriber.connect();
+      this.clientsUp++;
+      this.logger.info('Redis subscriber client connected successfully!');
+
+      if (this.socketAdapter) {
+        this.logger.info('Attempting to connect redis adatper clients...');
+        await Promise.all([this.socketAdapter.pubClient.connect(), this.socketAdapter.subClient.connect()]);
+        this.clientsUp += 2;
+        this.logger.info('Redis adapter clients connected successfully!');
+      }
+
+      const connections = await this.getRedisConnections();
+      await this.redisClient.ping();
+
+      this.logger.info('Redis clients connected: [' + connections + ' connections] [' + this.clientsUp + ' Clients]');
+    } catch (e) {
+      this.logger.error({ e }, 'Redis connection error');
+      throw e;
+    }
+  }
+
+  private async getRedisConnections() {
+    const info = await this.redisClient.info('clients');
+    const match = info.match(/connected_clients:(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
   }
 }

@@ -25,7 +25,6 @@ import { REDIS_CLIENT, REDIS_OPTIONS, REDIS_SUBSCRIBER, SOCKET_ADAPTER_CLIENTS }
       provide: REDIS_CLIENT,
       useFactory: async (options: RedisClientOptions) => {
         const client = createClient(options);
-        await client.connect();
         return client;
       },
       inject: [REDIS_OPTIONS],
@@ -35,7 +34,6 @@ import { REDIS_CLIENT, REDIS_OPTIONS, REDIS_SUBSCRIBER, SOCKET_ADAPTER_CLIENTS }
       provide: REDIS_SUBSCRIBER,
       useFactory: async (options: RedisClientOptions) => {
         const sub = createClient(options);
-        await sub.connect();
         return sub;
       },
       inject: [REDIS_OPTIONS],
@@ -48,7 +46,6 @@ import { REDIS_CLIENT, REDIS_OPTIONS, REDIS_SUBSCRIBER, SOCKET_ADAPTER_CLIENTS }
 
         const pubClient = createClient(options);
         const subClient = pubClient.duplicate();
-        await Promise.all([pubClient.connect(), subClient.connect()]);
 
         return { pubClient, subClient };
       },
