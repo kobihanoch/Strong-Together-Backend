@@ -6,7 +6,9 @@
   "scripts": {
     "compose:up:dev": "cross-env NODE_ENV=development docker compose up --build -d",
     "compose:up:prod": "cross-env NODE_ENV=production docker compose up --build -d",
-    "test:db:reset": "node scripts/setup-test-db.mjs",
+    "db:dev:start": "node scripts/setup-local-db.mjs dev",
+    "db:dev:migrate": "node scripts/setup-local-db.mjs dev --skip-seeds",
+    "test:db:reset": "node scripts/setup-local-db.mjs test",
     "test:auth": "npm run test:db:reset && vitest run src/modules/auth/auth.test.ts --silent",
     "test:users": "npm run test:db:reset && vitest run src/modules/user/user.test.ts --silent",
     "test:workouts": "npm run test:db:reset && vitest run src/modules/workout/workout.test.ts --silent",
