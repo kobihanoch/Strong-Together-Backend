@@ -1,10 +1,11 @@
-import { BadRequestException, Inject, Injectable, OnModuleInit, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, OnApplicationBootstrap, UnauthorizedException } from '@nestjs/common';
+import { HttpAdapterHost } from '@nestjs/core';
 import { RedisClientType } from 'redis';
 import { Server, Socket } from 'socket.io';
-import { decodeSocketToken } from '../../modules/web-sockets/web-sockets.utils.ts';
-import { createLogger } from '../logger.ts';
-import { SOCKET_ADAPTER_CLIENTS } from '../redis/redis.tokens.ts';
-import { SOCKET_IO } from './socket.io.tokens.ts';
+import { decodeSocketToken } from '../../modules/web-sockets/web-sockets.utils';
+import { createLogger } from '../logger';
+import { SOCKET_ADAPTER_CLIENTS } from '../redis/redis.tokens';
+import { SOCKET_IO } from './socket.io.tokens';
 import { createAdapter } from '@socket.io/redis-adapter';
 
 type SocketUser = {
@@ -17,20 +18,29 @@ type AuthedSocket = Socket & {
 };
 
 @Injectable()
-export class SocketIOService implements OnModuleInit {
+export class SocketIOService implements OnApplicationBootstrap {
   private readonly logger = createLogger('config:websocket');
 
   constructor(
+    private readonly adapterHost: HttpAdapterHost,
     @Inject(SOCKET_ADAPTER_CLIENTS)
     private readonly socketAdapterClients: { pubClient: RedisClientType; subClient: RedisClientType },
     @Inject(SOCKET_IO) private readonly io: Server,
   ) {}
 
-  async onModuleInit() {
-    this.setUpRedisAdapter();
-    this.setUpMiddleware();
-    this.handleConnections();
-    this.logger.info('SocketIOService initialized');
+  async onApplicationBootstrap() {
+    const httpServer = this.adapterHost.httpAdapter.getHttpServer();
+
+    this.io.attach(httpServer, {
+      path: '/socket.io',
+      cors: { origin: '*', credentials: true },
+      transports: ['websocket', 'polling'],
+    });
+
+    await this.setUpRedisAdapter();
+    await this.setUpMiddleware();
+    await this.handleConnections();
+    this.logger.info({ event: 'websocket.initialized', path: '/socket.io' }, 'SocketIOService initialized');
   }
 
   async setUpRedisAdapter() {

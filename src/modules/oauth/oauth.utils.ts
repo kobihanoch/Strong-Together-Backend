@@ -1,7 +1,7 @@
 import { Request } from 'express';
 import { BadRequestException } from '@nestjs/common';
 import type postgres from 'postgres';
-import { appConfig } from '../../config/app.config.ts';
+import { appConfig } from '../../config/app.config';
 
 export async function ensureUniqueUsername(trx: postgres.TransactionSql, candidate: string | null): Promise<string> {
   // If no candidate (no email or full name) => random fallback

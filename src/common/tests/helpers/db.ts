@@ -1,7 +1,7 @@
 import postgres from 'postgres';
 import type { AerobicEntity, UserEntity } from '@strong-together/shared';
-import { appConfig } from '../../../config/app.config.ts';
-import { databaseConfig } from '../../../config/database.config.ts';
+import { appConfig } from '../../../config/app.config';
+import { databaseConfig } from '../../../config/database.config';
 
 const sql = postgres(databaseConfig.url, {
   ssl: appConfig.isTest ? false : 'require',

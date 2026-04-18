@@ -1,8 +1,8 @@
 import { Injectable, NestMiddleware, NotFoundException } from '@nestjs/common';
 import { NextFunction, Response } from 'express';
-import { createLogger } from '../../infrastructure/logger.ts';
-import { markSentryBotBlocked } from '../../infrastructure/sentry.ts';
-import type { AppRequest } from '../types/express.ts';
+import { createLogger } from '../../infrastructure/logger';
+import { markSentryBotBlocked } from '../../infrastructure/sentry';
+import type { AppRequest } from '../types/express';
 
 @Injectable()
 export class BotBlockerMiddleware implements NestMiddleware {
@@ -12,8 +12,10 @@ export class BotBlockerMiddleware implements NestMiddleware {
     const userAgent = req.headers['user-agent'];
     const appVersion = req.headers['x-app-version'];
     const acceptHeader = req.headers['accept'] || '';
-    const path = req.path;
+    const requestPath = req.originalUrl || req.url || req.path;
+    const path = requestPath.split('?')[0];
 
+    if (path.startsWith('/socket.io')) return next();
     if (appVersion) return next();
     if (
       path.includes('verify') ||

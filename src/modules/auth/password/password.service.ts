@@ -1,13 +1,13 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { ResetPasswordResponse, SendChangePassEmailBody } from '@strong-together/shared';
 import bcrypt from 'bcryptjs';
-import { PasswordQueries } from './password.queries.ts';
-import { SessionQueries } from '../session/session.queries.ts';
-import { decodeForgotPasswordToken } from './password.utils.ts';
-import { SQL } from '../../../infrastructure/db/db.tokens.ts';
-import { PasswordEmailsService } from './password-emails/password-emails.service.ts';
+import { PasswordQueries } from './password.queries';
+import { SessionQueries } from '../session/session.queries';
+import { decodeForgotPasswordToken } from './password.utils';
+import { SQL } from '../../../infrastructure/db/db.tokens';
+import { PasswordEmailsService } from './password-emails/password-emails.service';
 import postgres from 'postgres';
-import { CacheService } from '../../../infrastructure/cache/cache.service.ts';
+import { CacheService } from '../../../infrastructure/cache/cache.service';
 
 @Injectable()
 export class PasswordService {

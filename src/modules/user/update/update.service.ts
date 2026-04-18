@@ -2,11 +2,11 @@ import { BadRequestException, ConflictException, Inject, Injectable, NotFoundExc
 import mime from 'mime';
 import path from 'path';
 import type postgres from 'postgres';
-import { supabaseConfig } from '../../../config/storage.config.ts';
-import type { AppLogger } from '../../../infrastructure/logger.ts';
-import { SQL } from '../../../infrastructure/db/db.tokens.ts';
-import { UpdateUserQueries } from './update.queries.ts';
-import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from './update.views.ts';
+import { supabaseConfig } from '../../../config/storage.config';
+import type { AppLogger } from '../../../infrastructure/logger';
+import { SQL } from '../../../infrastructure/db/db.tokens';
+import { UpdateUserQueries } from './update.queries';
+import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from './update.views';
 import type {
   ChangeEmailTokenPayload,
   DeleteUserProfilePicBody,
@@ -15,10 +15,10 @@ import type {
   UpdateAuthenticatedUserResponse,
   UserDataResponse,
 } from '@strong-together/shared';
-import { decodeChangeEmailToken } from './update.utils.ts';
-import { UpdateEmailsService } from './update-emails/update-emails.service.ts';
-import { CacheService } from '../../../infrastructure/cache/cache.service.ts';
-import { SupabaseStorageService } from '../../../infrastructure/supabase/storage/supabase-storage.service.ts';
+import { decodeChangeEmailToken } from './update.utils';
+import { UpdateEmailsService } from './update-emails/update-emails.service';
+import { CacheService } from '../../../infrastructure/cache/cache.service';
+import { SupabaseStorageService } from '../../../infrastructure/supabase/storage/supabase-storage.service';
 
 @Injectable()
 export class UpdateUserService {

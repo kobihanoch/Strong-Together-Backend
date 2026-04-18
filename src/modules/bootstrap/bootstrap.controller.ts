@@ -1,16 +1,16 @@
 import { Controller, Get, UseGuards, UseInterceptors } from '@nestjs/common';
 import { bootstrapRequest, type BootstrapRequestQuery, type BootstrapResponse } from '@strong-together/shared';
-import { CurrentLogger } from '../../common/decorators/current-logger.decorator.ts';
-import { CurrentUser } from '../../common/decorators/current-user.decorator.ts';
-import { RequestData } from '../../common/decorators/request-data.decorator.ts';
-import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard.ts';
-import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard.ts';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
-import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe.ts';
-import type { AppLogger } from '../../infrastructure/logger.ts';
-import type { AuthenticatedUser } from '../../common/types/express.ts';
-import { BootstrapService } from './bootstrap.service.ts';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
+import { CurrentLogger } from '../../common/decorators/current-logger.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RequestData } from '../../common/decorators/request-data.decorator';
+import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
+import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe';
+import type { AppLogger } from '../../infrastructure/logger';
+import type { AuthenticatedUser } from '../../common/types/express';
+import { BootstrapService } from './bootstrap.service';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 
 /**
  * Bootstrap routes for authenticated users.

@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Resend } from 'resend';
-import { createLogger } from '../logger.ts';
-import { RESEND_CLIENT } from './mailer.tokens.ts';
+import { createLogger } from '../logger';
+import { RESEND_CLIENT } from './mailer.tokens';
 
 @Injectable()
 export class MailerService {

@@ -1,13 +1,13 @@
-import { MessagesService } from './../messages/messages.service.ts';
-import { CacheService } from '../../infrastructure/cache/cache.service.ts';
-import type { AppLogger } from '../../infrastructure/logger.ts';
+import { MessagesService } from './../messages/messages.service';
+import { CacheService } from '../../infrastructure/cache/cache.service';
+import type { AppLogger } from '../../infrastructure/logger';
 import type { BootstrapResponse } from '@strong-together/shared';
-import { buildUserTimezoneKeyStable, TTL_TIMEZONE } from './bootstrap.cache.ts';
+import { buildUserTimezoneKeyStable, TTL_TIMEZONE } from './bootstrap.cache';
 import { Injectable } from '@nestjs/common';
-import { AerobicsService } from '../aerobics/aerobics.service.ts';
-import { UpdateUserService } from '../user/update/update.service.ts';
-import { WorkoutPlanService } from '../workout/plan/plan.service.ts';
-import { WorkoutTrackingService } from '../workout/tracking/tracking.service.ts';
+import { AerobicsService } from '../aerobics/aerobics.service';
+import { UpdateUserService } from '../user/update/update.service';
+import { WorkoutPlanService } from '../workout/plan/plan.service';
+import { WorkoutTrackingService } from '../workout/tracking/tracking.service';
 
 @Injectable()
 export class BootstrapService {

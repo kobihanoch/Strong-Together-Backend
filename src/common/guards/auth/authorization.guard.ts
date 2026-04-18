@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { AppRequest } from '../../types/express.ts';
+import type { AppRequest } from '../../types/express';
 
 type Role = 'user' | 'admin';
 

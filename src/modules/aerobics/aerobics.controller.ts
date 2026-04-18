@@ -1,16 +1,16 @@
 import { Controller, Get, Post, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
 import type { AddUserAerobicsBody, GetUserAerobicsQuery, UserAerobicsResponse } from '@strong-together/shared';
-import type { AuthenticatedUser } from '../../common/types/express.ts';
+import type { AuthenticatedUser } from '../../common/types/express';
 import { addAerobicsRequest, getAerobicsRequest } from '@strong-together/shared';
-import { AerobicsService } from './aerobics.service.ts';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
-import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard.ts';
-import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard.ts';
-import { RequestData } from '../../common/decorators/request-data.decorator.ts';
-import { CurrentUser } from '../../common/decorators/current-user.decorator.ts';
-import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe.ts';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
+import { AerobicsService } from './aerobics.service';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard';
+import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard';
+import { RequestData } from '../../common/decorators/request-data.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 
 /**
  * Aerobics routes for authenticated users.

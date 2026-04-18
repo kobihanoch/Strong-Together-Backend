@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { authHeaders } from './auth.ts';
+import { authHeaders } from './auth';
 
 const httpServer = (app: any) => app.getHttpServer();
 

@@ -8,15 +8,15 @@ import type {
   MarkMessageAsReadResponse,
 } from '@strong-together/shared';
 import { deleteMessageRequest, getAllMessagesRequest, markMessageAsReadRequest } from '@strong-together/shared';
-import { CurrentUser } from '../../common/decorators/current-user.decorator.ts';
-import { RequestData } from '../../common/decorators/request-data.decorator.ts';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
-import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard.ts';
-import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard.ts';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
-import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe.ts';
-import type { AuthenticatedUser } from '../../common/types/express.ts';
-import { MessagesService } from './messages.service.ts';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RequestData } from '../../common/decorators/request-data.decorator';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard';
+import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
+import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe';
+import type { AuthenticatedUser } from '../../common/types/express';
+import { MessagesService } from './messages.service';
 
 /**
  * Message routes for authenticated users.

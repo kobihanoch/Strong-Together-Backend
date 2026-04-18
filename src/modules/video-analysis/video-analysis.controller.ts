@@ -2,18 +2,18 @@ import { Controller, Post, Req, UseGuards, UseInterceptors } from '@nestjs/commo
 import type { Request } from 'express';
 import type { GetPresignedUrlFromS3Body, GetPresignedUrlFromS3Response } from '@strong-together/shared';
 import { getPresignedUrlS3Request } from '@strong-together/shared';
-import { CurrentLogger } from '../../common/decorators/current-logger.decorator.ts';
-import { CurrentRequestId } from '../../common/decorators/current-request-id.decorator.ts';
-import { CurrentUser } from '../../common/decorators/current-user.decorator.ts';
-import { RequestData } from '../../common/decorators/request-data.decorator.ts';
-import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard.ts';
-import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard.ts';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
-import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe.ts';
-import type { AppLogger } from '../../infrastructure/logger.ts';
-import type { AuthenticatedUser } from '../../common/types/express.ts';
-import { VideoAnalysisService, normalizeHeaderValue } from './video-analysis.service.ts';
+import { CurrentLogger } from '../../common/decorators/current-logger.decorator';
+import { CurrentRequestId } from '../../common/decorators/current-request-id.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RequestData } from '../../common/decorators/request-data.decorator';
+import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
+import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe';
+import type { AppLogger } from '../../infrastructure/logger';
+import type { AuthenticatedUser } from '../../common/types/express';
+import { VideoAnalysisService, normalizeHeaderValue } from './video-analysis.service';
 
 /**
  * Video-analysis routes for authenticated users.

@@ -1,17 +1,17 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createApp } from '../../app.ts';
+import { createApp } from '../../app';
 import { bootstrapResponseSchema, userAerobicsResponseSchema, loginResponseSchema } from '@strong-together/shared';
 import {
   loginBootstrapAerobicsUser,
   loginBootstrapFlowUser,
   loginBootstrapTestUser,
-} from '../../common/tests/helpers/auth.ts';
-import { addAerobicsRecord } from '../../common/tests/helpers/aerobics.ts';
-import { getBootstrap } from '../../common/tests/helpers/bootstrap.ts';
-import { getExerciseToWorkoutSplitId, getUserReminderTimezone } from '../../common/tests/helpers/db.ts';
-import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
-import { addWorkoutPlan, finishWorkout } from '../../common/tests/helpers/workouts.ts';
+} from '../../common/tests/helpers/auth';
+import { addAerobicsRecord } from '../../common/tests/helpers/aerobics';
+import { getBootstrap } from '../../common/tests/helpers/bootstrap';
+import { getExerciseToWorkoutSplitId, getUserReminderTimezone } from '../../common/tests/helpers/db';
+import { expectSchema } from '../../common/tests/helpers/assert-schema';
+import { addWorkoutPlan, finishWorkout } from '../../common/tests/helpers/workouts';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 

@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module.ts';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
-import { MessagesController } from './messages.controller.ts';
-import { MessagesQueries } from './messages.queries.ts';
-import { MessagesService } from './messages.service.ts';
-import { SystemMessagesService } from './system-messages/system-messages.service.ts';
+import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
+import { MessagesController } from './messages.controller';
+import { MessagesQueries } from './messages.queries';
+import { MessagesService } from './messages.service';
+import { SystemMessagesService } from './system-messages/system-messages.service';
 
 @Module({
   imports: [AuthGuardsModule],

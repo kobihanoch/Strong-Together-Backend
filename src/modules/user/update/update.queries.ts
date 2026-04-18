@@ -3,7 +3,7 @@ import postgres from 'postgres';
 import type { AuthenticatedUserForUpdate } from '@strong-together/shared';
 import { UserEntity } from '@strong-together/shared';
 import type { Sql } from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens.ts';
+import { SQL } from '../../../infrastructure/db/db.tokens';
 
 @Injectable()
 export class UpdateUserQueries {

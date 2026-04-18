@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { SessionQueries } from '../../../modules/auth/session/session.queries.ts';
-import { AuthenticationGuard } from './authentication.guard.ts';
-import { AuthorizationGuard } from './authorization.guard.ts';
+import { SessionQueries } from '../../../modules/auth/session/session.queries';
+import { AuthenticationGuard } from './authentication.guard';
+import { AuthorizationGuard } from './authorization.guard';
 
 @Module({
   providers: [SessionQueries, AuthenticationGuard, AuthorizationGuard],

@@ -1,4 +1,4 @@
-# Strong Together Backend (v3.2.0)
+# Strong Together Backend (v4.0.0)
 
 [![CI](https://github.com/kobihanoch/Strong-Together-Backend/actions/workflows/ci.yml/badge.svg)](https://github.com/kobihanoch/Strong-Together-Backend/actions)
 
@@ -8,10 +8,11 @@ This is the backend for **Strong Together**.
 - Frontend repository: [Strong-Together-App](https://github.com/kobihanoch/Strong-Together-App)
 
 It powers authentication, workout planning, progress tracking, realtime messaging, push notifications, and asynchronous exercise video analysis.
-The project combines a TypeScript API, background workers, Redis-based async infrastructure, a Python computer-vision service, and a PostgreSQL schema designed for analytics-heavy fitness flows.
+The project is a **NestJS server** that combines a TypeScript API, background workers, Redis-based async infrastructure, a Python computer-vision service, and a PostgreSQL schema designed for analytics-heavy fitness flows.
 
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
@@ -32,77 +33,64 @@ The project combines a TypeScript API, background workers, Redis-based async inf
 
 A backend platform with:
 
+- a **NestJS server** built as a **modular monolith** for the main API and worker bootstrapping
 - async video processing using **Node.js**, **Python**, **Redis**, and **AWS S3** using **SQS**
 - secure authentication using **JWT**, **DPoP**, and **rate limits**
 - realtime communication using **Socket.IO**
-- a PostgreSQL schema designed for workout tracking, analytics, and reminders
+- a **PostgreSQL-first** schema and migration workflow with **Atlas**
+- separated **development** and **test** database environments
 - **GitHub Actions CI pipeline** that runs the automated test suite on pushes and pull requests targeting `main`.
 
 ## Highlights
 
-- **Vertical-slice server architecture**: the Node backend is organized by feature domains such as auth, users, workouts, messages, OAuth, and video analysis, each with its own routes, controller, service, query, and feature-local support files.
-- **Supporting services around the API**: background workers, Redis Pub/Sub, SQS, WebSockets, and a dedicated Python computer-vision worker.
-- **Authentication and request protection**: **JWT**, **DPoP proof-of-possession**, **rate limits**, bot blocking, token rotation, and strict request validation.
+- **NestJS modular architecture**: the backend is organized into feature modules such as auth, users, workouts, messages, OAuth, analytics, video analysis, and websockets, with Nest controllers, services, guards, interceptors, and providers.
+- **Infrastructure as modules**: Redis, PostgreSQL, Socket.IO, cache, AWS, mailer, and queue integrations are now composed as Nest-managed infrastructure modules.
+- **Authentication and request protection**: **JWT**, **DPoP proof-of-possession**, **rate limits**, bot blocking, token rotation, and request validation are handled through the current request pipeline.
 - **Request contracts**: request schemas are consumed from the shared package and validated at the API boundary before controller logic runs.
 - **Async media pipeline**: **direct AWS S3 uploads**, **S3 event-driven SQS dispatch**, Python-based CV analysis, **trace-aware async orchestration**, and **realtime result delivery** back to the client.
-- **Database design**: **PostgreSQL**, analytics views, normalized workout tracking, reminder intelligence, indexing strategy, and **RLS-aware** patterns.
+- **Database design**: **PostgreSQL**, analytics views, normalized workout tracking, reminder intelligence, indexing strategy, **RLS-aware** patterns, and repo-owned migrations/seeds.
 - **Test coverage**: **Vitest + Supertest** integration tests across auth, workouts, analytics, OAuth, websockets, and video analysis.
 - **Observability**: **Pino structured logs**, **Sentry tracing**, request IDs, and service-aware error handling.
-
-## Quick Links
-
-- [TL;DR](#tldr)
-- [Highlights](#highlights)
-- [Architecture](#architecture)
-- [Folder Tree](#folder-tree)
-- [Tech Stack](#tech-stack)
-- [Middleware and Security Layer](#middleware-and-security-layer)
-- [Docker Setup](#docker-setup)
-- [API Overview](#api-overview)
-- [Database Overview](#database-overview)
-- [Run Locally](#run-locally)
-- [Testing](#testing)
-- [CI](#ci)
-- [Schema SQL](./schema.sql)
-- [Test Seed SQL](./src/shared/test-seeds/test-seed.sql)
-- [Test Exercises Seed](./src/shared/test-seeds/test-exercises_seed.sql)
-- [Docker Compose](./docker-compose.yml)
 
 ## Table of Contents
 
 1. [TL;DR](#tldr)
 2. [Highlights](#highlights)
-3. [Quick Links](#quick-links)
-4. [Architecture](#architecture)
+3. [Architecture](#architecture)
    1. [Video Analysis Architecture](#video-analysis-architecture)
-5. [Folder Tree](#folder-tree)
-6. [Tech Stack](#tech-stack)
-7. [Middleware and Security Layer](#middleware-and-security-layer)
-   1. [Core middlewares](#core-middlewares)
+4. [Folder Tree](#folder-tree)
+5. [Tech Stack](#tech-stack)
+6. [Request Pipeline](#request-pipeline)
+   1. [Pipeline Layers](#pipeline-layers)
    2. [Why it matters](#why-it-matters)
-8. [Run Locally](#run-locally)
+7. [Run Locally](#run-locally)
    1. [Docker setup](#docker-setup)
-9. [Testing](#testing)
+8. [Testing](#testing)
    1. [CI](#ci)
-10. [API Overview](#api-overview)
-11. [Main domains](#main-domains)
-12. [API characteristics](#api-characteristics)
-13. [Database Overview](#database-overview)
-14. [Key database design choices](#key-database-design-choices)
-15. [Important tables and objects](#important-tables-and-objects)
-16. [DB files](#db-files)
-17. [Database Schema](#database-schema)
-18. [Workout tracking model](#workout-tracking-model)
-19. [Database Flows](#database-flows)
-20. [Workout Flow](#workout-flow)
-21. [Tracking Flow](#tracking-flow)
-22. [Messages Flow](#messages-flow)
-23. [Auth Flow](#auth-flow)
-24. [Reminder Flow](#reminder-flow)
+9. [Database Overview](#database-overview)
+10. [Key database design choices](#key-database-design-choices)
+11. [Database workflow](#database-workflow)
+12. [Important tables and objects](#important-tables-and-objects)
+13. [DB files](#db-files)
+14. [Database Schema](#database-schema)
+15. [Workout tracking model](#workout-tracking-model)
+16. [Database Flows](#database-flows)
+17. [Workout Flow](#workout-flow)
+18. [Tracking Flow](#tracking-flow)
+19. [Messages Flow](#messages-flow)
+20. [Auth Flow](#auth-flow)
+21. [Reminder Flow](#reminder-flow)
 
 ## Architecture
 
-The Node server is now structured as a **modular monolith built with vertical slices**.
+The Node backend is now structured as a **NestJS modular monolith** built around feature modules and infrastructure modules.
+
+At a high level:
+
+- `src/app.ts` defines the main `AppModule`
+- feature domains such as `auth`, `user`, `workout`, `messages`, `oauth`, `analytics`, `aerobics`, `bootstrap`, `video-analysis`, and `web-sockets` are exposed as Nest modules
+- cross-cutting infrastructure such as Redis, PostgreSQL, Socket.IO, cache, AWS, mailer, and queues is wired through dedicated Nest modules/providers
+- the worker process also boots through Nest application context, so API and workers now share the same dependency-injection model
 
 **Video analysis flow:** Client -> Node API (`getpresignedurl`) -> presigned S3 upload -> S3 event notification -> SQS (with DLQ) -> Python analysis worker -> Redis Pub/Sub -> Node subscriber -> Socket.IO -> Client
 
@@ -131,22 +119,20 @@ It also carries `jobId`, `requestId`, and Sentry trace headers through S3 object
 |   |   |-- sentry.config.ts
 |   |   `-- storage.config.ts
 |   |-- infrastructure
-|   |   |-- db.client.ts
 |   |   |-- logger.ts
-|   |   |-- mailer.service.ts
-|   |   |-- redis.client.ts
 |   |   |-- sentry.ts
-|   |   |-- socket.io.ts
 |   |   |-- cache
+|   |   |-- db
 |   |   |-- queues
+|   |   |-- redis
+|   |   |-- socket.io
 |   |   |-- supabase
+|   |   |-- mailer
 |   |   `-- aws
-|   |       `-- s3.service.ts
 |   |-- modules
 |   |   |-- aerobics
 |   |   |-- analytics
 |   |   |-- auth
-|   |   |   |-- auth.routes.ts
 |   |   |   |-- password
 |   |   |   |-- session
 |   |   |   `-- verification
@@ -154,39 +140,35 @@ It also carries `jobId`, `requestId`, and Sentry trace headers through S3 object
 |   |   |-- exercises
 |   |   |-- messages
 |   |   |-- oauth
-|   |   |   |-- oauth.routes.ts
-|   |   |   |-- oauth.utils.ts
 |   |   |   |-- apple
 |   |   |   `-- google
 |   |   |-- push
 |   |   |-- user
-|   |   |   |-- user.routes.ts
 |   |   |   |-- create
 |   |   |   |-- push-tokens
 |   |   |   `-- update
 |   |   |-- video-analysis
 |   |   |-- web-sockets
 |   |   `-- workout
-|   |       |-- workout.routes.ts
 |   |       |-- plan
 |   |       `-- tracking
-|   |-- shared
+|   |-- common
 |   |   |-- authentication
+|   |   |-- decorators
+|   |   |-- filters
+|   |   |-- guards
 |   |   |-- middlewares
-|   |   |-- test-seeds
-|   |   |-- tests
-|   |   `-- types
+|   |   |-- pipes
+|   |   `-- tests
 |-- workers
-|   |-- emails-worker.ts
-|   |-- global-worker.ts
-|   |-- push-notifications-worker.ts
-|   `-- utils
-|       `-- setup-graceful-shutdown.ts
+|   |-- entry.ts
+|   |-- emails
+|   `-- push
 |-- pythonService
+|-- docs
 |-- scripts
 |-- schema.sql
 |-- docker-compose.yml
-|-- docker-compose.test.yml
 `-- README.md
 ```
 
@@ -194,7 +176,7 @@ It also carries `jobId`, `requestId`, and Sentry trace headers through S3 object
 
 | Layer                | Main Tools                            |
 | -------------------- | ------------------------------------- |
-| API                  | Node.js, Express 5, TypeScript        |
+| API                  | Node.js, NestJS, TypeScript           |
 | Database             | PostgreSQL                            |
 | Async infrastructure | Redis, Bull, SQS, Pub/Sub             |
 | Realtime             | Socket.IO                             |
@@ -209,34 +191,75 @@ Redis is used for Pub/Sub and selected internal queues, while SQS is used as the
 Socket.IO is used to push analysis results and other realtime events back to the client without polling.
 PostgreSQL holds both operational data and analytics-oriented structures such as views, indexes, and reminder-related tables.
 
-## Middleware and Security Layer
+## Request Pipeline
 
-The request pipeline is structured through layered middleware to handle security, validation, and request lifecycle concerns.
+The current request pipeline is built around Nest middlewares, guards, interceptors, pipes, and filters instead of the previous Express-only middleware chain.
 
-### Core middlewares
+In practice, this means the server now separates responsibilities much more clearly:
 
-| Middleware                   | Role in the system                                                                        |
-| ---------------------------- | ----------------------------------------------------------------------------------------- |
-| `express.json()`             | Parses JSON request bodies for the API layer                                              |
-| `cors()`                     | Restricts allowed origins and request metadata                                            |
-| `helmet()`                   | Applies hardened HTTP security headers                                                    |
-| `generalLimiter`             | Applies general request rate limiting                                                     |
-| `botBlocker`                 | Blocks malicious bot and scanner traffic patterns                                         |
-| `checkAppVersion`            | Enforces minimum supported mobile app versions                                            |
-| request logger + request ID  | Attaches correlation metadata for logs and tracing                                        |
-| `dpopValidationMiddleware`   | Verifies DPoP proofs including signature, request binding, and replay-sensitive fields    |
-| `authenticate` + `authorize` | Validates JWT access tokens and enforces role-based access for protected routes           |
-| `validate(...)`              | Enforces request contract validation with schemas imported from `@strong-together/shared` |
-| `withRlsTx(...)`             | Wraps handlers in a transaction-aware DB execution flow aligned with RLS patterns         |
-| `asyncHandler`               | Centralizes async error forwarding for route handlers                                     |
-| `errorHandler`               | Standardizes API error responses at the edge                                              |
+- middlewares handle request-wide concerns before controller logic
+- guards protect routes and verify caller identity/access rules
+- pipes validate and normalize incoming request data
+- interceptors wrap execution around handlers when a flow needs extra runtime behavior
+- filters centralize exception handling so failures are logged and returned consistently
+
+### Pipeline Layers
+
+| Layer                  | Current role in the system                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------ |
+| Nest app bootstrap     | Creates the application, enables CORS, applies Helmet, and attaches global app behavior   |
+| Middleware             | Handles request logging, bot blocking, app-version checks, and general rate limiting       |
+| Guards                 | Enforces authentication, authorization, and DPoP proof validation                          |
+| Pipes                  | Validates request contracts and DTO shape before business logic runs                       |
+| Interceptors           | Wraps authenticated flows in request-scoped DB/RLS transaction behavior                    |
+| Filters                | Standardizes exception handling and response formatting                                    |
+| Infrastructure modules | Provide Redis, DB, Socket.IO, cache, queues, mailer, and AWS integrations through Nest DI |
+
+### What each layer does here
+
+**Middlewares**
+
+- `GeneralRateLimitMiddleware` applies broad request throttling at the edge.
+- `RequestLoggerMiddleware` attaches request context for structured logging and traceability.
+- `BotBlockerMiddleware` blocks suspicious bot/scanner traffic before it reaches business logic.
+- `CheckAppVersionMiddleware` enforces the minimum supported client version.
+
+These run early in the lifecycle and help keep the rest of the stack focused on valid, expected traffic.
+
+**Guards**
+
+- `AuthenticationGuard` validates access tokens, checks token version state, and attaches the authenticated user to the request.
+- `AuthorizationGuard` enforces role-based access rules where needed.
+- `DpopGuard` validates DPoP proof-of-possession behavior for protected flows.
+- `RateLimitGuard` adds route-level protection where a guard is a better fit than a global middleware.
+
+The guard layer is where identity, permissions, and proof binding are enforced before protected handlers run.
+
+**Pipes**
+
+- `ValidateRequestPipe` validates request payloads against the shared contract layer before controllers/services execute.
+
+This keeps request validation explicit and prevents invalid input from leaking deeper into the app.
+
+**Interceptors**
+
+- `RlsTxInterceptor` wraps authenticated request execution in a request-scoped database transaction, sets the current Postgres app user context, and aligns the app layer with Row Level Security behavior.
+
+This is one of the key architectural pieces in the current NestJS setup because it connects authenticated API execution to the database authorization model.
+
+**Filters**
+
+- `GlobalExceptionFilter` centralizes exception handling and shapes error responses in one place.
+
+That gives the app a more consistent failure model and makes operational debugging easier alongside structured logs and Sentry.
 
 ### Why it matters
 
 - **Security is enforced before business logic**: authentication, DPoP verification, **rate limits**, bot filtering, and version checks all happen at the request boundary.
 - **Validation is explicit**: route inputs are validated before controller execution, which keeps request contracts clearer and safer across the backend and shared package.
-- **Database access is controlled**: protected flows are executed through `withRlsTx(...)`, giving the backend a clean bridge between API identity and DB-level authorization patterns.
+- **Database access is controlled**: protected flows can run through `RlsTxInterceptor`, giving the backend a clean bridge between API identity and DB-level authorization patterns.
 - **Operational debugging is easier**: request IDs, structured logs, and Sentry context make production issues significantly easier to trace.
+- **The architecture is more maintainable**: feature logic and infrastructure now follow the same Nest dependency-injection model across the API and worker processes.
 
 ## Run Locally
 
@@ -323,26 +346,38 @@ ANALYSIS_WORKER_IDLE_SLEEP_MS=
 
 ```
 
-2. Install dependencies and start the API:
+2. Install dependencies:
 
 ```bash
 npm install
+```
+
+3. Start the local development database and apply migrations/seeds:
+
+```bash
+npm run db:dev:start
+```
+
+4. Start the API:
+
+```bash
 npm run start:server
 ```
 
-3. Start background workers:
+5. Start background workers:
 
 ```bash
 npm run start:workers
 ```
 
-4. Or run the stack with Docker Compose through the environment-specific scripts:
+6. Or run the stack with Docker Compose through the environment-specific scripts:
 
 ```bash
 npm run compose:up:dev
 ```
 
 Use `npm run compose:up:prod` when you want Compose to load `.env.production`.
+Use `npm run db:dev:migrate` when you want to reapply only migrations without reseeding.
 
 ## Testing
 
@@ -363,6 +398,7 @@ The project includes integration tests for the main product flows:
 Useful commands:
 
 ```bash
+npm run db:dev:start
 npm run test:db:reset
 npm run test:all
 ```
@@ -372,34 +408,6 @@ You can also run domain-specific suites such as `npm run test:auth`, `npm run te
 ### CI
 
 GitHub Actions can run the full test suite on every push and pull request to `main` via [`.github/workflows/ci.yml`](./.github/workflows/ci.yml). For CI, store the full `.env.test` contents in a repository secret named `ENV_TEST_FILE`.
-
-## API Overview
-
-Base path: `/api`
-
-### Main domains
-
-| Domain         | Key endpoints                                                                               |
-| -------------- | ------------------------------------------------------------------------------------------- |
-| Auth           | `/auth/login`, `/auth/refresh`, `/auth/logout`, `/auth/verify`                              |
-| Users          | `/users/create`, `/users/get`, `/users/updateself`, `/users/deleteself`                     |
-| OAuth          | `/oauth/google`, `/oauth/apple`                                                             |
-| Workouts       | `/workouts/getworkout`, `/workouts/gettracking`, `/workouts/finishworkout`, `/workouts/add` |
-| Messages       | `/messages/getmessages`, `/messages/markasread/:id`, `/messages/delete/:id`                 |
-| Exercises      | `/exercises/getall`                                                                         |
-| Analytics      | `/analytics/get`                                                                            |
-| Bootstrap      | `/bootstrap/get`                                                                            |
-| Aerobics       | `/aerobics/get`, `/aerobics/add`                                                            |
-| Push           | `/push/daily`, `/push/hourlyreminder`                                                       |
-| WebSocket      | `/ws/generateticket`                                                                        |
-| Video Analysis | `/videoanalysis/getpresignedurl`                                                            |
-
-### API characteristics
-
-- Protected routes use DPoP-aware authentication when enabled.
-- Request validation is enforced through schemas shared with the app via `@strong-together/shared`.
-- WebSocket access is gated through a signed connection ticket.
-- Heavy media work is offloaded from the API thread into S3-triggered async processing and the Python service.
 
 ## Database Overview
 
@@ -413,6 +421,26 @@ PostgreSQL is the system of record. The schema is used not only for storage, but
 - **Retention housekeeping**: `housekeeping_compact_old_workouts()` keeps workout history compact based on workout-day boundaries.
 - **Indexing for real usage**: the schema includes targeted indexes for reminders, tracking lookups, and workout time queries.
 - **Security-aware DB design**: the exported schema includes Row Level Security policies for user-owned data.
+
+## Database Workflow
+
+The database workflow was updated around a Postgres-first, repo-owned model.
+
+- migrations now live under `src/infrastructure/db/schema/migrations`
+- seed files live under `src/infrastructure/db/schema/seeds`
+- Atlas is used to diff and apply migrations
+- local development and test databases are separated
+- test runs rebuild the test database from migration history rather than relying on leftover local state
+
+Useful commands:
+
+```bash
+npm run db:dev:start
+npm run db:dev:migrate
+npm run db:migrate:diff -- <migration_name>
+npm run db:prod:migrate
+npm run test:db:reset
+```
 
 ### Important tables and objects
 
@@ -431,9 +459,9 @@ PostgreSQL is the system of record. The schema is used not only for storage, but
 ### DB files
 
 - Full schema: [schema.sql](./schema.sql)
-- Base test seed data: [src/shared/test-seeds/test-seed.sql](./src/shared/test-seeds/test-seed.sql)
-- Exercise test seed data: [src/shared/test-seeds/test-exercises_seed.sql](./src/shared/test-seeds/test-exercises_seed.sql)
-- All files under `src/shared/test-seeds/` are demo-only testing fixtures, and all data in them is fake.
+- Migrations: [src/infrastructure/db/schema/migrations](./src/infrastructure/db/schema/migrations)
+- Seed data: [src/infrastructure/db/schema/seeds](./src/infrastructure/db/schema/seeds)
+- Test helpers and test bootstrap: [src/common/tests](./src/common/tests)
 
 ### Database Schema
 

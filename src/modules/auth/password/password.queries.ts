@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type postgres from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens.ts';
+import { SQL } from '../../../infrastructure/db/db.tokens';
 
 @Injectable()
 export class PasswordQueries {

@@ -1,4 +1,4 @@
-import { authConfig } from '../../config/auth.config.ts';
+import { authConfig } from '../../config/auth.config';
 import jwt from 'jsonwebtoken';
 
 export const decodeSocketToken = (ticket: string): any | null => {

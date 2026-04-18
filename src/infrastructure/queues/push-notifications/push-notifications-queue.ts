@@ -1,8 +1,8 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import Bull, { Queue } from 'bull';
-import { appConfig } from '../../../config/app.config.ts';
-import { redisConfig } from '../../../config/redis.config.ts';
-import { NotificationPayload } from '../../../modules/push/push.dtos.ts';
+import { appConfig } from '../../../config/app.config';
+import { redisConfig } from '../../../config/redis.config';
+import { NotificationPayload } from '../../../modules/push/push.dtos';
 
 const getQueuePrefix = (): string => {
   switch (appConfig.nodeEnv) {

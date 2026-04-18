@@ -1,13 +1,12 @@
-import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { authConfig } from '../../config/auth.config.ts';
-import { createApp } from '../../app.ts';
+import { createApp } from '../../app';
 import { addWorkoutResponseSchema, getWholeUserWorkoutPlanResponseSchema } from '@strong-together/shared';
 import { finishUserWorkoutResponseSchema, getExerciseTrackingResponseSchema } from '@strong-together/shared';
 import { loginResponseSchema, createUserResponseSchema } from '@strong-together/shared';
-import { authHeaders, loginAuthTestUser, loginWorkoutsTestUser } from '../../common/tests/helpers/auth.ts';
-import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
+import { authHeaders, loginAuthTestUser, loginWorkoutsTestUser } from '../../common/tests/helpers/auth';
+import { expectSchema } from '../../common/tests/helpers/assert-schema';
+import { createAppUser, loginWithCredentials, verifyAppUser } from '../../common/tests/helpers/users';
 import {
   getActiveWorkoutSplitNames,
   getExerciseToWorkoutSplitId,
@@ -16,8 +15,8 @@ import {
   getInactiveExercisesForSplit,
   getInactiveWorkoutSplitNames,
   getWorkoutSummaryCount,
-} from '../../common/tests/helpers/db.ts';
-import { addWorkoutPlan, finishWorkout, getTracking, getWorkoutPlan } from '../../common/tests/helpers/workouts.ts';
+} from '../../common/tests/helpers/db';
+import { addWorkoutPlan, finishWorkout, getTracking, getWorkoutPlan } from '../../common/tests/helpers/workouts';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 
@@ -399,44 +398,21 @@ describe('Workouts', () => {
     const username = `fw_${suffix}`;
     const email = `${username}@example.com`;
 
-    const createResponse = await request(app.getHttpServer())
-      .post('/api/users/create')
-      .set('x-app-version', '4.5.0')
-      .send({
-        username,
-        fullName: 'Finish Workout',
-        email,
-        password: 'Test1234!',
-        gender: 'Other',
-      });
+    const createResponse = await createAppUser(app, {
+      username,
+      fullName: 'Finish Workout',
+      email,
+      password: 'Test1234!',
+      gender: 'Other',
+    }).then((result) => result.response);
 
     expect(createResponse.status).toBe(201);
     expectSchema(createUserResponseSchema, createResponse.body);
 
-    const verifyToken = jwt.sign(
-      {
-        sub: createResponse.body.user.id,
-        typ: 'email-verify',
-        jti: `verify-${suffix}`,
-        iss: 'strong-together',
-      },
-      authConfig.jwtVerifySecret,
-      { expiresIn: '1h' },
-    );
-
-    const verifyResponse = await request(app.getHttpServer())
-      .get('/api/auth/verify')
-      .query({ token: verifyToken })
-      .set('x-app-version', '4.5.0');
+    const verifyResponse = await verifyAppUser(app, createResponse.body.user.id);
     expect(verifyResponse.status).toBe(200);
 
-    const loginResponse = await request(app.getHttpServer())
-      .post('/api/auth/login')
-      .set('x-app-version', '4.5.0')
-      .send({
-        identifier: email,
-        password: 'Test1234!',
-      });
+    const loginResponse = await loginWithCredentials(app, email, 'Test1234!');
 
     expect(loginResponse.status).toBe(201);
     expectSchema(loginResponseSchema, loginResponse.body);

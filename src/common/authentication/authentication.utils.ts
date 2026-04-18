@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { Request } from 'express';
 import jwt from 'jsonwebtoken';
-import { authConfig } from '../../config/auth.config.ts';
+import { authConfig } from '../../config/auth.config';
 import type { AccessTokenPayload } from '@strong-together/shared';
 
 /*

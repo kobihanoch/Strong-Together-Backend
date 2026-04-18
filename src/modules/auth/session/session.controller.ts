@@ -2,23 +2,23 @@ import { Controller, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/
 import type { Response } from 'express';
 import type { LoginRequestBody, LoginResponse, LogOutResponse, RefreshTokenResponse } from '@strong-together/shared';
 import { loginRequest } from '@strong-together/shared';
-import type { AppLogger } from '../../../infrastructure/logger.ts';
-import { getRefreshToken } from './session.utils.ts';
-import { SessionService } from './session.service.ts';
-import { DpopGuard } from '../../../common/guards/dpop-validation.guard.ts';
-import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard.ts';
-import { AuthorizationGuard, Roles } from '../../../common/guards/auth/authorization.guard.ts';
+import type { AppLogger } from '../../../infrastructure/logger';
+import { getRefreshToken } from './session.utils';
+import { SessionService } from './session.service';
+import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
+import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../../common/guards/auth/authorization.guard';
 import {
   RateLimit,
   RateLimitGuard,
   loginIpRateLimit,
   loginRateLimit,
-} from '../../../common/guards/rate-limit.guard.ts';
-import { CurrentLogger } from '../../../common/decorators/current-logger.decorator.ts';
-import { RequestData } from '../../../common/decorators/request-data.decorator.ts';
-import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe.ts';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor.ts';
-import type { AppRequest } from '../../../common/types/express.ts';
+} from '../../../common/guards/rate-limit.guard';
+import { CurrentLogger } from '../../../common/decorators/current-logger.decorator';
+import { RequestData } from '../../../common/decorators/request-data.decorator';
+import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
+import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
+import type { AppRequest } from '../../../common/types/express';
 
 @Controller('api/auth')
 @UseInterceptors(RlsTxInterceptor)

@@ -4,10 +4,10 @@ import type {
   FinishUserWorkoutBody,
   FinishUserWorkoutResponse,
 } from '@strong-together/shared';
-import { CacheService } from '../../../infrastructure/cache/cache.service.ts';
-import { buildTrackingKeyStable, TTL_TRACKING } from './tracking.cache.ts';
-import { WorkoutTrackingQueries } from './tracking.queries.ts';
-import { SystemMessagesService } from '../../messages/system-messages/system-messages.service.ts';
+import { CacheService } from '../../../infrastructure/cache/cache.service';
+import { buildTrackingKeyStable, TTL_TRACKING } from './tracking.cache';
+import { WorkoutTrackingQueries } from './tracking.queries';
+import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
 
 @Injectable()
 export class WorkoutTrackingService {

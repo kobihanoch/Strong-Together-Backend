@@ -1,4 +1,4 @@
-import { redisConfig } from '../../config/redis.config.ts';
+import { redisConfig } from '../../config/redis.config';
 
 export const TTL_ANALYTICS = redisConfig.cacheTtls.analyticsSec;
 const ANALYTICS_NS = 'xt:analytics:v1';

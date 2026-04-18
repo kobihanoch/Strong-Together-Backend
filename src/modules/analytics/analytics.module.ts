@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module.ts';
-import { AnalyticsController } from './analytics.controller.ts';
-import { AnalyticsService } from './analytics.service.ts';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
-import { AnalyticsQueries } from './analytics.queries.ts';
+import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module';
+import { AnalyticsController } from './analytics.controller';
+import { AnalyticsService } from './analytics.service';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
+import { AnalyticsQueries } from './analytics.queries';
 
 @Module({
   imports: [AuthGuardsModule],

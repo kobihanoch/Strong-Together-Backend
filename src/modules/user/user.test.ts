@@ -1,19 +1,18 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { authConfig } from '../../config/auth.config.ts';
-import { createApp } from '../../app.ts';
+import { createApp } from '../../app';
 import { loginResponseSchema, createUserResponseSchema } from '@strong-together/shared';
 import { getAuthenticatedUserByIdResponseSchema, updateAuthenticatedUserResponseSchema } from '@strong-together/shared';
-import { authHeaders, createChangeEmailToken, loginUsersTestUser } from '../../common/tests/helpers/auth.ts';
-import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
+import { authHeaders, createChangeEmailToken, loginUsersTestUser } from '../../common/tests/helpers/auth';
+import { expectSchema } from '../../common/tests/helpers/assert-schema';
+import { createAppUser, loginWithCredentials, verifyAppUser } from '../../common/tests/helpers/users';
 import {
   getUserAuthStateByUsername,
   hasReminderSettings,
   waitForUserDeletionByUsername,
-} from '../../common/tests/helpers/db.ts';
+} from '../../common/tests/helpers/db';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 
@@ -106,38 +105,21 @@ describe('Users', () => {
     const email = `${username}@example.com`;
     const newEmail = `updated_${suffix}@example.com`;
 
-    const createResponse = await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
+    const createResponse = await createAppUser(app, {
       username,
       fullName: 'Email Update',
       email,
       password: 'Test1234!',
       gender: 'Other',
-    });
+    }).then((result) => result.response);
 
     expect(createResponse.status).toBe(201);
     expectSchema(createUserResponseSchema, createResponse.body);
 
-    const verifyToken = jwt.sign(
-      {
-        sub: createResponse.body.user.id,
-        typ: 'email-verify',
-        jti: `verify-${crypto.randomUUID()}`,
-        iss: 'strong-together',
-      },
-      authConfig.jwtVerifySecret,
-      { expiresIn: '1h' },
-    );
-
-    const verifyResponse = await request(app.getHttpServer())
-      .get('/api/auth/verify')
-      .query({ token: verifyToken })
-      .set('x-app-version', '4.5.0');
+    const verifyResponse = await verifyAppUser(app, createResponse.body.user.id);
     expect(verifyResponse.status).toBe(200);
 
-    const loginResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
-      identifier: email,
-      password: 'Test1234!',
-    });
+    const loginResponse = await loginWithCredentials(app, email, 'Test1234!');
 
     expect(loginResponse.status).toBe(201);
     expectSchema(loginResponseSchema, loginResponse.body);
@@ -264,38 +246,21 @@ describe('Users', () => {
     const username = `delete_${suffix}`;
     const email = `${username}@example.com`;
 
-    const createResponse = await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
+    const createResponse = await createAppUser(app, {
       username,
       fullName: 'Delete Me',
       email,
       password: 'Test1234!',
       gender: 'Male',
-    });
+    }).then((result) => result.response);
 
     expect(createResponse.status).toBe(201);
     expectSchema(createUserResponseSchema, createResponse.body);
 
-    const verifyToken = jwt.sign(
-      {
-        sub: createResponse.body.user.id,
-        typ: 'email-verify',
-        jti: `verify-${crypto.randomUUID()}`,
-        iss: 'strong-together',
-      },
-      authConfig.jwtVerifySecret,
-      { expiresIn: '1h' },
-    );
-
-    const verifyResponse = await request(app.getHttpServer())
-      .get('/api/auth/verify')
-      .query({ token: verifyToken })
-      .set('x-app-version', '4.5.0');
+    const verifyResponse = await verifyAppUser(app, createResponse.body.user.id);
     expect(verifyResponse.status).toBe(200);
 
-    const loginDeleteResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
-      identifier: email,
-      password: 'Test1234!',
-    });
+    const loginDeleteResponse = await loginWithCredentials(app, email, 'Test1234!');
 
     expect(loginDeleteResponse.status).toBe(201);
     expectSchema(loginResponseSchema, loginDeleteResponse.body);

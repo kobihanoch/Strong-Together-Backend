@@ -14,7 +14,7 @@ INSERT INTO public.users (
   push_token,
   created_at
 ) VALUES (
-  '11111111-2222-4333-8444-555555555555',
+  '8dedd0e0-8c25-4c84-a05b-4ae5f5c48f3a',
   'system_bot',
   'system.bot@example.com',
   'System Bot',
