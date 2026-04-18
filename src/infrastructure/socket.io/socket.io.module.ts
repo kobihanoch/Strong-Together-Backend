@@ -2,8 +2,8 @@
 import { Global, Module } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { Server } from 'socket.io';
-import { SocketIOService } from './socket.io.service.ts';
-import { SOCKET_IO } from './socket.io.tokens.ts';
+import { SocketIOService } from './socket.io.service';
+import { SOCKET_IO } from './socket.io.tokens';
 
 @Global()
 @Module({

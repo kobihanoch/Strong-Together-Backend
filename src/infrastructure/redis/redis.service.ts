@@ -1,7 +1,7 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { RedisClientType } from 'redis';
-import { createLogger } from '../logger.ts';
-import { REDIS_CLIENT, REDIS_SUBSCRIBER, SOCKET_ADAPTER_CLIENTS } from './redis.tokens.ts';
+import { createLogger } from '../logger';
+import { REDIS_CLIENT, REDIS_SUBSCRIBER, SOCKET_ADAPTER_CLIENTS } from './redis.tokens';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {

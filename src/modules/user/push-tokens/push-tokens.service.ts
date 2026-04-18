@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { SaveUserPushTokenBody } from '@strong-together/shared';
-import { PushTokensQueries } from './push-tokens.queries.ts';
+import { PushTokensQueries } from './push-tokens.queries';
 
 @Injectable()
 export class PushTokensService {

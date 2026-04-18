@@ -1,1 +1,1 @@
-import './env.ts';
+import './env';

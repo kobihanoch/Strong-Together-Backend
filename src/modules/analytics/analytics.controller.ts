@@ -1,14 +1,14 @@
 import { Controller, Get, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
 import type { GetAnalyticsResponse } from '@strong-together/shared';
-import type { AuthenticatedUser } from '../../common/types/express.ts';
-import { createLogger } from '../../infrastructure/logger.ts';
-import { AnalyticsService } from './analytics.service.ts';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
-import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard.ts';
-import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard.ts';
-import { CurrentUser } from '../../common/decorators/current-user.decorator.ts';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
+import type { AuthenticatedUser } from '../../common/types/express';
+import { createLogger } from '../../infrastructure/logger';
+import { AnalyticsService } from './analytics.service';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard';
+import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 
 /**
  * Analytics routes for authenticated users.

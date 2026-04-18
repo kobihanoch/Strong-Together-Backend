@@ -5,3 +5,4 @@ node_modules/
 pythonService/.venv/
 __pycache__/
 *.pyc
+dist/*

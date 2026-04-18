@@ -1,17 +1,17 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createApp } from '../../app.ts';
+import { createApp } from '../../app';
 import { loginResponseSchema, createUserResponseSchema, userAerobicsResponseSchema } from '@strong-together/shared';
 import type { AerobicEntity, UserAerobicsResponse, WeeklyData } from '@strong-together/shared';
 import {
   loginAerobicsDefaultTimezoneUser,
   loginAerobicsGetUser,
   loginAerobicsTestUser,
-} from '../../common/tests/helpers/auth.ts';
-import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
-import { addAerobicsRecord, getAerobics } from '../../common/tests/helpers/aerobics.ts';
-import { waitForAerobicsRowsForUser } from '../../common/tests/helpers/db.ts';
-import { createAppUser, loginWithCredentials, verifyAppUser } from '../../common/tests/helpers/users.ts';
+} from '../../common/tests/helpers/auth';
+import { expectSchema } from '../../common/tests/helpers/assert-schema';
+import { addAerobicsRecord, getAerobics } from '../../common/tests/helpers/aerobics';
+import { waitForAerobicsRowsForUser } from '../../common/tests/helpers/db';
+import { createAppUser, loginWithCredentials, verifyAppUser } from '../../common/tests/helpers/users';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 

@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type postgres from 'postgres';
-import { ensureUniqueUsername } from '../oauth.utils.ts';
-import { SQL } from '../../../infrastructure/db/db.tokens.ts';
+import { ensureUniqueUsername } from '../oauth.utils';
+import { SQL } from '../../../infrastructure/db/db.tokens';
 
 interface OAuthLookupResult {
   userId: string | null;

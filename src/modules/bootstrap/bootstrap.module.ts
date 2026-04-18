@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module.ts';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
-import { AerobicsModule } from '../aerobics/aerobics.module.ts';
-import { MessagesModule } from '../messages/messages.module.ts';
-import { UserModule } from '../user/user.module.ts';
-import { WorkoutModule } from '../workout/workout.module.ts';
-import { BootstrapController } from './bootstrap.controller.ts';
-import { BootstrapService } from './bootstrap.service.ts';
+import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
+import { AerobicsModule } from '../aerobics/aerobics.module';
+import { MessagesModule } from '../messages/messages.module';
+import { UserModule } from '../user/user.module';
+import { WorkoutModule } from '../workout/workout.module';
+import { BootstrapController } from './bootstrap.controller';
+import { BootstrapService } from './bootstrap.service';
 
 @Module({
   imports: [AerobicsModule, AuthGuardsModule, MessagesModule, UserModule, WorkoutModule],

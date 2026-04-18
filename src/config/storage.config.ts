@@ -1,4 +1,4 @@
-import './app.config.ts';
+import './app.config';
 
 export const awsConfig = {
   region: process.env.AWS_REGION ?? '',

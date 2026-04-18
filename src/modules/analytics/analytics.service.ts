@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import type { GetAnalyticsResponse } from '@strong-together/shared';
-import { CacheService } from '../../infrastructure/cache/cache.service.ts';
-import { buildAnalyticsKeyStable, TTL_ANALYTICS } from './analytics.cache.ts';
-import { AnalyticsQueries } from './analytics.queries.ts';
+import { CacheService } from '../../infrastructure/cache/cache.service';
+import { buildAnalyticsKeyStable, TTL_ANALYTICS } from './analytics.cache';
+import { AnalyticsQueries } from './analytics.queries';
 
 @Injectable()
 export class AnalyticsService {

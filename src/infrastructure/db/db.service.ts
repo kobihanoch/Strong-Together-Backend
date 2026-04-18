@@ -2,8 +2,8 @@ import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import dns from 'dns';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import postgres from 'postgres';
-import { createLogger } from '../logger.ts';
-import { DB_CLIENT } from './db.tokens.ts';
+import { createLogger } from '../logger';
+import { DB_CLIENT } from './db.tokens';
 
 interface DBStore {
   tx: postgres.Sql | postgres.TransactionSql;

@@ -1,4 +1,4 @@
-import { appConfig } from './app.config.ts';
+import { appConfig } from './app.config';
 
 export const sentryConfig = {
   dsn: process.env.SENTRY_DSN,

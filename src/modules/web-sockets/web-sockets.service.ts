@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import jwt from 'jsonwebtoken';
-import { authConfig } from '../../config/auth.config.ts';
+import { authConfig } from '../../config/auth.config';
 import type { GenerateTicketResponse } from '@strong-together/shared';
 
 @Injectable()

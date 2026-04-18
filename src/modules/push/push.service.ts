@@ -1,9 +1,9 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import axios from 'axios';
-import { PushNotificationsProducerService } from '../../infrastructure/queues/push-notifications/push-notifications-producer.ts';
-import { PushQueries } from './push.queries.ts';
-import type { NotificationPayload } from './push.dtos.ts';
-import { computeDelayFromUTC } from './push.utils.ts';
+import { PushNotificationsProducerService } from '../../infrastructure/queues/push-notifications/push-notifications-producer';
+import { PushQueries } from './push.queries';
+import type { NotificationPayload } from './push.dtos';
+import { computeDelayFromUTC } from './push.utils';
 
 export type PushBatchResponse = {
   success: true;

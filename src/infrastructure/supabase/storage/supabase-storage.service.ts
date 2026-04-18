@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import axios from 'axios';
-import { supabaseConfig } from '../../../config/storage.config.ts';
+import { supabaseConfig } from '../../../config/storage.config';
 
 const base = supabaseConfig.url;
 const svc = supabaseConfig.serviceRole;

@@ -1,9 +1,9 @@
 import { gunzipSync, gzipSync } from 'zlib';
-import { appConfig } from '../../config/app.config.ts';
-import { createLogger } from '../logger.ts';
+import { appConfig } from '../../config/app.config';
+import { createLogger } from '../logger';
 import { Inject, Injectable } from '@nestjs/common';
 import { RedisClientType } from 'redis';
-import { REDIS_CLIENT } from '../redis/redis.tokens.ts';
+import { REDIS_CLIENT } from '../redis/redis.tokens';
 
 @Injectable()
 export class CacheService {

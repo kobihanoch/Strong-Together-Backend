@@ -20,25 +20,25 @@ import type {
 } from '@strong-together/shared';
 import { deleteProfilePicRequest, updateUserRequest } from '@strong-together/shared';
 import type { Response } from 'express';
-import { CurrentLogger } from '../../../common/decorators/current-logger.decorator.ts';
-import { CurrentRequestId } from '../../../common/decorators/current-request-id.decorator.ts';
-import { CurrentUser } from '../../../common/decorators/current-user.decorator.ts';
-import { RequestData } from '../../../common/decorators/request-data.decorator.ts';
-import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard.ts';
-import { AuthorizationGuard, Roles } from '../../../common/guards/auth/authorization.guard.ts';
-import { DpopGuard } from '../../../common/guards/dpop-validation.guard.ts';
+import { CurrentLogger } from '../../../common/decorators/current-logger.decorator';
+import { CurrentRequestId } from '../../../common/decorators/current-request-id.decorator';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { RequestData } from '../../../common/decorators/request-data.decorator';
+import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../../common/guards/auth/authorization.guard';
+import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import {
   RateLimit,
   RateLimitGuard,
   updateUserRateLimit,
   updateUserRateLimitDaily,
-} from '../../../common/guards/rate-limit.guard.ts';
-import { imageUploadOptions } from '../../../common/interceptors/image-upload.config.ts';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor.ts';
-import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe.ts';
-import type { AppLogger } from '../../../infrastructure/logger.ts';
-import type { AuthenticatedUser } from '../../../common/types/express.ts';
-import { UpdateUserService } from './update.service.ts';
+} from '../../../common/guards/rate-limit.guard';
+import { imageUploadOptions } from '../../../common/interceptors/image-upload.config';
+import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
+import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
+import type { AppLogger } from '../../../infrastructure/logger';
+import type { AuthenticatedUser } from '../../../common/types/express';
+import { UpdateUserService } from './update.service';
 
 /**
  * User profile-management routes.

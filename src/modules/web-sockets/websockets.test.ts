@@ -1,12 +1,12 @@
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { authConfig } from '../../config/auth.config.ts';
-import { createApp } from '../../app.ts';
+import { authConfig } from '../../config/auth.config';
+import { createApp } from '../../app';
 import { loginResponseSchema, generateTicketResponseSchema } from '@strong-together/shared';
-import { loginTestUser } from '../../common/tests/helpers/auth.ts';
-import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
-import { generateWebSocketTicket } from '../../common/tests/helpers/websockets.ts';
+import { loginTestUser } from '../../common/tests/helpers/auth';
+import { expectSchema } from '../../common/tests/helpers/assert-schema';
+import { generateWebSocketTicket } from '../../common/tests/helpers/websockets';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 

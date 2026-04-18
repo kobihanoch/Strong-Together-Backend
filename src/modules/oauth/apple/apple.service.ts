@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import type { AppleOAuthBody, OAuthLoginResponse } from '@strong-together/shared';
 import jwt from 'jsonwebtoken';
-import { authConfig } from '../../../config/auth.config.ts';
-import type { AppLogger } from '../../../infrastructure/logger.ts';
-import { SessionQueries } from '../../auth/session/session.queries.ts';
-import { buildCnfClaim } from '../oauth.utils.ts';
-import { AppleQueries } from './apple.queries.ts';
-import { verifyAppleIdToken } from './apple.utils.ts';
-import { SystemMessagesService } from '../../messages/system-messages/system-messages.service.ts';
+import { authConfig } from '../../../config/auth.config';
+import type { AppLogger } from '../../../infrastructure/logger';
+import { SessionQueries } from '../../auth/session/session.queries';
+import { buildCnfClaim } from '../oauth.utils';
+import { AppleQueries } from './apple.queries';
+import { verifyAppleIdToken } from './apple.utils';
+import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
 
 @Injectable()
 export class AppleService {

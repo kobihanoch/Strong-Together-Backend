@@ -12,17 +12,17 @@ import {
   sendVerificationMailRequest,
   verifyAccountRequest,
 } from '@strong-together/shared';
-import { VerificationService } from './verification.service.ts';
+import { VerificationService } from './verification.service';
 import {
   RateLimit,
   RateLimitGuard,
   changeVerificationEmailRateLimit,
   changeVerificationEmailRateLimitDaily,
-} from '../../../common/guards/rate-limit.guard.ts';
-import { RequestData } from '../../../common/decorators/request-data.decorator.ts';
-import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe.ts';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor.ts';
-import type { AppRequest } from '../../../common/types/express.ts';
+} from '../../../common/guards/rate-limit.guard';
+import { RequestData } from '../../../common/decorators/request-data.decorator';
+import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
+import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
+import type { AppRequest } from '../../../common/types/express';
 
 @Controller('api/auth')
 @UseInterceptors(RlsTxInterceptor)

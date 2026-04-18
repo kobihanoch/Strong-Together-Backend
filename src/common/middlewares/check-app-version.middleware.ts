@@ -1,6 +1,6 @@
 import { HttpException, Injectable, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
-import { appConfig } from '../../config/app.config.ts';
+import { appConfig } from '../../config/app.config';
 
 // Public endpoints that should bypass the version gate (extend as needed)
 const EXEMPT_PREFIXES = [

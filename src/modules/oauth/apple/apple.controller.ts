@@ -2,14 +2,14 @@ import { Controller, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/
 import type { Request, Response } from 'express';
 import type { AppleOAuthBody, OAuthLoginResponse } from '@strong-together/shared';
 import { appleOAuthRequest } from '@strong-together/shared';
-import { CurrentLogger } from '../../../common/decorators/current-logger.decorator.ts';
-import { RequestData } from '../../../common/decorators/request-data.decorator.ts';
-import { RateLimit, RateLimitGuard, loginRateLimit } from '../../../common/guards/rate-limit.guard.ts';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor.ts';
-import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe.ts';
-import type { AppLogger } from '../../../infrastructure/logger.ts';
-import { validateJkt } from '../oauth.utils.ts';
-import { AppleService } from './apple.service.ts';
+import { CurrentLogger } from '../../../common/decorators/current-logger.decorator';
+import { RequestData } from '../../../common/decorators/request-data.decorator';
+import { RateLimit, RateLimitGuard, loginRateLimit } from '../../../common/guards/rate-limit.guard';
+import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
+import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
+import type { AppLogger } from '../../../infrastructure/logger';
+import { validateJkt } from '../oauth.utils';
+import { AppleService } from './apple.service';
 
 /**
  * OAuth routes for Apple sign-in.

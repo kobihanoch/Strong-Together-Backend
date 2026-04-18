@@ -1,9 +1,9 @@
 // infrastructure/redis/redis.module.ts
 import { Module, Global } from '@nestjs/common';
 import { createClient, RedisClientOptions } from 'redis';
-import { redisConfig } from '../../config/redis.config.ts';
-import { RedisService } from './redis.service.ts';
-import { REDIS_CLIENT, REDIS_OPTIONS, REDIS_SUBSCRIBER, SOCKET_ADAPTER_CLIENTS } from './redis.tokens.ts';
+import { redisConfig } from '../../config/redis.config';
+import { RedisService } from './redis.service';
+import { REDIS_CLIENT, REDIS_OPTIONS, REDIS_SUBSCRIBER, SOCKET_ADAPTER_CLIENTS } from './redis.tokens';
 
 @Global()
 @Module({

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationPayload } from '../../../modules/push/push.dtos.ts';
-import { createLogger } from '../../logger.ts';
-import { PushNotificationsQueueService } from './push-notifications-queue.ts';
+import { NotificationPayload } from '../../../modules/push/push.dtos';
+import { createLogger } from '../../logger';
+import { PushNotificationsQueueService } from './push-notifications-queue';
 
 @Injectable()
 export class PushNotificationsProducerService {

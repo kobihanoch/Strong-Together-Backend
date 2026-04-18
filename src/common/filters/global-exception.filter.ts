@@ -1,7 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import type { Response } from 'express';
-import { createLogger } from '../../infrastructure/logger.ts';
-import type { AppRequest } from '../types/express.ts';
+import { createLogger } from '../../infrastructure/logger';
+import type { AppRequest } from '../types/express';
 
 const logger = createLogger('filter:error-handler');
 

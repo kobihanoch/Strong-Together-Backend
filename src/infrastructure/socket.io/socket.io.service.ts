@@ -1,10 +1,10 @@
 import { BadRequestException, Inject, Injectable, OnModuleInit, UnauthorizedException } from '@nestjs/common';
 import { RedisClientType } from 'redis';
 import { Server, Socket } from 'socket.io';
-import { decodeSocketToken } from '../../modules/web-sockets/web-sockets.utils.ts';
-import { createLogger } from '../logger.ts';
-import { SOCKET_ADAPTER_CLIENTS } from '../redis/redis.tokens.ts';
-import { SOCKET_IO } from './socket.io.tokens.ts';
+import { decodeSocketToken } from '../../modules/web-sockets/web-sockets.utils';
+import { createLogger } from '../logger';
+import { SOCKET_ADAPTER_CLIENTS } from '../redis/redis.tokens';
+import { SOCKET_IO } from './socket.io.tokens';
 import { createAdapter } from '@socket.io/redis-adapter';
 
 type SocketUser = {

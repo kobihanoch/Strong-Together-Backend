@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { MessageAfterSendResponse } from '@strong-together/shared';
 import type postgres from 'postgres';
-import { appConfig } from '../../../config/app.config.ts';
-import { SQL } from '../../../infrastructure/db/db.tokens.ts';
-import { getEndOfWorkoutMessage, getFirstLoginMessage } from './system-messages.templates.ts';
-import { MessagesService } from '../messages.service.ts';
+import { appConfig } from '../../../config/app.config';
+import { SQL } from '../../../infrastructure/db/db.tokens';
+import { getEndOfWorkoutMessage, getFirstLoginMessage } from './system-messages.templates';
+import { MessagesService } from '../messages.service';
 
 @Injectable()
 export class SystemMessagesService {

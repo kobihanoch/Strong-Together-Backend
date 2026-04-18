@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import jwt from 'jsonwebtoken';
-import { generateJti } from '../../../../common/authentication/authentication.utils.ts';
-import { appConfig } from '../../../../config/app.config.ts';
-import { authConfig } from '../../../../config/auth.config.ts';
-import { generateConfirmEmailChange } from './update-emails.templates.ts';
-import { EmailsProducerService } from '../../../../infrastructure/queues/emails/emails-producer.ts';
+import { generateJti } from '../../../../common/authentication/authentication.utils';
+import { appConfig } from '../../../../config/app.config';
+import { authConfig } from '../../../../config/auth.config';
+import { generateConfirmEmailChange } from './update-emails.templates';
+import { EmailsProducerService } from '../../../../infrastructure/queues/emails/emails-producer';
 
 type EmailContext = {
   requestId?: string;

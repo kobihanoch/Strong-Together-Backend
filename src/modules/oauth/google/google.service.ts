@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import type { GoogleOAuthBody, GoogleTokenVerificationResult, OAuthLoginResponse } from '@strong-together/shared';
 import jwt from 'jsonwebtoken';
-import { authConfig } from '../../../config/auth.config.ts';
-import type { AppLogger } from '../../../infrastructure/logger.ts';
-import { SessionQueries } from '../../auth/session/session.queries.ts';
-import { SystemMessagesService } from '../../messages/system-messages/system-messages.service.ts';
-import { buildCnfClaim } from '../oauth.utils.ts';
-import { GoogleQueries } from './google.queries.ts';
-import { verifyGoogleIdToken } from './google.utils.ts';
+import { authConfig } from '../../../config/auth.config';
+import type { AppLogger } from '../../../infrastructure/logger';
+import { SessionQueries } from '../../auth/session/session.queries';
+import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
+import { buildCnfClaim } from '../oauth.utils';
+import { GoogleQueries } from './google.queries';
+import { verifyGoogleIdToken } from './google.utils';
 @Injectable()
 export class GoogleService {
   constructor(

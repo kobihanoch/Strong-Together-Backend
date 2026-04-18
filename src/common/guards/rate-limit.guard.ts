@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable, SetMetadata } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { appConfig } from '../../config/app.config.ts';
-import type { AppRequest } from '../types/express.ts';
+import { appConfig } from '../../config/app.config';
+import type { AppRequest } from '../types/express';
 
 export type RateLimitOptions = {
   windowMs: number;

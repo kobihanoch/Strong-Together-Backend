@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { AerobicsQueries } from './aerobics.queries.ts';
+import { AerobicsQueries } from './aerobics.queries';
 import type { AddUserAerobicsBody, UserAerobicsResponse } from '@strong-together/shared';
-import { buildAerobicsKeyStable, TTL_AEROBICS } from './aerobics.cache.ts';
-import { CacheService } from '../../infrastructure/cache/cache.service.ts';
+import { buildAerobicsKeyStable, TTL_AEROBICS } from './aerobics.cache';
+import { CacheService } from '../../infrastructure/cache/cache.service';
 
 @Injectable()
 export class AerobicsService {

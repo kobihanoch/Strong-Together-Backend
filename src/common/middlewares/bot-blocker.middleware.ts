@@ -1,8 +1,8 @@
 import { Injectable, NestMiddleware, NotFoundException } from '@nestjs/common';
 import { NextFunction, Response } from 'express';
-import { createLogger } from '../../infrastructure/logger.ts';
-import { markSentryBotBlocked } from '../../infrastructure/sentry.ts';
-import type { AppRequest } from '../types/express.ts';
+import { createLogger } from '../../infrastructure/logger';
+import { markSentryBotBlocked } from '../../infrastructure/sentry';
+import type { AppRequest } from '../types/express';
 
 @Injectable()
 export class BotBlockerMiddleware implements NestMiddleware {

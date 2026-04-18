@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { PushNotificationsProducerService } from './push-notifications-producer.ts';
-import { PushNotificationsQueueService } from './push-notifications-queue.ts';
+import { PushNotificationsProducerService } from './push-notifications-producer';
+import { PushNotificationsQueueService } from './push-notifications-queue';
 
 @Module({
   providers: [PushNotificationsQueueService, PushNotificationsProducerService],

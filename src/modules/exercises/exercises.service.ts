@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ExercisesQueries } from './exercises.queries.ts';
+import { ExercisesQueries } from './exercises.queries';
 import type { GetAllExercisesResponse } from '@strong-together/shared';
 
 @Injectable()

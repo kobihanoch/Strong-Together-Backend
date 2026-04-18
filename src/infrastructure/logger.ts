@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import pino, { type Bindings, type Logger } from 'pino';
-import { appConfig } from '../config/app.config.ts';
-import { loggerConfig } from '../config/logger.config.ts';
+import { appConfig } from '../config/app.config';
+import { loggerConfig } from '../config/logger.config';
 
 const serviceName = loggerConfig.serviceName;
 const isDevelopment = !appConfig.isProduction;

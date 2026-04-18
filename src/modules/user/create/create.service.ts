@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
-import { CreateUserQueries } from './create.queries.ts';
+import { CreateUserQueries } from './create.queries';
 import type { CreateUserBody, CreateUserResponse } from '@strong-together/shared';
-import { VerificationEmailsService } from '../../auth/verification/verification-emails/verification-emails.service.ts';
+import { VerificationEmailsService } from '../../auth/verification/verification-emails/verification-emails.service';
 
 @Injectable()
 export class CreateUserService {

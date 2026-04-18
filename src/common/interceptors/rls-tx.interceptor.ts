@@ -1,6 +1,6 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { from, lastValueFrom, Observable } from 'rxjs';
-import { DBService } from '../../infrastructure/db/db.service.ts';
+import { DBService } from '../../infrastructure/db/db.service';
 
 @Injectable()
 export class RlsTxInterceptor implements NestInterceptor {

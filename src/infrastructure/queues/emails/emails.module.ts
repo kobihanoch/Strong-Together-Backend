@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { EmailsProducerService } from './emails-producer.ts';
-import { EmailsQueueService } from './emails-queue.ts';
+import { EmailsProducerService } from './emails-producer';
+import { EmailsQueueService } from './emails-queue';
 
 @Module({
   providers: [EmailsQueueService, EmailsProducerService],

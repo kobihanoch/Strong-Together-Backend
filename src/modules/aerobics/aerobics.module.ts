@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module.ts';
-import { AerobicsController } from './aerobics.controller.ts';
-import { AerobicsQueries } from './aerobics.queries.ts';
-import { AerobicsService } from './aerobics.service.ts';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
+import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module';
+import { AerobicsController } from './aerobics.controller';
+import { AerobicsQueries } from './aerobics.queries';
+import { AerobicsService } from './aerobics.service';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 
 @Module({
   imports: [AuthGuardsModule],

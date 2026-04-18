@@ -1,15 +1,15 @@
 import { Controller, Put, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { SaveUserPushTokenBody } from '@strong-together/shared';
 import { saveUserPushTokenRequest } from '@strong-together/shared';
-import { CurrentUser } from '../../../common/decorators/current-user.decorator.ts';
-import { RequestData } from '../../../common/decorators/request-data.decorator.ts';
-import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard.ts';
-import { AuthorizationGuard, Roles } from '../../../common/guards/auth/authorization.guard.ts';
-import { DpopGuard } from '../../../common/guards/dpop-validation.guard.ts';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor.ts';
-import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe.ts';
-import type { AuthenticatedUser } from '../../../common/types/express.ts';
-import { PushTokensService } from './push-tokens.service.ts';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { RequestData } from '../../../common/decorators/request-data.decorator';
+import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../../common/guards/auth/authorization.guard';
+import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
+import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
+import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
+import type { AuthenticatedUser } from '../../../common/types/express';
+import { PushTokensService } from './push-tokens.service';
 
 /**
  * User push-token routes.

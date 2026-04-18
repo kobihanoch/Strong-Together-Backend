@@ -1,17 +1,17 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createApp } from '../../app.ts';
+import { createApp } from '../../app';
 import { loginResponseSchema } from '@strong-together/shared';
 import {
   deleteMessageResponseSchema,
   getAllUserMessagesResponseSchema,
   markMessageAsReadResponseSchema,
 } from '@strong-together/shared';
-import { loginAuthTestUser, loginMessagesTestUser } from '../../common/tests/helpers/auth.ts';
-import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
-import { getMessageReadState, getExerciseToWorkoutSplitId, messageExists } from '../../common/tests/helpers/db.ts';
-import { deleteMessage, getMessages, markMessageAsRead } from '../../common/tests/helpers/messages.ts';
-import { addWorkoutPlan, finishWorkout } from '../../common/tests/helpers/workouts.ts';
+import { loginAuthTestUser, loginMessagesTestUser } from '../../common/tests/helpers/auth';
+import { expectSchema } from '../../common/tests/helpers/assert-schema';
+import { getMessageReadState, getExerciseToWorkoutSplitId, messageExists } from '../../common/tests/helpers/db';
+import { deleteMessage, getMessages, markMessageAsRead } from '../../common/tests/helpers/messages';
+import { addWorkoutPlan, finishWorkout } from '../../common/tests/helpers/workouts';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 
