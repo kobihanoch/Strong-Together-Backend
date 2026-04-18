@@ -5,8 +5,8 @@ import type {
   MarkMessageAsReadResponse,
   MessageAfterSendResponse,
 } from '@strong-together/shared';
-import { SocketIOService } from '../../infrastructure/socket.io/socket.io.service.ts';
-import { MessagesQueries } from './messages.queries.ts';
+import { SocketIOService } from '../../infrastructure/socket.io/socket.io.service';
+import { MessagesQueries } from './messages.queries';
 
 @Injectable()
 export class MessagesService {

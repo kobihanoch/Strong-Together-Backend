@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createApp } from '../../app.ts';
+import { createApp } from '../../app';
 import { loginResponseSchema, logoutResponseSchema, refreshTokenResponseSchema } from '@strong-together/shared';
 import {
   resetPasswordResponseSchema,
@@ -15,9 +15,9 @@ import {
   loginTestUser,
   logoutHeaders,
   refreshHeaders,
-} from '../../common/tests/helpers/auth.ts';
-import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
-import { getUserAuthStateByUsername } from '../../common/tests/helpers/db.ts';
+} from '../../common/tests/helpers/auth';
+import { expectSchema } from '../../common/tests/helpers/assert-schema';
+import { getUserAuthStateByUsername } from '../../common/tests/helpers/db';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 

@@ -1,12 +1,12 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createApp } from '../../app.ts';
+import { createApp } from '../../app';
 import { getAnalyticsResponseSchema, loginResponseSchema } from '@strong-together/shared';
-import { loginAnalyticsEmptyUser, loginAnalyticsTestUser } from '../../common/tests/helpers/auth.ts';
-import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
-import { getExerciseToWorkoutSplitId, getWorkoutSummaryCount } from '../../common/tests/helpers/db.ts';
-import { getAnalytics } from '../../common/tests/helpers/analytics.ts';
-import { addWorkoutPlan, finishWorkout } from '../../common/tests/helpers/workouts.ts';
+import { loginAnalyticsEmptyUser, loginAnalyticsTestUser } from '../../common/tests/helpers/auth';
+import { expectSchema } from '../../common/tests/helpers/assert-schema';
+import { getExerciseToWorkoutSplitId, getWorkoutSummaryCount } from '../../common/tests/helpers/db';
+import { getAnalytics } from '../../common/tests/helpers/analytics';
+import { addWorkoutPlan, finishWorkout } from '../../common/tests/helpers/workouts';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 

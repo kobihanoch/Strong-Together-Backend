@@ -1,4 +1,4 @@
-import { appConfig } from './app.config.ts';
+import { appConfig } from './app.config';
 
 export const loggerConfig = {
   serviceName: process.env.LOG_SERVICE_NAME ?? 'strong-together-server',

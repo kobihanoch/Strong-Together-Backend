@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable, NestMiddleware } from '@nestjs/common';
 import type { NextFunction, Request, Response } from 'express';
-import { appConfig } from '../../config/app.config.ts';
-import { generalRateLimit } from '../guards/rate-limit.guard.ts';
+import { appConfig } from '../../config/app.config';
+import { generalRateLimit } from '../guards/rate-limit.guard';
 
 type Bucket = {
   count: number;

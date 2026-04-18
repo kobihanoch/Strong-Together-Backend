@@ -1,10 +1,10 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import type { AnalyzeVideoResultPayload, SquatRepetition } from '@strong-together/shared';
 import { RedisClientType } from 'redis';
-import { appConfig } from '../../config/app.config.ts';
-import { createLogger } from '../../infrastructure/logger.ts';
-import { REDIS_SUBSCRIBER } from '../../infrastructure/redis/redis.tokens.ts';
-import { VideoAnalysisService } from './video-analysis.service.ts';
+import { appConfig } from '../../config/app.config';
+import { createLogger } from '../../infrastructure/logger';
+import { REDIS_SUBSCRIBER } from '../../infrastructure/redis/redis.tokens';
+import { VideoAnalysisService } from './video-analysis.service';
 
 @Injectable()
 export class VideoAnalysisSubscriber implements OnModuleInit {

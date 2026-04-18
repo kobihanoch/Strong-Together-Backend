@@ -1,14 +1,14 @@
 import { BadRequestException, ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import type postgres from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens.ts';
-import { VerificationQueries } from './verification.queries.ts';
-import { CreateUserQueries } from '../../user/create/create.queries.ts';
-import { VerificationEmailsService } from './verification-emails/verification-emails.service.ts';
-import { generateVerificationFailedHTML, generateVerifiedHTML } from './verification.views.ts';
+import { SQL } from '../../../infrastructure/db/db.tokens';
+import { VerificationQueries } from './verification.queries';
+import { CreateUserQueries } from '../../user/create/create.queries';
+import { VerificationEmailsService } from './verification-emails/verification-emails.service';
+import { generateVerificationFailedHTML, generateVerifiedHTML } from './verification.views';
 import type { ChangeEmailAndVerifyBody, SendVerifcationMailBody } from '@strong-together/shared';
-import { CacheService } from '../../../infrastructure/cache/cache.service.ts';
-import { decodeVerifyToken } from './verification.utils.ts';
+import { CacheService } from '../../../infrastructure/cache/cache.service';
+import { decodeVerifyToken } from './verification.utils';
 
 @Injectable()
 export class VerificationService {

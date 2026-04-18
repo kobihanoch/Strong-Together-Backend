@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import type { EmailVerifyPayload } from '@strong-together/shared';
-import { authConfig } from '../../../config/auth.config.ts';
+import { authConfig } from '../../../config/auth.config';
 
 export const decodeVerifyToken = (verifyToken: string): EmailVerifyPayload | null => {
   try {

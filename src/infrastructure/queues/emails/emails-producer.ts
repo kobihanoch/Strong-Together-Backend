@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { appConfig } from '../../../config/app.config.ts';
-import { createLogger } from '../../logger.ts';
-import { EmailsQueueService } from './emails-queue.ts';
-import { EmailPayload } from './emails.dtos.ts';
+import { appConfig } from '../../../config/app.config';
+import { createLogger } from '../../logger';
+import { EmailsQueueService } from './emails-queue';
+import { EmailPayload } from './emails.dtos';
 
 @Injectable()
 export class EmailsProducerService {

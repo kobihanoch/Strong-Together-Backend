@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { UserToHourlyReminder, UserWithNotificationsEnabled } from './push.dtos.ts';
+import { UserToHourlyReminder, UserWithNotificationsEnabled } from './push.dtos';
 import type postgres from 'postgres';
-import { SQL } from '../../infrastructure/db/db.tokens.ts';
+import { SQL } from '../../infrastructure/db/db.tokens';
 
 @Injectable()
 export class PushQueries {

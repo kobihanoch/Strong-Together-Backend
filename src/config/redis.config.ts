@@ -1,4 +1,4 @@
-import './app.config.ts';
+import './app.config';
 
 export const redisConfig = {
   username: process.env.REDIS_USERNAME,

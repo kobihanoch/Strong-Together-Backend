@@ -1,8 +1,8 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import Bull, { Queue } from 'bull';
-import { appConfig } from '../../../config/app.config.ts';
-import { redisConfig } from '../../../config/redis.config.ts';
-import { EmailPayload } from './emails.dtos.ts';
+import { appConfig } from '../../../config/app.config';
+import { redisConfig } from '../../../config/redis.config';
+import { EmailPayload } from './emails.dtos';
 
 @Injectable()
 export class EmailsQueueService implements OnModuleDestroy {

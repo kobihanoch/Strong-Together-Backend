@@ -1,8 +1,8 @@
 import * as Sentry from '@sentry/node';
 import type { Express } from 'express';
-import { appConfig } from '../config/app.config.ts';
-import { sentryConfig } from '../config/sentry.config.ts';
-import type { AppRequest } from '../common/types/express.ts';
+import { appConfig } from '../config/app.config';
+import { sentryConfig } from '../config/sentry.config';
+import type { AppRequest } from '../common/types/express';
 
 const dsn = sentryConfig.dsn;
 const environment = sentryConfig.environment;

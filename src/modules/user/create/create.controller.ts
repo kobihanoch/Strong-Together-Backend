@@ -2,11 +2,11 @@ import { Controller, Post, Res, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
 import type { CreateUserBody, CreateUserResponse } from '@strong-together/shared';
 import { createUserRequest } from '@strong-together/shared';
-import { CurrentRequestId } from '../../../common/decorators/current-request-id.decorator.ts';
-import { RequestData } from '../../../common/decorators/request-data.decorator.ts';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor.ts';
-import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe.ts';
-import { CreateUserService } from './create.service.ts';
+import { CurrentRequestId } from '../../../common/decorators/current-request-id.decorator';
+import { RequestData } from '../../../common/decorators/request-data.decorator';
+import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
+import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
+import { CreateUserService } from './create.service';
 
 /**
  * User-registration routes.

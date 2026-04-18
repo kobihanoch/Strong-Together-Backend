@@ -1,6 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { createLogger } from '../../infrastructure/logger.ts';
-import type { AppRequest } from '../types/express.ts';
+import { createLogger } from '../../infrastructure/logger';
+import type { AppRequest } from '../types/express';
 
 const fallbackLogger = createLogger('request');
 

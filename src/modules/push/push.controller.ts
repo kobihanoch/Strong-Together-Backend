@@ -1,10 +1,10 @@
 import { Controller, Get, Res, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
-import { CurrentLogger } from '../../common/decorators/current-logger.decorator.ts';
-import { CurrentRequestId } from '../../common/decorators/current-request-id.decorator.ts';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
-import type { AppLogger } from '../../infrastructure/logger.ts';
-import { PushService } from './push.service.ts';
+import { CurrentLogger } from '../../common/decorators/current-logger.decorator';
+import { CurrentRequestId } from '../../common/decorators/current-request-id.decorator';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
+import type { AppLogger } from '../../infrastructure/logger';
+import { PushService } from './push.service';
 
 /**
  * Push-notification trigger routes.

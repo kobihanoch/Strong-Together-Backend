@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { MailerService } from './mailer.service.ts';
-import { RESEND_CLIENT } from './mailer.tokens.ts';
-import { emailConfig } from '../../config/email.config.ts';
+import { MailerService } from './mailer.service';
+import { RESEND_CLIENT } from './mailer.tokens';
+import { emailConfig } from '../../config/email.config';
 import { Resend } from 'resend';
 
 @Module({

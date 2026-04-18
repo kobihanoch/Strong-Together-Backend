@@ -1,8 +1,8 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { createLogger } from '../../src/infrastructure/logger.ts';
-import { PushNotificationsQueueService } from '../../src/infrastructure/queues/push-notifications/push-notifications-queue.ts';
-import { captureWorkerException } from '../../src/infrastructure/sentry.ts';
-import { sendPushNotification } from '../../src/modules/push/push.service.ts';
+import { createLogger } from '../../src/infrastructure/logger';
+import { PushNotificationsQueueService } from '../../src/infrastructure/queues/push-notifications/push-notifications-queue';
+import { captureWorkerException } from '../../src/infrastructure/sentry';
+import { sendPushNotification } from '../../src/modules/push/push.service';
 
 const logger = createLogger('worker:push-notifications', {
   queue: 'pushNotificationsQueue',

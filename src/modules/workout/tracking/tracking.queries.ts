@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type postgres from 'postgres';
 import type { ExerciseTrackingAndStats, FinishedWorkoutEntry } from '@strong-together/shared';
-import { SQL } from '../../../infrastructure/db/db.tokens.ts';
+import { SQL } from '../../../infrastructure/db/db.tokens';
 
 @Injectable()
 export class WorkoutTrackingQueries {

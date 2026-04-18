@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { AllUserMessages, DeletedMessage, MessageAsRead } from '@strong-together/shared';
 import type postgres from 'postgres';
-import { SQL } from '../../infrastructure/db/db.tokens.ts';
+import { SQL } from '../../infrastructure/db/db.tokens';
 
 // Returns sender's username, full name and profile image path too
 /*

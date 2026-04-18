@@ -6,8 +6,8 @@ import type {
   SquatRepetition,
 } from '@strong-together/shared';
 import { UserEntity } from '@strong-together/shared';
-import { S3Service } from '../../infrastructure/aws/s3/s3.service.ts';
-import { SocketIOService } from './../../infrastructure/socket.io/socket.io.service.ts';
+import { S3Service } from '../../infrastructure/aws/s3/s3.service';
+import { SocketIOService } from './../../infrastructure/socket.io/socket.io.service';
 
 export const normalizeHeaderValue = (value: string | string[] | undefined): string => {
   if (Array.isArray(value)) {

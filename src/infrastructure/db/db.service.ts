@@ -2,8 +2,8 @@ import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import dns from 'dns';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import postgres from 'postgres';
-import { createLogger } from '../logger.ts';
-import { DB_CLIENT } from './db.tokens.ts';
+import { createLogger } from '../logger';
+import { DB_CLIENT } from './db.tokens';
 
 interface DBStore {
   tx: postgres.Sql | postgres.TransactionSql;
@@ -40,16 +40,7 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
     if (!userId) return fn();
 
     return (await this.dbClient.begin(async (tx) => {
-      const claims = JSON.stringify({
-        sub: userId,
-        role: 'authenticated',
-        aud: 'authenticated',
-      });
-
-      await tx`select set_config('request.jwt.claims', ${claims}, true)`;
-      await tx`select set_config('request.jwt.claim.sub', ${userId}, true)`;
-      await tx`select set_config('request.jwt.claim.role', ${'authenticated'}, true)`;
-      await tx`select set_config('request.jwt.claim.aud', ${'authenticated'}, true)`;
+      await tx`select set_config('app.current_user_id', ${userId}, true)`;
       await tx`SET LOCAL ROLE authenticated`;
 
       return this.als.run({ tx, userId }, fn);

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import jwt from 'jsonwebtoken';
-import { generateJti } from '../../../../common/authentication/authentication.utils.ts';
-import { authConfig } from '../../../../config/auth.config.ts';
-import { EmailsProducerService } from './../../../../infrastructure/queues/emails/emails-producer.ts';
-import { generateForgotPasswordEmail } from './password-emails.templates.ts';
+import { generateJti } from '../../../../common/authentication/authentication.utils';
+import { authConfig } from '../../../../config/auth.config';
+import { EmailsProducerService } from './../../../../infrastructure/queues/emails/emails-producer';
+import { generateForgotPasswordEmail } from './password-emails.templates';
 
 type EmailContext = {
   requestId?: string;

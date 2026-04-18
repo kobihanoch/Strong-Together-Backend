@@ -2,12 +2,12 @@ import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/
 import type { AccessTokenPayload, LoginResponse, RefreshTokenResponse } from '@strong-together/shared';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { appConfig } from '../../../config/app.config.ts';
-import { authConfig } from '../../../config/auth.config.ts';
-import type { AppLogger } from '../../../infrastructure/logger.ts';
-import { SystemMessagesService } from '../../messages/system-messages/system-messages.service.ts';
-import { SessionQueries } from './session.queries.ts';
-import { decodeRefreshToken } from './session.utils.ts';
+import { appConfig } from '../../../config/app.config';
+import { authConfig } from '../../../config/auth.config';
+import type { AppLogger } from '../../../infrastructure/logger';
+import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
+import { SessionQueries } from './session.queries';
+import { decodeRefreshToken } from './session.utils';
 
 @Injectable()
 export class SessionService {

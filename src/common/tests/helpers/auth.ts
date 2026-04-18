@@ -1,8 +1,8 @@
 import crypto from 'crypto';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
-import { authConfig } from '../../../config/auth.config.ts';
-import { createApp } from '../../../app.ts';
+import { authConfig } from '../../../config/auth.config';
+import { createApp } from '../../../app';
 
 async function login(identifier: string) {
   const app = await createApp();

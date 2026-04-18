@@ -1,10 +1,10 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { CacheService } from '../../../infrastructure/cache/cache.service.ts';
-import { WorkoutPlanQueries } from './plan.queries.ts';
+import { CacheService } from '../../../infrastructure/cache/cache.service';
+import { WorkoutPlanQueries } from './plan.queries';
 import type { AddWorkoutBody, AddWorkoutResponse, GetWholeUserWorkoutPlanResponse } from '@strong-together/shared';
 
-import { buildPlanKeyStable, TTL_PLAN } from './plan.cache.ts';
-import { buildAnalyticsKeyStable } from '../../analytics/analytics.cache.ts';
+import { buildPlanKeyStable, TTL_PLAN } from './plan.cache';
+import { buildAnalyticsKeyStable } from '../../analytics/analytics.cache';
 
 @Injectable()
 export class WorkoutPlanService {

@@ -1,8 +1,8 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import type { NextFunction, Response } from 'express';
-import { createLogger, createRequestId } from '../../infrastructure/logger.ts';
-import { applySentryRequestContext } from '../../infrastructure/sentry.ts';
-import type { AppRequest } from '../types/express.ts';
+import { createLogger, createRequestId } from '../../infrastructure/logger';
+import { applySentryRequestContext } from '../../infrastructure/sentry';
+import type { AppRequest } from '../types/express';
 
 @Injectable()
 export class RequestLoggerMiddleware implements NestMiddleware {

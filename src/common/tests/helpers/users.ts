@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
-import { authConfig } from '../../../config/auth.config.ts';
+import { authConfig } from '../../../config/auth.config';
 
 type TestApp = {
   getHttpServer(): any;

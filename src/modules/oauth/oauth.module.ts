@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
-import { RateLimitGuard } from '../../common/guards/rate-limit.guard.ts';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
-import { MessagesModule } from '../messages/messages.module.ts';
-import { AppleController } from './apple/apple.controller.ts';
-import { AppleQueries } from './apple/apple.queries.ts';
-import { AppleService } from './apple/apple.service.ts';
-import { GoogleController } from './google/google.controller.ts';
-import { GoogleQueries } from './google/google.queries.ts';
-import { GoogleService } from './google/google.service.ts';
-import { SessionQueries } from '../auth/session/session.queries.ts';
+import { RateLimitGuard } from '../../common/guards/rate-limit.guard';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
+import { MessagesModule } from '../messages/messages.module';
+import { AppleController } from './apple/apple.controller';
+import { AppleQueries } from './apple/apple.queries';
+import { AppleService } from './apple/apple.service';
+import { GoogleController } from './google/google.controller';
+import { GoogleQueries } from './google/google.queries';
+import { GoogleService } from './google/google.service';
+import { SessionQueries } from '../auth/session/session.queries';
 
 @Module({
   imports: [MessagesModule],

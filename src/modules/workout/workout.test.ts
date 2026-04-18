@@ -1,12 +1,12 @@
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createApp } from '../../app.ts';
+import { createApp } from '../../app';
 import { addWorkoutResponseSchema, getWholeUserWorkoutPlanResponseSchema } from '@strong-together/shared';
 import { finishUserWorkoutResponseSchema, getExerciseTrackingResponseSchema } from '@strong-together/shared';
 import { loginResponseSchema, createUserResponseSchema } from '@strong-together/shared';
-import { authHeaders, loginAuthTestUser, loginWorkoutsTestUser } from '../../common/tests/helpers/auth.ts';
-import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
-import { createAppUser, loginWithCredentials, verifyAppUser } from '../../common/tests/helpers/users.ts';
+import { authHeaders, loginAuthTestUser, loginWorkoutsTestUser } from '../../common/tests/helpers/auth';
+import { expectSchema } from '../../common/tests/helpers/assert-schema';
+import { createAppUser, loginWithCredentials, verifyAppUser } from '../../common/tests/helpers/users';
 import {
   getActiveWorkoutSplitNames,
   getExerciseToWorkoutSplitId,
@@ -15,8 +15,8 @@ import {
   getInactiveExercisesForSplit,
   getInactiveWorkoutSplitNames,
   getWorkoutSummaryCount,
-} from '../../common/tests/helpers/db.ts';
-import { addWorkoutPlan, finishWorkout, getTracking, getWorkoutPlan } from '../../common/tests/helpers/workouts.ts';
+} from '../../common/tests/helpers/db';
+import { addWorkoutPlan, finishWorkout, getTracking, getWorkoutPlan } from '../../common/tests/helpers/workouts';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 

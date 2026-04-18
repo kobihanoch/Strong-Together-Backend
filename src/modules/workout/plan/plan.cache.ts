@@ -1,4 +1,4 @@
-import { redisConfig } from '../../../config/redis.config.ts';
+import { redisConfig } from '../../../config/redis.config';
 
 export const TTL_PLAN = redisConfig.cacheTtls.planSec;
 const PLAN_NS = 'xt:workoutplan:v1';

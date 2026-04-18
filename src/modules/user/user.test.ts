@@ -2,17 +2,17 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import request from 'supertest';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createApp } from '../../app.ts';
+import { createApp } from '../../app';
 import { loginResponseSchema, createUserResponseSchema } from '@strong-together/shared';
 import { getAuthenticatedUserByIdResponseSchema, updateAuthenticatedUserResponseSchema } from '@strong-together/shared';
-import { authHeaders, createChangeEmailToken, loginUsersTestUser } from '../../common/tests/helpers/auth.ts';
-import { expectSchema } from '../../common/tests/helpers/assert-schema.ts';
-import { createAppUser, loginWithCredentials, verifyAppUser } from '../../common/tests/helpers/users.ts';
+import { authHeaders, createChangeEmailToken, loginUsersTestUser } from '../../common/tests/helpers/auth';
+import { expectSchema } from '../../common/tests/helpers/assert-schema';
+import { createAppUser, loginWithCredentials, verifyAppUser } from '../../common/tests/helpers/users';
 import {
   getUserAuthStateByUsername,
   hasReminderSettings,
   waitForUserDeletionByUsername,
-} from '../../common/tests/helpers/db.ts';
+} from '../../common/tests/helpers/db';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 

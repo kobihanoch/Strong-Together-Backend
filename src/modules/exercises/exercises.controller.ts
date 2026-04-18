@@ -1,10 +1,10 @@
 import { Controller, Get, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { GetAllExercisesResponse } from '@strong-together/shared';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard.ts';
-import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard.ts';
-import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard.ts';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor.ts';
-import { ExercisesService } from './exercises.service.ts';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard';
+import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
+import { ExercisesService } from './exercises.service';
 
 /**
  * Exercise routes for authenticated users.
