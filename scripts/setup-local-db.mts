@@ -51,7 +51,10 @@ function run(): void {
     // Seeds are optional so dev can rerun migrations without re-inserting fixture data.
     if (!skipSeeds) {
       console.log('Injecting seeds...');
-      const seedFiles = fs.readdirSync(seedsDir).filter((name) => name.endsWith('.sql')).sort();
+      const seedFiles = fs
+        .readdirSync(seedsDir)
+        .filter((name) => name.endsWith('.sql'))
+        .sort();
 
       for (const seedFile of seedFiles) {
         execSync(`docker exec -i ${containerName} psql -v ON_ERROR_STOP=1 -U postgres -d ${dbName}`, {

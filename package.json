@@ -10,7 +10,7 @@
     "db:dev:migrate": "tsx scripts/setup-local-db.mts dev --skip-seeds",
     "db:migrate:diff": "tsx scripts/create-db-migration.mts",
     "db:prod:migrate": "tsx scripts/apply-prod-migrations.mts",
-    "test:db:reset": "tsx scripts/setup-local-db.mts test",
+    "test:db:reset": "cross-env NODE_ENV=test tsx scripts/setup-local-db.mts test",
     "test:auth": "npm run test:db:reset && vitest run src/modules/auth/auth.test.ts --silent",
     "test:users": "npm run test:db:reset && vitest run src/modules/user/user.test.ts --silent",
     "test:workouts": "npm run test:db:reset && vitest run src/modules/workout/workout.test.ts --silent",
