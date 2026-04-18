@@ -17,7 +17,7 @@ const seedsDir = 'src/infrastructure/db/schema/seeds';
 const dbUrl = `postgresql://postgres:postgres@localhost:${port}/${dbName}?sslmode=disable`;
 const atlasExecutable = path.join(process.env.LOCALAPPDATA ?? '', 'Programs', 'Atlas', 'atlas.exe');
 
-function run() {
+function run(): void {
   try {
     console.log(`Starting ${profile} orchestration...`);
 
