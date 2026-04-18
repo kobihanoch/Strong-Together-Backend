@@ -12,8 +12,10 @@ export class BotBlockerMiddleware implements NestMiddleware {
     const userAgent = req.headers['user-agent'];
     const appVersion = req.headers['x-app-version'];
     const acceptHeader = req.headers['accept'] || '';
-    const path = req.path;
+    const requestPath = req.originalUrl || req.url || req.path;
+    const path = requestPath.split('?')[0];
 
+    if (path.startsWith('/socket.io')) return next();
     if (appVersion) return next();
     if (
       path.includes('verify') ||

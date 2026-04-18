@@ -5,6 +5,7 @@ import { appConfig } from '../../config/app.config';
 // Public endpoints that should bypass the version gate (extend as needed)
 const EXEMPT_PREFIXES = [
   '/health',
+  '/socket.io',
   '/api/auth/verify',
   '/api/auth/resetpassword',
   '/api/auth/forgotpassemail',
@@ -36,8 +37,11 @@ function compareVersions(a: string, b: string): number {
 @Injectable()
 export class CheckAppVersionMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
+    const requestPath = req.originalUrl || req.url || req.path;
+    const path = requestPath.split('?')[0];
+
     // Skip exempt paths (prefix-based)
-    if (EXEMPT_PREFIXES.some((p) => req.path.startsWith(p))) return next();
+    if (EXEMPT_PREFIXES.some((p) => path.startsWith(p))) return next();
 
     // Read current version and minimum allowed
     const current = req.headers['x-app-version'] as string; // case-insensitive
