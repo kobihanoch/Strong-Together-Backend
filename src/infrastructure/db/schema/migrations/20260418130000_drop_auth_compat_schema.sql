@@ -1,3 +1,0 @@
-DROP FUNCTION IF EXISTS auth.uid();
-
-DROP SCHEMA IF EXISTS auth;

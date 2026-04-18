@@ -14,11 +14,34 @@ SET row_security = off;
 
 DO $$
 BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    CREATE ROLE anon NOLOGIN;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    CREATE ROLE authenticated NOLOGIN;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
+    CREATE ROLE service_role NOLOGIN;
+  END IF;
+
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_user') THEN
     CREATE ROLE app_user NOLOGIN;
   END IF;
 END
 $$;
+
+CREATE SCHEMA IF NOT EXISTS auth;
+
+CREATE OR REPLACE FUNCTION auth.uid()
+RETURNS uuid
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT nullif(current_setting('app.current_user_id', true), '')::uuid
+$$;
+
 
 
 CREATE SCHEMA IF NOT EXISTS "public";
@@ -807,6 +830,46 @@ CREATE INDEX "workoutsplits_workout_id_idx" ON "public"."workoutsplits" USING "b
 
 
 CREATE OR REPLACE TRIGGER "update_muscle_group_trigger" AFTER INSERT OR DELETE OR UPDATE ON "public"."exercisetoworkoutsplit" FOR EACH ROW EXECUTE FUNCTION "public"."update_muscle_group_trigger_function"();
+
+
+DO $$
+DECLARE
+  compact_old_workouts_daily_id bigint;
+  refresh_user_split_information_daily_id bigint;
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'cron') THEN
+    SELECT jobid
+    INTO compact_old_workouts_daily_id
+    FROM cron.job
+    WHERE jobname = 'compact_old_workouts_daily';
+
+    IF compact_old_workouts_daily_id IS NOT NULL THEN
+      PERFORM cron.unschedule(compact_old_workouts_daily_id);
+    END IF;
+
+    PERFORM cron.schedule(
+      'compact_old_workouts_daily',
+      '10 0 * * *',
+      'SELECT public.housekeeping_compact_old_workouts();'
+    );
+
+    SELECT jobid
+    INTO refresh_user_split_information_daily_id
+    FROM cron.job
+    WHERE jobname = 'refresh-user-split-information-daily';
+
+    IF refresh_user_split_information_daily_id IS NOT NULL THEN
+      PERFORM cron.unschedule(refresh_user_split_information_daily_id);
+    END IF;
+
+    PERFORM cron.schedule(
+      'refresh-user-split-information-daily',
+      '0 2 * * *',
+      'SELECT public.refresh_user_split_information();'
+    );
+  END IF;
+END
+$$;
 
 
 
