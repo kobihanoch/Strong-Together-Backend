@@ -14,7 +14,7 @@ import { DB_CLIENT, SQL } from './db.tokens.ts';
       useFactory: () => {
         const connectionString = databaseConfig.url;
         return postgres(connectionString!, {
-          ssl: appConfig.isTest ? false : 'require',
+          ssl: appConfig.isProduction ? 'require' : false,
           prepare: false,
           connect_timeout: 30,
         });

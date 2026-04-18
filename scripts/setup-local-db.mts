@@ -11,7 +11,7 @@ const dbName = isTest ? 'strongtogether_test' : 'strongtogether_dev';
 const containerName = isTest ? 'strongtogether_postgres_test' : 'strongtogether_postgres_dev';
 
 // Keep the compose, migration, and seed locations centralized for both modes.
-const composeFile = 'docker-compose.local-databases.yml';
+const composeFile = 'docker-compose.yml';
 const migrationsDir = 'src/infrastructure/db/schema/migrations';
 const seedsDir = 'src/infrastructure/db/schema/seeds';
 const dbUrl = `postgresql://postgres:postgres@localhost:${port}/${dbName}?sslmode=disable`;

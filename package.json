@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compose:up:dev": "cross-env NODE_ENV=development docker compose up --build -d",
+    "compose:up:dev": "cross-env NODE_ENV=development docker compose --profile dev up --build -d",
     "compose:up:prod": "cross-env NODE_ENV=production docker compose up --build -d",
     "db:dev:start": "tsx scripts/setup-local-db.mts dev",
     "db:dev:migrate": "tsx scripts/setup-local-db.mts dev --skip-seeds",
