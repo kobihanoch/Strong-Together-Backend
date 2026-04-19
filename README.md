@@ -376,6 +376,8 @@ npm run start:workers
 npm run orch:dev
 ```
 
+For the dev stack, Compose now starts local Redis on `localhost:6379` and RedisInsight on `http://localhost:5540`.
+
 Use `npm run orch:prod` when you want Compose to load `.env.production`.
 Use `npm run db:dev:migrate` when you want to reapply only migrations without reseeding.
 
