@@ -1,6 +1,6 @@
 env "local" {
-  url = "postgresql://postgres:postgres@localhost:5434/strongtogether_dev?sslmode=disable"
-  dev = "docker://postgres/16/dev"
+  url = "postgresql://postgres:postgres@postgres_dev:5432/strongtogether_dev?sslmode=disable"
+  dev = "postgresql://postgres:postgres@postgres_dev:5432/postgres?sslmode=disable"
 
   // Ignore Atlas's own revision schema when inspecting the desired database state.
   exclude = [

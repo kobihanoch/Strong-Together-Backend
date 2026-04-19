@@ -1,5 +1,4 @@
-import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 // Accept the migration label from the CLI so Atlas can name the generated file.
 const migrationName = process.argv[2];
@@ -9,19 +8,30 @@ if (!migrationName) {
   process.exit(1);
 }
 
+function runAtlas(args: string[]) {
+  execFileSync('docker', ['compose', '--profile', 'dev', 'up', '-d', '--wait', 'postgres_dev'], {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_ENV: 'development',
+    },
+  });
+
+  execFileSync('docker', ['compose', '--profile', 'dev', 'run', '--rm', 'atlas', ...args], {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_ENV: 'development',
+    },
+  });
+}
 // Point Atlas at the installed Windows binary and the repo-owned migration directory.
-const atlasExecutable = path.join(process.env.LOCALAPPDATA ?? '', 'Programs', 'Atlas', 'atlas.exe');
 const atlasEnv = 'local';
 
 try {
   console.log(`Generating migration "${migrationName}" from local dev database changes...`);
 
-  execSync(
-    `"${atlasExecutable}" migrate diff --env "${atlasEnv}" --to "env://url" ${migrationName}`,
-    {
-      stdio: 'inherit',
-    },
-  );
+  runAtlas(['migrate', 'diff', migrationName, '--env', atlasEnv, '--to', 'env://url']);
 
   console.log('Migration file created successfully.');
 } catch {
