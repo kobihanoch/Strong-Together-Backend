@@ -1,4 +1,6 @@
 import { execFileSync } from 'node:child_process';
+import { createInterface } from 'node:readline/promises';
+import { stdin as input, stdout as output } from 'node:process';
 
 // Read the production Postgres URL from the environment rather than hardcoding it.
 import dotenv from 'dotenv';
@@ -60,22 +62,46 @@ function initMigration() {
   ]);
 }
 
+async function confirmProductionChange(action: 'apply' | 'init') {
+  const expected = action === 'init' ? 'INIT PROD' : 'APPLY PROD';
+  const rl = createInterface({ input, output });
+
+  try {
+    console.log(`Confirmation required for production database ${action}.`);
+    console.log(`Type "${expected}" to continue.`);
+    const answer = (await rl.question('> ')).trim();
+
+    if (answer !== expected) {
+      console.error('Confirmation did not match. Aborting production migration.');
+      process.exit(1);
+    }
+  } finally {
+    rl.close();
+  }
+}
+
 // Reuse the repo-owned migration directory and the installed Atlas binary.
-try {
+async function main() {
   const isDry = process.argv.includes('check');
   const isInit = process.argv.includes('init');
+  const skipConfirmation = process.argv.includes('--yes');
 
   console.log('Applying migrations to production database...');
   if (isDry) {
     migrationDry();
   } else {
+    if (!skipConfirmation) {
+      await confirmProductionChange(isInit ? 'init' : 'apply');
+    }
+
     if (isInit) initMigration();
     else migration();
   }
 
   console.log('Production migrations applied successfully.');
-} catch (error) {
-  console.error('Production migration apply failed.');
-  console.error(error);
-  process.exit(1);
 }
+
+main().catch((error) => {
+  console.error('Production migration apply failed.');
+  process.exit(1);
+});
