@@ -1,4 +1,5 @@
 services:
+  # Postgres database - dev
   postgres_dev:
     image: postgres:16
     container_name: strongtogether_postgres_dev
@@ -20,6 +21,7 @@ services:
     networks:
       - strong_together_shared
 
+  # Postgres database - test
   postgres_test:
     image: postgres:16
     container_name: strongtogether_postgres_test
@@ -38,6 +40,16 @@ services:
     networks:
       - strong_together_shared
 
+  # Atlas container to run Atlas migrations
+  atlas:
+    image: arigaio/atlas:latest
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    networks:
+      - strong_together_shared
+
+  # Main server cotnainer
   main-server:
     build:
       context: .

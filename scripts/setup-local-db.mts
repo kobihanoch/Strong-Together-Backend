@@ -1,28 +1,26 @@
 import fs from 'node:fs';
-import { execSync } from 'node:child_process';
-import path from 'node:path';
+import { execFileSync, execSync } from 'node:child_process';
 
 // Switch between the dev and test database orchestration flows.
 const isTest = process.argv.includes('test');
 const skipSeeds = process.argv.includes('--skip-seeds');
 const profile = isTest ? 'test' : 'dev';
-const port = isTest ? '5433' : '5434';
 const dbName = isTest ? 'strongtogether_test' : 'strongtogether_dev';
 const containerName = isTest ? 'strongtogether_postgres_test' : 'strongtogether_postgres_dev';
+const composeService = isTest ? 'postgres_test' : 'postgres_dev';
 
 // Keep the compose, migration, and seed locations centralized for both modes.
 const composeFile = 'docker-compose.yml';
 const migrationsDir = 'src/infrastructure/db/schema/migrations';
 const seedsDir = 'src/infrastructure/db/schema/seeds';
-const dbUrl = `postgresql://postgres:postgres@localhost:${port}/${dbName}?sslmode=disable`;
-const atlasExecutable = path.join(process.env.LOCALAPPDATA ?? '', 'Programs', 'Atlas', 'atlas.exe');
+const atlasService = 'atlas';
 
 function run(): void {
   try {
     console.log(`Starting ${profile} orchestration...`);
 
-    // Start only the requested database profile and wait for its healthcheck to pass.
-    execSync(`docker compose -f ${composeFile} --profile ${profile} up -d --wait`, {
+    // Start only the requested database service and wait for its healthcheck to pass.
+    execSync(`docker compose -f ${composeFile} up -d --wait ${composeService}`, {
       stdio: 'inherit',
     });
 
@@ -44,9 +42,26 @@ function run(): void {
 
     // Apply the committed migration history to the selected local database.
     console.log('Applying migrations...');
-    execSync(`"${atlasExecutable}" migrate apply --dir "file://${migrationsDir}" --url "${dbUrl}"`, {
-      stdio: 'inherit',
-    });
+    execFileSync(
+      'docker',
+      [
+        'compose',
+        '-f',
+        composeFile,
+        'run',
+        '--rm',
+        atlasService,
+        'migrate',
+        'apply',
+        '--dir',
+        `file://${migrationsDir}`,
+        '--url',
+        `postgresql://postgres:postgres@${containerName}:5432/${dbName}?sslmode=disable`,
+      ],
+      {
+        stdio: 'inherit',
+      },
+    );
 
     // Seeds are optional so dev can rerun migrations without re-inserting fixture data.
     if (!skipSeeds) {

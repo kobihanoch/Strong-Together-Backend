@@ -373,10 +373,10 @@ npm run start:workers
 6. Or run the stack with Docker Compose through the environment-specific scripts:
 
 ```bash
-npm run compose:up:dev
+npm run orch:dev
 ```
 
-Use `npm run compose:up:prod` when you want Compose to load `.env.production`.
+Use `npm run orch:prod` when you want Compose to load `.env.production`.
 Use `npm run db:dev:migrate` when you want to reapply only migrations without reseeding.
 
 ## Testing
