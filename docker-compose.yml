@@ -56,6 +56,22 @@ services:
     networks:
       - strong_together_shared
 
+  # Local AWS emulator - dev
+  localstack:
+    image: localstack/localstack:4.14.0
+    container_name: strongtogether_localstack_dev
+    profiles: ['dev']
+    restart: unless-stopped
+    environment:
+      SERVICES: s3,sqs
+      AWS_DEFAULT_REGION: us-east-1
+    ports:
+      - '4566:4566'
+    volumes:
+      - ./scripts/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
+    networks:
+      - strong_together_shared
+
   # Postgres database - test
   postgres_test:
     image: postgres:16
@@ -98,6 +114,9 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
+    depends_on:
+      localstack:
+        condition: service_started
     networks:
       - strong_together_shared
     command: ['sh', '-c', 'npm ci && npm run start:server:watch']
@@ -112,6 +131,9 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
+    depends_on:
+      localstack:
+        condition: service_started
     networks:
       - strong_together_shared
     command: ['sh', '-c', 'npm ci && npm run start:workers:watch']
@@ -132,6 +154,9 @@ services:
       - ./pythonService/analyzers:/app/analyzers
       - ./pythonService/aws:/app/aws
       - ./pythonService/utils:/app/utils
+    depends_on:
+      localstack:
+        condition: service_started
     networks:
       - strong_together_shared
     command: ['python', 'main.py']

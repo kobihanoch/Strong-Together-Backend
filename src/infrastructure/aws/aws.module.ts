@@ -8,13 +8,21 @@ import { S3Client } from '@aws-sdk/client-s3';
     {
       provide: S3Client,
       useFactory: () => {
-        return new S3Client({
+        const clientConfig = {
           region: awsConfig.region,
           credentials: {
             accessKeyId: awsConfig.accessKeyId,
             secretAccessKey: awsConfig.secretAccessKey,
           },
-        });
+          ...(awsConfig.s3Endpoint
+            ? {
+                endpoint: awsConfig.s3Endpoint,
+                forcePathStyle: true,
+              }
+            : {}),
+        };
+
+        return new S3Client(clientConfig);
       },
     },
     S3Service,

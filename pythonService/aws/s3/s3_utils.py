@@ -14,6 +14,7 @@ def _create_s3_client():
     aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
     region_name=os.getenv("AWS_REGION"),
+    endpoint_url=os.getenv("AWS_S3_ENDPOINT_URL") or None,
   )
 
 def download_video_from_s3(file_key):
