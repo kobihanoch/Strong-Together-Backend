@@ -16,7 +16,7 @@ if (!prodDbUrl) {
 }
 
 function runAtlas(args: string[]) {
-  execFileSync('docker', ['compose', 'run', '--rm', 'atlas', ...args], {
+  execFileSync('docker', ['compose', '-f', 'docker-compose.development.yml', 'run', '--rm', 'atlas', ...args], {
     stdio: 'inherit',
   });
 }

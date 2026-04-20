@@ -2,7 +2,6 @@ import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { awsConfig } from '../../../config/storage.config';
-import { appConfig } from '../../../config/app.config';
 
 @Injectable()
 export class S3Service implements OnModuleDestroy {
