@@ -22,7 +22,7 @@ export class S3Service implements OnModuleDestroy {
     const url = await getSignedUrl(this.s3Client, command, { expiresIn: 300 });
 
     // Prod
-    if (appConfig.isProduction && !awsConfig.s3PresignEndpoint) {
+    if (!awsConfig.s3PresignEndpoint) {
       return url;
     } else {
       const resolvedUrl = new URL(url);
