@@ -4,6 +4,7 @@ import { createApp } from '../../app';
 import { loginResponseSchema, getPresignedUrlFromS3ResponseSchema } from '@strong-together/shared';
 import { loginBootstrapTestUser } from '../../common/tests/helpers/auth';
 import { expectSchema } from '../../common/tests/helpers/assert-schema';
+import { deleteUploadedObject, headUploadedObject } from '../../common/tests/helpers/infra';
 import { getPresignedUrl } from '../../common/tests/helpers/videoanalysis';
 
 let app: Awaited<ReturnType<typeof createApp>>;
@@ -31,6 +32,40 @@ describe('Video Analysis', () => {
     expect(response.body.fileKey).toContain(`Squat_${userId}_`);
     expect(response.body.requestId).toBeTypeOf('string');
     expect(response.body.requestId.length).toBeGreaterThan(0);
+  });
+
+  // login -> get presigned url -> upload to LocalStack S3 -> assert object metadata was stored
+  it('uploads a file to LocalStack using the generated presigned url', async () => {
+    const loginResponse = await loginBootstrapTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
+    const accessToken = loginResponse.body.accessToken as string;
+    const userId = loginResponse.body.user as string;
+    const jobId = 'test-upload-job-id';
+
+    const response = await getPresignedUrl(app, accessToken, 'Squat', 'video/mp4', jobId);
+
+    expect(response.status).toBe(201);
+    expectSchema(getPresignedUrlFromS3ResponseSchema, response.body);
+
+    const uploadResponse = await fetch(response.body.uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'video/mp4',
+      },
+      body: Buffer.from('fake-video-binary'),
+    });
+
+    expect(uploadResponse.ok).toBe(true);
+
+    const uploaded = await headUploadedObject(response.body.fileKey);
+    expect(uploaded.ContentType).toBe('video/mp4');
+    expect(uploaded.Metadata).toMatchObject({
+      exercise: 'Squat',
+      job_id: jobId,
+      user_id: userId,
+    });
+
+    await deleteUploadedObject(response.body.fileKey);
   });
 
   // get presigned url without token -> assert 401

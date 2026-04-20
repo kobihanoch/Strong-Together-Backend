@@ -31,6 +31,21 @@ export async function getExerciseToWorkoutSplitId(userId: string, splitName: str
   return rows[0] ? Number(rows[0].id) : null;
 }
 
+export async function getWorkoutSplitId(userId: string, splitName: string) {
+  const rows = await sql<{ id: number }[]>`
+    SELECT ws.id
+    FROM public.workoutsplits ws
+    INNER JOIN public.workoutplans wp ON wp.id = ws.workout_id
+    WHERE wp.user_id = ${userId}::uuid
+      AND wp.is_active = TRUE
+      AND ws.is_active = TRUE
+      AND ws.name = ${splitName}
+    LIMIT 1
+  `;
+
+  return rows[0] ? Number(rows[0].id) : null;
+}
+
 export async function getActiveWorkoutSplitNames(userId: string) {
   const rows = await sql<{ name: string | null }[]>`
     SELECT ws.name
@@ -256,4 +271,35 @@ export async function hasReminderSettings(userId: string) {
   `;
 
   return Number(row?.count ?? '0') > 0;
+}
+
+export async function configureHourlyReminderForUser(userId: string, splitId: number, estimatedTimeUtc: string) {
+  const preferredWeekday = new Date().getUTCDay();
+
+  await sql`
+    UPDATE public.user_reminder_settings
+    SET workout_reminders_enabled = TRUE,
+        reminder_offset_minutes = 0
+    WHERE user_id = ${userId}::uuid
+  `;
+
+  await sql`
+    INSERT INTO public.user_split_information (
+      user_id,
+      split_id,
+      estimated_time_utc,
+      confidence,
+      preferred_weekday
+    ) VALUES (
+      ${userId}::uuid,
+      ${splitId},
+      ${estimatedTimeUtc}::timestamptz,
+      1.00,
+      ${preferredWeekday}
+    )
+    ON CONFLICT (user_id, split_id) DO UPDATE
+    SET estimated_time_utc = EXCLUDED.estimated_time_utc,
+        confidence = EXCLUDED.confidence,
+        preferred_weekday = EXCLUDED.preferred_weekday
+  `;
 }

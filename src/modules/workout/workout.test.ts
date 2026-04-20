@@ -77,6 +77,7 @@ describe('Workouts', () => {
     expect(getResponse.body.workoutPlanForEditWorkout.B).toEqual(
       expect.arrayContaining([expect.objectContaining({ id: 12, sets: [3], order_index: 0 })]),
     );
+    expect(getResponse.headers['x-cache']).toBe('HIT');
   });
 
   // get workout plan without token -> assert 401
@@ -201,6 +202,54 @@ describe('Workouts', () => {
 
     expect(await getWorkoutSummaryCount(userId)).toBe(1);
     expect(await getExerciseTrackingCountForUser(userId)).toBe(1);
+  });
+
+  // login -> add workout plan -> fetch twice -> assert writes warm Redis and repeated reads stay cached
+  it('uses Redis cache for repeated workout plan and tracking reads', async () => {
+    const createResult = await createAppUser(app, {
+      fullName: 'Workout Cache User',
+    });
+    expect(createResult.response.status).toBe(201);
+    expectSchema(createUserResponseSchema, createResult.response.body);
+
+    const verifyResponse = await verifyAppUser(app, createResult.response.body.user.id);
+    expect(verifyResponse.status).toBe(200);
+
+    const loginResponse = await loginWithCredentials(app, createResult.email, createResult.password);
+    expectSchema(loginResponseSchema, loginResponse.body);
+    const accessToken = loginResponse.body.accessToken as string;
+    const userId = loginResponse.body.user as string;
+
+    await addWorkoutPlan(app, accessToken, {
+      A: [{ id: 20, sets: [5, 5, 5], order_index: 0 }],
+    });
+
+    const firstPlanResponse = await getWorkoutPlan(app, accessToken);
+    const secondPlanResponse = await getWorkoutPlan(app, accessToken);
+
+    expect(firstPlanResponse.status).toBe(200);
+    expect(secondPlanResponse.status).toBe(200);
+    expect(firstPlanResponse.headers['x-cache']).toBe('HIT');
+    expect(secondPlanResponse.headers['x-cache']).toBe('HIT');
+
+    const exercisetosplitId = await getExerciseToWorkoutSplitId(userId, 'A', 20);
+    expect(exercisetosplitId).not.toBeNull();
+
+    await finishWorkout(app, accessToken, [
+      {
+        exercisetosplit_id: exercisetosplitId!,
+        weight: [70, 70, 70],
+        reps: [8, 8, 8],
+      },
+    ]);
+
+    const firstTrackingResponse = await getTracking(app, accessToken);
+    const secondTrackingResponse = await getTracking(app, accessToken);
+
+    expect(firstTrackingResponse.status).toBe(200);
+    expect(secondTrackingResponse.status).toBe(200);
+    expect(firstTrackingResponse.headers['x-cache']).toBe('HIT');
+    expect(secondTrackingResponse.headers['x-cache']).toBe('HIT');
   });
 
   // user b creates workout plan -> user a submits user b exercisetosplit_id -> assert request is rejected and no tracking rows are created

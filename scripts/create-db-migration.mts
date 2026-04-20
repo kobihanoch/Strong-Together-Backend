@@ -8,8 +8,10 @@ if (!migrationName) {
   process.exit(1);
 }
 
+const localDbComposeFile = 'docker-compose.development.yml';
+
 function runAtlas(args: string[]) {
-  execFileSync('docker', ['compose', '--profile', 'dev', 'up', '-d', '--wait', 'postgres_dev'], {
+  execFileSync('docker', ['compose', '-f', localDbComposeFile, 'up', '-d', '--wait', 'postgres_dev'], {
     stdio: 'inherit',
     env: {
       ...process.env,
@@ -17,7 +19,7 @@ function runAtlas(args: string[]) {
     },
   });
 
-  execFileSync('docker', ['compose', '--profile', 'dev', 'run', '--rm', 'atlas', ...args], {
+  execFileSync('docker', ['compose', '-f', localDbComposeFile, 'run', '--rm', 'atlas', ...args], {
     stdio: 'inherit',
     env: {
       ...process.env,

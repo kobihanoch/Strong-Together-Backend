@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { appConfig } from '../../../config/app.config';
 import { createLogger } from '../../logger';
 import { EmailsQueueService } from './emails-queue';
 import { EmailPayload } from './emails.dtos';
@@ -14,10 +13,6 @@ export class EmailsProducerService {
 
   // Add jobs to queue
   async enqueueEmails(emails: EmailPayload[]): Promise<void> {
-    if (appConfig.isTest) {
-      return;
-    }
-
     const requestIds = [...new Set(emails.map((email) => email.requestId).filter(Boolean))];
     try {
       await this.emailsQueueService.emailsQueue.addBulk(
