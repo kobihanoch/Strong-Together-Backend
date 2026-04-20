@@ -49,7 +49,7 @@ A backend platform with:
 - **Request contracts**: request schemas are consumed from the shared package and validated at the API boundary before controller logic runs.
 - **Async media pipeline**: **direct AWS S3 uploads**, **S3 event-driven SQS dispatch**, Python-based CV analysis, **trace-aware async orchestration**, and **realtime result delivery** back to the client.
 - **Database design**: **PostgreSQL**, analytics views, normalized workout tracking, reminder intelligence, indexing strategy, **RLS-aware** patterns, and repo-owned migrations/seeds.
-- **Test coverage**: **Vitest + Supertest** integration tests across auth, workouts, analytics, OAuth, websockets, and video analysis.
+- **Environment separation**: local development and local test now run on separate Docker Compose files, ports, and databases.
 - **Observability**: **Pino structured logs**, **Sentry tracing**, request IDs, and service-aware error handling.
 
 ## Table of Contents
@@ -67,19 +67,20 @@ A backend platform with:
    1. [Docker setup](#docker-setup)
 8. [Testing](#testing)
    1. [CI](#ci)
-9. [Database Overview](#database-overview)
-10. [Key database design choices](#key-database-design-choices)
-11. [Database workflow](#database-workflow)
-12. [Important tables and objects](#important-tables-and-objects)
-13. [DB files](#db-files)
-14. [Database Schema](#database-schema)
-15. [Workout tracking model](#workout-tracking-model)
-16. [Database Flows](#database-flows)
-17. [Workout Flow](#workout-flow)
-18. [Tracking Flow](#tracking-flow)
-19. [Messages Flow](#messages-flow)
-20. [Auth Flow](#auth-flow)
-21. [Reminder Flow](#reminder-flow)
+9. [Documentation Hub](#documentation-hub)
+10. [Database Overview](#database-overview)
+11. [Key database design choices](#key-database-design-choices)
+12. [Database workflow](#database-workflow)
+13. [Important tables and objects](#important-tables-and-objects)
+14. [DB files](#db-files)
+15. [Database Schema](#database-schema)
+16. [Workout tracking model](#workout-tracking-model)
+17. [Database Flows](#database-flows)
+18. [Workout Flow](#workout-flow)
+19. [Tracking Flow](#tracking-flow)
+20. [Messages Flow](#messages-flow)
+21. [Auth Flow](#auth-flow)
+22. [Reminder Flow](#reminder-flow)
 
 ## Architecture
 
@@ -167,8 +168,8 @@ It also carries `jobId`, `requestId`, and Sentry trace headers through S3 object
 |-- pythonService
 |-- docs
 |-- scripts
-|-- schema.sql
-|-- docker-compose.yml
+|-- docker-compose.development.yml
+|-- docker-compose.test.yml
 `-- README.md
 ```
 
@@ -205,14 +206,14 @@ In practice, this means the server now separates responsibilities much more clea
 
 ### Pipeline Layers
 
-| Layer                  | Current role in the system                                                                 |
-| ---------------------- | ------------------------------------------------------------------------------------------ |
+| Layer                  | Current role in the system                                                                |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
 | Nest app bootstrap     | Creates the application, enables CORS, applies Helmet, and attaches global app behavior   |
-| Middleware             | Handles request logging, bot blocking, app-version checks, and general rate limiting       |
-| Guards                 | Enforces authentication, authorization, and DPoP proof validation                          |
-| Pipes                  | Validates request contracts and DTO shape before business logic runs                       |
-| Interceptors           | Wraps authenticated flows in request-scoped DB/RLS transaction behavior                    |
-| Filters                | Standardizes exception handling and response formatting                                    |
+| Middleware             | Handles request logging, bot blocking, app-version checks, and general rate limiting      |
+| Guards                 | Enforces authentication, authorization, and DPoP proof validation                         |
+| Pipes                  | Validates request contracts and DTO shape before business logic runs                      |
+| Interceptors           | Wraps authenticated flows in request-scoped DB/RLS transaction behavior                   |
+| Filters                | Standardizes exception handling and response formatting                                   |
 | Infrastructure modules | Provide Redis, DB, Socket.IO, cache, queues, mailer, and AWS integrations through Nest DI |
 
 ### What each layer does here
@@ -370,16 +371,45 @@ npm run start:server
 npm run start:workers
 ```
 
-6. Or run the stack with Docker Compose through the environment-specific scripts:
+6. Or run the full dev stack with Docker Compose:
 
 ```bash
 npm run orch:dev
 ```
 
-For the dev stack, Compose now starts local Redis on `localhost:6379` and RedisInsight on `http://localhost:5540`.
+If you only want to prepare the database without bringing up the full Compose stack:
 
-Use `npm run orch:prod` when you want Compose to load `.env.production`.
+```bash
+# Apply migrations only
+npm run db:dev:migrate
+
+# Apply migrations and seed data
+npm run db:dev:start
+```
+
+The development Compose now includes:
+
+- Postgres dev on `localhost:5434`
+- Redis dev on `localhost:6379`
+- RedisInsight on `http://localhost:5540`
+- LocalStack on `http://localhost:4566`
+- the Nest main server
+- background workers
+- the Python analysis worker
+
 Use `npm run db:dev:migrate` when you want to reapply only migrations without reseeding.
+
+### Environment separation
+
+The repo now separates local environments clearly:
+
+- `.env.development`: local development app/infrastructure values
+- `.env.test`: local integration-test values
+- `.env.production`: production values
+- `docker-compose.development.yml`: persistent local dev stack
+- `docker-compose.test.yml`: isolated local test infra stack
+
+This keeps local dev data stable while allowing test runs to rebuild a clean test database and use separate ports.
 
 ## Testing
 
@@ -394,22 +424,51 @@ The project includes integration tests for the main product flows:
 - Analytics
 - Exercises
 - OAuth
+- Push
 - Video analysis
 - WebSockets
+
+The test environment now uses one dedicated local infra stack:
+
+- Postgres test on `localhost:5433`
+- Redis test on `localhost:6380`
+- RedisInsight test on `http://localhost:5541`
+- LocalStack test on `http://localhost:4567`
+
+`postgres_test`, `redis_test`, and `localstack_test` are intentionally separate from the dev stack so test runs do not collide with your local development data.
 
 Useful commands:
 
 ```bash
 npm run db:dev:start
 npm run test:db:reset
+npm run test:env:up
+npm run test:env:down
+npm run test:prepare
 npm run test:all
 ```
 
-You can also run domain-specific suites such as `npm run test:auth`, `npm run test:workouts`, or `npm run test:videoanalysis`.
+You can also run domain-specific suites such as `npm run test:auth`, `npm run test:workouts`, `npm run test:push`, or `npm run test:videoanalysis`.
+
+`npm run test` now follows a one-up / one-down flow:
+
+1. start the test infra stack once
+2. rebuild and migrate the test database once
+3. run all test suites
+4. tear the test infra stack down once at the end
 
 ### CI
 
 GitHub Actions can run the full test suite on every push and pull request to `main` via [`.github/workflows/ci.yml`](./.github/workflows/ci.yml). For CI, store the full `.env.test` contents in a repository secret named `ENV_TEST_FILE`.
+
+## Documentation Hub
+
+The root README stays intentionally high-level. The detailed docs live under [`docs/`](./docs):
+
+- [Scripts usage](./docs/scripts-usage.md)
+- [Migrations and DB pipeline](./docs/migrations-and-db-pipeline.md)
+- [API documentation](./docs/api-documentation.md)
+- [Docker Compose environments](./docs/docker-compose-environments.md)
 
 ## Database Overview
 
@@ -444,6 +503,12 @@ npm run db:prod:migrate
 npm run test:db:reset
 ```
 
+Local database orchestration now follows the environment-specific Compose files:
+
+- dev DB orchestration uses `docker-compose.development.yml`
+- test DB orchestration uses `docker-compose.test.yml`
+- test DB resets always rebuild the database from migrations and then inject seeds
+
 ### Important tables and objects
 
 | Object                                                    | Purpose                                                      |
@@ -460,7 +525,6 @@ npm run test:db:reset
 
 ### DB files
 
-- Full schema: [schema.sql](./schema.sql)
 - Migrations: [src/infrastructure/db/schema/migrations](./src/infrastructure/db/schema/migrations)
 - Seed data: [src/infrastructure/db/schema/seeds](./src/infrastructure/db/schema/seeds)
 - Test helpers and test bootstrap: [src/common/tests](./src/common/tests)
