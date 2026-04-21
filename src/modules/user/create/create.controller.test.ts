@@ -45,6 +45,16 @@ describe('CreateUserController', () => {
   });
 
   it('POST /api/users/create rejects invalid or duplicate users with 400', async () => {
+    const username = `dupe${crypto.randomUUID().slice(0, 8)}`;
+    users.add(username);
+    await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
+      username,
+      fullName: 'Duplicate Base',
+      email: `${username}@example.com`,
+      password: 'Test1234!',
+      gender: 'Male',
+    });
+
     const invalid = await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
       username: 'ab',
       fullName: 'Bad',
@@ -53,7 +63,7 @@ describe('CreateUserController', () => {
       gender: 'Male',
     });
     const duplicate = await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
-      username: 'auth_test_user',
+      username,
       fullName: 'Duplicate',
       email: 'duplicate_create@example.com',
       password: 'Test1234!',

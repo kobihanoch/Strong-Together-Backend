@@ -12,8 +12,6 @@ type EmailContext = {
 
 @Injectable()
 export class UpdateEmailsService {
-  private readonly base = appConfig.publicBaseUrl;
-
   constructor(private readonly emailsProducerService: EmailsProducerService) {}
 
   async sendVerificationEmailForEmailUpdate(
@@ -37,7 +35,7 @@ export class UpdateEmailsService {
       { expiresIn: '10m' },
     );
 
-    const confirmUrl = `${this.base}/api/users/changeemail?token=${encodeURIComponent(token)}`;
+    const confirmUrl = `${appConfig.emailApiBaseUrl}/api/users/changeemail?token=${encodeURIComponent(token)}`;
 
     const html = generateConfirmEmailChange({
       fullName,

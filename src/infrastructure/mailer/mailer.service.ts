@@ -22,7 +22,8 @@ export class MailerService {
       return { ok: false, permanent: true, reason: 'Missing required fields' };
     }
 
-    if (appConfig.isTest) {
+    // Dev/test mail goes to Maildev. Prod goes to Resend.
+    if (appConfig.isDevelopment || appConfig.isTest) {
       await this.sendMaildevMail({ to, subject, html });
       return { ok: true, id: `maildev-${Date.now()}` };
     }

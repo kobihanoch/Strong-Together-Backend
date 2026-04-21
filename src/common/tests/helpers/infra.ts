@@ -139,19 +139,19 @@ export async function getLatestPushJob() {
   return job ?? null;
 }
 
-export async function headUploadedObject(key: string) {
+export async function headUploadedObject(key: string, bucket = awsConfig.bucketName) {
   return s3Client.send(
     new HeadObjectCommand({
-      Bucket: awsConfig.bucketName,
+      Bucket: bucket,
       Key: key,
     }),
   );
 }
 
-export async function deleteUploadedObject(key: string) {
+export async function deleteUploadedObject(key: string, bucket = awsConfig.bucketName) {
   await s3Client.send(
     new DeleteObjectCommand({
-      Bucket: awsConfig.bucketName,
+      Bucket: bucket,
       Key: key,
     }),
   );

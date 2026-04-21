@@ -6,6 +6,7 @@ import { createApp } from '../../../app';
 import { createForgotPasswordToken } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
 import { getUserAuthStateByUsername } from '../../../common/tests/helpers/db';
+import { appConfig } from '../../../config/app.config';
 import {
   clearEmailQueue,
   clearMaildevMessages,
@@ -48,10 +49,13 @@ describe('PasswordController', () => {
     expect(response.status).toBe(201);
     expect(response.text).toBe('');
     expect(await getEmailQueueJobCount()).toBe(1);
-    expect((await getLatestEmailJob())?.data).toMatchObject({
+    const latestJob = await getLatestEmailJob();
+    expect(latestJob?.data).toMatchObject({
       to: user.email,
       subject: expect.stringContaining('Reset'),
     });
+    expect(latestJob?.data.html).toContain(`${appConfig.emailWebBaseUrl}/reset-password`);
+    expect(latestJob?.data.html).toContain(`${appConfig.emailWebBaseUrl}/appicon.png`);
 
     const job = await deliverLatestEmailJobToMaildev();
     expect(job).not.toBeNull();

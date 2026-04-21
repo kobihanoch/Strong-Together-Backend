@@ -10,7 +10,7 @@ import { appConfig } from '../../config/app.config';
     MailerService,
     {
       provide: RESEND_CLIENT,
-      useFactory: () => (appConfig.isTest ? null : new Resend(emailConfig.resendApiKey)),
+      useFactory: () => (appConfig.isDevelopment || appConfig.isTest ? null : new Resend(emailConfig.resendApiKey)),
     },
   ],
   exports: [MailerService],

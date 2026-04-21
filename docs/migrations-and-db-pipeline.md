@@ -34,7 +34,7 @@ That gives you two important guarantees:
 
 `npm run db:dev:migrate` is the same flow without reseeding.
 
-Use that when you want schema updates on your current local DB without replaying fixture users and test content.
+Use that when you want schema updates on your current local DB without replaying seed data.
 
 ## Test DB Pipeline
 
@@ -45,7 +45,7 @@ Use that when you want schema updates on your current local DB without replaying
 3. drops the existing test database
 4. recreates the test database
 5. applies all committed migrations from scratch
-6. injects seed files
+6. injects baseline seed files
 
 This makes the test DB deterministic and disposable.
 
@@ -88,7 +88,7 @@ Seeds are intended for local environments and test bootstrap.
 
 Use seeds when you want:
 
-- known users for local development
+- known app/system data for local development
 - known baseline data for integration tests
 - deterministic app flows without manual setup
 
@@ -96,6 +96,7 @@ Be aware:
 
 - dev seeds write into the persistent dev DB
 - test seeds write into the disposable test DB
+- controller tests create and clean up their own users, workouts, messages, and profile data
 
 ## Why This Pipeline Matters
 

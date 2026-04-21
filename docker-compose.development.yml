@@ -68,6 +68,18 @@ services:
       - ./scripts/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
     networks:
       - strong_together_shared
+
+  # Local email inbox - dev only
+  maildev:
+    image: maildev/maildev:2.1.0
+    container_name: strongtogether_maildev_dev
+    restart: unless-stopped
+    ports:
+      - '1026:1025'
+      - '1081:1080'
+    networks:
+      - strong_together_shared
+
   # Atlas container to run Atlas migrations
   atlas:
     image: arigaio/atlas:latest
@@ -96,6 +108,8 @@ services:
         condition: service_healthy
       localstack:
         condition: service_started
+      maildev:
+        condition: service_started
     networks:
       - strong_together_shared
     command: ['sh', '-c', 'npm ci && npm run start:server:watch']
@@ -114,6 +128,8 @@ services:
       postgres_dev:
         condition: service_healthy
       localstack:
+        condition: service_started
+      maildev:
         condition: service_started
     networks:
       - strong_together_shared

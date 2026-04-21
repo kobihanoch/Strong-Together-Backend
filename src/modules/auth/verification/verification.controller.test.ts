@@ -4,6 +4,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../../../app';
 import { createVerifyToken } from '../../../common/tests/helpers/auth';
 import { createVerifiedTestUser, getUserAuthStateByUsername } from '../../../common/tests/helpers/db';
+import { appConfig } from '../../../config/app.config';
 import {
   clearEmailQueue,
   clearMaildevMessages,
@@ -74,10 +75,13 @@ describe('VerificationController', () => {
     expect(response.status).toBe(201);
     expect(response.text).toBe('');
     expect(await getEmailQueueJobCount()).toBe(1);
-    expect((await getLatestEmailJob())?.data).toMatchObject({
+    const latestJob = await getLatestEmailJob();
+    expect(latestJob?.data).toMatchObject({
       to: user.email,
       subject: 'Confirm your Strong Together account',
     });
+    expect(latestJob?.data.html).toContain(`${appConfig.emailApiBaseUrl}/api/auth/verify`);
+    expect(latestJob?.data.html).toContain(`${appConfig.emailWebBaseUrl}/appicon.png`);
     await deliverLatestEmailJobToMaildev();
     const message = await waitForMaildevMessage('Confirm your Strong Together account');
     expect(message?.subject).toBe('Confirm your Strong Together account');
@@ -106,7 +110,10 @@ describe('VerificationController', () => {
     expect((await getUserAuthStateByUsername(user.username))?.email).toBe(newEmail);
     expect((await getUserAuthStateByUsername(user.username))?.is_verified).toBe(false);
     expect(await getEmailQueueJobCount()).toBe(1);
-    expect((await getLatestEmailJob())?.data.to).toBe(newEmail);
+    const latestJob = await getLatestEmailJob();
+    expect(latestJob?.data.to).toBe(newEmail);
+    expect(latestJob?.data.html).toContain(`${appConfig.emailApiBaseUrl}/api/auth/verify`);
+    expect(latestJob?.data.html).toContain(`${appConfig.emailWebBaseUrl}/appicon.png`);
     await deliverLatestEmailJobToMaildev();
     expect(JSON.stringify(await waitForMaildevMessage('Confirm your Strong Together account'))).toContain(newEmail);
   });

@@ -4,11 +4,14 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   getAuthenticatedUserByIdResponseSchema,
   loginResponseSchema,
+  setProfilePicAndUpdateDBResponseSchema,
   updateAuthenticatedUserResponseSchema,
 } from '@strong-together/shared';
 import { createApp } from '../../../app';
 import { authHeaders, createChangeEmailToken } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
+import { appConfig } from '../../../config/app.config';
+import { supabaseConfig } from '../../../config/storage.config';
 import { getUserAuthStateByUsername, waitForUserDeletionByUsername } from '../../../common/tests/helpers/db';
 import {
   clearEmailQueue,
@@ -17,6 +20,7 @@ import {
   deliverLatestEmailJobToMaildev,
   getEmailQueueJobCount,
   getLatestEmailJob,
+  headUploadedObject,
   waitForMaildevMessage,
 } from '../../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../../common/tests/helpers/users';
@@ -85,7 +89,10 @@ describe('UpdateUserController', () => {
     expect(update.body.emailChanged).toBe(true);
     expect((await getUserAuthStateByUsername(user.username))?.email).toBe(user.email);
     expect(await getEmailQueueJobCount()).toBe(1);
-    expect((await getLatestEmailJob())?.data.to).toBe(newEmail);
+    const latestJob = await getLatestEmailJob();
+    expect(latestJob?.data.to).toBe(newEmail);
+    expect(latestJob?.data.html).toContain(`${appConfig.emailApiBaseUrl}/api/users/changeemail`);
+    expect(latestJob?.data.html).toContain(`${appConfig.emailWebBaseUrl}/appicon.png`);
     await deliverLatestEmailJobToMaildev();
     expect(JSON.stringify(await waitForMaildevMessage('Confirm'))).toContain(newEmail);
 
@@ -117,8 +124,39 @@ describe('UpdateUserController', () => {
     users.delete(user.username);
   });
 
-  it('profile image endpoints reject bad requests without touching DB storage fields', async () => {
+  it('PUT and DELETE profile image use LocalStack S3 and update DB profile state', async () => {
     const user = await createAndLoginTestUser(app, 'user_pic');
+    users.add(user.username);
+
+    const upload = await request(app.getHttpServer())
+      .put('/api/users/setprofilepic')
+      .set(authHeaders(user.accessToken))
+      .attach('file', Buffer.from('fake-image'), { filename: 'avatar.png', contentType: 'image/png' });
+
+    expect(upload.status).toBe(201);
+    expectSchema(setProfilePicAndUpdateDBResponseSchema, upload.body);
+    expect(upload.body.path).toMatch(new RegExp(`^${supabaseConfig.bucketName}/${user.userId}/.+\\.png$`));
+
+    const key = upload.body.path.replace(`${supabaseConfig.bucketName}/`, '');
+    expect((await headUploadedObject(key, supabaseConfig.bucketName)).ContentType).toBe('image/png');
+
+    const getAfterUpload = await request(app.getHttpServer()).get('/api/users/get').set(authHeaders(user.accessToken));
+    expectSchema(getAuthenticatedUserByIdResponseSchema, getAfterUpload.body);
+    expect(getAfterUpload.body.profile_image_url).toBe(upload.body.path);
+
+    const deleted = await request(app.getHttpServer())
+      .delete('/api/users/deleteprofilepic')
+      .set(authHeaders(user.accessToken))
+      .send({ path: upload.body.path });
+
+    expect(deleted.status).toBe(200);
+    const getAfterDelete = await request(app.getHttpServer()).get('/api/users/get').set(authHeaders(user.accessToken));
+    expectSchema(getAuthenticatedUserByIdResponseSchema, getAfterDelete.body);
+    expect(getAfterDelete.body.profile_image_url).toBeNull();
+  }, 30000);
+
+  it('profile image endpoints reject bad requests without touching DB storage fields', async () => {
+    const user = await createAndLoginTestUser(app, 'user_pic_bad');
     users.add(user.username);
 
     const noFile = await request(app.getHttpServer()).put('/api/users/setprofilepic').set(authHeaders(user.accessToken));
@@ -130,7 +168,6 @@ describe('UpdateUserController', () => {
     expect(noFile.status).toBe(400);
     expect(noFile.body.message).toBe('No file provided');
     expect(badDelete.status).toBe(400);
-    expect((await getUserAuthStateByUsername(user.username))?.id).toBe(user.userId);
   });
 
   it('user update endpoints reject 400/401 bad paths', async () => {
