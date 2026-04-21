@@ -30,7 +30,7 @@ export class SessionQueries {
   async queryBumpTokenVersionAndGetSelfData(userId: string): Promise<UserAfterBump[]> {
     return this.sql<UserAfterBump[]>`
       UPDATE users 
-      SET token_version = token_version + 1 
+      SET token_version = token_version + 1, last_login = NOW() AT TIME ZONE 'utc'
       WHERE id = ${userId}::uuid 
       RETURNING token_version, (to_jsonb(users) - 'password' - 'token_version') AS user_data
     `;
@@ -39,7 +39,7 @@ export class SessionQueries {
   async queryBumpTokenVersionAndGetSelfDataCAS(userId: string, prevTokenVer: number): Promise<UserAfterBump[]> {
     return this.sql<UserAfterBump[]>`
       UPDATE users 
-      SET token_version = token_version + 1 
+      SET token_version = token_version + 1, last_login = NOW() AT TIME ZONE 'utc' 
       WHERE id = ${userId}::uuid AND token_version = ${prevTokenVer} 
       RETURNING token_version, (to_jsonb(users) - 'password' - 'token_version') AS user_data
     `;
