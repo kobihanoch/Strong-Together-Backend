@@ -17,7 +17,7 @@ import {
   refreshHeaders,
 } from '../../common/tests/helpers/auth';
 import { expectSchema } from '../../common/tests/helpers/assert-schema';
-import { getUserAuthStateByUsername } from '../../common/tests/helpers/db';
+import { getUserAuthStateByUsername, getUserLastLoginByUsername } from '../../common/tests/helpers/db';
 import {
   clearEmailQueue,
   getEmailQueueJobCount,
@@ -95,6 +95,26 @@ describe('Auth Login', () => {
     expect(response.body.user).toBeTypeOf('string');
     expect(response.body.accessToken).toBeTypeOf('string');
     expect(response.body.refreshToken).toBeTypeOf('string');
+  });
+
+  // login -> assert last_login is updated to the current UTC instant
+  it('updates last_login after successful login', async () => {
+    const { username, password } = await createVerifiedUser();
+    const beforeLogin = Date.now();
+
+    const response = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+      identifier: username,
+      password,
+    });
+    const afterLogin = Date.now();
+
+    expect(response.status).toBe(201);
+    expectSchema(loginResponseSchema, response.body);
+
+    const lastLogin = await getUserLastLoginByUsername(username);
+    expect(lastLogin).toBeInstanceOf(Date);
+    expect(lastLogin!.getTime()).toBeGreaterThanOrEqual(beforeLogin - 1000);
+    expect(lastLogin!.getTime()).toBeLessThanOrEqual(afterLogin + 1000);
   });
 
   // login -> get authenticated user -> assert protected access works

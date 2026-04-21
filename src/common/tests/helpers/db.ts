@@ -247,6 +247,17 @@ export async function getUserAuthStateByUsername(username: string) {
   return row ?? null;
 }
 
+export async function getUserLastLoginByUsername(username: string) {
+  const [row] = await sql<{ last_login: Date | null }[]>`
+    SELECT last_login
+    FROM public.users
+    WHERE username = ${username}
+    LIMIT 1
+  `;
+
+  return row?.last_login ?? null;
+}
+
 export async function waitForUserDeletionByUsername(username: string) {
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const row = await getUserAuthStateByUsername(username);
