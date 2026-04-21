@@ -9,8 +9,7 @@ const dbName = isTest ? 'strongtogether_test' : 'strongtogether_dev';
 const containerName = isTest ? 'strongtogether_postgres_test' : 'strongtogether_postgres_dev';
 const composeService = isTest ? 'postgres_test' : 'postgres_dev';
 
-// Keep the compose, migration, and seed locations centralized for both modes.
-const composeFile = 'docker-compose.yml';
+const localDbComposeFile = isTest ? 'docker-compose.test.yml' : 'docker-compose.development.yml';
 const migrationsDir = 'src/infrastructure/db/schema/migrations';
 const seedsDir = 'src/infrastructure/db/schema/seeds';
 const atlasService = 'atlas';
@@ -20,7 +19,7 @@ function run(): void {
     console.log(`Starting ${profile} orchestration...`);
 
     // Start only the requested database service and wait for its healthcheck to pass.
-    execSync(`docker compose -f ${composeFile} up -d --wait ${composeService}`, {
+    execSync(`docker compose -f ${localDbComposeFile} up -d --wait ${composeService}`, {
       stdio: 'inherit',
     });
 
@@ -32,7 +31,9 @@ function run(): void {
         input: `
           SELECT pg_terminate_backend(pid)
           FROM pg_stat_activity
-          WHERE datname = '${dbName}' AND pid <> pg_backend_pid();
+          WHERE datname = '${dbName}'
+            AND pid <> pg_backend_pid()
+            AND backend_type = 'client backend';
 
           DROP DATABASE IF EXISTS ${dbName};
           CREATE DATABASE ${dbName};
@@ -47,7 +48,7 @@ function run(): void {
       [
         'compose',
         '-f',
-        composeFile,
+        localDbComposeFile,
         'run',
         '--rm',
         atlasService,

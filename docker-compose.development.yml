@@ -1,9 +1,9 @@
+name: strong-together-dev
 services:
   # Postgres database - dev
   postgres_dev:
     image: postgres:16
     container_name: strongtogether_postgres_dev
-    profiles: ['dev']
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -21,25 +21,53 @@ services:
     networks:
       - strong_together_shared
 
-  # Postgres database - test
-  postgres_test:
-    image: postgres:16
-    container_name: strongtogether_postgres_test
-    profiles: ['test']
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: strongtogether_test
+  # Redis cache/pubsub - dev
+  redis:
+    image: redis:7-alpine
+    container_name: strongtogether_redis_dev
+    restart: unless-stopped
     ports:
-      - '5433:5432'
+      - '6379:6379'
+    volumes:
+      - redis_dev_data:/data
+    command: ['redis-server', '--appendonly', 'yes']
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d strongtogether_test']
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 3s
       timeout: 3s
-      retries: 5
+      retries: 10
     networks:
       - strong_together_shared
 
+  # Redis UI - dev
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: strongtogether_redisinsight_dev
+    restart: unless-stopped
+    ports:
+      - '5540:5540'
+    volumes:
+      - redisinsight_data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - strong_together_shared
+
+  # Local AWS emulator - dev
+  localstack:
+    image: localstack/localstack:4.14.0
+    container_name: strongtogether_localstack_dev
+    restart: unless-stopped
+    environment:
+      SERVICES: s3,sqs
+      AWS_DEFAULT_REGION: us-east-1
+    ports:
+      - '4566:4566'
+    volumes:
+      - ./scripts/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
+    networks:
+      - strong_together_shared
   # Atlas container to run Atlas migrations
   atlas:
     image: arigaio/atlas:latest
@@ -63,6 +91,11 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
+    depends_on:
+      postgres_dev:
+        condition: service_healthy
+      localstack:
+        condition: service_started
     networks:
       - strong_together_shared
     command: ['sh', '-c', 'npm ci && npm run start:server:watch']
@@ -77,6 +110,11 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
+    depends_on:
+      postgres_dev:
+        condition: service_healthy
+      localstack:
+        condition: service_started
     networks:
       - strong_together_shared
     command: ['sh', '-c', 'npm ci && npm run start:workers:watch']
@@ -97,12 +135,19 @@ services:
       - ./pythonService/analyzers:/app/analyzers
       - ./pythonService/aws:/app/aws
       - ./pythonService/utils:/app/utils
+    depends_on:
+      postgres_dev:
+        condition: service_healthy
+      localstack:
+        condition: service_started
     networks:
       - strong_together_shared
     command: ['python', 'main.py']
 
 volumes:
   pg_dev_data:
+  redis_dev_data:
+  redisinsight_data:
 
 networks:
   strong_together_shared:

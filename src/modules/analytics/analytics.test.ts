@@ -90,6 +90,38 @@ describe('Analytics', () => {
     expect(response.body.goals.A['Bench Press'].adherence_pct).toBeCloseTo(90.3846, 3);
   });
 
+  // login -> create analytics payload -> fetch twice -> assert Redis-backed cache miss then hit
+  it('uses Redis cache for repeated analytics requests', async () => {
+    const loginResponse = await loginAnalyticsTestUser();
+    expectSchema(loginResponseSchema, loginResponse.body);
+    const accessToken = loginResponse.body.accessToken as string;
+    const userId = loginResponse.body.user as string;
+
+    await addWorkoutPlan(app, accessToken, {
+      A: [{ id: 20, sets: [8, 8, 10], order_index: 0 }],
+    });
+
+    const exercisetosplitId = await getExerciseToWorkoutSplitId(userId, 'A', 20);
+    expect(exercisetosplitId).not.toBeNull();
+
+    await finishWorkout(app, accessToken, [
+      {
+        exercisetosplit_id: exercisetosplitId!,
+        weight: [60, 60, 60],
+        reps: [10, 10, 10],
+      },
+    ]);
+
+    const firstResponse = await getAnalytics(app, accessToken);
+    const secondResponse = await getAnalytics(app, accessToken);
+
+    expect(firstResponse.status).toBe(200);
+    expect(secondResponse.status).toBe(200);
+    expect(firstResponse.headers['x-cache']).toBe('MISS');
+    expect(secondResponse.headers['x-cache']).toBe('HIT');
+    expect(secondResponse.body).toEqual(firstResponse.body);
+  });
+
   // get analytics without token -> assert 401
   it('rejects analytics access without token', async () => {
     const response = await request(app.getHttpServer()).get('/api/analytics/get').set({

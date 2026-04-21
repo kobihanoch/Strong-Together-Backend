@@ -18,6 +18,11 @@ import {
 } from '../../common/tests/helpers/auth';
 import { expectSchema } from '../../common/tests/helpers/assert-schema';
 import { getUserAuthStateByUsername } from '../../common/tests/helpers/db';
+import {
+  clearEmailQueue,
+  getEmailQueueJobCount,
+  getLatestEmailJob,
+} from '../../common/tests/helpers/infra';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 
@@ -242,6 +247,7 @@ describe('Auth Login', () => {
   // send verification email for existing user -> assert no enumeration-safe 204 response
   it('accepts resend verification email requests for an existing account', async () => {
     const { email } = await createUnverifiedUser();
+    await clearEmailQueue();
 
     const response = await request(app.getHttpServer()).post('/api/auth/sendverificationemail').set('x-app-version', '4.5.0').send({
       email,
@@ -249,6 +255,13 @@ describe('Auth Login', () => {
 
     expect(response.status).toBe(201);
     expect(response.text).toBe('');
+    expect(await getEmailQueueJobCount()).toBe(1);
+
+    const job = await getLatestEmailJob();
+    expect(job?.data).toMatchObject({
+      to: email,
+      subject: 'Confirm your Strong Together account',
+    });
   });
 
   // send verification email for missing user -> assert same 204 response without leaking account existence
@@ -333,6 +346,8 @@ describe('Auth Login', () => {
   // forgotpassemail with existing app user -> assert enumeration-safe 204 response
   it('accepts forgot password requests for an existing app user', async () => {
     const { username } = await createVerifiedUser();
+    const user = await getUserAuthStateByUsername(username);
+    await clearEmailQueue();
 
     const response = await request(app.getHttpServer()).post('/api/auth/forgotpassemail').set('x-app-version', '4.5.0').send({
       identifier: username,
@@ -340,6 +355,13 @@ describe('Auth Login', () => {
 
     expect(response.status).toBe(201);
     expect(response.text).toBe('');
+    expect(await getEmailQueueJobCount()).toBe(1);
+
+    const job = await getLatestEmailJob();
+    expect(job?.data).toMatchObject({
+      to: user?.email,
+      subject: expect.stringContaining('Reset'),
+    });
   });
 
   // forgotpassemail with unknown identifier -> assert same 204 response without leaking existence

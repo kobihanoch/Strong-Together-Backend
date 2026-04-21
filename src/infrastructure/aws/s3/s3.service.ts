@@ -19,7 +19,17 @@ export class S3Service implements OnModuleDestroy {
 
     // URL will be valid for 5 minutes (300 seconds)
     const url = await getSignedUrl(this.s3Client, command, { expiresIn: 300 });
-    return url;
+
+    // Prod
+    if (!awsConfig.s3PresignEndpoint) {
+      return url;
+    } else {
+      const resolvedUrl = new URL(url);
+      const publicEndpoint = new URL(awsConfig.s3PresignEndpoint);
+      resolvedUrl.protocol = publicEndpoint.protocol;
+      resolvedUrl.host = publicEndpoint.host;
+      return resolvedUrl.toString();
+    }
   }
 
   async onModuleDestroy() {

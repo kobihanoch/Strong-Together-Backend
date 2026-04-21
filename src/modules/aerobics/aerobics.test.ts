@@ -186,6 +186,30 @@ describe('Aerobics', () => {
     });
   });
 
+  // login -> add aerobics -> fetch twice -> assert Redis cache miss then hit
+  it('uses Redis cache for repeated aerobics reads', async () => {
+    const createResult = await createAppUser(app, {
+      fullName: 'Aerobics Cache User',
+    });
+    expect(createResult.response.status).toBe(201);
+    expectSchema(createUserResponseSchema, createResult.response.body);
+
+    const verifyResponse = await verifyAppUser(app, createResult.response.body.user.id);
+    expect(verifyResponse.status).toBe(200);
+
+    const loginResponse = await loginWithCredentials(app, createResult.email, createResult.password);
+    expectSchema(loginResponseSchema, loginResponse.body);
+    const accessToken = loginResponse.body.accessToken as string;
+
+    const firstResponse = await getAerobics(app, accessToken);
+    const secondResponse = await getAerobics(app, accessToken);
+
+    expect(firstResponse.status).toBe(200);
+    expect(secondResponse.status).toBe(200);
+    expect(firstResponse.headers['x-cache']).toBe('MISS');
+    expect(secondResponse.headers['x-cache']).toBe('HIT');
+  });
+
   // get aerobics without token -> assert 401
   it('rejects getting aerobics without token', async () => {
     const response = await request(app.getHttpServer()).get('/api/aerobics/get').query({ tz: 'Asia/Jerusalem' }).set({
