@@ -248,14 +248,25 @@ export async function getUserAuthStateByUsername(username: string) {
 }
 
 export async function getUserLastLoginByUsername(username: string) {
-  const [row] = await sql<{ last_login: Date | null }[]>`
-    SELECT last_login
+  const [row] = await sql<{ last_login: Date | null; database_now: Date }[]>`
+    SELECT last_login, NOW() AS database_now
     FROM public.users
     WHERE username = ${username}
     LIMIT 1
   `;
 
-  return row?.last_login ?? null;
+  return {
+    lastLogin: row?.last_login ?? null,
+    databaseNow: row?.database_now ?? null,
+  };
+}
+
+export async function getDatabaseNow() {
+  const [row] = await sql<{ database_now: Date }[]>`
+    SELECT NOW() AS database_now
+  `;
+
+  return row.database_now;
 }
 
 export async function waitForUserDeletionByUsername(username: string) {
