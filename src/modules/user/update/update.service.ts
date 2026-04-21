@@ -19,6 +19,7 @@ import { decodeChangeEmailToken } from './update.utils';
 import { UpdateEmailsService } from './update-emails/update-emails.service';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
 import { SupabaseStorageService } from '../../../infrastructure/supabase/storage/supabase-storage.service';
+import { appConfig } from '../../../config/app.config';
 
 @Injectable()
 export class UpdateUserService {
@@ -139,7 +140,7 @@ export class UpdateUserService {
     if (!file) throw new BadRequestException('No file provided');
 
     const ext = path.extname(file.originalname) || `.${mime.getExtension(file.mimetype) || 'jpg'}`;
-    const key = `${userId}/${Date.now()}${ext}`;
+    const key = appConfig.isProduction ? `${userId}/${Date.now()}${ext}` : `${userId}-${Date.now()}${ext}`;
 
     const { path: newPath, publicUrl } = await this.supabaseStorageService.uploadBufferToSupabase(
       supabaseConfig.bucketName,

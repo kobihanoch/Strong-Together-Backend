@@ -135,7 +135,7 @@ describe('UpdateUserController', () => {
 
     expect(upload.status).toBe(201);
     expectSchema(setProfilePicAndUpdateDBResponseSchema, upload.body);
-    expect(upload.body.path).toMatch(new RegExp(`^${supabaseConfig.bucketName}/${user.userId}/.+\\.png$`));
+    expect(upload.body.path).toMatch(new RegExp(`^${supabaseConfig.bucketName}/${user.userId}-.+\\.png$`));
 
     const key = upload.body.path.replace(`${supabaseConfig.bucketName}/`, '');
     expect((await headUploadedObject(key, supabaseConfig.bucketName)).ContentType).toBe('image/png');
