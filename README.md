@@ -394,6 +394,7 @@ The development Compose now includes:
 - Redis dev on `localhost:6379`
 - RedisInsight on `http://localhost:5540`
 - LocalStack on `http://localhost:4566`
+- S3 explorer on `http://localhost:8081`
 - the Nest main server
 - background workers
 - the Python analysis worker

@@ -69,6 +69,24 @@ services:
     networks:
       - strong_together_shared
 
+  # S3 browser - dev
+  s3-explorer:
+    image: mastertinner/s3manager:latest
+    container_name: strongtogether_s3_explorer_dev
+    restart: unless-stopped
+    environment:
+      ENDPOINT: localstack:4566
+      ACCESS_KEY_ID: test
+      SECRET_ACCESS_KEY: testtest123
+      USE_SSL: 'false'
+    ports:
+      - '8082:8080'
+    depends_on:
+      localstack:
+        condition: service_started
+    networks:
+      - strong_together_shared
+
   # Local email inbox - dev only
   maildev:
     image: maildev/maildev:2.1.0

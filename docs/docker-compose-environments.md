@@ -23,6 +23,7 @@ This stack is meant for daily local work and includes both infra and app service
 | `redis` | Redis cache / pubsub / Bull queues | `6379` |
 | `redis-insight` | Redis UI | `5540` |
 | `localstack` | Local S3 and SQS emulation | `4566` |
+| `s3-explorer` | Local S3 browser UI | `8081` |
 | `maildev` | Local email SMTP/UI | `1026`, `1081` |
 | `atlas` | Migration runner container | none |
 | `main-server` | Nest API in watch mode | `5000` |
