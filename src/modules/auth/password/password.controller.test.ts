@@ -6,7 +6,15 @@ import { createApp } from '../../../app';
 import { createForgotPasswordToken } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
 import { getUserAuthStateByUsername } from '../../../common/tests/helpers/db';
-import { clearEmailQueue, deleteRedisKeysByPattern, getEmailQueueJobCount, getLatestEmailJob } from '../../../common/tests/helpers/infra';
+import {
+  clearEmailQueue,
+  clearMaildevMessages,
+  deleteRedisKeysByPattern,
+  deliverLatestEmailJobToMaildev,
+  getEmailQueueJobCount,
+  getLatestEmailJob,
+  waitForMaildevMessage,
+} from '../../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser, loginWithCredentials } from '../../../common/tests/helpers/users';
 
 let app: Awaited<ReturnType<typeof createApp>>;
@@ -18,6 +26,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await clearEmailQueue();
+  await clearMaildevMessages();
 });
 
 afterEach(async () => {
@@ -43,6 +52,12 @@ describe('PasswordController', () => {
       to: user.email,
       subject: expect.stringContaining('Reset'),
     });
+
+    const job = await deliverLatestEmailJobToMaildev();
+    expect(job).not.toBeNull();
+    const message = await waitForMaildevMessage('Reset');
+    expect(message?.subject).toContain('Reset');
+    expect(JSON.stringify(message?.to)).toContain(user.email);
   });
 
   it('PUT /api/auth/resetpassword updates DB password, stores Redis JTI, and allows only the new login', async () => {

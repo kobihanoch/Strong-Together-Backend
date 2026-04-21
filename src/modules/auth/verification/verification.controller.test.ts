@@ -4,7 +4,15 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../../../app';
 import { createVerifyToken } from '../../../common/tests/helpers/auth';
 import { createVerifiedTestUser, getUserAuthStateByUsername } from '../../../common/tests/helpers/db';
-import { clearEmailQueue, deleteRedisKeysByPattern, getEmailQueueJobCount, getLatestEmailJob } from '../../../common/tests/helpers/infra';
+import {
+  clearEmailQueue,
+  clearMaildevMessages,
+  deleteRedisKeysByPattern,
+  deliverLatestEmailJobToMaildev,
+  getEmailQueueJobCount,
+  getLatestEmailJob,
+  waitForMaildevMessage,
+} from '../../../common/tests/helpers/infra';
 import { cleanupTestUsers } from '../../../common/tests/helpers/users';
 
 let app: Awaited<ReturnType<typeof createApp>>;
@@ -16,6 +24,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await clearEmailQueue();
+  await clearMaildevMessages();
 });
 
 afterEach(async () => {
@@ -69,6 +78,10 @@ describe('VerificationController', () => {
       to: user.email,
       subject: 'Confirm your Strong Together account',
     });
+    await deliverLatestEmailJobToMaildev();
+    const message = await waitForMaildevMessage('Confirm your Strong Together account');
+    expect(message?.subject).toBe('Confirm your Strong Together account');
+    expect(JSON.stringify(message?.to)).toContain(user.email);
 
     await clearEmailQueue();
     const missing = await request(app.getHttpServer())
@@ -94,6 +107,8 @@ describe('VerificationController', () => {
     expect((await getUserAuthStateByUsername(user.username))?.is_verified).toBe(false);
     expect(await getEmailQueueJobCount()).toBe(1);
     expect((await getLatestEmailJob())?.data.to).toBe(newEmail);
+    await deliverLatestEmailJobToMaildev();
+    expect(JSON.stringify(await waitForMaildevMessage('Confirm your Strong Together account'))).toContain(newEmail);
   });
 
   it('GET /api/auth/checkuserverify returns verification state and bad paths return 400/401', async () => {

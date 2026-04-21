@@ -8,7 +8,9 @@ import {
 import Bull, { Queue } from 'bull';
 import { createClient } from 'redis';
 import { redisConfig } from '../../../config/redis.config';
+import { emailConfig } from '../../../config/email.config';
 import { awsConfig } from '../../../config/storage.config';
+import { MailerService } from '../../../infrastructure/mailer/mailer.service';
 
 const emailQueue = new Bull('test:emailsQueue', redisConfig.url);
 const pushQueue = new Bull('test:pushNotificationsQueue', redisConfig.url);
@@ -73,6 +75,10 @@ export async function clearEmailQueue() {
   await emailQueue.obliterate({ force: true });
 }
 
+export async function clearMaildevMessages() {
+  await fetch(`${emailConfig.maildevApiUrl}/email/all`, { method: 'DELETE' }).catch(() => undefined);
+}
+
 export async function clearPushQueue() {
   await pushQueue.obliterate({ force: true });
 }
@@ -88,6 +94,44 @@ export async function getPushQueueJobCount() {
 export async function getLatestEmailJob() {
   const [job] = await emailQueue.getJobs(['waiting', 'delayed', 'active', 'completed'], 0, 0, true);
   return job ?? null;
+}
+
+export async function deliverLatestEmailJobToMaildev() {
+  const job = await getLatestEmailJob();
+  if (!job) return null;
+
+  const mailer = new MailerService(null);
+  await mailer.sendMail({
+    to: job.data.to,
+    subject: job.data.subject,
+    html: job.data.html,
+  });
+
+  return job;
+}
+
+export async function getMaildevMessages() {
+  const response = await fetch(`${emailConfig.maildevApiUrl}/email`);
+  if (!response.ok) return [];
+
+  return (await response.json()) as Array<{
+    id: string;
+    subject: string;
+    html?: string;
+    text?: string;
+    to?: Array<{ address?: string; name?: string }> | string;
+  }>;
+}
+
+export async function waitForMaildevMessage(subject: string) {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const messages = await getMaildevMessages();
+    const message = messages.find((item) => item.subject === subject || item.subject?.includes(subject));
+    if (message) return message;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  return null;
 }
 
 export async function getLatestPushJob() {

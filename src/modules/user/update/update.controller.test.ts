@@ -10,7 +10,15 @@ import { createApp } from '../../../app';
 import { authHeaders, createChangeEmailToken } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
 import { getUserAuthStateByUsername, waitForUserDeletionByUsername } from '../../../common/tests/helpers/db';
-import { clearEmailQueue, deleteRedisKeysByPattern, getEmailQueueJobCount, getLatestEmailJob } from '../../../common/tests/helpers/infra';
+import {
+  clearEmailQueue,
+  clearMaildevMessages,
+  deleteRedisKeysByPattern,
+  deliverLatestEmailJobToMaildev,
+  getEmailQueueJobCount,
+  getLatestEmailJob,
+  waitForMaildevMessage,
+} from '../../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../../common/tests/helpers/users';
 
 let app: Awaited<ReturnType<typeof createApp>>;
@@ -22,6 +30,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await clearEmailQueue();
+  await clearMaildevMessages();
 });
 
 afterEach(async () => {
@@ -77,6 +86,8 @@ describe('UpdateUserController', () => {
     expect((await getUserAuthStateByUsername(user.username))?.email).toBe(user.email);
     expect(await getEmailQueueJobCount()).toBe(1);
     expect((await getLatestEmailJob())?.data.to).toBe(newEmail);
+    await deliverLatestEmailJobToMaildev();
+    expect(JSON.stringify(await waitForMaildevMessage('Confirm'))).toContain(newEmail);
 
     const token = createChangeEmailToken(user.userId, newEmail);
     const confirm = await request(app.getHttpServer())
