@@ -9,6 +9,8 @@ const sql = postgres(databaseConfig.url, {
   connect_timeout: 30,
 });
 
+const testPasswordHash = '$2b$10$ZpjAscThaAj5E5T5bkhktudfz1BfRNW0yIvYaKcYWpMMqWRR33TCi';
+
 async function wait(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -245,6 +247,82 @@ export async function getUserAuthStateByUsername(username: string) {
   `;
 
   return row ?? null;
+}
+
+export async function createVerifiedTestUser(overrides: {
+  username: string;
+  email?: string;
+  fullName?: string;
+  gender?: 'Male' | 'Female' | 'Other' | 'Unknown';
+  isFirstLogin?: boolean;
+  isVerified?: boolean;
+}) {
+  const [row] = await sql<{ id: string }[]>`
+    INSERT INTO public.users (
+      username,
+      email,
+      name,
+      gender,
+      password,
+      role,
+      is_first_login,
+      token_version,
+      is_verified,
+      auth_provider
+    ) VALUES (
+      ${overrides.username},
+      ${overrides.email ?? `${overrides.username}@example.com`},
+      ${overrides.fullName ?? 'Session Test User'},
+      ${overrides.gender ?? 'Other'},
+      ${testPasswordHash},
+      'User',
+      ${overrides.isFirstLogin ?? false},
+      0,
+      ${overrides.isVerified ?? true},
+      'app'
+    )
+    RETURNING id
+  `;
+
+  await sql`
+    INSERT INTO public.user_reminder_settings (user_id)
+    VALUES (${row.id}::uuid)
+  `;
+
+  return row.id;
+}
+
+export async function getUserSessionStateByUsername(username: string) {
+  const [row] = await sql<{ id: string; token_version: string; push_token: string | null; last_login: Date | null }[]>`
+    SELECT id, token_version::text, push_token, last_login
+    FROM public.users
+    WHERE username = ${username}
+    LIMIT 1
+  `;
+
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    tokenVersion: Number(row.token_version),
+    pushToken: row.push_token,
+    lastLogin: row.last_login,
+  };
+}
+
+export async function setUserPushTokenByUsername(username: string, pushToken: string) {
+  await sql`
+    UPDATE public.users
+    SET push_token = ${pushToken}
+    WHERE username = ${username}
+  `;
+}
+
+export async function deleteUserByUsername(username: string) {
+  await sql`
+    DELETE FROM public.users
+    WHERE username = ${username}
+  `;
 }
 
 export async function getUserLastLoginByUsername(username: string) {

@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { authConfig } from '../../../config/auth.config';
+import { createVerifiedTestUser, deleteUserByUsername } from './db';
 
 type TestApp = {
   getHttpServer(): any;
@@ -59,4 +60,29 @@ export async function loginWithCredentials(app: TestApp, identifier: string, pas
     identifier,
     password,
   });
+}
+
+export async function createAndLoginTestUser(app: TestApp, prefix = 'ctrl') {
+  const suffix = crypto.randomUUID().slice(0, 8);
+  const username = `${prefix}_${suffix}`;
+  const email = `${username}@example.com`;
+  const userId = await createVerifiedTestUser({
+    username,
+    email,
+    fullName: 'Controller Test User',
+  });
+  const loginResponse = await loginWithCredentials(app, email, 'Test1234!');
+
+  return {
+    accessToken: loginResponse.body.accessToken as string,
+    email,
+    loginResponse,
+    password: 'Test1234!',
+    userId,
+    username,
+  };
+}
+
+export async function cleanupTestUsers(usernames: Iterable<string>) {
+  await Promise.all([...usernames].map((username) => deleteUserByUsername(username)));
 }

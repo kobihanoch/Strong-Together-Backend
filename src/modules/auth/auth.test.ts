@@ -106,7 +106,6 @@ describe('Auth Login', () => {
       identifier: username,
       password,
     });
-    const afterLogin = Date.now();
 
     expect(response.status).toBe(201);
     expectSchema(loginResponseSchema, response.body);
