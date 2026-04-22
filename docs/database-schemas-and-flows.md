@@ -4,36 +4,42 @@ The database is PostgreSQL-first and organized around domain schemas rather than
 
 ## Schema Map
 
-| Schema | Main objects | Responsibility |
-| --- | --- | --- |
-| `identity` | `users`, `oauth_accounts` | User profile, credentials metadata, roles, verification, OAuth linkage, token versioning |
-| `workout` | `exercises`, `workoutplans`, `workoutsplits`, `exercisetoworkoutsplit` | Exercise catalog and planned workout structure |
-| `tracking` | `workout_summary`, `exercisetracking`, `aerobictracking` | Completed workout sessions, set-level strength data, aerobic history |
-| `reminders` | `user_reminder_settings`, `user_split_information` | Reminder preferences and inferred split scheduling data |
-| `messages` | `messages` | User/system messaging |
-| `analytics` | `v_exercisetracking_expanded`, `v_exercisetracking_set_simple`, `v_prs` | Read-optimized analytics views |
-| `app` | `current_user_id()` support | RLS request context helpers |
-| `auth` | compatibility helpers | Auth-related database compatibility surface |
+| Schema      | Main objects                                                            | Responsibility                                                                           |
+| ----------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `identity`  | `users`, `oauth_accounts`, `current_user_id()` support                  | User profile, credentials metadata, roles, verification, OAuth linkage, token versioning |
+| `workout`   | `exercises`, `workoutplans`, `workoutsplits`, `exercisetoworkoutsplit`  | Exercise catalog and planned workout structure                                           |
+| `tracking`  | `workout_summary`, `exercisetracking`, `aerobictracking`                | Completed workout sessions, set-level strength data, aerobic history                     |
+| `reminders` | `user_reminder_settings`, `user_split_information`                      | Reminder preferences and inferred split scheduling data                                  |
+| `messages`  | `messages`                                                              | User/system messaging                                                                    |
+| `analytics` | `v_exercisetracking_expanded`, `v_exercisetracking_set_simple`, `v_prs` | Read-optimized analytics views                                                           |
 
 ## Identity Schema
 
-![Identity Schema](./identity.svg)
+### Tables
+
+![Identity Schema](./db-diagrams/identityschema.svg)
 
 `identity.users` is the security anchor for the application. It stores user identity, role, verification state, password data, profile fields, `token_version`, and `last_login`.
 
 Important flows:
 
-- Login bumps `token_version` and returns access/refresh tokens with the new version.
+- Login bumps `token_version` and returns acces./db-diagrams/refresh tokens with the new version.
 - Refresh performs a version compare-and-set before issuing new tokens.
 - Logout bumps `token_version`, invalidating older access tokens.
 - Verification and password flows update identity state while preserving centralized token invalidation.
 - `identity.oauth_accounts` links provider identities to application users.
 
-The schema is protected by RLS so authenticated users can read/update/delete only their own profile, with specific exceptions such as message sender visibility.
+The schema is protected by RLS so authenticated users can rea./db-diagrams/updat./db-diagrams/delete only their own profile, with specific exceptions such as message sender visibility.
 
 ## Workout Schema
 
-![Workout Schema](./workout.svg)
+### Tables
+
+![Workout Schema](./db-diagrams/workoutschema.svg)
+
+### Views
+
+![Workout views Schema](./db-diagrams/workoutviewsschema.svg)
 
 The workout schema separates reusable exercise definitions from user-specific plans.
 
@@ -41,7 +47,7 @@ Core objects:
 
 - `workout.exercises`: exercise catalog readable by authenticated users.
 - `workout.workoutplans`: plan owned by a user.
-- `workout.workoutsplits`: split/day definitions under a plan.
+- `workout.workoutsplits`: spli./db-diagrams/day definitions under a plan.
 - `workout.exercisetoworkoutsplit`: ordered exercises inside a split.
 - `workout.v_exercisetoworkoutsplit_expanded`: view that expands planned exercises for API reads.
 
@@ -50,11 +56,17 @@ Why this shape matters:
 - Exercise metadata stays normalized.
 - User plans can evolve without duplicating the catalog.
 - Ordered split exercises support practical workout UX.
-- RLS policies tie nested split/exercise rows back to the owning plan.
+- RLS policies tie nested spli./db-diagrams/exercise rows back to the owning plan.
 
 ## Tracking Schema
 
-![Tracking Schema](./tracking.svg)
+### Tables
+
+![Tracking Schema](./db-diagrams/trackingschema.svg)
+
+### Views
+
+![Tracking Views Schema](./db-diagrams/trackingviewsschema.svg)
 
 The tracking schema captures performed activity, not planned activity.
 
@@ -75,7 +87,9 @@ The RLS model protects nested set rows by checking ownership through `workout_su
 
 ## Analytics Schema
 
-![Analytics Schema](./analytics.svg)
+### Views
+
+![Analytics Schema](./db-diagrams/analyticsschema.svg)
 
 Analytics is modeled through security-invoker views:
 
@@ -89,7 +103,9 @@ The API uses these views for higher-level fitness insights such as personal reco
 
 ## Reminders Schema
 
-![Reminders Schema](./reminders.svg)
+### Tables
+
+![Reminders Schema](./db-diagrams/remindersschema.svg)
 
 Reminder data is split between explicit settings and inferred schedule intelligence:
 
@@ -100,11 +116,13 @@ The confidence index on `preferred_weekday` and `confidence` exists because remi
 
 ## Messages Schema
 
-![Messages Schema](./messages.svg)
+### Tables
+
+![Messages Schema](./db-diagrams/messagesschema.svg)
 
 `messages.messages` supports user and system messages.
 
-RLS allows participants to read/update/delete messages where they are sender or receiver. Insert policy also allows a known system sender ID, which supports automated application messages without giving every user broad write access.
+RLS allows participants to rea./db-diagrams/updat./db-diagrams/delete messages where they are sender or receiver. Insert policy also allows a known system sender ID, which supports automated application messages without giving every user broad write access.
 
 ## RLS Flow
 
