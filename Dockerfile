@@ -4,7 +4,7 @@ RUN apk add --no-cache dos2unix
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN npx tsc --noEmit
+RUN npx nest build
 RUN npm prune --omit=dev
 RUN dos2unix ./start.sh && sed -i "1s/^\xEF\xBB\xBF//" ./start.sh && chmod +x ./start.sh
 EXPOSE 5000

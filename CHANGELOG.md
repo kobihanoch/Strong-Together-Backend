@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.0.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v4.0.0...v4.0.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* Update Dockerfile to use 'npx nest build' and modify start.sh to run node directly ([4825fa6](https://github.com/kobihanoch/Strong-Together-Backend/commit/4825fa6860937ebe7fad8d8fa9525bed561c80a8))
+
 ## [4.0.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v3.2.0...v4.0.0) (2026-04-22)
 
 
