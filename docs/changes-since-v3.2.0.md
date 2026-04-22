@@ -188,7 +188,7 @@ The setup script also applies ordered seed files from `src/infrastructure/db/sch
 That means the project now has a more complete database bootstrap process:
 
 - migrations define structure and durable schema changes
-- seed files define baseline data and fixtures needed for local/test flows
+- seed files define baseline app data; controller tests create their own user/workout/message fixtures
 
 ## 6. Decoupling from Supabase
 
@@ -213,12 +213,13 @@ The new migration set includes a large base schema export plus follow-up migrati
 
 ### What was not decoupled
 
-Supabase is still present as a storage integration.
+Supabase is still present as the production storage integration.
 
 Profile image upload/delete still goes through `SupabaseStorageService`, and `UserModule` still imports `SupabaseModule` for that purpose. So the current state is best described as:
 
 - database/schema/migrations decoupled from Supabase
-- object storage integration still using Supabase
+- production object storage still using Supabase
+- development and test profile-image storage using LocalStack S3
 
 That distinction is worth being explicit about so the refactor is described accurately.
 
@@ -248,6 +249,8 @@ The main improvements here are:
 - test helpers were moved under `src/common/tests`
 - the dedicated test database reset flow became part of standard test commands
 - the app bootstrap includes special handling to reuse the initialized Nest app in test mode
+- controller tests now assert response schemas from `@strong-together/shared`
+- controller tests use real local Postgres, Redis/Bull, LocalStack S3/SQS, and Maildev
 
 This is a strong sign that the refactor was not only structural but operational: the project was adapted so the new architecture still supports integration-style tests across the main domains.
 

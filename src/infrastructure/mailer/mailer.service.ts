@@ -1,12 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
+import net from 'node:net';
 import { Resend } from 'resend';
+import { appConfig } from '../../config/app.config';
+import { emailConfig } from '../../config/email.config';
 import { createLogger } from '../logger';
 import { RESEND_CLIENT } from './mailer.tokens';
 
 @Injectable()
 export class MailerService {
   private readonly logger = createLogger('config:mailer');
-  constructor(@Inject(RESEND_CLIENT) private readonly resend: Resend) {}
+  constructor(@Inject(RESEND_CLIENT) private readonly resend: Resend | null) {}
 
   async sendMail({ to, subject, html }: { to: string; subject: string; html: string }): Promise<{
     ok: boolean;
@@ -19,7 +22,17 @@ export class MailerService {
       return { ok: false, permanent: true, reason: 'Missing required fields' };
     }
 
+    // Dev/test mail goes to Maildev. Prod goes to Resend.
+    if (appConfig.isDevelopment || appConfig.isTest) {
+      await this.sendMaildevMail({ to, subject, html });
+      return { ok: true, id: `maildev-${Date.now()}` };
+    }
+
     try {
+      if (!this.resend) {
+        return { ok: false, permanent: true, reason: 'Mailer provider is not configured' };
+      }
+
       const result = await this.resend.emails.send({
         from: 'Strong Together <support@auth.kobihanoch.com>',
         to,
@@ -118,5 +131,59 @@ export class MailerService {
       (m.includes('rate') && m.includes('limit')) ||
       m.includes('unavailable')
     );
+  }
+
+  private async sendMaildevMail({ to, subject, html }: { to: string; subject: string; html: string }): Promise<void> {
+    const from = 'support@auth.kobihanoch.com';
+    const data = [
+      `From: Strong Together <${from}>`,
+      `To: ${to}`,
+      `Subject: ${subject}`,
+      'MIME-Version: 1.0',
+      'Content-Type: text/html; charset=UTF-8',
+      '',
+      html.replace(/^\./gm, '..'),
+      '.',
+      '',
+    ].join('\r\n');
+
+    await new Promise<void>((resolve, reject) => {
+      const socket = net.createConnection(emailConfig.maildevSmtpPort, emailConfig.maildevSmtpHost);
+      const commands = [`HELO localhost`, `MAIL FROM:<${from}>`, `RCPT TO:<${to}>`, 'DATA', data, 'QUIT'];
+      let commandIndex = 0;
+      let settled = false;
+
+      const fail = (error: Error) => {
+        if (settled) return;
+        settled = true;
+        socket.destroy();
+        reject(error);
+      };
+
+      socket.setEncoding('utf8');
+      socket.setTimeout(5000, () => fail(new Error('Maildev SMTP timeout')));
+      socket.on('error', fail);
+      socket.on('data', (chunk) => {
+        const lines = String(chunk).split(/\r?\n/).filter(Boolean);
+        const last = lines[lines.length - 1] ?? '';
+        if (/^\d{3}-/.test(last)) return;
+        if (!/^[235]\d{2}/.test(last)) {
+          fail(new Error(`Maildev SMTP rejected command: ${last}`));
+          return;
+        }
+
+        const command = commands[commandIndex++];
+        if (command) {
+          socket.write(`${command}\r\n`);
+          return;
+        }
+
+        if (!settled) {
+          settled = true;
+          socket.end();
+          resolve();
+        }
+      });
+    });
   }
 }

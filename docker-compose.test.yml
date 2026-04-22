@@ -72,6 +72,17 @@ services:
     networks:
       - strong_together_shared
 
+  # Mail capture server - test only
+  maildev_test:
+    image: maildev/maildev:2.1.0
+    container_name: strongtogether_maildev_test
+    restart: unless-stopped
+    ports:
+      - '1025:1025'
+      - '1080:1080'
+    networks:
+      - strong_together_shared
+
   # Atlas container to run Atlas migrations
   atlas:
     image: arigaio/atlas:latest

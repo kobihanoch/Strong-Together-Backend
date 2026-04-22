@@ -1600,7 +1600,7 @@ These routes touch external infrastructure directly:
 - `/api/videoanalysis/getpresignedurl` uses S3 presigning
 - `/api/push/daily` and `/api/push/hourlyreminder` enqueue background work
 - auth mail flows rely on mailer / queue infrastructure
-- profile image routes use object storage through the Supabase module
+- profile image routes use object storage through `SupabaseStorageService`; prod uses Supabase Storage, dev/test use LocalStack S3
 
 ### Source Of Truth
 

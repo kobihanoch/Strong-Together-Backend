@@ -320,6 +320,7 @@ AWS_BUCKET_NAME=
 
 # URLS
 PUBLIC_BASE_URL=
+PUBLIC_WEB_BASE_URL=
 PUBLIC_BASE_URL_RENDER_DEFAULT=
 PRIVATE_BASE_URL_DEV=
 
@@ -393,6 +394,7 @@ The development Compose now includes:
 - Redis dev on `localhost:6379`
 - RedisInsight on `http://localhost:5540`
 - LocalStack on `http://localhost:4566`
+- S3 explorer on `http://localhost:8081`
 - the Nest main server
 - background workers
 - the Python analysis worker
@@ -413,7 +415,7 @@ This keeps local dev data stable while allowing test runs to rebuild a clean tes
 
 ## Testing
 
-The project includes integration tests for the main product flows:
+The project includes controller-level integration tests for the main product flows:
 
 - Authentication
 - Users
@@ -434,8 +436,12 @@ The test environment now uses one dedicated local infra stack:
 - Redis test on `localhost:6380`
 - RedisInsight test on `http://localhost:5541`
 - LocalStack test on `http://localhost:4567`
+- Maildev test SMTP on `localhost:1025`
+- Maildev test UI/API on `http://localhost:1080`
 
-`postgres_test`, `redis_test`, and `localstack_test` are intentionally separate from the dev stack so test runs do not collide with your local development data.
+`postgres_test`, `redis_test`, `localstack_test`, and `maildev_test` are intentionally separate from the dev stack so test runs do not collide with your local development data.
+
+Tests use the real local integrations: Postgres for DB assertions, Redis/Bull for queue assertions, LocalStack S3/SQS for storage and video-analysis flows, and Maildev for email assertions. Response bodies are checked against the shared schemas from `@strong-together/shared`.
 
 Useful commands:
 
@@ -448,7 +454,9 @@ npm run test:prepare
 npm run test:all
 ```
 
-You can also run domain-specific suites such as `npm run test:auth`, `npm run test:workouts`, `npm run test:push`, or `npm run test:videoanalysis`.
+You can also run domain-specific suites such as `npm run test:auth`, `npm run test:workouts`, `npm run test:oauth`, `npm run test:push`, or `npm run test:videoanalysis`.
+
+The `test:*` scripts run `test:prepare` first. The lower-level `test:run:*` scripts assume the test stack is already running, so use `npm run test:prepare` before calling them directly.
 
 `npm run test` now follows a one-up / one-down flow:
 
@@ -507,7 +515,8 @@ Local database orchestration now follows the environment-specific Compose files:
 
 - dev DB orchestration uses `docker-compose.development.yml`
 - test DB orchestration uses `docker-compose.test.yml`
-- test DB resets always rebuild the database from migrations and then inject seeds
+- test DB resets always rebuild the database from migrations and then inject baseline seeds
+- controller tests create and clean up their own user/profile/workout data
 
 ### Important tables and objects
 

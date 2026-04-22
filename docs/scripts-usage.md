@@ -24,7 +24,7 @@ Use these for the isolated test environment:
 | --- | --- |
 | `npm run test:env:up` | Starts the test infra stack from `docker-compose.test.yml`. |
 | `npm run test:env:down` | Stops the test infra stack. |
-| `npm run test:db:reset` | Rebuilds the test database, applies migrations, and injects seeds. |
+| `npm run test:db:reset` | Rebuilds the test database, applies migrations, and injects baseline seeds. |
 | `npm run test:prepare` | Brings test infra up and resets the test DB once. |
 | `npm run test` | Runs the full test flow with one infra startup at the beginning and one shutdown at the end. |
 | `npm run test:watch` | Starts test infra, resets the test DB, then runs Vitest in watch mode. |
@@ -47,6 +47,8 @@ These are useful when you want one focused module:
 - `npm run test:websockets`
 
 Under the hood, each of these runs `test:prepare` first so it can be executed on its own.
+
+The matching `test:run:*` scripts skip preparation and run exact controller test files. Use them only after `npm run test:prepare` or while the test stack is already up.
 
 ## Migrations
 
@@ -94,3 +96,5 @@ npm run test:db:reset
 - Dev and test use different Compose files and different ports.
 - Test infra is intentionally isolated so it does not overwrite your dev data.
 - The test stack is infra-only. Vitest boots the Nest app in-process during tests.
+- Controller tests create their own users and clean them up; seeds provide only baseline data such as system users/exercises.
+- Tests use real local Postgres, Redis, LocalStack S3/SQS, and Maildev. Production providers such as Resend and Supabase Storage are not called by tests.

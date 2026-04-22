@@ -12,7 +12,6 @@ type EmailContext = {
 
 @Injectable()
 export class VerificationEmailsService {
-  private readonly base = appConfig.publicBaseUrl;
   constructor(private readonly emailsProducerService: EmailsProducerService) {}
 
   async sendVerificationEmail(
@@ -27,7 +26,7 @@ export class VerificationEmailsService {
       authConfig.jwtVerifySecret, // strong secret in env
       { expiresIn: '1h' }, // claims
     );
-    const verifyUrl = `${this.base}/api/auth/verify?token=${encodeURIComponent(token)}`;
+    const verifyUrl = `${appConfig.emailApiBaseUrl}/api/auth/verify?token=${encodeURIComponent(token)}`;
     const html = generateValidateUserEmail({
       fullName,
       verifyUrl,

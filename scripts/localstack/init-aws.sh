@@ -2,9 +2,11 @@
 set -e
 
 BUCKET_NAME="${AWS_BUCKET_NAME:-strong-together-videos-dev}"
+PROFILE_BUCKET_NAME="${BUCKET_NAME_PROFILE:-profile-pics}"
 QUEUE_NAME="${AWS_ANALYSIS_QUEUE_NAME:-s3-upload-processing-queue}"
 
 awslocal s3api create-bucket --bucket "$BUCKET_NAME" >/dev/null 2>&1 || true
+awslocal s3api create-bucket --bucket "$PROFILE_BUCKET_NAME" >/dev/null 2>&1 || true
 awslocal sqs create-queue --queue-name "$QUEUE_NAME" >/dev/null
 
 QUEUE_URL="$(awslocal sqs get-queue-url --queue-name "$QUEUE_NAME" --output text --query QueueUrl)"

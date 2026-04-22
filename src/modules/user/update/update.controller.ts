@@ -179,7 +179,7 @@ export class UpdateUserController {
     @RequestData(new ValidateRequestPipe(deleteProfilePicRequest))
     data: { body: DeleteUserProfilePicBody },
     @CurrentUser() user: AuthenticatedUser,
-    @Res() res: Response,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
     return this.updateUserService.deleteUserProfilePicData(user.id, data.body);
   }
