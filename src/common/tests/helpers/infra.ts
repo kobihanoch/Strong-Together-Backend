@@ -1,6 +1,14 @@
-import { HeadObjectCommand, DeleteObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import {
+  CreateBucketCommand,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+  PutBucketNotificationConfigurationCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import {
+  CreateQueueCommand,
   DeleteMessageCommand,
+  GetQueueAttributesCommand,
   PurgeQueueCommand,
   ReceiveMessageCommand,
   SQSClient,
@@ -148,6 +156,17 @@ export async function headUploadedObject(key: string, bucket = awsConfig.bucketN
   );
 }
 
+export async function ensureS3Bucket(bucket: string) {
+  try {
+    await s3Client.send(new CreateBucketCommand({ Bucket: bucket }));
+  } catch (e: any) {
+    if (e?.name === 'BucketAlreadyOwnedByYou' || e?.name === 'BucketAlreadyExists' || e?.$metadata?.httpStatusCode === 409) {
+      return;
+    }
+    throw e;
+  }
+}
+
 export async function deleteUploadedObject(key: string, bucket = awsConfig.bucketName) {
   await s3Client.send(
     new DeleteObjectCommand({
@@ -169,6 +188,38 @@ export async function purgeAnalysisQueue() {
   } catch {
     // SQS purge has a short cooldown; tests can continue with receive/delete.
   }
+}
+
+export async function ensureAnalysisQueue(bucket = awsConfig.bucketName) {
+  const queueUrl = process.env.AWS_ANALYSIS_SQS_QUEUE_URL;
+  if (!queueUrl || !bucket) return;
+
+  const queueName = queueUrl.split('/').filter(Boolean).at(-1);
+  if (!queueName) return;
+
+  await sqsClient.send(new CreateQueueCommand({ QueueName: queueName }));
+  const attributes = await sqsClient.send(
+    new GetQueueAttributesCommand({
+      QueueUrl: queueUrl,
+      AttributeNames: ['QueueArn'],
+    }),
+  );
+  const queueArn = attributes.Attributes?.QueueArn;
+  if (!queueArn) return;
+
+  await s3Client.send(
+    new PutBucketNotificationConfigurationCommand({
+      Bucket: bucket,
+      NotificationConfiguration: {
+        QueueConfigurations: [
+          {
+            QueueArn: queueArn,
+            Events: ['s3:ObjectCreated:*'],
+          },
+        ],
+      },
+    }),
+  );
 }
 
 export async function receiveAnalysisQueueMessage() {
