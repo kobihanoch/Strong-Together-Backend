@@ -81,7 +81,7 @@ describe('VerificationController', () => {
       subject: 'Confirm your Strong Together account',
     });
     expect(latestJob?.data.html).toContain(`${appConfig.emailApiBaseUrl}/api/auth/verify`);
-    expect(latestJob?.data.html).toContain(`${appConfig.emailWebBaseUrl}/appicon.png`);
+    expect(latestJob?.data.html).toContain('https://strongtogether.kobihanoch.com/appicon.png');
     await deliverLatestEmailJobToMaildev();
     const message = await waitForMaildevMessage('Confirm your Strong Together account');
     expect(message?.subject).toBe('Confirm your Strong Together account');
@@ -113,7 +113,7 @@ describe('VerificationController', () => {
     const latestJob = await getLatestEmailJob();
     expect(latestJob?.data.to).toBe(newEmail);
     expect(latestJob?.data.html).toContain(`${appConfig.emailApiBaseUrl}/api/auth/verify`);
-    expect(latestJob?.data.html).toContain(`${appConfig.emailWebBaseUrl}/appicon.png`);
+    expect(latestJob?.data.html).toContain('https://strongtogether.kobihanoch.com/appicon.png');
     await deliverLatestEmailJobToMaildev();
     expect(JSON.stringify(await waitForMaildevMessage('Confirm your Strong Together account'))).toContain(newEmail);
   });

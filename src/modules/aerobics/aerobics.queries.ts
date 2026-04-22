@@ -88,7 +88,7 @@ export class AerobicsQueries {
       (at.workout_time_utc AT TIME ZONE (SELECT tz FROM params))::date AS local_date,
       /* Keep row payload but drop keys we re-add or don't need */
       (to_jsonb(at) - 'user_id' - 'workout_time_utc' - 'id') AS row
-    FROM aerobictracking at, params p
+    FROM tracking.aerobictracking at, params p
     WHERE at.user_id = p.user_id
       AND at.workout_time_utc >= (NOW() AT TIME ZONE 'UTC' - (p.days || ' days')::interval)
   ),
@@ -150,6 +150,6 @@ export class AerobicsQueries {
   // Add a new aerobic record
   async queryAddAerobicTracking(userId: string, record: AddAerobicInput): Promise<void> {
     const { durationMins, durationSec, type } = record;
-    await this.sql`INSERT INTO aerobictracking (user_id, type, duration_mins, duration_sec) VALUES (${userId}::uuid, ${type}, ${durationMins}, ${durationSec})`;
+    await this.sql`INSERT INTO tracking.aerobictracking (user_id, type, duration_mins, duration_sec) VALUES (${userId}::uuid, ${type}, ${durationMins}, ${durationSec})`;
   }
 }

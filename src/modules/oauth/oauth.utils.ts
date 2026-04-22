@@ -13,7 +13,7 @@ export async function ensureUniqueUsername(trx: postgres.TransactionSql, candida
 
   // Keep checking until we find a username that does not exist
   while (true) {
-    const exists = await trx`SELECT 1 FROM users WHERE username = ${username} LIMIT 1`;
+    const exists = await trx`SELECT 1 FROM identity.users WHERE username = ${username} LIMIT 1`;
 
     if (exists.length === 0) {
       // Found a free username

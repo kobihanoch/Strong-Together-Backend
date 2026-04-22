@@ -19,7 +19,7 @@ export class AppleQueries {
   /** Same shape as the Google version: returns { userId, missing_fields } */
   async queryFindUserIdWithAppleUserId(appleUserId: string): Promise<OAuthLookupResult> {
     const rows = await this.sql<{ user_id: string; missing_fields: string | null }[]>`
-      SELECT o.user_id, o.missing_fields FROM oauth_accounts o 
+      SELECT o.user_id, o.missing_fields FROM identity.oauth_accounts o
                 WHERE o.provider_user_id=${appleUserId} AND o.provider='apple'`;
     return {
       userId: rows[0]?.user_id || null,
@@ -35,7 +35,7 @@ export class AppleQueries {
     return await this.sql.begin(async (trx: postgres.TransactionSql) => {
       const existing = await trx<{ id: string }[]>`
         SELECT u.id
-        FROM users u
+        FROM identity.users u
         WHERE lower(u.email) = lower(${appleEmail})
         FOR UPDATE
         LIMIT 1
@@ -47,14 +47,14 @@ export class AppleQueries {
 
       // Insert oauth link for Apple (idempotent)
       await trx`
-        INSERT INTO oauth_accounts (user_id, provider, provider_user_id, provider_email)
+        INSERT INTO identity.oauth_accounts (user_id, provider, provider_user_id, provider_email)
         VALUES (${userId}, 'apple', ${appleSub}, ${appleEmail})
         ON CONFLICT (provider, provider_user_id) DO NOTHING
       `;
 
       // Mark auth_provider without overwriting user-chosen fields
       await trx`
-        UPDATE users
+        UPDATE identity.users
         SET auth_provider = 'apple'
         WHERE id = ${userId}
       `;
@@ -78,7 +78,7 @@ export class AppleQueries {
 
       // Create user
       const [inserted] = await trx<{ id: string }[]>`
-        INSERT INTO users (username, email, name, gender, is_verified, auth_provider)
+        INSERT INTO identity.users (username, email, name, gender, is_verified, auth_provider)
         VALUES (${username}, ${email}, ${fullName}, 'Unknown', true, 'apple')
         RETURNING id
       `;
@@ -86,13 +86,13 @@ export class AppleQueries {
 
       // Create oauth link
       await trx`
-        INSERT INTO oauth_accounts (user_id, provider, provider_user_id, provider_email, missing_fields)
+        INSERT INTO identity.oauth_accounts (user_id, provider, provider_user_id, provider_email, missing_fields)
         VALUES (${newUserId}, 'apple', ${appleSub}, ${appleEmail}, ${oauthMissingFields})
       `;
 
       // Create default reminder settings
       await trx`
-        INSERT INTO user_reminder_settings (user_id)
+        INSERT INTO reminders.user_reminder_settings (user_id)
         VALUES (${newUserId})
       `;
 

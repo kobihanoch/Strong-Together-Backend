@@ -6,11 +6,14 @@ import { authHeaders } from '../../common/tests/helpers/auth';
 import { expectSchema } from '../../common/tests/helpers/assert-schema';
 import {
   deleteUploadedObject,
+  ensureAnalysisQueue,
+  ensureS3Bucket,
   headUploadedObject,
   purgeAnalysisQueue,
   receiveAnalysisQueueMessage,
 } from '../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../common/tests/helpers/users';
+import { awsConfig } from '../../config/storage.config';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 const users = new Set<string>();
@@ -21,6 +24,8 @@ beforeAll(async () => {
 }, 30000);
 
 beforeEach(async () => {
+  await ensureS3Bucket(awsConfig.bucketName as string);
+  await ensureAnalysisQueue(awsConfig.bucketName);
   await purgeAnalysisQueue();
 });
 

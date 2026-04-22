@@ -32,8 +32,8 @@ export class MessagesQueries {
         m.is_read AS is_read,
         u.name AS sender_full_name,
         u.profile_image_url AS sender_profile_image_url
-      FROM messages m
-      INNER JOIN users u
+      FROM messages.messages m
+      INNER JOIN identity.users u
         ON u.id = m.sender_id
       WHERE m.receiver_id = ${userId}::uuid
       ORDER BY sent_at DESC
@@ -44,7 +44,7 @@ export class MessagesQueries {
 
   async queryMarkUserMessageAsRead(messageId: string, userId: string): Promise<MessageAsRead[]> {
     return this.sql<MessageAsRead[]>`
-      UPDATE messages AS m
+      UPDATE messages.messages AS m
       SET is_read = TRUE
       WHERE m.id=${messageId}::uuid AND m.receiver_id=${userId}::uuid
       RETURNING id, is_read
@@ -53,7 +53,7 @@ export class MessagesQueries {
 
   async queryDeleteMessage(messageId: string, userId: string): Promise<DeletedMessage[]> {
     return this.sql<DeletedMessage[]>`
-      DELETE FROM messages AS m
+      DELETE FROM messages.messages AS m
       WHERE m.id=${messageId}::uuid AND (m.receiver_id=${userId}::uuid OR m.sender_id=${userId}::uuid)
       RETURNING id
     `;

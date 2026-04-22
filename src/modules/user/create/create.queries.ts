@@ -12,7 +12,7 @@ export class CreateUserQueries {
     email: string | null,
   ): Promise<[Pick<UserEntity, 'id'>]> {
     return this.sql<[Pick<UserEntity, 'id'>]>`
-      SELECT id FROM users WHERE username=${username} OR email=${email} LIMIT 1`;
+      SELECT id FROM identity.users WHERE username=${username} OR email=${email} LIMIT 1`;
   }
 
   // Creates a new user and reminder settings
@@ -28,14 +28,14 @@ export class CreateUserQueries {
       const [user] = await trx<
         [Pick<UserEntity, 'id' | 'username' | 'name' | 'email' | 'gender' | 'role' | 'created_at'>]
       >`
-        INSERT INTO users (username, name, email, gender, password)
+        INSERT INTO identity.users (username, name, email, gender, password)
         VALUES (${username}, ${fullName}, ${email}, ${gender}, ${hash})
         RETURNING id, username, name, email, gender, role, created_at
       `;
 
       // 2) create default reminder settings for this user
       await trx`
-        INSERT INTO user_reminder_settings (user_id)
+        INSERT INTO reminders.user_reminder_settings (user_id)
         VALUES (${user.id}::uuid)
       `;
 

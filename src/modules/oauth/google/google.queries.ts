@@ -18,7 +18,7 @@ export class GoogleQueries {
 
   async queryFindUserIdWithGoogleUserId(googleUserId: string): Promise<OAuthLookupResult> {
     const rows = await this.sql<{ user_id: string; missing_fields: string | null }[]>`
-      SELECT o.user_id, o.missing_fields FROM oauth_accounts o 
+      SELECT o.user_id, o.missing_fields FROM identity.oauth_accounts o
       WHERE o.provider_user_id=${googleUserId} AND o.provider='google'`;
     return {
       userId: rows[0]?.user_id || null,
@@ -42,7 +42,7 @@ export class GoogleQueries {
       // Lock the candidate row if it exists to avoid concurrent link races.
       const existing = await trx<{ id: string }[]>`
         SELECT u.id
-        FROM users u
+        FROM identity.users u
         WHERE lower(u.email) = lower(${googleEmail})
         FOR UPDATE
         LIMIT 1
@@ -54,7 +54,7 @@ export class GoogleQueries {
 
       // Insert into oauth_accounts; ignore if already linked.
       await trx`
-        INSERT INTO oauth_accounts (user_id, provider, provider_user_id, provider_email)
+        INSERT INTO identity.oauth_accounts (user_id, provider, provider_user_id, provider_email)
         VALUES (${userId}, 'google', ${googleSub}, ${googleEmail})
         ON CONFLICT (provider, provider_user_id) DO NOTHING
       `;
@@ -62,7 +62,7 @@ export class GoogleQueries {
       // Optionally enrich missing profile fields (do not overwrite user choices).
       // If you want to upsert full_name/picture here, add parameters to this function and COALESCE them.
       await trx`
-        UPDATE users
+        UPDATE identity.users
         SET auth_provider = 'google'
         WHERE id = ${userId}
       `;
@@ -85,7 +85,7 @@ export class GoogleQueries {
 
       // Create user
       const [inserted] = await trx<{ id: string }[]>`
-        INSERT INTO users (username, email, name, gender, is_verified, auth_provider)
+        INSERT INTO identity.users (username, email, name, gender, is_verified, auth_provider)
         VALUES (${username}, ${email}, ${fullName}, 'Unknown', true, 'google')
         RETURNING id
       `;
@@ -93,13 +93,13 @@ export class GoogleQueries {
 
       // Create oauth link
       await trx`
-        INSERT INTO oauth_accounts (user_id, provider, provider_user_id, provider_email, missing_fields)
+        INSERT INTO identity.oauth_accounts (user_id, provider, provider_user_id, provider_email, missing_fields)
         VALUES (${newUserId}, 'google', ${googleSub}, ${googleEmail}, ${oauthMissingFields})
       `;
 
       // Create default reminder settings
       await trx`
-        INSERT INTO user_reminder_settings (user_id)
+        INSERT INTO reminders.user_reminder_settings (user_id)
         VALUES (${newUserId})
       `;
 

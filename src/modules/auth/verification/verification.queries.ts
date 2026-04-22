@@ -10,13 +10,13 @@ export class VerificationQueries {
   async queryUserByUsername(username: string): Promise<UserByIndetifier[]> {
     return this.sql<UserByIndetifier[]>`
       SELECT id, name, username, password, role, is_first_login, is_verified
-      FROM users 
+      FROM identity.users
       WHERE username=${username} 
       LIMIT 1
     `;
   }
 
   async queryUpdateUserVerficiationStatus(userId: string, state: boolean): Promise<void> {
-    await this.sql`UPDATE users SET is_verified = ${state} WHERE users.id = ${userId}::uuid`;
+    await this.sql`UPDATE identity.users SET is_verified = ${state} WHERE users.id = ${userId}::uuid`;
   }
 }

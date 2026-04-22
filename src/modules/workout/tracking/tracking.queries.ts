@@ -23,8 +23,8 @@ export class WorkoutTrackingQueries {
   all_workout_summaries as(
     select wsum.id as id, ws.name as split_name, ((wsum.workout_start_utc at time zone ${tz})) as workout_time_local, 
     wsum.workout_start_utc, wsum.workout_end_utc
-    from public.workout_summary wsum
-    join public.workoutsplits ws on ws.id = wsum.workoutsplit_id
+    from tracking.workout_summary wsum
+    join workout.workoutsplits ws on ws.id = wsum.workoutsplit_id
     where wsum.user_id=${userId}::uuid
   ),
 
@@ -62,7 +62,7 @@ export class WorkoutTrackingQueries {
 
   all_prs as (
     select p.exercisetosplit_id as etsid, p.exercise_id, p.exercise, p.weight, p.reps, ((p.workout_start_utc at time zone ${tz})::date) as workout_date_utc
-    from public.v_prs p
+    from analytics.v_prs p
     join all_workout_summaries aws on p.workout_summary_id = aws.id
   ),
 
@@ -82,9 +82,9 @@ export class WorkoutTrackingQueries {
           'specifictargetmuscle', ex.specifictargetmuscle
         )
       ) as exercisetoworkoutsplit
-    from public.v_exercisetracking_expanded et
-    join public.exercisetoworkoutsplit ets on ets.id = et.exercisetosplit_id
-    join public.exercises ex on ex.id = ets.exercise_id
+    from analytics.v_exercisetracking_expanded et
+    join workout.exercisetoworkoutsplit ets on ets.id = et.exercisetosplit_id
+    join workout.exercises ex on ex.id = ets.exercise_id
     join bounded_workout_summaries bws on et.workout_summary_id = bws.id
   ),
 
@@ -147,13 +147,13 @@ export class WorkoutTrackingQueries {
     const [{ workoutsplit_id }] = await this.sql<[{ workoutsplit_id: number }]>`
       select distinct ews.workoutsplit_id
       from jsonb_to_recordset(${workoutArrayJson}::jsonb) as t(exercisetosplit_id int8)
-      join public.exercisetoworkoutsplit ews
+      join workout.exercisetoworkoutsplit ews
         on ews.id = t.exercisetosplit_id
       limit 1;
     `;
 
     const [{ id: workoutSummaryId }] = await this.sql<[{ id: string }]>`
-      insert into public.workout_summary (
+      insert into tracking.workout_summary (
         user_id,
         workout_start_utc,
         workout_end_utc,
@@ -169,7 +169,7 @@ export class WorkoutTrackingQueries {
     `;
 
     await this.sql`
-      insert into public.exercisetracking
+      insert into tracking.exercisetracking
         (exercisetosplit_id, weight, reps, notes, workout_summary_id)
       select
         t.exercisetosplit_id::int8,

@@ -47,7 +47,7 @@ export class VerificationService {
   async sendVerificationMailData(body: SendVerifcationMailBody, requestId?: string): Promise<void> {
     const { email } = body;
     const [user = null] = await this.sql<{ id: string; name: string | null; username: string }[]>`
-      SELECT id, name, username FROM users WHERE email=${email}`;
+      SELECT id, name, username FROM identity.users WHERE email=${email}`;
     if (!user) return;
     const { id, name } = user;
     await this.verificationEmailsService.sendVerificationEmail(email, id, name ?? user.username, {
@@ -68,7 +68,7 @@ export class VerificationService {
     const [exists] = await this.createUserQueries.queryUserExistsByUsernameOrEmail(null, newEmail);
     if (exists) throw new ConflictException('Email already in use');
 
-    await this.sql`UPDATE users SET email = ${newEmail} WHERE id = ${user.id}::uuid`;
+    await this.sql`UPDATE identity.users SET email = ${newEmail} WHERE id = ${user.id}::uuid`;
     await this.verificationEmailsService.sendVerificationEmail(
       newEmail,
       user.id,
@@ -80,7 +80,7 @@ export class VerificationService {
   }
 
   async checkUserVerifyData(username: string): Promise<{ isVerified: boolean }> {
-    const [user] = await this.sql<{ is_verified: boolean }[]>`SELECT is_verified FROM users WHERE username=${username}`;
+    const [user] = await this.sql<{ is_verified: boolean }[]>`SELECT is_verified FROM identity.users WHERE username=${username}`;
     return { isVerified: user?.is_verified ?? false };
   }
 }

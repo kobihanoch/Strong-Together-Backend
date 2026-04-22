@@ -18,6 +18,7 @@ import {
   clearMaildevMessages,
   deleteRedisKeysByPattern,
   deliverLatestEmailJobToMaildev,
+  ensureS3Bucket,
   getEmailQueueJobCount,
   getLatestEmailJob,
   headUploadedObject,
@@ -92,7 +93,7 @@ describe('UpdateUserController', () => {
     const latestJob = await getLatestEmailJob();
     expect(latestJob?.data.to).toBe(newEmail);
     expect(latestJob?.data.html).toContain(`${appConfig.emailApiBaseUrl}/api/users/changeemail`);
-    expect(latestJob?.data.html).toContain(`${appConfig.emailWebBaseUrl}/appicon.png`);
+    expect(latestJob?.data.html).toContain('https://strongtogether.kobihanoch.com/appicon.png');
     await deliverLatestEmailJobToMaildev();
     expect(JSON.stringify(await waitForMaildevMessage('Confirm'))).toContain(newEmail);
 
@@ -127,6 +128,7 @@ describe('UpdateUserController', () => {
   it('PUT and DELETE profile image use LocalStack S3 and update DB profile state', async () => {
     const user = await createAndLoginTestUser(app, 'user_pic');
     users.add(user.username);
+    await ensureS3Bucket(supabaseConfig.bucketName);
 
     const upload = await request(app.getHttpServer())
       .put('/api/users/setprofilepic')

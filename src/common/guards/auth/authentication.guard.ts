@@ -64,7 +64,7 @@ export class AuthenticationGuard implements CanActivate {
 
     // Fetch user id and role
     const [user]: [AuthenticatedUser?] = await this.sql`
-      SELECT id, role, is_verified FROM users WHERE id=${decoded.id}::uuid
+      SELECT id, role, is_verified FROM identity.users WHERE id=${decoded.id}::uuid
     `;
 
     // If user not found
