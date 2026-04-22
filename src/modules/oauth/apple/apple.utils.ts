@@ -1,6 +1,6 @@
 import type { JWTPayload } from 'jose';
 import * as jose from 'jose';
-import { authConfig } from '../../../config/auth.config.ts';
+import { authConfig } from '../../../config/auth.config';
 import type { AppleTokenVerificationResult } from '@strong-together/shared';
 
 interface AppleJwtPayload extends JWTPayload {

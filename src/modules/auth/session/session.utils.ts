@@ -1,8 +1,8 @@
 import { Request } from 'express';
 import type { AccessTokenPayload } from '@strong-together/shared';
-import { authConfig } from '../../../config/auth.config.ts';
+import { authConfig } from '../../../config/auth.config';
 import jwt from 'jsonwebtoken';
-import { extractBearerToken, extractDpopToken } from '../../../shared/authentication/authentication.utils.ts';
+import { extractBearerToken, extractDpopToken } from '../../../common/authentication/authentication.utils';
 
 export const decodeRefreshToken = (refreshToken: string | null): AccessTokenPayload | null => {
   if (!refreshToken) return null;

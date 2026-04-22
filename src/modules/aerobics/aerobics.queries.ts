@@ -1,5 +1,7 @@
-import sql from '../../infrastructure/db.client.ts';
+import { Inject, Injectable } from '@nestjs/common';
 import type { AddAerobicInput, UserAerobicsResponse } from '@strong-together/shared';
+import type postgres from 'postgres';
+import { SQL } from '../../infrastructure/db/db.tokens';
 
 // Gets all records from last 45 days mapped by dates
 /**
@@ -56,13 +58,16 @@ import type { AddAerobicInput, UserAerobicsResponse } from '@strong-together/sha
 // Exact same response contract, except:
 // 1) Grouping is by local date derived from workout_time_utc in the provided tz
 // 2) In the weekly records array, we attach 'workout_time_utc' as the local timestamp (string) in that tz
+@Injectable()
+export class AerobicsQueries {
+  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
-export const queryGetUserAerobicsForNDays = async (
-  userId: string,
-  days: number,
-  tz: string = 'Asia/Jerusalem',
-): Promise<UserAerobicsResponse> => {
-  const [obj] = await sql<[{ data: UserAerobicsResponse }]>`
+  async queryGetUserAerobicsForNDays(
+    userId: string,
+    days: number,
+    tz: string = 'Asia/Jerusalem',
+  ): Promise<UserAerobicsResponse> {
+    const [obj] = await this.sql<[{ data: UserAerobicsResponse }]>`
   /* Normalize parameters (default tz to UTC if empty) */
   WITH params AS (
     SELECT
@@ -83,7 +88,7 @@ export const queryGetUserAerobicsForNDays = async (
       (at.workout_time_utc AT TIME ZONE (SELECT tz FROM params))::date AS local_date,
       /* Keep row payload but drop keys we re-add or don't need */
       (to_jsonb(at) - 'user_id' - 'workout_time_utc' - 'id') AS row
-    FROM aerobictracking at, params p
+    FROM tracking.aerobictracking at, params p
     WHERE at.user_id = p.user_id
       AND at.workout_time_utc >= (NOW() AT TIME ZONE 'UTC' - (p.days || ' days')::interval)
   ),
@@ -139,11 +144,12 @@ export const queryGetUserAerobicsForNDays = async (
   ) AS data
   `;
 
-  return obj.data;
-};
+    return obj.data;
+  }
 
-// Add a new aerobic record
-export const queryAddAerobicTracking = async (userId: string, record: AddAerobicInput): Promise<void> => {
-  const { durationMins, durationSec, type } = record;
-  await sql`INSERT INTO aerobictracking (user_id, type, duration_mins, duration_sec) VALUES (${userId}::uuid, ${type}, ${durationMins}, ${durationSec})`;
-};
+  // Add a new aerobic record
+  async queryAddAerobicTracking(userId: string, record: AddAerobicInput): Promise<void> {
+    const { durationMins, durationSec, type } = record;
+    await this.sql`INSERT INTO tracking.aerobictracking (user_id, type, duration_mins, duration_sec) VALUES (${userId}::uuid, ${type}, ${durationMins}, ${durationSec})`;
+  }
+}

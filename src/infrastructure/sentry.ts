@@ -1,7 +1,8 @@
 import * as Sentry from '@sentry/node';
-import type { Express, Request } from 'express';
-import { appConfig } from '../config/app.config.ts';
-import { sentryConfig } from '../config/sentry.config.ts';
+import type { Express } from 'express';
+import { appConfig } from '../config/app.config';
+import { sentryConfig } from '../config/sentry.config';
+import type { AppRequest } from '../common/types/express';
 
 const dsn = sentryConfig.dsn;
 const environment = sentryConfig.environment;
@@ -58,7 +59,7 @@ export const initSentry = (serviceName: string): void => {
   initialized = true;
 };
 
-export const applySentryRequestContext = (req: Request): void => {
+export const applySentryRequestContext = (req: AppRequest): void => {
   if (!initialized) {
     return;
   }
@@ -107,6 +108,33 @@ export const captureWorkerException = (
 
       scope.setTag(key, String(value));
       scope.setExtra(key, value);
+    }
+
+    return Sentry.captureException(error);
+  });
+};
+
+export const captureHttpException = (
+  error: unknown,
+  req: AppRequest,
+  statusCode: number,
+  message: string,
+): string | undefined => {
+  if (!initialized) {
+    return undefined;
+  }
+
+  return Sentry.withScope((scope) => {
+    scope.setTag('requestId', req.requestId || 'unknown');
+    scope.setTag('statusCode', String(statusCode));
+    scope.setTag('method', req.method);
+    scope.setTag('path', req.originalUrl || req.url || 'unknown');
+    scope.setExtra('statusCode', statusCode);
+    scope.setExtra('message', message);
+
+    if (req.user?.id) {
+      scope.setUser({ id: req.user.id });
+      scope.setTag('userId', req.user.id);
     }
 
     return Sentry.captureException(error);

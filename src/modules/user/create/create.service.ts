@@ -1,24 +1,31 @@
+import { BadRequestException, Injectable } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
-import createError from 'http-errors';
-import { queryInsertUser, queryUserExistsByUsernameOrEmail } from './create.queries.ts';
-import { sendVerificationEmail } from '../../auth/verification/verification-emails/verification-emails.service.ts';
+import { CreateUserQueries } from './create.queries';
 import type { CreateUserBody, CreateUserResponse } from '@strong-together/shared';
+import { VerificationEmailsService } from '../../auth/verification/verification-emails/verification-emails.service';
 
-export const createUserData = async (body: CreateUserBody, requestId?: string): Promise<CreateUserResponse> => {
-  const { username, fullName, email, password, gender } = body;
-  const rowsExists = await queryUserExistsByUsernameOrEmail(username, email);
-  const [user] = rowsExists;
-  if (user) throw createError(400, 'User already exists');
+@Injectable()
+export class CreateUserService {
+  constructor(
+    private readonly createUserQueries: CreateUserQueries,
+    private readonly verificationEmailsService: VerificationEmailsService,
+  ) {}
 
-  const salt = await bcrypt.genSalt(10);
-  const hash = await bcrypt.hash(password, salt);
+  async createUserData(body: CreateUserBody, requestId?: string): Promise<CreateUserResponse> {
+    const { username, fullName, email, password, gender } = body;
+    const rowsExists = await this.createUserQueries.queryUserExistsByUsernameOrEmail(username, email);
+    const [user] = rowsExists;
+    if (user) throw new BadRequestException('User already exists');
 
-  const created = await queryInsertUser(username!, fullName, email!, gender, hash);
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(password, salt);
 
-  await sendVerificationEmail(email as string, created.id, fullName, {
-    ...(requestId ? { requestId } : {}),
-  });
+    const created = await this.createUserQueries.queryInsertUser(username!, fullName, email!, gender, hash);
 
-  return { message: 'User created successfully!', user: created };
-};
+    await this.verificationEmailsService.sendVerificationEmail(email as string, created.id, fullName, {
+      ...(requestId ? { requestId } : {}),
+    });
 
+    return { message: 'User created successfully!', user: created };
+  }
+}

@@ -1,4 +1,4 @@
-import './app.config.ts';
+import './app.config';
 
 export const authConfig = {
   jwtAccessSecret: process.env.JWT_ACCESS_SECRET as string,

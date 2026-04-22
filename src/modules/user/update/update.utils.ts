@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { authConfig } from '../../../config/auth.config.ts';
+import { authConfig } from '../../../config/auth.config';
 
 export const decodeChangeEmailToken = (changeEmailToken: string): any | null => {
   try {

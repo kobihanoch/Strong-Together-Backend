@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [4.0.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v3.2.0...v4.0.0) (2026-04-22)
+
+
+### Features
+
+* **DB Schema:** Added last login attribute to user ([bac137d](https://github.com/kobihanoch/Strong-Together-Backend/commit/bac137df4e82e910718bc2c7cf973c83251fdab7))
+
+
+### Code Refactoring
+
+* **Db Schemas:** Refactored DB schemas ([495aefc](https://github.com/kobihanoch/Strong-Together-Backend/commit/495aefc2a5503a249b8cc78008b29f2cf522eee8))
+* **Env:** Created a seperated env for DB, and decoupled DB infrastructure from Supabase, and updated migrations to only initialize postgres-related ([a5963ca](https://github.com/kobihanoch/Strong-Together-Backend/commit/a5963ca6bffa6864724ab01ecbddc5619aaff822))
+* **Env:** Created a seperated test env ([db92537](https://github.com/kobihanoch/Strong-Together-Backend/commit/db9253754278ccfe63a3ad47c892f5255a52ebac))
+* **Nest:** Refactored server to use NestJS ([124b76f](https://github.com/kobihanoch/Strong-Together-Backend/commit/124b76f3a463c2c314d0d857e8f2e6925959d92d))
+* **Tests:** Refactored tests to API endpoints integration tests and added test mailer and S3 bucket ([41543f8](https://github.com/kobihanoch/Strong-Together-Backend/commit/41543f847da5e2879ab06c9a56e8b6c8e6502f18))
+
 ## [3.2.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v3.1.1...v3.2.0) (2026-04-09)
 
 

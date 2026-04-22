@@ -1,44 +1,56 @@
-import { cacheGetJSON, cacheSetJSON } from '../../infrastructure/cache/redis.cache.ts';
+import { MessagesService } from './../messages/messages.service';
+import { CacheService } from '../../infrastructure/cache/cache.service';
+import type { AppLogger } from '../../infrastructure/logger';
 import type { BootstrapResponse } from '@strong-together/shared';
-import { getAerobicsData } from '../aerobics/aerobics.service.ts';
-import { getAllMessagesData } from '../messages/messages.service.ts';
-import { getUserData, updateUsersReminderSettingsTimezone } from '../user/update/update.service.ts';
-import { getWorkoutPlanData } from '../workout/plan/plan.service.ts';
-import { getExerciseTrackingData } from '../workout/tracking/tracking.service.ts';
-import { buildUserTimezoneKeyStable, TTL_TIMEZONE } from './bootstrap.cache.ts';
+import { buildUserTimezoneKeyStable, TTL_TIMEZONE } from './bootstrap.cache';
+import { Injectable } from '@nestjs/common';
+import { AerobicsService } from '../aerobics/aerobics.service';
+import { UpdateUserService } from '../user/update/update.service';
+import { WorkoutPlanService } from '../workout/plan/plan.service';
+import { WorkoutTrackingService } from '../workout/tracking/tracking.service';
 
-export const getBootstrapDataPayload = async (
-  userId: string,
-  tz: string,
-  requestLogger: { info: (...args: any[]) => void },
-): Promise<BootstrapResponse> => {
-  const { tz: cachedTz = null } = (await cacheGetJSON<{ tz: string }>(buildUserTimezoneKeyStable(userId))) || {};
+@Injectable()
+export class BootstrapService {
+  constructor(
+    private readonly aerobicsService: AerobicsService,
+    private readonly cacheService: CacheService,
+    private readonly messagesService: MessagesService,
+    private readonly updateUserService: UpdateUserService,
+    private readonly workoutPlanService: WorkoutPlanService,
+    private readonly workoutTrackingService: WorkoutTrackingService,
+  ) {}
 
-  const promises = [
-    getUserData(userId),
-    getWorkoutPlanData(userId, true, tz),
-    getExerciseTrackingData(userId, 45, true, tz),
-    getAllMessagesData(userId, tz),
-    getAerobicsData(userId, 45, true, tz),
-  ] as const;
+  async getBootstrapDataPayload(userId: string, tz: string, requestLogger: AppLogger): Promise<BootstrapResponse> {
+    const { tz: cachedTz = null } =
+      (await this.cacheService.cacheGetJSON<{ tz: string }>(buildUserTimezoneKeyStable(userId))) || {};
 
-  const timezoneUpdatePromise = cachedTz !== tz ? updateUsersReminderSettingsTimezone(userId, tz) : Promise.resolve();
+    const promises = [
+      this.updateUserService.getUserData(userId),
+      this.workoutPlanService.getWorkoutPlanData(userId, true, tz),
+      this.workoutTrackingService.getExerciseTrackingData(userId, 45, true, tz),
+      this.messagesService.getAllMessagesData(userId, tz),
+      this.aerobicsService.getAerobicsData(userId, 45, true, tz),
+    ] as const;
 
-  requestLogger.info(
-    { event: 'bootstrap.timezone_resolved', userId, cachedTz, requestedTz: tz },
-    'Resolved bootstrap timezone state',
-  );
+    const timezoneUpdatePromise =
+      cachedTz !== tz ? this.updateUserService.updateUsersReminderSettingsTimezone(userId, tz) : Promise.resolve();
 
-  const [ud, wp, et, msg, aer] = await Promise.all(promises);
-  await timezoneUpdatePromise;
+    requestLogger.info(
+      { event: 'bootstrap.timezone_resolved', userId, cachedTz, requestedTz: tz },
+      'Resolved bootstrap timezone state',
+    );
 
-  await cacheSetJSON<{ tz: string }>(buildUserTimezoneKeyStable(userId), { tz }, TTL_TIMEZONE);
+    const [ud, wp, et, msg, aer] = await Promise.all(promises);
+    await timezoneUpdatePromise;
 
-  return {
-    user: ud.payload,
-    workout: wp.payload,
-    tracking: et.payload,
-    aerobics: aer.payload,
-    messages: msg.payload,
-  };
-};
+    await this.cacheService.cacheSetJSON<{ tz: string }>(buildUserTimezoneKeyStable(userId), { tz }, TTL_TIMEZONE);
+
+    return {
+      user: ud.payload,
+      workout: wp.payload,
+      tracking: et.payload,
+      aerobics: aer.payload,
+      messages: msg.payload,
+    };
+  }
+}

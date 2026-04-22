@@ -1,4 +1,4 @@
-import { redisConfig } from '../../config/redis.config.ts';
+import { redisConfig } from '../../config/redis.config';
 
 export const TTL_AEROBICS = redisConfig.cacheTtls.aerobicsSec;
 const AEROBICS_NS = 'xt:aerobics:v1';

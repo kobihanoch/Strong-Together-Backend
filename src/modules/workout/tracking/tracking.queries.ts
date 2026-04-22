@@ -1,13 +1,18 @@
+import { Inject, Injectable } from '@nestjs/common';
 import type postgres from 'postgres';
-import sql from '../../../infrastructure/db.client.ts';
 import type { ExerciseTrackingAndStats, FinishedWorkoutEntry } from '@strong-together/shared';
+import { SQL } from '../../../infrastructure/db/db.tokens';
 
-export const queryGetExerciseTrackingAndStats = async (
-  userId: string,
-  days: number = 45,
-  tz: string = 'Asia/Jerusalem',
-): Promise<ExerciseTrackingAndStats> => {
-  const [{ data }] = await sql<[{ data: ExerciseTrackingAndStats }]>`
+@Injectable()
+export class WorkoutTrackingQueries {
+  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+
+  async queryGetExerciseTrackingAndStats(
+    userId: string,
+    days: number = 45,
+    tz: string = 'Asia/Jerusalem',
+  ): Promise<ExerciseTrackingAndStats> {
+    const [{ data }] = await this.sql<[{ data: ExerciseTrackingAndStats }]>`
   with 
   bounds as (
     select 
@@ -18,8 +23,8 @@ export const queryGetExerciseTrackingAndStats = async (
   all_workout_summaries as(
     select wsum.id as id, ws.name as split_name, ((wsum.workout_start_utc at time zone ${tz})) as workout_time_local, 
     wsum.workout_start_utc, wsum.workout_end_utc
-    from public.workout_summary wsum
-    join public.workoutsplits ws on ws.id = wsum.workoutsplit_id
+    from tracking.workout_summary wsum
+    join workout.workoutsplits ws on ws.id = wsum.workoutsplit_id
     where wsum.user_id=${userId}::uuid
   ),
 
@@ -57,7 +62,7 @@ export const queryGetExerciseTrackingAndStats = async (
 
   all_prs as (
     select p.exercisetosplit_id as etsid, p.exercise_id, p.exercise, p.weight, p.reps, ((p.workout_start_utc at time zone ${tz})::date) as workout_date_utc
-    from public.v_prs p
+    from analytics.v_prs p
     join all_workout_summaries aws on p.workout_summary_id = aws.id
   ),
 
@@ -77,9 +82,9 @@ export const queryGetExerciseTrackingAndStats = async (
           'specifictargetmuscle', ex.specifictargetmuscle
         )
       ) as exercisetoworkoutsplit
-    from public.v_exercisetracking_expanded et
-    join public.exercisetoworkoutsplit ets on ets.id = et.exercisetosplit_id
-    join public.exercises ex on ex.id = ets.exercise_id
+    from analytics.v_exercisetracking_expanded et
+    join workout.exercisetoworkoutsplit ets on ets.id = et.exercisetosplit_id
+    join workout.exercises ex on ex.id = ets.exercise_id
     join bounded_workout_summaries bws on et.workout_summary_id = bws.id
   ),
 
@@ -128,57 +133,58 @@ export const queryGetExerciseTrackingAndStats = async (
     )) as data
   `;
 
-  return data;
-};
+    return data;
+  }
 
-export const queryInsertUserFinishedWorkout = async (
-  userId: string,
-  workoutArray: FinishedWorkoutEntry[],
-  workoutStartUtc: string | null,
-  workoutEndUtc: string | null,
-): Promise<string> => {
-  const workoutArrayJson = workoutArray as unknown as postgres.ParameterOrFragment<never>;
+  async queryInsertUserFinishedWorkout(
+    userId: string,
+    workoutArray: FinishedWorkoutEntry[],
+    workoutStartUtc: string | null,
+    workoutEndUtc: string | null,
+  ): Promise<string> {
+    const workoutArrayJson = workoutArray as unknown as postgres.ParameterOrFragment<never>;
 
-  const [{ workoutsplit_id }] = await sql<[{ workoutsplit_id: number }]>`
-    select distinct ews.workoutsplit_id
-    from jsonb_to_recordset(${workoutArrayJson}::jsonb) as t(exercisetosplit_id int8)
-    join public.exercisetoworkoutsplit ews
-      on ews.id = t.exercisetosplit_id
-    limit 1;
-  `;
+    const [{ workoutsplit_id }] = await this.sql<[{ workoutsplit_id: number }]>`
+      select distinct ews.workoutsplit_id
+      from jsonb_to_recordset(${workoutArrayJson}::jsonb) as t(exercisetosplit_id int8)
+      join workout.exercisetoworkoutsplit ews
+        on ews.id = t.exercisetosplit_id
+      limit 1;
+    `;
 
-  const [{ id: workoutSummaryId }] = await sql<[{ id: string }]>`
-    insert into public.workout_summary (
-      user_id,
-      workout_start_utc,
-      workout_end_utc,
-      workoutsplit_id
-    )
-    values (
-      ${userId}::uuid,
-      ${workoutStartUtc}::timestamptz,
-      ${workoutEndUtc}::timestamptz,
-      ${workoutsplit_id}::int8
-    )
-    returning id;
-  `;
+    const [{ id: workoutSummaryId }] = await this.sql<[{ id: string }]>`
+      insert into tracking.workout_summary (
+        user_id,
+        workout_start_utc,
+        workout_end_utc,
+        workoutsplit_id
+      )
+      values (
+        ${userId}::uuid,
+        ${workoutStartUtc}::timestamptz,
+        ${workoutEndUtc}::timestamptz,
+        ${workoutsplit_id}::int8
+      )
+      returning id;
+    `;
 
-  await sql`
-    insert into public.exercisetracking
-      (exercisetosplit_id, weight, reps, notes, workout_summary_id)
-    select
-      t.exercisetosplit_id::int8,
-      t.weight::float4[],
-      t.reps::int8[],
-      coalesce(t.notes, '')::text,
-      ${workoutSummaryId}::uuid as workout_summary_id
-    from jsonb_to_recordset(${workoutArrayJson}::jsonb) as t(
-      exercisetosplit_id int8,
-      weight float4[],
-      reps int8[],
-      notes text
-    );
-  `;
+    await this.sql`
+      insert into tracking.exercisetracking
+        (exercisetosplit_id, weight, reps, notes, workout_summary_id)
+      select
+        t.exercisetosplit_id::int8,
+        t.weight::float4[],
+        t.reps::int8[],
+        coalesce(t.notes, '')::text,
+        ${workoutSummaryId}::uuid as workout_summary_id
+      from jsonb_to_recordset(${workoutArrayJson}::jsonb) as t(
+        exercisetosplit_id int8,
+        weight float4[],
+        reps int8[],
+        notes text
+      );
+    `;
 
-  return workoutSummaryId;
-};
+    return workoutSummaryId;
+  }
+}

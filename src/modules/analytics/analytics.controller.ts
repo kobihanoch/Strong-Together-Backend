@@ -1,33 +1,55 @@
-import { Request, Response } from 'express';
-import { createLogger } from '../../infrastructure/logger.ts';
-import { getAnalyticsData } from './analytics.service.ts';
+import { Controller, Get, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import type { Response } from 'express';
 import type { GetAnalyticsResponse } from '@strong-together/shared';
-
-const logger = createLogger('controller:analytics');
+import type { AuthenticatedUser } from '../../common/types/express';
+import { createLogger } from '../../infrastructure/logger';
+import { AnalyticsService } from './analytics.service';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard';
+import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 
 /**
- * Get the authenticated user's analytics snapshot.
+ * Analytics routes for authenticated users.
  *
- * Returns the latest analytics payload, including estimated one-rep max data
- * and goal-adherence metrics. The handler also sets the `X-Cache` response
- * header to indicate whether the payload was served from cache.
+ * Preserves the existing route path and behavior from the Express version:
+ * - GET /api/analytics/get
  *
- * Route: GET /api/analytics/get
  * Access: User
  */
-export const getAnalytics = async (
-  req: Request<{}, GetAnalyticsResponse>,
-  res: Response<GetAnalyticsResponse>,
-): Promise<Response<GetAnalyticsResponse>> => {
-  const { payload, cacheHit, analyticsKey } = await getAnalyticsData(req.user!.id);
-  if (cacheHit) {
-    res.set('X-Cache', 'HIT');
-    (req.logger || logger).info(
-      { event: 'analytics.cache_hit', userId: req.user!.id, analyticsKey },
-      'Analytics served from cache',
-    );
-    return res.status(200).json(payload);
+@Controller('api/analytics')
+@UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
+@Roles('user')
+@UseInterceptors(RlsTxInterceptor)
+export class AnalyticsController {
+  private readonly logger = createLogger('controller:analytics');
+  constructor(private readonly analyticsService: AnalyticsService) {}
+
+  /**
+   * Get the authenticated user's analytics snapshot.
+   *
+   * Returns the latest analytics payload, including estimated one-rep max data
+   * and goal-adherence metrics. The handler also sets the `X-Cache` response
+   * header to indicate whether the payload was served from cache.
+   *
+   * Route: GET /api/analytics/get
+   * Access: User
+   */
+  @Get('get')
+  async getAnalytics(
+    @CurrentUser() user: AuthenticatedUser,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<GetAnalyticsResponse> {
+    const { payload, cacheHit, analyticsKey } = await this.analyticsService.getAnalyticsData(user.id);
+
+    if (cacheHit) {
+      res.set('X-Cache', 'HIT');
+      this.logger.info({ event: 'analytics.cache_hit', userId: user.id, analyticsKey }, 'Analytics served from cache');
+      return payload;
+    }
+
+    res.set('X-Cache', 'MISS');
+    return payload;
   }
-  res.set('X-Cache', 'MISS');
-  return res.status(200).json(payload);
-};
+}

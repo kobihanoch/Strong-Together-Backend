@@ -1,4 +1,4 @@
-import { redisConfig } from '../../../config/redis.config.ts';
+import { redisConfig } from '../../../config/redis.config';
 
 export const TTL_TRACKING = redisConfig.cacheTtls.trackingSec;
 const TRACKING_NS = 'xt:tracking:v1';

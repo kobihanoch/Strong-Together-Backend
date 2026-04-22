@@ -1,12 +1,16 @@
-import sql from '../../../infrastructure/db.client.ts';
-import { queryBumpTokenVersionAndGetSelfData } from '../session/session.queries.ts';
+import { Inject, Injectable } from '@nestjs/common';
+import type postgres from 'postgres';
+import { SQL } from '../../../infrastructure/db/db.tokens';
 
-export { queryBumpTokenVersionAndGetSelfData };
+@Injectable()
+export class PasswordQueries {
+  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
-export const queryUpdateUserPassword = async (userId: string, newPass: string): Promise<void> => {
-  await sql`
-    UPDATE users 
-    SET password=${newPass} 
-    WHERE id=${userId}::uuid AND auth_provider='app'
-  `;
-};
+  async queryUpdateUserPassword(userId: string, newPass: string): Promise<void> {
+    await this.sql`
+      UPDATE identity.users
+      SET password=${newPass} 
+      WHERE id=${userId}::uuid AND auth_provider='app'
+    `;
+  }
+}

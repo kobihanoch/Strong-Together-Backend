@@ -39,9 +39,9 @@ def _to_int(value, default):
 def _extract_s3_records(message_body):
   payload = json.loads(message_body)
   records = payload.get("Records")
-  if not isinstance(records, list) or not records:
-    raise RuntimeError("SQS message does not contain S3 Records")
-  return records
+  if isinstance(records, list) and records:
+    return records
+  return []
 
 
 def _derive_metadata_from_file_key(file_key):
@@ -154,6 +154,11 @@ def _process_s3_record(record):
 def _process_message(message):
   receipt_handle = message["ReceiptHandle"]
   records = _extract_s3_records(message["Body"])
+
+  if not records:
+    delete_analysis_message(receipt_handle)
+    logger.info("[Worker]: Deleted non-S3-record queue message")
+    return
 
   for record in records:
     _process_s3_record(record)
