@@ -1,100 +1,174 @@
 # Scripts Usage
 
-This file is the quickest reference for the scripts you will use most often.
+This is the practical "what do I run now?" guide for local development, tests, migrations, and production migration operations.
 
-## Local Development
+The backend is already deployed in production on Render. These scripts are for local development, local test isolation, and controlled database migration work.
 
-Use these when working on the normal local stack:
+## Start Developing
 
-| Script | What it does |
-| --- | --- |
-| `npm run orch:dev` | Starts the full development Docker stack from `docker-compose.development.yml`. |
-| `npm run db:dev:start` | Starts the dev Postgres service, applies migrations, and injects seeds. |
-| `npm run db:dev:migrate` | Starts the dev Postgres service and applies migrations without reseeding. |
-| `npm run start:server` | Starts the Nest API once. |
-| `npm run start:server:watch` | Starts the Nest API in watch mode. |
-| `npm run start:workers` | Starts the Node background workers once. |
-| `npm run start:workers:watch` | Starts the Node background workers in watch mode. |
+### First time on the repo
 
-## Testing
-
-Use these for the isolated test environment:
-
-| Script | What it does |
-| --- | --- |
-| `npm run test:env:up` | Starts the test infra stack from `docker-compose.test.yml`. |
-| `npm run test:env:down` | Stops the test infra stack. |
-| `npm run test:db:reset` | Rebuilds the test database, applies migrations, and injects baseline seeds. |
-| `npm run test:prepare` | Brings test infra up and resets the test DB once. |
-| `npm run test` | Runs the full test flow with one infra startup at the beginning and one shutdown at the end. |
-| `npm run test:watch` | Starts test infra, resets the test DB, then runs Vitest in watch mode. |
-
-### Single-Suite Scripts
-
-These are useful when you want one focused module:
-
-- `npm run test:auth`
-- `npm run test:users`
-- `npm run test:workouts`
-- `npm run test:bootstrap`
-- `npm run test:messages`
-- `npm run test:aerobics`
-- `npm run test:analytics`
-- `npm run test:exercises`
-- `npm run test:oauth`
-- `npm run test:push`
-- `npm run test:videoanalysis`
-- `npm run test:websockets`
-
-Under the hood, each of these runs `test:prepare` first so it can be executed on its own.
-
-The matching `test:run:*` scripts skip preparation and run exact controller test files. Use them only after `npm run test:prepare` or while the test stack is already up.
-
-## Migrations
-
-| Script | What it does |
-| --- | --- |
-| `npm run db:migrate:diff -- <migration_name>` | Generates a new Atlas migration diff against the dev DB. |
-| `npm run db:prod:migrate` | Applies committed migrations to the production DB pipeline. |
-
-## Typical Flows
-
-### Start a normal local work session with Compose
+Run this when you cloned the repo or rebuilt your Docker environment:
 
 ```bash
 npm install
 npm run orch:dev
-```
-
-Use the DB scripts separately only when you want database preparation without booting the whole stack.
-
-### Prepare only the local database
-
-```bash
-# Apply migrations only
-npm run db:dev:migrate
-
-# Apply migrations and seed data
 npm run db:dev:start
 ```
 
-### Run the full integration test stack once
+What this gives you:
+
+- full Docker development stack
+- Postgres dev database with migrations and seeds
+- Redis, Redis queues, LocalStack S3/SQS, Maildev
+- Nest API, Node workers, and Python video-analysis service
+
+### Normal daily development
+
+If Docker containers are already healthy:
 
 ```bash
-npm run test
+npm run orch:dev
 ```
 
-### Reset only the test DB while keeping test infra available
+Use this as the default local startup command. It brings up the API, workers, Redis, Postgres, LocalStack, Maildev, and the Python service from `docker-compose.development.yml`.
+
+### Only refresh the database
+
+Use this after pulling new migrations:
 
 ```bash
-npm run test:env:up
+npm run db:dev:migrate
+```
+
+Use this when you want migrations plus seed data:
+
+```bash
+npm run db:dev:start
+```
+
+## What To Run When
+
+| Situation | Run |
+| --- | --- |
+| Start normal local development | `npm run orch:dev` |
+| First setup or rebuild dev DB with seeds | `npm run db:dev:start` |
+| Apply new migrations without reseeding | `npm run db:dev:migrate` |
+| Run all tests once | `npm test` |
+| Run one domain test suite from scratch | `npm run test:auth`, `npm run test:workouts`, etc. |
+| Keep test infra up and rerun exact files | `npm run test:prepare`, then `npm run test:run:*` |
+| Create a new DB migration | `npm run db:migrate:diff -- <migration_name>` |
+| Apply migrations to production pipeline | `npm run db:prod:migrate` |
+
+## Local Services
+
+Development stack:
+
+| Service | Purpose |
+| --- | --- |
+| `main-server` | Nest API |
+| `background-workers` | email and push workers |
+| `python-service` | video-analysis worker |
+| `postgres_dev` | dev database |
+| `redis` | cache, Redis Pub/Sub, Bull queues |
+| `localstack` | local S3/SQS |
+| `maildev` | local email inbox |
+| `atlas` | migration runner |
+
+Useful local URLs:
+
+- RedisInsight: `http://localhost:5540`
+- Maildev: `http://localhost:1081`
+- S3 explorer: `http://localhost:8082`
+- LocalStack: `http://localhost:4566`
+
+## Tests
+
+### Full test run
+
+```bash
+npm test
+```
+
+This starts the isolated test infrastructure, rebuilds the test database from migrations, runs all suites, and shuts the test stack down.
+
+### One suite
+
+```bash
+npm run test:auth
+npm run test:workouts
+npm run test:videoanalysis
+npm run test:websockets
+```
+
+The `test:*` scripts run `test:prepare` first, so they are safe to run directly.
+
+### Faster reruns while test infra is already up
+
+```bash
+npm run test:prepare
+npm run test:run:auth
+```
+
+Use `test:run:*` only when the test stack is already running and the test DB is prepared.
+
+### Stop test infra
+
+```bash
+npm run test:env:down
+```
+
+## Database Migrations
+
+### Create a migration
+
+1. Start the dev stack.
+2. Make the schema change in the dev database.
+3. Generate the Atlas diff:
+
+```bash
+npm run db:migrate:diff -- add_feature_name
+```
+
+4. Review the generated SQL in `src/infrastructure/db/schema/migrations`.
+5. Apply locally:
+
+```bash
+npm run db:dev:migrate
+```
+
+6. Prove the clean rebuild:
+
+```bash
 npm run test:db:reset
 ```
 
+### Production migration pipeline
+
+Use this only when you intentionally want to apply committed migrations to the production database pipeline:
+
+```bash
+npm run db:prod:migrate
+```
+
+Production is hosted on Render, so treat this as an operational command, not a normal local development step.
+
+## Running Without Docker
+
+These scripts start local Node processes directly:
+
+```bash
+npm run start:server
+npm run start:server:watch
+npm run start:workers
+npm run start:workers:watch
+```
+
+Use them only when Postgres, Redis, LocalStack, and required environment variables are already available. For most local work, prefer `npm run orch:dev`.
+
 ## Notes
 
-- Dev and test use different Compose files and different ports.
-- Test infra is intentionally isolated so it does not overwrite your dev data.
-- The test stack is infra-only. Vitest boots the Nest app in-process during tests.
-- Controller tests create their own users and clean them up; seeds provide only baseline data such as system users/exercises.
-- Tests use real local Postgres, Redis, LocalStack S3/SQS, and Maildev. Production providers such as Resend and Supabase Storage are not called by tests.
+- Dev and test use separate Compose files and ports.
+- Test infra is isolated so it does not overwrite dev data.
+- Tests use local Postgres, Redis, Redis queues, LocalStack S3/SQS, and Maildev.
+- Production providers are not called by local tests.

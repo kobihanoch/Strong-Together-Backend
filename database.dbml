@@ -1,0 +1,220 @@
+Enum "identity"."Auth Providers" {
+  "apple"
+  "google"
+  "app"
+}
+
+Table "identity"."oauth_accounts" {
+  "id" uuid [pk, not null, default: `gen_random_uuid()`]
+  "user_id" uuid [not null]
+  "provider" text [not null]
+  "provider_user_id" text [not null]
+  "provider_email" text [not null]
+  "linked_at" timestamptz [not null, default: `(now() AT TIME ZONE 'utc'::text)`, note: 'When account was first created/linked to oauth']
+  "missing_fields" text [note: 'Missing fields for user profile']
+
+  Indexes {
+    (provider, provider_user_id) [type: btree, unique, name: "oauth_accounts_provider_user_unique"]
+  }
+  Note: 'All oauth accounts information'
+}
+
+Table "identity"."users" {
+  "username" text [not null]
+  "email" text [not null]
+  "name" text [not null]
+  "gender" text [not null, default: 'Unknown']
+  "created_at" timestamptz [not null, default: `(now() AT TIME ZONE 'utc'::text)`]
+  "profile_image_url" text
+  "id" uuid [pk, not null, default: `gen_random_uuid()`]
+  "push_token" text
+  "password" text
+  "role" text [not null, default: 'User']
+  "is_first_login" bool [not null, default: true]
+  "token_version" int8 [not null, default: '0', note: 'Token version for two-devices validation']
+  "is_verified" bool [not null, default: false, note: 'Email validation']
+  "auth_provider" text [not null, default: 'app', note: 'Auth provider (Apple, Google, App)']
+  "last_login" timestamptz
+  Note: 'All registered users'
+}
+
+Table "atlas_schema_revisions"."atlas_schema_revisions" {
+  "version" varchar [pk, not null]
+  "description" varchar [not null]
+  "type" int8 [not null, default: 2]
+  "applied" int8 [not null, default: 0]
+  "total" int8 [not null, default: 0]
+  "executed_at" timestamptz [not null]
+  "execution_time" int8 [not null]
+  "error" text
+  "error_stmt" text
+  "hash" varchar [not null]
+  "partial_hashes" jsonb
+  "operator_version" varchar [not null]
+}
+
+Table "messages"."messages" {
+  "id" uuid [pk, not null, default: `gen_random_uuid()`]
+  "sender_id" uuid [not null, default: `identity.current_user_id()`]
+  "receiver_id" uuid [not null, default: `identity.current_user_id()`]
+  "subject" text [not null, default: 'Subject']
+  "msg" text [not null, default: 'Hello World']
+  "sent_at" timestamptz [not null, default: `(now() AT TIME ZONE 'utc'::text)`]
+  "is_read" bool [not null, default: false]
+
+  Indexes {
+    receiver_id [type: btree, name: "messages_receiver_id_idx"]
+  }
+  Note: 'All messages inside app - user to user, app to user etc..'
+}
+
+Table "reminders"."user_reminder_settings" {
+  "user_id" uuid [pk, not null]
+  "workout_reminders_enabled" bool [not null, default: true]
+  "reminder_offset_minutes" int4 [not null, default: 60]
+  "updated_at" timestamptz [not null, default: `timezone('UTC'::text, now())`]
+  "timezone" text [default: '''UTC'']
+}
+
+Table "reminders"."user_split_information" {
+  "id" int8 [pk, not null, increment]
+  "user_id" uuid [not null]
+  "split_id" int8 [not null]
+  "estimated_time_utc" timestamptz [not null]
+  "confidence" numeric(3,2) [not null, default: 1.00]
+  "last_computed_at" timestamptz [not null, default: `timezone('UTC'::text, now())`]
+  "preferred_weekday" int4
+
+  Indexes {
+    (user_id, split_id) [type: btree, unique, name: "user_split_information_user_id_split_id_key"]
+    (preferred_weekday, confidence) [type: btree, name: "user_split_information_confidence_idx"]
+    (user_id, preferred_weekday) [type: btree, name: "user_split_information_user_weekday_idx"]
+  }
+}
+
+Table "tracking"."aerobictracking" {
+  "id" int8 [pk, not null, increment]
+  "user_id" uuid [not null]
+  "type" text [not null]
+  "duration_mins" int8 [not null, default: '0']
+  "duration_sec" int8 [not null, default: '0']
+  "workout_time_utc" timestamptz [not null, default: `(now() AT TIME ZONE 'utc'::text)`]
+
+  Indexes {
+    (user_id, workout_time_utc) [type: btree, name: "aerobictracking_user_id_workout_time_utc_idx"]
+  }
+  Note: 'All aerobic trackings'
+}
+
+Table "tracking"."exercisetracking" {
+  "id" int8 [pk, not null, increment]
+  "exercisetosplit_id" int8 [not null]
+  "weight" "float4[]" [not null]
+  "reps" "int8[]" [not null]
+  "notes" text
+  "workout_summary_id" uuid [not null]
+
+  Indexes {
+    workout_summary_id [type: btree, name: "exercisetracking_workout_summary_id_idx"]
+  }
+  Note: 'Exercise tracking'
+}
+
+Table "tracking"."workout_summary" {
+  "id" uuid [pk, not null, default: `gen_random_uuid()`]
+  "user_id" uuid [not null]
+  "workout_start_utc" timestamptz [not null]
+  "workout_end_utc" timestamptz [not null]
+  "created_at" timestamptz [not null, default: `now()`]
+  "workoutsplit_id" int8 [not null]
+
+  Indexes {
+    (user_id, workout_start_utc) [type: btree, name: "workout_summary_user_start_utc_idx"]
+  }
+}
+
+Table "workout"."exercisetoworkoutsplit" {
+  "id" int8 [pk, not null, increment]
+  "exercise_id" int8 [not null]
+  "workoutsplit_id" int8 [not null]
+  "created_at" timestamptz [not null, default: `now()`]
+  "sets" "int8[]" [not null]
+  "order_index" int8 [not null]
+  "is_active" bool [not null, default: true]
+
+  Indexes {
+    (workoutsplit_id, exercise_id) [type: btree, unique, name: "uq_ets_split_exercise"]
+    (workoutsplit_id, order_index) [type: btree, name: "exercisetoworkoutsplit_active_idx"]
+    (workoutsplit_id, order_index) [type: btree, name: "exercisetoworkoutsplit_workoutsplit_id_order_index_idx"]
+  }
+}
+
+Table "workout"."exercises" {
+  "id" int8 [pk, not null, increment]
+  "name" text [unique, not null]
+  "description" text [not null]
+  "targetmuscle" text [not null]
+  "specifictargetmuscle" text [not null]
+  Note: 'All exercises'
+}
+
+Table "workout"."workoutsplits" {
+  "id" int8 [pk, not null, increment]
+  "workout_id" int8 [not null]
+  "name" text [not null]
+  "created_at" timestamptz [not null, default: `now()`]
+  "muscle_group" text
+  "is_active" bool [not null, default: true]
+
+  Indexes {
+    (workout_id, name) [type: btree, unique, name: "uq_workoutsplits_plan_name"]
+    workout_id [type: btree, name: "workoutsplits_workout_id_idx"]
+  }
+  Note: 'All workout splits'
+}
+
+Table "workout"."workoutplans" {
+  "id" int8 [pk, not null, increment]
+  "name" text [not null, default: 'My Workout']
+  "numberofsplits" int8 [not null, default: '1']
+  "created_at" timestamptz [not null, default: `now()`]
+  "is_deleted" bool [not null, default: false]
+  "level" text [not null, default: 'Beginner', note: 'Level of the workout']
+  "user_id" uuid [unique, not null]
+  "trainer_id" uuid
+  "is_active" bool [not null, default: true]
+  "updated_at" timestamptz [not null, default: `(now() AT TIME ZONE 'utc'::text)`]
+  Note: 'All workout plans'
+}
+
+Ref "oauth_accounts_user_id_fkey":"identity"."users"."id" < "identity"."oauth_accounts"."user_id" [update: cascade, delete: cascade]
+
+Ref "messages_receiver_id_fkey":"identity"."users"."id" < "messages"."messages"."receiver_id" [update: cascade, delete: cascade]
+
+Ref "messages_sender_id_fkey":"identity"."users"."id" < "messages"."messages"."sender_id" [update: cascade, delete: cascade]
+
+Ref "user_reminder_settings_user_id_fkey":"identity"."users"."id" < "reminders"."user_reminder_settings"."user_id" [delete: cascade]
+
+Ref "user_split_information_split_id_fkey":"workout"."workoutsplits"."id" < "reminders"."user_split_information"."split_id" [delete: cascade]
+
+Ref "user_split_information_user_id_fkey":"identity"."users"."id" < "reminders"."user_split_information"."user_id" [delete: cascade]
+
+Ref "aerobictracking_user_id_fkey":"identity"."users"."id" < "tracking"."aerobictracking"."user_id" [update: cascade, delete: cascade]
+
+Ref "exercisetracking_exercisetosplit_id_fkey":"workout"."exercisetoworkoutsplit"."id" < "tracking"."exercisetracking"."exercisetosplit_id" [update: cascade, delete: cascade]
+
+Ref "exercisetracking_workout_summary_id_fkey":"tracking"."workout_summary"."id" < "tracking"."exercisetracking"."workout_summary_id" [update: cascade, delete: cascade]
+
+Ref "workout_summary_user_id_fkey":"identity"."users"."id" < "tracking"."workout_summary"."user_id" [delete: cascade]
+
+Ref "workout_summary_workoutsplit_id_fkey":"workout"."workoutsplits"."id" < "tracking"."workout_summary"."workoutsplit_id" [update: cascade, delete: cascade]
+
+Ref "ExerciseToWorkoutsplit_exercise_id_fkey":"workout"."exercises"."id" < "workout"."exercisetoworkoutsplit"."exercise_id" [update: cascade, delete: cascade]
+
+Ref "ExerciseToWorkoutsplit_workoutsplit_id_fkey":"workout"."workoutsplits"."id" < "workout"."exercisetoworkoutsplit"."workoutsplit_id" [update: cascade, delete: cascade]
+
+Ref "workoutplans_trainer_id_fkey":"identity"."users"."id" < "workout"."workoutplans"."trainer_id" [update: cascade, delete: cascade]
+
+Ref "workoutplans_user_id_fkey":"identity"."users"."id" < "workout"."workoutplans"."user_id" [update: cascade, delete: cascade]
+
+Ref "workoutsplits_workout_id_fkey":"workout"."workoutplans"."id" < "workout"."workoutsplits"."workout_id" [update: cascade, delete: cascade]
