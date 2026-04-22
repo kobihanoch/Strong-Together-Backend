@@ -23,13 +23,13 @@ The database is PostgreSQL-first and organized around domain schemas rather than
 
 Important flows:
 
-- Login bumps `token_version` and returns acces./db-diagrams/refresh tokens with the new version.
+- Login bumps `token_version` and returns access/refresh tokens with the new version.
 - Refresh performs a version compare-and-set before issuing new tokens.
 - Logout bumps `token_version`, invalidating older access tokens.
 - Verification and password flows update identity state while preserving centralized token invalidation.
 - `identity.oauth_accounts` links provider identities to application users.
 
-The schema is protected by RLS so authenticated users can rea./db-diagrams/updat./db-diagrams/delete only their own profile, with specific exceptions such as message sender visibility.
+The schema is protected by RLS so authenticated users can read/update/delete only their own profile, with specific exceptions such as message sender visibility.
 
 ## Workout Schema
 
@@ -47,7 +47,7 @@ Core objects:
 
 - `workout.exercises`: exercise catalog readable by authenticated users.
 - `workout.workoutplans`: plan owned by a user.
-- `workout.workoutsplits`: spli./db-diagrams/day definitions under a plan.
+- `workout.workoutsplits`: split/day definitions under a plan.
 - `workout.exercisetoworkoutsplit`: ordered exercises inside a split.
 - `workout.v_exercisetoworkoutsplit_expanded`: view that expands planned exercises for API reads.
 
@@ -56,7 +56,7 @@ Why this shape matters:
 - Exercise metadata stays normalized.
 - User plans can evolve without duplicating the catalog.
 - Ordered split exercises support practical workout UX.
-- RLS policies tie nested spli./db-diagrams/exercise rows back to the owning plan.
+- RLS policies tie nested split/exercise rows back to the owning plan.
 
 ## Tracking Schema
 
@@ -122,7 +122,7 @@ The confidence index on `preferred_weekday` and `confidence` exists because remi
 
 `messages.messages` supports user and system messages.
 
-RLS allows participants to rea./db-diagrams/updat./db-diagrams/delete messages where they are sender or receiver. Insert policy also allows a known system sender ID, which supports automated application messages without giving every user broad write access.
+RLS allows participants to read/update/delete messages where they are sender or receiver. Insert policy also allows a known system sender ID, which supports automated application messages without giving every user broad write access.
 
 ## RLS Flow
 
