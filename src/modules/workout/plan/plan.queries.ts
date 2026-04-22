@@ -31,19 +31,19 @@ export class WorkoutPlanQueries {
                                        )
                                     ORDER BY ews.order_index
                                   ), '[]'::json)
-                           FROM public.v_exercisetoworkoutsplit_expanded AS ews
-                           LEFT JOIN public.exercises ex ON ex.id = ews.exercise_id
+                           FROM workout.v_exercisetoworkoutsplit_expanded AS ews
+                           LEFT JOIN workout.exercises ex ON ex.id = ews.exercise_id
                            WHERE ews.workoutsplit_id = workoutsplits.id
                              AND ews.is_active = TRUE
                          )
                        )
                     ORDER BY workoutsplits.id
                   ), '[]'::json)
-          FROM public.workoutsplits
+          FROM workout.workoutsplits
           WHERE workoutsplits.workout_id = workoutplans.id
             AND workoutsplits.is_active = TRUE
         ) AS workoutsplits
-      FROM public.workoutplans
+      FROM workout.workoutplans
       WHERE workoutplans.user_id = ${userId}::uuid
         AND workoutplans.is_active = TRUE
       LIMIT 1;
@@ -67,15 +67,15 @@ export class WorkoutPlanQueries {
                      )
                      ORDER BY ets.order_index
                    )
-            FROM public.v_exercisetoworkoutsplit_expanded AS ets
-            INNER JOIN public.exercises e ON e.id = ets.exercise_id
+            FROM workout.v_exercisetoworkoutsplit_expanded AS ets
+            INNER JOIN workout.exercises e ON e.id = ets.exercise_id
             WHERE ets.workoutsplit_id = ws.id
               AND ets.is_active = TRUE
           ),
           '[]'::json
         )
       ) AS splits
-      FROM public.workoutsplits AS ws
+      FROM workout.workoutsplits AS ws
       WHERE ws.workout_id = ${workoutId}::int8
         AND ws.is_active = TRUE
     `;
@@ -99,7 +99,7 @@ export class WorkoutPlanQueries {
     const planResult = await this.sql<[{ id: number }]>`
         WITH
         plan AS (
-            INSERT INTO public.workoutplans (user_id, trainer_id, name, numberofsplits, is_active, updated_at)
+            INSERT INTO workout.workoutplans (user_id, trainer_id, name, numberofsplits, is_active, updated_at)
             VALUES (${userId}::uuid, ${userId}::uuid, ${workoutName}::text, ${numSplits}::int, TRUE, NOW())
             ON CONFLICT (user_id) WHERE (is_active)
             DO UPDATE SET
@@ -121,13 +121,13 @@ export class WorkoutPlanQueries {
     const splitsResult = await this.sql<Array<{ id: number; name: string }>>`
         WITH
         deact_splits AS (
-            UPDATE public.workoutsplits s
+            UPDATE workout.workoutsplits s
             SET is_active = FALSE
             WHERE s.workout_id = ${planId}
             RETURNING 1
         )
 
-        INSERT INTO public.workoutsplits (workout_id, name, is_active)
+        INSERT INTO workout.workoutsplits (workout_id, name, is_active)
         SELECT ${planId}, kv.key::text, TRUE
         FROM jsonb_each(${payloadJsonParam}::jsonb) AS kv
         WHERE jsonb_typeof(kv.value) = 'array'
@@ -148,11 +148,11 @@ export class WorkoutPlanQueries {
     await this.sql`
         WITH
         existing_split_ids AS (
-            SELECT id FROM public.workoutsplits WHERE workout_id = ${planId}
+            SELECT id FROM workout.workoutsplits WHERE workout_id = ${planId}
         ),
 
         deact_exercises AS (
-            UPDATE public.exercisetoworkoutsplit ets
+            UPDATE workout.exercisetoworkoutsplit ets
             SET is_active = FALSE
             WHERE ets.workoutsplit_id IN (
                 SELECT id FROM existing_split_ids
@@ -160,7 +160,7 @@ export class WorkoutPlanQueries {
             RETURNING 1
         )
 
-        INSERT INTO public.exercisetoworkoutsplit (workoutsplit_id, exercise_id, sets, order_index, is_active)
+        INSERT INTO workout.exercisetoworkoutsplit (workoutsplit_id, exercise_id, sets, order_index, is_active)
         SELECT
             ((${splitMapParam}::jsonb) ->> kv.split_name::text)::bigint AS workoutsplit_id,
             (ex->>'id')::bigint AS exercise_id,

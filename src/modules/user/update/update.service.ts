@@ -40,7 +40,7 @@ export class UpdateUserService {
 
   async updateUsersReminderSettingsTimezone(userId: string, tz: string): Promise<void> {
     await this
-      .sql`update public.user_reminder_settings urs set timezone=${tz}::text where urs.user_id = ${userId}::uuid and urs.timezone is distinct from ${tz}::text;`;
+      .sql`update reminders.user_reminder_settings urs set timezone=${tz}::text where urs.user_id = ${userId}::uuid and urs.timezone is distinct from ${tz}::text;`;
   }
 
   async updateAuthenticatedUserData(
@@ -111,7 +111,7 @@ export class UpdateUserService {
     try {
       await this.sql.begin(async (trx) => {
         await trx`
-          UPDATE users
+          UPDATE identity.users
           SET email = ${normalized}
           WHERE id = ${sub}::uuid
         `;

@@ -23,7 +23,7 @@ export class AnalyticsQueries {
       -- All workouts for this user (authoritative source)
       all_workout_summaries as (
         select id
-        from public.workout_summary
+        from tracking.workout_summary
         where user_id = ${userId}::uuid
       ),
 
@@ -42,7 +42,7 @@ export class AnalyticsQueries {
             when s.reps between 11 and 12 then (s.weight * (1 + 0.025 * s.reps))::numeric    -- O'Connor
             else null
           end as est_1rm
-        from public.v_exercisetracking_set_simple s
+        from analytics.v_exercisetracking_set_simple s
         where s.workout_summary_id in (select id from all_workout_summaries)
           and s.weight > 0
           and s.reps between 1 and 12
@@ -56,7 +56,7 @@ export class AnalyticsQueries {
           p.weight,
           p.reps,
           p.workout_summary_id
-        from public.v_prs p
+        from analytics.v_prs p
         where p.workout_summary_id in (select id from all_workout_summaries)
       ),
 
@@ -133,10 +133,10 @@ export class AnalyticsQueries {
             select coalesce(sum(v), 0)
             from unnest(ews.sets) as v
           ) as planned
-        from public.workoutplans w
-        join public.workoutsplits ws
+        from workout.workoutplans w
+        join workout.workoutsplits ws
           on ws.workout_id = w.id
-        join public.v_exercisetoworkoutsplit_expanded ews
+        join workout.v_exercisetoworkoutsplit_expanded ews
           on ews.workoutsplit_id = ws.id
         where w.user_id = ${userId}::uuid
           and w.is_active = true
@@ -147,7 +147,7 @@ export class AnalyticsQueries {
         select
           ws.id,
           ws.workoutsplit_id
-        from public.workout_summary ws
+        from tracking.workout_summary ws
         where ws.user_id = ${userId}::uuid
           and ws.workoutsplit_id is not null
       ),
@@ -162,10 +162,10 @@ export class AnalyticsQueries {
           (
             select sum(x) from unnest(et.reps) as x
           ) as reps_sum_per_row
-        from public.v_exercisetracking_expanded et
+        from analytics.v_exercisetracking_expanded et
         join all_workout_summaries aws
           on aws.id = et.workout_summary_id
-        left join public.workoutsplits wspl
+        left join workout.workoutsplits wspl
           on wspl.id = aws.workoutsplit_id
         where aws.workoutsplit_id is not null
       ),

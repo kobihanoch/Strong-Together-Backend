@@ -25,7 +25,7 @@ export class ExercisesQueries {
             ORDER BY e.name
           )
           AS ex_list
-        FROM exercises e
+        FROM workout.exercises e
         GROUP BY e.targetmuscle
       ) AS t
     `) as QueryGetExerciseMapByMuscleRow[];

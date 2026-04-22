@@ -13,7 +13,7 @@ export class SessionQueries {
       SELECT 
         id, name, username, password, is_first_login, is_verified, role
       FROM 
-        users 
+        identity.users
       WHERE 
         auth_provider='app' 
         AND (username=${identifier} OR email=${identifier})
@@ -23,13 +23,13 @@ export class SessionQueries {
 
   async querySetUserFirstLoginFalse(userId: string): Promise<{ id: string }[]> {
     return this.sql<{ id: string }[]>`
-      UPDATE users SET is_first_login=FALSE WHERE id=${userId}::uuid RETURNING id
+      UPDATE identity.users SET is_first_login=FALSE WHERE id=${userId}::uuid RETURNING id
     `;
   }
 
   async queryBumpTokenVersionAndGetSelfData(userId: string): Promise<UserAfterBump[]> {
     return this.sql<UserAfterBump[]>`
-      UPDATE users 
+      UPDATE identity.users
       SET token_version = token_version + 1, last_login = NOW() AT TIME ZONE 'utc'
       WHERE id = ${userId}::uuid 
       RETURNING token_version, (to_jsonb(users) - 'password' - 'token_version') AS user_data
@@ -38,7 +38,7 @@ export class SessionQueries {
 
   async queryBumpTokenVersionAndGetSelfDataCAS(userId: string, prevTokenVer: number): Promise<UserAfterBump[]> {
     return this.sql<UserAfterBump[]>`
-      UPDATE users 
+      UPDATE identity.users
       SET token_version = token_version + 1, last_login = NOW() AT TIME ZONE 'utc' 
       WHERE id = ${userId}::uuid AND token_version = ${prevTokenVer} 
       RETURNING token_version, (to_jsonb(users) - 'password' - 'token_version') AS user_data
@@ -47,11 +47,11 @@ export class SessionQueries {
 
   async queryGetCurrentTokenVersion(userId: string): Promise<TokenVersionResult[]> {
     return this.sql<TokenVersionResult[]>`
-      SELECT token_version FROM users WHERE id=${userId}::uuid
+      SELECT token_version FROM identity.users WHERE id=${userId}::uuid
     `;
   }
 
   async queryUpdateExpoPushTokenToNull(userId: string): Promise<void> {
-    await this.sql`UPDATE users SET push_token=NULL WHERE id=${userId}::uuid`;
+    await this.sql`UPDATE identity.users SET push_token=NULL WHERE id=${userId}::uuid`;
   }
 }

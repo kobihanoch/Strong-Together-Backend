@@ -24,7 +24,7 @@ export class PasswordService {
     if (!identifier) throw new BadRequestException('Please fill username or email');
     const [user = null] = await this.sql<
       { id: string; email: string; name: string; username: string }[]
-    >`SELECT id, email, name, username FROM users WHERE 
+    >`SELECT id, email, name, username FROM identity.users WHERE
         auth_provider='app' 
         AND (username=${identifier} OR email=${identifier}) LIMIT 1`;
     if (!user) return;
