@@ -85,7 +85,7 @@ services:
 
   # Atlas container to run Atlas migrations
   atlas:
-    image: arigaio/atlas:latest
+    image: arigaio/atlas@sha256:4a95c68779e069ec5348a9bd1efe577fd37e185dc750ef9d4f7a38429aaf7a68
     working_dir: /workspace
     volumes:
       - .:/workspace
