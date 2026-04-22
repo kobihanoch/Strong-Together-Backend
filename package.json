@@ -36,7 +36,7 @@
     "test:oauth": "npm run test:prepare && npm run test:run:oauth",
     "test:push": "npm run test:prepare && npm run test:run:push",
     "test:all:run": "npm run test:run:auth && npm run test:run:users && npm run test:run:workouts && npm run test:run:bootstrap && npm run test:run:messages && npm run test:run:aerobics && npm run test:run:analytics && npm run test:run:exercises && npm run test:run:oauth && npm run test:run:push && npm run test:run:videoanalysis && npm run test:run:websockets",
-    "test:all": "powershell -NoProfile -Command \"npm run test:prepare; if ($LASTEXITCODE -ne 0) { npm run test:env:down; exit $LASTEXITCODE }; npm run test:all:run; $code=$LASTEXITCODE; npm run test:env:down; exit $code\"",
+    "test:all": "node -e \"const { spawnSync } = require('node:child_process'); const run = (script) => spawnSync('npm', ['run', script], { stdio: 'inherit', shell: true }).status ?? 1; let code = run('test:prepare'); if (code === 0) code = run('test:all:run'); const downCode = run('test:env:down'); process.exit(code || downCode);\"",
     "test": "npm run test:all",
     "test:watch": "npm run test:prepare && vitest",
     "test:videoanalysis": "npm run test:prepare && npm run test:run:videoanalysis",
