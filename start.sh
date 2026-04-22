@@ -9,7 +9,7 @@ term_handler() {
 }
 trap term_handler INT TERM
 
-npm run start:server &
+node dist/index.js &
 API_PID=$!
 
 npm run start:workers &
