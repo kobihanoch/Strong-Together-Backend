@@ -105,7 +105,7 @@ The API uses these views for higher-level fitness insights such as personal reco
 
 ### Tables
 
-![Reminders Schema](./db-diagrams/remindersschema.svg)
+![Reminders Schema](./db-diagrams/reminderschema.svg)
 
 Reminder data is split between explicit settings and inferred schedule intelligence:
 
