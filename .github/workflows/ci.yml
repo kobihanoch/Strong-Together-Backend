@@ -29,5 +29,18 @@ jobs:
           ${{ secrets.ENV_TEST_FILE }}
           EOF
 
+      - name: Validate migration checksums
+        shell: bash
+        run: |
+          git rev-parse HEAD
+          git ls-files --eol src/infrastructure/db/schema/migrations/20260417190000_prod_public_schema.sql src/infrastructure/db/schema/migrations/atlas.sum
+          sed -n '1,2p' src/infrastructure/db/schema/migrations/atlas.sum
+          docker compose -f docker-compose.test.yml run --rm atlas version
+          tmpdir="$(mktemp -d)"
+          cp -R src/infrastructure/db/schema/migrations "$tmpdir/migrations"
+          docker run --rm -v "$tmpdir:/workspace" -w /workspace arigaio/atlas@sha256:4a95c68779e069ec5348a9bd1efe577fd37e185dc750ef9d4f7a38429aaf7a68 migrate hash --dir file://migrations
+          sed -n '1,2p' "$tmpdir/migrations/atlas.sum"
+          docker compose -f docker-compose.test.yml run --rm atlas migrate validate --dir file://src/infrastructure/db/schema/migrations
+
       - name: Run test suite
         run: npm run test
