@@ -1,25 +1,24 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import mime from 'mime';
-import path from 'path';
-import type postgres from 'postgres';
-import { supabaseConfig } from '../../../config/storage.config';
-import type { AppLogger } from '../../../infrastructure/logger';
-import { SQL } from '../../../infrastructure/db/db.tokens';
-import { UpdateUserQueries } from './update.queries';
-import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from './update.views';
 import type {
   ChangeEmailTokenPayload,
   DeleteUserProfilePicBody,
   SetProfilePicAndUpdateDBResponse,
-  UpdateUserBody,
   UpdateAuthenticatedUserResponse,
+  UpdateUserBody,
   UserDataResponse,
 } from '@strong-together/shared';
-import { decodeChangeEmailToken } from './update.utils';
-import { UpdateEmailsService } from './update-emails/update-emails.service';
+import mime from 'mime';
+import path from 'path';
+import type postgres from 'postgres';
+import { supabaseConfig } from '../../../config/storage.config';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
+import { SQL } from '../../../infrastructure/db/db.tokens';
+import type { AppLogger } from '../../../infrastructure/logger';
 import { SupabaseStorageService } from '../../../infrastructure/supabase/storage/supabase-storage.service';
-import { appConfig } from '../../../config/app.config';
+import { UpdateEmailsService } from './update-emails/update-emails.service';
+import { UpdateUserQueries } from './update.queries';
+import { decodeChangeEmailToken } from './update.utils';
+import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from './update.views';
 
 @Injectable()
 export class UpdateUserService {
@@ -140,7 +139,7 @@ export class UpdateUserService {
     if (!file) throw new BadRequestException('No file provided');
 
     const ext = path.extname(file.originalname) || `.${mime.getExtension(file.mimetype) || 'jpg'}`;
-    const key = appConfig.isProduction ? `${userId}/${Date.now()}${ext}` : `${userId}-${Date.now()}${ext}`;
+    const key = `${userId}/${Date.now()}${ext}`;
 
     const { path: newPath, publicUrl } = await this.supabaseStorageService.uploadBufferToSupabase(
       supabaseConfig.bucketName,
