@@ -1,0 +1,97 @@
+name: Prepare Main Release
+
+on:
+  pull_request_target:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: prepare-main-release-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'staging'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Rewrite rc version to stable release
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          if [[ ! "$VERSION" =~ -rc\.[0-9]+$ ]]; then
+            echo "Current version is already stable: $VERSION"
+            exit 0
+          fi
+
+          STABLE_VERSION="${VERSION%-rc.*}"
+          echo "Preparing stable version $STABLE_VERSION from $VERSION"
+
+          npm version "$STABLE_VERSION" --no-git-tag-version
+
+          VERSION="$VERSION" STABLE_VERSION="$STABLE_VERSION" node <<'NODE'
+          const fs = require('node:fs');
+
+          const version = process.env.VERSION;
+          const stableVersion = process.env.STABLE_VERSION;
+
+          const escapeRegExp = (value) =>
+            value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+          let changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+          let readme = fs.readFileSync('README.md', 'utf8');
+
+          changelog = changelog.replace(
+            new RegExp(`(\\[)${escapeRegExp(version)}(\\])`),
+            `$1${stableVersion}$2`,
+          );
+
+          changelog = changelog.replace(
+            new RegExp(`(\\.\\.\\.v)${escapeRegExp(version)}`),
+            `$1${stableVersion}`,
+          );
+
+          readme = readme.replace(
+            /^# Strong Together Backend \(v[0-9]+\.[0-9]+\.[0-9]+\)$/m,
+            `# Strong Together Backend (v${stableVersion})`,
+          );
+
+          fs.writeFileSync('CHANGELOG.md', changelog);
+          fs.writeFileSync('README.md', readme);
+          NODE
+
+          if git diff --quiet; then
+            echo "No release changes to commit"
+            exit 0
+          fi
+
+          git add package.json package-lock.json CHANGELOG.md README.md
+          git commit -m "chore(release): ${STABLE_VERSION} [skip ci]"
+          git push origin HEAD:"$HEAD_REF"
