@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.0.2](https://github.com/kobihanoch/Strong-Together-Backend/compare/v4.0.2-rc.1...v4.0.2) (2026-04-24)
+
+### [4.0.2-rc.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v4.0.2-rc.0...v4.0.2-rc.1) (2026-04-24)
+
+### [4.0.2-rc.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v4.0.1...v4.0.2-rc.0) (2026-04-24)
+
+
+### Bug Fixes
+
+* **Storage:** Fixed local storage behavior (buckets) ([e416251](https://github.com/kobihanoch/Strong-Together-Backend/commit/e4162513d3ecec8ee1b19be6f87fb2cb5cfab5b8))
+
 ### [4.0.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v4.0.0...v4.0.1) (2026-04-22)
 
 
