@@ -37,6 +37,7 @@ Development keeps state on disk:
 - Postgres uses `pg_dev_data`
 - Redis uses `redis_dev_data`
 - RedisInsight uses `redisinsight_data`
+- LocalStack uses `localstack_persist_data`
 
 That is intentional so your local work survives restarts.
 
@@ -109,5 +110,7 @@ That bootstrap script prepares the local AWS resources used by the app:
 - profile-image S3 bucket
 - SQS queue
 - S3 notification wiring into SQS
+
+In development, that LocalStack state is persisted across restarts. In tests, LocalStack stays ephemeral through `tmpfs`.
 
 This makes the video-analysis upload path and local profile-image storage work without touching real AWS or Supabase Storage.

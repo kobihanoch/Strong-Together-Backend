@@ -1,2 +1,3 @@
 src/infrastructure/db/schema/migrations/*.sql text eol=lf
 src/infrastructure/db/schema/migrations/atlas.sum text eol=lf
+*.sh text eol=lf
