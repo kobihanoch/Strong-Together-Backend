@@ -38,8 +38,35 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: Calculate next rc version
+        id: next_rc
+        run: |
+          CURRENT_VERSION="$(node -p "require('./package.json').version")"
+
+          if [[ "$CURRENT_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-rc\.([0-9]+)$ ]]; then
+            BASE_VERSION="${BASH_REMATCH[1]}"
+            RC_NUMBER="${BASH_REMATCH[2]}"
+            NEXT_VERSION="${BASE_VERSION}-rc.$((RC_NUMBER + 1))"
+          else
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+            BASE_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+
+            LATEST_RC_TAG="$(
+              git tag --list "v${BASE_VERSION}-rc.*" --sort=-version:refname | head -n 1
+            )"
+
+            if [[ -n "$LATEST_RC_TAG" && "$LATEST_RC_TAG" =~ ^v${BASE_VERSION//./\\.}-rc\.([0-9]+)$ ]]; then
+              NEXT_VERSION="${BASE_VERSION}-rc.$((BASH_REMATCH[1] + 1))"
+            else
+              NEXT_VERSION="${BASE_VERSION}-rc.0"
+            fi
+          fi
+
+          echo "next_version=$NEXT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Next prerelease version: $NEXT_VERSION"
+
       - name: Create rc prerelease commit and tag
-        run: 'npx standard-version@9.5.0 --prerelease rc -m "chore(release): %s [skip ci]"'
+        run: 'npx standard-version@9.5.0 --release-as "${{ steps.next_rc.outputs.next_version }}" -m "chore(release): %s [skip ci]"'
 
       - name: Push prerelease commit and tags
         run: git push origin HEAD:staging --follow-tags
