@@ -94,5 +94,5 @@ jobs:
           fi
 
           git add package.json package-lock.json CHANGELOG.md README.md
-          git commit -m "chore(release): ${STABLE_VERSION} [skip ci]"
+          git commit -m "chore(release): ${STABLE_VERSION}"
           git push origin HEAD:"$HEAD_REF"
