@@ -1,4 +1,4 @@
-# Strong Together Backend (v4.0.1)
+# Strong Together Backend (v4.0.2)
 
 [![CI](https://github.com/kobihanoch/Strong-Together-Backend/actions/workflows/ci.yml/badge.svg)](https://github.com/kobihanoch/Strong-Together-Backend/actions)
 
@@ -124,7 +124,7 @@ The API attaches **request**, **job**, **user**, **exercise**, and **Sentry trac
 - **Python video-analysis service**
 - **PostgreSQL**
 - **Redis** and **RedisInsight**
-- **LocalStack S3/SQS**
+- **Persisted LocalStack S3/SQS in dev**
 - **Maildev**
 - **Atlas migration runner**
 
@@ -221,7 +221,7 @@ docs/                            Architecture, security, testing, DB, and operat
 
 - Video-analysis results are currently delivered realtime-first; durable Postgres persistence for historical analysis results is a natural future extension.
 - The Python video worker processes one SQS message at a time in the local environment; horizontal worker scaling is the intended path for higher throughput.
-- Local development uses LocalStack to exercise AWS-shaped S3/SQS behavior without requiring cloud resources.
+- Local development uses persisted LocalStack to exercise AWS-shaped S3/SQS behavior without requiring cloud resources, while tests keep LocalStack ephemeral.
 
 ## What This Demonstrates
 

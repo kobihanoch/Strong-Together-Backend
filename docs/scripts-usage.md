@@ -20,7 +20,7 @@ What this gives you:
 
 - full Docker development stack
 - Postgres dev database with migrations and seeds
-- Redis, Redis queues, LocalStack S3/SQS, Maildev
+- Redis, Redis queues, persisted LocalStack S3/SQS in dev, Maildev
 - Nest API, Node workers, and Python video-analysis service
 
 ### Normal daily development
@@ -31,7 +31,7 @@ If Docker containers are already healthy:
 npm run orch:dev
 ```
 
-Use this as the default local startup command. It brings up the API, workers, Redis, Postgres, LocalStack, Maildev, and the Python service from `docker-compose.development.yml`.
+Use this as the default local startup command. It brings up the API, workers, Redis, Postgres, persisted LocalStack, Maildev, and the Python service from `docker-compose.development.yml`.
 
 ### Only refresh the database
 
@@ -71,7 +71,7 @@ Development stack:
 | `python-service` | video-analysis worker |
 | `postgres_dev` | dev database |
 | `redis` | cache, Redis Pub/Sub, Bull queues |
-| `localstack` | local S3/SQS |
+| `localstack` | persisted local S3/SQS in development |
 | `maildev` | local email inbox |
 | `atlas` | migration runner |
 
@@ -170,5 +170,5 @@ Use them only when Postgres, Redis, LocalStack, and required environment variabl
 
 - Dev and test use separate Compose files and ports.
 - Test infra is isolated so it does not overwrite dev data.
-- Tests use local Postgres, Redis, Redis queues, LocalStack S3/SQS, and Maildev.
+- Tests use local Postgres, Redis, Redis queues, ephemeral LocalStack S3/SQS, and Maildev.
 - Production providers are not called by local tests.
