@@ -1,8 +1,8 @@
+import './instrument';
 import { createNestApp } from './app';
 import { appConfig } from './config/app.config';
 import { createLogger } from './infrastructure/logger';
 import { flushSentry } from './infrastructure/sentry';
-import './instrument';
 
 const logger = createLogger('bootstrap');
 const PORT = appConfig.port;

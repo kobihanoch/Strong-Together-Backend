@@ -1,69 +1,8 @@
 import * as Sentry from '@sentry/node';
 import type { Express } from 'express';
-import { appConfig } from '../config/app.config';
-import { sentryConfig } from '../config/sentry.config';
 import type { AppRequest } from '../common/types/express';
 
-const dsn = sentryConfig.dsn;
-const environment = sentryConfig.environment;
-const release = sentryConfig.release;
-const tracesSampleRate = sentryConfig.tracesSampleRate;
-const profilesSampleRate = sentryConfig.profilesSampleRate;
-const isTestEnv = appConfig.isTest;
-
-let initialized = false;
-
-const parseStatusCode = (event: Sentry.Event): number | null => {
-  const statusCode = event.contexts?.response?.status_code;
-  return typeof statusCode === 'number' ? statusCode : null;
-};
-
-export const isSentryEnabled = (): boolean => !isTestEnv && Boolean(dsn);
-
-export const initSentry = (serviceName: string): void => {
-  if (initialized || !isSentryEnabled()) {
-    return;
-  }
-
-  Sentry.init({
-    dsn,
-    enabled: true,
-    environment,
-    release,
-    tracesSampleRate,
-    profilesSampleRate,
-    sendDefaultPii: false,
-    integrations: [Sentry.expressIntegration()],
-    initialScope: {
-      tags: {
-        service: serviceName,
-      },
-    },
-    beforeSend(event) {
-      const statusCode = parseStatusCode(event);
-      if (statusCode && statusCode < 500) {
-        return null;
-      }
-
-      return event;
-    },
-    beforeSendTransaction(event) {
-      if (event.tags?.botBlocked === 'true') {
-        return null;
-      }
-
-      return event;
-    },
-  });
-
-  initialized = true;
-};
-
 export const applySentryRequestContext = (req: AppRequest): void => {
-  if (!initialized) {
-    return;
-  }
-
   Sentry.setTag('requestId', req.requestId || 'unknown');
 
   if (req.user?.id) {
@@ -73,30 +12,15 @@ export const applySentryRequestContext = (req: AppRequest): void => {
 };
 
 export const markSentryBotBlocked = (reason: string): void => {
-  if (!initialized) {
-    return;
-  }
-
   Sentry.setTag('botBlocked', 'true');
   Sentry.setTag('botBlockedReason', reason);
 };
 
 export const setupSentryErrorHandler = (app: Express): void => {
-  if (!initialized) {
-    return;
-  }
-
   Sentry.setupExpressErrorHandler(app);
 };
 
-export const captureWorkerException = (
-  error: unknown,
-  context: Record<string, unknown> = {},
-): string | undefined => {
-  if (!initialized) {
-    return undefined;
-  }
-
+export const captureWorkerException = (error: unknown, context: Record<string, unknown> = {}): string | undefined => {
   return Sentry.withScope((scope) => {
     for (const [key, value] of Object.entries(context)) {
       if (value === undefined || value === null) continue;
@@ -120,10 +44,6 @@ export const captureHttpException = (
   statusCode: number,
   message: string,
 ): string | undefined => {
-  if (!initialized) {
-    return undefined;
-  }
-
   return Sentry.withScope((scope) => {
     scope.setTag('requestId', req.requestId || 'unknown');
     scope.setTag('statusCode', String(statusCode));
@@ -142,9 +62,5 @@ export const captureHttpException = (
 };
 
 export const flushSentry = async (timeoutMs = 2000): Promise<boolean> => {
-  if (!initialized) {
-    return true;
-  }
-
   return Sentry.flush(timeoutMs);
 };

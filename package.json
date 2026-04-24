@@ -44,7 +44,7 @@
     "lint:sql": "eslint",
     "start": "npx nest start --entryFile index",
     "start:server": "npx nest start --entryFile index",
-    "start:server:watch": "npx nest start --watch --entryFile index",
+    "start:server:watch": "npx nest start --watch --poll 10000 --entryFile index",
     "start:workers": "tsx workers/entry.ts",
     "start:workers:watch": "tsx watch workers/entry.ts"
   },

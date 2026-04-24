@@ -4,8 +4,11 @@ import axios from 'axios';
 import { appConfig } from '../../../config/app.config';
 import { awsConfig, supabaseConfig } from '../../../config/storage.config';
 
+// Prod - Cloud Supabase storage
 const base = supabaseConfig.url;
 const svc = supabaseConfig.serviceRole;
+
+// Dev - Localstack
 const localStorage = appConfig.isDevelopment || appConfig.isTest;
 const s3 = new S3Client({
   region: awsConfig.region,
@@ -25,6 +28,7 @@ export class SupabaseStorageService {
     buffer: Buffer,
     contentType: string,
   ): Promise<{ path: string; publicUrl: string }> {
+    // Dev
     if (localStorage) {
       await s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: buffer, ContentType: contentType }));
       return {
@@ -33,6 +37,7 @@ export class SupabaseStorageService {
       };
     }
 
+    // Prod
     const url = `${base}/storage/v1/object/${bucket}/${key}`;
 
     try {
