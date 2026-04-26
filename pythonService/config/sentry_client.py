@@ -66,3 +66,24 @@ def capture_exception(error: Exception, **context):
             scope.set_extra("baggage", baggage)
 
         return sentry_sdk.capture_exception(error)
+
+def apply_sentry_headers(sentry_trace, baggage):
+  trace_headers = {}
+  if sentry_trace:
+    trace_headers["sentry-trace"] = sentry_trace
+  if baggage:
+    trace_headers["baggage"] = baggage
+  return trace_headers
+
+def set_span_data(span, job_id, user_id, exercise, file_key, event_name, request_id=None, sentry_trace=None, baggage=None):
+  span.set_data("queue.name", "analysisSqsQueue")
+  span.set_data("queue.job_id", str(job_id))
+  span.set_data("user.id", str(user_id))
+  span.set_data("video.exercise", str(exercise))
+  span.set_data("storage.file_key", str(file_key))
+  span.set_data("storage.event_name", str(event_name))
+  span.set_data("http.request_id", str(request_id) if request_id else "unknown")
+  if sentry_trace:
+    span.set_data("sentry.trace", str(sentry_trace))
+  if baggage:
+    span.set_data("sentry.baggage", str(baggage))

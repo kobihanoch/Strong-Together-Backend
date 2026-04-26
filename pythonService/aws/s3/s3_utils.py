@@ -7,16 +7,17 @@ from utils.file_utils import build_download_path
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-
+# ------------------- Helpers ------------------------------
 def _create_s3_client():
   return boto3.client(
     "s3",
     aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
     region_name=os.getenv("AWS_REGION"),
-    endpoint_url=os.getenv("AWS_S3_ENDPOINT_URL") or None,
+    endpoint_url=os.getenv("AWS_S3_ENDPOINT_URL") or None, # Exists in dev/test
   )
 
+# ------------------- Core logic ------------------------------
 def download_video_from_s3(file_key):
   s3 = _create_s3_client()
   bucket_name = os.getenv("AWS_BUCKET_NAME")
@@ -31,7 +32,7 @@ def download_video_from_s3(file_key):
     logger.exception(f"[S3]: Error downloading from S3: {e}")
     return None
 
-
+# Get the headers of the video => job_id, user_id, sentry_trace etc...
 def get_video_metadata(file_key):
   s3 = _create_s3_client()
   bucket_name = os.getenv("AWS_BUCKET_NAME")
