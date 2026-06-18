@@ -54,6 +54,15 @@ async function addPlan(user: Awaited<ReturnType<typeof trackingUser>>) {
   return etsId!;
 }
 
+function recentWorkoutWindow() {
+  const end = new Date();
+  const start = new Date(end.getTime() - 45 * 60 * 1000);
+  return {
+    workout_start_utc: start.toISOString(),
+    workout_end_utc: end.toISOString(),
+  };
+}
+
 describe('WorkoutTrackingController', () => {
   it('GET /api/workouts/gettracking returns User A empty tracking and warms Redis', async () => {
     const user = await trackingUser('tracking_empty');
@@ -88,11 +97,11 @@ describe('WorkoutTrackingController', () => {
   it('POST /api/workouts/finishworkout creates User C tracking, DB rows, system message, and Redis cache', async () => {
     const user = await trackingUser('tracking_finish');
     const etsId = await addPlan(user);
+    const workoutWindow = recentWorkoutWindow();
 
     const response = await request(app.getHttpServer()).post('/api/workouts/finishworkout').set(authHeaders(user.accessToken)).send({
       tz: 'Asia/Jerusalem',
-      workout_start_utc: '2026-03-22T10:00:00.000Z',
-      workout_end_utc: '2026-03-22T10:45:00.000Z',
+      ...workoutWindow,
       workout: [{ exercisetosplit_id: etsId, weight: [80, 80, 75], reps: [8, 8, 10], notes: 'Solid set' }],
     });
 
