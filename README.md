@@ -2,11 +2,6 @@
 
 [![CI](https://github.com/kobihanoch/Strong-Together-Backend/actions/workflows/ci.yml/badge.svg)](https://github.com/kobihanoch/Strong-Together-Backend/actions)
 
-Backend for **Strong Together**, a **fitness and health platform** that provides **authentication**, **workout planning**, **progress tracking**, **realtime messaging**, **push notifications**, and **asynchronous exercise video analysis**.
-
-- Backend repository: [Strong-Together-Backend](https://github.com/kobihanoch/Strong-Together-Backend)
-- Frontend repository: [Strong-Together-App](https://github.com/kobihanoch/Strong-Together-App)
-
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)
@@ -26,37 +21,41 @@ Backend for **Strong Together**, a **fitness and health platform** that provides
 ![Pino](https://img.shields.io/badge/Pino-FFD43B?style=for-the-badge&logo=javascript&logoColor=black)
 ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)
 
+Backend for **Strong Together**, a **fitness and health platform** with **authentication**, **workout planning**, **progress tracking**, **realtime messaging**, **push notifications**, and **asynchronous exercise video analysis**. The system combines a **NestJS modular monolith**, **PostgreSQL RLS**, **Redis-backed realtime infrastructure**, **S3/SQS event pipelines**, and a **Python computer-vision worker** into a **locally reproducible backend platform**.
+
+- Backend repository: [Strong-Together-Backend](https://github.com/kobihanoch/Strong-Together-Backend)
+- Frontend repository: [Strong-Together-App](https://github.com/kobihanoch/Strong-Together-App)
+
+## Key Highlights
+
+- **Realtime communication:** **Socket.IO** with **authenticated tickets**, **Redis adapter** support, **per-user rooms**, and **targeted result delivery**.
+- **Async pipelines:** **Bull/Redis workers** for **email** and **push jobs**, plus **SQS-driven media processing** outside the request path.
+- **Video processing:** **Direct S3 uploads**, **S3 `ObjectCreated` events**, **SQS long polling**, **Python OpenCV/MediaPipe analysis**, **Redis Pub/Sub**, and **Socket.IO fanout**.
+- **Security:** **DPoP proof-of-possession**, **JWT refresh rotation**, **token versioning**, **role guards**, **app-version gates**, **rate limits**, **bot filtering**, **Zod validation**, and **PostgreSQL RLS**.
+- **Observability:** **Pino structured logs**, **request IDs**, **Sentry tracing**, and **trace propagation** from **NestJS** to **Python** through **S3 metadata**.
+- **Infrastructure:** **Docker Compose** dev/test stacks with **Postgres**, **Redis**, **LocalStack S3/SQS**, **Maildev**, **Atlas migrations**, **Node workers**, and the **Python service**.
+- **Contracts:** Shared **`@strong-together/shared`** package for **runtime request validation** and **response contract testing**.
+
 ## Table Of Contents
 
-- [Why This Project Stands Out](#why-this-project-stands-out)
-- [Architecture At A Glance](#architecture-at-a-glance)
-- [Expensive Engineering Features](#expensive-engineering-features)
+- [System Architecture](#system-architecture)
+- [Core Capabilities](#core-capabilities)
   - [Security Model](#security-model)
   - [Video Analysis Pipeline](#video-analysis-pipeline)
-  - [Local Distributed-System Environment](#local-distributed-system-environment)
+  - [Realtime And Background Work](#realtime-and-background-work)
   - [Database And Migrations](#database-and-migrations)
+  - [Local Distributed-System Environment](#local-distributed-system-environment)
   - [Testing Strategy](#testing-strategy)
+- [Engineering Decisions & Tradeoffs](#engineering-decisions--tradeoffs)
 - [Quick Start](#quick-start)
 - [Repository Map](#repository-map)
 - [Documentation](#documentation)
 - [Current Tradeoffs](#current-tradeoffs)
 - [What This Demonstrates](#what-this-demonstrates)
 
-## Why This Project Stands Out
+## System Architecture
 
-This backend goes beyond a standard **CRUD API**. It includes several **production-grade systems** that are typically associated with mature backend platforms:
-
-| Capability                        | Implementation                                                                                                                                                                         |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Secure auth lifecycle**         | **DPoP proof-of-possession**, **JWT token versioning**, **refresh rotation**, **role guards**, **app-version enforcement**, **bot filtering**, **rate limits**, and **PostgreSQL RLS** |
-| **Async video-analysis pipeline** | **Direct S3 uploads**, **S3 `ObjectCreated` events**, **SQS dispatch**, **Python computer-vision worker**, **Redis Pub/Sub**, and **Socket.IO result delivery**                        |
-| **Real local infrastructure**     | **One-command Docker stack** with **Postgres**, **Redis**, **LocalStack S3/SQS**, **Maildev**, **Atlas migrations**, the **API**, **workers**, and the **Python service**              |
-| **Database ownership model**      | **Domain schemas**, **repo-owned Atlas migrations**, **deterministic seeds**, **RLS policies**, **analytics-oriented SQL**, and **clean dev/test separation**                          |
-| **Realtime and background work**  | **Redis-backed Bull queues** for email/push jobs, **Redis Pub/Sub fanout**, **authenticated WebSocket ticketing**, and **user-targeted Socket.IO emissions**                           |
-| **Operational confidence**        | **Structured Pino logs**, **request IDs**, **Sentry tracing**, **async trace propagation through S3 metadata**, and **integration tests against disposable infrastructure**            |
-| **Shared contracts**              | Published **`@strong-together/shared`** package used for **runtime request validation** and **response contract testing**                                                              |
-
-## Architecture At A Glance
+**Strong Together** is built as a **modular monolith** with **explicit async boundaries**. **User-facing requests** stay in the **NestJS API**, while **slower** or **failure-prone work** is pushed into **queues**, **workers**, **object-storage events**, **Redis Pub/Sub**, and **realtime delivery channels**.
 
 ```text
 Mobile Client
@@ -71,15 +70,38 @@ Mobile Client
       -> Python CV worker
 ```
 
-The system is a **NestJS modular monolith** with clear **async boundaries**. Product domains remain in one cohesive API because they share **user context** and **database authorization rules**, while expensive or isolated workloads are handled through **queues**, **workers**, **object-storage events**, and **realtime fanout**.
+Typical **synchronous request flow**:
+
+```text
+Request
+  -> HTTP middleware
+  -> DPoP + JWT + role guards
+  -> Zod validation
+  -> RLS-bound transaction
+  -> domain service
+  -> response
+```
+
+Typical **asynchronous flow**:
+
+```text
+Request
+  -> enqueue job / create presigned upload
+  -> worker or AWS-shaped event
+  -> background processing
+  -> Redis Pub/Sub or persisted side effect
+  -> Socket.IO, email, push, or API-visible state
+```
+
+This keeps the **API responsive** while preserving **domain cohesion**: **authentication**, **workouts**, **messages**, **analytics**, **reminders**, **realtime delivery**, and **user data** share one **authorization** and **database model**, while **expensive workloads** run out of band.
 
 **Deep dives:** [System Architecture](./docs/architecture.md) | [Security Deep Dive](./docs/security-deep-dive.md) | [Video Pipeline](./docs/video-analysis-pipeline.md) | [WebSocket Realtime](./docs/websocket-realtime.md) | [Testing Policy](./docs/testing-policy.md)
 
-## Expensive Engineering Features
+## Core Capabilities
 
 ### Security Model
 
-Security is enforced across the **HTTP edge**, **token lifecycle**, **Nest guards**, **runtime validation**, and **database policies**.
+**Security** is enforced across the **HTTP edge**, **token lifecycle**, **Nest guards**, **runtime validation**, and **database policies**.
 
 ```text
 Request
@@ -91,13 +113,13 @@ Request
   -> RLS-bound PostgreSQL transaction
 ```
 
-Highlights include **DPoP replay protection**, **JWT token versioning** for centralized revocation, **refresh rotation**, **role-based route authorization**, **Helmet/CORS hardening**, and **PostgreSQL row-level security** bound to the authenticated user.
+Key controls include **DPoP replay protection**, **JWT token versioning** for **centralized revocation**, **refresh rotation**, **role-based route authorization**, **Helmet/CORS hardening**, and **PostgreSQL row-level security** bound to the **authenticated user**.
 
 **Read more:** [Security Deep Dive](./docs/security-deep-dive.md) | [API And Engineering Standards](./docs/api-and-standards.md)
 
 ### Video Analysis Pipeline
 
-Video analysis is implemented as an **event-driven media pipeline**, keeping **large uploads** and **CPU-heavy computer-vision work** outside the HTTP request path.
+**Video analysis** is implemented as an **event-driven media pipeline**. **Large uploads** and **CPU-heavy computer-vision work** never block the **HTTP request** that starts the job.
 
 ```text
 Client
@@ -111,13 +133,41 @@ Client
   -> Client
 ```
 
-The API attaches **request**, **job**, **user**, **exercise**, and **Sentry trace metadata** to the S3 upload. The **Python worker** long-polls **SQS**, downloads the object, analyzes the exercise, publishes the result to **Redis**, deletes the source video, and deletes the **SQS message** only after successful processing.
+The **API** attaches **request**, **job**, **user**, **exercise**, and **Sentry trace metadata** to the **S3 upload**. The **Python worker** **long-polls SQS**, **downloads the object**, **analyzes the exercise**, **publishes the result to Redis**, **deletes the source video**, and **deletes the SQS message** only after **successful processing**.
 
 **Read more:** [Video Analysis Pipeline](./docs/video-analysis-pipeline.md)
 
+### Realtime And Background Work
+
+The backend separates **interactive responses** from **background side effects**:
+
+- **Socket.IO** delivers **user-targeted realtime events**.
+- **Redis Pub/Sub** carries **video-analysis results** from **Python** back into **NestJS**.
+- **Bull/Redis queues** handle **email** and **push jobs**.
+- **Authenticated WebSocket tickets** protect **socket connections**.
+- **Redis caching** accelerates repeated reads for **workouts**, **tracking**, **analytics**, **aerobics**, and **bootstrap flows**.
+
+**Read more:** [WebSocket Realtime](./docs/websocket-realtime.md) | [API And Engineering Standards](./docs/api-and-standards.md)
+
+### Database And Migrations
+
+The **database workflow** is **migration-first** and **repository-owned**.
+
+```text
+Local DB change
+  -> Atlas diff
+  -> committed migration
+  -> dev apply
+  -> test rebuild from zero
+```
+
+The **schema** is organized into domains such as **`identity`**, **`workout`**, **`tracking`**, **`reminders`**, **`analytics`**, and **`messages`**. **RLS policies** protect **user-owned data**, while **explicit SQL** keeps **analytics-heavy queries** visible and tunable.
+
+**Read more:** [Database Schemas And Flows](./docs/database-schemas-and-flows.md) | [Migrations And DB Pipeline](./docs/migrations-and-db-pipeline.md)
+
 ### Local Distributed-System Environment
 
-`npm run orch:dev` starts the development stack with **Docker Compose**:
+**`npm run orch:dev`** starts the **development stack** with **Docker Compose**:
 
 - **NestJS API**
 - **Node background workers**
@@ -128,29 +178,13 @@ The API attaches **request**, **job**, **user**, **exercise**, and **Sentry trac
 - **Maildev**
 - **Atlas migration runner**
 
-This makes **S3 events**, **SQS delivery**, **Redis Pub/Sub**, **Redis queues**, **database migrations**, and **email capture** reproducible in local development.
+This makes **S3 events**, **SQS delivery**, **Redis Pub/Sub**, **Redis queues**, **database migrations**, and **email capture** reproducible in **local development**.
 
 **Read more:** [Docker Compose Environments](./docs/docker-compose-environments.md) | [Scripts Usage](./docs/scripts-usage.md)
 
-### Database And Migrations
-
-The database workflow is **migration-first** and **repository-owned**.
-
-```text
-Local DB change
-  -> Atlas diff
-  -> committed migration
-  -> dev apply
-  -> test rebuild from zero
-```
-
-The schema is organized into domains such as **`identity`**, **`workout`**, **`tracking`**, **`reminders`**, **`analytics`**, and **`messages`**. **RLS policies** protect user-owned data, while **explicit SQL** keeps analytics-heavy queries visible and tunable.
-
-**Read more:** [Database Schemas And Flows](./docs/database-schemas-and-flows.md) | [Migrations And DB Pipeline](./docs/migrations-and-db-pipeline.md)
-
 ### Testing Strategy
 
-The test suite prioritizes **integration confidence** because the highest-risk behavior crosses real boundaries: **auth**, **token rotation**, **RLS**, **Postgres**, **Redis**, **queues**, **S3/SQS emulation**, **Maildev**, and **WebSocket-adjacent flows**.
+The **test suite** prioritizes **integration confidence** because the highest-risk behavior crosses **real boundaries**: **auth**, **token rotation**, **RLS**, **Postgres**, **Redis**, **queues**, **S3/SQS emulation**, **Maildev**, and **WebSocket-adjacent flows**.
 
 ```bash
 npm test
@@ -165,7 +199,21 @@ npm run test:videoanalysis
 npm run test:websockets
 ```
 
+**Controller test documentation** is kept beside the suites as short checklists describing **happy paths**, **bad paths**, and **edge cases**.
+
 **Read more:** [Testing Policy](./docs/testing-policy.md)
+
+## Engineering Decisions & Tradeoffs
+
+**Queues for slow or unreliable work:** **Email**, **push**, and **video-analysis jobs** run outside the **HTTP request path** so the **API** can return quickly and **workers** can retry or scale independently.
+
+**Modular monolith over microservices:** The **product domains** share **user identity**, **RLS authorization**, and **database transactions**. Keeping them in one **NestJS codebase** reduces **distributed-system overhead** while still using **queues** and **workers** for independent execution.
+
+**Async pipelines for media processing:** **Video uploads** are sent directly to **S3**, then processed from **SQS** by **Python**. This avoids routing **large files** through the **API** and isolates **CPU-heavy OpenCV/MediaPipe work** from normal request traffic.
+
+**RLS-backed security:** **Authorization** is enforced in both **application code** and the **database**. **Nest guards** validate **identity** and **roles**, while **PostgreSQL RLS** protects **user-owned rows** even when queries cross complex **domain schemas**.
+
+**LocalStack for AWS-shaped development:** Local **S3/SQS behavior** is reproduced without **cloud dependencies**, making the **async media pipeline** testable and debuggable on a developer machine.
 
 ## Quick Start
 
@@ -175,7 +223,7 @@ npm run orch:dev
 npm run db:dev:start
 ```
 
-Useful local tools:
+Useful **local tools**:
 
 - RedisInsight: `http://localhost:5540`
 - Maildev: `http://localhost:1081`
@@ -225,4 +273,4 @@ docs/                            Architecture, security, testing, DB, and operat
 
 ## What This Demonstrates
 
-This project demonstrates **secure backend design**, **typed API contracts**, **event-driven processing**, **local infrastructure automation**, **database ownership modeling**, **realtime delivery**, **observability**, and **integration testing across real service boundaries**.
+This project demonstrates **secure backend design**, **typed API contracts**, **event-driven processing**, **local infrastructure automation**, **database ownership modeling**, **realtime delivery**, **observability**, and **integration testing** across **real service boundaries**.
