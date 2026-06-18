@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.0.3](https://github.com/kobihanoch/Strong-Together-Backend/compare/v4.0.3-rc.1...v4.0.3) (2026-06-18)
+
 ### [4.0.3-rc.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v4.0.3-rc.0...v4.0.3-rc.1) (2026-06-18)
 
 ### [4.0.3-rc.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v4.0.2...v4.0.3-rc.0) (2026-06-18)
