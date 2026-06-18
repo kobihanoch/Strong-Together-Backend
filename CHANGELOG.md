@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.0.3-rc.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v4.0.2...v4.0.3-rc.0) (2026-06-18)
+
+
+### Code Refactoring
+
+* Refactored python service to make it more readable ([59a5fc1](https://github.com/kobihanoch/Strong-Together-Backend/commit/59a5fc19952d1d31616f08c127c4a2af01c2dfa0))
+
 ### [4.0.2](https://github.com/kobihanoch/Strong-Together-Backend/compare/v4.0.2-rc.1...v4.0.2) (2026-04-24)
 
 ### [4.0.2-rc.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v4.0.2-rc.0...v4.0.2-rc.1) (2026-04-24)
