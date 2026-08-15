@@ -1,11 +1,13 @@
 import { relations, sql as drizzleSql } from 'drizzle-orm';
 import { bigint, boolean, primaryKey, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { messages } from '../../messages/messages/table';
-import { userReminderSettings, userSplitInformation } from '../../reminders/tables';
-import { aerobictracking, workoutSummary } from '../../tracking/tables';
-import { workoutplans } from '../../workout/tables';
+import { userReminderSettings } from '../../reminders/user_reminder_settings/table';
+import { userSplitInformation } from '../../reminders/user_split_information/table';
+import { aerobictracking } from '../../tracking/aerobictracking/table';
+import { workoutSummary } from '../../tracking/workout_summary/table';
+import { workoutplans } from '../../workout/workoutplans/table';
 import { identitySchema } from '../../schemas';
-import { oauthAccounts } from '../oauth-accounts/table';
+import { oauthAccounts } from '../oauth_accounts/table';
 import { usersPolicies } from './policies';
 export const users = identitySchema.table(
   'users',

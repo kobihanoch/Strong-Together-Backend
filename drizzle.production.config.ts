@@ -13,7 +13,6 @@ export default defineConfig({
     './src/infrastructure/db/schema/drizzle/schemas.ts',
     './src/infrastructure/db/schema/drizzle/roles.ts',
     './src/infrastructure/db/schema/drizzle/**/table.ts',
-    './src/infrastructure/db/schema/drizzle/**/tables.ts',
     './src/infrastructure/db/schema/drizzle/**/*.view.ts',
   ],
   out: './src/infrastructure/db/schema/drizzle-migrations',
@@ -27,4 +26,3 @@ export default defineConfig({
   strict: true,
   verbose: true,
 });
-
