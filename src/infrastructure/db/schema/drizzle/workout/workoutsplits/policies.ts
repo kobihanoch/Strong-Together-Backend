@@ -3,13 +3,34 @@ import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
 const uid = drizzleSql`"identity"."current_user_id"()`;
 
-export function workoutsplitsPolicies(t: { workoutId: AnyPgColumn }) { const owns = drizzleSql`${uid} = (select wp."user_id" from "workout"."workoutplans" wp where wp."id" = ${t.workoutId})`; return [
-  // Lets authenticated users read splits belonging to their own plans.
-  pgPolicy('Enable read access for auth users on workoutsplits', { for: 'select', to: authenticatedRole, using: owns }),
-  // Lets authenticated users add splits only to their own plans.
-  pgPolicy('Enable insert for auth users on workoutsplits', { for: 'insert', to: authenticatedRole, withCheck: owns }),
-  // Lets authenticated users update splits only within their own plans.
-  pgPolicy('Enable update for auth users on workoutsplits', { for: 'update', to: authenticatedRole, using: owns, withCheck: owns }),
-  // Lets authenticated users delete splits only from their own plans.
-  pgPolicy('Enable delete for auth users on workoutsplits', { for: 'delete', to: authenticatedRole, using: owns }),
-]; }
+export function workoutsplitsPolicies(t: { workoutId: AnyPgColumn }) {
+  const owns = drizzleSql`${uid} = (select wp."user_id" from "workout"."workoutplans" wp where wp."id" = ${t.workoutId})`;
+  const ownsForDelete = drizzleSql`exists (select 1 from "workout"."workoutplans" wp where wp."id" = ${t.workoutId} and wp."user_id" = ${uid})`;
+  return [
+    // Lets authenticated users read splits belonging to their own plans.
+    pgPolicy('Enable read access for auth users on workoutsplits', {
+      for: 'select',
+      to: authenticatedRole,
+      using: owns,
+    }),
+    // Lets authenticated users add splits only to their own plans.
+    pgPolicy('Enable insert for auth users on workoutsplits', {
+      for: 'insert',
+      to: authenticatedRole,
+      withCheck: owns,
+    }),
+    // Lets authenticated users update splits only within their own plans.
+    pgPolicy('Enable update for auth users on workoutsplits', {
+      for: 'update',
+      to: authenticatedRole,
+      using: owns,
+      withCheck: owns,
+    }),
+    // Lets authenticated users delete splits only from their own plans.
+    pgPolicy('Enable delete for auth users on workoutsplits', {
+      for: 'delete',
+      to: authenticatedRole,
+      using: ownsForDelete,
+    }),
+  ];
+}

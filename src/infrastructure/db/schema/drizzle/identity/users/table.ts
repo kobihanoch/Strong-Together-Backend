@@ -17,7 +17,7 @@ export const users = identitySchema.table(
     name: text('name').notNull(),
     gender: text('gender').default('Unknown').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true })
-      .default(drizzleSql`now() AT TIME ZONE 'utc'`)
+      .default(drizzleSql`(now() AT TIME ZONE 'utc')`)
       .notNull(),
     profileImageUrl: text('profile_image_url'),
     id: uuid('id').defaultRandom().notNull(),

@@ -29,7 +29,7 @@ export const workoutSummary = trackingSchema.table(
       .onUpdate('cascade')
       .onDelete('cascade'),
     index('workout_summary_start_date_idx').on(drizzleSql`((${t.workoutStartUtc} at time zone 'UTC')::date)`),
-    index('workout_summary_user_start_utc_idx').on(t.userId, t.workoutStartUtc.desc()),
+    index('workout_summary_user_start_utc_idx').on(t.userId, t.workoutStartUtc.desc().nullsFirst()),
     ...workoutSummaryPolicies(t),
   ],
 );

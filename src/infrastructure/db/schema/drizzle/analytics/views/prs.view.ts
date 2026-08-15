@@ -1,7 +1,8 @@
+import { sql as drizzleSql } from 'drizzle-orm';
 import { bigint, real, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { analyticsSchema } from '../../schemas';
 
-// Existing security-invoker view that selects the strongest recorded set per exercise.
+// Security-invoker view that selects the strongest recorded set per exercise.
 export const prsView = analyticsSchema
   .view('v_prs', {
     id: bigint('id', { mode: 'number' }),
@@ -15,5 +16,18 @@ export const prsView = analyticsSchema
     workoutEndUtc: timestamp('workout_end_utc', { withTimezone: true }),
   })
   .with({ securityInvoker: true })
-  .existing();
-
+  .as(drizzleSql`
+    SELECT DISTINCT ON (s.exercise_id)
+      s.id,
+      s.exercisetosplit_id,
+      s.exercise_id,
+      s.exercise,
+      s.weight,
+      s.reps,
+      s.workout_summary_id,
+      s.workout_start_utc,
+      s.workout_end_utc
+    FROM analytics.v_exercisetracking_set_simple s
+    WHERE s.weight IS NOT NULL AND s.reps IS NOT NULL
+    ORDER BY s.exercise_id, s.weight DESC, s.reps DESC, s.workout_start_utc DESC, s.id DESC
+  `);

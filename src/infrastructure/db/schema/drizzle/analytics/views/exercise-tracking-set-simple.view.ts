@@ -1,7 +1,8 @@
+import { sql as drizzleSql } from 'drizzle-orm';
 import { bigint, real, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { analyticsSchema } from '../../schemas';
 
-// Existing security-invoker view that expands the paired weight/reps arrays into sets.
+// Security-invoker view that expands the paired weight/reps arrays into sets.
 export const exerciseTrackingSetSimpleView = analyticsSchema
   .view('v_exercisetracking_set_simple', {
     id: bigint('id', { mode: 'number' }),
@@ -15,5 +16,16 @@ export const exerciseTrackingSetSimpleView = analyticsSchema
     workoutEndUtc: timestamp('workout_end_utc', { withTimezone: true }),
   })
   .with({ securityInvoker: true })
-  .existing();
-
+  .as(drizzleSql`
+    SELECT et.id,
+      et.exercisetosplit_id,
+      et.exercise_id,
+      et.exercise,
+      s.weight,
+      s.reps,
+      et.workout_summary_id,
+      et.workout_start_utc,
+      et.workout_end_utc
+    FROM analytics.v_exercisetracking_expanded et
+    CROSS JOIN LATERAL UNNEST(et.weight, et.reps) s(weight, reps)
+  `);

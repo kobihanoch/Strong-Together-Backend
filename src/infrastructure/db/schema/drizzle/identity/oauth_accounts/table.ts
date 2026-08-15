@@ -12,7 +12,7 @@ export const oauthAccounts = identitySchema.table(
     providerUserId: text('provider_user_id').notNull(),
     providerEmail: text('provider_email').notNull(),
     linkedAt: timestamp('linked_at', { withTimezone: true })
-      .default(drizzleSql`now() AT TIME ZONE 'utc'`)
+      .default(drizzleSql`(now() AT TIME ZONE 'utc')`)
       .notNull(),
     missingFields: text('missing_fields'),
   },
