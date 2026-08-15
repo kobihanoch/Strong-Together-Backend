@@ -1,0 +1,22 @@
+import { bigint, real, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { analyticsSchema } from '../../schemas';
+
+// Existing security-invoker view that joins exercise tracking to workout metadata.
+export const exerciseTrackingExpandedView = analyticsSchema
+  .view('v_exercisetracking_expanded', {
+    id: bigint('id', { mode: 'number' }),
+    exercisetosplitId: bigint('exercisetosplit_id', { mode: 'number' }),
+    weight: real('weight').array(),
+    reps: bigint('reps', { mode: 'number' }).array(),
+    exerciseId: bigint('exercise_id', { mode: 'number' }),
+    workoutsplitId: bigint('workoutsplit_id', { mode: 'number' }),
+    splitname: text('splitname'),
+    exercise: text('exercise'),
+    notes: text('notes'),
+    workoutSummaryId: uuid('workout_summary_id'),
+    workoutStartUtc: timestamp('workout_start_utc', { withTimezone: true }),
+    workoutEndUtc: timestamp('workout_end_utc', { withTimezone: true }),
+  })
+  .with({ securityInvoker: true })
+  .existing();
+
