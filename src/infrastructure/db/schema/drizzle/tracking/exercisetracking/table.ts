@@ -3,6 +3,7 @@ import { bigint, foreignKey, index, primaryKey, real, text, uuid } from 'drizzle
 import { trackingSchema } from '../../schemas';
 import { exercisetoworkoutsplit } from '../../workout/exercisetoworkoutsplit/table';
 import { workoutSummary } from '../workout_summary/table';
+import { trackingSet } from '../tracking_set/table';
 import { exerciseTrackingPolicies } from './policies';
 
 export const exercisetracking = trackingSchema.table(
@@ -35,10 +36,11 @@ export const exercisetracking = trackingSchema.table(
     ...exerciseTrackingPolicies(t),
   ],
 );
-export const exercisetrackingRelations = relations(exercisetracking, ({ one }) => ({
+export const exercisetrackingRelations = relations(exercisetracking, ({ many, one }) => ({
   exerciseToWorkoutsplit: one(exercisetoworkoutsplit, {
     fields: [exercisetracking.exercisetosplitId],
     references: [exercisetoworkoutsplit.id],
   }),
   workoutSummary: one(workoutSummary, { fields: [exercisetracking.workoutSummaryId], references: [workoutSummary.id] }),
+  trackingSets: many(trackingSet),
 }));

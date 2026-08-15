@@ -15,6 +15,13 @@
       "when": 1786830643414,
       "tag": "0001_least_privilege_runtime_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786833949100,
+      "tag": "0002_sets_entities",
+      "breakpoints": true
     }
   ]
 }
