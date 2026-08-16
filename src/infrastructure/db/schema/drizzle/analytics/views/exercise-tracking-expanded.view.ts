@@ -6,12 +6,12 @@ import { analyticsSchema } from '../../schemas';
 export const exerciseTrackingExpandedView = analyticsSchema
   .view('v_exercisetracking_expanded', {
     id: bigint('id', { mode: 'number' }),
-    exercisetosplitId: bigint('exercisetosplit_id', { mode: 'number' }),
+    exerciseToSplitId: bigint('exercisetosplit_id', { mode: 'number' }),
     weight: real('weight').array(),
     reps: bigint('reps', { mode: 'number' }).array(),
     exerciseId: bigint('exercise_id', { mode: 'number' }),
-    workoutsplitId: bigint('workoutsplit_id', { mode: 'number' }),
-    splitname: text('splitname'),
+    workoutSplitId: bigint('workoutsplit_id', { mode: 'number' }),
+    splitName: text('splitname'),
     exercise: text('exercise'),
     notes: text('notes'),
     workoutSummaryId: uuid('workout_summary_id'),

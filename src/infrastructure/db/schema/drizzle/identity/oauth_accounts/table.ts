@@ -1,10 +1,10 @@
 import { relations, sql as drizzleSql } from 'drizzle-orm';
 import { foreignKey, primaryKey, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 import { identitySchema } from '../../schemas';
-import { users } from '../users/table';
-import { oauthAccountsPolicies } from './policies';
-export const oauthAccounts = identitySchema.table(
-  'oauth_accounts',
+import { user } from '../users/table';
+import { oauthAccountPolicies } from './policies';
+export const oauthAccount = identitySchema.table(
+  'oauth_account',
   {
     id: uuid('id').defaultRandom().notNull(),
     userId: uuid('user_id').notNull(),
@@ -19,12 +19,12 @@ export const oauthAccounts = identitySchema.table(
   (t) => [
     primaryKey({ name: 'oauth_accounts_pkey', columns: [t.id] }),
     unique('oauth_accounts_provider_user_unique').on(t.provider, t.providerUserId),
-    foreignKey({ name: 'oauth_accounts_user_id_fkey', columns: [t.userId], foreignColumns: [users.id] })
+    foreignKey({ name: 'oauth_accounts_user_id_fkey', columns: [t.userId], foreignColumns: [user.id] })
       .onUpdate('cascade')
       .onDelete('cascade'),
-    ...oauthAccountsPolicies(t),
+    ...oauthAccountPolicies(t),
   ],
 );
-export const oauthAccountsRelations = relations(oauthAccounts, ({ one }) => ({
-  user: one(users, { fields: [oauthAccounts.userId], references: [users.id] }),
+export const oauthAccountRelations = relations(oauthAccount, ({ one }) => ({
+  user: one(user, { fields: [oauthAccount.userId], references: [user.id] }),
 }));

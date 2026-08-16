@@ -1,11 +1,11 @@
 import { relations, sql as drizzleSql } from 'drizzle-orm';
 import { bigint, foreignKey, index, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { users } from '../../identity/users/table';
+import { user } from '../../identity/users/table';
 import { trackingSchema } from '../../schemas';
 import { aerobicTrackingPolicies } from './policies';
 
-export const aerobictracking = trackingSchema.table(
-  'aerobictracking',
+export const aerobicTracking = trackingSchema.table(
+  'aerobic_tracking',
   {
     id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'aerobictracking_id_seq' }).notNull(),
     userId: uuid('user_id').notNull(),
@@ -18,13 +18,13 @@ export const aerobictracking = trackingSchema.table(
   },
   (t) => [
     primaryKey({ name: 'aerobictracking_pkey', columns: [t.id] }),
-    foreignKey({ name: 'aerobictracking_user_id_fkey', columns: [t.userId], foreignColumns: [users.id] })
+    foreignKey({ name: 'aerobictracking_user_id_fkey', columns: [t.userId], foreignColumns: [user.id] })
       .onUpdate('cascade')
       .onDelete('cascade'),
     index('aerobictracking_user_id_workout_time_utc_idx').on(t.userId, t.workoutTimeUtc.desc().nullsFirst()),
     ...aerobicTrackingPolicies(t),
   ],
 );
-export const aerobictrackingRelations = relations(aerobictracking, ({ one }) => ({
-  user: one(users, { fields: [aerobictracking.userId], references: [users.id] }),
+export const aerobicTrackingRelations = relations(aerobicTracking, ({ one }) => ({
+  user: one(user, { fields: [aerobicTracking.userId], references: [user.id] }),
 }));

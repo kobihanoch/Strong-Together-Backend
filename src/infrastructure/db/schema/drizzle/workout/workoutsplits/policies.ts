@@ -3,7 +3,7 @@ import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
 const uid = drizzleSql`"identity"."current_user_id"()`;
 
-export function workoutsplitsPolicies(t: { workoutId: AnyPgColumn }) {
+export function workoutSplitPolicies(t: { workoutId: AnyPgColumn }) {
   const owns = drizzleSql`${uid} = (select wp."user_id" from "workout"."workoutplans" wp where wp."id" = ${t.workoutId})`;
   const ownsForDelete = drizzleSql`exists (select 1 from "workout"."workoutplans" wp where wp."id" = ${t.workoutId} and wp."user_id" = ${uid})`;
   return [

@@ -2,7 +2,7 @@ import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
 const uid = drizzleSql`"identity"."current_user_id"()`;
-export function messagesPolicies(t: { senderId: AnyPgColumn; receiverId: AnyPgColumn }) { const participant = drizzleSql`${uid} = ${t.senderId} or ${uid} = ${t.receiverId}`; return [
+export function messagePolicies(t: { senderId: AnyPgColumn; receiverId: AnyPgColumn }) { const participant = drizzleSql`${uid} = ${t.senderId} or ${uid} = ${t.receiverId}`; return [
   // Lets authenticated message participants read their sent or received messages.
   pgPolicy('Enable read access for auth users on messages', { for: 'select', to: authenticatedRole, using: participant }),
   // Lets authenticated users send as themselves or as the existing system sender.

@@ -1,7 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { bigint, foreignKey, index, integer, primaryKey, real, unique, uuid } from 'drizzle-orm/pg-core';
 import { trackingSchema } from '../../schemas';
-import { exercisetracking } from '../exercisetracking/table';
+import { exerciseTracking } from '../exercisetracking/table';
 import { trackingSetPolicies } from './policies';
 
 export const trackingSet = trackingSchema.table(
@@ -19,7 +19,7 @@ export const trackingSet = trackingSchema.table(
     foreignKey({
       name: 'tracking_set_exercise_tracking_id_fkey',
       columns: [t.exerciseTrackingId],
-      foreignColumns: [exercisetracking.id],
+      foreignColumns: [exerciseTracking.id],
     })
       .onUpdate('cascade')
       .onDelete('cascade'),
@@ -29,8 +29,8 @@ export const trackingSet = trackingSchema.table(
 );
 
 export const trackingSetRelations = relations(trackingSet, ({ one }) => ({
-  exerciseTracking: one(exercisetracking, {
+  exerciseTracking: one(exerciseTracking, {
     fields: [trackingSet.exerciseTrackingId],
-    references: [exercisetracking.id],
+    references: [exerciseTracking.id],
   }),
 }));

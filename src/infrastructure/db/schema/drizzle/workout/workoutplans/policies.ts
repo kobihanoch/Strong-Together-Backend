@@ -3,7 +3,7 @@ import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
 const uid = drizzleSql`"identity"."current_user_id"()`;
 
-export function workoutplansPolicies(t: { userId: AnyPgColumn }) { return [
+export function workoutPlanPolicies(t: { userId: AnyPgColumn }) { return [
   // Lets authenticated users read only workout plans they own.
   pgPolicy('Enable read access for auth users on workoutplans', { for: 'select', to: authenticatedRole, using: drizzleSql`${uid} = ${t.userId}` }),
   // Lets authenticated users create workout plans only for themselves.

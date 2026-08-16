@@ -2,7 +2,7 @@ import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
 const currentUserId = drizzleSql`"identity"."current_user_id"()`;
-export function usersPolicies(table: { id: AnyPgColumn }) { return [
+export function userPolicies(table: { id: AnyPgColumn }) { return [
   // Lets an authenticated user read their own profile.
   pgPolicy('Enable read access for auth users on own profile', { for: 'select', to: authenticatedRole, using: drizzleSql`${currentUserId} = ${table.id}` }),
   // Lets a message receiver read the profile of a sender in their inbox.

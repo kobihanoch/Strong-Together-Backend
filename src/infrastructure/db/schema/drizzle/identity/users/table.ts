@@ -1,16 +1,16 @@
 import { relations, sql as drizzleSql } from 'drizzle-orm';
 import { bigint, boolean, primaryKey, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
-import { messages } from '../../messages/messages/table';
-import { userReminderSettings } from '../../reminders/user_reminder_settings/table';
+import { message } from '../../messages/messages/table';
+import { userReminderSetting } from '../../reminders/user_reminder_settings/table';
 import { userSplitInformation } from '../../reminders/user_split_information/table';
-import { aerobictracking } from '../../tracking/aerobictracking/table';
+import { aerobicTracking } from '../../tracking/aerobictracking/table';
 import { workoutSummary } from '../../tracking/workout_summary/table';
-import { workoutplans } from '../../workout/workoutplans/table';
+import { workoutPlan } from '../../workout/workoutplans/table';
 import { identitySchema } from '../../schemas';
-import { oauthAccounts } from '../oauth_accounts/table';
-import { usersPolicies } from './policies';
-export const users = identitySchema.table(
-  'users',
+import { oauthAccount } from '../oauth_accounts/table';
+import { userPolicies } from './policies';
+export const user = identitySchema.table(
+  'user',
   {
     username: text('username').notNull(),
     email: text('email').notNull(),
@@ -39,17 +39,17 @@ export const users = identitySchema.table(
     uniqueIndex('users_username_ci_unique')
       .on(drizzleSql`lower(trim(both from ${t.username}))`)
       .where(drizzleSql`${t.username} is not null`),
-    ...usersPolicies(t),
+    ...userPolicies(t),
   ],
 );
-export const usersRelations = relations(users, ({ many, one }) => ({
-  oauthAccounts: many(oauthAccounts),
-  ownedWorkoutplans: many(workoutplans, { relationName: 'workoutplanOwner' }),
-  trainedWorkoutplans: many(workoutplans, { relationName: 'workoutplanTrainer' }),
+export const userRelations = relations(user, ({ many, one }) => ({
+  oauthAccounts: many(oauthAccount),
+  ownedWorkoutPlans: many(workoutPlan, { relationName: 'workoutPlanOwner' }),
+  trainedWorkoutPlans: many(workoutPlan, { relationName: 'workoutPlanTrainer' }),
   workoutSummaries: many(workoutSummary),
-  aerobicTrackings: many(aerobictracking),
-  reminderSettings: one(userReminderSettings),
+  aerobicTrackings: many(aerobicTracking),
+  reminderSettings: one(userReminderSetting),
   splitInformation: many(userSplitInformation),
-  sentMessages: many(messages, { relationName: 'messageSender' }),
-  receivedMessages: many(messages, { relationName: 'messageReceiver' }),
+  sentMessages: many(message, { relationName: 'messageSender' }),
+  receivedMessages: many(message, { relationName: 'messageReceiver' }),
 }));

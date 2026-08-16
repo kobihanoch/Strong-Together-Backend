@@ -6,7 +6,7 @@ import { analyticsSchema } from '../../schemas';
 export const prsView = analyticsSchema
   .view('v_prs', {
     id: bigint('id', { mode: 'number' }),
-    exercisetosplitId: bigint('exercisetosplit_id', { mode: 'number' }),
+    exerciseToSplitId: bigint('exercisetosplit_id', { mode: 'number' }),
     exerciseId: bigint('exercise_id', { mode: 'number' }),
     exercise: text('exercise'),
     weight: real('weight'),

@@ -1,9 +1,9 @@
 import { relations, sql as drizzleSql } from 'drizzle-orm';
 import { bigint, foreignKey, index, primaryKey, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { users } from '../../identity/users/table';
+import { user } from '../../identity/users/table';
 import { trackingSchema } from '../../schemas';
-import { workoutsplits } from '../../workout/workoutsplits/table';
-import { exercisetracking } from '../exercisetracking/table';
+import { workoutSplit } from '../../workout/workoutsplits/table';
+import { exerciseTracking } from '../exercisetracking/table';
 import { workoutSummaryPolicies } from './policies';
 
 export const workoutSummary = trackingSchema.table(
@@ -14,17 +14,17 @@ export const workoutSummary = trackingSchema.table(
     workoutStartUtc: timestamp('workout_start_utc', { withTimezone: true }).notNull(),
     workoutEndUtc: timestamp('workout_end_utc', { withTimezone: true }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    workoutsplitId: bigint('workoutsplit_id', { mode: 'number' }).notNull(),
+    workoutSplitId: bigint('workoutsplit_id', { mode: 'number' }).notNull(),
   },
   (t) => [
     primaryKey({ name: 'workout_summary_pkey', columns: [t.id] }),
-    foreignKey({ name: 'workout_summary_user_id_fkey', columns: [t.userId], foreignColumns: [users.id] }).onDelete(
+    foreignKey({ name: 'workout_summary_user_id_fkey', columns: [t.userId], foreignColumns: [user.id] }).onDelete(
       'cascade',
     ),
     foreignKey({
       name: 'workout_summary_workoutsplit_id_fkey',
-      columns: [t.workoutsplitId],
-      foreignColumns: [workoutsplits.id],
+      columns: [t.workoutSplitId],
+      foreignColumns: [workoutSplit.id],
     })
       .onUpdate('cascade')
       .onDelete('cascade'),
@@ -34,7 +34,7 @@ export const workoutSummary = trackingSchema.table(
   ],
 );
 export const workoutSummaryRelations = relations(workoutSummary, ({ many, one }) => ({
-  user: one(users, { fields: [workoutSummary.userId], references: [users.id] }),
-  workoutsplit: one(workoutsplits, { fields: [workoutSummary.workoutsplitId], references: [workoutsplits.id] }),
-  exerciseTrackings: many(exercisetracking),
+  user: one(user, { fields: [workoutSummary.userId], references: [user.id] }),
+  workoutSplit: one(workoutSplit, { fields: [workoutSummary.workoutSplitId], references: [workoutSplit.id] }),
+  exerciseTrackings: many(exerciseTracking),
 }));

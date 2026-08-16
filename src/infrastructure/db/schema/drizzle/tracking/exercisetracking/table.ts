@@ -1,16 +1,16 @@
 import { relations } from 'drizzle-orm';
 import { bigint, foreignKey, index, primaryKey, real, text, uuid } from 'drizzle-orm/pg-core';
 import { trackingSchema } from '../../schemas';
-import { exercisetoworkoutsplit } from '../../workout/exercisetoworkoutsplit/table';
+import { exerciseToWorkoutSplit } from '../../workout/exercisetoworkoutsplit/table';
 import { workoutSummary } from '../workout_summary/table';
 import { trackingSet } from '../tracking_set/table';
 import { exerciseTrackingPolicies } from './policies';
 
-export const exercisetracking = trackingSchema.table(
-  'exercisetracking',
+export const exerciseTracking = trackingSchema.table(
+  'exercise_tracking',
   {
     id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'exercisetracking_id_seq' }).notNull(),
-    exercisetosplitId: bigint('exercisetosplit_id', { mode: 'number' }).notNull(),
+    exerciseToSplitId: bigint('exercisetosplit_id', { mode: 'number' }).notNull(),
     weight: real('weight').array().notNull(),
     reps: bigint('reps', { mode: 'number' }).array().notNull(),
     notes: text('notes'),
@@ -20,8 +20,8 @@ export const exercisetracking = trackingSchema.table(
     primaryKey({ name: 'exercisetracking_pkey', columns: [t.id] }),
     foreignKey({
       name: 'exercisetracking_exercisetosplit_id_fkey',
-      columns: [t.exercisetosplitId],
-      foreignColumns: [exercisetoworkoutsplit.id],
+      columns: [t.exerciseToSplitId],
+      foreignColumns: [exerciseToWorkoutSplit.id],
     })
       .onUpdate('cascade')
       .onDelete('cascade'),
@@ -36,11 +36,11 @@ export const exercisetracking = trackingSchema.table(
     ...exerciseTrackingPolicies(t),
   ],
 );
-export const exercisetrackingRelations = relations(exercisetracking, ({ many, one }) => ({
-  exerciseToWorkoutsplit: one(exercisetoworkoutsplit, {
-    fields: [exercisetracking.exercisetosplitId],
-    references: [exercisetoworkoutsplit.id],
+export const exerciseTrackingRelations = relations(exerciseTracking, ({ many, one }) => ({
+  exerciseToWorkoutSplit: one(exerciseToWorkoutSplit, {
+    fields: [exerciseTracking.exerciseToSplitId],
+    references: [exerciseToWorkoutSplit.id],
   }),
-  workoutSummary: one(workoutSummary, { fields: [exercisetracking.workoutSummaryId], references: [workoutSummary.id] }),
+  workoutSummary: one(workoutSummary, { fields: [exerciseTracking.workoutSummaryId], references: [workoutSummary.id] }),
   trackingSets: many(trackingSet),
 }));

@@ -2,7 +2,7 @@ import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
 const currentUserId = drizzleSql`"identity"."current_user_id"()`;
-export function oauthAccountsPolicies(table: { userId: AnyPgColumn }) {
+export function oauthAccountPolicies(table: { userId: AnyPgColumn }) {
   return [
     // Lets authenticated users read only OAuth accounts linked to themselves.
     pgPolicy('Enable read access for auth users on oauth_accounts', {

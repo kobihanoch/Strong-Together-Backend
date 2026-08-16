@@ -1,35 +1,35 @@
 import { relations } from 'drizzle-orm';
 import { bigint, foreignKey, index, integer, primaryKey, unique, uuid } from 'drizzle-orm/pg-core';
 import { workoutSchema } from '../../schemas';
-import { exercisetoworkoutsplit } from '../exercisetoworkoutsplit/table';
+import { exerciseToWorkoutSplit } from '../exercisetoworkoutsplit/table';
 import { workoutSetPolicies } from './policies';
 
 export const workoutSet = workoutSchema.table(
   'workout_set',
   {
     id: uuid('id').defaultRandom().notNull(),
-    exerciseToWorkoutsplitId: bigint('exercisetoworkoutsplit_id', { mode: 'number' }).notNull(),
+    exerciseToWorkoutSplitId: bigint('exercisetoworkoutsplit_id', { mode: 'number' }).notNull(),
     orderIndex: integer('order_index').notNull(),
     reps: integer('reps').notNull(),
   },
   (t) => [
     primaryKey({ name: 'workout_set_pkey', columns: [t.id] }),
-    unique('workout_set_exercise_order_unique').on(t.exerciseToWorkoutsplitId, t.orderIndex),
+    unique('workout_set_exercise_order_unique').on(t.exerciseToWorkoutSplitId, t.orderIndex),
     foreignKey({
       name: 'workout_set_exercisetoworkoutsplit_id_fkey',
-      columns: [t.exerciseToWorkoutsplitId],
-      foreignColumns: [exercisetoworkoutsplit.id],
+      columns: [t.exerciseToWorkoutSplitId],
+      foreignColumns: [exerciseToWorkoutSplit.id],
     })
       .onUpdate('cascade')
       .onDelete('cascade'),
-    index('workout_set_exercisetoworkoutsplit_id_idx').on(t.exerciseToWorkoutsplitId),
+    index('workout_set_exercisetoworkoutsplit_id_idx').on(t.exerciseToWorkoutSplitId),
     ...workoutSetPolicies(t),
   ],
 );
 
 export const workoutSetRelations = relations(workoutSet, ({ one }) => ({
-  exerciseToWorkoutsplit: one(exercisetoworkoutsplit, {
-    fields: [workoutSet.exerciseToWorkoutsplitId],
-    references: [exercisetoworkoutsplit.id],
+  exerciseToWorkoutSplit: one(exerciseToWorkoutSplit, {
+    fields: [workoutSet.exerciseToWorkoutSplitId],
+    references: [exerciseToWorkoutSplit.id],
   }),
 }));

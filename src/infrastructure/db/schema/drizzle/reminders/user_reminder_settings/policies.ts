@@ -3,7 +3,7 @@ import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
 const uid = drizzleSql`"identity"."current_user_id"()`;
 
-export function reminderSettingsPolicies(t: { userId: AnyPgColumn }) {
+export function userReminderSettingPolicies(t: { userId: AnyPgColumn }) {
   return [
     // Lets authenticated users read only their own reminder settings.
     pgPolicy('auth can SELECT own reminder settings', {
