@@ -71,6 +71,13 @@
       "when": 1786883102193,
       "tag": "0009_use_normalized_sets",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786883591807,
+      "tag": "0010_backfill_normalized_sets",
+      "breakpoints": true
     }
   ]
 }
