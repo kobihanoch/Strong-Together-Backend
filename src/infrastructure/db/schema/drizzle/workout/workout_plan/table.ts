@@ -10,7 +10,6 @@ export const workoutPlan = workoutSchema.table(
   {
     id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'workout_plan_id_seq' }).notNull(),
     name: text('name').default('My Workout').notNull(),
-    numberOfSplits: bigint('numberofsplits', { mode: 'number' }).default(1).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     isDeleted: boolean('is_deleted').default(false).notNull(),
     level: text('level').default('Beginner').notNull(),

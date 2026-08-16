@@ -98,8 +98,8 @@ BEGIN
       now()
     );
 
-  INSERT INTO workout.workout_plan (user_id, trainer_id, numberofsplits, is_active, updated_at)
-  VALUES (plan_only_user_id, plan_only_user_id, 1, TRUE, now())
+  INSERT INTO workout.workout_plan (user_id, trainer_id, is_active, updated_at)
+  VALUES (plan_only_user_id, plan_only_user_id, TRUE, now())
   RETURNING id INTO plan_only_plan_id;
 
   INSERT INTO workout.workout_split (workout_id, name, is_active)
@@ -111,8 +111,8 @@ BEGIN
     (plan_only_split_id, 20, ARRAY[8, 8, 8]::bigint[], 0, TRUE),
     (plan_only_split_id, 12, ARRAY[10, 10, 10]::bigint[], 1, TRUE);
 
-  INSERT INTO workout.workout_plan (user_id, trainer_id, numberofsplits, is_active, updated_at)
-  VALUES (plan_tracking_user_id, plan_tracking_user_id, 1, TRUE, now())
+  INSERT INTO workout.workout_plan (user_id, trainer_id, is_active, updated_at)
+  VALUES (plan_tracking_user_id, plan_tracking_user_id, TRUE, now())
   RETURNING id INTO plan_tracking_plan_id;
 
   INSERT INTO workout.workout_split (workout_id, name, is_active)
@@ -133,8 +133,8 @@ BEGIN
   INSERT INTO tracking.exercise_tracking (exercise_to_split_id, weight, reps, notes, workout_summary_id)
   VALUES (plan_tracking_ets_id, ARRAY[60, 65, 70]::real[], ARRAY[8, 8, 6]::bigint[], 'Seed workout from yesterday', plan_tracking_summary_id);
 
-  INSERT INTO workout.workout_plan (user_id, trainer_id, numberofsplits, is_active, updated_at)
-  VALUES (full_seed_user_id, full_seed_user_id, 1, TRUE, now())
+  INSERT INTO workout.workout_plan (user_id, trainer_id, is_active, updated_at)
+  VALUES (full_seed_user_id, full_seed_user_id, TRUE, now())
   RETURNING id INTO full_seed_plan_id;
 
   INSERT INTO workout.workout_split (workout_id, name, is_active)
