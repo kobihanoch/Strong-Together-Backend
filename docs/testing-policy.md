@@ -36,7 +36,7 @@ Tests use `docker-compose.test.yml`, which provides:
 - `localstack_test` on host port `4567`
 - `maildev_test` on host ports `1025` and `1080`
 - RedisInsight test UI on host port `5541`
-- Atlas migration container
+- Drizzle migrations applied to the isolated test PostgreSQL database
 
 The test database and Redis data are mounted on `tmpfs`. That makes the environment disposable by default and prevents accidental coupling to local development data.
 
@@ -54,7 +54,7 @@ npm run test:db:reset
 1. terminating active connections
 2. dropping `strongtogether_test`
 3. recreating `strongtogether_test`
-4. applying committed Atlas migrations
+4. applying committed Drizzle migrations
 5. injecting seed SQL
 
 This proves the migration history can bootstrap a clean environment before tests run. That is more valuable than testing against a hand-mutated local database.

@@ -1,26 +1,6 @@
 name: strong-together-dev
 services:
-  # Postgres database - dev
-  postgres_dev:
-    image: postgres:16
-    container_name: strongtogether_postgres_dev
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: strongtogether_dev
-    ports:
-      - '5434:5432'
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d strongtogether_dev']
-      interval: 3s
-      timeout: 3s
-      retries: 5
-    volumes:
-      - pg_dev_data:/var/lib/postgresql/data
-    networks:
-      - strong_together_shared
-
+  # Single Drizzle-managed Postgres database for development.
   postgres_drizzle_dev:
     image: postgres:16
     container_name: strongtogether_postgres_drizzle_dev
@@ -119,15 +99,6 @@ services:
     networks:
       - strong_together_shared
 
-  # Atlas container to run Atlas migrations
-  atlas:
-    image: arigaio/atlas@sha256:4a95c68779e069ec5348a9bd1efe577fd37e185dc750ef9d4f7a38429aaf7a68
-    working_dir: /workspace
-    volumes:
-      - .:/workspace
-    networks:
-      - strong_together_shared
-
   # Main server cotnainer
   main-server:
     build:
@@ -143,7 +114,7 @@ services:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     depends_on:
-      postgres_dev:
+      postgres_drizzle_dev:
         condition: service_healthy
       localstack:
         condition: service_started
@@ -164,7 +135,7 @@ services:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     depends_on:
-      postgres_dev:
+      postgres_drizzle_dev:
         condition: service_healthy
       localstack:
         condition: service_started
@@ -191,7 +162,7 @@ services:
       - ./pythonService/aws:/app/aws
       - ./pythonService/utils:/app/utils
     depends_on:
-      postgres_dev:
+      postgres_drizzle_dev:
         condition: service_healthy
       localstack:
         condition: service_started
@@ -200,7 +171,6 @@ services:
     command: ['python', 'main.py']
 
 volumes:
-  pg_dev_data:
   redis_dev_data:
   redisinsight_data:
   localstack_persist_data:

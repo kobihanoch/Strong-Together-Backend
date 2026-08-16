@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "orch:dev": "cross-env NODE_ENV=development docker compose -f docker-compose.development.yml up --build -d",
-    "db:dev:start": "cross-env NODE_ENV=development docker compose -f docker-compose.development.yml up -d --wait postgres_dev",
+    "db:dev:start": "cross-env NODE_ENV=development tsx scripts/db-related/setup-local-db.mts dev",
+    "db:dev:seed": "cross-env NODE_ENV=development tsx scripts/db-related/setup-local-db.mts dev",
     "db:dev:migrate": "drizzle-kit migrate --config=drizzle.development.config.ts",
     "db:migrate:diff": "drizzle-kit generate --config=drizzle.development.config.ts",
     "db:prod:migrate": "drizzle-kit migrate --config=drizzle.production.config.ts",

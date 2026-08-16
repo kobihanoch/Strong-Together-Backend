@@ -20,7 +20,7 @@ The local database pipeline is now split by environment:
 
 | Environment | Compose file | Container | Host port | Persistence |
 | --- | --- | --- | --- | --- |
-| Development | `docker-compose.development.yml` | `strongtogether_postgres_dev` | `5434` | Persistent Docker volume |
+| Development | `docker-compose.development.yml` | `strongtogether_postgres_drizzle_dev` | `5435` | Persistent Docker volume |
 | Test | `docker-compose.test.yml` | `strongtogether_postgres_test` | `5433` | Ephemeral `tmpfs` |
 
 That gives you two important guarantees:
@@ -32,12 +32,12 @@ That gives you two important guarantees:
 
 `npm run db:dev:start` does the following:
 
-1. starts `postgres_dev`
+1. starts `postgres_drizzle_dev`
 2. waits for the database healthcheck
 3. applies all committed migrations
-4. injects seed files
+4. injects seed files that are not recorded in `drizzle.__seed_history`
 
-`npm run db:dev:migrate` is the same flow without reseeding.
+`npm run db:dev:migrate` applies migrations without running the seed pipeline.
 
 Use that when you want schema updates on your current local DB without replaying seed data.
 
@@ -52,7 +52,9 @@ Use that when you want schema updates on your current local DB without replaying
 5. applies all committed migrations from scratch
 6. injects baseline seed files
 
-This makes the test DB deterministic and disposable.
+This makes the test DB deterministic and disposable. Development and test use
+the same Drizzle migration directory and seed runner; only their database names,
+ports, persistence, and reset behavior differ.
 
 ## Creating A New Migration
 
@@ -101,6 +103,7 @@ Be aware:
 
 - dev seeds write into the persistent dev DB
 - test seeds write into the disposable test DB
+- applied seed filenames are tracked in `drizzle.__seed_history`, so setup can be rerun safely
 - controller tests create and clean up their own users, workouts, messages, and profile data
 
 ## Why This Pipeline Matters

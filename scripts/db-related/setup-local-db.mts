@@ -5,13 +5,14 @@ import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';
 
 // Switch between the dev and test database orchestration flows.
-const isTest = process.argv.includes('test');
+const requestedProfile = process.argv.includes('test') ? 'test' : 'dev';
+const isTest = requestedProfile === 'test';
 const skipSeeds = process.argv.includes('--skip-seeds');
-const profile = isTest ? 'test' : 'dev';
-const dbName = isTest ? 'strongtogether_test' : 'strongtogether_dev';
-const containerName = isTest ? 'strongtogether_postgres_test' : 'strongtogether_postgres_dev';
-const composeService = isTest ? 'postgres_test' : 'postgres_dev';
-const hostPort = isTest ? 5433 : 5434;
+const profile = requestedProfile;
+const dbName = isTest ? 'strongtogether_test' : 'strongtogether_drizzle_dev';
+const containerName = isTest ? 'strongtogether_postgres_test' : 'strongtogether_postgres_drizzle_dev';
+const composeService = isTest ? 'postgres_test' : 'postgres_drizzle_dev';
+const hostPort = isTest ? 5433 : 5435;
 
 const localDbComposeFile = isTest ? 'docker-compose.test.yml' : 'docker-compose.development.yml';
 const migrationsDir = 'src/infrastructure/db/schema/drizzle-migrations';
@@ -58,24 +59,42 @@ async function run(): Promise<void> {
         migrationsSchema: 'drizzle',
         migrationsTable: '__drizzle_migrations',
       });
+      // Track seed files independently from schema migrations. This makes dev
+      // setup repeatable while test still rebuilds from a clean database.
+      if (!skipSeeds) {
+        console.log('Injecting seeds...');
+        await client.unsafe(`
+          CREATE TABLE IF NOT EXISTS drizzle.__seed_history (
+            name text PRIMARY KEY,
+            applied_at timestamptz NOT NULL DEFAULT now()
+          )
+        `);
+
+        const seedFiles = fs
+          .readdirSync(seedsDir)
+          .filter((name) => name.endsWith('.sql'))
+          .sort();
+
+        for (const seedFile of seedFiles) {
+          const [alreadyApplied] = await client<{ exists: boolean }[]>`
+            SELECT EXISTS (
+              SELECT 1 FROM drizzle.__seed_history WHERE name = ${seedFile}
+            ) AS exists
+          `;
+
+          if (alreadyApplied.exists) {
+            console.log(`Skipping already applied seed ${seedFile}`);
+            continue;
+          }
+
+          await client.begin(async (tx) => {
+            await tx.unsafe(fs.readFileSync(`${seedsDir}/${seedFile}`, 'utf8'));
+            await tx`INSERT INTO drizzle.__seed_history (name) VALUES (${seedFile})`;
+          });
+        }
+      }
     } finally {
       await client.end();
-    }
-
-    // Seeds are optional so dev can rerun migrations without re-inserting fixture data.
-    if (!skipSeeds) {
-      console.log('Injecting seeds...');
-      const seedFiles = fs
-        .readdirSync(seedsDir)
-        .filter((name) => name.endsWith('.sql'))
-        .sort();
-
-      for (const seedFile of seedFiles) {
-        execSync(`docker exec -i ${containerName} psql -v ON_ERROR_STOP=1 -U postgres -d ${dbName}`, {
-          stdio: ['pipe', 'inherit', 'inherit'],
-          input: fs.readFileSync(`${seedsDir}/${seedFile}`),
-        });
-      }
     }
 
     console.log(`${profile.toUpperCase()} environment is ready.`);

@@ -1,6 +1,6 @@
 # Database Schemas And Flows
 
-The database is PostgreSQL-first and organized around domain schemas rather than a single overloaded `public` namespace. Atlas migrations live in `src/infrastructure/db/schema/migrations`, and seeds live in `src/infrastructure/db/schema/seeds`.
+The database is PostgreSQL-first and organized around domain schemas rather than a single overloaded `public` namespace. The active Drizzle migrations live in `src/infrastructure/db/schema/drizzle-migrations`, and seeds live in `src/infrastructure/db/schema/seeds`.
 
 ## Schema Map
 
@@ -152,4 +152,4 @@ npm run db:dev:migrate
 npm run test:db:reset
 ```
 
-The key engineering rule: schema state must be reproducible from committed migrations. Local mutations are not the source of truth until Atlas captures them as migration files.
+The key engineering rule: schema state must be reproducible from committed Drizzle migrations. Local mutations are not the source of truth until the Drizzle schema and generated migration capture them.

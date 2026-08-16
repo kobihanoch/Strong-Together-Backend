@@ -30,7 +30,8 @@ CACHE_ENABLED=true
 ENABLE_SOCKET_REDIS_ADAPTER=true
 
 # Database
-DATABASE_URL=postgres://postgres:postgres@postgres_dev:5432/strongtogether_dev
+DATABASE_URL=postgres://app_runtime_user:<local-runtime-password>@localhost:5435/strongtogether_drizzle_dev
+DRIZZLE_DATABASE_URL=postgres://postgres:postgres@localhost:5435/strongtogether_drizzle_dev
 
 # JWT and auth secrets
 JWT_ACCESS_SECRET=replace-with-local-access-secret
