@@ -1,5 +1,8 @@
 import fs from 'node:fs';
-import { execFileSync, execSync } from 'node:child_process';
+import { execSync } from 'node:child_process';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import postgres from 'postgres';
 
 // Switch between the dev and test database orchestration flows.
 const isTest = process.argv.includes('test');
@@ -8,13 +11,13 @@ const profile = isTest ? 'test' : 'dev';
 const dbName = isTest ? 'strongtogether_test' : 'strongtogether_dev';
 const containerName = isTest ? 'strongtogether_postgres_test' : 'strongtogether_postgres_dev';
 const composeService = isTest ? 'postgres_test' : 'postgres_dev';
+const hostPort = isTest ? 5433 : 5434;
 
 const localDbComposeFile = isTest ? 'docker-compose.test.yml' : 'docker-compose.development.yml';
-const migrationsDir = 'src/infrastructure/db/schema/migrations';
+const migrationsDir = 'src/infrastructure/db/schema/drizzle-migrations';
 const seedsDir = 'src/infrastructure/db/schema/seeds';
-const atlasService = 'atlas';
 
-function run(): void {
+async function run(): Promise<void> {
   try {
     console.log(`Starting ${profile} orchestration...`);
 
@@ -37,32 +40,27 @@ function run(): void {
 
           DROP DATABASE IF EXISTS ${dbName};
           CREATE DATABASE ${dbName};
+
+          -- Roles live at cluster scope, so remove those created by an earlier
+          -- disposable test database before replaying the Drizzle baseline.
+          DROP ROLE IF EXISTS app_runtime_user, guest, anon, authenticated, service_role, app_user;
         `,
       });
     }
 
     // Apply the committed migration history to the selected local database.
     console.log('Applying migrations...');
-    execFileSync(
-      'docker',
-      [
-        'compose',
-        '-f',
-        localDbComposeFile,
-        'run',
-        '--rm',
-        atlasService,
-        'migrate',
-        'apply',
-        '--dir',
-        `file://${migrationsDir}`,
-        '--url',
-        `postgresql://postgres:postgres@${containerName}:5432/${dbName}?sslmode=disable`,
-      ],
-      {
-        stdio: 'inherit',
-      },
-    );
+    const client = postgres(`postgresql://postgres:postgres@localhost:${hostPort}/${dbName}`, { max: 1 });
+
+    try {
+      await migrate(drizzle(client), {
+        migrationsFolder: migrationsDir,
+        migrationsSchema: 'drizzle',
+        migrationsTable: '__drizzle_migrations',
+      });
+    } finally {
+      await client.end();
+    }
 
     // Seeds are optional so dev can rerun migrations without re-inserting fixture data.
     if (!skipSeeds) {
@@ -87,4 +85,4 @@ function run(): void {
   }
 }
 
-run();
+void run();

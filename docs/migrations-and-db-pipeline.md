@@ -1,13 +1,18 @@
 # Migrations And DB Pipeline
 
-This project uses a repo-owned PostgreSQL migration flow built around Atlas.
+This project uses a repo-owned PostgreSQL migration flow built around Drizzle.
 
 ## Source Of Truth
 
 The database pipeline is based on committed files inside the repo:
 
-- Migrations: [`src/infrastructure/db/schema/migrations`](../src/infrastructure/db/schema/migrations)
+- Drizzle schema: [`src/infrastructure/db/schema/drizzle`](../src/infrastructure/db/schema/drizzle)
+- Active migrations: [`src/infrastructure/db/schema/drizzle-migrations`](../src/infrastructure/db/schema/drizzle-migrations)
+- Archived Atlas history: [`src/infrastructure/db/schema/migrations`](../src/infrastructure/db/schema/migrations)
 - Seeds: [`src/infrastructure/db/schema/seeds`](../src/infrastructure/db/schema/seeds)
+
+The Drizzle `0000_baseline.sql` migration represents the database state after the
+last archived Atlas migration. New schema changes must be generated with Drizzle.
 
 ## Environment Split
 
@@ -57,11 +62,11 @@ Generate a new migration diff with:
 npm run db:migrate:diff -- add_some_change
 ```
 
-That script:
+That command:
 
-1. ensures the dev Postgres service is running
-2. uses Atlas inside Docker
-3. diffs the current DB state into a new committed migration file
+1. reads the committed Drizzle TypeScript schema
+2. compares it with the latest Drizzle snapshot
+3. writes a new migration and snapshot when the schema changed
 
 ## Recommended Workflow
 
