@@ -8,12 +8,10 @@ export class VerificationQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
   async queryUserByUsername(username: string): Promise<UserByIndetifier[]> {
-    return this.sql<UserByIndetifier[]>`
-      SELECT id, name, username, password, role, is_verified
-      FROM identity.user
-      WHERE username=${username} 
-      LIMIT 1
+    const [row] = await this.sql<{ user_data: UserByIndetifier | null }[]>`
+      SELECT guest_api.find_user_by_username(${username}) AS user_data
     `;
+    return row?.user_data ? [row.user_data] : [];
   }
 
   async queryUpdateUserVerficiationStatus(userId: string, state: boolean): Promise<void> {

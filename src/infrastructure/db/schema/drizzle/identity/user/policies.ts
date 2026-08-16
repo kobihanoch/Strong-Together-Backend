@@ -1,27 +1,9 @@
 import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
-import { authenticatedRole, guestRole } from '../../roles';
+import { authenticatedRole } from '../../roles';
 const currentUserId = drizzleSql`"identity"."current_user_id"()`;
 export function userPolicies(table: { id: AnyPgColumn }) {
   return [
-    // Lets unauthenticated auth flows find a login, registration, or OAuth candidate.
-    // Column-level GRANTs restrict which user fields the guest role can actually read.
-    pgPolicy('Guest can read users for public auth flows', { for: 'select', to: guestRole, using: drizzleSql`true` }),
-    // Lets registration and OAuth create a user before an authenticated user id exists.
-    // Column-level GRANTs limit the fields that guest can insert.
-    pgPolicy('Guest can create users during public auth flows', {
-      for: 'insert',
-      to: guestRole,
-      withCheck: drizzleSql`true`,
-    }),
-    // Lets login, verification, password reset, email change, and OAuth linking update auth fields.
-    // Column-level GRANTs prevent guest from updating unrelated profile fields.
-    pgPolicy('Guest can update auth fields during public auth flows', {
-      for: 'update',
-      to: guestRole,
-      using: drizzleSql`true`,
-      withCheck: drizzleSql`true`,
-    }),
     // Lets an authenticated user read their own profile.
     pgPolicy('Enable read access for auth users on own profile', {
       for: 'select',

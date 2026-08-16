@@ -11,8 +11,10 @@ export class CreateUserQueries {
     username: string | null,
     email: string | null,
   ): Promise<[Pick<UserEntity, 'id'>]> {
-    return this.sql<[Pick<UserEntity, 'id'>]>`
-      SELECT id FROM identity.user WHERE username=${username} OR email=${email} LIMIT 1`;
+    const [row] = await this.sql<{ id: string | null }[]>`
+      SELECT guest_api.user_exists(${username}, ${email}) AS id
+    `;
+    return row?.id ? ([{ id: row.id }] as [Pick<UserEntity, 'id'>]) : ([] as unknown as [Pick<UserEntity, 'id'>]);
   }
 
   // Creates a new user and reminder settings
@@ -23,24 +25,9 @@ export class CreateUserQueries {
     gender: string | null,
     hash: string,
   ): Promise<Pick<UserEntity, 'id' | 'username' | 'name' | 'email' | 'gender' | 'role' | 'created_at'>> {
-    return this.sql.begin(async (trx) => {
-      // 1) create the user
-      const [user] = await trx<
-        [Pick<UserEntity, 'id' | 'username' | 'name' | 'email' | 'gender' | 'role' | 'created_at'>]
-      >`
-        INSERT INTO identity.user (username, name, email, gender, password)
-        VALUES (${username}, ${fullName}, ${email}, ${gender}, ${hash})
-        RETURNING id, username, name, email, gender, role, created_at
-      `;
-
-      // 2) create default reminder settings for this user
-      await trx`
-        INSERT INTO reminders.user_reminder_setting (user_id)
-        VALUES (${user.id}::uuid)
-      `;
-
-      // 3) return the created user
-      return user;
-    });
+    const [row] = await this.sql<{ user_data: Pick<UserEntity, 'id' | 'username' | 'name' | 'email' | 'gender' | 'role' | 'created_at'> }[]>`
+      SELECT guest_api.create_app_user(${username}, ${fullName}, ${email}, ${gender}, ${hash}) AS user_data
+    `;
+    return row.user_data;
   }
 }

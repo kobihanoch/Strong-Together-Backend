@@ -129,6 +129,7 @@ export class SessionService {
       }
     }
 
+    await this.dbService.promoteCurrentRlsTxToAuthenticated(decoded.id);
     const [user = null] = await this.sessionQueries.queryBumpTokenVersionAndGetSelfDataCAS(decoded.id, decoded.tokenVer);
     if (!user) throw new UnauthorizedException('New login required');
 

@@ -13,6 +13,7 @@ import type postgres from 'postgres';
 import { supabaseConfig } from '../../../config/storage.config';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
 import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 import type { AppLogger } from '../../../infrastructure/logger';
 import { SupabaseStorageService } from '../../../infrastructure/supabase/storage/supabase-storage.service';
 import { UpdateEmailsService } from './update-emails/update-emails.service';
@@ -24,6 +25,7 @@ import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from '.
 export class UpdateUserService {
   constructor(
     @Inject(SQL) private readonly sql: postgres.Sql,
+    private readonly dbService: DBService,
     private readonly updateUserQueries: UpdateUserQueries,
     private readonly updateEmailsService: UpdateEmailsService,
     private readonly supabaseStorageService: SupabaseStorageService,
@@ -108,6 +110,7 @@ export class UpdateUserService {
     const normalized = newEmail.trim().toLowerCase();
 
     try {
+      await this.dbService.promoteCurrentRlsTxToAuthenticated(sub);
       await this.sql.begin(async (trx) => {
         await trx`
           UPDATE identity.user

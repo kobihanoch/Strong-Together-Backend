@@ -1,17 +1,10 @@
 import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
-import { authenticatedRole, guestRole } from '../../roles';
+import { authenticatedRole } from '../../roles';
 const uid = drizzleSql`"identity"."current_user_id"()`;
 
 export function userReminderSettingPolicies(t: { userId: AnyPgColumn }) {
   return [
-    // Lets registration and OAuth create the default reminder row together with a new user.
-    // Guest receives INSERT permission only for the user_id column.
-    pgPolicy('Guest can create default reminder settings during registration', {
-      for: 'insert',
-      to: guestRole,
-      withCheck: drizzleSql`true`,
-    }),
     // Lets authenticated users read only their own reminder settings.
     pgPolicy('auth can SELECT own reminder settings', {
       for: 'select',

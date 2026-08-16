@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type postgres from 'postgres';
-import { ensureUniqueUsername } from '../oauth.utils';
 import { SQL } from '../../../infrastructure/db/db.tokens';
 
 interface OAuthLookupResult {
@@ -18,12 +17,11 @@ export class AppleQueries {
 
   /** Same shape as the Google version: returns { userId, missing_fields } */
   async queryFindUserIdWithAppleUserId(appleUserId: string): Promise<OAuthLookupResult> {
-    const rows = await this.sql<{ user_id: string; missing_fields: string | null }[]>`
-      SELECT o.user_id, o.missing_fields FROM identity.oauth_account o
-                WHERE o.provider_user_id=${appleUserId} AND o.provider='apple'`;
+    const rows = await this.sql<{ oauth_data: { user_id: string; missing_fields: string | null } | null }[]>`
+      SELECT guest_api.oauth_lookup('apple', ${appleUserId}) AS oauth_data`;
     return {
-      userId: rows[0]?.user_id || null,
-      missing_fields: rows[0]?.missing_fields || null,
+      userId: rows[0]?.oauth_data?.user_id || null,
+      missing_fields: rows[0]?.oauth_data?.missing_fields || null,
     };
   }
 
@@ -31,36 +29,10 @@ export class AppleQueries {
   async queryTryToLinkUserWithEmailApple(appleEmail: string | null, appleSub: string): Promise<OAuthLinkResult> {
     if (!appleEmail) return { userId: null };
 
-    // Use a transaction to avoid race conditions
-    return await this.sql.begin(async (trx: postgres.TransactionSql) => {
-      const existing = await trx<{ id: string }[]>`
-        SELECT u.id
-        FROM identity.user u
-        WHERE lower(u.email) = lower(${appleEmail})
-        FOR UPDATE
-        LIMIT 1
-      `;
-      if (existing.length === 0) {
-        return { userId: null };
-      }
-      const userId = existing[0].id;
-
-      // Insert oauth link for Apple (idempotent)
-      await trx`
-        INSERT INTO identity.oauth_account (user_id, provider, provider_user_id, provider_email)
-        VALUES (${userId}, 'apple', ${appleSub}, ${appleEmail})
-        ON CONFLICT (provider, provider_user_id) DO NOTHING
-      `;
-
-      // Mark auth_provider without overwriting user-chosen fields
-      await trx`
-        UPDATE identity.user
-        SET auth_provider = 'apple'
-        WHERE id = ${userId}
-      `;
-
-      return { userId };
-    });
+    const [row] = await this.sql<{ user_id: string | null }[]>`
+      SELECT guest_api.oauth_link_by_email('apple', ${appleEmail}, ${appleSub}) AS user_id
+    `;
+    return { userId: row?.user_id ?? null };
   }
 
   /** Create brand new user + oauth link for Apple (mirrors the Google variant) */
@@ -72,31 +44,11 @@ export class AppleQueries {
     appleSub: string,
     appleEmail: string | null,
   ): Promise<string> {
-    return await this.sql.begin(async (trx: postgres.TransactionSql) => {
-      // Generate unique username
-      const username = await ensureUniqueUsername(trx, candidateUsername);
-
-      // Create user
-      const [inserted] = await trx<{ id: string }[]>`
-        INSERT INTO identity.user (username, email, name, gender, is_verified, auth_provider)
-        VALUES (${username}, ${email}, ${fullName}, 'Unknown', true, 'apple')
-        RETURNING id
-      `;
-      const newUserId = inserted.id;
-
-      // Create oauth link
-      await trx`
-        INSERT INTO identity.oauth_account (user_id, provider, provider_user_id, provider_email, missing_fields)
-        VALUES (${newUserId}, 'apple', ${appleSub}, ${appleEmail}, ${oauthMissingFields})
-      `;
-
-      // Create default reminder settings
-      await trx`
-        INSERT INTO reminders.user_reminder_setting (user_id)
-        VALUES (${newUserId})
-      `;
-
-      return newUserId;
-    });
+    const [row] = await this.sql<{ user_id: string }[]>`
+      SELECT guest_api.oauth_create_user(
+        'apple', ${candidateUsername}, ${email}, ${fullName}, ${oauthMissingFields}, ${appleSub}, ${appleEmail}
+      ) AS user_id
+    `;
+    return row.user_id;
   }
 }

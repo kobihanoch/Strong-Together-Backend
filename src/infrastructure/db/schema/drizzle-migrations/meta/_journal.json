@@ -92,6 +92,13 @@
       "when": 1786889525991,
       "tag": "0012_remove_is_first_login",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1786890130710,
+      "tag": "0013_guest_api_security_definer_functions",
+      "breakpoints": true
     }
   ]
 }

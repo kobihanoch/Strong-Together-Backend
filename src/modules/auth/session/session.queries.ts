@@ -11,21 +11,15 @@ export class SessionQueries {
   async queryUserByIdentifierForLogin(
     identifier: string,
   ): Promise<(UserByIndetifier & { last_login: Date | null })[]> {
-    return this.sql<(UserByIndetifier & { last_login: Date | null })[]>`
-      SELECT 
-        id, name, username, password, last_login, is_verified, role
-      FROM 
-        identity.user
-      WHERE 
-        auth_provider='app' 
-        AND (username=${identifier} OR email=${identifier})
-      LIMIT 1;
+    const [row] = await this.sql<{ user_data: (UserByIndetifier & { last_login: Date | null }) | null }[]>`
+      SELECT guest_api.find_login_user(${identifier}) AS user_data
     `;
+    return row?.user_data ? [row.user_data] : [];
   }
 
   async queryLastLogin(userId: string): Promise<Date | null> {
     const [user] = await this.sql<{ last_login: Date | null }[]>`
-      SELECT last_login FROM identity.user WHERE id=${userId}::uuid
+      SELECT guest_api.last_login(${userId}::uuid) AS last_login
     `;
     return user?.last_login ?? null;
   }
