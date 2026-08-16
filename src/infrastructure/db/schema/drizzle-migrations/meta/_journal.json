@@ -43,6 +43,13 @@
       "when": 1786877465529,
       "tag": "0005_normalize_policy_and_view_names",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786878146549,
+      "tag": "0006_normalize_routines_and_cron",
+      "breakpoints": true
     }
   ]
 }
