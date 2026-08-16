@@ -8,7 +8,7 @@ import { workoutPlanPolicies } from './policies';
 export const workoutPlan = workoutSchema.table(
   'workout_plan',
   {
-    id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'workoutplan_id_seq' }).notNull(),
+    id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'workout_plan_id_seq' }).notNull(),
     name: text('name').default('My Workout').notNull(),
     numberOfSplits: bigint('numberofsplits', { mode: 'number' }).default(1).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -22,14 +22,14 @@ export const workoutPlan = workoutSchema.table(
       .notNull(),
   },
   (t) => [
-    primaryKey({ name: 'workoutplan_pkey', columns: [t.id] }),
-    foreignKey({ name: 'workoutplans_user_id_fkey', columns: [t.userId], foreignColumns: [user.id] })
+    primaryKey({ name: 'workout_plan_pkey', columns: [t.id] }),
+    foreignKey({ name: 'workout_plan_user_id_fkey', columns: [t.userId], foreignColumns: [user.id] })
       .onUpdate('cascade')
       .onDelete('cascade'),
-    foreignKey({ name: 'workoutplans_trainer_id_fkey', columns: [t.trainerId], foreignColumns: [user.id] })
+    foreignKey({ name: 'workout_plan_trainer_id_fkey', columns: [t.trainerId], foreignColumns: [user.id] })
       .onUpdate('cascade')
       .onDelete('cascade'),
-    uniqueIndex('uq_workoutplans_active_user')
+    uniqueIndex('uq_workout_plan_active_user')
       .on(t.userId)
       .where(drizzleSql`${t.isActive}`),
     ...workoutPlanPolicies(t),

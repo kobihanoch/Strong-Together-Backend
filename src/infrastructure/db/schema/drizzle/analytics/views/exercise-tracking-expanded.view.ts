@@ -4,14 +4,14 @@ import { analyticsSchema } from '../../schemas';
 
 // Security-invoker view that joins exercise tracking to workout metadata.
 export const exerciseTrackingExpandedView = analyticsSchema
-  .view('v_exercisetracking_expanded', {
+  .view('v_exercise_tracking_expanded', {
     id: bigint('id', { mode: 'number' }),
     exerciseToSplitId: bigint('exercise_to_split_id', { mode: 'number' }),
     weight: real('weight').array(),
     reps: bigint('reps', { mode: 'number' }).array(),
     exerciseId: bigint('exercise_id', { mode: 'number' }),
     workoutSplitId: bigint('workout_split_id', { mode: 'number' }),
-    splitName: text('splitname'),
+    splitName: text('split_name'),
     exercise: text('exercise'),
     notes: text('notes'),
     workoutSummaryId: uuid('workout_summary_id'),
@@ -26,7 +26,7 @@ export const exerciseTrackingExpandedView = analyticsSchema
       et.reps,
       ews.exercise_id,
       wsumm.workout_split_id,
-      ws.name AS splitname,
+      ws.name AS split_name,
       ex.name AS exercise,
       et.notes,
       et.workout_summary_id,

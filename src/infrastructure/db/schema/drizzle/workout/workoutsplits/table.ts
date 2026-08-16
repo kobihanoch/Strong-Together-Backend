@@ -10,7 +10,7 @@ import { workoutSplitPolicies } from './policies';
 export const workoutSplit = workoutSchema.table(
   'workout_split',
   {
-    id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'workoutsplits_id_seq' }).notNull(),
+    id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'workout_split_id_seq' }).notNull(),
     workoutId: bigint('workout_id', { mode: 'number' }).notNull(),
     name: text('name').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -18,12 +18,12 @@ export const workoutSplit = workoutSchema.table(
     isActive: boolean('is_active').default(true).notNull(),
   },
   (t) => [
-    primaryKey({ name: 'workoutsplits_pkey', columns: [t.id] }),
-    unique('uq_workoutsplits_plan_name').on(t.workoutId, t.name),
-    foreignKey({ name: 'workoutsplits_workout_id_fkey', columns: [t.workoutId], foreignColumns: [workoutPlan.id] })
+    primaryKey({ name: 'workout_split_pkey', columns: [t.id] }),
+    unique('uq_workout_split_plan_name').on(t.workoutId, t.name),
+    foreignKey({ name: 'workout_split_workout_id_fkey', columns: [t.workoutId], foreignColumns: [workoutPlan.id] })
       .onUpdate('cascade')
       .onDelete('cascade'),
-    index('workoutsplits_workout_id_idx').on(t.workoutId),
+    index('workout_split_workout_id_idx').on(t.workoutId),
     ...workoutSplitPolicies(t),
   ],
 );

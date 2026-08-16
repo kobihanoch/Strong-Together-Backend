@@ -18,14 +18,14 @@ export const message = messagesSchema.table(
     isRead: boolean('is_read').default(false).notNull(),
   },
   (t) => [
-    primaryKey({ name: 'messages_pkey', columns: [t.id] }),
-    foreignKey({ name: 'messages_sender_id_fkey', columns: [t.senderId], foreignColumns: [user.id] })
+    primaryKey({ name: 'message_pkey', columns: [t.id] }),
+    foreignKey({ name: 'message_sender_id_fkey', columns: [t.senderId], foreignColumns: [user.id] })
       .onUpdate('cascade')
       .onDelete('cascade'),
-    foreignKey({ name: 'messages_receiver_id_fkey', columns: [t.receiverId], foreignColumns: [user.id] })
+    foreignKey({ name: 'message_receiver_id_fkey', columns: [t.receiverId], foreignColumns: [user.id] })
       .onUpdate('cascade')
       .onDelete('cascade'),
-    index('messages_receiver_id_idx').on(t.receiverId),
+    index('message_receiver_id_idx').on(t.receiverId),
     ...messagePolicies(t),
   ],
 );

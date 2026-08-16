@@ -9,7 +9,7 @@ export const userSplitInformation = remindersSchema
     'user_split_information',
     {
       id: bigint('id', { mode: 'number' })
-        .generatedByDefaultAsIdentity({ name: 'user_split_information_id_seq1' })
+        .generatedByDefaultAsIdentity({ name: 'user_split_information_id_seq' })
         .notNull(),
       userId: uuid('user_id').notNull(),
       workoutSplitId: bigint('workout_split_id', { mode: 'number' }).notNull(),
@@ -22,14 +22,14 @@ export const userSplitInformation = remindersSchema
     },
     (t) => [
       primaryKey({ name: 'user_split_information_pkey', columns: [t.id] }),
-      unique('user_split_information_user_id_split_id_key').on(t.userId, t.workoutSplitId),
+      unique('user_split_information_user_id_workout_split_id_key').on(t.userId, t.workoutSplitId),
       foreignKey({
         name: 'user_split_information_user_id_fkey',
         columns: [t.userId],
         foreignColumns: [user.id],
       }).onDelete('cascade'),
       foreignKey({
-        name: 'user_split_information_split_id_fkey',
+        name: 'user_split_information_workout_split_id_fkey',
         columns: [t.workoutSplitId],
         foreignColumns: [workoutSplit.id],
       }).onDelete('cascade'),

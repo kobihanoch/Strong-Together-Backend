@@ -31,12 +31,12 @@ export const user = identitySchema.table(
     lastLogin: timestamp('last_login', { withTimezone: true }),
   },
   (t) => [
-    primaryKey({ name: 'users_pkey', columns: [t.id] }),
-    unique('users_id_key1').on(t.id),
-    uniqueIndex('users_email_ci_unique')
+    primaryKey({ name: 'user_pkey', columns: [t.id] }),
+    unique('user_id_key').on(t.id),
+    uniqueIndex('user_email_ci_unique')
       .on(drizzleSql`lower(trim(both from ${t.email}))`)
       .where(drizzleSql`${t.email} is not null`),
-    uniqueIndex('users_username_ci_unique')
+    uniqueIndex('user_username_ci_unique')
       .on(drizzleSql`lower(trim(both from ${t.username}))`)
       .where(drizzleSql`${t.username} is not null`),
     ...userPolicies(t),

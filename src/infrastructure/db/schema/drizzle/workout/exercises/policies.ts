@@ -4,5 +4,5 @@ import { authenticatedRole } from '../../roles';
 
 export const exercisePolicies = () => [
   // Makes the shared exercise catalog readable to every authenticated user.
-  pgPolicy('Allow all authenticated users to read exercises', { for: 'select', to: authenticatedRole, using: drizzleSql`true` }),
+  pgPolicy('Allow all authenticated users to read exercise', { for: 'select', to: authenticatedRole, using: drizzleSql`true` }),
 ];

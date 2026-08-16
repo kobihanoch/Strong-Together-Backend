@@ -7,7 +7,7 @@ import { aerobicTrackingPolicies } from './policies';
 export const aerobicTracking = trackingSchema.table(
   'aerobic_tracking',
   {
-    id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'aerobictracking_id_seq' }).notNull(),
+    id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'aerobic_tracking_id_seq' }).notNull(),
     userId: uuid('user_id').notNull(),
     type: text('type').notNull(),
     durationMins: bigint('duration_mins', { mode: 'number' }).default(0).notNull(),
@@ -17,11 +17,11 @@ export const aerobicTracking = trackingSchema.table(
       .notNull(),
   },
   (t) => [
-    primaryKey({ name: 'aerobictracking_pkey', columns: [t.id] }),
-    foreignKey({ name: 'aerobictracking_user_id_fkey', columns: [t.userId], foreignColumns: [user.id] })
+    primaryKey({ name: 'aerobic_tracking_pkey', columns: [t.id] }),
+    foreignKey({ name: 'aerobic_tracking_user_id_fkey', columns: [t.userId], foreignColumns: [user.id] })
       .onUpdate('cascade')
       .onDelete('cascade'),
-    index('aerobictracking_user_id_workout_time_utc_idx').on(t.userId, t.workoutTimeUtc.desc().nullsFirst()),
+    index('aerobic_tracking_user_id_workout_time_utc_idx').on(t.userId, t.workoutTimeUtc.desc().nullsFirst()),
     ...aerobicTrackingPolicies(t),
   ],
 );

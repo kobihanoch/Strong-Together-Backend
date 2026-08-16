@@ -22,7 +22,7 @@ export const workoutSummary = trackingSchema.table(
       'cascade',
     ),
     foreignKey({
-      name: 'workout_summary_workoutsplit_id_fkey',
+      name: 'workout_summary_workout_split_id_fkey',
       columns: [t.workoutSplitId],
       foreignColumns: [workoutSplit.id],
     })

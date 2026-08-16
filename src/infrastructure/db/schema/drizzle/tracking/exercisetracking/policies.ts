@@ -7,17 +7,17 @@ export function exerciseTrackingPolicies(t: { workoutSummaryId: AnyPgColumn }) {
   const owns = drizzleSql`exists (select 1 from "tracking"."workout_summary" ws where ws."id" = ${t.workoutSummaryId} and ws."user_id" = ${uid})`;
   return [
     // Lets authenticated users read exercise tracking rows through summaries they own.
-    pgPolicy('exercisetracking_select_by_summary_owner', { for: 'select', to: authenticatedRole, using: owns }),
+    pgPolicy('exercise_tracking_select_by_summary_owner', { for: 'select', to: authenticatedRole, using: owns }),
     // Lets authenticated users insert exercise tracking rows through summaries they own.
-    pgPolicy('exercisetracking_insert_by_summary_owner', { for: 'insert', to: authenticatedRole, withCheck: owns }),
+    pgPolicy('exercise_tracking_insert_by_summary_owner', { for: 'insert', to: authenticatedRole, withCheck: owns }),
     // Lets authenticated users update exercise tracking rows through summaries they own.
-    pgPolicy('exercisetracking_update_by_summary_owner', {
+    pgPolicy('exercise_tracking_update_by_summary_owner', {
       for: 'update',
       to: authenticatedRole,
       using: owns,
       withCheck: owns,
     }),
     // Lets authenticated users delete exercise tracking rows through summaries they own.
-    pgPolicy('exercisetracking_delete_by_summary_owner', { for: 'delete', to: authenticatedRole, using: owns }),
+    pgPolicy('exercise_tracking_delete_by_summary_owner', { for: 'delete', to: authenticatedRole, using: owns }),
   ];
 }

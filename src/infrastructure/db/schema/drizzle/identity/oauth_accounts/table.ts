@@ -17,9 +17,9 @@ export const oauthAccount = identitySchema.table(
     missingFields: text('missing_fields'),
   },
   (t) => [
-    primaryKey({ name: 'oauth_accounts_pkey', columns: [t.id] }),
-    unique('oauth_accounts_provider_user_unique').on(t.provider, t.providerUserId),
-    foreignKey({ name: 'oauth_accounts_user_id_fkey', columns: [t.userId], foreignColumns: [user.id] })
+    primaryKey({ name: 'oauth_account_pkey', columns: [t.id] }),
+    unique('oauth_account_provider_user_unique').on(t.provider, t.providerUserId),
+    foreignKey({ name: 'oauth_account_user_id_fkey', columns: [t.userId], foreignColumns: [user.id] })
       .onUpdate('cascade')
       .onDelete('cascade'),
     ...oauthAccountPolicies(t),

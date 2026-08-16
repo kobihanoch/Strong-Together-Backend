@@ -11,7 +11,7 @@ export const exerciseToWorkoutSplit = workoutSchema.table(
   'exercise_to_workout_split',
   {
     id: bigint('id', { mode: 'number' })
-      .generatedByDefaultAsIdentity({ name: 'ExerciseToWorkoutsplit_id_seq' })
+      .generatedByDefaultAsIdentity({ name: 'exercise_to_workout_split_id_seq' })
       .notNull(),
     exerciseId: bigint('exercise_id', { mode: 'number' }).notNull(),
     workoutSplitId: bigint('workout_split_id', { mode: 'number' }).notNull(),
@@ -21,26 +21,26 @@ export const exerciseToWorkoutSplit = workoutSchema.table(
     isActive: boolean('is_active').default(true).notNull(),
   },
   (t) => [
-    primaryKey({ name: 'ExerciseToWorkoutsplit_pkey', columns: [t.id] }),
-    unique('uq_ets_split_exercise').on(t.workoutSplitId, t.exerciseId),
+    primaryKey({ name: 'exercise_to_workout_split_pkey', columns: [t.id] }),
+    unique('uq_exercise_to_workout_split_workout_split_exercise').on(t.workoutSplitId, t.exerciseId),
     foreignKey({
-      name: 'ExerciseToWorkoutsplit_exercise_id_fkey',
+      name: 'exercise_to_workout_split_exercise_id_fkey',
       columns: [t.exerciseId],
       foreignColumns: [exercise.id],
     })
       .onUpdate('cascade')
       .onDelete('cascade'),
     foreignKey({
-      name: 'ExerciseToWorkoutsplit_workoutsplit_id_fkey',
+      name: 'exercise_to_workout_split_workout_split_id_fkey',
       columns: [t.workoutSplitId],
       foreignColumns: [workoutSplit.id],
     })
       .onUpdate('cascade')
       .onDelete('cascade'),
-    index('exercisetoworkoutsplit_active_idx')
+    index('exercise_to_workout_split_active_idx')
       .on(t.workoutSplitId, t.orderIndex)
       .where(drizzleSql`${t.isActive} = true`),
-    index('exercisetoworkoutsplit_workoutsplit_id_order_index_idx').on(t.workoutSplitId, t.orderIndex),
+    index('exercise_to_workout_split_workout_split_id_order_index_idx').on(t.workoutSplitId, t.orderIndex),
     ...exerciseToWorkoutSplitPolicies(t),
   ],
 );

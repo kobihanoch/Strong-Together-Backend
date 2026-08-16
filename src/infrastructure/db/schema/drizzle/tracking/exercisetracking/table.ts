@@ -9,7 +9,7 @@ import { exerciseTrackingPolicies } from './policies';
 export const exerciseTracking = trackingSchema.table(
   'exercise_tracking',
   {
-    id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'exercisetracking_id_seq' }).notNull(),
+    id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'exercise_tracking_id_seq' }).notNull(),
     exerciseToSplitId: bigint('exercise_to_split_id', { mode: 'number' }).notNull(),
     weight: real('weight').array().notNull(),
     reps: bigint('reps', { mode: 'number' }).array().notNull(),
@@ -17,22 +17,22 @@ export const exerciseTracking = trackingSchema.table(
     workoutSummaryId: uuid('workout_summary_id').notNull(),
   },
   (t) => [
-    primaryKey({ name: 'exercisetracking_pkey', columns: [t.id] }),
+    primaryKey({ name: 'exercise_tracking_pkey', columns: [t.id] }),
     foreignKey({
-      name: 'exercisetracking_exercisetosplit_id_fkey',
+      name: 'exercise_tracking_exercise_to_split_id_fkey',
       columns: [t.exerciseToSplitId],
       foreignColumns: [exerciseToWorkoutSplit.id],
     })
       .onUpdate('cascade')
       .onDelete('cascade'),
     foreignKey({
-      name: 'exercisetracking_workout_summary_id_fkey',
+      name: 'exercise_tracking_workout_summary_id_fkey',
       columns: [t.workoutSummaryId],
       foreignColumns: [workoutSummary.id],
     })
       .onUpdate('cascade')
       .onDelete('cascade'),
-    index('exercisetracking_workout_summary_id_idx').on(t.workoutSummaryId),
+    index('exercise_tracking_workout_summary_id_idx').on(t.workoutSummaryId),
     ...exerciseTrackingPolicies(t),
   ],
 );

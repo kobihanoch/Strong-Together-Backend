@@ -7,15 +7,15 @@ import { exercisePolicies } from './policies';
 export const exercise = workoutSchema.table(
   'exercise',
   {
-    id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'exercises_id_seq' }).notNull(),
+    id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'exercise_id_seq' }).notNull(),
     name: text('name').notNull(),
     description: text('description').notNull(),
     targetMuscle: text('target_muscle').notNull(),
     specificTargetMuscle: text('specific_target_muscle').notNull(),
   },
   (t) => [
-    primaryKey({ name: 'exercises_pkey', columns: [t.id] }),
-    uniqueIndex('exercises_name_unique').on(t.name),
+    primaryKey({ name: 'exercise_pkey', columns: [t.id] }),
+    uniqueIndex('exercise_name_unique').on(t.name),
     ...exercisePolicies(),
   ],
 );

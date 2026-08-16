@@ -16,13 +16,13 @@ export const workoutSet = workoutSchema.table(
     primaryKey({ name: 'workout_set_pkey', columns: [t.id] }),
     unique('workout_set_exercise_order_unique').on(t.exerciseToSplitId, t.orderIndex),
     foreignKey({
-      name: 'workout_set_exercisetoworkoutsplit_id_fkey',
+      name: 'workout_set_exercise_to_split_id_fkey',
       columns: [t.exerciseToSplitId],
       foreignColumns: [exerciseToWorkoutSplit.id],
     })
       .onUpdate('cascade')
       .onDelete('cascade'),
-    index('workout_set_exercisetoworkoutsplit_id_idx').on(t.exerciseToSplitId),
+    index('workout_set_exercise_to_split_id_idx').on(t.exerciseToSplitId),
     ...workoutSetPolicies(t),
   ],
 );

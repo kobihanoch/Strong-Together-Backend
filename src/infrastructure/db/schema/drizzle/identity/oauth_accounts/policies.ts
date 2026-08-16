@@ -5,26 +5,26 @@ const currentUserId = drizzleSql`"identity"."current_user_id"()`;
 export function oauthAccountPolicies(table: { userId: AnyPgColumn }) {
   return [
     // Lets authenticated users read only OAuth accounts linked to themselves.
-    pgPolicy('Enable read access for auth users on oauth_accounts', {
+    pgPolicy('Enable read access for auth users on oauth_account', {
       for: 'select',
       to: authenticatedRole,
       using: drizzleSql`${currentUserId} = ${table.userId}`,
     }),
     // Lets authenticated users link OAuth accounts only to themselves.
-    pgPolicy('Enable insert for auth users on oauth_accounts', {
+    pgPolicy('Enable insert for auth users on oauth_account', {
       for: 'insert',
       to: authenticatedRole,
       withCheck: drizzleSql`${currentUserId} = ${table.userId}`,
     }),
     // Lets authenticated users update only OAuth accounts linked to themselves.
-    pgPolicy('Enable update for auth users on oauth_accounts', {
+    pgPolicy('Enable update for auth users on oauth_account', {
       for: 'update',
       to: authenticatedRole,
       using: drizzleSql`${currentUserId} = ${table.userId}`,
       withCheck: drizzleSql`${currentUserId} = ${table.userId}`,
     }),
     // Lets authenticated users delete only OAuth accounts linked to themselves.
-    pgPolicy('Enable delete for auth users on oauth_accounts', {
+    pgPolicy('Enable delete for auth users on oauth_account', {
       for: 'delete',
       to: authenticatedRole,
       using: drizzleSql`${currentUserId} = ${table.userId}`,

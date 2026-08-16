@@ -4,7 +4,7 @@ import { analyticsSchema } from '../../schemas';
 
 // Security-invoker view that expands the paired weight/reps arrays into sets.
 export const exerciseTrackingSetSimpleView = analyticsSchema
-  .view('v_exercisetracking_set_simple', {
+  .view('v_exercise_tracking_set_simple', {
     id: bigint('id', { mode: 'number' }),
     exerciseToSplitId: bigint('exercise_to_split_id', { mode: 'number' }),
     exerciseId: bigint('exercise_id', { mode: 'number' }),
@@ -26,6 +26,6 @@ export const exerciseTrackingSetSimpleView = analyticsSchema
       et.workout_summary_id,
       et.workout_start_utc,
       et.workout_end_utc
-    FROM analytics.v_exercisetracking_expanded et
+    FROM analytics.v_exercise_tracking_expanded et
     CROSS JOIN LATERAL UNNEST(et.weight, et.reps) s(weight, reps)
   `);
