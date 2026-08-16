@@ -10,7 +10,7 @@ export const exerciseTracking = trackingSchema.table(
   'exercise_tracking',
   {
     id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'exercisetracking_id_seq' }).notNull(),
-    exerciseToSplitId: bigint('exercisetosplit_id', { mode: 'number' }).notNull(),
+    exerciseToSplitId: bigint('exercise_to_split_id', { mode: 'number' }).notNull(),
     weight: real('weight').array().notNull(),
     reps: bigint('reps', { mode: 'number' }).array().notNull(),
     notes: text('notes'),

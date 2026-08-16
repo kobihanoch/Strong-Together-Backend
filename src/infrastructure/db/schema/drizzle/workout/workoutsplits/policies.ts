@@ -4,8 +4,8 @@ import { authenticatedRole } from '../../roles';
 const uid = drizzleSql`"identity"."current_user_id"()`;
 
 export function workoutSplitPolicies(t: { workoutId: AnyPgColumn }) {
-  const owns = drizzleSql`${uid} = (select wp."user_id" from "workout"."workoutplans" wp where wp."id" = ${t.workoutId})`;
-  const ownsForDelete = drizzleSql`exists (select 1 from "workout"."workoutplans" wp where wp."id" = ${t.workoutId} and wp."user_id" = ${uid})`;
+  const owns = drizzleSql`${uid} = (select wp."user_id" from "workout"."workout_plan" wp where wp."id" = ${t.workoutId})`;
+  const ownsForDelete = drizzleSql`exists (select 1 from "workout"."workout_plan" wp where wp."id" = ${t.workoutId} and wp."user_id" = ${uid})`;
   return [
     // Lets authenticated users read splits belonging to their own plans.
     pgPolicy('Enable read access for auth users on workoutsplits', {

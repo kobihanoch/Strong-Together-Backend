@@ -6,7 +6,7 @@ import { analyticsSchema } from '../../schemas';
 export const prsView = analyticsSchema
   .view('v_prs', {
     id: bigint('id', { mode: 'number' }),
-    exerciseToSplitId: bigint('exercisetosplit_id', { mode: 'number' }),
+    exerciseToSplitId: bigint('exercise_to_split_id', { mode: 'number' }),
     exerciseId: bigint('exercise_id', { mode: 'number' }),
     exercise: text('exercise'),
     weight: real('weight'),
@@ -19,7 +19,7 @@ export const prsView = analyticsSchema
   .as(drizzleSql`
     SELECT DISTINCT ON (s.exercise_id)
       s.id,
-      s.exercisetosplit_id,
+      s.exercise_to_split_id,
       s.exercise_id,
       s.exercise,
       s.weight,

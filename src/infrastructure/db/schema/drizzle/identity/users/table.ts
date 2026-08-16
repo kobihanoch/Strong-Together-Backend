@@ -19,7 +19,7 @@ export const user = identitySchema.table(
     createdAt: timestamp('created_at', { withTimezone: true })
       .default(drizzleSql`(now() AT TIME ZONE 'utc')`)
       .notNull(),
-    profileImageUrl: text('profile_image_url'),
+    profileImagePath: text('profile_image_path'),
     id: uuid('id').defaultRandom().notNull(),
     pushToken: text('push_token'),
     password: text('password'),

@@ -8,28 +8,28 @@ export const workoutSet = workoutSchema.table(
   'workout_set',
   {
     id: uuid('id').defaultRandom().notNull(),
-    exerciseToWorkoutSplitId: bigint('exercisetoworkoutsplit_id', { mode: 'number' }).notNull(),
+    exerciseToSplitId: bigint('exercise_to_split_id', { mode: 'number' }).notNull(),
     orderIndex: integer('order_index').notNull(),
     reps: integer('reps').notNull(),
   },
   (t) => [
     primaryKey({ name: 'workout_set_pkey', columns: [t.id] }),
-    unique('workout_set_exercise_order_unique').on(t.exerciseToWorkoutSplitId, t.orderIndex),
+    unique('workout_set_exercise_order_unique').on(t.exerciseToSplitId, t.orderIndex),
     foreignKey({
       name: 'workout_set_exercisetoworkoutsplit_id_fkey',
-      columns: [t.exerciseToWorkoutSplitId],
+      columns: [t.exerciseToSplitId],
       foreignColumns: [exerciseToWorkoutSplit.id],
     })
       .onUpdate('cascade')
       .onDelete('cascade'),
-    index('workout_set_exercisetoworkoutsplit_id_idx').on(t.exerciseToWorkoutSplitId),
+    index('workout_set_exercisetoworkoutsplit_id_idx').on(t.exerciseToSplitId),
     ...workoutSetPolicies(t),
   ],
 );
 
 export const workoutSetRelations = relations(workoutSet, ({ one }) => ({
   exerciseToWorkoutSplit: one(exerciseToWorkoutSplit, {
-    fields: [workoutSet.exerciseToWorkoutSplitId],
+    fields: [workoutSet.exerciseToSplitId],
     references: [exerciseToWorkoutSplit.id],
   }),
 }));

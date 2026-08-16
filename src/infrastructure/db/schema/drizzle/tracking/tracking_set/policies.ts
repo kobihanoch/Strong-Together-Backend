@@ -7,7 +7,7 @@ const currentUserId = drizzleSql`"identity"."current_user_id"()`;
 export function trackingSetPolicies(table: { exerciseTrackingId: AnyPgColumn }) {
   const ownsExerciseTracking = drizzleSql`exists (
     select 1
-    from "tracking"."exercisetracking" et
+    from "tracking"."exercise_tracking" et
     join "tracking"."workout_summary" ws on ws."id" = et."workout_summary_id"
     where et."id" = ${table.exerciseTrackingId}
       and ws."user_id" = ${currentUserId}

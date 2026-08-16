@@ -14,7 +14,7 @@ export const workoutSummary = trackingSchema.table(
     workoutStartUtc: timestamp('workout_start_utc', { withTimezone: true }).notNull(),
     workoutEndUtc: timestamp('workout_end_utc', { withTimezone: true }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    workoutSplitId: bigint('workoutsplit_id', { mode: 'number' }).notNull(),
+    workoutSplitId: bigint('workout_split_id', { mode: 'number' }).notNull(),
   },
   (t) => [
     primaryKey({ name: 'workout_summary_pkey', columns: [t.id] }),

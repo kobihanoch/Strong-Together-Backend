@@ -29,6 +29,13 @@
       "when": 1786876506178,
       "tag": "0003_normalize_table_names",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786876867254,
+      "tag": "0004_normalize_column_names",
+      "breakpoints": true
     }
   ]
 }

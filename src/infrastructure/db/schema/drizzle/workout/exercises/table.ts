@@ -10,8 +10,8 @@ export const exercise = workoutSchema.table(
     id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'exercises_id_seq' }).notNull(),
     name: text('name').notNull(),
     description: text('description').notNull(),
-    targetMuscle: text('targetmuscle').notNull(),
-    specificTargetMuscle: text('specifictargetmuscle').notNull(),
+    targetMuscle: text('target_muscle').notNull(),
+    specificTargetMuscle: text('specific_target_muscle').notNull(),
   },
   (t) => [
     primaryKey({ name: 'exercises_pkey', columns: [t.id] }),

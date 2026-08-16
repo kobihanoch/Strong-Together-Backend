@@ -6,7 +6,7 @@ import { sql as drizzleSql } from 'drizzle-orm';
 export const exerciseToWorkoutSplitExpandedView = workoutSchema
   .view('v_exercisetoworkoutsplit_expanded', {
     id: bigint('id', { mode: 'number' }),
-    workoutSplitId: bigint('workoutsplit_id', { mode: 'number' }),
+    workoutSplitId: bigint('workout_split_id', { mode: 'number' }),
     workoutId: bigint('workout_id', { mode: 'number' }),
     exerciseId: bigint('exercise_id', { mode: 'number' }),
     exercise: text('exercise'),
@@ -18,7 +18,7 @@ export const exerciseToWorkoutSplitExpandedView = workoutSchema
   })
   .with({ securityInvoker: true }).as(drizzleSql`
     SELECT ews.id,
-      ews.workoutsplit_id,
+      ews.workout_split_id,
       ws.workout_id,
       ews.exercise_id,
       ex.name AS exercise,
@@ -27,7 +27,7 @@ export const exerciseToWorkoutSplitExpandedView = workoutSchema
       ews.order_index,
       ews.created_at,
       ews.is_active
-    FROM workout.exercisetoworkoutsplit ews
-    JOIN workout.workoutsplits ws ON ws.id = ews.workoutsplit_id
-    JOIN workout.exercises ex ON ex.id = ews.exercise_id
+    FROM workout.exercise_to_workout_split ews
+    JOIN workout.workout_split ws ON ws.id = ews.workout_split_id
+    JOIN workout.exercise ex ON ex.id = ews.exercise_id
   `);

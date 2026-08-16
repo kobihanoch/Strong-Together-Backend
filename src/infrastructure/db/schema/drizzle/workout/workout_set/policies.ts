@@ -4,13 +4,13 @@ import { authenticatedRole } from '../../roles';
 
 const currentUserId = drizzleSql`"identity"."current_user_id"()`;
 
-export function workoutSetPolicies(table: { exerciseToWorkoutSplitId: AnyPgColumn }) {
+export function workoutSetPolicies(table: { exerciseToSplitId: AnyPgColumn }) {
   const ownsWorkoutSet = drizzleSql`exists (
     select 1
-    from "workout"."exercisetoworkoutsplit" ets
-    join "workout"."workoutsplits" ws on ws."id" = ets."workoutsplit_id"
-    join "workout"."workoutplans" wp on wp."id" = ws."workout_id"
-    where ets."id" = ${table.exerciseToWorkoutSplitId}
+    from "workout"."exercise_to_workout_split" ets
+    join "workout"."workout_split" ws on ws."id" = ets."workout_split_id"
+    join "workout"."workout_plan" wp on wp."id" = ws."workout_id"
+    where ets."id" = ${table.exerciseToSplitId}
       and wp."user_id" = ${currentUserId}
   )`;
 

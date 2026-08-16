@@ -14,7 +14,7 @@ export const exerciseToWorkoutSplit = workoutSchema.table(
       .generatedByDefaultAsIdentity({ name: 'ExerciseToWorkoutsplit_id_seq' })
       .notNull(),
     exerciseId: bigint('exercise_id', { mode: 'number' }).notNull(),
-    workoutSplitId: bigint('workoutsplit_id', { mode: 'number' }).notNull(),
+    workoutSplitId: bigint('workout_split_id', { mode: 'number' }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     sets: bigint('sets', { mode: 'number' }).array().notNull(),
     orderIndex: bigint('order_index', { mode: 'number' }).notNull(),

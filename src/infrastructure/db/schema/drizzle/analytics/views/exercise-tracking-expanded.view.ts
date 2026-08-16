@@ -6,11 +6,11 @@ import { analyticsSchema } from '../../schemas';
 export const exerciseTrackingExpandedView = analyticsSchema
   .view('v_exercisetracking_expanded', {
     id: bigint('id', { mode: 'number' }),
-    exerciseToSplitId: bigint('exercisetosplit_id', { mode: 'number' }),
+    exerciseToSplitId: bigint('exercise_to_split_id', { mode: 'number' }),
     weight: real('weight').array(),
     reps: bigint('reps', { mode: 'number' }).array(),
     exerciseId: bigint('exercise_id', { mode: 'number' }),
-    workoutSplitId: bigint('workoutsplit_id', { mode: 'number' }),
+    workoutSplitId: bigint('workout_split_id', { mode: 'number' }),
     splitName: text('splitname'),
     exercise: text('exercise'),
     notes: text('notes'),
@@ -21,20 +21,20 @@ export const exerciseTrackingExpandedView = analyticsSchema
   .with({ securityInvoker: true })
   .as(drizzleSql`
     SELECT et.id,
-      et.exercisetosplit_id,
+      et.exercise_to_split_id,
       et.weight,
       et.reps,
       ews.exercise_id,
-      wsumm.workoutsplit_id,
+      wsumm.workout_split_id,
       ws.name AS splitname,
       ex.name AS exercise,
       et.notes,
       et.workout_summary_id,
       wsumm.workout_start_utc,
       wsumm.workout_end_utc
-    FROM tracking.exercisetracking et
+    FROM tracking.exercise_tracking et
     LEFT JOIN tracking.workout_summary wsumm ON wsumm.id = et.workout_summary_id
-    LEFT JOIN workout.exercisetoworkoutsplit ews ON ews.id = et.exercisetosplit_id
-    LEFT JOIN workout.workoutsplits ws ON ws.id = wsumm.workoutsplit_id
-    LEFT JOIN workout.exercises ex ON ex.id = ews.exercise_id
+    LEFT JOIN workout.exercise_to_workout_split ews ON ews.id = et.exercise_to_split_id
+    LEFT JOIN workout.workout_split ws ON ws.id = wsumm.workout_split_id
+    LEFT JOIN workout.exercise ex ON ex.id = ews.exercise_id
   `);

@@ -6,7 +6,7 @@ import { analyticsSchema } from '../../schemas';
 export const exerciseTrackingSetSimpleView = analyticsSchema
   .view('v_exercisetracking_set_simple', {
     id: bigint('id', { mode: 'number' }),
-    exerciseToSplitId: bigint('exercisetosplit_id', { mode: 'number' }),
+    exerciseToSplitId: bigint('exercise_to_split_id', { mode: 'number' }),
     exerciseId: bigint('exercise_id', { mode: 'number' }),
     exercise: text('exercise'),
     weight: real('weight'),
@@ -18,7 +18,7 @@ export const exerciseTrackingSetSimpleView = analyticsSchema
   .with({ securityInvoker: true })
   .as(drizzleSql`
     SELECT et.id,
-      et.exercisetosplit_id,
+      et.exercise_to_split_id,
       et.exercise_id,
       et.exercise,
       s.weight,
