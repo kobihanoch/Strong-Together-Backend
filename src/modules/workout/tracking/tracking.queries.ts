@@ -12,6 +12,7 @@ export class WorkoutTrackingQueries {
     days: number = 45,
     tz: string = 'Asia/Jerusalem',
   ): Promise<ExerciseTrackingAndStats> {
+    // Load the user's tracking history, statistics, PRs, and response maps in one query.
     const [{ data }] = await this.sql<[{ data: ExerciseTrackingAndStats }]>`
   with 
   bounds as (
@@ -142,16 +143,15 @@ export class WorkoutTrackingQueries {
     workoutStartUtc: string | null,
     workoutEndUtc: string | null,
   ): Promise<string> {
-    const workoutArrayJson = workoutArray as unknown as postgres.ParameterOrFragment<never>;
-
+    // Resolve the workout split that owns the exercises in the finished workout.
     const [{ workoutsplit_id }] = await this.sql<[{ workoutsplit_id: number }]>`
-      select distinct ews.workout_split_id as workoutsplit_id
-      from jsonb_to_recordset(${workoutArrayJson}::jsonb) as t(exercisetosplit_id int8)
-      join workout.exercise_to_workout_split ews
-        on ews.id = t.exercisetosplit_id
+      select workout_split_id as workoutsplit_id
+      from workout.exercise_to_workout_split
+      where id = ${workoutArray[0].exercisetosplit_id}
       limit 1;
     `;
 
+    // Create the parent summary for the completed workout.
     const [{ id: workoutSummaryId }] = await this.sql<[{ id: string }]>`
       insert into tracking.workout_summary (
         user_id,
@@ -168,40 +168,36 @@ export class WorkoutTrackingQueries {
       returning id;
     `;
 
-    await this.sql`
-      insert into tracking.exercise_tracking
-        (exercise_to_split_id, notes, workout_summary_id)
-      select
-        t.exercisetosplit_id::int8,
-        coalesce(t.notes, '')::text,
-        ${workoutSummaryId}::uuid as workout_summary_id
-      from jsonb_to_recordset(${workoutArrayJson}::jsonb) as t(
-        exercisetosplit_id int8,
-        weight float4[],
-        reps int8[],
-        notes text
-      )
-      returning id;
-    `;
+    for (const exercise of workoutArray) {
+      if (exercise.weight.length !== exercise.reps.length) {
+        throw new Error('Weight and reps arrays must have the same length');
+      }
 
-    await this.sql`
-      insert into tracking.tracking_set (exercise_tracking_id, set_index, reps, weight)
-      select
-        exercise_tracking.id,
-        (set_data.set_ordinality - 1)::integer,
-        set_data.reps::integer,
-        set_data.weight::real
-      from jsonb_to_recordset(${workoutArrayJson}::jsonb) as t(
-        exercisetosplit_id int8,
-        weight float4[],
-        reps int8[]
-      )
-      join tracking.exercise_tracking exercise_tracking
-        on exercise_tracking.exercise_to_split_id = t.exercisetosplit_id
-       and exercise_tracking.workout_summary_id = ${workoutSummaryId}::uuid
-      cross join lateral unnest(t.weight, t.reps) with ordinality
-        as set_data(weight, reps, set_ordinality);
-    `;
+      // Create one tracking record for this exercise; its sets are inserted next.
+      const [{ id: exerciseTrackingId }] = await this.sql<[{ id: number }]>`
+        insert into tracking.exercise_tracking
+          (exercise_to_split_id, notes, workout_summary_id)
+        values (
+          ${exercise.exercisetosplit_id},
+          ${exercise.notes ?? ''},
+          ${workoutSummaryId}::uuid
+        )
+        returning id;
+      `;
+
+      for (let setIndex = 0; setIndex < exercise.reps.length; setIndex += 1) {
+        // Store the reps and weight for one performed set at its zero-based index.
+        await this.sql`
+          insert into tracking.tracking_set (exercise_tracking_id, set_index, reps, weight)
+          values (
+            ${exerciseTrackingId},
+            ${setIndex},
+            ${exercise.reps[setIndex]},
+            ${exercise.weight[setIndex]}
+          );
+        `;
+      }
+    }
 
     return workoutSummaryId;
   }
