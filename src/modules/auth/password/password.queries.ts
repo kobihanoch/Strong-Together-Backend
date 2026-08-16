@@ -8,7 +8,7 @@ export class PasswordQueries {
 
   async queryUpdateUserPassword(userId: string, newPass: string): Promise<void> {
     await this.sql`
-      UPDATE identity.users
+      UPDATE identity.user
       SET password=${newPass} 
       WHERE id=${userId}::uuid AND auth_provider='app'
     `;

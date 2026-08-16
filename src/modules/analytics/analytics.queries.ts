@@ -42,7 +42,7 @@ export class AnalyticsQueries {
             when s.reps between 11 and 12 then (s.weight * (1 + 0.025 * s.reps))::numeric    -- O'Connor
             else null
           end as est_1rm
-        from analytics.v_exercisetracking_set_simple s
+        from analytics.v_exercise_tracking_set_simple s
         where s.workout_summary_id in (select id from all_workout_summaries)
           and s.weight > 0
           and s.reps between 1 and 12
@@ -133,11 +133,11 @@ export class AnalyticsQueries {
             select coalesce(sum(v), 0)
             from unnest(ews.sets) as v
           ) as planned
-        from workout.workoutplans w
-        join workout.workoutsplits ws
+        from workout.workout_plan w
+        join workout.workout_split ws
           on ws.workout_id = w.id
-        join workout.v_exercisetoworkoutsplit_expanded ews
-          on ews.workoutsplit_id = ws.id
+        join workout.v_exercise_to_workout_split_expanded ews
+          on ews.workout_split_id = ws.id
         where w.user_id = ${userId}::uuid
           and w.is_active = true
       ),
@@ -146,28 +146,28 @@ export class AnalyticsQueries {
       all_workout_summaries as (
         select
           ws.id,
-          ws.workoutsplit_id
+          ws.workout_split_id
         from tracking.workout_summary ws
         where ws.user_id = ${userId}::uuid
-          and ws.workoutsplit_id is not null
+          and ws.workout_split_id is not null
       ),
 
       -- Raw performed reps per workout+exercise
       actual_raw as (
         select
-          aws.workoutsplit_id        as split_id,
+          aws.workout_split_id       as split_id,
           wspl.name                  as splitname,
           et.exercise_id,
           et.exercise,
           (
             select sum(x) from unnest(et.reps) as x
           ) as reps_sum_per_row
-        from analytics.v_exercisetracking_expanded et
+        from analytics.v_exercise_tracking_expanded et
         join all_workout_summaries aws
           on aws.id = et.workout_summary_id
-        left join workout.workoutsplits wspl
-          on wspl.id = aws.workoutsplit_id
-        where aws.workoutsplit_id is not null
+        left join workout.workout_split wspl
+          on wspl.id = aws.workout_split_id
+        where aws.workout_split_id is not null
       ),
 
       -- Aggregate actual per split+exercise

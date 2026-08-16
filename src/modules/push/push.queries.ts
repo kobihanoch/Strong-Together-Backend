@@ -9,7 +9,7 @@ export class PushQueries {
 
   async queryGetAllUsersWithNotificationsEnabled(): Promise<UserWithNotificationsEnabled[]> {
     const rows = await this.sql<UserWithNotificationsEnabled[]>`
-      SELECT push_token, name FROM identity.users WHERE push_token IS NOT NULL`;
+      SELECT push_token, name FROM identity.user WHERE push_token IS NOT NULL`;
 
     return rows as UserWithNotificationsEnabled[];
   }
@@ -21,16 +21,16 @@ export class PushQueries {
         u.name AS name,
         u.push_token,
         rs.reminder_offset_minutes,
-        usi.split_id,
+        usi.workout_split_id AS split_id,
         ws.name AS split_name,
         usi.estimated_time_utc
-      FROM identity.users AS u
-      JOIN reminders.user_reminder_settings AS rs
+      FROM identity.user AS u
+      JOIN reminders.user_reminder_setting AS rs
         ON rs.user_id = u.id
       JOIN reminders.user_split_information AS usi
         ON usi.user_id = u.id
-      JOIN workout.workoutsplits AS ws
-        ON usi.split_id = ws.id
+      JOIN workout.workout_split AS ws
+        ON usi.workout_split_id = ws.id
       WHERE rs.workout_reminders_enabled = TRUE
         AND u.push_token IS NOT NULL
         AND u.push_token <> ''

@@ -24,7 +24,7 @@ export class WorkoutTrackingQueries {
     select wsum.id as id, ws.name as split_name, ((wsum.workout_start_utc at time zone ${tz})) as workout_time_local, 
     wsum.workout_start_utc, wsum.workout_end_utc
     from tracking.workout_summary wsum
-    join workout.workoutsplits ws on ws.id = wsum.workoutsplit_id
+    join workout.workout_split ws on ws.id = wsum.workout_split_id
     where wsum.user_id=${userId}::uuid
   ),
 
@@ -61,7 +61,7 @@ export class WorkoutTrackingQueries {
   ),
 
   all_prs as (
-    select p.exercisetosplit_id as etsid, p.exercise_id, p.exercise, p.weight, p.reps, ((p.workout_start_utc at time zone ${tz})::date) as workout_date_utc
+    select p.exercise_to_split_id as etsid, p.exercise_id, p.exercise, p.weight, p.reps, ((p.workout_start_utc at time zone ${tz})::date) as workout_date_utc
     from analytics.v_prs p
     join all_workout_summaries aws on p.workout_summary_id = aws.id
   ),
@@ -74,17 +74,17 @@ export class WorkoutTrackingQueries {
   ),
 
   all_exercise_trackings as (
-    select et.id, et.exercisetosplit_id, et.weight, et.reps, et.exercise_id, et.workoutsplit_id, et.splitname, et.exercise, et.notes, to_char((et.workout_start_utc at time zone ${tz})::date, 'YYYY-MM-DD') as workoutdate, ets.order_index,
+    select et.id, et.exercise_to_split_id as exercisetosplit_id, et.weight, et.reps, et.exercise_id, et.workout_split_id as workoutsplit_id, et.split_name as splitname, et.exercise, et.notes, to_char((et.workout_start_utc at time zone ${tz})::date, 'YYYY-MM-DD') as workoutdate, ets.order_index,
     jsonb_build_object(
         'sets', ets.sets,
         'exercises', jsonb_build_object(
-          'targetmuscle', ex.targetmuscle,
-          'specifictargetmuscle', ex.specifictargetmuscle
+          'targetmuscle', ex.target_muscle,
+          'specifictargetmuscle', ex.specific_target_muscle
         )
       ) as exercisetoworkoutsplit
-    from analytics.v_exercisetracking_expanded et
-    join workout.exercisetoworkoutsplit ets on ets.id = et.exercisetosplit_id
-    join workout.exercises ex on ex.id = ets.exercise_id
+    from analytics.v_exercise_tracking_expanded et
+    join workout.exercise_to_workout_split ets on ets.id = et.exercise_to_split_id
+    join workout.exercise ex on ex.id = ets.exercise_id
     join bounded_workout_summaries bws on et.workout_summary_id = bws.id
   ),
 
@@ -145,9 +145,9 @@ export class WorkoutTrackingQueries {
     const workoutArrayJson = workoutArray as unknown as postgres.ParameterOrFragment<never>;
 
     const [{ workoutsplit_id }] = await this.sql<[{ workoutsplit_id: number }]>`
-      select distinct ews.workoutsplit_id
+      select distinct ews.workout_split_id as workoutsplit_id
       from jsonb_to_recordset(${workoutArrayJson}::jsonb) as t(exercisetosplit_id int8)
-      join workout.exercisetoworkoutsplit ews
+      join workout.exercise_to_workout_split ews
         on ews.id = t.exercisetosplit_id
       limit 1;
     `;
@@ -157,7 +157,7 @@ export class WorkoutTrackingQueries {
         user_id,
         workout_start_utc,
         workout_end_utc,
-        workoutsplit_id
+        workout_split_id
       )
       values (
         ${userId}::uuid,
@@ -169,8 +169,8 @@ export class WorkoutTrackingQueries {
     `;
 
     await this.sql`
-      insert into tracking.exercisetracking
-        (exercisetosplit_id, weight, reps, notes, workout_summary_id)
+      insert into tracking.exercise_tracking
+        (exercise_to_split_id, weight, reps, notes, workout_summary_id)
       select
         t.exercisetosplit_id::int8,
         t.weight::float4[],

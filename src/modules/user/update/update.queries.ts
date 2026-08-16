@@ -13,7 +13,10 @@ export class UpdateUserQueries {
     userId: string,
   ): Promise<[{ user_data: Omit<UserEntity, 'password'> }]> {
     return this.sql<[{ user_data: Omit<UserEntity, 'password'> }]>`
-      SELECT to_jsonb(users) - 'password' AS user_data FROM identity.users WHERE id = ${userId}::uuid`;
+      SELECT (to_jsonb(users) - 'password' - 'profile_image_path')
+        || jsonb_build_object('profile_image_url', users.profile_image_path) AS user_data
+      FROM identity.user AS users
+      WHERE id = ${userId}::uuid`;
   }
 
   async queryUsernameOrEmailConflict(username: string, email: string, userId: string): Promise<boolean> {
@@ -21,7 +24,7 @@ export class UpdateUserQueries {
     const rows = await this.sql<[{ conflict: boolean }]>`
       SELECT EXISTS (
         SELECT 1
-        FROM identity.users
+        FROM identity.user
         WHERE id <> ${userId}::uuid
           AND (
             (${username}::text IS NOT NULL AND lower(username) = lower(${username}::text))
@@ -44,7 +47,7 @@ export class UpdateUserQueries {
         await this.sql`SAVEPOINT email_probe`;
         try {
           await this.sql`
-            UPDATE identity.users
+            UPDATE identity.user
             SET email = ${emailCandidate}
             WHERE id = ${userId}::uuid
               AND email IS DISTINCT FROM ${emailCandidate}
@@ -66,31 +69,32 @@ export class UpdateUserQueries {
 
     // 2) Real update for non-email fields
     const rows = await this.sql<[{ user_data: Omit<UserEntity, 'password'> }]>`
-      UPDATE identity.users
+      UPDATE identity.user AS users
       SET
         username          = COALESCE(${username ?? null}, username),
         name              = COALESCE(${fullName ?? null}, name)
       WHERE id = ${userId}::uuid
-      RETURNING to_jsonb(users) - 'password' AS user_data
+      RETURNING (to_jsonb(users) - 'password' - 'profile_image_path')
+        || jsonb_build_object('profile_image_url', users.profile_image_path) AS user_data
     `;
 
     return rows;
   }
 
   async queryDeleteUserById(id: string): Promise<void> {
-    await this.sql`DELETE FROM identity.users WHERE id=${id}::uuid`;
+    await this.sql`DELETE FROM identity.user WHERE id=${id}::uuid`;
   }
 
   async queryUserUsernamePicAndName(
     id: string,
   ): Promise<[Pick<UserEntity, 'id' | 'username' | 'profile_image_url' | 'name'>]> {
     return this.sql<[Pick<UserEntity, 'id' | 'username' | 'profile_image_url' | 'name'>]>`
-      SELECT id, username, profile_image_url, name FROM identity.users WHERE id=${id}::uuid`;
+      SELECT id, username, profile_image_path AS profile_image_url, name FROM identity.user WHERE id=${id}::uuid`;
   }
 
   async queryGetUserProfilePicURL(userId: string): Promise<[Pick<UserEntity, 'profile_image_url'>]> {
     return this.sql<[Pick<UserEntity, 'profile_image_url'>]>`
-      SELECT profile_image_url FROM identity.users WHERE id=${userId}::uuid LIMIT 1`;
+      SELECT profile_image_path AS profile_image_url FROM identity.user WHERE id=${userId}::uuid LIMIT 1`;
   }
 
   async queryUpdateUserProfilePicURL(
@@ -99,6 +103,6 @@ export class UpdateUserQueries {
   ): Promise<[Pick<UserEntity, 'profile_image_url'>]> {
     return this.sql<
       [Pick<UserEntity, 'profile_image_url'>]
-    >`UPDATE identity.users SET profile_image_url=${newURL} WHERE id=${userId}::uuid RETURNING profile_image_url`;
+    >`UPDATE identity.user SET profile_image_path=${newURL} WHERE id=${userId}::uuid RETURNING profile_image_path AS profile_image_url`;
   }
 }

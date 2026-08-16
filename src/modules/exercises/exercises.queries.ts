@@ -15,18 +15,18 @@ export class ExercisesQueries {
       ) AS result
       FROM (
         SELECT
-          e.targetmuscle,
+          e.target_muscle AS targetmuscle,
           jsonb_agg(
             jsonb_build_object(
               'id', e.id,
               'name', e.name,
-              'specificTargetMuscle', e.specifictargetmuscle
+              'specificTargetMuscle', e.specific_target_muscle
             )
             ORDER BY e.name
           )
           AS ex_list
-        FROM workout.exercises e
-        GROUP BY e.targetmuscle
+        FROM workout.exercise e
+        GROUP BY e.target_muscle
       ) AS t
     `) as QueryGetExerciseMapByMuscleRow[];
 
