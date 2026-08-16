@@ -1,6 +1,6 @@
 import { relations, sql as drizzleSql } from 'drizzle-orm';
 import { bigint, foreignKey, index, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { user } from '../../identity/users/table';
+import { user } from '../../identity/user/table';
 import { trackingSchema } from '../../schemas';
 import { aerobicTrackingPolicies } from './policies';
 

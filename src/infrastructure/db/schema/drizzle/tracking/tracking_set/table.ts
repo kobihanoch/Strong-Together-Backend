@@ -1,7 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { bigint, foreignKey, index, integer, primaryKey, real, unique, uuid } from 'drizzle-orm/pg-core';
 import { trackingSchema } from '../../schemas';
-import { exerciseTracking } from '../exercisetracking/table';
+import { exerciseTracking } from '../exercise_tracking/table';
 import { trackingSetPolicies } from './policies';
 
 export const trackingSet = trackingSchema.table(

@@ -1,7 +1,7 @@
 import { relations, sql as drizzleSql } from 'drizzle-orm';
 import { foreignKey, primaryKey, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 import { identitySchema } from '../../schemas';
-import { user } from '../users/table';
+import { user } from '../user/table';
 import { oauthAccountPolicies } from './policies';
 export const oauthAccount = identitySchema.table(
   'oauth_account',

@@ -16,6 +16,7 @@ export class WorkoutPlanQueries {
           SELECT COALESCE(json_agg(
                     to_jsonb(workoutsplits.*)
                     || jsonb_build_object(
+                         'muscle_group', workout.get_muscle_group(workoutsplits.id),
                          'exercisetoworkoutsplit',
                          (
                            SELECT COALESCE(json_agg(
@@ -186,6 +187,12 @@ export class WorkoutPlanQueries {
             sets        = EXCLUDED.sets,
             order_index = EXCLUDED.order_index,
             is_active   = TRUE;
+    `;
+
+    await this.sql`
+      UPDATE workout.workout_split AS ws
+      SET muscle_group = workout.get_muscle_group(ws.id)
+      WHERE ws.workout_id = ${planId}::int8;
     `;
 
     return planId;

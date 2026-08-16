@@ -4,7 +4,7 @@ import { userSplitInformation } from '../../reminders/user_split_information/tab
 import { workoutSummary } from '../../tracking/workout_summary/table';
 import { workoutSchema } from '../../schemas';
 import { exerciseToWorkoutSplit } from '../exercisetoworkoutsplit/table';
-import { workoutPlan } from '../workoutplans/table';
+import { workoutPlan } from '../workout_plan/table';
 import { workoutSplitPolicies } from './policies';
 
 export const workoutSplit = workoutSchema.table(

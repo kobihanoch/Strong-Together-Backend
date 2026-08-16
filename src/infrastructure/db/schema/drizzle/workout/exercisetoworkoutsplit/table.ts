@@ -1,9 +1,9 @@
 import { relations, sql as drizzleSql } from 'drizzle-orm';
 import { bigint, boolean, foreignKey, index, primaryKey, timestamp, unique } from 'drizzle-orm/pg-core';
-import { exerciseTracking } from '../../tracking/exercisetracking/table';
+import { exerciseTracking } from '../../tracking/exercise_tracking/table';
 import { workoutSchema } from '../../schemas';
 import { exercise } from '../exercises/table';
-import { workoutSplit } from '../workoutsplits/table';
+import { workoutSplit } from '../workout_split/table';
 import { workoutSet } from '../workout_set/table';
 import { exerciseToWorkoutSplitPolicies } from './policies';
 

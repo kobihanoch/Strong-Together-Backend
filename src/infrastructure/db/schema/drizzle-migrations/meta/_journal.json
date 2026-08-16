@@ -50,6 +50,13 @@
       "when": 1786878146549,
       "tag": "0006_normalize_routines_and_cron",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786879003918,
+      "tag": "0007_replace_muscle_group_trigger",
+      "breakpoints": true
     }
   ]
 }

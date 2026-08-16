@@ -1,8 +1,8 @@
 import { relations, sql as drizzleSql } from 'drizzle-orm';
 import { bigint, foreignKey, index, integer, numeric, primaryKey, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
-import { user } from '../../identity/users/table';
+import { user } from '../../identity/user/table';
 import { remindersSchema } from '../../schemas';
-import { workoutSplit } from '../../workout/workoutsplits/table';
+import { workoutSplit } from '../../workout/workout_split/table';
 
 export const userSplitInformation = remindersSchema
   .table(

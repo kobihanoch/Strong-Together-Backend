@@ -1,6 +1,6 @@
 import { relations, sql as drizzleSql } from 'drizzle-orm';
 import { boolean, foreignKey, index, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { user } from '../../identity/users/table';
+import { user } from '../../identity/user/table';
 import { messagesSchema } from '../../schemas';
 import { messagePolicies } from './policies';
 const uid = drizzleSql`"identity"."current_user_id"()`;
