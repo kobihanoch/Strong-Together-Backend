@@ -3,6 +3,7 @@ import type { GoogleOAuthBody, GoogleTokenVerificationResult, OAuthLoginResponse
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../../../config/auth.config';
 import type { AppLogger } from '../../../infrastructure/logger';
+import { DBService } from '../../../infrastructure/db/db.service';
 import { SessionQueries } from '../../auth/session/session.queries';
 import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
 import { buildCnfClaim } from '../oauth.utils';
@@ -11,6 +12,7 @@ import { verifyGoogleIdToken } from './google.utils';
 @Injectable()
 export class GoogleService {
   constructor(
+    private readonly dbService: DBService,
     private readonly systemMessagesService: SystemMessagesService,
     private readonly sessionQueries: SessionQueries,
     private readonly googleQueries: GoogleQueries,
@@ -83,10 +85,11 @@ export class GoogleService {
       'Google OAuth user authenticated',
     );
 
+    const hasNeverLoggedIn = (await this.sessionQueries.queryLastLogin(finalUserId)) === null;
+    await this.dbService.promoteCurrentRlsTxToAuthenticated(finalUserId);
     const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(finalUserId);
     const [{ token_version, user_data: userData }] = rowsUserData;
-    if (userData.is_first_login && !missingFieldsPayload) {
-      await this.sessionQueries.querySetUserFirstLoginFalse(finalUserId);
+    if (hasNeverLoggedIn && !missingFieldsPayload) {
       try {
         await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
       } catch (e) {

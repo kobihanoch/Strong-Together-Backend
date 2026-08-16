@@ -26,14 +26,14 @@ afterEach(async () => {
   createdUsernames.clear();
 });
 
-async function createSessionUser(overrides: { isFirstLogin?: boolean } = {}) {
+async function createSessionUser(overrides: { hasLoggedIn?: boolean } = {}) {
   const username = `session_${crypto.randomUUID().slice(0, 8)}`;
   createdUsernames.add(username);
   const userId = await createVerifiedTestUser({
     username,
     email: `${username}@example.com`,
     fullName: 'Session Controller',
-    ...(overrides.isFirstLogin === undefined ? {} : { isFirstLogin: overrides.isFirstLogin }),
+    ...(overrides.hasLoggedIn === undefined ? {} : { hasLoggedIn: overrides.hasLoggedIn }),
   });
 
   return {
@@ -76,6 +76,28 @@ describe('SessionController', () => {
 
       const { lastLogin, databaseNow } = await getUserLastLoginByUsername(user.username);
       expect(lastLogin!.getTime()).toBeLessThanOrEqual(databaseNow!.getTime());
+    });
+
+    it('sends the initial system message when last_login is null and exposes the bot image', async () => {
+      const user = await createSessionUser({ hasLoggedIn: false });
+
+      const loginResponse = await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .set('x-app-version', '4.5.0')
+        .send({ identifier: user.email, password: user.password });
+
+      expect(loginResponse.status).toBe(201);
+
+      const messagesResponse = await request(app.getHttpServer())
+        .get('/api/messages/getmessages')
+        .query({ tz: 'Asia/Jerusalem' })
+        .set(authHeaders(loginResponse.body.accessToken));
+
+      expect(messagesResponse.status).toBe(200);
+      expect(messagesResponse.body.messages[0]).toMatchObject({
+        sender_full_name: 'System Bot',
+        sender_profile_image_url: 'profile_pics/system-bot/avatar.jpg',
+      });
     });
 
     it('rejects invalid request bodies with 400', async () => {

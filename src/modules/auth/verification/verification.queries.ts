@@ -9,7 +9,7 @@ export class VerificationQueries {
 
   async queryUserByUsername(username: string): Promise<UserByIndetifier[]> {
     return this.sql<UserByIndetifier[]>`
-      SELECT id, name, username, password, role, is_first_login, is_verified
+      SELECT id, name, username, password, role, is_verified
       FROM identity.user
       WHERE username=${username} 
       LIMIT 1

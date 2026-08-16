@@ -49,6 +49,15 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
     })) as T;
   }
 
+  async promoteCurrentRlsTxToAuthenticated(userId: string): Promise<void> {
+    const store = this.als.getStore();
+    if (!store) throw new Error('No active RLS transaction');
+
+    await store.tx`select set_config('app.current_user_id', ${userId}, true)`;
+    await store.tx`SET LOCAL ROLE authenticated`;
+    store.userId = userId;
+  }
+
   private isTransientConnError(err: any): boolean {
     const msg = String(err?.message || '');
     return /CONNECTION_ENDED|ECONNRESET|terminat(ed|ion)/i.test(msg);

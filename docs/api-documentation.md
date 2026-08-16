@@ -455,7 +455,6 @@ Successful response:
   "profile_image_url": "string | null",
   "push_token": "string | null",
   "role": "string",
-  "is_first_login": true,
   "token_version": 1,
   "is_verified": true,
   "auth_provider": "string"
@@ -502,7 +501,6 @@ Successful response:
     "profile_image_url": "string | null",
     "push_token": "string | null",
     "role": "string",
-    "is_first_login": true,
     "token_version": 1,
     "is_verified": true,
     "auth_provider": "string"
@@ -1078,7 +1076,6 @@ Successful response:
     "profile_image_url": "string | null",
     "push_token": "string | null",
     "role": "string",
-    "is_first_login": true,
     "token_version": 1,
     "is_verified": true,
     "auth_provider": "string"

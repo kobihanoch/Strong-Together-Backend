@@ -24,7 +24,6 @@ export const user = identitySchema.table(
     pushToken: text('push_token'),
     password: text('password'),
     role: text('role').default('User').notNull(),
-    isFirstLogin: boolean('is_first_login').default(true).notNull(),
     tokenVersion: bigint('token_version', { mode: 'number' }).default(0).notNull(),
     isVerified: boolean('is_verified').default(false).notNull(),
     authProvider: text('auth_provider').default('app').notNull(),

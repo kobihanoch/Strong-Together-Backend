@@ -8,10 +8,12 @@ import { SQL } from '../../../infrastructure/db/db.tokens';
 export class SessionQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
-  async queryUserByIdentifierForLogin(identifier: string): Promise<UserByIndetifier[]> {
-    return this.sql<UserByIndetifier[]>`
+  async queryUserByIdentifierForLogin(
+    identifier: string,
+  ): Promise<(UserByIndetifier & { last_login: Date | null })[]> {
+    return this.sql<(UserByIndetifier & { last_login: Date | null })[]>`
       SELECT 
-        id, name, username, password, is_first_login, is_verified, role
+        id, name, username, password, last_login, is_verified, role
       FROM 
         identity.user
       WHERE 
@@ -21,10 +23,11 @@ export class SessionQueries {
     `;
   }
 
-  async querySetUserFirstLoginFalse(userId: string): Promise<{ id: string }[]> {
-    return this.sql<{ id: string }[]>`
-      UPDATE identity.user SET is_first_login=FALSE WHERE id=${userId}::uuid RETURNING id
+  async queryLastLogin(userId: string): Promise<Date | null> {
+    const [user] = await this.sql<{ last_login: Date | null }[]>`
+      SELECT last_login FROM identity.user WHERE id=${userId}::uuid
     `;
+    return user?.last_login ?? null;
   }
 
   async queryBumpTokenVersionAndGetSelfData(userId: string): Promise<UserAfterBump[]> {

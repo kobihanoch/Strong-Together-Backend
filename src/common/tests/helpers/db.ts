@@ -259,7 +259,7 @@ export async function createVerifiedTestUser(overrides: {
   email?: string;
   fullName?: string;
   gender?: 'Male' | 'Female' | 'Other' | 'Unknown';
-  isFirstLogin?: boolean;
+  hasLoggedIn?: boolean;
   isVerified?: boolean;
 }) {
   const [row] = await sql<{ id: string }[]>`
@@ -270,7 +270,7 @@ export async function createVerifiedTestUser(overrides: {
       gender,
       password,
       role,
-      is_first_login,
+      last_login,
       token_version,
       is_verified,
       auth_provider
@@ -281,7 +281,7 @@ export async function createVerifiedTestUser(overrides: {
       ${overrides.gender ?? 'Other'},
       ${testPasswordHash},
       'User',
-      ${overrides.isFirstLogin ?? false},
+      ${overrides.hasLoggedIn === false ? null : new Date()},
       0,
       ${overrides.isVerified ?? true},
       'app'

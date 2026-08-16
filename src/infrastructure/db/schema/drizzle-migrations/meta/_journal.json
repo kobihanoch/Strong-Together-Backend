@@ -85,6 +85,13 @@
       "when": 1786886955815,
       "tag": "0011_guest_public_auth_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1786889525991,
+      "tag": "0012_remove_is_first_login",
+      "breakpoints": true
     }
   ]
 }

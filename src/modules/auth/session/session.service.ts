@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { appConfig } from '../../../config/app.config';
 import { authConfig } from '../../../config/auth.config';
 import type { AppLogger } from '../../../infrastructure/logger';
+import { DBService } from '../../../infrastructure/db/db.service';
 import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
 import { SessionQueries } from './session.queries';
 import { decodeRefreshToken } from './session.utils';
@@ -12,6 +13,7 @@ import { decodeRefreshToken } from './session.utils';
 @Injectable()
 export class SessionService {
   constructor(
+    private readonly dbService: DBService,
     private readonly systemMessagesService: SystemMessagesService,
     private readonly sessionQueries: SessionQueries,
   ) {}
@@ -38,8 +40,11 @@ export class SessionService {
       throw new UnauthorizedException('You need to verify you account');
     }
 
-    if (user.is_first_login) {
-      await this.sessionQueries.querySetUserFirstLoginFalse(user.id);
+    // Credentials are now verified. Continue the same request transaction as
+    // this authenticated user before changing session state or sending messages.
+    await this.dbService.promoteCurrentRlsTxToAuthenticated(user.id);
+
+    if (user.last_login === null) {
       try {
         await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(user.id, user.name!);
       } catch (e) {

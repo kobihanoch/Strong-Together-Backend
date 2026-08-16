@@ -89,7 +89,7 @@ Infrastructure modules live under `src/infrastructure` and provide reusable clie
 
 `AuthModule` is split into session, password, and verification flows.
 
-- `SessionService` uses `SessionQueries` for login, refresh rotation, logout, token-version bumping, and first-login state. First login can call `SystemMessagesService`.
+- `SessionService` uses `SessionQueries` for login, refresh rotation, logout, and token-version bumping. A null `last_login` triggers the initial system message.
 - `PasswordService` uses PostgreSQL for user/password updates and Redis for one-time forgot-password JTI keys: `forgotpassword:jti:*`.
 - `PasswordEmailsService` generates the reset token and enqueues email jobs. It does not write cache keys.
 - `VerificationService` uses PostgreSQL for verification state and Redis for one-time verification JTI keys: `accountverify:jti:*`.

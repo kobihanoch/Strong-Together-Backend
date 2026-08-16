@@ -17,7 +17,6 @@ GRANT SELECT ON TABLE "identity"."user" TO "guest";
 GRANT UPDATE (
   "email",
   "password",
-  "is_first_login",
   "token_version",
   "is_verified",
   "auth_provider",
