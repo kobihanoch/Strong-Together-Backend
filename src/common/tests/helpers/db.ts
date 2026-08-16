@@ -1,9 +1,14 @@
 import postgres from 'postgres';
+import dotenv from 'dotenv';
 import type { AerobicEntity, UserEntity } from '@strong-together/shared';
 import { appConfig } from '../../../config/app.config';
 import { databaseConfig } from '../../../config/database.config';
 
-const sql = postgres(databaseConfig.url, {
+dotenv.config({ path: '.env.test', override: true });
+
+// Test fixtures and direct DB assertions intentionally use the admin connection.
+// The application itself uses DATABASE_URL and therefore runs as app_runtime_user.
+const sql = postgres(process.env.DRIZZLE_DATABASE_URL || databaseConfig.url, {
   ssl: appConfig.isTest ? false : 'require',
   prepare: false,
   connect_timeout: 30,

@@ -59,6 +59,13 @@ async function run(): Promise<void> {
         migrationsSchema: 'drizzle',
         migrationsTable: '__drizzle_migrations',
       });
+
+      if (isTest) {
+        // The backend test process connects as the real non-superuser runtime role.
+        // This password exists only in the disposable local TEST database.
+        await client.unsafe(`ALTER ROLE app_runtime_user PASSWORD 'app_runtime_test'`);
+      }
+
       // Track seed files independently from schema migrations. This makes dev
       // setup repeatable while test still rebuilds from a clean database.
       if (!skipSeeds) {

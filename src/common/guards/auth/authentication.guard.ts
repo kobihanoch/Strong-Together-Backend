@@ -4,6 +4,7 @@ import * as crypto from 'crypto';
 import type postgres from 'postgres';
 import { appConfig } from '../../../config/app.config';
 import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 import { applySentryRequestContext } from '../../../infrastructure/sentry';
 import { SessionQueries } from '../../../modules/auth/session/session.queries';
 import { decodeAccessToken, getAccessToken } from '../../authentication/authentication.utils';
@@ -13,6 +14,7 @@ import type { AppRequest, AuthenticatedUser } from '../../types/express';
 export class AuthenticationGuard implements CanActivate {
   constructor(
     @Inject(SQL) private readonly sql: postgres.Sql,
+    private readonly dbService: DBService,
     private readonly sessionQueries: SessionQueries,
   ) {}
 
@@ -57,15 +59,19 @@ export class AuthenticationGuard implements CanActivate {
       if (currentAth !== req.dpopAth) throw new UnauthorizedException("DPoP ath doesn't match.");
     }
 
-    const [versionData] = await this.sessionQueries.queryGetCurrentTokenVersion(decoded.id);
+    // Guards run before interceptors, so establish the authenticated RLS role
+    // while validating the token and loading its user.
+    const { versionData, user } = await this.dbService.runWithRlsTx(decoded.id, async () => {
+      const [currentVersion] = await this.sessionQueries.queryGetCurrentTokenVersion(decoded.id);
+      const [currentUser]: [AuthenticatedUser?] = await this.sql`
+        SELECT id, role, is_verified FROM identity.user WHERE id=${decoded.id}::uuid
+      `;
+      return { versionData: currentVersion, user: currentUser };
+    });
+
     if (!versionData || decoded.tokenVer !== versionData.token_version) {
       throw new UnauthorizedException('New login required');
     }
-
-    // Fetch user id and role
-    const [user]: [AuthenticatedUser?] = await this.sql`
-      SELECT id, role, is_verified FROM identity.user WHERE id=${decoded.id}::uuid
-    `;
 
     // If user not found
     if (!user) {
