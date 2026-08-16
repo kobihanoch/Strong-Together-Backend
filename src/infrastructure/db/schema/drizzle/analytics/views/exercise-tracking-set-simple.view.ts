@@ -2,7 +2,7 @@ import { sql as drizzleSql } from 'drizzle-orm';
 import { bigint, real, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { analyticsSchema } from '../../schemas';
 
-// Security-invoker view that expands the paired weight/reps arrays into sets.
+// Security-invoker view that expands the contract-compatible weight/reps arrays into sets.
 export const exerciseTrackingSetSimpleView = analyticsSchema
   .view('v_exercise_tracking_set_simple', {
     id: bigint('id', { mode: 'number' }),

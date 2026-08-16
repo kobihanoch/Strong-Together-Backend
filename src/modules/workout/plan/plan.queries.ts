@@ -160,20 +160,12 @@ export class WorkoutPlanQueries {
                 SELECT id FROM existing_split_ids
             )
             RETURNING 1
-        )
-
-        INSERT INTO workout.exercise_to_workout_split (workout_split_id, exercise_id, sets, order_index, is_active)
+        ),
+        upserted_exercises AS (
+          INSERT INTO workout.exercise_to_workout_split (workout_split_id, exercise_id, order_index, is_active)
         SELECT
             ((${splitMapParam}::jsonb) ->> kv.split_name::text)::bigint AS workout_split_id,
             (ex->>'id')::bigint AS exercise_id,
-            CASE
-                WHEN jsonb_typeof(ex->'sets') = 'array' THEN (
-                    SELECT COALESCE(array_agg((elem)::text::bigint ORDER BY ord2), ARRAY[]::bigint[])
-                    FROM jsonb_array_elements(ex->'sets') WITH ORDINALITY AS e2(elem, ord2)
-                )
-                WHEN jsonb_typeof(ex->'sets') = 'number' THEN ARRAY[(ex->>'sets')::bigint]::bigint[]
-                ELSE ARRAY[]::bigint[]
-            END AS sets,
             COALESCE((ex->>'order_index')::bigint, (ord - 1)) AS order_index,
             TRUE AS is_active
         FROM jsonb_each(${payloadJsonParam}::jsonb) AS kv(split_name, arr)
@@ -183,9 +175,60 @@ export class WorkoutPlanQueries {
           AND ((${splitMapParam}::jsonb) ->> kv.split_name::text) IS NOT NULL
         ON CONFLICT (workout_split_id, exercise_id)
         DO UPDATE SET
-            sets        = EXCLUDED.sets,
             order_index = EXCLUDED.order_index,
-            is_active   = TRUE;
+            is_active   = TRUE
+          RETURNING id
+        )
+        INSERT INTO workout.workout_set (exercise_to_split_id, order_index, reps)
+        SELECT
+            upserted_exercises.id,
+            set_data.set_index::integer,
+            set_data.reps::integer
+        FROM jsonb_each(${payloadJsonParam}::jsonb) AS kv(split_name, arr)
+        CROSS JOIN LATERAL jsonb_array_elements(arr) AS exercise_data(exercise)
+        JOIN upserted_exercises
+          ON upserted_exercises.id = (
+            SELECT ets.id
+            FROM workout.exercise_to_workout_split ets
+            WHERE ets.workout_split_id = ((${splitMapParam}::jsonb) ->> kv.split_name::text)::bigint
+              AND ets.exercise_id = (exercise_data.exercise->>'id')::bigint
+          )
+        CROSS JOIN LATERAL (
+          SELECT (set_ordinality - 1)::integer AS set_index, set_value::text::integer AS reps
+          FROM jsonb_array_elements(
+            CASE
+              WHEN jsonb_typeof(exercise_data.exercise->'sets') = 'array' THEN exercise_data.exercise->'sets'
+              WHEN jsonb_typeof(exercise_data.exercise->'sets') = 'number' THEN jsonb_build_array(exercise_data.exercise->'sets')
+              ELSE '[]'::jsonb
+            END
+          ) WITH ORDINALITY AS planned_set(set_value, set_ordinality)
+        ) AS set_data
+        ON CONFLICT (exercise_to_split_id, order_index)
+        DO UPDATE SET reps = EXCLUDED.reps;
+    `;
+
+    await this.sql`
+      DELETE FROM workout.workout_set workout_set
+      USING workout.exercise_to_workout_split ets
+      WHERE workout_set.exercise_to_split_id = ets.id
+        AND ets.workout_split_id IN (
+          SELECT value::bigint FROM jsonb_each_text(${splitMapParam}::jsonb)
+        )
+        AND NOT EXISTS (
+          SELECT 1
+          FROM jsonb_each(${payloadJsonParam}::jsonb) AS kv(split_name, arr)
+          CROSS JOIN LATERAL jsonb_array_elements(arr) AS exercise_data(exercise)
+          CROSS JOIN LATERAL jsonb_array_elements(
+            CASE
+              WHEN jsonb_typeof(exercise_data.exercise->'sets') = 'array' THEN exercise_data.exercise->'sets'
+              WHEN jsonb_typeof(exercise_data.exercise->'sets') = 'number' THEN jsonb_build_array(exercise_data.exercise->'sets')
+              ELSE '[]'::jsonb
+            END
+          ) WITH ORDINALITY AS planned_set(set_value, set_ordinality)
+          WHERE ((${splitMapParam}::jsonb) ->> kv.split_name::text)::bigint = ets.workout_split_id
+            AND (exercise_data.exercise->>'id')::bigint = ets.exercise_id
+            AND (planned_set.set_ordinality - 1)::integer = workout_set.order_index
+        );
     `;
 
     await this.sql`

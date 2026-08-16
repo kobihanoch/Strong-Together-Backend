@@ -83,7 +83,7 @@ export class WorkoutTrackingQueries {
         )
       ) as exercisetoworkoutsplit
     from analytics.v_exercise_tracking_expanded et
-    join workout.exercise_to_workout_split ets on ets.id = et.exercise_to_split_id
+    join workout.v_exercise_to_workout_split_expanded ets on ets.id = et.exercise_to_split_id
     join workout.exercise ex on ex.id = ets.exercise_id
     join bounded_workout_summaries bws on et.workout_summary_id = bws.id
   ),
@@ -170,11 +170,9 @@ export class WorkoutTrackingQueries {
 
     await this.sql`
       insert into tracking.exercise_tracking
-        (exercise_to_split_id, weight, reps, notes, workout_summary_id)
+        (exercise_to_split_id, notes, workout_summary_id)
       select
         t.exercisetosplit_id::int8,
-        t.weight::float4[],
-        t.reps::int8[],
         coalesce(t.notes, '')::text,
         ${workoutSummaryId}::uuid as workout_summary_id
       from jsonb_to_recordset(${workoutArrayJson}::jsonb) as t(
@@ -182,7 +180,27 @@ export class WorkoutTrackingQueries {
         weight float4[],
         reps int8[],
         notes text
-      );
+      )
+      returning id;
+    `;
+
+    await this.sql`
+      insert into tracking.tracking_set (exercise_tracking_id, set_index, reps, weight)
+      select
+        exercise_tracking.id,
+        (set_data.set_ordinality - 1)::integer,
+        set_data.reps::integer,
+        set_data.weight::real
+      from jsonb_to_recordset(${workoutArrayJson}::jsonb) as t(
+        exercisetosplit_id int8,
+        weight float4[],
+        reps int8[]
+      )
+      join tracking.exercise_tracking exercise_tracking
+        on exercise_tracking.exercise_to_split_id = t.exercisetosplit_id
+       and exercise_tracking.workout_summary_id = ${workoutSummaryId}::uuid
+      cross join lateral unnest(t.weight, t.reps) with ordinality
+        as set_data(weight, reps, set_ordinality);
     `;
 
     return workoutSummaryId;

@@ -23,11 +23,17 @@ export const exerciseToWorkoutSplitExpandedView = workoutSchema
       ews.exercise_id,
       ex.name AS exercise,
       ws.name AS workout_split,
-      ews.sets,
+      CASE WHEN count(workout_set.id) > 0
+        THEN array_agg(workout_set.reps::bigint ORDER BY workout_set.order_index)
+          FILTER (WHERE workout_set.id IS NOT NULL)
+        ELSE ews.sets
+      END AS sets,
       ews.order_index,
       ews.created_at,
       ews.is_active
     FROM workout.exercise_to_workout_split ews
     JOIN workout.workout_split ws ON ws.id = ews.workout_split_id
     JOIN workout.exercise ex ON ex.id = ews.exercise_id
+    LEFT JOIN workout.workout_set workout_set ON workout_set.exercise_to_split_id = ews.id
+    GROUP BY ews.id, ws.workout_id, ws.name, ex.name, ews.sets
   `);
