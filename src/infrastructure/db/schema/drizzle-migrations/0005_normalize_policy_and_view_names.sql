@@ -1,169 +1,61 @@
-DROP VIEW "analytics"."v_exercise_tracking_expanded";--> statement-breakpoint
-DROP VIEW "analytics"."v_exercise_tracking_set_simple";--> statement-breakpoint
-DROP VIEW "analytics"."v_prs";--> statement-breakpoint
-DROP VIEW "workout"."v_exercise_to_workout_split_expanded";--> statement-breakpoint
 ALTER VIEW "analytics"."v_exercisetracking_expanded" RENAME TO "v_exercise_tracking_expanded";--> statement-breakpoint
 ALTER VIEW "analytics"."v_exercisetracking_set_simple" RENAME TO "v_exercise_tracking_set_simple";--> statement-breakpoint
 ALTER VIEW "workout"."v_exercisetoworkoutsplit_expanded" RENAME TO "v_exercise_to_workout_split_expanded";--> statement-breakpoint
-ALTER TABLE "identity"."oauth_account" DROP CONSTRAINT "oauth_accounts_provider_user_unique";--> statement-breakpoint
-ALTER TABLE "identity"."user" DROP CONSTRAINT "users_id_key1";--> statement-breakpoint
-ALTER TABLE "reminders"."user_split_information" DROP CONSTRAINT "user_split_information_user_id_split_id_key";--> statement-breakpoint
-ALTER TABLE "workout"."exercise_to_workout_split" DROP CONSTRAINT "uq_ets_split_exercise";--> statement-breakpoint
-ALTER TABLE "workout"."workout_split" DROP CONSTRAINT "uq_workoutsplits_plan_name";--> statement-breakpoint
-ALTER TABLE "identity"."oauth_account" DROP CONSTRAINT "oauth_accounts_user_id_fkey";
---> statement-breakpoint
-ALTER TABLE "messages"."message" DROP CONSTRAINT "messages_sender_id_fkey";
---> statement-breakpoint
-ALTER TABLE "messages"."message" DROP CONSTRAINT "messages_receiver_id_fkey";
---> statement-breakpoint
-ALTER TABLE "reminders"."user_reminder_setting" DROP CONSTRAINT "user_reminder_settings_user_id_fkey";
---> statement-breakpoint
-ALTER TABLE "reminders"."user_split_information" DROP CONSTRAINT "user_split_information_split_id_fkey";
---> statement-breakpoint
-ALTER TABLE "tracking"."aerobic_tracking" DROP CONSTRAINT "aerobictracking_user_id_fkey";
---> statement-breakpoint
-ALTER TABLE "tracking"."exercise_tracking" DROP CONSTRAINT "exercisetracking_exercisetosplit_id_fkey";
---> statement-breakpoint
-ALTER TABLE "tracking"."exercise_tracking" DROP CONSTRAINT "exercisetracking_workout_summary_id_fkey";
---> statement-breakpoint
-ALTER TABLE "tracking"."workout_summary" DROP CONSTRAINT "workout_summary_workoutsplit_id_fkey";
---> statement-breakpoint
-ALTER TABLE "workout"."exercise_to_workout_split" DROP CONSTRAINT "ExerciseToWorkoutsplit_exercise_id_fkey";
---> statement-breakpoint
-ALTER TABLE "workout"."exercise_to_workout_split" DROP CONSTRAINT "ExerciseToWorkoutsplit_workoutsplit_id_fkey";
---> statement-breakpoint
-ALTER TABLE "workout"."workout_set" DROP CONSTRAINT "workout_set_exercisetoworkoutsplit_id_fkey";
---> statement-breakpoint
-ALTER TABLE "workout"."workout_plan" DROP CONSTRAINT "workoutplans_user_id_fkey";
---> statement-breakpoint
-ALTER TABLE "workout"."workout_plan" DROP CONSTRAINT "workoutplans_trainer_id_fkey";
---> statement-breakpoint
-ALTER TABLE "workout"."workout_split" DROP CONSTRAINT "workoutsplits_workout_id_fkey";
---> statement-breakpoint
-DROP INDEX "identity"."users_email_ci_unique";--> statement-breakpoint
-DROP INDEX "identity"."users_username_ci_unique";--> statement-breakpoint
-DROP INDEX "messages"."messages_receiver_id_idx";--> statement-breakpoint
-DROP INDEX "tracking"."aerobictracking_user_id_workout_time_utc_idx";--> statement-breakpoint
-DROP INDEX "tracking"."exercisetracking_workout_summary_id_idx";--> statement-breakpoint
-DROP INDEX "workout"."exercises_name_unique";--> statement-breakpoint
-DROP INDEX "workout"."exercisetoworkoutsplit_active_idx";--> statement-breakpoint
-DROP INDEX "workout"."exercisetoworkoutsplit_workoutsplit_id_order_index_idx";--> statement-breakpoint
-DROP INDEX "workout"."workout_set_exercisetoworkoutsplit_id_idx";--> statement-breakpoint
-DROP INDEX "workout"."uq_workoutplans_active_user";--> statement-breakpoint
-DROP INDEX "workout"."workoutsplits_workout_id_idx";--> statement-breakpoint
-ALTER TABLE "identity"."oauth_account" DROP CONSTRAINT "oauth_accounts_pkey";--> statement-breakpoint
-ALTER TABLE "identity"."user" DROP CONSTRAINT "users_pkey";--> statement-breakpoint
-ALTER TABLE "messages"."message" DROP CONSTRAINT "messages_pkey";--> statement-breakpoint
-ALTER TABLE "reminders"."user_reminder_setting" DROP CONSTRAINT "user_reminder_settings_pkey";--> statement-breakpoint
-ALTER TABLE "tracking"."aerobic_tracking" DROP CONSTRAINT "aerobictracking_pkey";--> statement-breakpoint
-ALTER TABLE "tracking"."exercise_tracking" DROP CONSTRAINT "exercisetracking_pkey";--> statement-breakpoint
-ALTER TABLE "workout"."exercise" DROP CONSTRAINT "exercises_pkey";--> statement-breakpoint
-ALTER TABLE "workout"."exercise_to_workout_split" DROP CONSTRAINT "ExerciseToWorkoutsplit_pkey";--> statement-breakpoint
-ALTER TABLE "workout"."workout_plan" DROP CONSTRAINT "workoutplan_pkey";--> statement-breakpoint
-ALTER TABLE "workout"."workout_split" DROP CONSTRAINT "workoutsplits_pkey";--> statement-breakpoint
-ALTER TABLE "identity"."oauth_account" ADD CONSTRAINT "oauth_account_pkey" PRIMARY KEY("id");--> statement-breakpoint
-ALTER TABLE "identity"."user" ADD CONSTRAINT "user_pkey" PRIMARY KEY("id");--> statement-breakpoint
-ALTER TABLE "messages"."message" ADD CONSTRAINT "message_pkey" PRIMARY KEY("id");--> statement-breakpoint
-ALTER TABLE "reminders"."user_reminder_setting" ADD CONSTRAINT "user_reminder_setting_pkey" PRIMARY KEY("user_id");--> statement-breakpoint
-ALTER TABLE "tracking"."aerobic_tracking" ADD CONSTRAINT "aerobic_tracking_pkey" PRIMARY KEY("id");--> statement-breakpoint
-ALTER TABLE "tracking"."exercise_tracking" ADD CONSTRAINT "exercise_tracking_pkey" PRIMARY KEY("id");--> statement-breakpoint
-ALTER TABLE "workout"."exercise" ADD CONSTRAINT "exercise_pkey" PRIMARY KEY("id");--> statement-breakpoint
-ALTER TABLE "workout"."exercise_to_workout_split" ADD CONSTRAINT "exercise_to_workout_split_pkey" PRIMARY KEY("id");--> statement-breakpoint
-ALTER TABLE "workout"."workout_plan" ADD CONSTRAINT "workout_plan_pkey" PRIMARY KEY("id");--> statement-breakpoint
-ALTER TABLE "workout"."workout_split" ADD CONSTRAINT "workout_split_pkey" PRIMARY KEY("id");--> statement-breakpoint
-ALTER TABLE "identity"."oauth_account" ADD CONSTRAINT "oauth_account_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "identity"."user"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "messages"."message" ADD CONSTRAINT "message_sender_id_fkey" FOREIGN KEY ("sender_id") REFERENCES "identity"."user"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "messages"."message" ADD CONSTRAINT "message_receiver_id_fkey" FOREIGN KEY ("receiver_id") REFERENCES "identity"."user"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "reminders"."user_reminder_setting" ADD CONSTRAINT "user_reminder_setting_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "identity"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "reminders"."user_split_information" ADD CONSTRAINT "user_split_information_workout_split_id_fkey" FOREIGN KEY ("workout_split_id") REFERENCES "workout"."workout_split"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "tracking"."aerobic_tracking" ADD CONSTRAINT "aerobic_tracking_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "identity"."user"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "tracking"."exercise_tracking" ADD CONSTRAINT "exercise_tracking_exercise_to_split_id_fkey" FOREIGN KEY ("exercise_to_split_id") REFERENCES "workout"."exercise_to_workout_split"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "tracking"."exercise_tracking" ADD CONSTRAINT "exercise_tracking_workout_summary_id_fkey" FOREIGN KEY ("workout_summary_id") REFERENCES "tracking"."workout_summary"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "tracking"."workout_summary" ADD CONSTRAINT "workout_summary_workout_split_id_fkey" FOREIGN KEY ("workout_split_id") REFERENCES "workout"."workout_split"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "workout"."exercise_to_workout_split" ADD CONSTRAINT "exercise_to_workout_split_exercise_id_fkey" FOREIGN KEY ("exercise_id") REFERENCES "workout"."exercise"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "workout"."exercise_to_workout_split" ADD CONSTRAINT "exercise_to_workout_split_workout_split_id_fkey" FOREIGN KEY ("workout_split_id") REFERENCES "workout"."workout_split"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "workout"."workout_set" ADD CONSTRAINT "workout_set_exercise_to_split_id_fkey" FOREIGN KEY ("exercise_to_split_id") REFERENCES "workout"."exercise_to_workout_split"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "workout"."workout_plan" ADD CONSTRAINT "workout_plan_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "identity"."user"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "workout"."workout_plan" ADD CONSTRAINT "workout_plan_trainer_id_fkey" FOREIGN KEY ("trainer_id") REFERENCES "identity"."user"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-ALTER TABLE "workout"."workout_split" ADD CONSTRAINT "workout_split_workout_id_fkey" FOREIGN KEY ("workout_id") REFERENCES "workout"."workout_plan"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
-CREATE UNIQUE INDEX "user_email_ci_unique" ON "identity"."user" USING btree (lower(trim(both from "email"))) WHERE "identity"."user"."email" is not null;--> statement-breakpoint
-CREATE UNIQUE INDEX "user_username_ci_unique" ON "identity"."user" USING btree (lower(trim(both from "username"))) WHERE "identity"."user"."username" is not null;--> statement-breakpoint
-CREATE INDEX "message_receiver_id_idx" ON "messages"."message" USING btree ("receiver_id");--> statement-breakpoint
-CREATE INDEX "aerobic_tracking_user_id_workout_time_utc_idx" ON "tracking"."aerobic_tracking" USING btree ("user_id","workout_time_utc" DESC NULLS FIRST);--> statement-breakpoint
-CREATE INDEX "exercise_tracking_workout_summary_id_idx" ON "tracking"."exercise_tracking" USING btree ("workout_summary_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "exercise_name_unique" ON "workout"."exercise" USING btree ("name");--> statement-breakpoint
-CREATE INDEX "exercise_to_workout_split_active_idx" ON "workout"."exercise_to_workout_split" USING btree ("workout_split_id","order_index") WHERE "workout"."exercise_to_workout_split"."is_active" = true;--> statement-breakpoint
-CREATE INDEX "exercise_to_workout_split_workout_split_id_order_index_idx" ON "workout"."exercise_to_workout_split" USING btree ("workout_split_id","order_index");--> statement-breakpoint
-CREATE INDEX "workout_set_exercise_to_split_id_idx" ON "workout"."workout_set" USING btree ("exercise_to_split_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "uq_workout_plan_active_user" ON "workout"."workout_plan" USING btree ("user_id") WHERE "workout"."workout_plan"."is_active";--> statement-breakpoint
-CREATE INDEX "workout_split_workout_id_idx" ON "workout"."workout_split" USING btree ("workout_id");--> statement-breakpoint
-ALTER TABLE "identity"."oauth_account" ADD CONSTRAINT "oauth_account_provider_user_unique" UNIQUE("provider","provider_user_id");--> statement-breakpoint
-ALTER TABLE "identity"."user" ADD CONSTRAINT "user_id_key" UNIQUE("id");--> statement-breakpoint
-ALTER TABLE "reminders"."user_split_information" ADD CONSTRAINT "user_split_information_user_id_workout_split_id_key" UNIQUE("user_id","workout_split_id");--> statement-breakpoint
-ALTER TABLE "workout"."exercise_to_workout_split" ADD CONSTRAINT "uq_exercise_to_workout_split_workout_split_exercise" UNIQUE("workout_split_id","exercise_id");--> statement-breakpoint
-ALTER TABLE "workout"."workout_split" ADD CONSTRAINT "uq_workout_split_plan_name" UNIQUE("workout_id","name");--> statement-breakpoint
-CREATE VIEW "analytics"."v_exercise_tracking_expanded" WITH (security_invoker = true) AS (
-    SELECT et.id,
-      et.exercise_to_split_id,
-      et.weight,
-      et.reps,
-      ews.exercise_id,
-      wsumm.workout_split_id,
-      ws.name AS split_name,
-      ex.name AS exercise,
-      et.notes,
-      et.workout_summary_id,
-      wsumm.workout_start_utc,
-      wsumm.workout_end_utc
-    FROM tracking.exercise_tracking et
-    LEFT JOIN tracking.workout_summary wsumm ON wsumm.id = et.workout_summary_id
-    LEFT JOIN workout.exercise_to_workout_split ews ON ews.id = et.exercise_to_split_id
-    LEFT JOIN workout.workout_split ws ON ws.id = wsumm.workout_split_id
-    LEFT JOIN workout.exercise ex ON ex.id = ews.exercise_id
-  );--> statement-breakpoint
-CREATE VIEW "analytics"."v_exercise_tracking_set_simple" WITH (security_invoker = true) AS (
-    SELECT et.id,
-      et.exercise_to_split_id,
-      et.exercise_id,
-      et.exercise,
-      s.weight,
-      s.reps,
-      et.workout_summary_id,
-      et.workout_start_utc,
-      et.workout_end_utc
-    FROM analytics.v_exercise_tracking_expanded et
-    CROSS JOIN LATERAL UNNEST(et.weight, et.reps) s(weight, reps)
-  );--> statement-breakpoint
-CREATE VIEW "analytics"."v_prs" WITH (security_invoker = true) AS (
-    SELECT DISTINCT ON (s.exercise_id)
-      s.id,
-      s.exercise_to_split_id,
-      s.exercise_id,
-      s.exercise,
-      s.weight,
-      s.reps,
-      s.workout_summary_id,
-      s.workout_start_utc,
-      s.workout_end_utc
-    FROM analytics.v_exercise_tracking_set_simple s
-    WHERE s.weight IS NOT NULL AND s.reps IS NOT NULL
-    ORDER BY s.exercise_id, s.weight DESC, s.reps DESC, s.workout_start_utc DESC, s.id DESC
-  );--> statement-breakpoint
-CREATE VIEW "workout"."v_exercise_to_workout_split_expanded" WITH (security_invoker = true) AS (
-    SELECT ews.id,
-      ews.workout_split_id,
-      ws.workout_id,
-      ews.exercise_id,
-      ex.name AS exercise,
-      ws.name AS workout_split,
-      ews.sets,
-      ews.order_index,
-      ews.created_at,
-      ews.is_active
-    FROM workout.exercise_to_workout_split ews
-    JOIN workout.workout_split ws ON ws.id = ews.workout_split_id
-    JOIN workout.exercise ex ON ex.id = ews.exercise_id
-  );--> statement-breakpoint
+ALTER VIEW "analytics"."v_exercise_tracking_expanded" RENAME COLUMN "splitname" TO "split_name";--> statement-breakpoint
+ALTER VIEW "workout"."v_exercise_to_workout_split_expanded" RENAME COLUMN "workoutsplit" TO "workout_split";--> statement-breakpoint
+
+DROP SEQUENCE "reminders"."user_split_information_id_seq";--> statement-breakpoint
+ALTER SEQUENCE "reminders"."user_split_information_id_seq1" RENAME TO "user_split_information_id_seq";--> statement-breakpoint
+ALTER SEQUENCE "tracking"."aerobictracking_id_seq" RENAME TO "aerobic_tracking_id_seq";--> statement-breakpoint
+ALTER SEQUENCE "tracking"."exercisetracking_id_seq" RENAME TO "exercise_tracking_id_seq";--> statement-breakpoint
+ALTER SEQUENCE "workout"."exercises_id_seq" RENAME TO "exercise_id_seq";--> statement-breakpoint
+ALTER SEQUENCE "workout"."ExerciseToWorkoutsplit_id_seq" RENAME TO "exercise_to_workout_split_id_seq";--> statement-breakpoint
+ALTER SEQUENCE "workout"."workoutplan_id_seq" RENAME TO "workout_plan_id_seq";--> statement-breakpoint
+ALTER SEQUENCE "workout"."workoutsplits_id_seq" RENAME TO "workout_split_id_seq";--> statement-breakpoint
+
+ALTER TABLE "identity"."oauth_account" RENAME CONSTRAINT "oauth_accounts_pkey" TO "oauth_account_pkey";--> statement-breakpoint
+ALTER TABLE "identity"."oauth_account" RENAME CONSTRAINT "oauth_accounts_provider_user_unique" TO "oauth_account_provider_user_unique";--> statement-breakpoint
+ALTER TABLE "identity"."oauth_account" RENAME CONSTRAINT "oauth_accounts_user_id_fkey" TO "oauth_account_user_id_fkey";--> statement-breakpoint
+ALTER TABLE "identity"."user" RENAME CONSTRAINT "users_pkey" TO "user_pkey";--> statement-breakpoint
+ALTER TABLE "identity"."user" RENAME CONSTRAINT "users_id_key1" TO "user_id_key";--> statement-breakpoint
+ALTER TABLE "messages"."message" RENAME CONSTRAINT "messages_pkey" TO "message_pkey";--> statement-breakpoint
+ALTER TABLE "messages"."message" RENAME CONSTRAINT "messages_sender_id_fkey" TO "message_sender_id_fkey";--> statement-breakpoint
+ALTER TABLE "messages"."message" RENAME CONSTRAINT "messages_receiver_id_fkey" TO "message_receiver_id_fkey";--> statement-breakpoint
+ALTER TABLE "reminders"."user_reminder_setting" RENAME CONSTRAINT "user_reminder_settings_pkey" TO "user_reminder_setting_pkey";--> statement-breakpoint
+ALTER TABLE "reminders"."user_reminder_setting" RENAME CONSTRAINT "user_reminder_settings_user_id_fkey" TO "user_reminder_setting_user_id_fkey";--> statement-breakpoint
+ALTER TABLE "reminders"."user_split_information" RENAME CONSTRAINT "user_split_information_user_id_split_id_key" TO "user_split_information_user_id_workout_split_id_key";--> statement-breakpoint
+ALTER TABLE "reminders"."user_split_information" RENAME CONSTRAINT "user_split_information_split_id_fkey" TO "user_split_information_workout_split_id_fkey";--> statement-breakpoint
+ALTER TABLE "tracking"."aerobic_tracking" RENAME CONSTRAINT "aerobictracking_pkey" TO "aerobic_tracking_pkey";--> statement-breakpoint
+ALTER TABLE "tracking"."aerobic_tracking" RENAME CONSTRAINT "aerobictracking_user_id_fkey" TO "aerobic_tracking_user_id_fkey";--> statement-breakpoint
+ALTER TABLE "tracking"."exercise_tracking" RENAME CONSTRAINT "exercisetracking_pkey" TO "exercise_tracking_pkey";--> statement-breakpoint
+ALTER TABLE "tracking"."exercise_tracking" RENAME CONSTRAINT "exercisetracking_exercisetosplit_id_fkey" TO "exercise_tracking_exercise_to_split_id_fkey";--> statement-breakpoint
+ALTER TABLE "tracking"."exercise_tracking" RENAME CONSTRAINT "exercisetracking_workout_summary_id_fkey" TO "exercise_tracking_workout_summary_id_fkey";--> statement-breakpoint
+ALTER TABLE "tracking"."workout_summary" RENAME CONSTRAINT "workout_summary_workoutsplit_id_fkey" TO "workout_summary_workout_split_id_fkey";--> statement-breakpoint
+ALTER TABLE "workout"."exercise" RENAME CONSTRAINT "exercises_pkey" TO "exercise_pkey";--> statement-breakpoint
+ALTER TABLE "workout"."exercise_to_workout_split" RENAME CONSTRAINT "ExerciseToWorkoutsplit_pkey" TO "exercise_to_workout_split_pkey";--> statement-breakpoint
+ALTER TABLE "workout"."exercise_to_workout_split" RENAME CONSTRAINT "uq_ets_split_exercise" TO "uq_exercise_to_workout_split_workout_split_exercise";--> statement-breakpoint
+ALTER TABLE "workout"."exercise_to_workout_split" RENAME CONSTRAINT "ExerciseToWorkoutsplit_exercise_id_fkey" TO "exercise_to_workout_split_exercise_id_fkey";--> statement-breakpoint
+ALTER TABLE "workout"."exercise_to_workout_split" RENAME CONSTRAINT "ExerciseToWorkoutsplit_workoutsplit_id_fkey" TO "exercise_to_workout_split_workout_split_id_fkey";--> statement-breakpoint
+ALTER TABLE "workout"."workout_set" RENAME CONSTRAINT "workout_set_exercisetoworkoutsplit_id_fkey" TO "workout_set_exercise_to_split_id_fkey";--> statement-breakpoint
+ALTER TABLE "workout"."workout_plan" RENAME CONSTRAINT "workoutplan_pkey" TO "workout_plan_pkey";--> statement-breakpoint
+ALTER TABLE "workout"."workout_plan" RENAME CONSTRAINT "workoutplans_user_id_fkey" TO "workout_plan_user_id_fkey";--> statement-breakpoint
+ALTER TABLE "workout"."workout_plan" RENAME CONSTRAINT "workoutplans_trainer_id_fkey" TO "workout_plan_trainer_id_fkey";--> statement-breakpoint
+ALTER TABLE "workout"."workout_split" RENAME CONSTRAINT "workoutsplits_pkey" TO "workout_split_pkey";--> statement-breakpoint
+ALTER TABLE "workout"."workout_split" RENAME CONSTRAINT "uq_workoutsplits_plan_name" TO "uq_workout_split_plan_name";--> statement-breakpoint
+ALTER TABLE "workout"."workout_split" RENAME CONSTRAINT "workoutsplits_workout_id_fkey" TO "workout_split_workout_id_fkey";--> statement-breakpoint
+
+ALTER INDEX "identity"."users_email_ci_unique" RENAME TO "user_email_ci_unique";--> statement-breakpoint
+ALTER INDEX "identity"."users_username_ci_unique" RENAME TO "user_username_ci_unique";--> statement-breakpoint
+ALTER INDEX "messages"."messages_receiver_id_idx" RENAME TO "message_receiver_id_idx";--> statement-breakpoint
+ALTER INDEX "tracking"."aerobictracking_user_id_workout_time_utc_idx" RENAME TO "aerobic_tracking_user_id_workout_time_utc_idx";--> statement-breakpoint
+ALTER INDEX "tracking"."exercisetracking_workout_summary_id_idx" RENAME TO "exercise_tracking_workout_summary_id_idx";--> statement-breakpoint
+ALTER INDEX "workout"."exercises_name_unique" RENAME TO "exercise_name_unique";--> statement-breakpoint
+ALTER INDEX "workout"."exercisetoworkoutsplit_active_idx" RENAME TO "exercise_to_workout_split_active_idx";--> statement-breakpoint
+ALTER INDEX "workout"."exercisetoworkoutsplit_workoutsplit_id_order_index_idx" RENAME TO "exercise_to_workout_split_workout_split_id_order_index_idx";--> statement-breakpoint
+ALTER INDEX "workout"."workout_set_exercisetoworkoutsplit_id_idx" RENAME TO "workout_set_exercise_to_split_id_idx";--> statement-breakpoint
+ALTER INDEX "workout"."uq_workoutplans_active_user" RENAME TO "uq_workout_plan_active_user";--> statement-breakpoint
+ALTER INDEX "workout"."workoutsplits_workout_id_idx" RENAME TO "workout_split_workout_id_idx";--> statement-breakpoint
+
 ALTER POLICY "Enable read access for auth users on oauth_accounts" ON "identity"."oauth_account" RENAME TO "Enable read access for auth users on oauth_account";--> statement-breakpoint
 ALTER POLICY "Enable insert for auth users on oauth_accounts" ON "identity"."oauth_account" RENAME TO "Enable insert for auth users on oauth_account";--> statement-breakpoint
 ALTER POLICY "Enable update for auth users on oauth_accounts" ON "identity"."oauth_account" RENAME TO "Enable update for auth users on oauth_account";--> statement-breakpoint
