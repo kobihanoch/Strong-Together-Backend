@@ -105,7 +105,8 @@ DPOP_ENABLED=false
 CACHE_ENABLED=true
 ENABLE_SOCKET_REDIS_ADAPTER=true
 
-DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5433/strongtogether_test
+DATABASE_URL=postgres://app_runtime_user:app_runtime_test@127.0.0.1:5433/strongtogether_test
+DRIZZLE_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5433/strongtogether_test
 
 JWT_ACCESS_SECRET=replace-with-test-access-secret
 JWT_REFRESH_SECRET=replace-with-test-refresh-secret
@@ -152,6 +153,7 @@ Production values should be configured in the deployment provider, not copied in
 For production, use real provider values for:
 
 - **`DATABASE_URL`**
+- **`PROD_DATABASE_URL`** for the controlled migration job only
 - **JWT secrets**
 - **`RESEND_API_KEY`**
 - **AWS credentials and endpoints**
@@ -167,7 +169,7 @@ Production secrets should be generated uniquely per environment. Do not reuse lo
 | --- | --- |
 | Runtime | `NODE_ENV`, `PORT`, `PUBLIC_BASE_URL`, `PUBLIC_BASE_URL_RENDER_DEFAULT`, `PRIVATE_BASE_URL_DEV`, `MIN_APP_VERSION`, `SYSTEM_USER_ID` |
 | Feature flags | `DPOP_ENABLED`, `CACHE_ENABLED`, `ENABLE_SOCKET_REDIS_ADAPTER` |
-| Database | `DATABASE_URL`, `PROD_DATABASE_URL` |
+| Database | `DATABASE_URL` (non-superuser application runtime), `DRIZZLE_DATABASE_URL` (local/test admin tooling), `PROD_DATABASE_URL` (production migration tooling) |
 | Auth | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_VERIFY_SECRET`, `JWT_FORGOT_PASSWORD_SECRET`, `CHANGE_EMAIL_SECRET`, `JWT_SOCKET_SECRET`, `APPLE_ALLOWED_AUDS` |
 | Redis | `REDIS_HOST`, `REDIS_PORT`, `REDIS_URL`, `REDIS_USERNAME`, `REDIS_PASSWORD` |
 | Cache TTLs | `CACHE_TTL_TRACKING_SEC`, `CACHE_TTL_TIMEZONE_SEC`, `CACHE_TTL_PLAN_SEC`, `CACHE_TTL_ANALYTICS_SEC`, `CACHE_TTL_AEROBICS_SEC` |

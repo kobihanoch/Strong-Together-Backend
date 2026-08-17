@@ -40,6 +40,13 @@ Tests use `docker-compose.test.yml`, which provides:
 
 The test database and Redis data are mounted on `tmpfs`. That makes the environment disposable by default and prevents accidental coupling to local development data.
 
+The test database uses two connection identities:
+
+- `DRIZZLE_DATABASE_URL` connects as the PostgreSQL administrator and is reserved for database recreation, migrations, seeds, and direct fixture/assertion helpers.
+- `DATABASE_URL` connects the Nest application as `app_runtime_user`, matching the non-superuser runtime model used by development and production.
+
+Requests then switch locally to `guest` or `authenticated`. This ensures integration tests can expose missing grants, schema permissions, role-transition errors, and RLS failures that a superuser application connection would bypass.
+
 ## Database Reset Strategy
 
 `npm run test:prepare` runs:
@@ -58,6 +65,8 @@ npm run test:db:reset
 5. injecting seed SQL
 
 This proves the migration history can bootstrap a clean environment before tests run. That is more valuable than testing against a hand-mutated local database.
+
+Passing tests demonstrate only the covered behavior. They do not prove that the backend is vulnerability-free, race-free, safe under production load, or protected against an untested authorization path.
 
 ## Shared Helpers
 

@@ -210,7 +210,7 @@ npm run test:websockets
 
 **Async pipelines for media processing:** **Video uploads** are sent directly to **S3**, then processed from **SQS** by **Python**. This avoids routing **large files** through the **API** and isolates **CPU-heavy OpenCV/MediaPipe work** from normal request traffic.
 
-**RLS-backed security:** **Authorization** is enforced in both **application code** and the **database**. **Nest guards** validate **identity** and **roles**, while **PostgreSQL RLS** protects **user-owned rows** even when queries cross complex **domain schemas**.
+**RLS-backed security:** **Authorization** is enforced in both **application code** and the **database**. **Nest guards** validate **identity** and **roles**, while **PostgreSQL RLS** protects **user-owned rows** even when queries cross complex **domain schemas**. Unauthenticated database access is limited to allow-listed `SECURITY DEFINER` functions in `guest_api`; the guest role has no direct application-table grants or guest RLS policies.
 
 **LocalStack for AWS-shaped development:** Local **S3/SQS behavior** is reproduced without **cloud dependencies**, making the **async media pipeline** testable and debuggable on a developer machine.
 

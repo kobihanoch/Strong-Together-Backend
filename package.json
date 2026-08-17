@@ -10,6 +10,7 @@
     "db:dev:migrate": "drizzle-kit migrate --config=drizzle.development.config.ts",
     "db:migrate:diff": "drizzle-kit generate --config=drizzle.development.config.ts",
     "db:prod:migrate": "drizzle-kit migrate --config=drizzle.production.config.ts",
+    "docs:db-diagrams": "tsx scripts/db-related/render-db-diagrams.mts",
     "test:env:up": "cross-env NODE_ENV=test docker compose -f docker-compose.test.yml up --build --remove-orphans -d postgres_test redis_test redis-insight_test localstack_test maildev_test",
     "test:env:down": "docker compose -f docker-compose.test.yml down --remove-orphans",
     "test:db:reset": "cross-env NODE_ENV=test tsx scripts/db-related/setup-local-db.mts test",
@@ -97,6 +98,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@softwaretechnik/dbml-renderer": "^1.0.31",
     "@ts-safeql/eslint-plugin": "^4.2.0",
     "@types/express": "^5.0.6",
     "@types/http-errors": "^2.0.5",

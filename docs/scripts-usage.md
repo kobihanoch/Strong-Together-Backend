@@ -64,6 +64,7 @@ explicit alias for the same migrate-and-seed setup flow.
 | Keep test infra up and rerun exact files | `npm run test:prepare`, then `npm run test:run:*` |
 | Create a new DB migration | `npm run db:migrate:diff -- <migration_name>` |
 | Apply migrations to production pipeline | `npm run db:prod:migrate` |
+| Regenerate database ERD SVGs | `npm run docs:db-diagrams` |
 
 ## Local Services
 
@@ -135,6 +136,8 @@ npm run db:migrate:diff -- add_feature_name
 ```
 
 4. Review the generated SQL in `src/infrastructure/db/schema/drizzle-migrations`.
+
+Drizzle Kit generates table and policy diffs, but it does not fully model PostgreSQL routines and detailed privilege boundaries. When a change includes `SECURITY DEFINER` functions or role grants, add and review those statements in the generated migration. Grant function execution explicitly and keep runtime roles without direct table access unless the documented RLS model requires it.
 5. Apply locally:
 
 ```bash
@@ -171,6 +174,8 @@ npm run start:workers:watch
 Use them only when Postgres, Redis, LocalStack, and required environment variables are already available. For most local work, prefer `npm run orch:dev`.
 
 ## Notes
+
+Database diagram sources live in `docs/db-diagrams/source`. After changing a Drizzle table or view, update the matching DBML source and run `npm run docs:db-diagrams`; the command intentionally overwrites the existing SVG filenames referenced by the documentation.
 
 - Dev and test use separate Compose files and ports.
 - Test infra is isolated so it does not overwrite dev data.

@@ -14,6 +14,8 @@ The database pipeline is based on committed files inside the repo:
 The Drizzle `0000_baseline.sql` migration represents the database state after the
 last archived Atlas migration. New schema changes must be generated with Drizzle.
 
+Drizzle schema files are also the source of truth for tables and RLS policies. PostgreSQL routines, explicit grants, revokes, and schemas such as `guest_api` are reviewed SQL additions inside the generated migration because Drizzle Kit does not fully model those objects.
+
 ## Environment Split
 
 The local database pipeline is now split by environment:
@@ -56,6 +58,8 @@ This makes the test DB deterministic and disposable. Development and test use
 the same Drizzle migration directory and seed runner; only their database names,
 ports, persistence, and reset behavior differ.
 
+Database recreation, migration, and seeding use the administrator URL. The Nest application under test uses `app_runtime_user`; direct test fixture helpers intentionally use the administrator URL.
+
 ## Creating A New Migration
 
 Generate a new migration diff with:
@@ -69,6 +73,8 @@ That command:
 1. reads the committed Drizzle TypeScript schema
 2. compares it with the latest Drizzle snapshot
 3. writes a new migration and snapshot when the schema changed
+
+After generation, review the SQL. If the change includes routines or privilege boundaries, add the required `CREATE FUNCTION`, `REVOKE`, and explicit `GRANT EXECUTE` statements to that migration. Never grant guest access with `GRANT ... ON ALL TABLES` or a permissive guest RLS policy.
 
 ## Recommended Workflow
 
