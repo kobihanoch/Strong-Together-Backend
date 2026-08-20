@@ -1,5 +1,5 @@
 import { relations, sql as drizzleSql } from 'drizzle-orm';
-import { bigint, boolean, primaryKey, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { bigint, boolean, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { message } from '../../messages/messages/table';
 import { userReminderSetting } from '../../reminders/user_reminder_setting/table';
 import { userSplitInformation } from '../../reminders/user_split_information/table';
@@ -19,10 +19,13 @@ export const user = identitySchema.table(
     createdAt: timestamp('created_at', { withTimezone: true })
       .default(drizzleSql`(now() AT TIME ZONE 'utc')`)
       .notNull(),
-    profileImagePath: text('profile_image_path'),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .default(drizzleSql`(now() AT TIME ZONE 'utc')`)
+      .notNull(),
+    profilePicPath: text('profile_pic_path'),
     id: uuid('id').defaultRandom().notNull(),
     pushToken: text('push_token'),
-    password: text('password'),
+    passwordHash: text('password_hash'),
     role: text('role').default('User').notNull(),
     tokenVersion: bigint('token_version', { mode: 'number' }).default(0).notNull(),
     isVerified: boolean('is_verified').default(false).notNull(),
@@ -31,13 +34,8 @@ export const user = identitySchema.table(
   },
   (t) => [
     primaryKey({ name: 'user_pkey', columns: [t.id] }),
-    unique('user_id_key').on(t.id),
-    uniqueIndex('user_email_ci_unique')
-      .on(drizzleSql`lower(trim(both from ${t.email}))`)
-      .where(drizzleSql`${t.email} is not null`),
-    uniqueIndex('user_username_ci_unique')
-      .on(drizzleSql`lower(trim(both from ${t.username}))`)
-      .where(drizzleSql`${t.username} is not null`),
+    uniqueIndex('user_email_ci_unique').on(drizzleSql`lower(trim(both from ${t.email}))`),
+    uniqueIndex('user_username_ci_unique').on(drizzleSql`lower(trim(both from ${t.username}))`),
     ...userPolicies(t),
   ],
 );

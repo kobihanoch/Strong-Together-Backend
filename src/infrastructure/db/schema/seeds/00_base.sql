@@ -4,13 +4,13 @@ INSERT INTO identity.user (
   email,
   name,
   gender,
-  password,
+  password_hash,
   role,
   last_login,
   token_version,
   is_verified,
   auth_provider,
-  profile_image_path,
+  profile_pic_path,
   push_token,
   created_at
 ) VALUES (

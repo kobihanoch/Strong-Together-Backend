@@ -13,8 +13,8 @@ export class UpdateUserQueries {
     userId: string,
   ): Promise<[{ user_data: Omit<UserEntity, 'password'> }]> {
     return this.sql<[{ user_data: Omit<UserEntity, 'password'> }]>`
-      SELECT (to_jsonb(users) - 'password' - 'profile_image_path')
-        || jsonb_build_object('profile_image_url', users.profile_image_path) AS user_data
+      SELECT (to_jsonb(users) - 'password_hash' - 'profile_pic_path')
+        || jsonb_build_object('profile_image_url', users.profile_pic_path, 'is_first_login', users.last_login IS NULL) AS user_data
       FROM identity.user AS users
       WHERE id = ${userId}::uuid`;
   }
@@ -74,8 +74,8 @@ export class UpdateUserQueries {
         username          = COALESCE(${username ?? null}, username),
         name              = COALESCE(${fullName ?? null}, name)
       WHERE id = ${userId}::uuid
-      RETURNING (to_jsonb(users) - 'password' - 'profile_image_path')
-        || jsonb_build_object('profile_image_url', users.profile_image_path) AS user_data
+      RETURNING (to_jsonb(users) - 'password_hash' - 'profile_pic_path')
+        || jsonb_build_object('profile_image_url', users.profile_pic_path, 'is_first_login', users.last_login IS NULL) AS user_data
     `;
 
     return rows;
@@ -89,12 +89,12 @@ export class UpdateUserQueries {
     id: string,
   ): Promise<[Pick<UserEntity, 'id' | 'username' | 'profile_image_url' | 'name'>]> {
     return this.sql<[Pick<UserEntity, 'id' | 'username' | 'profile_image_url' | 'name'>]>`
-      SELECT id, username, profile_image_path AS profile_image_url, name FROM identity.user WHERE id=${id}::uuid`;
+      SELECT id, username, profile_pic_path AS profile_image_url, name FROM identity.user WHERE id=${id}::uuid`;
   }
 
   async queryGetUserProfilePicURL(userId: string): Promise<[Pick<UserEntity, 'profile_image_url'>]> {
     return this.sql<[Pick<UserEntity, 'profile_image_url'>]>`
-      SELECT profile_image_path AS profile_image_url FROM identity.user WHERE id=${userId}::uuid LIMIT 1`;
+      SELECT profile_pic_path AS profile_image_url FROM identity.user WHERE id=${userId}::uuid LIMIT 1`;
   }
 
   async queryUpdateUserProfilePicURL(
@@ -103,6 +103,6 @@ export class UpdateUserQueries {
   ): Promise<[Pick<UserEntity, 'profile_image_url'>]> {
     return this.sql<
       [Pick<UserEntity, 'profile_image_url'>]
-    >`UPDATE identity.user SET profile_image_path=${newURL} WHERE id=${userId}::uuid RETURNING profile_image_path AS profile_image_url`;
+    >`UPDATE identity.user SET profile_pic_path=${newURL} WHERE id=${userId}::uuid RETURNING profile_pic_path AS profile_image_url`;
   }
 }

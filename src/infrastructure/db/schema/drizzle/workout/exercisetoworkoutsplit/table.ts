@@ -13,10 +13,11 @@ export const exerciseToWorkoutSplit = workoutSchema.table(
     id: bigint('id', { mode: 'number' })
       .generatedByDefaultAsIdentity({ name: 'exercise_to_workout_split_id_seq' })
       .notNull(),
-    exerciseId: bigint('exercise_id', { mode: 'number' }).notNull(),
     workoutSplitId: bigint('workout_split_id', { mode: 'number' }).notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    sets: bigint('sets', { mode: 'number' }).array().default(drizzleSql`ARRAY[]::bigint[]`).notNull(),
+    exerciseId: bigint('exercise_id', { mode: 'number' }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .default(drizzleSql`(now() AT TIME ZONE 'utc')`)
+      .notNull(),
     orderIndex: bigint('order_index', { mode: 'number' }).notNull(),
     isActive: boolean('is_active').default(true).notNull(),
   },
@@ -44,6 +45,7 @@ export const exerciseToWorkoutSplit = workoutSchema.table(
     ...exerciseToWorkoutSplitPolicies(t),
   ],
 );
+
 export const exerciseToWorkoutSplitRelations = relations(exerciseToWorkoutSplit, ({ many, one }) => ({
   exercise: one(exercise, { fields: [exerciseToWorkoutSplit.exerciseId], references: [exercise.id] }),
   workoutSplit: one(workoutSplit, { fields: [exerciseToWorkoutSplit.workoutSplitId], references: [workoutSplit.id] }),

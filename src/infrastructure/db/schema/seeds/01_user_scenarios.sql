@@ -25,13 +25,13 @@ BEGIN
     email,
     name,
     gender,
-    password,
+    password_hash,
     role,
     last_login,
     token_version,
     is_verified,
     auth_provider,
-    profile_image_path,
+    profile_pic_path,
     push_token,
     created_at
   ) VALUES
@@ -100,8 +100,8 @@ BEGIN
       now()
     );
 
-  INSERT INTO workout.workout_plan (user_id, trainer_id, is_active, updated_at)
-  VALUES (plan_only_user_id, plan_only_user_id, TRUE, now())
+  INSERT INTO workout.workout_plan (user_id, is_active, updated_at)
+  VALUES (plan_only_user_id, TRUE, now())
   RETURNING id INTO plan_only_plan_id;
 
   INSERT INTO workout.workout_split (workout_id, name, is_active)
@@ -124,8 +124,8 @@ BEGIN
   CROSS JOIN (VALUES (0, 10), (1, 10), (2, 10)) AS planned_set(order_index, reps)
   WHERE ets.workout_split_id = plan_only_split_id AND ets.exercise_id = 12;
 
-  INSERT INTO workout.workout_plan (user_id, trainer_id, is_active, updated_at)
-  VALUES (plan_tracking_user_id, plan_tracking_user_id, TRUE, now())
+  INSERT INTO workout.workout_plan (user_id, is_active, updated_at)
+  VALUES (plan_tracking_user_id, TRUE, now())
   RETURNING id INTO plan_tracking_plan_id;
 
   INSERT INTO workout.workout_split (workout_id, name, is_active)
@@ -162,8 +162,8 @@ BEGIN
   VALUES (plan_tracking_tracking_id, 0, 60, 8), (plan_tracking_tracking_id, 1, 65, 8),
     (plan_tracking_tracking_id, 2, 70, 6);
 
-  INSERT INTO workout.workout_plan (user_id, trainer_id, is_active, updated_at)
-  VALUES (full_seed_user_id, full_seed_user_id, TRUE, now())
+  INSERT INTO workout.workout_plan (user_id, is_active, updated_at)
+  VALUES (full_seed_user_id, TRUE, now())
   RETURNING id INTO full_seed_plan_id;
 
   INSERT INTO workout.workout_split (workout_id, name, is_active)
@@ -200,6 +200,6 @@ BEGIN
   VALUES (full_seed_tracking_id, 0, 62.5, 8), (full_seed_tracking_id, 1, 67.5, 8),
     (full_seed_tracking_id, 2, 72.5, 5);
 
-  INSERT INTO tracking.aerobic_tracking (user_id, type, duration_mins, duration_sec, workout_time_utc)
-  VALUES (full_seed_user_id, 'Walk', 30, 0, yesterday_start + interval '2 hours');
+  INSERT INTO tracking.aerobic_tracking (user_id, type, duration_sec, workout_time_utc)
+  VALUES (full_seed_user_id, 'Walk', 1800, yesterday_start + interval '2 hours');
 END $$;

@@ -1,5 +1,5 @@
 import { relations, sql as drizzleSql } from 'drizzle-orm';
-import { bigint, boolean, foreignKey, primaryKey, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { bigint, boolean, foreignKey, primaryKey, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { user } from '../../identity/user/table';
 import { workoutSchema } from '../../schemas';
 import { workoutSplit } from '../workout_split/table';
@@ -9,23 +9,16 @@ export const workoutPlan = workoutSchema.table(
   'workout_plan',
   {
     id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'workout_plan_id_seq' }).notNull(),
-    name: text('name').default('My Workout').notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    isDeleted: boolean('is_deleted').default(false).notNull(),
-    level: text('level').default('Beginner').notNull(),
     userId: uuid('user_id').notNull(),
-    trainerId: uuid('trainer_id'),
     isActive: boolean('is_active').default(true).notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .default(drizzleSql`(now() AT TIME ZONE 'utc')`)
       .notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     primaryKey({ name: 'workout_plan_pkey', columns: [t.id] }),
     foreignKey({ name: 'workout_plan_user_id_fkey', columns: [t.userId], foreignColumns: [user.id] })
-      .onUpdate('cascade')
-      .onDelete('cascade'),
-    foreignKey({ name: 'workout_plan_trainer_id_fkey', columns: [t.trainerId], foreignColumns: [user.id] })
       .onUpdate('cascade')
       .onDelete('cascade'),
     uniqueIndex('uq_workout_plan_active_user')
@@ -34,8 +27,8 @@ export const workoutPlan = workoutSchema.table(
     ...workoutPlanPolicies(t),
   ],
 );
+
 export const workoutPlanRelations = relations(workoutPlan, ({ many, one }) => ({
   owner: one(user, { fields: [workoutPlan.userId], references: [user.id], relationName: 'workoutPlanOwner' }),
-  trainer: one(user, { fields: [workoutPlan.trainerId], references: [user.id], relationName: 'workoutPlanTrainer' }),
   splits: many(workoutSplit),
 }));

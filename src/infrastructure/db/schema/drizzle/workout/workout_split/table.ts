@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm';
+import { relations, sql as drizzleSql } from 'drizzle-orm';
 import { bigint, boolean, foreignKey, index, primaryKey, text, timestamp, unique } from 'drizzle-orm/pg-core';
 import { userSplitInformation } from '../../reminders/user_split_information/table';
 import { workoutSummary } from '../../tracking/workout_summary/table';
@@ -13,8 +13,9 @@ export const workoutSplit = workoutSchema.table(
     id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'workout_split_id_seq' }).notNull(),
     workoutId: bigint('workout_id', { mode: 'number' }).notNull(),
     name: text('name').notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    muscleGroup: text('muscle_group'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .default(drizzleSql`(now() AT TIME ZONE 'utc')`)
+      .notNull(),
     isActive: boolean('is_active').default(true).notNull(),
   },
   (t) => [

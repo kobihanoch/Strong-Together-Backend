@@ -84,7 +84,7 @@ export async function getInactiveWorkoutSplitNames(userId: string) {
 export async function getExercisesForSplit(userId: string, splitName: string) {
   const rows = await sql<{ exercise_id: number | null; sets: number[] | null; order_index: number | null }[]>`
     SELECT ets.exercise_id, ets.sets, ets.order_index
-    FROM workout.exercise_to_workout_split ets
+    FROM workout.v_exercise_to_workout_split_expanded ets
     INNER JOIN workout.workout_split ws ON ws.id = ets.workout_split_id
     INNER JOIN workout.workout_plan wp ON wp.id = ws.workout_id
     WHERE wp.user_id = ${userId}::uuid
@@ -210,7 +210,8 @@ export async function messageExists(messageId: string) {
 
 export async function getAerobicsRowsForUser(userId: string) {
   const rows = await sql<Pick<AerobicEntity, 'id' | 'type' | 'duration_mins' | 'duration_sec' | 'workout_time_utc'>[]>`
-    SELECT at.id, at.type, at.duration_mins, at.duration_sec, at.workout_time_utc
+    SELECT at.id, at.type, at.duration_sec / 60 AS duration_mins,
+      at.duration_sec % 60 AS duration_sec, at.workout_time_utc
     FROM tracking.aerobic_tracking at
     WHERE at.user_id = ${userId}::uuid
     ORDER BY at.id ASC
@@ -245,7 +246,7 @@ export async function getUserAuthStateByUsername(username: string) {
   const [row] = await sql<
     Pick<UserEntity, 'id' | 'username' | 'email' | 'name' | 'gender' | 'role' | 'password' | 'is_verified'>[]
   >`
-    SELECT id, username, email, name, gender, role, password, is_verified
+    SELECT id, username, email, name, gender, role, password_hash AS password, is_verified
     FROM identity.user
     WHERE username = ${username}
     LIMIT 1
@@ -268,7 +269,7 @@ export async function createVerifiedTestUser(overrides: {
       email,
       name,
       gender,
-      password,
+      password_hash,
       role,
       last_login,
       token_version,

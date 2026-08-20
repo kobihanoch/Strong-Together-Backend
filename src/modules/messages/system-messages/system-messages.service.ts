@@ -26,7 +26,7 @@ export class SystemMessagesService {
         inserted.*,
         u.username          AS sender_username,
         u.name              AS sender_full_name,
-        u.profile_image_path AS sender_profile_image_url,
+        u.profile_pic_path AS sender_profile_image_url,
         u.gender            AS sender_gender
       FROM inserted
       LEFT JOIN identity.user u ON u.id = inserted.sender_id

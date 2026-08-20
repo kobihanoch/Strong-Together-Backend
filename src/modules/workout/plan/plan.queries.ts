@@ -10,7 +10,7 @@ export class WorkoutPlanQueries {
   async queryWholeUserWorkoutPlan(userId: string, tz: string): Promise<WholeUserWorkoutPlan[]> {
     return this.sql<WholeUserWorkoutPlan[]>`
       SELECT
-        workoutplans.id::INT, workoutplans.name, workout.get_number_of_splits(workoutplans.id)::INT AS numberofsplits, workoutplans.created_at, workoutplans.is_deleted, workoutplans.level, workoutplans.user_id, workoutplans.trainer_id, workoutplans.is_active,
+        workoutplans.id::INT, workout.get_number_of_splits(workoutplans.id)::INT AS numberofsplits, workoutplans.created_at, workoutplans.user_id, workoutplans.is_active,
         (workoutplans.updated_at AT TIME ZONE ${tz}) AS updated_at,
         (
           SELECT COALESCE(json_agg(
@@ -99,14 +99,12 @@ export class WorkoutPlanQueries {
 
     let planId: number;
 
-    // Create the active workout plan, or update its name and trainer when it already exists.
+    // Create the active workout plan, or touch its update timestamp when it already exists.
     const planResult = await this.sql<[{ id: number }]>`
-      INSERT INTO workout.workout_plan (user_id, trainer_id, name, is_active, updated_at)
-      VALUES (${userId}::uuid, ${userId}::uuid, ${workoutName}, TRUE, NOW())
+      INSERT INTO workout.workout_plan (user_id, is_active, updated_at)
+      VALUES (${userId}::uuid, TRUE, NOW())
       ON CONFLICT (user_id) WHERE is_active
       DO UPDATE SET
-        name = EXCLUDED.name,
-        trainer_id = EXCLUDED.trainer_id,
         updated_at = NOW()
       RETURNING id;
     `;

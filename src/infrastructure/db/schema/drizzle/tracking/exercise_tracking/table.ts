@@ -1,20 +1,21 @@
 import { relations, sql as drizzleSql } from 'drizzle-orm';
-import { bigint, foreignKey, index, primaryKey, real, text, uuid } from 'drizzle-orm/pg-core';
+import { bigint, foreignKey, index, primaryKey, text, uuid } from 'drizzle-orm/pg-core';
 import { trackingSchema } from '../../schemas';
+import { exercise } from '../../workout/exercises/table';
 import { exerciseToWorkoutSplit } from '../../workout/exercisetoworkoutsplit/table';
-import { workoutSummary } from '../workout_summary/table';
 import { trackingSet } from '../tracking_set/table';
+import { workoutSummary } from '../workout_summary/table';
 import { exerciseTrackingPolicies } from './policies';
+import { check } from 'drizzle-orm/pg-core';
 
 export const exerciseTracking = trackingSchema.table(
   'exercise_tracking',
   {
     id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'exercise_tracking_id_seq' }).notNull(),
-    exerciseToSplitId: bigint('exercise_to_split_id', { mode: 'number' }).notNull(),
-    weight: real('weight').array().default(drizzleSql`ARRAY[]::real[]`).notNull(),
-    reps: bigint('reps', { mode: 'number' }).array().default(drizzleSql`ARRAY[]::bigint[]`).notNull(),
-    notes: text('notes'),
     workoutSummaryId: uuid('workout_summary_id').notNull(),
+    exerciseToSplitId: bigint('exercise_to_split_id', { mode: 'number' }),
+    exerciseId: bigint('exercise_id', { mode: 'number' }),
+    notes: text('notes'),
   },
   (t) => [
     primaryKey({ name: 'exercise_tracking_pkey', columns: [t.id] }),
@@ -26,12 +27,20 @@ export const exerciseTracking = trackingSchema.table(
       .onUpdate('cascade')
       .onDelete('cascade'),
     foreignKey({
+      name: 'exercise_tracking_exercise_id_fkey',
+      columns: [t.exerciseId],
+      foreignColumns: [exercise.id],
+    })
+      .onUpdate('cascade')
+      .onDelete('cascade'),
+    foreignKey({
       name: 'exercise_tracking_workout_summary_id_fkey',
       columns: [t.workoutSummaryId],
       foreignColumns: [workoutSummary.id],
     })
       .onUpdate('cascade')
       .onDelete('cascade'),
+    check('exercise_tracking_xor_check', drizzleSql`num_nonnulls(${t.exerciseToSplitId}, ${t.exerciseId}) = 1`), // Only one of them can be defined (for random exercises that are not assigned)
     index('exercise_tracking_workout_summary_id_idx').on(t.workoutSummaryId),
     ...exerciseTrackingPolicies(t),
   ],
@@ -43,4 +52,8 @@ export const exerciseTrackingRelations = relations(exerciseTracking, ({ many, on
   }),
   workoutSummary: one(workoutSummary, { fields: [exerciseTracking.workoutSummaryId], references: [workoutSummary.id] }),
   trackingSets: many(trackingSet),
+  exercise: one(exercise, {
+    fields: [exerciseTracking.exerciseId],
+    references: [exercise.id],
+  }),
 }));

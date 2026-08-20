@@ -30,8 +30,8 @@ export class SessionQueries {
       SET token_version = token_version + 1, last_login = NOW() AT TIME ZONE 'utc'
       WHERE id = ${userId}::uuid 
       RETURNING token_version,
-        (to_jsonb(users) - 'password' - 'token_version' - 'profile_image_path')
-          || jsonb_build_object('profile_image_url', users.profile_image_path) AS user_data
+        (to_jsonb(users) - 'password_hash' - 'token_version' - 'profile_pic_path')
+          || jsonb_build_object('profile_image_url', users.profile_pic_path, 'is_first_login', users.last_login IS NULL) AS user_data
     `;
   }
 
@@ -41,8 +41,8 @@ export class SessionQueries {
       SET token_version = token_version + 1, last_login = NOW() AT TIME ZONE 'utc' 
       WHERE id = ${userId}::uuid AND token_version = ${prevTokenVer} 
       RETURNING token_version,
-        (to_jsonb(users) - 'password' - 'token_version' - 'profile_image_path')
-          || jsonb_build_object('profile_image_url', users.profile_image_path) AS user_data
+        (to_jsonb(users) - 'password_hash' - 'token_version' - 'profile_pic_path')
+          || jsonb_build_object('profile_image_url', users.profile_pic_path, 'is_first_login', users.last_login IS NULL) AS user_data
     `;
   }
 

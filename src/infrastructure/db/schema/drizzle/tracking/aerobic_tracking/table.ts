@@ -10,7 +10,6 @@ export const aerobicTracking = trackingSchema.table(
     id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'aerobic_tracking_id_seq' }).notNull(),
     userId: uuid('user_id').notNull(),
     type: text('type').notNull(),
-    durationMins: bigint('duration_mins', { mode: 'number' }).default(0).notNull(),
     durationSec: bigint('duration_sec', { mode: 'number' }).default(0).notNull(),
     workoutTimeUtc: timestamp('workout_time_utc', { withTimezone: true })
       .default(drizzleSql`(now() AT TIME ZONE 'utc')`)

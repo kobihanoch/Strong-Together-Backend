@@ -18,20 +18,20 @@ export const exerciseTrackingExpandedView = analyticsSchema
     workoutStartUtc: timestamp('workout_start_utc', { withTimezone: true }),
     workoutEndUtc: timestamp('workout_end_utc', { withTimezone: true }),
   })
-  .with({ securityInvoker: true })
-  .as(drizzleSql`
-    SELECT et.id,
+  .with({ securityInvoker: true }).as(drizzleSql`
+    SELECT 
+      et.id,
       et.exercise_to_split_id,
-      CASE WHEN count(tracking_set.id) > 0
-        THEN array_agg(tracking_set.weight ORDER BY tracking_set.set_index)
-          FILTER (WHERE tracking_set.id IS NOT NULL)
-        ELSE et.weight
-      END AS weight,
-      CASE WHEN count(tracking_set.id) > 0
-        THEN array_agg(tracking_set.reps::bigint ORDER BY tracking_set.set_index)
-          FILTER (WHERE tracking_set.id IS NOT NULL)
-        ELSE et.reps
-      END AS reps,
+      COALESCE(
+        array_agg(tracking_set.weight ORDER BY tracking_set.set_index)
+          FILTER (WHERE tracking_set.id IS NOT NULL),
+        ARRAY[]::real[]
+      ) AS weight,
+      COALESCE(
+        array_agg(tracking_set.reps::bigint ORDER BY tracking_set.set_index)
+          FILTER (WHERE tracking_set.id IS NOT NULL),
+        ARRAY[]::bigint[]
+      ) AS reps,
       ews.exercise_id,
       wsumm.workout_split_id,
       ws.name AS split_name,
@@ -47,5 +47,5 @@ export const exerciseTrackingExpandedView = analyticsSchema
     LEFT JOIN workout.exercise ex ON ex.id = ews.exercise_id
     LEFT JOIN tracking.tracking_set tracking_set ON tracking_set.exercise_tracking_id = et.id
     GROUP BY et.id, ews.exercise_id, wsumm.workout_split_id, ws.name, ex.name,
-      wsumm.workout_start_utc, wsumm.workout_end_utc, et.weight, et.reps
+      wsumm.workout_start_utc, wsumm.workout_end_utc
   `);
