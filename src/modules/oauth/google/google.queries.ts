@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type postgres from 'postgres';
-import { ensureUniqueUsername } from '../oauth.utils';
 import { SQL } from '../../../infrastructure/db/db.tokens';
 
 interface OAuthLookupResult {
@@ -17,12 +16,11 @@ export class GoogleQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
   async queryFindUserIdWithGoogleUserId(googleUserId: string): Promise<OAuthLookupResult> {
-    const rows = await this.sql<{ user_id: string; missing_fields: string | null }[]>`
-      SELECT o.user_id, o.missing_fields FROM identity.oauth_accounts o
-      WHERE o.provider_user_id=${googleUserId} AND o.provider='google'`;
+    const rows = await this.sql<{ oauth_data: { user_id: string; missing_fields: string | null } | null }[]>`
+      SELECT guest_api.oauth_lookup('google', ${googleUserId}) AS oauth_data`;
     return {
-      userId: rows[0]?.user_id || null,
-      missing_fields: rows[0]?.missing_fields || null,
+      userId: rows[0]?.oauth_data?.user_id || null,
+      missing_fields: rows[0]?.oauth_data?.missing_fields || null,
     };
   }
 
@@ -37,38 +35,10 @@ export class GoogleQueries {
   async queryTryToLinkUserWithEmailGoogle(googleEmail: string | null, googleSub: string): Promise<OAuthLinkResult> {
     if (!googleEmail) return { userId: null };
 
-    // Use a transaction to avoid race conditions between lookup and insert.
-    return await this.sql.begin(async (trx: postgres.TransactionSql) => {
-      // Lock the candidate row if it exists to avoid concurrent link races.
-      const existing = await trx<{ id: string }[]>`
-        SELECT u.id
-        FROM identity.users u
-        WHERE lower(u.email) = lower(${googleEmail})
-        FOR UPDATE
-        LIMIT 1
-      `;
-      if (existing.length === 0) {
-        return { userId: null };
-      }
-      const userId = existing[0].id;
-
-      // Insert into oauth_accounts; ignore if already linked.
-      await trx`
-        INSERT INTO identity.oauth_accounts (user_id, provider, provider_user_id, provider_email)
-        VALUES (${userId}, 'google', ${googleSub}, ${googleEmail})
-        ON CONFLICT (provider, provider_user_id) DO NOTHING
-      `;
-
-      // Optionally enrich missing profile fields (do not overwrite user choices).
-      // If you want to upsert full_name/picture here, add parameters to this function and COALESCE them.
-      await trx`
-        UPDATE identity.users
-        SET auth_provider = 'google'
-        WHERE id = ${userId}
-      `;
-
-      return { userId };
-    });
+    const [row] = await this.sql<{ user_id: string | null }[]>`
+      SELECT guest_api.oauth_link_by_email('google', ${googleEmail}, ${googleSub}) AS user_id
+    `;
+    return { userId: row?.user_id ?? null };
   }
 
   async queryCreateUserWithGoogleInfo(
@@ -79,31 +49,11 @@ export class GoogleQueries {
     googleSub: string,
     googleEmail: string | null,
   ): Promise<string> {
-    return await this.sql.begin(async (trx: postgres.TransactionSql) => {
-      // Generate a unique username
-      const username = await ensureUniqueUsername(trx, candidateUsername);
-
-      // Create user
-      const [inserted] = await trx<{ id: string }[]>`
-        INSERT INTO identity.users (username, email, name, gender, is_verified, auth_provider)
-        VALUES (${username}, ${email}, ${fullName}, 'Unknown', true, 'google')
-        RETURNING id
-      `;
-      const newUserId = inserted.id;
-
-      // Create oauth link
-      await trx`
-        INSERT INTO identity.oauth_accounts (user_id, provider, provider_user_id, provider_email, missing_fields)
-        VALUES (${newUserId}, 'google', ${googleSub}, ${googleEmail}, ${oauthMissingFields})
-      `;
-
-      // Create default reminder settings
-      await trx`
-        INSERT INTO reminders.user_reminder_settings (user_id)
-        VALUES (${newUserId})
-      `;
-
-      return newUserId;
-    });
+    const [row] = await this.sql<{ user_id: string }[]>`
+      SELECT guest_api.oauth_create_user(
+        'google', ${candidateUsername}, ${email}, ${fullName}, ${oauthMissingFields}, ${googleSub}, ${googleEmail}
+      ) AS user_id
+    `;
+    return row.user_id;
   }
 }

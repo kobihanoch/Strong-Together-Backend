@@ -56,7 +56,7 @@ That stack means:
 - DPoP validates the request proof.
 - Authentication validates JWT claims, DPoP token binding, token version, and verified user state.
 - Authorization validates route role metadata.
-- RLS binds all SQL executed in the request to the authenticated user.
+- The authentication guard validates its database state in an authenticated RLS transaction, and the interceptor binds controller/service SQL to the authenticated user. Public auth requests remain `guest` until credentials or a signed token are verified.
 
 ## Error Handling
 

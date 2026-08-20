@@ -18,7 +18,7 @@ export class SystemMessagesService {
 
     const [row] = await this.sql<[MessageAfterSendResponse]>`
       WITH inserted AS (
-        INSERT INTO messages.messages (sender_id, receiver_id, subject, msg)
+        INSERT INTO messages.message (sender_id, receiver_id, subject, msg)
         VALUES (${senderId}::uuid, ${receiverId}::uuid, ${msg.header}, ${msg.text})
         RETURNING *
       )
@@ -26,10 +26,10 @@ export class SystemMessagesService {
         inserted.*,
         u.username          AS sender_username,
         u.name              AS sender_full_name,
-        u.profile_image_url AS sender_profile_image_url,
+        u.profile_pic_path AS sender_profile_image_url,
         u.gender            AS sender_gender
       FROM inserted
-      LEFT JOIN identity.users u ON u.id = inserted.sender_id
+      LEFT JOIN identity.user u ON u.id = inserted.sender_id
     `;
 
     this.messagesService.emitNewMessage(receiverId, row);

@@ -4,5 +4,16 @@
   "semi": true,
   "trailingComma": "all",
   "bracketSpacing": true,
-  "arrowParens": "always"
+  "arrowParens": "always",
+  "plugins": ["prettier-plugin-embed", "prettier-plugin-sql"],
+  "embeddedSqlTags": ["sql", "this.sql", "drizzleSql"],
+  "language": "postgresql",
+  "keywordCase": "upper",
+  "dataTypeCase": "upper",
+  "functionCase": "upper",
+  "tabWidth": 2,
+  "useTabs": false,
+  "expressionWidth": 60,
+  "denseOperators": false,
+  "linesBetweenQueries": 1
 }

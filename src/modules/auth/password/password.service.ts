@@ -8,11 +8,13 @@ import { SQL } from '../../../infrastructure/db/db.tokens';
 import { PasswordEmailsService } from './password-emails/password-emails.service';
 import postgres from 'postgres';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
+import { DBService } from '../../../infrastructure/db/db.service';
 
 @Injectable()
 export class PasswordService {
   constructor(
     @Inject(SQL) private readonly sql: postgres.Sql,
+    private readonly dbService: DBService,
     private readonly passwordQueries: PasswordQueries,
     private readonly sessionQueries: SessionQueries,
     private readonly passwordEmailsService: PasswordEmailsService,
@@ -22,11 +24,10 @@ export class PasswordService {
   async sendChangePassEmailData(body: SendChangePassEmailBody, requestId?: string): Promise<void> {
     const { identifier } = body;
     if (!identifier) throw new BadRequestException('Please fill username or email');
-    const [user = null] = await this.sql<
-      { id: string; email: string; name: string; username: string }[]
-    >`SELECT id, email, name, username FROM identity.users WHERE
-        auth_provider='app' 
-        AND (username=${identifier} OR email=${identifier}) LIMIT 1`;
+    const [row] = await this.sql<{
+      user_data: { id: string; email: string; name: string; username: string } | null;
+    }[]>`SELECT guest_api.find_login_user(${identifier}) AS user_data`;
+    const user = row?.user_data ?? null;
     if (!user) return;
 
     await this.passwordEmailsService.sendForgotPasswordEmail(
@@ -61,6 +62,7 @@ export class PasswordService {
 
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(newPassword, salt);
+    await this.dbService.promoteCurrentRlsTxToAuthenticated(sub);
     await Promise.all([
       this.passwordQueries.queryUpdateUserPassword(sub, hash),
       this.sessionQueries.queryBumpTokenVersionAndGetSelfData(sub),

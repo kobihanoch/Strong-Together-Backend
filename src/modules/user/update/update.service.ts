@@ -13,6 +13,7 @@ import type postgres from 'postgres';
 import { supabaseConfig } from '../../../config/storage.config';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
 import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 import type { AppLogger } from '../../../infrastructure/logger';
 import { SupabaseStorageService } from '../../../infrastructure/supabase/storage/supabase-storage.service';
 import { UpdateEmailsService } from './update-emails/update-emails.service';
@@ -24,6 +25,7 @@ import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from '.
 export class UpdateUserService {
   constructor(
     @Inject(SQL) private readonly sql: postgres.Sql,
+    private readonly dbService: DBService,
     private readonly updateUserQueries: UpdateUserQueries,
     private readonly updateEmailsService: UpdateEmailsService,
     private readonly supabaseStorageService: SupabaseStorageService,
@@ -39,7 +41,7 @@ export class UpdateUserService {
 
   async updateUsersReminderSettingsTimezone(userId: string, tz: string): Promise<void> {
     await this
-      .sql`update reminders.user_reminder_settings urs set timezone=${tz}::text where urs.user_id = ${userId}::uuid and urs.timezone is distinct from ${tz}::text;`;
+      .sql`update reminders.user_reminder_setting urs set timezone=${tz}::text where urs.user_id = ${userId}::uuid and urs.timezone is distinct from ${tz}::text;`;
   }
 
   async updateAuthenticatedUserData(
@@ -108,9 +110,10 @@ export class UpdateUserService {
     const normalized = newEmail.trim().toLowerCase();
 
     try {
+      await this.dbService.promoteCurrentRlsTxToAuthenticated(sub);
       await this.sql.begin(async (trx) => {
         await trx`
-          UPDATE identity.users
+          UPDATE identity.user
           SET email = ${normalized}
           WHERE id = ${sub}::uuid
         `;

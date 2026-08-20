@@ -89,7 +89,9 @@ Infrastructure modules live under `src/infrastructure` and provide reusable clie
 
 `AuthModule` is split into session, password, and verification flows.
 
-- `SessionService` uses `SessionQueries` for login, refresh rotation, logout, token-version bumping, and first-login state. First login can call `SystemMessagesService`.
+- `SessionService` uses `SessionQueries` for login, refresh rotation, logout, and token-version bumping. A null `last_login` triggers the initial system message.
+- Public authentication runs as `guest`, which has no direct privileges or RLS policies on application tables. It can execute only the allow-listed `SECURITY DEFINER` functions in the `guest_api` schema. Once credentials or a signed token are verified, the request transaction is promoted to the authenticated user's RLS context.
+- `guest_api` routines use a fixed `search_path` and preserve the existing login, registration, verification, password, and OAuth behavior while replacing direct guest table access.
 - `PasswordService` uses PostgreSQL for user/password updates and Redis for one-time forgot-password JTI keys: `forgotpassword:jti:*`.
 - `PasswordEmailsService` generates the reset token and enqueues email jobs. It does not write cache keys.
 - `VerificationService` uses PostgreSQL for verification state and Redis for one-time verification JTI keys: `accountverify:jti:*`.
@@ -154,6 +156,8 @@ The current implementation delivers analysis results in realtime and does not pe
 - `GET /api/push/daily`
 - `GET /api/push/hourlyreminder`
 
+The push trigger routes are currently public for compatibility. They are not allowed to gain broad guest database privileges; the target architecture is an authenticated scheduler/worker using a dedicated cron runtime role and allow-listed `cron_api` functions.
+
 `PushService` queries eligible users from PostgreSQL and enqueues jobs into the Redis-backed Bull queue `{env}:pushNotificationsQueue`. The push worker consumes those jobs and sends notifications to Expo Push.
 
 ### Analytics
@@ -179,7 +183,7 @@ xt:aerobics:v1:{userId}:{days}:{tz}
 `OAuthModule` is split into Google and Apple flows.
 
 - Provider utilities verify the external ID token/JWKS.
-- Provider queries find, link, or create users and `identity.oauth_accounts` rows.
+- Provider queries find, link, or create users and `identity.oauth_account` rows through the allow-listed `guest_api` functions.
 - `SessionQueries` bumps token versions and returns auth payload data.
 - First-login flows can call `SystemMessagesService`.
 

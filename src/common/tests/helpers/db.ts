@@ -1,9 +1,14 @@
 import postgres from 'postgres';
+import dotenv from 'dotenv';
 import type { AerobicEntity, UserEntity } from '@strong-together/shared';
 import { appConfig } from '../../../config/app.config';
 import { databaseConfig } from '../../../config/database.config';
 
-const sql = postgres(databaseConfig.url, {
+dotenv.config({ path: '.env.test', override: true });
+
+// Test fixtures and direct DB assertions intentionally use the admin connection.
+// The application itself uses DATABASE_URL and therefore runs as app_runtime_user.
+const sql = postgres(process.env.DRIZZLE_DATABASE_URL || databaseConfig.url, {
   ssl: appConfig.isTest ? false : 'require',
   prepare: false,
   connect_timeout: 30,
@@ -18,9 +23,9 @@ async function wait(ms: number) {
 export async function getExerciseToWorkoutSplitId(userId: string, splitName: string, exerciseId: number) {
   const rows = await sql<{ id: number }[]>`
     SELECT ets.id
-    FROM workout.exercisetoworkoutsplit ets
-    INNER JOIN workout.workoutsplits ws ON ws.id = ets.workoutsplit_id
-    INNER JOIN workout.workoutplans wp ON wp.id = ws.workout_id
+    FROM workout.exercise_to_workout_split ets
+    INNER JOIN workout.workout_split ws ON ws.id = ets.workout_split_id
+    INNER JOIN workout.workout_plan wp ON wp.id = ws.workout_id
     WHERE wp.user_id = ${userId}::uuid
       AND wp.is_active = TRUE
       AND ws.is_active = TRUE
@@ -36,8 +41,8 @@ export async function getExerciseToWorkoutSplitId(userId: string, splitName: str
 export async function getWorkoutSplitId(userId: string, splitName: string) {
   const rows = await sql<{ id: number }[]>`
     SELECT ws.id
-    FROM workout.workoutsplits ws
-    INNER JOIN workout.workoutplans wp ON wp.id = ws.workout_id
+    FROM workout.workout_split ws
+    INNER JOIN workout.workout_plan wp ON wp.id = ws.workout_id
     WHERE wp.user_id = ${userId}::uuid
       AND wp.is_active = TRUE
       AND ws.is_active = TRUE
@@ -51,8 +56,8 @@ export async function getWorkoutSplitId(userId: string, splitName: string) {
 export async function getActiveWorkoutSplitNames(userId: string) {
   const rows = await sql<{ name: string | null }[]>`
     SELECT ws.name
-    FROM workout.workoutsplits ws
-    INNER JOIN workout.workoutplans wp ON wp.id = ws.workout_id
+    FROM workout.workout_split ws
+    INNER JOIN workout.workout_plan wp ON wp.id = ws.workout_id
     WHERE wp.user_id = ${userId}::uuid
       AND wp.is_active = TRUE
       AND ws.is_active = TRUE
@@ -65,8 +70,8 @@ export async function getActiveWorkoutSplitNames(userId: string) {
 export async function getInactiveWorkoutSplitNames(userId: string) {
   const rows = await sql<{ name: string | null }[]>`
     SELECT ws.name
-    FROM workout.workoutsplits ws
-    INNER JOIN workout.workoutplans wp ON wp.id = ws.workout_id
+    FROM workout.workout_split ws
+    INNER JOIN workout.workout_plan wp ON wp.id = ws.workout_id
     WHERE wp.user_id = ${userId}::uuid
       AND wp.is_active = TRUE
       AND ws.is_active = FALSE
@@ -79,9 +84,9 @@ export async function getInactiveWorkoutSplitNames(userId: string) {
 export async function getExercisesForSplit(userId: string, splitName: string) {
   const rows = await sql<{ exercise_id: number | null; sets: number[] | null; order_index: number | null }[]>`
     SELECT ets.exercise_id, ets.sets, ets.order_index
-    FROM workout.exercisetoworkoutsplit ets
-    INNER JOIN workout.workoutsplits ws ON ws.id = ets.workoutsplit_id
-    INNER JOIN workout.workoutplans wp ON wp.id = ws.workout_id
+    FROM workout.v_exercise_to_workout_split_expanded ets
+    INNER JOIN workout.workout_split ws ON ws.id = ets.workout_split_id
+    INNER JOIN workout.workout_plan wp ON wp.id = ws.workout_id
     WHERE wp.user_id = ${userId}::uuid
       AND wp.is_active = TRUE
       AND ws.is_active = TRUE
@@ -100,9 +105,9 @@ export async function getExercisesForSplit(userId: string, splitName: string) {
 export async function getInactiveExercisesForSplit(userId: string, splitName: string) {
   const rows = await sql<{ exercise_id: number | null }[]>`
     SELECT ets.exercise_id
-    FROM workout.exercisetoworkoutsplit ets
-    INNER JOIN workout.workoutsplits ws ON ws.id = ets.workoutsplit_id
-    INNER JOIN workout.workoutplans wp ON wp.id = ws.workout_id
+    FROM workout.exercise_to_workout_split ets
+    INNER JOIN workout.workout_split ws ON ws.id = ets.workout_split_id
+    INNER JOIN workout.workout_plan wp ON wp.id = ws.workout_id
     WHERE wp.user_id = ${userId}::uuid
       AND wp.is_active = TRUE
       AND ws.name = ${splitName}
@@ -126,7 +131,7 @@ export async function getWorkoutSummaryCount(userId: string) {
 export async function getExerciseTrackingCountForUser(userId: string) {
   const [row] = await sql<{ count: string }[]>`
     SELECT COUNT(*)::text AS count
-    FROM tracking.exercisetracking et
+    FROM tracking.exercise_tracking et
     INNER JOIN tracking.workout_summary ws ON ws.id = et.workout_summary_id
     WHERE ws.user_id = ${userId}::uuid
   `;
@@ -138,7 +143,7 @@ export async function getUserReminderTimezone(userId: string) {
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const [row] = await sql<{ timezone: string | null }[]>`
       SELECT urs.timezone
-      FROM reminders.user_reminder_settings urs
+      FROM reminders.user_reminder_setting urs
       WHERE urs.user_id = ${userId}::uuid
       LIMIT 1
     `;
@@ -154,7 +159,7 @@ export async function getUserReminderTimezone(userId: string) {
 
   const [row] = await sql<{ timezone: string | null }[]>`
     SELECT urs.timezone
-    FROM reminders.user_reminder_settings urs
+    FROM reminders.user_reminder_setting urs
     WHERE urs.user_id = ${userId}::uuid
     LIMIT 1
   `;
@@ -166,7 +171,7 @@ export async function getMessageReadState(messageId: string) {
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const [row] = await sql<{ is_read: boolean | null }[]>`
       SELECT m.is_read
-      FROM messages.messages m
+      FROM messages.message m
       WHERE m.id = ${messageId}::uuid
       LIMIT 1
     `;
@@ -187,7 +192,7 @@ export async function messageExists(messageId: string) {
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const [row] = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
-      FROM messages.messages m
+      FROM messages.message m
       WHERE m.id = ${messageId}::uuid
     `;
 
@@ -205,8 +210,9 @@ export async function messageExists(messageId: string) {
 
 export async function getAerobicsRowsForUser(userId: string) {
   const rows = await sql<Pick<AerobicEntity, 'id' | 'type' | 'duration_mins' | 'duration_sec' | 'workout_time_utc'>[]>`
-    SELECT at.id, at.type, at.duration_mins, at.duration_sec, at.workout_time_utc
-    FROM tracking.aerobictracking at
+    SELECT at.id, at.type, at.duration_sec / 60 AS duration_mins,
+      at.duration_sec % 60 AS duration_sec, at.workout_time_utc
+    FROM tracking.aerobic_tracking at
     WHERE at.user_id = ${userId}::uuid
     ORDER BY at.id ASC
   `;
@@ -240,8 +246,8 @@ export async function getUserAuthStateByUsername(username: string) {
   const [row] = await sql<
     Pick<UserEntity, 'id' | 'username' | 'email' | 'name' | 'gender' | 'role' | 'password' | 'is_verified'>[]
   >`
-    SELECT id, username, email, name, gender, role, password, is_verified
-    FROM identity.users
+    SELECT id, username, email, name, gender, role, password_hash AS password, is_verified
+    FROM identity.user
     WHERE username = ${username}
     LIMIT 1
   `;
@@ -254,18 +260,18 @@ export async function createVerifiedTestUser(overrides: {
   email?: string;
   fullName?: string;
   gender?: 'Male' | 'Female' | 'Other' | 'Unknown';
-  isFirstLogin?: boolean;
+  hasLoggedIn?: boolean;
   isVerified?: boolean;
 }) {
   const [row] = await sql<{ id: string }[]>`
-    INSERT INTO identity.users (
+    INSERT INTO identity.user (
       username,
       email,
       name,
       gender,
-      password,
+      password_hash,
       role,
-      is_first_login,
+      last_login,
       token_version,
       is_verified,
       auth_provider
@@ -276,7 +282,7 @@ export async function createVerifiedTestUser(overrides: {
       ${overrides.gender ?? 'Other'},
       ${testPasswordHash},
       'User',
-      ${overrides.isFirstLogin ?? false},
+      ${overrides.hasLoggedIn === false ? null : new Date()},
       0,
       ${overrides.isVerified ?? true},
       'app'
@@ -285,7 +291,7 @@ export async function createVerifiedTestUser(overrides: {
   `;
 
   await sql`
-    INSERT INTO reminders.user_reminder_settings (user_id)
+    INSERT INTO reminders.user_reminder_setting (user_id)
     VALUES (${row.id}::uuid)
   `;
 
@@ -295,7 +301,7 @@ export async function createVerifiedTestUser(overrides: {
 export async function getUserSessionStateByUsername(username: string) {
   const [row] = await sql<{ id: string; token_version: string; push_token: string | null; last_login: Date | null }[]>`
     SELECT id, token_version::text, push_token, last_login
-    FROM identity.users
+    FROM identity.user
     WHERE username = ${username}
     LIMIT 1
   `;
@@ -312,7 +318,7 @@ export async function getUserSessionStateByUsername(username: string) {
 
 export async function setUserPushTokenByUsername(username: string, pushToken: string) {
   await sql`
-    UPDATE identity.users
+    UPDATE identity.user
     SET push_token = ${pushToken}
     WHERE username = ${username}
   `;
@@ -320,7 +326,7 @@ export async function setUserPushTokenByUsername(username: string, pushToken: st
 
 export async function deleteUserByUsername(username: string) {
   await sql`
-    DELETE FROM identity.users
+    DELETE FROM identity.user
     WHERE username = ${username}
   `;
 }
@@ -328,7 +334,7 @@ export async function deleteUserByUsername(username: string) {
 export async function getUserLastLoginByUsername(username: string) {
   const [row] = await sql<{ last_login: Date | null; database_now: Date }[]>`
     SELECT last_login, NOW() AS database_now
-    FROM identity.users
+    FROM identity.user
     WHERE username = ${username}
     LIMIT 1
   `;
@@ -366,7 +372,7 @@ export async function waitForUserDeletionByUsername(username: string) {
 export async function hasReminderSettings(userId: string) {
   const [row] = await sql<{ count: string }[]>`
     SELECT COUNT(*)::text AS count
-    FROM reminders.user_reminder_settings
+    FROM reminders.user_reminder_setting
     WHERE user_id = ${userId}::uuid
   `;
 
@@ -377,7 +383,7 @@ export async function configureHourlyReminderForUser(userId: string, splitId: nu
   const preferredWeekday = new Date().getUTCDay();
 
   await sql`
-    UPDATE reminders.user_reminder_settings
+    UPDATE reminders.user_reminder_setting
     SET workout_reminders_enabled = TRUE,
         reminder_offset_minutes = 0
     WHERE user_id = ${userId}::uuid
@@ -386,7 +392,7 @@ export async function configureHourlyReminderForUser(userId: string, splitId: nu
   await sql`
     INSERT INTO reminders.user_split_information (
       user_id,
-      split_id,
+      workout_split_id,
       estimated_time_utc,
       confidence,
       preferred_weekday
@@ -397,7 +403,7 @@ export async function configureHourlyReminderForUser(userId: string, splitId: nu
       1.00,
       ${preferredWeekday}
     )
-    ON CONFLICT (user_id, split_id) DO UPDATE
+    ON CONFLICT (user_id, workout_split_id) DO UPDATE
     SET estimated_time_utc = EXCLUDED.estimated_time_utc,
         confidence = EXCLUDED.confidence,
         preferred_weekday = EXCLUDED.preferred_weekday

@@ -1,6 +1,6 @@
 # Security Deep Dive
 
-Security in Strong Together is layered across the HTTP edge, token lifecycle, route authorization, request validation, and PostgreSQL RLS.
+Security in Strong Together is layered across the HTTP edge, token lifecycle, route authorization, request validation, a restricted public-auth database API, and PostgreSQL RLS.
 
 ## Server-Side Middleware
 
@@ -44,7 +44,7 @@ Authentication is split between proof validation and token validation:
 2. `AuthenticationGuard` extracts and decodes the access token.
 3. The token `cnf.jkt` claim must match the DPoP JWK thumbprint.
 4. The `ath` claim must match the hash of the access token.
-5. The token `tokenVer` claim must match `identity.users.token_version`.
+5. The token `tokenVer` claim must match `identity.user.token_version`.
 6. The user must exist and be verified.
 
 Token versioning gives the backend central revocation without maintaining a token blacklist. Login, refresh, password-sensitive flows, and logout can bump `token_version`, making older access and refresh tokens fail with `New login required`.
@@ -79,8 +79,8 @@ For authenticated users, the transaction sets:
 
 RLS policies then enforce ownership rules for:
 
-- `identity.users`
-- `identity.oauth_accounts`
+- `identity.user`
+- `identity.oauth_account`
 - `workout.workoutplans`
 - `workout.workoutsplits`
 - `workout.exercisetoworkoutsplit`
@@ -88,9 +88,29 @@ RLS policies then enforce ownership rules for:
 - `tracking.exercisetracking`
 - `tracking.aerobictracking`
 - `messages.messages`
-- `reminders.user_reminder_settings`
+- `reminders.user_reminder_setting`
 
 The important architectural point: even if an application query forgets a `WHERE user_id = ...` condition, PostgreSQL still evaluates row ownership. That is the right shape for a backend that stores personal health and activity data.
+
+### Guest database boundary
+
+Unauthenticated requests start a transaction with `SET LOCAL ROLE guest`. The `guest` role has:
+
+- no direct table, sequence, or application-function privileges
+- no RLS policies on application tables
+- no `USAGE` on the `identity`, `workout`, `tracking`, `reminders`, `analytics`, or `messages` schemas
+- `USAGE` only on the dedicated `guest_api` schema
+- `EXECUTE` only on the allow-listed public-auth functions
+
+The functions in `guest_api` are `SECURITY DEFINER` routines with a fixed `search_path = pg_catalog`. They implement the existing login, registration, verification lookup, and OAuth lookup/link/create operations without exposing general SQL access to application tables.
+
+After the application verifies a password, OAuth identity token, refresh token, or signed email token, `DBService.promoteCurrentRlsTxToAuthenticated()` sets `app.current_user_id` and changes the same transaction to `authenticated`. Subsequent writes are then subject to the authenticated user's RLS policies.
+
+This is a least-privilege boundary, not a replacement for HTTP validation and rate limiting. Login-related functions still accept caller-provided identifiers, and password comparison remains in Node using bcrypt.
+
+### Scheduled jobs
+
+The push scheduler routes currently remain HTTP-public and must not receive broad `guest` database permissions. The intended hardening is a separately authenticated scheduler/worker identity with its own `cron_runtime_user` login and a narrow `cron_api` function surface. The main application runtime should not receive `service_role` membership.
 
 ## Failure And Observability Controls
 

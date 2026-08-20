@@ -118,8 +118,8 @@ This file focuses on success contracts. Route-specific non-JSON behavior is call
 | `DELETE` | `/api/messages/delete/:id` | User | Delete message |
 | `POST` | `/api/oauth/apple` | Public | Apple OAuth login |
 | `POST` | `/api/oauth/google` | Public | Google OAuth login |
-| `GET` | `/api/push/daily` | Public | Trigger daily push enqueue |
-| `GET` | `/api/push/hourlyreminder` | Public | Trigger hourly reminder enqueue |
+| `GET` | `/api/push/daily` | Public (temporary) | Trigger daily push enqueue; scheduled-job authentication is still required |
+| `GET` | `/api/push/hourlyreminder` | Public (temporary) | Trigger hourly reminder enqueue; scheduled-job authentication is still required |
 | `POST` | `/api/videoanalysis/getpresignedurl` | User | Generate direct-upload URL |
 | `POST` | `/api/ws/generateticket` | User | Generate websocket ticket |
 
@@ -155,7 +155,7 @@ Authenticates a user with local credentials.
 
 Access:
 
-- Public
+- Public temporarily. Do not grant this route broad `guest` database access. It must move to an authenticated cron/worker identity with a narrow database function before production hardening is considered complete.
 - Rate-limited by `RateLimitGuard`
 
 Headers:
@@ -455,7 +455,6 @@ Successful response:
   "profile_image_url": "string | null",
   "push_token": "string | null",
   "role": "string",
-  "is_first_login": true,
   "token_version": 1,
   "is_verified": true,
   "auth_provider": "string"
@@ -502,7 +501,6 @@ Successful response:
     "profile_image_url": "string | null",
     "push_token": "string | null",
     "role": "string",
-    "is_first_login": true,
     "token_version": 1,
     "is_verified": true,
     "auth_provider": "string"
@@ -1078,7 +1076,6 @@ Successful response:
     "profile_image_url": "string | null",
     "push_token": "string | null",
     "role": "string",
-    "is_first_login": true,
     "token_version": 1,
     "is_verified": true,
     "auth_provider": "string"

@@ -8,12 +8,14 @@ import { VerificationEmailsService } from './verification-emails/verification-em
 import { generateVerificationFailedHTML, generateVerifiedHTML } from './verification.views';
 import type { ChangeEmailAndVerifyBody, SendVerifcationMailBody } from '@strong-together/shared';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
+import { DBService } from '../../../infrastructure/db/db.service';
 import { decodeVerifyToken } from './verification.utils';
 
 @Injectable()
 export class VerificationService {
   constructor(
     @Inject(SQL) private readonly sql: postgres.Sql,
+    private readonly dbService: DBService,
     private readonly verificationQueries: VerificationQueries,
     private readonly createUserQueries: CreateUserQueries,
     private readonly verificationEmailsService: VerificationEmailsService,
@@ -40,14 +42,17 @@ export class VerificationService {
       return { statusCode: 401, html: generateVerificationFailedHTML() };
     }
 
+    await this.dbService.promoteCurrentRlsTxToAuthenticated(sub);
     await this.verificationQueries.queryUpdateUserVerficiationStatus(sub, true);
     return { statusCode: 200, html: generateVerifiedHTML() };
   }
 
   async sendVerificationMailData(body: SendVerifcationMailBody, requestId?: string): Promise<void> {
     const { email } = body;
-    const [user = null] = await this.sql<{ id: string; name: string | null; username: string }[]>`
-      SELECT id, name, username FROM identity.users WHERE email=${email}`;
+    const [row] = await this.sql<{ user_data: { id: string; name: string | null; username: string } | null }[]>`
+      SELECT guest_api.find_user_for_email(${email}) AS user_data
+    `;
+    const user = row?.user_data ?? null;
     if (!user) return;
     const { id, name } = user;
     await this.verificationEmailsService.sendVerificationEmail(email, id, name ?? user.username, {
@@ -68,7 +73,8 @@ export class VerificationService {
     const [exists] = await this.createUserQueries.queryUserExistsByUsernameOrEmail(null, newEmail);
     if (exists) throw new ConflictException('Email already in use');
 
-    await this.sql`UPDATE identity.users SET email = ${newEmail} WHERE id = ${user.id}::uuid`;
+    await this.dbService.promoteCurrentRlsTxToAuthenticated(user.id);
+    await this.sql`UPDATE identity.user SET email = ${newEmail} WHERE id = ${user.id}::uuid`;
     await this.verificationEmailsService.sendVerificationEmail(
       newEmail,
       user.id,
@@ -80,7 +86,9 @@ export class VerificationService {
   }
 
   async checkUserVerifyData(username: string): Promise<{ isVerified: boolean }> {
-    const [user] = await this.sql<{ is_verified: boolean }[]>`SELECT is_verified FROM identity.users WHERE username=${username}`;
+    const [user] = await this.sql<{ is_verified: boolean | null }[]>`
+      SELECT guest_api.verification_state(${username}) AS is_verified
+    `;
     return { isVerified: user?.is_verified ?? false };
   }
 }

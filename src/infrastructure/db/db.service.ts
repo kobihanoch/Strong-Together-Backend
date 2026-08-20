@@ -37,14 +37,25 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
   }
 
   async runWithRlsTx<T>(userId: string | undefined, fn: () => Promise<T>): Promise<T> {
-    if (!userId) return fn();
-
     return (await this.dbClient.begin(async (tx) => {
-      await tx`select set_config('app.current_user_id', ${userId}, true)`;
-      await tx`SET LOCAL ROLE authenticated`;
-
-      return this.als.run({ tx, userId }, fn);
+      if (!userId) {
+        await tx`SET LOCAL ROLE guest`;
+        return this.als.run({ tx }, fn);
+      } else {
+        await tx`select set_config('app.current_user_id', ${userId}, true)`;
+        await tx`SET LOCAL ROLE authenticated`;
+        return this.als.run({ tx, userId }, fn);
+      }
     })) as T;
+  }
+
+  async promoteCurrentRlsTxToAuthenticated(userId: string): Promise<void> {
+    const store = this.als.getStore();
+    if (!store) throw new Error('No active RLS transaction');
+
+    await store.tx`select set_config('app.current_user_id', ${userId}, true)`;
+    await store.tx`SET LOCAL ROLE authenticated`;
+    store.userId = userId;
   }
 
   private isTransientConnError(err: any): boolean {
@@ -73,8 +84,10 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
 
     proxy.begin = async (fn: (tx: postgres.TransactionSql) => Promise<any>) => {
       const store = this.als.getStore();
-      const runner = store?.tx || this.dbClient;
-      return runner.begin(fn);
+      // Requests already run inside the RLS transaction. Reuse it instead of
+      // trying to open an unsupported nested transaction on TransactionSql.
+      if (store?.tx) return fn(store.tx as postgres.TransactionSql);
+      return this.dbClient.begin(fn);
     };
 
     return proxy;

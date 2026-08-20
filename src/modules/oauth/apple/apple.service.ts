@@ -3,6 +3,7 @@ import type { AppleOAuthBody, OAuthLoginResponse } from '@strong-together/shared
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../../../config/auth.config';
 import type { AppLogger } from '../../../infrastructure/logger';
+import { DBService } from '../../../infrastructure/db/db.service';
 import { SessionQueries } from '../../auth/session/session.queries';
 import { buildCnfClaim } from '../oauth.utils';
 import { AppleQueries } from './apple.queries';
@@ -12,6 +13,7 @@ import { SystemMessagesService } from '../../messages/system-messages/system-mes
 @Injectable()
 export class AppleService {
   constructor(
+    private readonly dbService: DBService,
     private readonly systemMessagesService: SystemMessagesService,
     private readonly sessionQueries: SessionQueries,
     private readonly appleQueries: AppleQueries,
@@ -89,11 +91,12 @@ export class AppleService {
     }
 
     const finalUserId = userId as string;
+    const hasNeverLoggedIn = (await this.sessionQueries.queryLastLogin(finalUserId)) === null;
+    await this.dbService.promoteCurrentRlsTxToAuthenticated(finalUserId);
     const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(finalUserId);
     const [{ token_version, user_data: userData }] = rowsUserData;
 
-    if (userData.is_first_login && !missingFieldsPayload) {
-      await this.sessionQueries.querySetUserFirstLoginFalse(finalUserId);
+    if (hasNeverLoggedIn && !missingFieldsPayload) {
       try {
         await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
       } catch (e) {
