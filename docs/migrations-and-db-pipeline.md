@@ -16,6 +16,8 @@ last archived Atlas migration. New schema changes must be generated with Drizzle
 
 Drizzle schema files are also the source of truth for tables and RLS policies. PostgreSQL routines, explicit grants, revokes, and schemas such as `guest_api` are reviewed SQL additions inside the generated migration because Drizzle Kit does not fully model those objects.
 
+Reviewed ERD sources live in `docs/db-diagrams/source`. After a Drizzle table/view change, update the corresponding DBML and run `npm run docs:db-diagrams`. The renderer overwrites the existing SVG filenames so all Markdown injections remain stable.
+
 ## Environment Split
 
 The local database pipeline is now split by environment:

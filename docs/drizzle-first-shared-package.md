@@ -126,6 +126,8 @@ SELECT
 FROM messages.message m;
 ```
 
+Profile-picture storage references are consistently named `profilePicPath`; message sender projections use `senderProfilePicPath`. The upload endpoint separately returns `url` for the actual public URL. Physical storage/database names such as `profile_pic_path` do not leak into HTTP contracts.
+
 Existing exported contract names remain unchanged. Removed database/query fields are removed instead of retained as fictional compatibility fields.
 
 ## No-duplication policy

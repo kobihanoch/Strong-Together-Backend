@@ -13,7 +13,7 @@ The ERDs are generated from the reviewed DBML sources under `docs/db-diagrams/so
 | `tracking`  | `workout_summary`, `exercise_tracking`, `tracking_set`, `aerobic_tracking` | Completed workout sessions, set-level strength data, aerobic history                  |
 | `reminders` | `user_reminder_setting`, `user_split_information`                       | Reminder preferences and inferred split scheduling data                                  |
 | `messages`  | `message`                                                               | User/system messaging                                                                    |
-| `analytics` | `v_exercise_tracking_expanded`, `v_exercise_tracking_set_simple`, `v_prs` | Read-optimized analytics views                                                        |
+| `analytics` | `v_exercise_tracking_expanded`, `v_prs`                                 | Security-invoker, read-optimized tracking and personal-record views                   |
 | `guest_api` | allow-listed `SECURITY DEFINER` functions                              | Narrow database API for unauthenticated authentication and registration flows            |
 
 ## Identity Schema
@@ -43,7 +43,7 @@ Guest never receives direct access to `identity` tables. Public auth code calls 
 
 ![Workout Schema](./db-diagrams/workoutschema.svg)
 
-### Views
+### Tracking-to-analytics view dependencies
 
 ![Workout views Schema](./db-diagrams/workoutviewsschema.svg)
 
@@ -56,7 +56,7 @@ Core objects:
 - `workout.workout_split`: split/day definitions under a plan.
 - `workout.exercise_to_workout_split`: ordered exercises inside a split.
 - `workout.workout_set`: normalized prescribed reps for each ordered set.
-- `workout.v_exercise_to_workout_split_expanded`: compatibility view that returns the existing array contract.
+- `workout.v_exercise_to_workout_split_expanded`: security-invoker, row-expanded view of exercise assignments and their normalized prescribed sets. API queries aggregate these rows into arrays and camelCase response objects.
 
 Why this shape matters:
 
@@ -102,7 +102,6 @@ The RLS model protects nested set rows by checking ownership through `workout_su
 Analytics is modeled through security-invoker views:
 
 - `analytics.v_exercise_tracking_expanded`
-- `analytics.v_exercise_tracking_set_simple`
 - `analytics.v_prs`
 
 Security-invoker views are an important choice because they preserve caller RLS behavior. Analytics queries can be expressive and reusable without accidentally becoming privileged read paths.

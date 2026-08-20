@@ -1,4 +1,4 @@
-# Strong Together Backend (v4.0.3)
+# Strong Together Backend (v5.0.0)
 
 [![CI](https://github.com/kobihanoch/Strong-Together-Backend/actions/workflows/ci.yml/badge.svg)](https://github.com/kobihanoch/Strong-Together-Backend/actions)
 
@@ -249,20 +249,21 @@ docs/                            Architecture, security, testing, DB, and operat
 
 ## Documentation
 
-| Document                                                             | What it covers                                                             |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| [System Architecture](./docs/architecture.md)                        | NestJS modules, runtime components, request lifecycle, async boundaries    |
-| [Security Deep Dive](./docs/security-deep-dive.md)                   | Middleware, DPoP, token versioning, authorization, validation, RLS         |
-| [Video Analysis Pipeline](./docs/video-analysis-pipeline.md)         | S3, SQS, Python worker, Redis Pub/Sub, Socket.IO delivery                  |
-| [WebSocket Realtime](./docs/websocket-realtime.md)                   | Socket.IO ticketing, Redis adapter, per-user rooms, targeted events        |
-| [Environment Example](./docs/environment-example.md)                 | Placeholder-only environment templates and secret-handling notes           |
-| [API Documentation](./docs/api-documentation.md)                     | Route index, request conventions, response shapes, operational route notes |
-| [Testing Policy](./docs/testing-policy.md)                           | Test types, isolation, database reset strategy, when to add tests          |
-| [API And Engineering Standards](./docs/api-and-standards.md)         | Contract standards, auth standards, error model, observability, caching    |
-| [Database Schemas And Flows](./docs/database-schemas-and-flows.md)   | Domain schemas, RLS flow, migration lifecycle                              |
-| [Migrations And DB Pipeline](./docs/migrations-and-db-pipeline.md)   | Drizzle workflow, dev/test/prod database lifecycle                         |
-| [Docker Compose Environments](./docs/docker-compose-environments.md) | Development and test Compose stacks                                        |
-| [Scripts Usage](./docs/scripts-usage.md)                             | Practical command guide for development, tests, and migrations             |
+| Document                                                               | What it covers                                                             |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [System Architecture](./docs/architecture.md)                          | NestJS modules, runtime components, request lifecycle, async boundaries    |
+| [Security Deep Dive](./docs/security-deep-dive.md)                     | Middleware, DPoP, token versioning, authorization, validation, RLS         |
+| [Video Analysis Pipeline](./docs/video-analysis-pipeline.md)           | S3, SQS, Python worker, Redis Pub/Sub, Socket.IO delivery                  |
+| [WebSocket Realtime](./docs/websocket-realtime.md)                     | Socket.IO ticketing, Redis adapter, per-user rooms, targeted events        |
+| [Environment Example](./docs/environment-example.md)                   | Placeholder-only environment templates and secret-handling notes           |
+| [API Documentation](./docs/api-documentation.md)                       | Route index, request conventions, response shapes, operational route notes |
+| [Testing Policy](./docs/testing-policy.md)                             | Test types, isolation, database reset strategy, when to add tests          |
+| [API And Engineering Standards](./docs/api-and-standards.md)           | Contract standards, auth standards, error model, observability, caching    |
+| [Drizzle-first Shared Package](./docs/drizzle-first-shared-package.md) | Package layers, Zod/Drizzle dependency flow, frontend contracts            |
+| [Database Schemas And Flows](./docs/database-schemas-and-flows.md)     | Domain schemas, RLS flow, migration lifecycle                              |
+| [Migrations And DB Pipeline](./docs/migrations-and-db-pipeline.md)     | Drizzle workflow, dev/test/prod database lifecycle                         |
+| [Docker Compose Environments](./docs/docker-compose-environments.md)   | Development and test Compose stacks                                        |
+| [Scripts Usage](./docs/scripts-usage.md)                               | Practical command guide for development, tests, and migrations             |
 
 ## Current Tradeoffs
 

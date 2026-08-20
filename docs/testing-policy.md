@@ -14,6 +14,8 @@ Strong Together uses Vitest and Supertest to test the NestJS API against real lo
 
 The repo currently does not emphasize isolated unit tests. That is acceptable here because the service surface is database and infrastructure heavy; integration coverage provides higher confidence than mocking every adapter.
 
+Contract fixtures and assertions use the same camelCase wire names exported by the shared package. Raw administrator-only database helpers may use snake_case aliases when intentionally asserting physical PostgreSQL columns; those are not API contracts.
+
 ## Test Runner Configuration
 
 `vitest.config.ts` configures:

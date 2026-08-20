@@ -9,7 +9,9 @@ It is intended to answer four things for every route:
 3. the complete request structure
 4. the complete response structure
 
-The request and response shapes below are aligned with the currently installed shared contract package used by the controllers: `@strong-together/shared@1.0.5`.
+The request and response shapes below are aligned with the backend workspace package `@strong-together/shared@2.0.0`.
+
+All TypeScript-visible request and response fields use `camelCase`. PostgreSQL column names remain `snake_case` and are translated by query aliases/JSON builders. Stored profile-picture object keys use `profilePicPath` (or `senderProfilePicPath` on message sender projections); an actual public URL remains `url`.
 
 ## Base URL And Transport
 
@@ -425,7 +427,7 @@ Successful response:
     "email": "string | null",
     "gender": "string",
     "role": "string",
-    "created_at": "string"
+    "createdAt": "string"
   }
 }
 ```
@@ -451,13 +453,16 @@ Successful response:
   "email": "string | null",
   "name": "string",
   "gender": "string",
-  "created_at": "string",
+  "createdAt": "string",
+  "updatedAt": "string",
   "profilePicPath": "string | null",
-  "push_token": "string | null",
+  "pushToken": "string | null",
   "role": "string",
-  "token_version": 1,
-  "is_verified": true,
-  "auth_provider": "string"
+  "isFirstLogin": false,
+  "tokenVersion": 1,
+  "isVerified": true,
+  "authProvider": "string",
+  "lastLogin": "string | null"
 }
 ```
 
@@ -497,13 +502,16 @@ Successful response:
     "email": "string | null",
     "name": "string",
     "gender": "string",
-    "created_at": "string",
+    "createdAt": "string",
+    "updatedAt": "string",
     "profilePicPath": "string | null",
-    "push_token": "string | null",
+    "pushToken": "string | null",
     "role": "string",
-    "token_version": 1,
-    "is_verified": true,
-    "auth_provider": "string"
+    "isFirstLogin": false,
+    "tokenVersion": 1,
+    "isVerified": true,
+    "authProvider": "string",
+    "lastLogin": "string | null"
   }
 }
 ```
@@ -628,32 +636,28 @@ The plan and bootstrap endpoints reuse this workout plan shape:
 {
   "workoutPlan": {
     "id": 1,
-    "name": "string",
-    "numberofsplits": 4,
-    "created_at": "string",
-    "is_deleted": false,
-    "level": "string",
-    "user_id": "string",
-    "trainer_id": "string",
-    "is_active": true,
-    "updated_at": "string",
-    "workoutsplits": [
+    "numberOfSplits": 4,
+    "createdAt": "string",
+    "userId": "string",
+    "isActive": true,
+    "updatedAt": "string",
+    "workoutSplits": [
       {
         "id": 1,
-        "workout_id": 1,
+        "workoutId": 1,
         "name": "string",
-        "created_at": "string",
-        "muscle_group": "string | null",
-        "is_active": true,
-        "exercisetoworkoutsplit": [
+        "createdAt": "string",
+        "muscleGroup": "string | null",
+        "isActive": true,
+        "exerciseToWorkoutSplit": [
           {
             "id": 1,
             "sets": [8, 8, 6],
-            "is_active": true,
-            "targetmuscle": "string",
-            "specifictargetmuscle": "string",
+            "isActive": true,
+            "targetMuscle": "string",
+            "specificTargetMuscle": "string",
             "exercise": "string",
-            "workoutsplit": "string"
+            "workoutSplit": "string"
           }
         ]
       }
@@ -665,9 +669,9 @@ The plan and bootstrap endpoints reuse this workout plan shape:
         "id": 10,
         "name": "Bench Press",
         "sets": [8, 8, 6],
-        "order_index": 1,
-        "targetmuscle": "Chest",
-        "specifictargetmuscle": "Upper Chest"
+        "orderIndex": 1,
+        "targetMuscle": "Chest",
+        "specificTargetMuscle": "Upper Chest"
       }
     ]
   }
@@ -681,19 +685,19 @@ The tracking and bootstrap endpoints reuse this structure:
 ```json
 {
   "exerciseTrackingAnalysis": {
-    "unique_days": 12,
-    "most_frequent_split": "Push",
-    "most_frequent_split_days": 5,
+    "uniqueDays": 12,
+    "mostFrequentSplit": "Push",
+    "mostFrequentSplitDays": 5,
     "lastWorkoutDate": "string | null",
     "splitDaysByName": {
       "Push": 5
     },
     "prs": {
-      "pr_max": {
+      "prMax": {
         "exercise": "Bench Press",
         "weight": 100,
         "reps": 5,
-        "workout_time_utc": "string"
+        "workoutTimeUtc": "string"
       }
     }
   },
@@ -702,44 +706,44 @@ The tracking and bootstrap endpoints reuse this structure:
       "2026-04-20": [
         {
           "id": 1,
-          "exercisetosplit_id": 10,
+          "exerciseToSplitId": 10,
           "weight": [100, 95, 90],
           "reps": [5, 6, 8],
           "notes": "string | null",
-          "exercise_id": 20,
-          "workoutsplit_id": 30,
-          "splitname": "Push",
+          "exerciseId": 20,
+          "workoutSplitId": 30,
+          "splitName": "Push",
           "exercise": "Bench Press",
-          "order_index": 1,
-          "exercisetoworkoutsplit": {
+          "orderIndex": 1,
+          "exerciseToWorkoutSplit": {
             "sets": [5, 6, 8],
             "exercises": {
-              "targetmuscle": "Chest",
-              "specifictargetmuscle": "Upper Chest"
+              "targetMuscle": "Chest",
+              "specificTargetMuscle": "Upper Chest"
             }
           }
         }
       ]
     },
-    "byETSId": {
+    "byExerciseToSplitId": {
       "10": [
         {
           "id": 1,
-          "exercisetosplit_id": 10,
+          "exerciseToSplitId": 10,
           "weight": [100, 95, 90],
           "reps": [5, 6, 8],
           "notes": "string | null",
-          "exercise_id": 20,
-          "workoutsplit_id": 30,
-          "splitname": "Push",
+          "exerciseId": 20,
+          "workoutSplitId": 30,
+          "splitName": "Push",
           "exercise": "Bench Press",
-          "workoutdate": "string",
-          "order_index": 1,
-          "exercisetoworkoutsplit": {
+          "workoutDate": "string",
+          "orderIndex": 1,
+          "exerciseToWorkoutSplit": {
             "sets": [5, 6, 8],
             "exercises": {
-              "targetmuscle": "Chest",
-              "specifictargetmuscle": "Upper Chest"
+              "targetMuscle": "Chest",
+              "specificTargetMuscle": "Upper Chest"
             }
           }
         }
@@ -749,20 +753,20 @@ The tracking and bootstrap endpoints reuse this structure:
       "Push": [
         {
           "id": 1,
-          "exercisetosplit_id": 10,
+          "exerciseToSplitId": 10,
           "weight": [100, 95, 90],
           "reps": [5, 6, 8],
           "notes": "string | null",
-          "exercise_id": 20,
-          "workoutsplit_id": 30,
+          "exerciseId": 20,
+          "workoutSplitId": 30,
           "exercise": "Bench Press",
-          "workoutdate": "string",
-          "order_index": 1,
-          "exercisetoworkoutsplit": {
+          "workoutDate": "string",
+          "orderIndex": 1,
+          "exerciseToWorkoutSplit": {
             "sets": [5, 6, 8],
             "exercises": {
-              "targetmuscle": "Chest",
-              "specifictargetmuscle": "Upper Chest"
+              "targetMuscle": "Chest",
+              "specificTargetMuscle": "Upper Chest"
             }
           }
         }
@@ -813,7 +817,7 @@ Request body:
       {
         "id": 10,
         "sets": [8, 8, 6],
-        "order_index": 1
+        "orderIndex": 1
       }
     ]
   },
@@ -829,32 +833,28 @@ Successful response:
   "message": "string",
   "workoutPlan": {
     "id": 1,
-    "name": "string",
-    "numberofsplits": 4,
-    "created_at": "string",
-    "is_deleted": false,
-    "level": "string",
-    "user_id": "string",
-    "trainer_id": "string",
-    "is_active": true,
-    "updated_at": "string",
-    "workoutsplits": [
+    "numberOfSplits": 4,
+    "createdAt": "string",
+    "userId": "string",
+    "isActive": true,
+    "updatedAt": "string",
+    "workoutSplits": [
       {
         "id": 1,
-        "workout_id": 1,
+        "workoutId": 1,
         "name": "string",
-        "created_at": "string",
-        "muscle_group": "string | null",
-        "is_active": true,
-        "exercisetoworkoutsplit": [
+        "createdAt": "string",
+        "muscleGroup": "string | null",
+        "isActive": true,
+        "exerciseToWorkoutSplit": [
           {
             "id": 1,
             "sets": [8, 8, 6],
-            "is_active": true,
-            "targetmuscle": "string",
-            "specifictargetmuscle": "string",
+            "isActive": true,
+            "targetMuscle": "string",
+            "specificTargetMuscle": "string",
             "exercise": "string",
-            "workoutsplit": "string"
+            "workoutSplit": "string"
           }
         ]
       }
@@ -866,9 +866,9 @@ Successful response:
         "id": 10,
         "name": "Bench Press",
         "sets": [8, 8, 6],
-        "order_index": 1,
-        "targetmuscle": "Chest",
-        "specifictargetmuscle": "Upper Chest"
+        "orderIndex": 1,
+        "targetMuscle": "Chest",
+        "specificTargetMuscle": "Upper Chest"
       }
     ]
   }
@@ -913,15 +913,15 @@ Request body:
 {
   "workout": [
     {
-      "exercisetosplit_id": 10,
+      "exerciseToSplitId": 10,
       "weight": [100, 95, 90],
       "reps": [5, 6, 8],
       "notes": "string | null"
     }
   ],
   "tz": "string",
-  "workout_start_utc": "string",
-  "workout_end_utc": "string"
+  "workoutStartUtc": "string",
+  "workoutEndUtc": "string"
 }
 ```
 
@@ -955,8 +955,8 @@ Successful response:
     "2026-04-20": [
       {
         "type": "string",
-        "duration_sec": 1800,
-        "duration_mins": 30
+        "durationSec": 0,
+        "durationMins": 30
       }
     ]
   },
@@ -965,13 +965,13 @@ Successful response:
       "records": [
         {
           "type": "string",
-          "duration_sec": 1800,
-          "duration_mins": 30,
-          "workout_time_utc": "string"
+          "durationSec": 0,
+          "durationMins": 30,
+          "workoutTimeUtc": "string"
         }
       ],
-      "total_duration_sec": 1800,
-      "total_duration_mins": 30
+      "totalDurationSec": 0,
+      "totalDurationMins": 30
     }
   }
 }
@@ -996,7 +996,7 @@ Request body:
   "tz": "string",
   "record": {
     "durationMins": 30,
-    "durationSec": 1800,
+    "durationSec": 0,
     "type": "string"
   }
 }
@@ -1020,12 +1020,12 @@ Successful response:
 
 ```json
 {
-  "_1RM": {
+  "oneRepMaxes": {
     "Bench Press": {
       "exercise": "Bench Press",
-      "pr_weight": 100,
-      "pr_reps": 5,
-      "max_1rm": 116.67
+      "prWeight": 100,
+      "prReps": 5,
+      "max1Rm": 116.67
     }
   },
   "goals": {
@@ -1033,7 +1033,7 @@ Successful response:
       "Bench Press": {
         "planned": 12,
         "actual": 10,
-        "adherence_pct": 83.33
+        "adherencePct": 83.33
       }
     }
   }
@@ -1072,43 +1072,42 @@ Successful response:
     "email": "string | null",
     "name": "string",
     "gender": "string",
-    "created_at": "string",
+    "createdAt": "string",
+    "updatedAt": "string",
     "profilePicPath": "string | null",
-    "push_token": "string | null",
+    "pushToken": "string | null",
     "role": "string",
-    "token_version": 1,
-    "is_verified": true,
-    "auth_provider": "string"
+    "isFirstLogin": false,
+    "tokenVersion": 1,
+    "isVerified": true,
+    "authProvider": "string",
+    "lastLogin": "string | null"
   },
   "workout": {
     "workoutPlan": {
       "id": 1,
-      "name": "string",
-      "numberofsplits": 4,
-      "created_at": "string",
-      "is_deleted": false,
-      "level": "string",
-      "user_id": "string",
-      "trainer_id": "string",
-      "is_active": true,
-      "updated_at": "string",
-      "workoutsplits": [
+      "numberOfSplits": 4,
+      "createdAt": "string",
+      "userId": "string",
+      "isActive": true,
+      "updatedAt": "string",
+      "workoutSplits": [
         {
           "id": 1,
-          "workout_id": 1,
+          "workoutId": 1,
           "name": "string",
-          "created_at": "string",
-          "muscle_group": "string | null",
-          "is_active": true,
-          "exercisetoworkoutsplit": [
+          "createdAt": "string",
+          "muscleGroup": "string | null",
+          "isActive": true,
+          "exerciseToWorkoutSplit": [
             {
               "id": 1,
               "sets": [8, 8, 6],
-              "is_active": true,
-              "targetmuscle": "string",
-              "specifictargetmuscle": "string",
+              "isActive": true,
+              "targetMuscle": "string",
+              "specificTargetMuscle": "string",
               "exercise": "string",
-              "workoutsplit": "string"
+              "workoutSplit": "string"
             }
           ]
         }
@@ -1120,28 +1119,28 @@ Successful response:
           "id": 10,
           "name": "Bench Press",
           "sets": [8, 8, 6],
-          "order_index": 1,
-          "targetmuscle": "Chest",
-          "specifictargetmuscle": "Upper Chest"
+          "orderIndex": 1,
+          "targetMuscle": "Chest",
+          "specificTargetMuscle": "Upper Chest"
         }
       ]
     }
   },
   "tracking": {
     "exerciseTrackingAnalysis": {
-      "unique_days": 12,
-      "most_frequent_split": "Push",
-      "most_frequent_split_days": 5,
+      "uniqueDays": 12,
+      "mostFrequentSplit": "Push",
+      "mostFrequentSplitDays": 5,
       "lastWorkoutDate": "string | null",
       "splitDaysByName": {
         "Push": 5
       },
       "prs": {
-        "pr_max": {
+        "prMax": {
           "exercise": "Bench Press",
           "weight": 100,
           "reps": 5,
-          "workout_time_utc": "string"
+          "workoutTimeUtc": "string"
         }
       }
     },
@@ -1150,44 +1149,44 @@ Successful response:
         "2026-04-20": [
           {
             "id": 1,
-            "exercisetosplit_id": 10,
+            "exerciseToSplitId": 10,
             "weight": [100, 95, 90],
             "reps": [5, 6, 8],
             "notes": "string | null",
-            "exercise_id": 20,
-            "workoutsplit_id": 30,
-            "splitname": "Push",
+            "exerciseId": 20,
+            "workoutSplitId": 30,
+            "splitName": "Push",
             "exercise": "Bench Press",
-            "order_index": 1,
-            "exercisetoworkoutsplit": {
+            "orderIndex": 1,
+            "exerciseToWorkoutSplit": {
               "sets": [5, 6, 8],
               "exercises": {
-                "targetmuscle": "Chest",
-                "specifictargetmuscle": "Upper Chest"
+                "targetMuscle": "Chest",
+                "specificTargetMuscle": "Upper Chest"
               }
             }
           }
         ]
       },
-      "byETSId": {
+      "byExerciseToSplitId": {
         "10": [
           {
             "id": 1,
-            "exercisetosplit_id": 10,
+            "exerciseToSplitId": 10,
             "weight": [100, 95, 90],
             "reps": [5, 6, 8],
             "notes": "string | null",
-            "exercise_id": 20,
-            "workoutsplit_id": 30,
-            "splitname": "Push",
+            "exerciseId": 20,
+            "workoutSplitId": 30,
+            "splitName": "Push",
             "exercise": "Bench Press",
-            "workoutdate": "string",
-            "order_index": 1,
-            "exercisetoworkoutsplit": {
+            "workoutDate": "string",
+            "orderIndex": 1,
+            "exerciseToWorkoutSplit": {
               "sets": [5, 6, 8],
               "exercises": {
-                "targetmuscle": "Chest",
-                "specifictargetmuscle": "Upper Chest"
+                "targetMuscle": "Chest",
+                "specificTargetMuscle": "Upper Chest"
               }
             }
           }
@@ -1197,20 +1196,20 @@ Successful response:
         "Push": [
           {
             "id": 1,
-            "exercisetosplit_id": 10,
+            "exerciseToSplitId": 10,
             "weight": [100, 95, 90],
             "reps": [5, 6, 8],
             "notes": "string | null",
-            "exercise_id": 20,
-            "workoutsplit_id": 30,
+            "exerciseId": 20,
+            "workoutSplitId": 30,
             "exercise": "Bench Press",
-            "workoutdate": "string",
-            "order_index": 1,
-            "exercisetoworkoutsplit": {
+            "workoutDate": "string",
+            "orderIndex": 1,
+            "exerciseToWorkoutSplit": {
               "sets": [5, 6, 8],
               "exercises": {
-                "targetmuscle": "Chest",
-                "specifictargetmuscle": "Upper Chest"
+                "targetMuscle": "Chest",
+                "specificTargetMuscle": "Upper Chest"
               }
             }
           }
@@ -1224,9 +1223,9 @@ Successful response:
         "id": "string",
         "subject": "string",
         "msg": "string",
-        "sent_at": "string",
-        "is_read": true,
-        "sender_full_name": "string",
+        "sentAt": "string",
+        "isRead": true,
+        "senderFullName": "string",
         "senderProfilePicPath": "string | null"
       }
     ]
@@ -1236,8 +1235,8 @@ Successful response:
       "2026-04-20": [
         {
           "type": "string",
-          "duration_sec": 1800,
-          "duration_mins": 30
+          "durationSec": 0,
+          "durationMins": 30
         }
       ]
     },
@@ -1246,13 +1245,13 @@ Successful response:
         "records": [
           {
             "type": "string",
-            "duration_sec": 1800,
-            "duration_mins": 30,
-            "workout_time_utc": "string"
+            "durationSec": 0,
+            "durationMins": 30,
+            "workoutTimeUtc": "string"
           }
         ],
-        "total_duration_sec": 1800,
-        "total_duration_mins": 30
+        "totalDurationSec": 0,
+        "totalDurationMins": 30
       }
     }
   }
@@ -1310,9 +1309,9 @@ Successful response:
       "id": "string",
       "subject": "string",
       "msg": "string",
-      "sent_at": "string",
-      "is_read": true,
-      "sender_full_name": "string",
+      "sentAt": "string",
+      "isRead": true,
+      "senderFullName": "string",
       "senderProfilePicPath": "string | null"
     }
   ]
@@ -1340,7 +1339,7 @@ Successful response:
 ```json
 {
   "id": "string",
-  "is_read": true
+  "isRead": true
 }
 ```
 
@@ -1605,4 +1604,4 @@ This document was aligned against:
 
 - route controllers in `src/modules/**`
 - root routes in `src/app.ts`
-- shared request / response contracts in `node_modules/@strong-together/shared/dist/index.d.ts`
+- shared request/response schemas and inferred contracts in `packages/shared/src`
