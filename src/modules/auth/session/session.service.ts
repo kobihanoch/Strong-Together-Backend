@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { appConfig } from '../../../config/app.config';
 import { authConfig } from '../../../config/auth.config';
 import type { AppLogger } from '../../../infrastructure/logger';
+import { DBService } from '../../../infrastructure/db/db.service';
 import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
 import { SessionQueries } from './session.queries';
 import { decodeRefreshToken } from './session.utils';
@@ -12,6 +13,7 @@ import { decodeRefreshToken } from './session.utils';
 @Injectable()
 export class SessionService {
   constructor(
+    private readonly dbService: DBService,
     private readonly systemMessagesService: SystemMessagesService,
     private readonly sessionQueries: SessionQueries,
   ) {}
@@ -34,12 +36,15 @@ export class SessionService {
     const isMatch = await bcrypt.compare(password, user.password!);
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
 
-    if (!user.is_verified) {
+    if (!user.isVerified) {
       throw new UnauthorizedException('You need to verify you account');
     }
 
-    if (user.is_first_login) {
-      await this.sessionQueries.querySetUserFirstLoginFalse(user.id);
+    // Credentials are now verified. Continue the same request transaction as
+    // this authenticated user before changing session state or sending messages.
+    await this.dbService.promoteCurrentRlsTxToAuthenticated(user.id);
+
+    if (user.lastLogin === null) {
       try {
         await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(user.id, user.name!);
       } catch (e) {
@@ -51,7 +56,7 @@ export class SessionService {
     }
 
     const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(user.id);
-    const [{ token_version, user_data: userData }] = rowsUserData;
+    const [{ tokenVersion, userData }] = rowsUserData;
 
     const cnfClaim = jkt
       ? {
@@ -65,7 +70,7 @@ export class SessionService {
       {
         id: userData.id,
         role: userData.role,
-        tokenVer: token_version,
+        tokenVer: tokenVersion,
         ...cnfClaim,
       },
       authConfig.jwtAccessSecret,
@@ -76,7 +81,7 @@ export class SessionService {
       {
         id: userData.id,
         role: userData.role,
-        tokenVer: token_version,
+        tokenVer: tokenVersion,
         ...cnfClaim,
       },
       authConfig.jwtRefreshSecret,
@@ -124,10 +129,11 @@ export class SessionService {
       }
     }
 
+    await this.dbService.promoteCurrentRlsTxToAuthenticated(decoded.id);
     const [user = null] = await this.sessionQueries.queryBumpTokenVersionAndGetSelfDataCAS(decoded.id, decoded.tokenVer);
     if (!user) throw new UnauthorizedException('New login required');
 
-    const { token_version, user_data: userData } = user;
+    const { tokenVersion, userData } = user;
 
     const cnfClaim = dpopJkt
       ? {
@@ -141,7 +147,7 @@ export class SessionService {
       {
         id: userData.id,
         role: userData.role,
-        tokenVer: token_version,
+        tokenVer: tokenVersion,
         ...cnfClaim,
       },
       authConfig.jwtAccessSecret,
@@ -152,7 +158,7 @@ export class SessionService {
       {
         id: userData.id,
         role: userData.role,
-        tokenVer: token_version,
+        tokenVer: tokenVersion,
         ...cnfClaim,
       },
       authConfig.jwtRefreshSecret,

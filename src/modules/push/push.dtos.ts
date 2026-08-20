@@ -8,16 +8,16 @@ export type NotificationPayload = {
 };
 
 export type UserToHourlyReminder = {
-  user_id: string;
+  userId: string;
   name: string | null;
-  push_token: string | null;
-  reminder_offset_minutes: number;
-  split_id: number;
-  split_name: string | null;
-  estimated_time_utc: string;
+  pushToken: string | null;
+  reminderOffsetMinutes: number;
+  splitId: number;
+  splitName: string | null;
+  estimatedTimeUtc: string;
 };
 
 export type UserWithNotificationsEnabled = {
-  push_token: string | null;
+  pushToken: string | null;
   name: string | null;
 };

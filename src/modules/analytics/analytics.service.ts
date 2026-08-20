@@ -25,7 +25,7 @@ export class AnalyticsService {
     const rows2 = await this.analyticsQueries.queryGoalAdherence(userId);
 
     const payload = {
-      _1RM: rows1,
+      oneRepMaxes: rows1,
       goals: rows2,
     };
 

@@ -13,6 +13,7 @@ import type postgres from 'postgres';
 import { supabaseConfig } from '../../../config/storage.config';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
 import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 import type { AppLogger } from '../../../infrastructure/logger';
 import { SupabaseStorageService } from '../../../infrastructure/supabase/storage/supabase-storage.service';
 import { UpdateEmailsService } from './update-emails/update-emails.service';
@@ -24,22 +25,23 @@ import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from '.
 export class UpdateUserService {
   constructor(
     @Inject(SQL) private readonly sql: postgres.Sql,
+    private readonly dbService: DBService,
     private readonly updateUserQueries: UpdateUserQueries,
     private readonly updateEmailsService: UpdateEmailsService,
     private readonly supabaseStorageService: SupabaseStorageService,
     private readonly cacheService: CacheService,
   ) {}
 
-  async getUserData(userId: string): Promise<{ payload: UserDataResponse['user_data'] }> {
+  async getUserData(userId: string): Promise<{ payload: UserDataResponse['userData'] }> {
     const rows = await this.updateUserQueries.queryAuthenticatedUserById(userId);
     const [user] = rows;
     if (!user) throw new NotFoundException('User not found');
-    return { payload: user.user_data };
+    return { payload: user.userData };
   }
 
   async updateUsersReminderSettingsTimezone(userId: string, tz: string): Promise<void> {
     await this
-      .sql`update reminders.user_reminder_settings urs set timezone=${tz}::text where urs.user_id = ${userId}::uuid and urs.timezone is distinct from ${tz}::text;`;
+      .sql`update reminders.user_reminder_setting urs set timezone=${tz}::text where urs.user_id = ${userId}::uuid and urs.timezone is distinct from ${tz}::text;`;
   }
 
   async updateAuthenticatedUserData(
@@ -63,7 +65,7 @@ export class UpdateUserService {
     const [updated] = rowsUpdated;
     if (!updated) return { message: 'User not found' } as any;
 
-    const { user_data: userData } = updated;
+    const { userData } = updated;
     const currentEmail = (currentUser.email || '').trim().toLowerCase();
     const candidate = (email || '').trim().toLowerCase();
 
@@ -78,7 +80,7 @@ export class UpdateUserService {
     return {
       message: 'User updated successfully',
       emailChanged,
-      user: updated.user_data,
+      user: updated.userData,
     };
   }
 
@@ -108,9 +110,10 @@ export class UpdateUserService {
     const normalized = newEmail.trim().toLowerCase();
 
     try {
+      await this.dbService.promoteCurrentRlsTxToAuthenticated(sub);
       await this.sql.begin(async (trx) => {
         await trx`
-          UPDATE identity.users
+          UPDATE identity.user
           SET email = ${normalized}
           WHERE id = ${sub}::uuid
         `;
@@ -149,7 +152,7 @@ export class UpdateUserService {
     );
 
     const [row] = await this.updateUserQueries.queryGetUserProfilePicURL(userId);
-    const oldPath = row?.profile_image_url;
+    const oldPath = row?.profilePicPath;
     await this.updateUserQueries.queryUpdateUserProfilePicURL(userId, newPath);
 
     if (oldPath && oldPath !== newPath) {
@@ -167,11 +170,11 @@ export class UpdateUserService {
       });
     }
 
-    return { path: newPath, url: publicUrl, message: 'Upload success' };
+    return { profilePicPath: newPath, url: publicUrl, message: 'Upload success' };
   }
 
   async deleteUserProfilePicData(userId: string, body: DeleteUserProfilePicBody): Promise<void> {
-    await this.supabaseStorageService.deleteFromSupabase(body.path);
+    await this.supabaseStorageService.deleteFromSupabase(body.profilePicPath);
     await this.updateUserQueries.queryUpdateUserProfilePicURL(userId, null);
   }
 }

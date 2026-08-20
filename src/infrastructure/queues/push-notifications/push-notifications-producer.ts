@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationPayload } from '../../../modules/push/push.dtos';
+import type { NotificationPayload } from '../../../modules/push/push.dtos';
 import { createLogger } from '../../logger';
 import { PushNotificationsQueueService } from './push-notifications-queue';
 

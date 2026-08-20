@@ -1,0 +1,29 @@
+Table identity.user {
+  id uuid [pk]
+  username text [not null, unique]
+  email text [not null, unique]
+  name text [not null]
+  gender text [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  profile_pic_path text
+  push_token text
+  password_hash text
+  role text [not null]
+  token_version bigint [not null]
+  is_verified boolean [not null]
+  auth_provider text [not null]
+  last_login timestamptz
+}
+
+Table identity.oauth_account {
+  id uuid [pk]
+  user_id uuid [not null, ref: > identity.user.id]
+  provider text [not null]
+  provider_user_id text [not null]
+  provider_email text [not null]
+  linked_at timestamptz [not null]
+  missing_fields text
+
+  indexes { (provider, provider_user_id) [unique] }
+}

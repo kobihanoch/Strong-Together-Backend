@@ -137,24 +137,24 @@ describe('UpdateUserController', () => {
 
     expect(upload.status).toBe(201);
     expectSchema(setProfilePicAndUpdateDBResponseSchema, upload.body);
-    expect(upload.body.path).toMatch(new RegExp(`^${supabaseConfig.bucketName}/${user.userId}/.+\\.png$`));
+    expect(upload.body.profilePicPath).toMatch(new RegExp(`^${supabaseConfig.bucketName}/${user.userId}/.+\\.png$`));
 
-    const key = upload.body.path.replace(`${supabaseConfig.bucketName}/`, '');
+    const key = upload.body.profilePicPath.replace(`${supabaseConfig.bucketName}/`, '');
     expect((await headUploadedObject(key, supabaseConfig.bucketName)).ContentType).toBe('image/png');
 
     const getAfterUpload = await request(app.getHttpServer()).get('/api/users/get').set(authHeaders(user.accessToken));
     expectSchema(getAuthenticatedUserByIdResponseSchema, getAfterUpload.body);
-    expect(getAfterUpload.body.profile_image_url).toBe(upload.body.path);
+    expect(getAfterUpload.body.profilePicPath).toBe(upload.body.profilePicPath);
 
     const deleted = await request(app.getHttpServer())
       .delete('/api/users/deleteprofilepic')
       .set(authHeaders(user.accessToken))
-      .send({ path: upload.body.path });
+      .send({ profilePicPath: upload.body.profilePicPath });
 
     expect(deleted.status).toBe(200);
     const getAfterDelete = await request(app.getHttpServer()).get('/api/users/get').set(authHeaders(user.accessToken));
     expectSchema(getAuthenticatedUserByIdResponseSchema, getAfterDelete.body);
-    expect(getAfterDelete.body.profile_image_url).toBeNull();
+    expect(getAfterDelete.body.profilePicPath).toBeNull();
   }, 30000);
 
   it('profile image endpoints reject bad requests without touching DB storage fields', async () => {

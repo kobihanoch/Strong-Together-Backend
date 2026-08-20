@@ -1,4 +1,4 @@
-# Strong Together Backend (v4.0.3)
+# Strong Together Backend (v5.0.0)
 
 [![CI](https://github.com/kobihanoch/Strong-Together-Backend/actions/workflows/ci.yml/badge.svg)](https://github.com/kobihanoch/Strong-Together-Backend/actions)
 
@@ -33,7 +33,7 @@ Backend for **Strong Together**, a **fitness and health platform** with **authen
 - **Video processing:** **Direct S3 uploads**, **S3 `ObjectCreated` events**, **SQS long polling**, **Python OpenCV/MediaPipe analysis**, **Redis Pub/Sub**, and **Socket.IO fanout**.
 - **Security:** **DPoP proof-of-possession**, **JWT refresh rotation**, **token versioning**, **role guards**, **app-version gates**, **rate limits**, **bot filtering**, **Zod validation**, and **PostgreSQL RLS**.
 - **Observability:** **Pino structured logs**, **request IDs**, **Sentry tracing**, and **trace propagation** from **NestJS** to **Python** through **S3 metadata**.
-- **Infrastructure:** **Docker Compose** dev/test stacks with **Postgres**, **Redis**, **LocalStack S3/SQS**, **Maildev**, **Atlas migrations**, **Node workers**, and the **Python service**.
+- **Infrastructure:** **Docker Compose** dev/test stacks with **Drizzle-managed Postgres**, **Redis**, **LocalStack S3/SQS**, **Maildev**, **Node workers**, and the **Python service**.
 - **Contracts:** Shared **`@strong-together/shared`** package for **runtime request validation** and **response contract testing**.
 
 ## Table Of Contents
@@ -154,8 +154,8 @@ The backend separates **interactive responses** from **background side effects**
 The **database workflow** is **migration-first** and **repository-owned**.
 
 ```text
-Local DB change
-  -> Atlas diff
+Drizzle schema change
+  -> Drizzle migration diff
   -> committed migration
   -> dev apply
   -> test rebuild from zero
@@ -176,7 +176,6 @@ The **schema** is organized into domains such as **`identity`**, **`workout`**, 
 - **Redis** and **RedisInsight**
 - **Persisted LocalStack S3/SQS in dev**
 - **Maildev**
-- **Atlas migration runner**
 
 This makes **S3 events**, **SQS delivery**, **Redis Pub/Sub**, **Redis queues**, **database migrations**, and **email capture** reproducible in **local development**.
 
@@ -211,7 +210,7 @@ npm run test:websockets
 
 **Async pipelines for media processing:** **Video uploads** are sent directly to **S3**, then processed from **SQS** by **Python**. This avoids routing **large files** through the **API** and isolates **CPU-heavy OpenCV/MediaPipe work** from normal request traffic.
 
-**RLS-backed security:** **Authorization** is enforced in both **application code** and the **database**. **Nest guards** validate **identity** and **roles**, while **PostgreSQL RLS** protects **user-owned rows** even when queries cross complex **domain schemas**.
+**RLS-backed security:** **Authorization** is enforced in both **application code** and the **database**. **Nest guards** validate **identity** and **roles**, while **PostgreSQL RLS** protects **user-owned rows** even when queries cross complex **domain schemas**. Unauthenticated database access is limited to allow-listed `SECURITY DEFINER` functions in `guest_api`; the guest role has no direct application-table grants or guest RLS policies.
 
 **LocalStack for AWS-shaped development:** Local **S3/SQS behavior** is reproduced without **cloud dependencies**, making the **async media pipeline** testable and debuggable on a developer machine.
 
@@ -219,8 +218,8 @@ npm run test:websockets
 
 ```bash
 npm install
-npm run orch:dev
 npm run db:dev:start
+npm run orch:dev
 ```
 
 Useful **local tools**:
@@ -250,20 +249,21 @@ docs/                            Architecture, security, testing, DB, and operat
 
 ## Documentation
 
-| Document                                                             | What it covers                                                             |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| [System Architecture](./docs/architecture.md)                        | NestJS modules, runtime components, request lifecycle, async boundaries    |
-| [Security Deep Dive](./docs/security-deep-dive.md)                   | Middleware, DPoP, token versioning, authorization, validation, RLS         |
-| [Video Analysis Pipeline](./docs/video-analysis-pipeline.md)         | S3, SQS, Python worker, Redis Pub/Sub, Socket.IO delivery                  |
-| [WebSocket Realtime](./docs/websocket-realtime.md)                   | Socket.IO ticketing, Redis adapter, per-user rooms, targeted events        |
-| [Environment Example](./docs/environment-example.md)                 | Placeholder-only environment templates and secret-handling notes           |
-| [API Documentation](./docs/api-documentation.md)                     | Route index, request conventions, response shapes, operational route notes |
-| [Testing Policy](./docs/testing-policy.md)                           | Test types, isolation, database reset strategy, when to add tests          |
-| [API And Engineering Standards](./docs/api-and-standards.md)         | Contract standards, auth standards, error model, observability, caching    |
-| [Database Schemas And Flows](./docs/database-schemas-and-flows.md)   | Domain schemas, RLS flow, migration lifecycle                              |
-| [Migrations And DB Pipeline](./docs/migrations-and-db-pipeline.md)   | Atlas workflow, dev/test/prod database lifecycle                           |
-| [Docker Compose Environments](./docs/docker-compose-environments.md) | Development and test Compose stacks                                        |
-| [Scripts Usage](./docs/scripts-usage.md)                             | Practical command guide for development, tests, and migrations             |
+| Document                                                               | What it covers                                                             |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [System Architecture](./docs/architecture.md)                          | NestJS modules, runtime components, request lifecycle, async boundaries    |
+| [Security Deep Dive](./docs/security-deep-dive.md)                     | Middleware, DPoP, token versioning, authorization, validation, RLS         |
+| [Video Analysis Pipeline](./docs/video-analysis-pipeline.md)           | S3, SQS, Python worker, Redis Pub/Sub, Socket.IO delivery                  |
+| [WebSocket Realtime](./docs/websocket-realtime.md)                     | Socket.IO ticketing, Redis adapter, per-user rooms, targeted events        |
+| [Environment Example](./docs/environment-example.md)                   | Placeholder-only environment templates and secret-handling notes           |
+| [API Documentation](./docs/api-documentation.md)                       | Route index, request conventions, response shapes, operational route notes |
+| [Testing Policy](./docs/testing-policy.md)                             | Test types, isolation, database reset strategy, when to add tests          |
+| [API And Engineering Standards](./docs/api-and-standards.md)           | Contract standards, auth standards, error model, observability, caching    |
+| [Drizzle-first Shared Package](./docs/drizzle-first-shared-package.md) | Package layers, Zod/Drizzle dependency flow, frontend contracts            |
+| [Database Schemas And Flows](./docs/database-schemas-and-flows.md)     | Domain schemas, RLS flow, migration lifecycle                              |
+| [Migrations And DB Pipeline](./docs/migrations-and-db-pipeline.md)     | Drizzle workflow, dev/test/prod database lifecycle                         |
+| [Docker Compose Environments](./docs/docker-compose-environments.md)   | Development and test Compose stacks                                        |
+| [Scripts Usage](./docs/scripts-usage.md)                               | Practical command guide for development, tests, and migrations             |
 
 ## Current Tradeoffs
 

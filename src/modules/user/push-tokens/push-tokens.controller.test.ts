@@ -33,7 +33,7 @@ describe('PushTokensController', () => {
     expect(await getUserSessionStateByUsername(user.username)).toMatchObject({ pushToken: token });
     expect(getResponse.status).toBe(200);
     expectSchema(getAuthenticatedUserByIdResponseSchema, getResponse.body);
-    expect(getResponse.body.push_token).toBe(token);
+    expect(getResponse.body.pushToken).toBe(token);
   });
 
   it('PUT /api/users/pushtoken rejects bad payloads with 400 and unauthenticated requests with 401', async () => {

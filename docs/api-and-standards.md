@@ -33,12 +33,14 @@ Request validation uses schemas from `@strong-together/shared`:
 
 Response types are also imported from the shared package. Tests commonly assert response bodies against shared response schemas, which turns the package into an executable contract between client and server.
 
+The package is Drizzle-first and Zod-first: database-backed Zod fields are generated from backend-owned Drizzle tables, request/response schemas compose those fields, and TypeScript contracts/DTOs are inferred with `z.infer`. There is no handwritten entity layer. Public request/response/event fields are camelCase; SQL maps physical snake_case columns to those boundary names.
+
 Standard:
 
 - Controllers validate input at the boundary.
 - Services assume validated data and focus on use cases.
 - Query classes own SQL.
-- Shared schemas/types are preferred over duplicated local DTOs.
+- Shared schemas and their inferred types replace duplicated local API DTOs.
 - Tests assert the contract shape for successful responses.
 
 ## Authentication Standard
@@ -56,7 +58,7 @@ That stack means:
 - DPoP validates the request proof.
 - Authentication validates JWT claims, DPoP token binding, token version, and verified user state.
 - Authorization validates route role metadata.
-- RLS binds all SQL executed in the request to the authenticated user.
+- The authentication guard validates its database state in an authenticated RLS transaction, and the interceptor binds controller/service SQL to the authenticated user. Public auth requests remain `guest` until credentials or a signed token are verified.
 
 ## Error Handling
 

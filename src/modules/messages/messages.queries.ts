@@ -28,15 +28,15 @@ export class MessagesQueries {
         m.id AS id,
         m.subject AS subject,
         m.msg AS msg,
-        m.sent_at AT TIME ZONE ${tz} AS sent_at,
-        m.is_read AS is_read,
-        u.name AS sender_full_name,
-        u.profile_image_url AS sender_profile_image_url
-      FROM messages.messages m
-      INNER JOIN identity.users u
+        m.sent_at AT TIME ZONE ${tz} AS "sentAt",
+        m.is_read AS "isRead",
+        u.name AS "senderFullName",
+        u.profile_pic_path AS "senderProfilePicPath"
+      FROM messages.message m
+      INNER JOIN identity.user u
         ON u.id = m.sender_id
       WHERE m.receiver_id = ${userId}::uuid
-      ORDER BY sent_at DESC
+      ORDER BY m.sent_at DESC
     `;
 
     return rows;
@@ -44,16 +44,16 @@ export class MessagesQueries {
 
   async queryMarkUserMessageAsRead(messageId: string, userId: string): Promise<MessageAsRead[]> {
     return this.sql<MessageAsRead[]>`
-      UPDATE messages.messages AS m
+      UPDATE messages.message AS m
       SET is_read = TRUE
       WHERE m.id=${messageId}::uuid AND m.receiver_id=${userId}::uuid
-      RETURNING id, is_read
+      RETURNING id, is_read AS "isRead"
     `;
   }
 
   async queryDeleteMessage(messageId: string, userId: string): Promise<DeletedMessage[]> {
     return this.sql<DeletedMessage[]>`
-      DELETE FROM messages.messages AS m
+      DELETE FROM messages.message AS m
       WHERE m.id=${messageId}::uuid AND (m.receiver_id=${userId}::uuid OR m.sender_id=${userId}::uuid)
       RETURNING id
     `;

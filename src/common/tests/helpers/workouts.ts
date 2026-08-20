@@ -14,7 +14,7 @@ export function getTracking(app: any, accessToken: string, tz = 'Asia/Jerusalem'
 export function addWorkoutPlan(
   app: any,
   accessToken: string,
-  workoutData: Record<string, Array<{ id: number; sets: number[]; order_index?: number }>>,
+  workoutData: Record<string, Array<{ id: number; sets: number[]; orderIndex?: number }>>,
   workoutName = 'Test Workout',
   tz = 'Asia/Jerusalem',
 ) {
@@ -29,7 +29,7 @@ export function finishWorkout(
   app: any,
   accessToken: string,
   workout: Array<{
-    exercisetosplit_id: number;
+    exerciseToSplitId: number;
     weight: number[];
     reps: number[];
     notes?: string | null;
@@ -41,7 +41,7 @@ export function finishWorkout(
   return request(httpServer(app)).post('/api/workouts/finishworkout').set(authHeaders(accessToken)).send({
     workout,
     tz,
-    workout_start_utc: workoutStartUtc,
-    workout_end_utc: workoutEndUtc,
+    workoutStartUtc,
+    workoutEndUtc,
   });
 }

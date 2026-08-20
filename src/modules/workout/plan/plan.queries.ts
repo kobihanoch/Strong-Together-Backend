@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type postgres from 'postgres';
-import { AddWorkoutSplitPayload, WholeUserWorkoutPlan, WorkoutSplitsMap } from '@strong-together/shared';
+import type { AddWorkoutSplitPayload, WholeUserWorkoutPlan, WorkoutSplitsMap } from '@strong-together/shared';
 import { SQL } from '../../../infrastructure/db/db.tokens';
 
 @Injectable()
@@ -10,73 +10,180 @@ export class WorkoutPlanQueries {
   async queryWholeUserWorkoutPlan(userId: string, tz: string): Promise<WholeUserWorkoutPlan[]> {
     return this.sql<WholeUserWorkoutPlan[]>`
       SELECT
-        workoutplans.id::INT, workoutplans.name, workoutplans.numberofsplits::INT, workoutplans.created_at, workoutplans.is_deleted, workoutplans.level, workoutplans.user_id, workoutplans.trainer_id, workoutplans.is_active,
-        (workoutplans.updated_at AT TIME ZONE ${tz}) AS updated_at,
+        workoutplans.id::INT,
+        workout.get_number_of_splits (workoutplans.id)::INT AS "numberOfSplits",
+        workoutplans.created_at AS "createdAt",
+        workoutplans.user_id AS "userId",
+        workoutplans.is_active AS "isActive",
         (
-          SELECT COALESCE(json_agg(
-                    to_jsonb(workoutsplits.*)
-                    || jsonb_build_object(
-                         'exercisetoworkoutsplit',
-                         (
-                           SELECT COALESCE(json_agg(
-                                    (to_jsonb(ews.*)
-                                     - 'workoutsplit_id'
-                                     - 'workout_id'
-                                     - 'exercise_id'
-                                     - 'created_at'
-                                     - 'order_index')
-                                    || jsonb_build_object(
-                                         'targetmuscle', ex.targetmuscle,
-                                         'specifictargetmuscle', ex.specifictargetmuscle
-                                       )
-                                    ORDER BY ews.order_index
-                                  ), '[]'::json)
-                           FROM workout.v_exercisetoworkoutsplit_expanded AS ews
-                           LEFT JOIN workout.exercises ex ON ex.id = ews.exercise_id
-                           WHERE ews.workoutsplit_id = workoutsplits.id
-                             AND ews.is_active = TRUE
-                         )
-                       )
-                    ORDER BY workoutsplits.id
-                  ), '[]'::json)
-          FROM workout.workoutsplits
-          WHERE workoutsplits.workout_id = workoutplans.id
+          workoutplans.updated_at AT TIME ZONE ${tz}
+        ) AS "updatedAt",
+        (
+          SELECT
+            COALESCE(
+              JSON_AGG(
+                JSONB_BUILD_OBJECT(
+                  'id', workoutsplits.id,
+                  'workoutId', workoutsplits.workout_id,
+                  'name', workoutsplits.name,
+                  'createdAt', workoutsplits.created_at,
+                  'isActive', workoutsplits.is_active,
+                  'muscleGroup',
+                  workout.get_muscle_group (workoutsplits.id),
+                  'exerciseToWorkoutSplit',
+                  (
+                    SELECT
+                      COALESCE(
+                        JSON_AGG(
+                          JSONB_BUILD_OBJECT(
+                            'id',
+                            ews.id,
+                            'sets',
+                            ews.sets,
+                            'isActive',
+                            ews.is_active,
+                            'workoutSplit',
+                            ews.workout_split,
+                            'exercise',
+                            ews.exercise,
+                            'targetMuscle',
+                            ex.target_muscle,
+                            'specificTargetMuscle',
+                            ex.specific_target_muscle
+                          )
+                          ORDER BY
+                            ews.order_index
+                        ),
+                        '[]'::JSON
+                      )
+                    FROM
+                      (
+                        SELECT
+                          expanded.id,
+                          expanded.workout_split_id,
+                          expanded.exercise_id,
+                          expanded.exercise,
+                          expanded.workout_split,
+                          expanded.order_index,
+                          expanded.is_active,
+                          COALESCE(
+                            JSONB_AGG(
+                              expanded.reps
+                              ORDER BY
+                                expanded.set_order_index
+                            ) FILTER (
+                              WHERE
+                                expanded.reps IS NOT NULL
+                            ),
+                            '[]'::JSONB
+                          ) AS sets
+                        FROM
+                          workout.v_exercise_to_workout_split_expanded AS expanded
+                        WHERE
+                          expanded.is_active = TRUE
+                        GROUP BY
+                          expanded.id,
+                          expanded.workout_split_id,
+                          expanded.exercise_id,
+                          expanded.exercise,
+                          expanded.workout_split,
+                          expanded.order_index,
+                          expanded.is_active
+                      ) AS ews
+                      LEFT JOIN workout.exercise ex ON ex.id = ews.exercise_id
+                    WHERE
+                      ews.workout_split_id = workoutsplits.id
+                  )
+                )
+                ORDER BY
+                  workoutsplits.id
+              ),
+              '[]'::JSON
+            )
+          FROM
+            workout.workout_split AS workoutsplits
+          WHERE
+            workoutsplits.workout_id = workoutplans.id
             AND workoutsplits.is_active = TRUE
-        ) AS workoutsplits
-      FROM workout.workoutplans
-      WHERE workoutplans.user_id = ${userId}::uuid
+        ) AS "workoutSplits"
+      FROM
+        workout.workout_plan AS workoutplans
+      WHERE
+        workoutplans.user_id = ${userId}::UUID
         AND workoutplans.is_active = TRUE
-      LIMIT 1;
+      LIMIT
+        1;
     `;
   }
 
   async queryGetWorkoutSplitsObj(workoutId: number): Promise<{ splits: WorkoutSplitsMap }> {
+    // Build the editable workout-plan map, grouped by split name.
     const rows = await this.sql<[{ splits: WorkoutSplitsMap }]>`
-      SELECT jsonb_object_agg(
-        ws.name,
-        COALESCE(
-          (
-            SELECT json_agg(
-                     jsonb_build_object(
-                       'id', ets.exercise_id,
-                       'name', ets.exercise,
-                       'sets', ets.sets,
-                       'order_index', ets.order_index,
-                       'targetmuscle', e.targetmuscle,
-                       'specifictargetmuscle', e.specifictargetmuscle
-                     )
-                     ORDER BY ets.order_index
-                   )
-            FROM workout.v_exercisetoworkoutsplit_expanded AS ets
-            INNER JOIN workout.exercises e ON e.id = ets.exercise_id
-            WHERE ets.workoutsplit_id = ws.id
-              AND ets.is_active = TRUE
-          ),
-          '[]'::json
-        )
-      ) AS splits
-      FROM workout.workoutsplits AS ws
-      WHERE ws.workout_id = ${workoutId}::int8
+      SELECT
+        JSONB_OBJECT_AGG(
+          ws.name,
+          COALESCE(
+            (
+              SELECT
+                JSON_AGG(
+                  JSONB_BUILD_OBJECT(
+                    'id',
+                    ets.exercise_id,
+                    'name',
+                    ets.exercise,
+                    'sets',
+                    ets.sets,
+                    'orderIndex',
+                    ets.order_index,
+                    'targetMuscle',
+                    e.target_muscle,
+                    'specificTargetMuscle',
+                    e.specific_target_muscle
+                  )
+                  ORDER BY
+                    ets.order_index
+                )
+              FROM
+                (
+                  SELECT
+                    expanded.id,
+                    expanded.workout_split_id,
+                    expanded.exercise_id,
+                    expanded.exercise,
+                    expanded.order_index,
+                    COALESCE(
+                      JSONB_AGG(
+                        expanded.reps
+                        ORDER BY
+                          expanded.set_order_index
+                      ) FILTER (
+                        WHERE
+                          expanded.reps IS NOT NULL
+                      ),
+                      '[]'::JSONB
+                    ) AS sets
+                  FROM
+                    workout.v_exercise_to_workout_split_expanded AS expanded
+                  WHERE
+                    expanded.is_active = TRUE
+                  GROUP BY
+                    expanded.id,
+                    expanded.workout_split_id,
+                    expanded.exercise_id,
+                    expanded.exercise,
+                    expanded.order_index
+                ) AS ets
+                INNER JOIN workout.exercise e ON e.id = ets.exercise_id
+              WHERE
+                ets.workout_split_id = ws.id
+            ),
+            '[]'::JSON
+          )
+        ) AS splits
+      FROM
+        workout.workout_split AS ws
+      WHERE
+        ws.workout_id = ${workoutId}::int8
         AND ws.is_active = TRUE
     `;
     return rows[0];
@@ -90,27 +197,24 @@ export class WorkoutPlanQueries {
     const payloadJson = Object.fromEntries(
       Object.entries(workoutData || {}).filter(([, exercises]) => Array.isArray(exercises) && exercises.length > 0),
     );
-    const payloadJsonParam = payloadJson as unknown as postgres.ParameterOrFragment<never>;
     const numSplits = Object.keys(payloadJson || {}).length;
     if (!numSplits) throw new Error('workoutData has no splits');
 
     let planId: number;
 
+    // Create the active workout plan, or touch its update timestamp when it already exists.
     const planResult = await this.sql<[{ id: number }]>`
-        WITH
-        plan AS (
-            INSERT INTO workout.workoutplans (user_id, trainer_id, name, numberofsplits, is_active, updated_at)
-            VALUES (${userId}::uuid, ${userId}::uuid, ${workoutName}::text, ${numSplits}::int, TRUE, NOW())
-            ON CONFLICT (user_id) WHERE (is_active)
-            DO UPDATE SET
-                name           = EXCLUDED.name,
-                trainer_id     = EXCLUDED.trainer_id,
-                numberofsplits = EXCLUDED.numberofsplits,
-                is_active      = TRUE,
-                updated_at     = NOW()
-            RETURNING id
-        )
-        SELECT id FROM plan;
+      INSERT INTO
+        workout.workout_plan (user_id, is_active, updated_at)
+      VALUES
+        (${userId}::UUID, TRUE, NOW())
+      ON CONFLICT (user_id)
+      WHERE
+        is_active DO UPDATE
+      SET
+        updated_at = NOW()
+      RETURNING
+        id;
     `;
 
     if (!planResult?.[0]) {
@@ -118,73 +222,96 @@ export class WorkoutPlanQueries {
     }
     planId = planResult[0].id;
 
-    const splitsResult = await this.sql<Array<{ id: number; name: string }>>`
-        WITH
-        deact_splits AS (
-            UPDATE workout.workoutsplits s
-            SET is_active = FALSE
-            WHERE s.workout_id = ${planId}
-            RETURNING 1
-        )
-
-        INSERT INTO workout.workoutsplits (workout_id, name, is_active)
-        SELECT ${planId}, kv.key::text, TRUE
-        FROM jsonb_each(${payloadJsonParam}::jsonb) AS kv
-        WHERE jsonb_typeof(kv.value) = 'array'
-          AND jsonb_array_length(kv.value) > 0
-        ON CONFLICT (workout_id, name)
-        DO UPDATE SET is_active = TRUE
-        RETURNING id, name;
-    `;
-    const splitMap = splitsResult.reduce(
-      (map, split) => {
-        map[split.name] = split.id;
-        return map;
-      },
-      {} as Record<string, number>,
-    );
-    const splitMapParam = splitMap as unknown as postgres.ParameterOrFragment<never>;
-
+    // Deactivate the plan's previous splits before reactivating the splits from the new payload.
     await this.sql`
-        WITH
-        existing_split_ids AS (
-            SELECT id FROM workout.workoutsplits WHERE workout_id = ${planId}
-        ),
-
-        deact_exercises AS (
-            UPDATE workout.exercisetoworkoutsplit ets
-            SET is_active = FALSE
-            WHERE ets.workoutsplit_id IN (
-                SELECT id FROM existing_split_ids
-            )
-            RETURNING 1
-        )
-
-        INSERT INTO workout.exercisetoworkoutsplit (workoutsplit_id, exercise_id, sets, order_index, is_active)
-        SELECT
-            ((${splitMapParam}::jsonb) ->> kv.split_name::text)::bigint AS workoutsplit_id,
-            (ex->>'id')::bigint AS exercise_id,
-            CASE
-                WHEN jsonb_typeof(ex->'sets') = 'array' THEN (
-                    SELECT COALESCE(array_agg((elem)::text::bigint ORDER BY ord2), ARRAY[]::bigint[])
-                    FROM jsonb_array_elements(ex->'sets') WITH ORDINALITY AS e2(elem, ord2)
-                )
-                WHEN jsonb_typeof(ex->'sets') = 'number' THEN ARRAY[(ex->>'sets')::bigint]::bigint[]
-                ELSE ARRAY[]::bigint[]
-            END AS sets,
-            COALESCE((ex->>'order_index')::bigint, (ord - 1)) AS order_index,
-            TRUE AS is_active
-        FROM jsonb_each(${payloadJsonParam}::jsonb) AS kv(split_name, arr)
-        CROSS JOIN LATERAL jsonb_array_elements(arr) WITH ORDINALITY AS e(ex, ord)
-        WHERE jsonb_typeof(arr) = 'array'
-          AND jsonb_array_length(arr) > 0
-          AND ((${splitMapParam}::jsonb) ->> kv.split_name::text) IS NOT NULL
-        ON CONFLICT (workoutsplit_id, exercise_id)
-        DO UPDATE SET
-            sets        = EXCLUDED.sets,
-            order_index = EXCLUDED.order_index,
-            is_active   = TRUE;
+      UPDATE workout.workout_split
+      SET
+        is_active = FALSE
+      WHERE
+        workout_id = ${planId};
     `;
+
+    const splitMap: Record<string, number> = {};
+    for (const splitName of Object.keys(payloadJson)) {
+      // Create this split, or reactivate it when the same split name already exists.
+      const [split] = await this.sql<[{ id: number }]>`
+        INSERT INTO
+          workout.workout_split (workout_id, name, is_active)
+        VALUES
+          (
+            ${planId},
+            ${splitName},
+            TRUE
+          )
+        ON CONFLICT (workout_id, name) DO UPDATE
+        SET
+          is_active = TRUE
+        RETURNING
+          id;
+      `;
+      splitMap[splitName] = split.id;
+    }
+
+    // Deactivate all previous exercises; payload exercises are reactivated below.
+    await this.sql`
+      UPDATE workout.exercise_to_workout_split
+      SET
+        is_active = FALSE
+      WHERE
+        workout_split_id IN (
+          SELECT
+            id
+          FROM
+            workout.workout_split
+          WHERE
+            workout_id = ${planId}
+        );
+    `;
+
+    for (const [splitName, exercises] of Object.entries(payloadJson)) {
+      for (const [exerciseIndex, exercise] of exercises.entries()) {
+        // Create the exercise assignment, or update its order and reactivate it.
+        const [savedExercise] = await this.sql<[{ id: number }]>`
+          INSERT INTO
+            workout.exercise_to_workout_split (workout_split_id, exercise_id, order_index, is_active)
+          VALUES
+            (
+              ${splitMap[splitName]},
+              ${exercise.id},
+              ${exercise.orderIndex ?? exerciseIndex},
+              TRUE
+            )
+          ON CONFLICT (workout_split_id, exercise_id) DO UPDATE
+          SET
+            order_index = EXCLUDED.order_index,
+            is_active = TRUE
+          RETURNING
+            id;
+        `;
+
+        // Remove the previous planned sets so the payload becomes the complete source of truth.
+        await this.sql`
+          DELETE FROM workout.workout_set
+          WHERE
+            exercise_to_split_id = ${savedExercise.id};
+        `;
+
+        const sets = Array.isArray(exercise.sets) ? exercise.sets : [exercise.sets];
+        for (const [setIndex, reps] of sets.entries()) {
+          // Store one planned set with its zero-based order and target reps.
+          await this.sql`
+            INSERT INTO
+              workout.workout_set (exercise_to_split_id, order_index, reps)
+            VALUES
+              (
+                ${savedExercise.id},
+                ${setIndex},
+                ${reps}
+              );
+          `;
+        }
+      }
+    }
 
     return planId;
   }

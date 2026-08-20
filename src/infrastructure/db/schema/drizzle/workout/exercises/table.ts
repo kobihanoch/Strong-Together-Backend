@@ -1,0 +1,24 @@
+import { relations } from 'drizzle-orm';
+import { bigint, primaryKey, text, uniqueIndex } from 'drizzle-orm/pg-core';
+import { workoutSchema } from '../../schemas';
+import { exerciseToWorkoutSplit } from '../exercisetoworkoutsplit/table';
+import { exercisePolicies } from './policies';
+
+export const exercise = workoutSchema.table(
+  'exercise',
+  {
+    id: bigint('id', { mode: 'number' }).generatedByDefaultAsIdentity({ name: 'exercise_id_seq' }).notNull(),
+    name: text('name').notNull(),
+    description: text('description').notNull(),
+    targetMuscle: text('target_muscle').notNull(),
+    specificTargetMuscle: text('specific_target_muscle').notNull(),
+  },
+  (t) => [
+    primaryKey({ name: 'exercise_pkey', columns: [t.id] }),
+    uniqueIndex('exercise_name_unique').on(t.name),
+    ...exercisePolicies(),
+  ],
+);
+export const exerciseRelations = relations(exercise, ({ many }) => ({
+  workoutSplitAssignments: many(exerciseToWorkoutSplit),
+}));

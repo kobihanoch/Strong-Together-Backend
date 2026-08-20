@@ -46,7 +46,7 @@ describe('PushController', () => {
     users.add(user.username);
     const pushToken = 'ExponentPushToken[hourly-controller-token]';
     await request(app.getHttpServer()).put('/api/users/pushtoken').set(authHeaders(user.accessToken)).send({ token: pushToken });
-    await addWorkoutPlan(app, user.accessToken, { A: [{ id: 20, sets: [8], order_index: 0 }] });
+    await addWorkoutPlan(app, user.accessToken, { A: [{ id: 20, sets: [8], orderIndex: 0 }] });
     const splitId = await getWorkoutSplitId(user.userId, 'A');
     expect(splitId).not.toBeNull();
     await configureHourlyReminderForUser(user.userId, splitId!, new Date(Date.now() + 5 * 60 * 1000).toISOString());

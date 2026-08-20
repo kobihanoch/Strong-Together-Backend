@@ -1,0 +1,118 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1786829824618,
+      "tag": "0000_baseline",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786830643414,
+      "tag": "0001_least_privilege_runtime_roles",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786833949100,
+      "tag": "0002_sets_entities",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786876506178,
+      "tag": "0003_normalize_table_names",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786876867254,
+      "tag": "0004_normalize_column_names",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786877465529,
+      "tag": "0005_normalize_policy_and_view_names",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786878146549,
+      "tag": "0006_normalize_routines_and_cron",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786879003918,
+      "tag": "0007_replace_muscle_group_trigger",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1786879271668,
+      "tag": "0008_remove_number_of_splits",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1786883102193,
+      "tag": "0009_use_normalized_sets",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786883591807,
+      "tag": "0010_backfill_normalized_sets",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786886955815,
+      "tag": "0011_guest_public_auth_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1786889525991,
+      "tag": "0012_remove_is_first_login",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1786890130710,
+      "tag": "0013_guest_api_security_definer_functions",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1787002186380,
+      "tag": "0014_refactor_db_schema_by_erd",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1787224210839,
+      "tag": "0015_refactor_db_views",
+      "breakpoints": true
+    }
+  ]
+}

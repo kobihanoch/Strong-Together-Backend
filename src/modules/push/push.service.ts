@@ -82,7 +82,7 @@ export class PushService {
 
     await this.pushNotificationsProducerService.enqueuePushNotifications(
       users.map((user) => ({
-        token: user.push_token!,
+        token: user.pushToken!,
         title: `Hello, ${user.name!.split(' ')[0]}!`,
         body: 'Ready to go workout?',
         delay: 0,
@@ -100,18 +100,18 @@ export class PushService {
     const now = new Date();
 
     for (const user of users) {
-      const delayMs = computeDelayFromUTC(now, user.estimated_time_utc, user.reminder_offset_minutes);
+      const delayMs = computeDelayFromUTC(now, user.estimatedTimeUtc, user.reminderOffsetMinutes);
 
       if (delayMs === null) {
         continue;
       }
 
       pushNotifications.push({
-        token: user.push_token!,
+        token: user.pushToken!,
         title: 'Workout Reminder',
         body: `${user.name!.split(' ')[0]}, get ready! Your ${
-          user.split_name
-        } workout kicks off in ${user.reminder_offset_minutes} minutes.`,
+          user.splitName
+        } workout kicks off in ${user.reminderOffsetMinutes} minutes.`,
         delay: delayMs,
         expiresAt: 0,
         ...(requestId ? { requestId } : {}),
