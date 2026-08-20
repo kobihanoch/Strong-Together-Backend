@@ -22,6 +22,7 @@ This gives the system a pragmatic balance:
 | Component                          | Responsibility                                                                                                                          |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | NestJS API                         | HTTP routes, auth, users, workout planning/tracking, analytics, messages, push triggers, presigned video upload URLs, Socket.IO hosting |
+| `@strong-together/shared`          | Drizzle-derived Zod schemas, inferred HTTP contracts/DTOs, and worker/event boundary schemas                                           |
 | PostgreSQL                         | Operational data, domain schemas, analytics views, token version state, RLS policies                                                    |
 | Redis                              | Cache, JTI replay protection, Redis Pub/Sub, Socket.IO adapter support, Bull queue backing store                                        |
 | Socket.IO                          | Authenticated user-room realtime delivery for messages and video-analysis results                                                       |
@@ -82,6 +83,8 @@ Feature modules live under `src/modules`.
 | `exercises`      | Exercise catalog                                                         | PostgreSQL                                                                  |
 
 Infrastructure modules live under `src/infrastructure` and provide reusable clients/adapters such as `DBModule`, `RedisModule`, `CacheModule`, `SocketIOModule`, `AWSModule`, `SupabaseModule`, queue modules, and `MailerModule`.
+
+The shared package lives under `packages/shared` but keeps a one-way dependency on backend-owned Drizzle tables. `drizzle-zod` generates database schemas; feature Zod schemas compose request/response/event shapes; `*.contracts.ts` and `*.dtos.ts` only infer TypeScript types. Controllers and the separate frontend consume the package, while physical PostgreSQL names remain snake_case and public boundary fields remain camelCase.
 
 ## Module Details
 
@@ -172,7 +175,7 @@ The module is read-heavy and does not mutate domain data directly.
 
 ### Aerobics
 
-`AerobicsService` reads and writes `tracking.aerobictracking` through `AerobicsQueries` and caches cardio history with:
+`AerobicsService` reads and writes `tracking.aerobic_tracking` through `AerobicsQueries` and caches cardio history with:
 
 ```text
 xt:aerobics:v1:{userId}:{days}:{tz}

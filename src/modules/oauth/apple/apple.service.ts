@@ -46,12 +46,12 @@ export class AppleService {
 
     const resolvedEmail = tokenEmail ?? email ?? null;
 
-    let { userId, missing_fields } = await this.appleQueries.queryFindUserIdWithAppleUserId(appleSub);
+    let { userId, missingFields } = await this.appleQueries.queryFindUserIdWithAppleUserId(appleSub);
     const userExistOnOAuthUsers = !!userId;
 
     let missingFieldsPayload = null;
-    if (userExistOnOAuthUsers && missing_fields) {
-      missingFieldsPayload = missing_fields.split(',');
+    if (userExistOnOAuthUsers && missingFields) {
+      missingFieldsPayload = missingFields.split(',');
     }
 
     if (!userExistOnOAuthUsers) {
@@ -94,7 +94,7 @@ export class AppleService {
     const hasNeverLoggedIn = (await this.sessionQueries.queryLastLogin(finalUserId)) === null;
     await this.dbService.promoteCurrentRlsTxToAuthenticated(finalUserId);
     const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(finalUserId);
-    const [{ token_version, user_data: userData }] = rowsUserData;
+    const [{ tokenVersion, userData }] = rowsUserData;
 
     if (hasNeverLoggedIn && !missingFieldsPayload) {
       try {
@@ -112,7 +112,7 @@ export class AppleService {
       {
         id: userData.id,
         role: userData.role,
-        tokenVer: token_version,
+        tokenVer: tokenVersion,
         ...cnfClaim,
       },
       authConfig.jwtAccessSecret,
@@ -123,7 +123,7 @@ export class AppleService {
       {
         id: userData.id,
         role: userData.role,
-        tokenVer: token_version,
+        tokenVer: tokenVersion,
         ...cnfClaim,
       },
       authConfig.jwtRefreshSecret,

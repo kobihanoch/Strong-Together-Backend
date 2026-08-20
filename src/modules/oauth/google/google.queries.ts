@@ -4,7 +4,7 @@ import { SQL } from '../../../infrastructure/db/db.tokens';
 
 interface OAuthLookupResult {
   userId: string | null;
-  missing_fields: string | null;
+  missingFields: string | null;
 }
 
 interface OAuthLinkResult {
@@ -20,7 +20,7 @@ export class GoogleQueries {
       SELECT guest_api.oauth_lookup('google', ${googleUserId}) AS oauth_data`;
     return {
       userId: rows[0]?.oauth_data?.user_id || null,
-      missing_fields: rows[0]?.oauth_data?.missing_fields || null,
+      missingFields: rows[0]?.oauth_data?.missing_fields || null,
     };
   }
 

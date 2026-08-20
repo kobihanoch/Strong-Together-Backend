@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { MessageAfterSendResponse } from '@strong-together/shared';
+import type { MessageAfterSendResponse } from '@strong-together/shared';
 import type postgres from 'postgres';
 import { appConfig } from '../../../config/app.config';
 import { SQL } from '../../../infrastructure/db/db.tokens';
@@ -23,11 +23,17 @@ export class SystemMessagesService {
         RETURNING *
       )
       SELECT
-        inserted.*,
-        u.username          AS sender_username,
-        u.name              AS sender_full_name,
-        u.profile_pic_path AS sender_profile_image_url,
-        u.gender            AS sender_gender
+        inserted.id,
+        inserted.sender_id AS "senderId",
+        inserted.receiver_id AS "receiverId",
+        inserted.subject,
+        inserted.msg,
+        inserted.sent_at AS "sentAt",
+        inserted.is_read AS "isRead",
+        u.username AS "senderUsername",
+        u.name AS "senderFullName",
+        u.profile_pic_path AS "senderProfilePicPath",
+        u.gender AS "senderGender"
       FROM inserted
       LEFT JOIN identity.user u ON u.id = inserted.sender_id
     `;

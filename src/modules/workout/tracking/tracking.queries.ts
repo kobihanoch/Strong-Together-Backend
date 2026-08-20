@@ -134,7 +134,7 @@ export class WorkoutTrackingQueries {
         all_exercise_trackings AS (
           SELECT
             et.id,
-            et.exercise_to_split_id AS exercisetosplit_id,
+            et.exercise_to_split_id AS "exerciseToSplitId",
             ARRAY_AGG(
               et.weight
               ORDER BY
@@ -145,18 +145,18 @@ export class WorkoutTrackingQueries {
               ORDER BY
                 et.set_index
             ) AS reps,
-            et.exercise_id,
-            et.workout_split_id AS workoutsplit_id,
-            et.split_name AS splitname,
+            et.exercise_id AS "exerciseId",
+            et.workout_split_id AS "workoutSplitId",
+            et.split_name AS "splitName",
             et.exercise,
             et.notes,
-            ets.order_index AS order_index,
+            ets.order_index AS "orderIndex",
             TO_CHAR(
               (
                 et.workout_start_utc at TIME ZONE ${tz}
               )::date,
               'YYYY-MM-DD'
-            ) AS workoutdate,
+            ) AS "workoutDate",
             JSONB_BUILD_OBJECT(
               'sets',
               JSONB_AGG(
@@ -166,12 +166,12 @@ export class WorkoutTrackingQueries {
               ),
               'exercises',
               JSONB_BUILD_OBJECT(
-                'targetmuscle',
+                'targetMuscle',
                 ex.target_muscle,
-                'specifictargetmuscle',
+                'specificTargetMuscle',
                 ex.specific_target_muscle
               )
-            ) AS exercisetoworkoutsplit
+            ) AS "exerciseToWorkoutSplit"
           FROM
             analytics.v_exercise_tracking_expanded et
             LEFT JOIN workout.v_exercise_to_workout_split_expanded ets ON ets.id = et.exercise_to_split_id
@@ -203,75 +203,75 @@ export class WorkoutTrackingQueries {
           FROM
             (
               SELECT
-                aet.workoutdate AS workout_date_local_string,
+                aet."workoutDate" AS workout_date_local_string,
                 JSONB_AGG(
-                  TO_JSONB(aet) - 'workoutdate'
+                  TO_JSONB(aet) - 'workoutDate'
                   ORDER BY
-                    aet.order_index ASC
+                    aet."orderIndex" ASC
                 ) AS items
               FROM
                 all_exercise_trackings aet
               GROUP BY
-                aet.workoutdate
+                aet."workoutDate"
             ) t
         ),
         by_etsid AS (
           SELECT
-            JSONB_OBJECT_AGG(exercisetosplit_id, items) AS map
+            JSONB_OBJECT_AGG("exerciseToSplitId", items) AS map
           FROM
             (
               SELECT
-                aet.exercisetosplit_id,
+                aet."exerciseToSplitId",
                 JSONB_AGG(
                   TO_JSONB(aet)
                   ORDER BY
-                    aet.workoutdate DESC
+                    aet."workoutDate" DESC
                 ) AS items
               FROM
                 all_exercise_trackings aet
               WHERE
-                aet.exercisetosplit_id IS NOT NULL
+                aet."exerciseToSplitId" IS NOT NULL
               GROUP BY
-                aet.exercisetosplit_id
+                aet."exerciseToSplitId"
             ) t
         ),
         by_split_name AS (
           SELECT
-            JSONB_OBJECT_AGG(splitname, items) AS map
+            JSONB_OBJECT_AGG("splitName", items) AS map
           FROM
             (
               SELECT
-                aet.splitname,
+                aet."splitName",
                 JSONB_AGG(
-                  TO_JSONB(aet) - 'splitname'
+                  TO_JSONB(aet) - 'splitName'
                   ORDER BY
-                    aet.workoutdate DESC
+                    aet."workoutDate" DESC
                 ) AS items
               FROM
                 all_exercise_trackings aet
               GROUP BY
-                aet.splitname
+                aet."splitName"
             ) t
         )
       SELECT
         JSONB_BUILD_OBJECT(
           'exerciseTrackingAnalysis',
           JSONB_BUILD_OBJECT(
-            'unique_days',
+            'uniqueDays',
             (
               SELECT
                 workout_count
               FROM
                 unique_days
             ),
-            'most_frequent_split',
+            'mostFrequentSplit',
             (
               SELECT
                 name
               FROM
                 most_frequent_split
             ),
-            'most_frequent_split_days',
+            'mostFrequentSplitDays',
             (
               SELECT
                 count
@@ -303,12 +303,17 @@ export class WorkoutTrackingQueries {
             'prs',
             (
               JSONB_BUILD_OBJECT(
-                'pr_max',
+                'prMax',
                 (
                   COALESCE(
                     (
                       SELECT
-                        TO_JSONB(prm)
+                        JSONB_BUILD_OBJECT(
+                          'exercise', prm.exercise,
+                          'weight', prm.weight,
+                          'reps', prm.reps,
+                          'workoutTimeUtc', prm.workout_time_utc
+                        )
                       FROM
                         pr_max prm
                     ),
@@ -330,7 +335,7 @@ export class WorkoutTrackingQueries {
               ),
               '{}'::JSONB
             ),
-            'byETSId',
+            'byExerciseToSplitId',
             COALESCE(
               (
                 SELECT
@@ -364,13 +369,13 @@ export class WorkoutTrackingQueries {
     workoutEndUtc: string | null,
   ): Promise<string> {
     // Resolve the workout split that owns the exercises in the finished workout.
-    const [{ workoutsplit_id }] = await this.sql<[{ workoutsplit_id: number }]>`
+    const [{ workoutSplitId }] = await this.sql<[{ workoutSplitId: number }]>`
       SELECT
-        workout_split_id AS workoutsplit_id
+        workout_split_id AS "workoutSplitId"
       FROM
         workout.exercise_to_workout_split
       WHERE
-        id = ${workoutArray[0].exercisetosplit_id}
+        id = ${workoutArray[0].exerciseToSplitId}
       LIMIT
         1;
     `;
@@ -389,7 +394,7 @@ export class WorkoutTrackingQueries {
           ${userId}::UUID,
           ${workoutStartUtc}::TIMESTAMPTZ,
           ${workoutEndUtc}::TIMESTAMPTZ,
-          ${workoutsplit_id}::int8
+          ${workoutSplitId}::int8
         )
       RETURNING
         id;
@@ -406,7 +411,7 @@ export class WorkoutTrackingQueries {
           tracking.exercise_tracking (exercise_to_split_id, notes, workout_summary_id)
         VALUES
           (
-            ${exercise.exercisetosplit_id},
+            ${exercise.exerciseToSplitId},
             ${exercise.notes ?? ''},
             ${workoutSummaryId}::UUID
           )

@@ -95,8 +95,8 @@ describe('SessionController', () => {
 
       expect(messagesResponse.status).toBe(200);
       expect(messagesResponse.body.messages[0]).toMatchObject({
-        sender_full_name: 'System Bot',
-        sender_profile_image_url: 'profile_pics/system-bot/avatar.jpg',
+        senderFullName: 'System Bot',
+        senderProfilePicPath: 'profile_pics/system-bot/avatar.jpg',
       });
     });
 

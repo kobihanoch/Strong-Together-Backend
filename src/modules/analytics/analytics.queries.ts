@@ -116,11 +116,11 @@ export class AnalyticsQueries {
             JSONB_BUILD_OBJECT(
               'exercise',
               exercise,
-              'pr_weight',
+              'prWeight',
               pr_weight,
-              'pr_reps',
+              'prReps',
               pr_reps,
-              'max_1rm',
+              'max1Rm',
               ROUND(est_1rm, 1)
             )
           ),
@@ -235,7 +235,7 @@ export class AnalyticsQueries {
                 planned,
                 'actual',
                 actual,
-                'adherence_pct',
+                'adherencePct',
                 CASE
                   WHEN planned > 0 THEN 100.0 * actual / planned
                   ELSE NULL

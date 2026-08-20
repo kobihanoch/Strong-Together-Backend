@@ -81,12 +81,12 @@ RLS policies then enforce ownership rules for:
 
 - `identity.user`
 - `identity.oauth_account`
-- `workout.workoutplans`
-- `workout.workoutsplits`
-- `workout.exercisetoworkoutsplit`
+- `workout.workout_plan`
+- `workout.workout_split`
+- `workout.exercise_to_workout_split`
 - `tracking.workout_summary`
-- `tracking.exercisetracking`
-- `tracking.aerobictracking`
+- `tracking.exercise_tracking`
+- `tracking.aerobic_tracking`
 - `messages.messages`
 - `reminders.user_reminder_setting`
 

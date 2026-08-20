@@ -57,7 +57,7 @@ describe('AerobicsController', () => {
     expect(response.status).toBe(201);
     expectSchema(userAerobicsResponseSchema, response.body);
     expect(Object.values(response.body.daily)[0]).toEqual([
-      expect.objectContaining({ type: 'Walk', duration_mins: 30, duration_sec: 15 }),
+      expect.objectContaining({ type: 'Walk', durationMins: 30, durationSec: 15 }),
     ]);
 
     const rows = await waitForAerobicsRowsForUser(user.userId, 1);

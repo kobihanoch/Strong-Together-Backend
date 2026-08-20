@@ -49,10 +49,10 @@ export class VerificationService {
 
   async sendVerificationMailData(body: SendVerifcationMailBody, requestId?: string): Promise<void> {
     const { email } = body;
-    const [row] = await this.sql<{ user_data: { id: string; name: string | null; username: string } | null }[]>`
-      SELECT guest_api.find_user_for_email(${email}) AS user_data
+    const [row] = await this.sql<{ userData: { id: string; name: string | null; username: string } | null }[]>`
+      SELECT guest_api.find_user_for_email(${email}) AS "userData"
     `;
-    const user = row?.user_data ?? null;
+    const user = row?.userData ?? null;
     if (!user) return;
     const { id, name } = user;
     await this.verificationEmailsService.sendVerificationEmail(email, id, name ?? user.username, {
@@ -68,7 +68,7 @@ export class VerificationService {
     const ok = await bcrypt.compare(password, user.password!);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
 
-    if (user.is_verified) throw new BadRequestException('Account already verified');
+    if (user.isVerified) throw new BadRequestException('Account already verified');
 
     const [exists] = await this.createUserQueries.queryUserExistsByUsernameOrEmail(null, newEmail);
     if (exists) throw new ConflictException('Email already in use');

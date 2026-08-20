@@ -246,16 +246,16 @@ def analyze_squat_rep(rep_frames, camera_angle):
       "status": status,
       "confidence": round(rep_conf, 2)
     },
-    "back_lean": {
+    "backLean": {
       "value": round(avg_back_angle, 1),
       "excessive": avg_back_angle > 45,
       "confidence": round(rep_conf, 2)
     },
     "audit": {
-      "frames_analyzed": len(rep_frames),
-      "valid_frames": len(valid_frames),
-      "camera_angle": camera_angle,
-      "raw_bottom_angle": round(true_bottom_angle, 1),
-      "sampling_rate": "filtered"
+      "framesAnalyzed": len(rep_frames),
+      "validFrames": len(valid_frames),
+      "cameraAngle": camera_angle,
+      "rawBottomAngle": round(true_bottom_angle, 1),
+      "samplingRate": "filtered"
     }
   }

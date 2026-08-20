@@ -45,7 +45,7 @@ async function addPlan(user: Awaited<ReturnType<typeof trackingUser>>) {
   const response = await request(app.getHttpServer()).post('/api/workouts/add').set(authHeaders(user.accessToken)).send({
     tz: 'Asia/Jerusalem',
     workoutName: 'Tracking Plan',
-    workoutData: { A: [{ id: 20, sets: [8, 8, 10], order_index: 0 }] },
+    workoutData: { A: [{ id: 20, sets: [8, 8, 10], orderIndex: 0 }] },
   });
   expect(response.status).toBe(201);
   expectSchema(addWorkoutResponseSchema, response.body);
@@ -58,8 +58,8 @@ function recentWorkoutWindow() {
   const end = new Date();
   const start = new Date(end.getTime() - 45 * 60 * 1000);
   return {
-    workout_start_utc: start.toISOString(),
-    workout_end_utc: end.toISOString(),
+    workoutStartUtc: start.toISOString(),
+    workoutEndUtc: end.toISOString(),
   };
 }
 
@@ -74,7 +74,7 @@ describe('WorkoutTrackingController', () => {
     expect(response.status).toBe(200);
     expect(response.headers['x-cache']).toBe('MISS');
     expectSchema(getExerciseTrackingResponseSchema, response.body);
-    expect(response.body.exerciseTrackingAnalysis.unique_days).toBe(0);
+    expect(response.body.exerciseTrackingAnalysis.uniqueDays).toBe(0);
     expect(response.body.exerciseTrackingMaps.byDate).toEqual({});
     expect(await getRedisKey(buildTrackingKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
@@ -90,7 +90,7 @@ describe('WorkoutTrackingController', () => {
 
     expect(response.status).toBe(200);
     expectSchema(getExerciseTrackingResponseSchema, response.body);
-    expect(response.body.exerciseTrackingAnalysis.unique_days).toBe(0);
+    expect(response.body.exerciseTrackingAnalysis.uniqueDays).toBe(0);
     expect(await getWorkoutSummaryCount(user.userId)).toBe(0);
   });
 
@@ -102,13 +102,13 @@ describe('WorkoutTrackingController', () => {
     const response = await request(app.getHttpServer()).post('/api/workouts/finishworkout').set(authHeaders(user.accessToken)).send({
       tz: 'Asia/Jerusalem',
       ...workoutWindow,
-      workout: [{ exercisetosplit_id: etsId, weight: [80, 80, 75], reps: [8, 8, 10], notes: 'Solid set' }],
+      workout: [{ exerciseToSplitId: etsId, weight: [80, 80, 75], reps: [8, 8, 10], notes: 'Solid set' }],
     });
 
     expect(response.status).toBe(201);
     expectSchema(finishUserWorkoutResponseSchema, response.body);
-    expect(response.body.exerciseTrackingAnalysis.unique_days).toBe(1);
-    expect(response.body.exerciseTrackingMaps.byETSId).toHaveProperty(String(etsId));
+    expect(response.body.exerciseTrackingAnalysis.uniqueDays).toBe(1);
+    expect(response.body.exerciseTrackingMaps.byExerciseToSplitId).toHaveProperty(String(etsId));
     expect(await getWorkoutSummaryCount(user.userId)).toBe(1);
     expect(await getExerciseTrackingCountForUser(user.userId)).toBe(1);
     expect(await getRedisKey(buildTrackingKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
@@ -118,8 +118,8 @@ describe('WorkoutTrackingController', () => {
     const user = await trackingUser('tracking_bad');
     const response = await request(app.getHttpServer()).post('/api/workouts/finishworkout').set(authHeaders(user.accessToken)).send({
       tz: 'Asia/Jerusalem',
-      workout_start_utc: '2026-03-22T10:00:00.000Z',
-      workout_end_utc: '2026-03-22T10:45:00.000Z',
+      workoutStartUtc: '2026-03-22T10:00:00.000Z',
+      workoutEndUtc: '2026-03-22T10:45:00.000Z',
       workout: [],
     });
 

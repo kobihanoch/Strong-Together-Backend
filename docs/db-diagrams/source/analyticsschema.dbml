@@ -1,0 +1,29 @@
+Table analytics.v_exercise_tracking_expanded [note: 'Security-invoker view'] {
+  id bigint
+  exercise_to_split_id bigint
+  weight real
+  reps bigint
+  set_index integer
+  exercise_id bigint
+  workout_split_id bigint
+  split_name text
+  exercise text
+  notes text
+  workout_summary_id uuid
+  workout_start_utc timestamptz
+  workout_end_utc timestamptz
+}
+
+Table analytics.v_prs [note: 'Strongest recorded set per exercise; security-invoker view'] {
+  id bigint
+  exercise_to_split_id bigint
+  exercise_id bigint
+  exercise text
+  weight real
+  reps bigint
+  workout_summary_id uuid
+  workout_start_utc timestamptz
+  workout_end_utc timestamptz
+}
+
+Ref: analytics.v_prs.id > analytics.v_exercise_tracking_expanded.id
