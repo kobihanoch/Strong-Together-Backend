@@ -41,8 +41,8 @@ export class WorkoutTrackingService {
   async finishUserWorkoutData(userId: string, body: FinishUserWorkoutBody): Promise<FinishUserWorkoutResponse> {
     const workoutArray = body.workout;
     const tz = body.tz || 'Asia/Jerusalem';
-    const workoutStartUtc = body.workout_start_utc || null;
-    const workoutEndUtc = body.workout_end_utc || null;
+    const workoutStartUtc = body.workoutStartUtc || null;
+    const workoutEndUtc = body.workoutEndUtc || null;
 
     if (!Array.isArray(workoutArray) || workoutArray.length === 0) {
       throw new BadRequestException('Not a valid workout');

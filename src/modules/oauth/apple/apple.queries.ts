@@ -4,7 +4,7 @@ import { SQL } from '../../../infrastructure/db/db.tokens';
 
 interface OAuthLookupResult {
   userId: string | null;
-  missing_fields: string | null;
+  missingFields: string | null;
 }
 
 interface OAuthLinkResult {
@@ -15,13 +15,13 @@ interface OAuthLinkResult {
 export class AppleQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
-  /** Same shape as the Google version: returns { userId, missing_fields } */
+  /** Same shape as the Google version: returns { userId, missingFields } */
   async queryFindUserIdWithAppleUserId(appleUserId: string): Promise<OAuthLookupResult> {
     const rows = await this.sql<{ oauth_data: { user_id: string; missing_fields: string | null } | null }[]>`
       SELECT guest_api.oauth_lookup('apple', ${appleUserId}) AS oauth_data`;
     return {
       userId: rows[0]?.oauth_data?.user_id || null,
-      missing_fields: rows[0]?.oauth_data?.missing_fields || null,
+      missingFields: rows[0]?.oauth_data?.missing_fields || null,
     };
   }
 

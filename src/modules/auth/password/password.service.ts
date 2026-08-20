@@ -25,9 +25,9 @@ export class PasswordService {
     const { identifier } = body;
     if (!identifier) throw new BadRequestException('Please fill username or email');
     const [row] = await this.sql<{
-      user_data: { id: string; email: string; name: string; username: string } | null;
-    }[]>`SELECT guest_api.find_login_user(${identifier}) AS user_data`;
-    const user = row?.user_data ?? null;
+      userData: { id: string; email: string; name: string; username: string } | null;
+    }[]>`SELECT guest_api.find_login_user(${identifier}) AS "userData"`;
+    const user = row?.userData ?? null;
     if (!user) return;
 
     await this.passwordEmailsService.sendForgotPasswordEmail(

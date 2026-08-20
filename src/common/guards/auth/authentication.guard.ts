@@ -64,12 +64,12 @@ export class AuthenticationGuard implements CanActivate {
     const { versionData, user } = await this.dbService.runWithRlsTx(decoded.id, async () => {
       const [currentVersion] = await this.sessionQueries.queryGetCurrentTokenVersion(decoded.id);
       const [currentUser]: [AuthenticatedUser?] = await this.sql`
-        SELECT id, role, is_verified FROM identity.user WHERE id=${decoded.id}::uuid
+        SELECT id, role, is_verified AS "isVerified" FROM identity.user WHERE id=${decoded.id}::uuid
       `;
       return { versionData: currentVersion, user: currentUser };
     });
 
-    if (!versionData || decoded.tokenVer !== versionData.token_version) {
+    if (!versionData || decoded.tokenVer !== versionData.tokenVersion) {
       throw new UnauthorizedException('New login required');
     }
 
@@ -78,7 +78,7 @@ export class AuthenticationGuard implements CanActivate {
       throw new NotFoundException('User not found');
     }
 
-    if (!user?.is_verified) {
+    if (!user?.isVerified) {
       throw new UnauthorizedException('A validation email is pending.');
     }
 

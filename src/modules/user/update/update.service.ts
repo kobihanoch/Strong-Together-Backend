@@ -32,11 +32,11 @@ export class UpdateUserService {
     private readonly cacheService: CacheService,
   ) {}
 
-  async getUserData(userId: string): Promise<{ payload: UserDataResponse['user_data'] }> {
+  async getUserData(userId: string): Promise<{ payload: UserDataResponse['userData'] }> {
     const rows = await this.updateUserQueries.queryAuthenticatedUserById(userId);
     const [user] = rows;
     if (!user) throw new NotFoundException('User not found');
-    return { payload: user.user_data };
+    return { payload: user.userData };
   }
 
   async updateUsersReminderSettingsTimezone(userId: string, tz: string): Promise<void> {
@@ -65,7 +65,7 @@ export class UpdateUserService {
     const [updated] = rowsUpdated;
     if (!updated) return { message: 'User not found' } as any;
 
-    const { user_data: userData } = updated;
+    const { userData } = updated;
     const currentEmail = (currentUser.email || '').trim().toLowerCase();
     const candidate = (email || '').trim().toLowerCase();
 
@@ -80,7 +80,7 @@ export class UpdateUserService {
     return {
       message: 'User updated successfully',
       emailChanged,
-      user: updated.user_data,
+      user: updated.userData,
     };
   }
 
@@ -152,7 +152,7 @@ export class UpdateUserService {
     );
 
     const [row] = await this.updateUserQueries.queryGetUserProfilePicURL(userId);
-    const oldPath = row?.profile_image_url;
+    const oldPath = row?.profileImageUrl;
     await this.updateUserQueries.queryUpdateUserProfilePicURL(userId, newPath);
 
     if (oldPath && oldPath !== newPath) {

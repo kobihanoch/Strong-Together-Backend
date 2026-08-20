@@ -144,7 +144,7 @@ describe('UpdateUserController', () => {
 
     const getAfterUpload = await request(app.getHttpServer()).get('/api/users/get').set(authHeaders(user.accessToken));
     expectSchema(getAuthenticatedUserByIdResponseSchema, getAfterUpload.body);
-    expect(getAfterUpload.body.profile_image_url).toBe(upload.body.path);
+    expect(getAfterUpload.body.profileImageUrl).toBe(upload.body.path);
 
     const deleted = await request(app.getHttpServer())
       .delete('/api/users/deleteprofilepic')
@@ -154,7 +154,7 @@ describe('UpdateUserController', () => {
     expect(deleted.status).toBe(200);
     const getAfterDelete = await request(app.getHttpServer()).get('/api/users/get').set(authHeaders(user.accessToken));
     expectSchema(getAuthenticatedUserByIdResponseSchema, getAfterDelete.body);
-    expect(getAfterDelete.body.profile_image_url).toBeNull();
+    expect(getAfterDelete.body.profileImageUrl).toBeNull();
   }, 30000);
 
   it('profile image endpoints reject bad requests without touching DB storage fields', async () => {

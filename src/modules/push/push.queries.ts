@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { UserToHourlyReminder, UserWithNotificationsEnabled } from './push.dtos';
+import type { UserToHourlyReminder, UserWithNotificationsEnabled } from './push.dtos';
 import type postgres from 'postgres';
 import { SQL } from '../../infrastructure/db/db.tokens';
 
@@ -9,7 +9,7 @@ export class PushQueries {
 
   async queryGetAllUsersWithNotificationsEnabled(): Promise<UserWithNotificationsEnabled[]> {
     const rows = await this.sql<UserWithNotificationsEnabled[]>`
-      SELECT push_token, name FROM identity.user WHERE push_token IS NOT NULL`;
+      SELECT push_token AS "pushToken", name FROM identity.user WHERE push_token IS NOT NULL`;
 
     return rows as UserWithNotificationsEnabled[];
   }
@@ -17,13 +17,13 @@ export class PushQueries {
   async queryGetAllUsersToSendHourlyReminder(): Promise<UserToHourlyReminder[]> {
     const users = await this.sql<UserToHourlyReminder[]>`
       SELECT
-        u.id AS user_id,
+        u.id AS "userId",
         u.name AS name,
-        u.push_token,
-        rs.reminder_offset_minutes,
-        usi.workout_split_id AS split_id,
-        ws.name AS split_name,
-        usi.estimated_time_utc
+        u.push_token AS "pushToken",
+        rs.reminder_offset_minutes AS "reminderOffsetMinutes",
+        usi.workout_split_id AS "splitId",
+        ws.name AS "splitName",
+        usi.estimated_time_utc AS "estimatedTimeUtc"
       FROM identity.user AS u
       JOIN reminders.user_reminder_setting AS rs
         ON rs.user_id = u.id

@@ -30,10 +30,10 @@ export class GoogleService {
       idToken,
     )) as GoogleTokenVerificationResult;
 
-    let { userId, missing_fields } = await this.googleQueries.queryFindUserIdWithGoogleUserId(googleSub);
+    let { userId, missingFields } = await this.googleQueries.queryFindUserIdWithGoogleUserId(googleSub);
     const userExistOnOAuthUsers = !!userId;
     let missingFieldsPayload = null;
-    if (userExistOnOAuthUsers && missing_fields) missingFieldsPayload = missing_fields.split(',');
+    if (userExistOnOAuthUsers && missingFields) missingFieldsPayload = missingFields.split(',');
 
     if (!userExistOnOAuthUsers) {
       let isLinked = false;
@@ -88,7 +88,7 @@ export class GoogleService {
     const hasNeverLoggedIn = (await this.sessionQueries.queryLastLogin(finalUserId)) === null;
     await this.dbService.promoteCurrentRlsTxToAuthenticated(finalUserId);
     const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(finalUserId);
-    const [{ token_version, user_data: userData }] = rowsUserData;
+    const [{ tokenVersion, userData }] = rowsUserData;
     if (hasNeverLoggedIn && !missingFieldsPayload) {
       try {
         await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
@@ -105,7 +105,7 @@ export class GoogleService {
       {
         id: userData.id,
         role: userData.role,
-        tokenVer: token_version,
+        tokenVer: tokenVersion,
         ...cnfClaim,
       },
       authConfig.jwtAccessSecret,
@@ -116,7 +116,7 @@ export class GoogleService {
       {
         id: userData.id,
         role: userData.role,
-        tokenVer: token_version,
+        tokenVer: tokenVersion,
         ...cnfClaim,
       },
       authConfig.jwtRefreshSecret,

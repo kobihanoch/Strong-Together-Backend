@@ -46,7 +46,7 @@ describe('BootstrapController', () => {
     expectSchema(bootstrapResponseSchema, response.body);
     expect(response.body.user.id).toBe(user.userId);
     expect(response.body.workout).toEqual({ workoutPlan: null, workoutPlanForEditWorkout: null });
-    expect(response.body.tracking.exerciseTrackingAnalysis.unique_days).toBe(0);
+    expect(response.body.tracking.exerciseTrackingAnalysis.uniqueDays).toBe(0);
     expect(response.body.messages).toEqual({ messages: [] });
     expect(response.body.aerobics).toEqual({ daily: {}, weekly: {} });
     expect(await getUserReminderTimezone(user.userId)).toBe('Europe/London');
@@ -55,10 +55,10 @@ describe('BootstrapController', () => {
 
   it('GET /api/bootstrap/get returns User C workout/tracking/message/aerobics data with shared schema', async () => {
     const user = await bootstrapUser('bootstrap_full');
-    await addWorkoutPlan(app, user.accessToken, { A: [{ id: 20, sets: [8, 8, 10], order_index: 0 }] });
+    await addWorkoutPlan(app, user.accessToken, { A: [{ id: 20, sets: [8, 8, 10], orderIndex: 0 }] });
     const etsId = await getExerciseToWorkoutSplitId(user.userId, 'A', 20);
     expect(etsId).not.toBeNull();
-    await finishWorkout(app, user.accessToken, [{ exercisetosplit_id: etsId!, weight: [80], reps: [8] }]);
+    await finishWorkout(app, user.accessToken, [{ exerciseToSplitId: etsId!, weight: [80], reps: [8] }]);
 
     const aerobics = await addAerobicsRecord(app, user.accessToken, {
       type: 'Walk',
@@ -74,8 +74,8 @@ describe('BootstrapController', () => {
 
     expect(response.status).toBe(200);
     expectSchema(bootstrapResponseSchema, response.body);
-    expect(response.body.workout.workoutPlan.numberofsplits).toBe(1);
-    expect(response.body.tracking.exerciseTrackingAnalysis.unique_days).toBe(1);
+    expect(response.body.workout.workoutPlan.numberOfSplits).toBe(1);
+    expect(response.body.tracking.exerciseTrackingAnalysis.uniqueDays).toBe(1);
     expect(response.body.messages.messages).toHaveLength(1);
     expect(Object.keys(response.body.aerobics.daily)).toHaveLength(1);
   });

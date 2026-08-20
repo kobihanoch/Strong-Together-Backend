@@ -36,7 +36,7 @@ export class SessionService {
     const isMatch = await bcrypt.compare(password, user.password!);
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
 
-    if (!user.is_verified) {
+    if (!user.isVerified) {
       throw new UnauthorizedException('You need to verify you account');
     }
 
@@ -44,7 +44,7 @@ export class SessionService {
     // this authenticated user before changing session state or sending messages.
     await this.dbService.promoteCurrentRlsTxToAuthenticated(user.id);
 
-    if (user.last_login === null) {
+    if (user.lastLogin === null) {
       try {
         await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(user.id, user.name!);
       } catch (e) {
@@ -56,7 +56,7 @@ export class SessionService {
     }
 
     const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(user.id);
-    const [{ token_version, user_data: userData }] = rowsUserData;
+    const [{ tokenVersion, userData }] = rowsUserData;
 
     const cnfClaim = jkt
       ? {
@@ -70,7 +70,7 @@ export class SessionService {
       {
         id: userData.id,
         role: userData.role,
-        tokenVer: token_version,
+        tokenVer: tokenVersion,
         ...cnfClaim,
       },
       authConfig.jwtAccessSecret,
@@ -81,7 +81,7 @@ export class SessionService {
       {
         id: userData.id,
         role: userData.role,
-        tokenVer: token_version,
+        tokenVer: tokenVersion,
         ...cnfClaim,
       },
       authConfig.jwtRefreshSecret,
@@ -133,7 +133,7 @@ export class SessionService {
     const [user = null] = await this.sessionQueries.queryBumpTokenVersionAndGetSelfDataCAS(decoded.id, decoded.tokenVer);
     if (!user) throw new UnauthorizedException('New login required');
 
-    const { token_version, user_data: userData } = user;
+    const { tokenVersion, userData } = user;
 
     const cnfClaim = dpopJkt
       ? {
@@ -147,7 +147,7 @@ export class SessionService {
       {
         id: userData.id,
         role: userData.role,
-        tokenVer: token_version,
+        tokenVer: tokenVersion,
         ...cnfClaim,
       },
       authConfig.jwtAccessSecret,
@@ -158,7 +158,7 @@ export class SessionService {
       {
         id: userData.id,
         role: userData.role,
-        tokenVer: token_version,
+        tokenVer: tokenVersion,
         ...cnfClaim,
       },
       authConfig.jwtRefreshSecret,

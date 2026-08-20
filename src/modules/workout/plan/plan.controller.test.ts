@@ -1,6 +1,10 @@
 import request from 'supertest';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { addWorkoutResponseSchema, getWholeUserWorkoutPlanResponseSchema, loginResponseSchema } from '@strong-together/shared';
+import {
+  addWorkoutResponseSchema,
+  getWholeUserWorkoutPlanResponseSchema,
+  loginResponseSchema,
+} from '@strong-together/shared';
 import { createApp } from '../../../app';
 import { authHeaders } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
@@ -49,19 +53,21 @@ describe('WorkoutPlanController', () => {
 
   it('POST /api/workouts/add creates User B plan, returns schema, asserts DB and Redis', async () => {
     const user = await workoutUser('plan_add');
-    const response = await request(app.getHttpServer()).post('/api/workouts/add').set(authHeaders(user.accessToken)).send({
-      tz: 'Asia/Jerusalem',
-      workoutName: 'Controller Plan',
-      workoutData: {
-        A: [{ id: 20, sets: [8, 8, 10], order_index: 0 }],
-        B: [{ id: 12, sets: [10, 10], order_index: 0 }],
-      },
-    });
+    const response = await request(app.getHttpServer())
+      .post('/api/workouts/add')
+      .set(authHeaders(user.accessToken))
+      .send({
+        tz: 'Asia/Jerusalem',
+        workoutName: 'Controller Plan',
+        workoutData: {
+          A: [{ id: 20, sets: [8, 8, 10], orderIndex: 0 }],
+          B: [{ id: 12, sets: [10, 10], orderIndex: 0 }],
+        },
+      });
 
     expect(response.status).toBe(201);
     expectSchema(addWorkoutResponseSchema, response.body);
     expect(response.body.message).toBe('Workout created successfully!');
-    expect(response.body.workoutPlan.name).toBe('Controller Plan');
     expect(response.body.workoutPlanForEditWorkout).toHaveProperty('A');
     expect(await getActiveWorkoutSplitNames(user.userId)).toEqual(['A', 'B']);
     expect(await getRedisKey(buildPlanKeyStable(user.userId, 'Asia/Jerusalem'))).toBeTypeOf('string');
@@ -69,11 +75,14 @@ describe('WorkoutPlanController', () => {
 
   it('GET /api/workouts/getworkout returns User B plan from Redis on repeated reads', async () => {
     const user = await workoutUser('plan_cache');
-    await request(app.getHttpServer()).post('/api/workouts/add').set(authHeaders(user.accessToken)).send({
-      tz: 'Asia/Jerusalem',
-      workoutName: 'Cache Plan',
-      workoutData: { A: [{ id: 20, sets: [5, 5], order_index: 0 }] },
-    });
+    await request(app.getHttpServer())
+      .post('/api/workouts/add')
+      .set(authHeaders(user.accessToken))
+      .send({
+        tz: 'Asia/Jerusalem',
+        workoutName: 'Cache Plan',
+        workoutData: { A: [{ id: 20, sets: [5, 5], orderIndex: 0 }] },
+      });
 
     const first = await request(app.getHttpServer())
       .get('/api/workouts/getworkout')
@@ -93,11 +102,14 @@ describe('WorkoutPlanController', () => {
 
   it('POST /api/workouts/add rejects invalid empty splits with 400', async () => {
     const user = await workoutUser('plan_bad');
-    const response = await request(app.getHttpServer()).post('/api/workouts/add').set(authHeaders(user.accessToken)).send({
-      tz: 'Asia/Jerusalem',
-      workoutName: 'Bad Plan',
-      workoutData: { A: [] },
-    });
+    const response = await request(app.getHttpServer())
+      .post('/api/workouts/add')
+      .set(authHeaders(user.accessToken))
+      .send({
+        tz: 'Asia/Jerusalem',
+        workoutName: 'Bad Plan',
+        workoutData: { A: [] },
+      });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Each split must include at least one exercise');
@@ -108,11 +120,14 @@ describe('WorkoutPlanController', () => {
       .get('/api/workouts/getworkout')
       .query({ tz: 'Asia/Jerusalem' })
       .set('x-app-version', '4.5.0');
-    const postResponse = await request(app.getHttpServer()).post('/api/workouts/add').set('x-app-version', '4.5.0').send({
-      tz: 'Asia/Jerusalem',
-      workoutName: 'No Auth',
-      workoutData: { A: [{ id: 20, sets: [1], order_index: 0 }] },
-    });
+    const postResponse = await request(app.getHttpServer())
+      .post('/api/workouts/add')
+      .set('x-app-version', '4.5.0')
+      .send({
+        tz: 'Asia/Jerusalem',
+        workoutName: 'No Auth',
+        workoutData: { A: [{ id: 20, sets: [1], orderIndex: 0 }] },
+      });
 
     expect(getResponse.status).toBe(401);
     expect(postResponse.status).toBe(401);

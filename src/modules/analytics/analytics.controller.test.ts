@@ -41,16 +41,16 @@ describe('AnalyticsController', () => {
     expect(response.status).toBe(200);
     expect(response.headers['x-cache']).toBe('MISS');
     expectSchema(getAnalyticsResponseSchema, response.body);
-    expect(response.body).toEqual({ _1RM: {}, goals: {} });
+    expect(response.body).toEqual({ oneRepMaxes: {}, goals: {} });
     expect(await getRedisKey(buildAnalyticsKeyStable(user.userId))).toBeTypeOf('string');
   });
 
   it('GET /api/analytics/get returns User C aggregates from DB-backed workout flow and Redis HIT', async () => {
     const user = await analyticsUser('analytics_full');
-    await addWorkoutPlan(app, user.accessToken, { A: [{ id: 20, sets: [8, 8, 10], order_index: 0 }] });
+    await addWorkoutPlan(app, user.accessToken, { A: [{ id: 20, sets: [8, 8, 10], orderIndex: 0 }] });
     const etsId = await getExerciseToWorkoutSplitId(user.userId, 'A', 20);
     expect(etsId).not.toBeNull();
-    await finishWorkout(app, user.accessToken, [{ exercisetosplit_id: etsId!, weight: [80, 80, 75], reps: [8, 8, 10] }]);
+    await finishWorkout(app, user.accessToken, [{ exerciseToSplitId: etsId!, weight: [80, 80, 75], reps: [8, 8, 10] }]);
 
     const first = await request(app.getHttpServer()).get('/api/analytics/get').set(authHeaders(user.accessToken));
     const second = await request(app.getHttpServer()).get('/api/analytics/get').set(authHeaders(user.accessToken));
@@ -61,7 +61,7 @@ describe('AnalyticsController', () => {
     expect(second.headers['x-cache']).toBe('HIT');
     expectSchema(getAnalyticsResponseSchema, second.body);
     expect(await getWorkoutSummaryCount(user.userId)).toBe(1);
-    expect(second.body._1RM).toHaveProperty('20');
+    expect(second.body.oneRepMaxes).toHaveProperty('20');
     expect(second.body.goals).toHaveProperty('A');
   });
 

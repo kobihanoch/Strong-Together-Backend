@@ -1,5 +1,10 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import type { AnalyzeVideoResultPayload, SquatRepetition } from '@strong-together/shared';
+import {
+  analyzeVideoResultPayloadSchema,
+  squatRepetitionSchema,
+  type AnalyzeVideoResultPayload,
+  type SquatRepetition,
+} from '@strong-together/shared';
 import { RedisClientType } from 'redis';
 import { appConfig } from '../../config/app.config';
 import { createLogger } from '../../infrastructure/logger';
@@ -20,7 +25,9 @@ export class VideoAnalysisSubscriber implements OnModuleInit {
 
   private async handleMessage(message: string): Promise<void> {
     try {
-      const payload = JSON.parse(message) as AnalyzeVideoResultPayload<SquatRepetition>;
+      const payload: AnalyzeVideoResultPayload<SquatRepetition> = analyzeVideoResultPayloadSchema(
+        squatRepetitionSchema,
+      ).parse(JSON.parse(message));
 
       const { jobId, userId, status, error, requestId } = payload;
 

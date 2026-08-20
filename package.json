@@ -3,7 +3,14 @@
   "version": "4.0.3",
   "description": "",
   "main": "index.js",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
+    "build:shared": "npm run build --workspace=@strong-together/shared",
+    "typecheck:shared": "npm run typecheck --workspace=@strong-together/shared",
+    "prestart": "npm run build:shared",
+    "pretest": "npm run build:shared",
     "orch:dev": "cross-env NODE_ENV=development docker compose -f docker-compose.development.yml up --build -d",
     "db:dev:start": "cross-env NODE_ENV=development tsx scripts/db-related/setup-local-db.mts dev",
     "db:dev:seed": "cross-env NODE_ENV=development tsx scripts/db-related/setup-local-db.mts dev",
@@ -63,7 +70,7 @@
     "@nestjs/platform-express": "^11.1.19",
     "@sentry/node": "^10.46.0",
     "@socket.io/redis-adapter": "^8.3.0",
-    "@strong-together/shared": "^1.0.5",
+    "@strong-together/shared": "file:packages/shared",
     "@supabase/supabase-js": "^2.54.0",
     "@swc/cli": "^0.7.8",
     "@swc/core": "^1.13.5",

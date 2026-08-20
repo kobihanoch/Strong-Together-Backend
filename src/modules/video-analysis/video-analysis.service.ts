@@ -4,8 +4,8 @@ import type {
   AnalyzeVideoResultPayload,
   GetPresignedUrlFromS3Response,
   SquatRepetition,
+  UserRow,
 } from '@strong-together/shared';
-import { UserEntity } from '@strong-together/shared';
 import { S3Service } from '../../infrastructure/aws/s3/s3.service';
 import { SocketIOService } from './../../infrastructure/socket.io/socket.io.service';
 
@@ -74,7 +74,7 @@ export class VideoAnalysisService {
     };
   }
 
-  emitVideoAnalysisResults = (userId: UserEntity['id'], results: AnalyzeVideoResultPayload<SquatRepetition>) => {
+  emitVideoAnalysisResults = (userId: UserRow['id'], results: AnalyzeVideoResultPayload<SquatRepetition>) => {
     this.socketIOService.emitToUser(userId, `video_analysis_results`, results);
   };
 
