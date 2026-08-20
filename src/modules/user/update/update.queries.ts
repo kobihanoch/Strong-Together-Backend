@@ -19,7 +19,7 @@ export class UpdateUserQueries {
           'gender', users.gender,
           'createdAt', users.created_at,
           'updatedAt', users.updated_at,
-          'profileImageUrl', users.profile_pic_path,
+          'profilePicPath', users.profile_pic_path,
           'pushToken', users.push_token,
           'role', users.role,
           'isFirstLogin', users.last_login IS NULL,
@@ -111,7 +111,7 @@ export class UpdateUserQueries {
           'gender', users.gender,
           'createdAt', users.created_at,
           'updatedAt', users.updated_at,
-          'profileImageUrl', users.profile_pic_path,
+          'profilePicPath', users.profile_pic_path,
           'pushToken', users.push_token,
           'role', users.role,
           'isFirstLogin', users.last_login IS NULL,
@@ -135,12 +135,12 @@ export class UpdateUserQueries {
 
   async queryUserUsernamePicAndName(
     id: string,
-  ): Promise<Array<Pick<UserRow, 'id' | 'username' | 'name'> & { profileImageUrl: string | null }>> {
-    return this.sql<Array<Pick<UserRow, 'id' | 'username' | 'name'> & { profileImageUrl: string | null }>>`
+  ): Promise<Array<Pick<UserRow, 'id' | 'username' | 'name'> & { profilePicPath: string | null }>> {
+    return this.sql<Array<Pick<UserRow, 'id' | 'username' | 'name'> & { profilePicPath: string | null }>>`
       SELECT
         id,
         username,
-        profile_pic_path AS "profileImageUrl",
+        profile_pic_path AS "profilePicPath",
         name
       FROM
         identity.user
@@ -149,10 +149,10 @@ export class UpdateUserQueries {
     `;
   }
 
-  async queryGetUserProfilePicURL(userId: string): Promise<Array<{ profileImageUrl: string | null }>> {
-    return this.sql<Array<{ profileImageUrl: string | null }>>`
+  async queryGetUserProfilePicURL(userId: string): Promise<Array<{ profilePicPath: string | null }>> {
+    return this.sql<Array<{ profilePicPath: string | null }>>`
       SELECT
-        profile_pic_path AS "profileImageUrl"
+        profile_pic_path AS "profilePicPath"
       FROM
         identity.user
       WHERE
@@ -165,15 +165,15 @@ export class UpdateUserQueries {
   async queryUpdateUserProfilePicURL(
     userId: string,
     newURL: string | null,
-  ): Promise<Array<{ profileImageUrl: string | null }>> {
-    return this.sql<Array<{ profileImageUrl: string | null }>>`
+  ): Promise<Array<{ profilePicPath: string | null }>> {
+    return this.sql<Array<{ profilePicPath: string | null }>>`
       UPDATE identity.user
       SET
         profile_pic_path = ${newURL}
       WHERE
         id = ${userId}::UUID
       RETURNING
-        profile_pic_path AS "profileImageUrl"
+        profile_pic_path AS "profilePicPath"
     `;
   }
 }

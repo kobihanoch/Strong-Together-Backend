@@ -452,7 +452,7 @@ Successful response:
   "name": "string",
   "gender": "string",
   "created_at": "string",
-  "profile_image_url": "string | null",
+  "profilePicPath": "string | null",
   "push_token": "string | null",
   "role": "string",
   "token_version": 1,
@@ -498,7 +498,7 @@ Successful response:
     "name": "string",
     "gender": "string",
     "created_at": "string",
-    "profile_image_url": "string | null",
+    "profilePicPath": "string | null",
     "push_token": "string | null",
     "role": "string",
     "token_version": 1,
@@ -567,7 +567,7 @@ Successful response:
 
 ```json
 {
-  "path": "string",
+  "profilePicPath": "string",
   "url": "string",
   "message": "string"
 }
@@ -590,7 +590,7 @@ Request body:
 
 ```json
 {
-  "path": "string"
+  "profilePicPath": "string"
 }
 ```
 
@@ -1073,7 +1073,7 @@ Successful response:
     "name": "string",
     "gender": "string",
     "created_at": "string",
-    "profile_image_url": "string | null",
+    "profilePicPath": "string | null",
     "push_token": "string | null",
     "role": "string",
     "token_version": 1,
@@ -1227,7 +1227,7 @@ Successful response:
         "sent_at": "string",
         "is_read": true,
         "sender_full_name": "string",
-        "sender_profile_image_url": "string | null"
+        "senderProfilePicPath": "string | null"
       }
     ]
   },
@@ -1313,7 +1313,7 @@ Successful response:
       "sent_at": "string",
       "is_read": true,
       "sender_full_name": "string",
-      "sender_profile_image_url": "string | null"
+      "senderProfilePicPath": "string | null"
     }
   ]
 }

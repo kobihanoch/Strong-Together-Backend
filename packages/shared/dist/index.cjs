@@ -1714,7 +1714,7 @@ var updateUserRequest = import_v46.z.object({
 });
 var deleteProfilePicRequest = import_v46.z.object({
   body: import_v46.z.object({
-    path: import_v46.z.string()
+    profilePicPath: import_v46.z.string()
   })
 });
 var userDataSchema = import_v46.z.object({
@@ -1725,7 +1725,7 @@ var userDataSchema = import_v46.z.object({
   gender: userDbSchema.shape.gender,
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
-  profileImageUrl: userDbSchema.shape.profilePicPath,
+  profilePicPath: userDbSchema.shape.profilePicPath,
   pushToken: userDbSchema.shape.pushToken,
   role: userDbSchema.shape.role,
   isFirstLogin: import_v46.z.boolean(),
@@ -1744,7 +1744,7 @@ var updateAuthenticatedUserResponseSchema = import_v46.z.object({
   user: userDataSchema
 });
 var setProfilePicAndUpdateDBResponseSchema = import_v46.z.object({
-  path: import_v46.z.string(),
+  profilePicPath: import_v46.z.string(),
   url: import_v46.z.string(),
   message: import_v46.z.string()
 });
@@ -1863,7 +1863,7 @@ var allUserMessageSchema = import_v412.z.object({
   sentAt: serializedDateSchema,
   isRead: messageDbSchema.shape.isRead,
   senderFullName: userDbSchema.shape.name,
-  senderProfileImageUrl: userDbSchema.shape.profilePicPath
+  senderProfilePicPath: userDbSchema.shape.profilePicPath
 });
 var getAllUserMessagesResponseSchema = import_v412.z.object({
   messages: import_v412.z.array(allUserMessageSchema)
@@ -1896,7 +1896,7 @@ var messageAfterSendResponseSchema = import_v412.z.object({
   isRead: messageDbSchema.shape.isRead,
   senderUsername: userDbSchema.shape.username,
   senderFullName: userDbSchema.shape.name,
-  senderProfileImageUrl: userDbSchema.shape.profilePicPath,
+  senderProfilePicPath: userDbSchema.shape.profilePicPath,
   senderGender: userDbSchema.shape.gender
 });
 var deleteMessageResponseSchema = deletedMessageSchema;

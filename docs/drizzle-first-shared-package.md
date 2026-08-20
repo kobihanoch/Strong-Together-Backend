@@ -66,7 +66,7 @@ export const allUserMessageSchema = z.object({
   sentAt: serializedDateSchema,
   isRead: messageDbSchema.shape.isRead,
   senderFullName: userDbSchema.shape.name,
-  senderProfileImageUrl: userDbSchema.shape.profilePicPath,
+  senderProfilePicPath: userDbSchema.shape.profilePicPath,
 });
 ```
 

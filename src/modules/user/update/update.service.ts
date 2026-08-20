@@ -152,7 +152,7 @@ export class UpdateUserService {
     );
 
     const [row] = await this.updateUserQueries.queryGetUserProfilePicURL(userId);
-    const oldPath = row?.profileImageUrl;
+    const oldPath = row?.profilePicPath;
     await this.updateUserQueries.queryUpdateUserProfilePicURL(userId, newPath);
 
     if (oldPath && oldPath !== newPath) {
@@ -170,11 +170,11 @@ export class UpdateUserService {
       });
     }
 
-    return { path: newPath, url: publicUrl, message: 'Upload success' };
+    return { profilePicPath: newPath, url: publicUrl, message: 'Upload success' };
   }
 
   async deleteUserProfilePicData(userId: string, body: DeleteUserProfilePicBody): Promise<void> {
-    await this.supabaseStorageService.deleteFromSupabase(body.path);
+    await this.supabaseStorageService.deleteFromSupabase(body.profilePicPath);
     await this.updateUserQueries.queryUpdateUserProfilePicURL(userId, null);
   }
 }

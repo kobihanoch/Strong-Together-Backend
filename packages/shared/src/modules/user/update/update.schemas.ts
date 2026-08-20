@@ -24,7 +24,7 @@ export const updateUserRequest = z.object({
 
 export const deleteProfilePicRequest = z.object({
   body: z.object({
-    path: z.string(),
+    profilePicPath: z.string(),
   }),
 });
 
@@ -36,7 +36,7 @@ export const userDataSchema = z.object({
   gender: userDbSchema.shape.gender,
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
-  profileImageUrl: userDbSchema.shape.profilePicPath,
+  profilePicPath: userDbSchema.shape.profilePicPath,
   pushToken: userDbSchema.shape.pushToken,
   role: userDbSchema.shape.role,
   isFirstLogin: z.boolean(),
@@ -59,7 +59,7 @@ export const updateAuthenticatedUserResponseSchema = z.object({
 });
 
 export const setProfilePicAndUpdateDBResponseSchema = z.object({
-  path: z.string(),
+  profilePicPath: z.string(),
   url: z.string(),
   message: z.string(),
 });

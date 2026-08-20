@@ -31,7 +31,7 @@ export class MessagesQueries {
         m.sent_at AT TIME ZONE ${tz} AS "sentAt",
         m.is_read AS "isRead",
         u.name AS "senderFullName",
-        u.profile_pic_path AS "senderProfileImageUrl"
+        u.profile_pic_path AS "senderProfilePicPath"
       FROM messages.message m
       INNER JOIN identity.user u
         ON u.id = m.sender_id

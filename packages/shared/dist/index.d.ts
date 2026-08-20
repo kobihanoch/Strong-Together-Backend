@@ -3874,7 +3874,7 @@ declare const userAfterBumpSchema: z.ZodObject<{
         gender: z.ZodString;
         createdAt: z.ZodString;
         updatedAt: z.ZodString;
-        profileImageUrl: z.ZodNullable<z.ZodString>;
+        profilePicPath: z.ZodNullable<z.ZodString>;
         pushToken: z.ZodNullable<z.ZodString>;
         role: z.ZodString;
         isFirstLogin: z.ZodBoolean;
@@ -3955,7 +3955,7 @@ declare const bootstrapResponseSchema: z.ZodObject<{
         gender: z.ZodString;
         createdAt: z.ZodString;
         updatedAt: z.ZodString;
-        profileImageUrl: z.ZodNullable<z.ZodString>;
+        profilePicPath: z.ZodNullable<z.ZodString>;
         pushToken: z.ZodNullable<z.ZodString>;
         role: z.ZodString;
         isFirstLogin: z.ZodBoolean;
@@ -4084,7 +4084,7 @@ declare const bootstrapResponseSchema: z.ZodObject<{
             sentAt: z.ZodString;
             isRead: z.ZodBoolean;
             senderFullName: z.ZodString;
-            senderProfileImageUrl: z.ZodNullable<z.ZodString>;
+            senderProfilePicPath: z.ZodNullable<z.ZodString>;
         }, z.core.$strip>>;
     }, z.core.$strip>;
     aerobics: z.ZodObject<{
@@ -4147,7 +4147,7 @@ declare const allUserMessageSchema: z.ZodObject<{
     sentAt: z.ZodString;
     isRead: z.ZodBoolean;
     senderFullName: z.ZodString;
-    senderProfileImageUrl: z.ZodNullable<z.ZodString>;
+    senderProfilePicPath: z.ZodNullable<z.ZodString>;
 }, z.core.$strip>;
 declare const getAllUserMessagesResponseSchema: z.ZodObject<{
     messages: z.ZodArray<z.ZodObject<{
@@ -4157,7 +4157,7 @@ declare const getAllUserMessagesResponseSchema: z.ZodObject<{
         sentAt: z.ZodString;
         isRead: z.ZodBoolean;
         senderFullName: z.ZodString;
-        senderProfileImageUrl: z.ZodNullable<z.ZodString>;
+        senderProfilePicPath: z.ZodNullable<z.ZodString>;
     }, z.core.$strip>>;
 }, z.core.$strip>;
 declare const markMessageAsReadRequest: z.ZodObject<{
@@ -4191,7 +4191,7 @@ declare const messageAfterSendResponseSchema: z.ZodObject<{
     isRead: z.ZodBoolean;
     senderUsername: z.ZodString;
     senderFullName: z.ZodString;
-    senderProfileImageUrl: z.ZodNullable<z.ZodString>;
+    senderProfilePicPath: z.ZodNullable<z.ZodString>;
     senderGender: z.ZodString;
 }, z.core.$strip>;
 declare const deleteMessageResponseSchema: z.ZodObject<{
@@ -4320,7 +4320,7 @@ declare const updateUserRequest: z.ZodObject<{
 }, z.core.$strip>;
 declare const deleteProfilePicRequest: z.ZodObject<{
     body: z.ZodObject<{
-        path: z.ZodString;
+        profilePicPath: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
 declare const userDataSchema: z.ZodObject<{
@@ -4331,7 +4331,7 @@ declare const userDataSchema: z.ZodObject<{
     gender: z.ZodString;
     createdAt: z.ZodString;
     updatedAt: z.ZodString;
-    profileImageUrl: z.ZodNullable<z.ZodString>;
+    profilePicPath: z.ZodNullable<z.ZodString>;
     pushToken: z.ZodNullable<z.ZodString>;
     role: z.ZodString;
     isFirstLogin: z.ZodBoolean;
@@ -4349,7 +4349,7 @@ declare const userDataResponseSchema: z.ZodObject<{
         gender: z.ZodString;
         createdAt: z.ZodString;
         updatedAt: z.ZodString;
-        profileImageUrl: z.ZodNullable<z.ZodString>;
+        profilePicPath: z.ZodNullable<z.ZodString>;
         pushToken: z.ZodNullable<z.ZodString>;
         role: z.ZodString;
         isFirstLogin: z.ZodBoolean;
@@ -4367,7 +4367,7 @@ declare const getAuthenticatedUserByIdResponseSchema: z.ZodObject<{
     gender: z.ZodString;
     createdAt: z.ZodString;
     updatedAt: z.ZodString;
-    profileImageUrl: z.ZodNullable<z.ZodString>;
+    profilePicPath: z.ZodNullable<z.ZodString>;
     pushToken: z.ZodNullable<z.ZodString>;
     role: z.ZodString;
     isFirstLogin: z.ZodBoolean;
@@ -4387,7 +4387,7 @@ declare const updateAuthenticatedUserResponseSchema: z.ZodObject<{
         gender: z.ZodString;
         createdAt: z.ZodString;
         updatedAt: z.ZodString;
-        profileImageUrl: z.ZodNullable<z.ZodString>;
+        profilePicPath: z.ZodNullable<z.ZodString>;
         pushToken: z.ZodNullable<z.ZodString>;
         role: z.ZodString;
         isFirstLogin: z.ZodBoolean;
@@ -4398,7 +4398,7 @@ declare const updateAuthenticatedUserResponseSchema: z.ZodObject<{
     }, z.core.$strip>;
 }, z.core.$strip>;
 declare const setProfilePicAndUpdateDBResponseSchema: z.ZodObject<{
-    path: z.ZodString;
+    profilePicPath: z.ZodString;
     url: z.ZodString;
     message: z.ZodString;
 }, z.core.$strip>;

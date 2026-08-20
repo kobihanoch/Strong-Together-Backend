@@ -32,7 +32,7 @@ export class SystemMessagesService {
         inserted.is_read AS "isRead",
         u.username AS "senderUsername",
         u.name AS "senderFullName",
-        u.profile_pic_path AS "senderProfileImageUrl",
+        u.profile_pic_path AS "senderProfilePicPath",
         u.gender AS "senderGender"
       FROM inserted
       LEFT JOIN identity.user u ON u.id = inserted.sender_id

@@ -15,7 +15,7 @@ export const allUserMessageSchema = z.object({
   sentAt: serializedDateSchema,
   isRead: messageDbSchema.shape.isRead,
   senderFullName: userDbSchema.shape.name,
-  senderProfileImageUrl: userDbSchema.shape.profilePicPath,
+  senderProfilePicPath: userDbSchema.shape.profilePicPath,
 });
 
 export const getAllUserMessagesResponseSchema = z.object({
@@ -55,7 +55,7 @@ export const messageAfterSendResponseSchema = z.object({
   isRead: messageDbSchema.shape.isRead,
   senderUsername: userDbSchema.shape.username,
   senderFullName: userDbSchema.shape.name,
-  senderProfileImageUrl: userDbSchema.shape.profilePicPath,
+  senderProfilePicPath: userDbSchema.shape.profilePicPath,
   senderGender: userDbSchema.shape.gender,
 });
 

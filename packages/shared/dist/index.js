@@ -1573,7 +1573,7 @@ var updateUserRequest = z6.object({
 });
 var deleteProfilePicRequest = z6.object({
   body: z6.object({
-    path: z6.string()
+    profilePicPath: z6.string()
   })
 });
 var userDataSchema = z6.object({
@@ -1584,7 +1584,7 @@ var userDataSchema = z6.object({
   gender: userDbSchema.shape.gender,
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
-  profileImageUrl: userDbSchema.shape.profilePicPath,
+  profilePicPath: userDbSchema.shape.profilePicPath,
   pushToken: userDbSchema.shape.pushToken,
   role: userDbSchema.shape.role,
   isFirstLogin: z6.boolean(),
@@ -1603,7 +1603,7 @@ var updateAuthenticatedUserResponseSchema = z6.object({
   user: userDataSchema
 });
 var setProfilePicAndUpdateDBResponseSchema = z6.object({
-  path: z6.string(),
+  profilePicPath: z6.string(),
   url: z6.string(),
   message: z6.string()
 });
@@ -1722,7 +1722,7 @@ var allUserMessageSchema = z12.object({
   sentAt: serializedDateSchema,
   isRead: messageDbSchema.shape.isRead,
   senderFullName: userDbSchema.shape.name,
-  senderProfileImageUrl: userDbSchema.shape.profilePicPath
+  senderProfilePicPath: userDbSchema.shape.profilePicPath
 });
 var getAllUserMessagesResponseSchema = z12.object({
   messages: z12.array(allUserMessageSchema)
@@ -1755,7 +1755,7 @@ var messageAfterSendResponseSchema = z12.object({
   isRead: messageDbSchema.shape.isRead,
   senderUsername: userDbSchema.shape.username,
   senderFullName: userDbSchema.shape.name,
-  senderProfileImageUrl: userDbSchema.shape.profilePicPath,
+  senderProfilePicPath: userDbSchema.shape.profilePicPath,
   senderGender: userDbSchema.shape.gender
 });
 var deleteMessageResponseSchema = deletedMessageSchema;
