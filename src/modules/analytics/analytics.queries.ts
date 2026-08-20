@@ -19,95 +19,115 @@ export class AnalyticsQueries {
 
   async queryGetWorkoutRMs(userId: string): Promise<WorkoutRMsResponse> {
     const [{ result }] = await this.sql<{ result: WorkoutRMsResponse }[]>`
-      with
-      -- All workouts for this user (authoritative source)
-      all_workout_summaries as (
-        select id
-        from tracking.workout_summary
-        where user_id = ${userId}::uuid
-      ),
-
-      -- All performed sets (only from this user's workouts)
-      per_set as (
-        select
-          s.exercise_id,
-          s.exercise,
-          s.id,
-          s.weight,
-          s.reps,
-          case
-            when s.reps = 1 then s.weight::numeric
-            when s.reps between 2 and 5  then (s.weight * (1 + 0.0333 * s.reps))::numeric    -- Epley
-            when s.reps between 6 and 10 then (s.weight * 36.0 / (37.0 - s.reps))::numeric   -- Brzycki
-            when s.reps between 11 and 12 then (s.weight * (1 + 0.025 * s.reps))::numeric    -- O'Connor
-            else null
-          end as est_1rm
-        from analytics.v_exercise_tracking_set_simple s
-        where s.workout_summary_id in (select id from all_workout_summaries)
-          and s.weight > 0
-          and s.reps between 1 and 12
-      ),
-
-      -- All PR rows for this user's workouts (not by user_id, but by summary chain)
-      all_prs as (
-        select
-          p.exercise_id,
-          p.exercise,
-          p.weight,
-          p.reps,
-          p.workout_summary_id
-        from analytics.v_prs p
-        where p.workout_summary_id in (select id from all_workout_summaries)
-      ),
-
-      -- One PR row per exercise (heaviest, then most reps, then latest)
-      pr_per_exercise as (
-        select distinct on (ap.exercise_id)
-          ap.exercise_id,
-          ap.exercise,
-          ap.weight,
-          ap.reps
-        from all_prs ap
-        order by
-          ap.exercise_id,
-          ap.weight desc,
-          ap.reps desc,
-          ap.workout_summary_id desc
-      ),
-
-      -- Choose best 1RM per exercise, and attach PR if exists
-      best as (
-        select distinct on (ps.exercise_id)
-          ps.exercise_id,
-          ps.exercise,
-          ppe.weight as pr_weight,
-          ppe.reps   as pr_reps,
-          ps.est_1rm
-        from per_set ps
-        left join pr_per_exercise ppe
-          on ppe.exercise_id = ps.exercise_id
-        where ps.est_1rm is not null
-        order by
-          ps.exercise_id,
-          ps.est_1rm desc,
-          ppe.weight desc nulls last,
-          ppe.reps desc nulls last,
-          ps.id desc
-      )
-
-      select coalesce(
-        jsonb_object_agg(
-          exercise_id,
-          jsonb_build_object(
-            'exercise',  exercise,
-            'pr_weight', pr_weight,
-            'pr_reps',   pr_reps,
-            'max_1rm',   round(est_1rm, 1)
-          )
+      WITH
+        -- All workouts for this user (authoritative source)
+        all_workout_summaries AS (
+          SELECT
+            id
+          FROM
+            tracking.workout_summary
+          WHERE
+            user_id = ${userId}::UUID
         ),
-        '{}'::jsonb
-      ) as result
-      from best;
+        -- All performed sets (only from this user's workouts)
+        per_set AS (
+          SELECT
+            et.exercise_id,
+            et.exercise,
+            et.id,
+            et.weight,
+            et.reps,
+            CASE
+              WHEN et.reps = 1 THEN et.weight::NUMERIC
+              WHEN et.reps BETWEEN 2 AND 5  THEN (et.weight * (1 + 0.0333 * et.reps))::NUMERIC -- Epley
+              WHEN et.reps BETWEEN 6 AND 10  THEN (et.weight * 36.0 / (37.0 - et.reps))::NUMERIC -- Brzycki
+              WHEN et.reps BETWEEN 11 AND 12  THEN (et.weight * (1 + 0.025 * et.reps))::NUMERIC -- O'Connor
+              ELSE NULL
+            END AS est_1rm
+          FROM
+            analytics.v_exercise_tracking_expanded et
+          WHERE
+            et.workout_summary_id IN (
+              SELECT
+                id
+              FROM
+                all_workout_summaries
+            )
+            AND et.weight > 0
+            AND et.reps BETWEEN 1 AND 12
+        ),
+        -- All PR rows for this user's workouts (not by user_id, but by summary chain)
+        all_prs AS (
+          SELECT
+            p.exercise_id,
+            p.exercise,
+            p.weight,
+            p.reps,
+            p.workout_summary_id
+          FROM
+            analytics.v_prs p
+          WHERE
+            p.workout_summary_id IN (
+              SELECT
+                id
+              FROM
+                all_workout_summaries
+            )
+        ),
+        -- One PR row per exercise (heaviest, then most reps, then latest)
+        pr_per_exercise AS (
+          SELECT DISTINCT
+            ON (ap.exercise_id) ap.exercise_id,
+            ap.exercise,
+            ap.weight,
+            ap.reps
+          FROM
+            all_prs ap
+          ORDER BY
+            ap.exercise_id,
+            ap.weight DESC,
+            ap.reps DESC,
+            ap.workout_summary_id DESC
+        ),
+        -- Choose best 1RM per exercise, and attach PR if exists
+        best AS (
+          SELECT DISTINCT
+            ON (ps.exercise_id) ps.exercise_id,
+            ps.exercise,
+            ppe.weight AS pr_weight,
+            ppe.reps AS pr_reps,
+            ps.est_1rm
+          FROM
+            per_set ps
+            LEFT JOIN pr_per_exercise ppe ON ppe.exercise_id = ps.exercise_id
+          WHERE
+            ps.est_1rm IS NOT NULL
+          ORDER BY
+            ps.exercise_id,
+            ps.est_1rm DESC,
+            ppe.weight DESC NULLS LAST,
+            ppe.reps DESC NULLS LAST,
+            ps.id DESC
+        )
+      SELECT
+        COALESCE(
+          JSONB_OBJECT_AGG(
+            exercise_id,
+            JSONB_BUILD_OBJECT(
+              'exercise',
+              exercise,
+              'pr_weight',
+              pr_weight,
+              'pr_reps',
+              pr_reps,
+              'max_1rm',
+              ROUND(est_1rm, 1)
+            )
+          ),
+          '{}'::JSONB
+        ) AS result
+      FROM
+        best;
     `;
 
     return result ?? {};
@@ -121,103 +141,114 @@ export class AnalyticsQueries {
 
   async queryGoalAdherence(userId: string): Promise<GoalAdherenceResponse> {
     const [{ result }] = await this.sql<{ result: GoalAdherenceResponse }[]>`
-      with
-      -- Planned volume per split+exercise from the user's active plans
-      planned as (
-        select
-          ws.id   as split_id,
-          ws.name as splitname,
-          ews.exercise_id,
-          ews.exercise,
-          (
-            select coalesce(sum(v), 0)
-            from unnest(ews.sets) as v
-          ) as planned
-        from workout.workout_plan w
-        join workout.workout_split ws
-          on ws.workout_id = w.id
-        join workout.v_exercise_to_workout_split_expanded ews
-          on ews.workout_split_id = ws.id
-        where w.user_id = ${userId}::uuid
-          and w.is_active = true
-      ),
-
-      -- All workouts actually performed by this user
-      all_workout_summaries as (
-        select
-          ws.id,
-          ws.workout_split_id
-        from tracking.workout_summary ws
-        where ws.user_id = ${userId}::uuid
-          and ws.workout_split_id is not null
-      ),
-
-      -- Raw performed reps per workout+exercise
-      actual_raw as (
-        select
-          aws.workout_split_id       as split_id,
-          wspl.name                  as splitname,
-          et.exercise_id,
-          et.exercise,
-          (
-            select sum(x) from unnest(et.reps) as x
-          ) as reps_sum_per_row
-        from analytics.v_exercise_tracking_expanded et
-        join all_workout_summaries aws
-          on aws.id = et.workout_summary_id
-        left join workout.workout_split wspl
-          on wspl.id = aws.workout_split_id
-        where aws.workout_split_id is not null
-      ),
-
-      -- Aggregate actual per split+exercise
-      actual as (
-        select
-          split_id,
-          splitname,
-          exercise_id,
-          exercise,
-          avg(reps_sum_per_row) as actual
-        from actual_raw
-        group by split_id, splitname, exercise_id, exercise
-      ),
-
-      -- Join planned with actual
-      joined as (
-        select
-          p.splitname,
-          p.exercise,
-          p.planned,
-          a.actual
-        from planned p
-        join actual a
-          on a.split_id    = p.split_id
-         and a.exercise_id = p.exercise_id
-      )
-
-      select coalesce(
-        jsonb_object_agg(
-          splitname,
-          per_split
+      WITH
+        -- Planned volume per split+exercise from the user's active plans
+        planned AS (
+          SELECT
+            ws.id AS split_id,
+            ws.name AS splitname,
+            ews.exercise_id,
+            ews.exercise,
+            SUM(ews.reps) AS planned -- Planned total sets per ex
+          FROM
+            workout.workout_plan w
+            JOIN workout.workout_split ws ON ws.workout_id = w.id
+            JOIN workout.v_exercise_to_workout_split_expanded ews ON ews.workout_split_id = ws.id
+          WHERE
+            w.user_id = ${userId}::UUID
+            AND w.is_active = TRUE
+          GROUP BY
+            ws.id,
+            ws.name,
+            ews.exercise_id,
+            ews.exercise
         ),
-        '{}'::jsonb
-      ) as result
-      from (
-        select
-          splitname,
-          jsonb_object_agg(
+        -- All workouts actually performed by this user
+        all_workout_summaries AS (
+          SELECT
+            ws.id,
+            ws.workout_split_id
+          FROM
+            tracking.workout_summary ws
+          WHERE
+            ws.user_id = ${userId}::UUID
+            AND ws.workout_split_id IS NOT NULL
+        ),
+        -- Raw performed reps per workout+exercise
+        actual_raw AS (
+          SELECT
+            aws.id,
+            aws.workout_split_id AS split_id,
+            wspl.name AS splitname,
+            et.exercise_id,
+            et.exercise,
+            SUM(et.reps) AS reps_sum_per_row
+          FROM
+            analytics.v_exercise_tracking_expanded et
+            JOIN all_workout_summaries aws ON aws.id = et.workout_summary_id
+            LEFT JOIN workout.workout_split wspl ON wspl.id = aws.workout_split_id
+          GROUP BY
+            aws.id,
+            aws.workout_split_id,
+            wspl.name,
+            et.exercise_id,
+            et.exercise
+        ),
+        -- Aggregate actual per split+exercise
+        actual AS (
+          SELECT
+            split_id,
+            splitname,
+            exercise_id,
             exercise,
-            jsonb_build_object(
-              'planned',       planned,
-              'actual',        actual,
-              'adherence_pct', case when planned > 0 then 100.0 * actual / planned else null end
-            )
-            order by exercise
-          )
-          as per_split
-        from joined
-        group by splitname
-      ) t;
+            AVG(reps_sum_per_row) AS actual
+          FROM
+            actual_raw
+          GROUP BY
+            split_id,
+            splitname,
+            exercise_id,
+            exercise
+        ),
+        -- Join planned with actual
+        joined AS (
+          SELECT
+            p.splitname,
+            p.exercise,
+            p.planned,
+            a.actual
+          FROM
+            planned p
+            JOIN actual a ON a.split_id = p.split_id
+            AND a.exercise_id = p.exercise_id
+        )
+      SELECT
+        COALESCE(JSONB_OBJECT_AGG(splitname, per_split), '{}'::JSONB) AS result
+      FROM
+        (
+          SELECT
+            splitname,
+            JSONB_OBJECT_AGG(
+              exercise,
+              JSONB_BUILD_OBJECT(
+                'planned',
+                planned,
+                'actual',
+                actual,
+                'adherence_pct',
+                CASE
+                  WHEN planned > 0 THEN 100.0 * actual / planned
+                  ELSE NULL
+                END
+              )
+              ORDER BY
+                exercise
+            ) AS per_split
+          FROM
+            joined
+          GROUP BY
+            splitname
+        ) t;
     `;
 
     return result ?? {};

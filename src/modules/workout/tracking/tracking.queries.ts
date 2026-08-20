@@ -109,7 +109,7 @@ export class WorkoutTrackingQueries {
             p.reps,
             (
               (
-                p.workout_start_utc at TIME ZONE ${tz}
+                p.workout_start_utc AT TIME ZONE ${tz}
               )::date
             ) AS workout_date_utc
           FROM
@@ -135,23 +135,35 @@ export class WorkoutTrackingQueries {
           SELECT
             et.id,
             et.exercise_to_split_id AS exercisetosplit_id,
-            et.weight,
-            et.reps,
+            ARRAY_AGG(
+              et.weight
+              ORDER BY
+                et.set_index
+            ) AS weight,
+            ARRAY_AGG(
+              et.reps
+              ORDER BY
+                et.set_index
+            ) AS reps,
             et.exercise_id,
             et.workout_split_id AS workoutsplit_id,
             et.split_name AS splitname,
             et.exercise,
             et.notes,
+            ets.order_index AS order_index,
             TO_CHAR(
               (
                 et.workout_start_utc at TIME ZONE ${tz}
               )::date,
               'YYYY-MM-DD'
             ) AS workoutdate,
-            COALESCE(ets.order_index, et.id) AS order_index,
             JSONB_BUILD_OBJECT(
               'sets',
-              COALESCE(ets.sets, ARRAY[]::BIGINT[]),
+              JSONB_AGG(
+                ets.reps
+                ORDER BY
+                  ets.set_order_index
+              ),
               'exercises',
               JSONB_BUILD_OBJECT(
                 'targetmuscle',
@@ -163,8 +175,27 @@ export class WorkoutTrackingQueries {
           FROM
             analytics.v_exercise_tracking_expanded et
             LEFT JOIN workout.v_exercise_to_workout_split_expanded ets ON ets.id = et.exercise_to_split_id
+            AND ets.set_order_index = et.set_index
             JOIN workout.exercise ex ON ex.id = et.exercise_id
-            JOIN bounded_workout_summaries bws ON et.workout_summary_id = bws.id
+          WHERE
+            et.workout_summary_id IN (
+              SELECT
+                id
+              FROM
+                bounded_workout_summaries
+            )
+          GROUP BY
+            et.id,
+            et.exercise_to_split_id,
+            et.exercise_id,
+            et.workout_split_id,
+            et.split_name,
+            et.exercise,
+            et.notes,
+            et.workout_start_utc,
+            ets.order_index,
+            ex.target_muscle,
+            ex.specific_target_muscle
         ),
         by_date AS (
           SELECT

@@ -106,6 +106,13 @@
       "when": 1787002186380,
       "tag": "0014_refactor_db_schema_by_erd",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1787224210839,
+      "tag": "0015_refactor_db_views",
+      "breakpoints": true
     }
   ]
 }
