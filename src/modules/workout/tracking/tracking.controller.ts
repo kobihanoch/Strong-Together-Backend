@@ -6,7 +6,7 @@ import type {
   FinishUserWorkoutBody,
   GetExerciseTrackingQuery,
 } from '@strong-together/shared';
-import { finishWorkoutRequest, getExerciseTrackingRequest } from '@strong-together/shared';
+import { finishWorkoutRequestSchema, getExerciseTrackingRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
@@ -44,7 +44,7 @@ export class WorkoutTrackingController {
    */
   @Get('gettracking')
   async getExerciseTracking(
-    @RequestData(new ValidateRequestPipe(getExerciseTrackingRequest))
+    @RequestData(new ValidateRequestPipe(getExerciseTrackingRequestSchema))
     data: { query: GetExerciseTrackingQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
@@ -67,7 +67,7 @@ export class WorkoutTrackingController {
    */
   @Post('finishworkout')
   async finishUserWorkout(
-    @RequestData(new ValidateRequestPipe(finishWorkoutRequest))
+    @RequestData(new ValidateRequestPipe(finishWorkoutRequestSchema))
     data: { body: FinishUserWorkoutBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<FinishUserWorkoutResponse> {

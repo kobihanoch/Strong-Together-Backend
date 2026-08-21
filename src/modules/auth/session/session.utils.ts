@@ -1,13 +1,13 @@
 import { Request } from 'express';
-import type { AccessTokenPayload } from '@strong-together/shared';
+import type { AccessTokenPayloadDto } from '@strong-together/shared';
 import { authConfig } from '../../../config/auth.config';
 import jwt from 'jsonwebtoken';
 import { extractBearerToken, extractDpopToken } from '../../../common/authentication/authentication.utils';
 
-export const decodeRefreshToken = (refreshToken: string | null): AccessTokenPayload | null => {
+export const decodeRefreshToken = (refreshToken: string | null): AccessTokenPayloadDto | null => {
   if (!refreshToken) return null;
   try {
-    return jwt.verify(refreshToken, authConfig.jwtRefreshSecret) as AccessTokenPayload;
+    return jwt.verify(refreshToken, authConfig.jwtRefreshSecret) as AccessTokenPayloadDto;
   } catch {
     return null;
   }

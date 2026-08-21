@@ -1,7 +1,7 @@
 import type { JWTPayload } from 'jose';
 import * as jose from 'jose';
 import { authConfig } from '../../../config/auth.config';
-import type { AppleTokenVerificationResult } from '@strong-together/shared';
+import type { AppleTokenVerificationResultDto } from '@strong-together/shared';
 
 interface AppleJwtPayload extends JWTPayload {
   email?: string | null;
@@ -29,7 +29,7 @@ export async function verifyAppleIdToken({
   identityToken,
   rawNonce,
   name,
-}: VerifyAppleIdTokenParams): Promise<AppleTokenVerificationResult & { payload: AppleJwtPayload }> {
+}: VerifyAppleIdTokenParams): Promise<AppleTokenVerificationResultDto & { payload: AppleJwtPayload }> {
   if (typeof identityToken !== 'string') throw new Error('Missing identityToken');
 
   // 1) Verify token signature and claims

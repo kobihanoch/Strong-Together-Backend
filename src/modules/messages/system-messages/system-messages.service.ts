@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { MessageAfterSendResponse } from '@strong-together/shared';
+import type { MessageAfterSendQueryDto } from '@strong-together/shared';
 import type postgres from 'postgres';
 import { appConfig } from '../../../config/app.config';
 import { SQL } from '../../../infrastructure/db/db.tokens';
@@ -16,12 +16,21 @@ export class SystemMessagesService {
   private async createAndSend(receiverId: string, msg: { header: string; text: string }) {
     const senderId = appConfig.systemUserId as string;
 
-    const [row] = await this.sql<[MessageAfterSendResponse]>`
-      WITH inserted AS (
-        INSERT INTO messages.message (sender_id, receiver_id, subject, msg)
-        VALUES (${senderId}::uuid, ${receiverId}::uuid, ${msg.header}, ${msg.text})
-        RETURNING *
-      )
+    const [row] = await this.sql<[MessageAfterSendQueryDto]>`
+      WITH
+        inserted AS (
+          INSERT INTO
+            messages.message (sender_id, receiver_id, subject, msg)
+          VALUES
+            (
+              ${senderId}::UUID,
+              ${receiverId}::UUID,
+              ${msg.header},
+              ${msg.text}
+            )
+          RETURNING
+            *
+        )
       SELECT
         inserted.id,
         inserted.sender_id AS "senderId",
@@ -34,8 +43,9 @@ export class SystemMessagesService {
         u.name AS "senderFullName",
         u.profile_pic_path AS "senderProfilePicPath",
         u.gender AS "senderGender"
-      FROM inserted
-      LEFT JOIN identity.user u ON u.id = inserted.sender_id
+      FROM
+        inserted
+        LEFT JOIN identity.user u ON u.id = inserted.sender_id
     `;
 
     this.messagesService.emitNewMessage(receiverId, row);

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import type {
-  ExerciseTrackingAndStats,
+  ExerciseTrackingAndStatsQueryDto,
   FinishUserWorkoutBody,
   FinishUserWorkoutResponse,
 } from '@strong-together/shared';
@@ -22,7 +22,7 @@ export class WorkoutTrackingService {
     days: number = 45,
     fromCache: boolean = true,
     tz: string,
-  ): Promise<{ payload: ExerciseTrackingAndStats; cacheHit: boolean }> {
+  ): Promise<{ payload: ExerciseTrackingAndStatsQueryDto; cacheHit: boolean }> {
     const key = buildTrackingKeyStable(userId, days, tz);
     if (fromCache) {
       await this.cacheService.cacheDeleteOtherTimezones(key);

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import type {
-  AnalyzeVideoResultPayload,
+  AnalyzeVideoResultPayloadDto,
   GetPresignedUrlFromS3Response,
-  SquatRepetition,
+  SquatRepetitionDto,
   UserRow,
 } from '@strong-together/shared';
 import { S3Service } from '../../infrastructure/aws/s3/s3.service';
@@ -74,7 +74,7 @@ export class VideoAnalysisService {
     };
   }
 
-  emitVideoAnalysisResults = (userId: UserRow['id'], results: AnalyzeVideoResultPayload<SquatRepetition>) => {
+  emitVideoAnalysisResults = (userId: UserRow['id'], results: AnalyzeVideoResultPayloadDto<SquatRepetitionDto>) => {
     this.socketIOService.emitToUser(userId, `video_analysis_results`, results);
   };
 

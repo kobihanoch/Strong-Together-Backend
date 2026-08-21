@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import type { GoogleOAuthBody, GoogleTokenVerificationResult, OAuthLoginResponse } from '@strong-together/shared';
+import type { GoogleOAuthBody, GoogleTokenVerificationResultDto, OAuthLoginResponse } from '@strong-together/shared';
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../../../config/auth.config';
 import type { AppLogger } from '../../../infrastructure/logger';
@@ -28,7 +28,7 @@ export class GoogleService {
     if (!idToken) throw new BadRequestException('Missing google id token');
     const { googleSub, email, emailVerified, fullName } = (await verifyGoogleIdToken(
       idToken,
-    )) as GoogleTokenVerificationResult;
+    )) as GoogleTokenVerificationResultDto;
 
     let { userId, missingFields } = await this.googleQueries.queryFindUserIdWithGoogleUserId(googleSub);
     const userExistOnOAuthUsers = !!userId;

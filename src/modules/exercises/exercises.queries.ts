@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { ExercisesMapByMuscle, QueryGetExerciseMapByMuscleRow } from '@strong-together/shared';
+import type { ExercisesMapByMuscleQueryDto, ExerciseMapByMuscleRowQueryDto } from '@strong-together/shared';
 import type postgres from 'postgres';
 import { SQL } from '../../infrastructure/db/db.tokens';
 
@@ -7,8 +7,8 @@ import { SQL } from '../../infrastructure/db/db.tokens';
 export class ExercisesQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
-  async queryGetExerciseMapByMuscle(): Promise<ExercisesMapByMuscle> {
-    const rows = (await this.sql`
+  async queryGetExerciseMapByMuscle(): Promise<ExercisesMapByMuscleQueryDto> {
+    const rows = await this.sql<ExerciseMapByMuscleRowQueryDto[]>`
       SELECT jsonb_build_object(
         'map',
         jsonb_object_agg(t.targetmuscle, t.ex_list)
@@ -28,7 +28,7 @@ export class ExercisesQueries {
         FROM workout.exercise e
         GROUP BY e.target_muscle
       ) AS t
-    `) as QueryGetExerciseMapByMuscleRow[];
+    `;
 
     // postgres.js returns an array of rows; we selected a single column aliased as "result"
     return rows[0]?.result?.map ?? {};

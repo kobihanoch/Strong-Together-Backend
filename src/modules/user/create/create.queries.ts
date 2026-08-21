@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { CreateUserResponse, UserRow } from '@strong-together/shared';
+import type { CreatedUserQueryDto, CreatedUserRowQueryDto, UserExistsQueryDto } from '@strong-together/shared';
 import type postgres from 'postgres';
 import { SQL } from '../../../infrastructure/db/db.tokens';
 
@@ -10,8 +10,8 @@ export class CreateUserQueries {
   async queryUserExistsByUsernameOrEmail(
     username: string | null,
     email: string | null,
-  ): Promise<Array<Pick<UserRow, 'id'>>> {
-    const [row] = await this.sql<{ id: string | null }[]>`
+  ): Promise<Array<Pick<UserExistsQueryDto, 'id'>>> {
+    const [row] = await this.sql<UserExistsQueryDto[]>`
       SELECT
         guest_api.user_exists (
           ${username},
@@ -28,9 +28,8 @@ export class CreateUserQueries {
     email: string,
     gender: string | null,
     hash: string,
-  ): Promise<CreateUserResponse['user']> {
-    type CreatedUserDbResult = Omit<CreateUserResponse['user'], 'createdAt'> & { created_at: string };
-    const [row] = await this.sql<{ userData: CreatedUserDbResult }[]>`
+  ): Promise<CreatedUserQueryDto> {
+    const [row] = await this.sql<CreatedUserRowQueryDto[]>`
       SELECT
         guest_api.create_app_user (
           ${username},

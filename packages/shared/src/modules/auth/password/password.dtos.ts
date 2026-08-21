@@ -1,7 +1,8 @@
 import { z } from 'zod/v4';
 import { userDbSchema } from '../../../database';
 
-export const forgotPasswordPayloadSchema = z.object({
+/** Claims carried by a forgot-password token. */
+export const forgotPasswordPayloadDtoSchema = z.object({
   sub: userDbSchema.shape.id,
   jti: z.string(),
   exp: z.number(),
@@ -9,4 +10,4 @@ export const forgotPasswordPayloadSchema = z.object({
   typ: z.string(),
 });
 
-export type ForgotPasswordPayload = z.infer<typeof forgotPasswordPayloadSchema>;
+export type ForgotPasswordPayloadDto = z.infer<typeof forgotPasswordPayloadDtoSchema>;

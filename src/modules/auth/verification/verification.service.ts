@@ -6,7 +6,7 @@ import { VerificationQueries } from './verification.queries';
 import { CreateUserQueries } from '../../user/create/create.queries';
 import { VerificationEmailsService } from './verification-emails/verification-emails.service';
 import { generateVerificationFailedHTML, generateVerifiedHTML } from './verification.views';
-import type { ChangeEmailAndVerifyBody, SendVerifcationMailBody } from '@strong-together/shared';
+import type { ChangeEmailAndVerifyBody, SendVerificationMailBody } from '@strong-together/shared';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
 import { DBService } from '../../../infrastructure/db/db.service';
 import { decodeVerifyToken } from './verification.utils';
@@ -43,11 +43,11 @@ export class VerificationService {
     }
 
     await this.dbService.promoteCurrentRlsTxToAuthenticated(sub);
-    await this.verificationQueries.queryUpdateUserVerficiationStatus(sub, true);
+    await this.verificationQueries.queryUpdateUserVerificationStatus(sub, true);
     return { statusCode: 200, html: generateVerifiedHTML() };
   }
 
-  async sendVerificationMailData(body: SendVerifcationMailBody, requestId?: string): Promise<void> {
+  async sendVerificationMailData(body: SendVerificationMailBody, requestId?: string): Promise<void> {
     const { email } = body;
     const [row] = await this.sql<{ userData: { id: string; name: string | null; username: string } | null }[]>`
       SELECT guest_api.find_user_for_email(${email}) AS "userData"

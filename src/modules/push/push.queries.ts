@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { UserToHourlyReminder, UserWithNotificationsEnabled } from './push.dtos';
+import type { UserToHourlyReminderQueryDto, UserWithNotificationsEnabledQueryDto } from '@strong-together/shared';
 import type postgres from 'postgres';
 import { SQL } from '../../infrastructure/db/db.tokens';
 
@@ -7,15 +7,15 @@ import { SQL } from '../../infrastructure/db/db.tokens';
 export class PushQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
-  async queryGetAllUsersWithNotificationsEnabled(): Promise<UserWithNotificationsEnabled[]> {
-    const rows = await this.sql<UserWithNotificationsEnabled[]>`
+  async queryGetAllUsersWithNotificationsEnabled(): Promise<UserWithNotificationsEnabledQueryDto[]> {
+    const rows = await this.sql<UserWithNotificationsEnabledQueryDto[]>`
       SELECT push_token AS "pushToken", name FROM identity.user WHERE push_token IS NOT NULL`;
 
-    return rows as UserWithNotificationsEnabled[];
+    return rows;
   }
 
-  async queryGetAllUsersToSendHourlyReminder(): Promise<UserToHourlyReminder[]> {
-    const users = await this.sql<UserToHourlyReminder[]>`
+  async queryGetAllUsersToSendHourlyReminder(): Promise<UserToHourlyReminderQueryDto[]> {
+    const users = await this.sql<UserToHourlyReminderQueryDto[]>`
       SELECT
         u.id AS "userId",
         u.name AS name,
@@ -38,6 +38,6 @@ export class PushQueries {
         AND usi.preferred_weekday = EXTRACT(DOW FROM TIMEZONE('UTC', NOW()))
     `;
 
-    return users as UserToHourlyReminder[];
+    return users;
   }
 }

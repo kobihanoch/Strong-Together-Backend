@@ -3,7 +3,7 @@ import type {
   DeleteMessageResponse,
   GetAllUserMessagesResponse,
   MarkMessageAsReadResponse,
-  MessageAfterSendResponse,
+  MessageAfterSendQueryDto,
 } from '@strong-together/shared';
 import { SocketIOService } from '../../infrastructure/socket.io/socket.io.service';
 import { MessagesQueries } from './messages.queries';
@@ -44,7 +44,7 @@ export class MessagesService {
     return rows[0];
   }
 
-  emitNewMessage(userId: string, msg: MessageAfterSendResponse): void {
+  emitNewMessage(userId: string, msg: MessageAfterSendQueryDto): void {
     this.socketIOService.emitToUser(userId, 'new_message', msg);
   }
 }

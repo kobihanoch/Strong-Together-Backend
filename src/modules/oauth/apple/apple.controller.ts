@@ -1,7 +1,7 @@
 import { Controller, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import type { AppleOAuthBody, OAuthLoginResponse } from '@strong-together/shared';
-import { appleOAuthRequest } from '@strong-together/shared';
+import { appleOAuthRequestSchema } from '@strong-together/shared';
 import { CurrentLogger } from '../../../common/decorators/current-logger.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { RateLimit, RateLimitGuard, loginRateLimit } from '../../../common/guards/rate-limit.guard';
@@ -37,7 +37,7 @@ export class AppleController {
   @UseGuards(RateLimitGuard)
   @RateLimit(loginRateLimit)
   async createOrSignInWithApple(
-    @RequestData(new ValidateRequestPipe(appleOAuthRequest))
+    @RequestData(new ValidateRequestPipe(appleOAuthRequestSchema))
     data: { body: AppleOAuthBody },
     @Req() req: Request,
     @CurrentLogger() requestLogger: AppLogger,

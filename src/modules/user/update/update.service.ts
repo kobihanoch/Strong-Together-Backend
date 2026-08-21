@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type {
-  ChangeEmailTokenPayload,
+  ChangeEmailTokenPayloadDto,
   DeleteUserProfilePicBody,
   SetProfilePicAndUpdateDBResponse,
   UpdateAuthenticatedUserResponse,
@@ -90,7 +90,7 @@ export class UpdateUserService {
   ): Promise<{ statusCode: number; html: string }> {
     if (!token) return { statusCode: 401, html: generateEmailChangeFailedHTML('Missing token') };
 
-    const decoded = decodeChangeEmailToken(token) as ChangeEmailTokenPayload | null;
+    const decoded = decodeChangeEmailToken(token) as ChangeEmailTokenPayloadDto | null;
     if (!decoded) {
       return { statusCode: 401, html: generateEmailChangeFailedHTML('Invalid or expired link') };
     }

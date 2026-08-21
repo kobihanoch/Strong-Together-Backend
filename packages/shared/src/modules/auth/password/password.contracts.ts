@@ -1,7 +1,25 @@
-import z from 'zod/v4';
-import { resetPasswordRequest, resetPasswordResponseSchema, sendChangePassEmailRequest } from './password.schemas';
+import { z } from 'zod/v4';
+import type { BodyOf, Contract, QueryOf, ResponseOf } from '../../../common';
 
-export type SendChangePassEmailBody = z.infer<typeof sendChangePassEmailRequest.shape.body>;
-export type ResetPasswordBody = z.infer<typeof resetPasswordRequest.shape.body>;
-export type ResetPasswordQuery = z.infer<typeof resetPasswordRequest.shape.query>;
-export type ResetPasswordResponse = z.infer<typeof resetPasswordResponseSchema>;
+// Send password-change email
+
+export const sendChangePassEmailRequestSchema = z.object({ body: z.object({ identifier: z.string() }) });
+
+export const sendChangePassEmailContract = { request: sendChangePassEmailRequestSchema } satisfies Contract;
+
+// Reset password
+
+export const resetPasswordRequestSchema = z.object({
+  body: z.object({ newPassword: z.string().min(8, 'Password must be at least 8 characters long') }),
+  query: z.object({ token: z.string().optional() }),
+});
+export const resetPasswordResponseSchema = z.object({ ok: z.boolean() });
+export const resetPasswordContract = {
+  request: resetPasswordRequestSchema,
+  response: resetPasswordResponseSchema,
+} satisfies Contract;
+
+export type SendChangePassEmailBody = BodyOf<typeof sendChangePassEmailContract>;
+export type ResetPasswordBody = BodyOf<typeof resetPasswordContract>;
+export type ResetPasswordQuery = QueryOf<typeof resetPasswordContract>;
+export type ResetPasswordResponse = ResponseOf<typeof resetPasswordContract>;

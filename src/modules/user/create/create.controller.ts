@@ -1,7 +1,7 @@
 import { Controller, Post, Res, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
 import type { CreateUserBody, CreateUserResponse } from '@strong-together/shared';
-import { createUserRequest } from '@strong-together/shared';
+import { createUserRequestSchema } from '@strong-together/shared';
 import { CurrentRequestId } from '../../../common/decorators/current-request-id.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
@@ -32,7 +32,7 @@ export class CreateUserController {
    */
   @Post('create')
   async createUser(
-    @RequestData(new ValidateRequestPipe(createUserRequest))
+    @RequestData(new ValidateRequestPipe(createUserRequestSchema))
     data: { body: CreateUserBody },
     @CurrentRequestId() requestId: string | undefined,
     @Res({ passthrough: true }) res: Response,

@@ -3,14 +3,14 @@ import type { Response } from 'express';
 import type {
   ChangeEmailAndVerifyBody,
   CheckUserVerifyQuery,
-  SendVerifcationMailBody,
+  SendVerificationMailBody,
   VerifyUserAccountQuery,
 } from '@strong-together/shared';
 import {
-  changeEmailAndVerifyRequest,
-  checkUserVerifyRequest,
-  sendVerificationMailRequest,
-  verifyAccountRequest,
+  changeEmailAndVerifyRequestSchema,
+  checkUserVerifyRequestSchema,
+  sendVerificationMailRequestSchema,
+  verifyAccountRequestSchema,
 } from '@strong-together/shared';
 import { VerificationService } from './verification.service';
 import {
@@ -41,7 +41,7 @@ export class VerificationController {
    */
   @Get('verify')
   async verifyUserAccount(
-    @RequestData(new ValidateRequestPipe(verifyAccountRequest))
+    @RequestData(new ValidateRequestPipe(verifyAccountRequestSchema))
     data: { query: VerifyUserAccountQuery },
     @Res() res: Response,
   ): Promise<void> {
@@ -62,8 +62,8 @@ export class VerificationController {
   @UseGuards(RateLimitGuard)
   @RateLimit(changeVerificationEmailRateLimitDaily, changeVerificationEmailRateLimit)
   async sendVerificationMail(
-    @RequestData(new ValidateRequestPipe(sendVerificationMailRequest))
-    data: { body: SendVerifcationMailBody },
+    @RequestData(new ValidateRequestPipe(sendVerificationMailRequestSchema))
+    data: { body: SendVerificationMailBody },
     @Req() req: AppRequest,
   ): Promise<void> {
     await this.verificationService.sendVerificationMailData(data.body, req.requestId);
@@ -83,7 +83,7 @@ export class VerificationController {
   @UseGuards(RateLimitGuard)
   @RateLimit(changeVerificationEmailRateLimitDaily, changeVerificationEmailRateLimit)
   async changeEmailAndVerify(
-    @RequestData(new ValidateRequestPipe(changeEmailAndVerifyRequest))
+    @RequestData(new ValidateRequestPipe(changeEmailAndVerifyRequestSchema))
     data: { body: ChangeEmailAndVerifyBody },
     @Req() req: AppRequest,
   ): Promise<void> {
@@ -100,7 +100,7 @@ export class VerificationController {
    */
   @Get('checkuserverify')
   async checkUserVerify(
-    @RequestData(new ValidateRequestPipe(checkUserVerifyRequest))
+    @RequestData(new ValidateRequestPipe(checkUserVerifyRequestSchema))
     data: {
       query: CheckUserVerifyQuery;
     },

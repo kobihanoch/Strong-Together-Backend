@@ -1,8 +1,9 @@
 import { z } from 'zod/v4';
 import { userDbSchema } from '../../../database';
-import { userDataSchema } from '../../user/update/update.schemas';
+import { userDataQueryDtoSchema } from '../../user/update/update.dtos';
 
-export const accessTokenPayloadSchema = z.object({
+/** Claims carried by an issued access token. */
+export const accessTokenPayloadDtoSchema = z.object({
   id: userDbSchema.shape.id,
   role: userDbSchema.shape.role,
   tokenVer: userDbSchema.shape.tokenVersion,
@@ -11,15 +12,21 @@ export const accessTokenPayloadSchema = z.object({
   exp: z.number().optional(),
 });
 
-export const userAfterBumpSchema = z.object({
+/** User data returned after atomically incrementing the token version. */
+export const userAfterBumpQueryDtoSchema = z.object({
   tokenVersion: userDbSchema.shape.tokenVersion,
-  userData: userDataSchema,
+  userData: userDataQueryDtoSchema,
 });
 
-export const tokenVersionResultSchema = z.object({
+/** Current token-version row returned by authentication checks. */
+export const tokenVersionQueryDtoSchema = z.object({
   tokenVersion: userDbSchema.shape.tokenVersion,
 });
 
-export type AccessTokenPayload = z.infer<typeof accessTokenPayloadSchema>;
-export type UserAfterBump = z.infer<typeof userAfterBumpSchema>;
-export type TokenVersionResult = z.infer<typeof tokenVersionResultSchema>;
+/** Last-login row returned by the session lookup function. */
+export const lastLoginQueryDtoSchema = z.object({ lastLogin: z.date().nullable() });
+
+export type AccessTokenPayloadDto = z.infer<typeof accessTokenPayloadDtoSchema>;
+export type UserAfterBumpQueryDto = z.infer<typeof userAfterBumpQueryDtoSchema>;
+export type TokenVersionQueryDto = z.infer<typeof tokenVersionQueryDtoSchema>;
+export type LastLoginQueryDto = z.infer<typeof lastLoginQueryDtoSchema>;

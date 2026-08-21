@@ -1,6 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import postgres from 'postgres';
-import type { AuthenticatedUserForUpdate, UserDataResponse, UserRow } from '@strong-together/shared';
+import type {
+  AuthenticatedUserForUpdateQueryDto,
+  UserConflictQueryDto,
+  UserDataRowQueryDto,
+  UserMessageIdentityQueryDto,
+  UserProfilePicQueryDto,
+} from '@strong-together/shared';
 import type { Sql } from 'postgres';
 import { SQL } from '../../../infrastructure/db/db.tokens';
 
@@ -8,8 +14,8 @@ import { SQL } from '../../../infrastructure/db/db.tokens';
 export class UpdateUserQueries {
   constructor(@Inject(SQL) private readonly sql: Sql) {}
 
-  async queryAuthenticatedUserById(userId: string): Promise<UserDataResponse[]> {
-    return this.sql<UserDataResponse[]>`
+  async queryAuthenticatedUserById(userId: string): Promise<UserDataRowQueryDto[]> {
+    return this.sql<UserDataRowQueryDto[]>`
       SELECT
         JSONB_BUILD_OBJECT(
           'id', users.id,
@@ -37,7 +43,7 @@ export class UpdateUserQueries {
 
   async queryUsernameOrEmailConflict(username: string, email: string, userId: string): Promise<boolean> {
     // Cast params to text so Postgres knows their type even when null
-    const rows = await this.sql<[{ conflict: boolean }]>`
+    const rows = await this.sql<UserConflictQueryDto[]>`
       SELECT
         EXISTS (
           SELECT
@@ -64,8 +70,8 @@ export class UpdateUserQueries {
 
   async queryUpdateAuthenticatedUser(
     userId: string,
-    { username, fullName, email: emailCandidate }: AuthenticatedUserForUpdate,
-  ): Promise<UserDataResponse[]> {
+    { username, fullName, email: emailCandidate }: AuthenticatedUserForUpdateQueryDto,
+  ): Promise<UserDataRowQueryDto[]> {
     // 1) Optional "fake" email update to trigger unique check - if user chose to update his email we only CHECK if email is valid here
     if (emailCandidate) {
       try {
@@ -95,7 +101,7 @@ export class UpdateUserQueries {
     }
 
     // 2) Real update for non-email fields
-    const rows = await this.sql<UserDataResponse[]>`
+    const rows = await this.sql<UserDataRowQueryDto[]>`
       UPDATE identity.user AS users
       SET
         username = COALESCE(${username ?? null}, username),
@@ -135,8 +141,8 @@ export class UpdateUserQueries {
 
   async queryUserUsernamePicAndName(
     id: string,
-  ): Promise<Array<Pick<UserRow, 'id' | 'username' | 'name'> & { profilePicPath: string | null }>> {
-    return this.sql<Array<Pick<UserRow, 'id' | 'username' | 'name'> & { profilePicPath: string | null }>>`
+  ): Promise<UserMessageIdentityQueryDto[]> {
+    return this.sql<UserMessageIdentityQueryDto[]>`
       SELECT
         id,
         username,
@@ -149,8 +155,8 @@ export class UpdateUserQueries {
     `;
   }
 
-  async queryGetUserProfilePicURL(userId: string): Promise<Array<{ profilePicPath: string | null }>> {
-    return this.sql<Array<{ profilePicPath: string | null }>>`
+  async queryGetUserProfilePicURL(userId: string): Promise<UserProfilePicQueryDto[]> {
+    return this.sql<UserProfilePicQueryDto[]>`
       SELECT
         profile_pic_path AS "profilePicPath"
       FROM
@@ -165,8 +171,8 @@ export class UpdateUserQueries {
   async queryUpdateUserProfilePicURL(
     userId: string,
     newURL: string | null,
-  ): Promise<Array<{ profilePicPath: string | null }>> {
-    return this.sql<Array<{ profilePicPath: string | null }>>`
+  ): Promise<UserProfilePicQueryDto[]> {
+    return this.sql<UserProfilePicQueryDto[]>`
       UPDATE identity.user
       SET
         profile_pic_path = ${newURL}

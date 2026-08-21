@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
-import type { AccessTokenPayload, LoginResponse, RefreshTokenResponse } from '@strong-together/shared';
+import type { AccessTokenPayloadDto, LoginResponse, RefreshTokenResponse } from '@strong-together/shared';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { appConfig } from '../../../config/app.config';
@@ -97,7 +97,7 @@ export class SessionService {
   }
 
   async logoutUserData(refreshToken: string | null | undefined): Promise<void> {
-    const decodedRefresh = decodeRefreshToken(refreshToken ?? null) as AccessTokenPayload | null;
+    const decodedRefresh = decodeRefreshToken(refreshToken ?? null) as AccessTokenPayloadDto | null;
 
     if (decodedRefresh) {
       await Promise.all([
@@ -119,7 +119,7 @@ export class SessionService {
 
     if (!refreshToken) throw new UnauthorizedException('No refresh token provided');
 
-    const decoded = decodeRefreshToken(refreshToken ?? null) as AccessTokenPayload | null;
+    const decoded = decodeRefreshToken(refreshToken ?? null) as AccessTokenPayloadDto | null;
     if (!decoded) throw new UnauthorizedException('Invalid or expired refresh token');
 
     if (appConfig.dpopEnabled) {

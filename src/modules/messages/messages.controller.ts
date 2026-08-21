@@ -7,7 +7,11 @@ import type {
   MarkMessageAsReadParams,
   MarkMessageAsReadResponse,
 } from '@strong-together/shared';
-import { deleteMessageRequest, getAllMessagesRequest, markMessageAsReadRequest } from '@strong-together/shared';
+import {
+  deleteMessageRequestSchema,
+  getAllMessagesRequestSchema,
+  markMessageAsReadRequestSchema,
+} from '@strong-together/shared';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestData } from '../../common/decorators/request-data.decorator';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
@@ -46,7 +50,7 @@ export class MessagesController {
    */
   @Get('getmessages')
   async getAllUserMessages(
-    @RequestData(new ValidateRequestPipe(getAllMessagesRequest))
+    @RequestData(new ValidateRequestPipe(getAllMessagesRequestSchema))
     data: { query: GetAllUserMessagesQuery },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<GetAllUserMessagesResponse> {
@@ -69,7 +73,7 @@ export class MessagesController {
    */
   @Put('markasread/:id')
   async markUserMessageAsRead(
-    @RequestData(new ValidateRequestPipe(markMessageAsReadRequest))
+    @RequestData(new ValidateRequestPipe(markMessageAsReadRequestSchema))
     data: { params: MarkMessageAsReadParams },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<MarkMessageAsReadResponse> {
@@ -88,7 +92,7 @@ export class MessagesController {
    */
   @Delete('delete/:id')
   async deleteMessage(
-    @RequestData(new ValidateRequestPipe(deleteMessageRequest))
+    @RequestData(new ValidateRequestPipe(deleteMessageRequestSchema))
     data: { params: DeleteMessageParams },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<DeleteMessageResponse> {

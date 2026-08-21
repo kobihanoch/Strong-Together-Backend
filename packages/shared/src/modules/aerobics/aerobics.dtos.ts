@@ -1,9 +1,45 @@
 import { z } from 'zod/v4';
-import { AddUserAerobicsBody } from './aerobics.contracts';
-import { aerobicsDailyRecordSchema, aerobicsWeeklyRecordSchema, weeklyDataSchema } from './aerobics.schemas';
+import { serializedDateSchema } from '../../common';
+import { aerobicTrackingDbSchema } from '../../database';
 
-export type AddAerobicInput = AddUserAerobicsBody['record'];
+/** Aerobic record accepted by the insert query. */
+export const addAerobicInputQueryDtoSchema = z.object({
+  durationMins: z.number(),
+  durationSec: aerobicTrackingDbSchema.shape.durationSec,
+  type: aerobicTrackingDbSchema.shape.type,
+});
 
-export type AerobicsDailyRecord = z.infer<typeof aerobicsDailyRecordSchema>;
-export type AerobicsWeeklyRecord = z.infer<typeof aerobicsWeeklyRecordSchema>;
-export type WeeklyData = z.infer<typeof weeklyDataSchema>;
+/** Daily aerobic record produced by the aerobics aggregation query. */
+export const aerobicsDailyRecordQueryDtoSchema = z.object({
+  type: aerobicTrackingDbSchema.shape.type,
+  durationSec: aerobicTrackingDbSchema.shape.durationSec,
+  durationMins: aerobicTrackingDbSchema.shape.durationSec,
+});
+/** Weekly aerobic record with its localized workout timestamp. */
+export const aerobicsWeeklyRecordQueryDtoSchema = aerobicsDailyRecordQueryDtoSchema.extend({
+  workoutTimeUtc: serializedDateSchema,
+});
+/** Weekly aerobic aggregation containing records and duration totals. */
+export const weeklyDataQueryDtoSchema = z.object({
+  records: z.array(aerobicsWeeklyRecordQueryDtoSchema),
+  totalDurationSec: z.number(),
+  totalDurationMins: z.number(),
+});
+
+/** Complete aerobics aggregate returned by the history SQL query. */
+export const userAerobicsQueryDtoSchema = z.object({
+  daily: z.record(z.string(), z.array(aerobicsDailyRecordQueryDtoSchema)),
+  weekly: z.record(z.string(), weeklyDataQueryDtoSchema),
+});
+
+/** SQL row wrapping the aerobics aggregate under the selected `data` alias. */
+export const userAerobicsRowQueryDtoSchema = z.object({ data: userAerobicsQueryDtoSchema });
+
+// SQL query input DTOs
+
+export type AddAerobicInputQueryDto = z.infer<typeof addAerobicInputQueryDtoSchema>;
+export type AerobicsDailyRecordQueryDto = z.infer<typeof aerobicsDailyRecordQueryDtoSchema>;
+export type AerobicsWeeklyRecordQueryDto = z.infer<typeof aerobicsWeeklyRecordQueryDtoSchema>;
+export type WeeklyDataQueryDto = z.infer<typeof weeklyDataQueryDtoSchema>;
+export type UserAerobicsQueryDto = z.infer<typeof userAerobicsQueryDtoSchema>;
+export type UserAerobicsRowQueryDto = z.infer<typeof userAerobicsRowQueryDtoSchema>;

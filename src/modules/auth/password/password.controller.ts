@@ -5,7 +5,7 @@ import type {
   ResetPasswordResponse,
   SendChangePassEmailBody,
 } from '@strong-together/shared';
-import { resetPasswordRequest, sendChangePassEmailRequest } from '@strong-together/shared';
+import { resetPasswordRequestSchema, sendChangePassEmailRequestSchema } from '@strong-together/shared';
 import { PasswordService } from './password.service';
 import {
   RateLimit,
@@ -36,7 +36,7 @@ export class PasswordController {
   @UseGuards(RateLimitGuard)
   @RateLimit(resetPasswordEmailRateLimitDaily, resetPasswordEmailRateLimit)
   async sendChangePassEmail(
-    @RequestData(new ValidateRequestPipe(sendChangePassEmailRequest))
+    @RequestData(new ValidateRequestPipe(sendChangePassEmailRequestSchema))
     data: { body: SendChangePassEmailBody },
     @Req() req: AppRequest,
   ): Promise<void> {
@@ -55,7 +55,7 @@ export class PasswordController {
    */
   @Put('resetpassword')
   async resetPassword(
-    @RequestData(new ValidateRequestPipe(resetPasswordRequest))
+    @RequestData(new ValidateRequestPipe(resetPasswordRequestSchema))
     data: {
       body: ResetPasswordBody;
       query: ResetPasswordQuery;

@@ -1,7 +1,7 @@
 import { Controller, Post, Req, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Request } from 'express';
 import type { GetPresignedUrlFromS3Body, GetPresignedUrlFromS3Response } from '@strong-together/shared';
-import { getPresignedUrlS3Request } from '@strong-together/shared';
+import { getPresignedUrlFromS3RequestSchema } from '@strong-together/shared';
 import { CurrentLogger } from '../../common/decorators/current-logger.decorator';
 import { CurrentRequestId } from '../../common/decorators/current-request-id.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -42,7 +42,7 @@ export class VideoAnalysisController {
    */
   @Post('getpresignedurl')
   async getPresignedUrlFromS3(
-    @RequestData(new ValidateRequestPipe(getPresignedUrlS3Request))
+    @RequestData(new ValidateRequestPipe(getPresignedUrlFromS3RequestSchema))
     data: { body: GetPresignedUrlFromS3Body },
     @CurrentUser() user: AuthenticatedUser,
     @CurrentRequestId() requestId: string | undefined,

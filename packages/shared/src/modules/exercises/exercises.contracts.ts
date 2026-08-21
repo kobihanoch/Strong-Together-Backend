@@ -1,4 +1,10 @@
-import z from 'zod/v4';
-import { getAllExercisesResponseSchema } from './exercises.schemas';
+import type { Contract, ResponseOf } from '../../common';
+import { exercisesMapByMuscleQueryDtoSchema } from './exercises.dtos';
 
-export type GetAllExercisesResponse = z.infer<typeof getAllExercisesResponseSchema>;
+// Get all exercises
+
+export const getAllExercisesResponseSchema = exercisesMapByMuscleQueryDtoSchema;
+
+export const getAllExercisesContract = { response: getAllExercisesResponseSchema } satisfies Contract;
+
+export type GetAllExercisesResponse = ResponseOf<typeof getAllExercisesContract>;

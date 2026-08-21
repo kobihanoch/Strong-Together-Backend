@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import type { AccessTokenPayload } from '@strong-together/shared';
+import type { AccessTokenPayloadDto } from '@strong-together/shared';
 import * as crypto from 'crypto';
 import type postgres from 'postgres';
 import { appConfig } from '../../../config/app.config';
@@ -35,7 +35,7 @@ export class AuthenticationGuard implements CanActivate {
     }
 
     // Decode
-    const decoded = decodeAccessToken(accessToken) as unknown as AccessTokenPayload;
+    const decoded = decodeAccessToken(accessToken) as unknown as AccessTokenPayloadDto;
     if (!decoded) {
       throw new UnauthorizedException('Access token is not valid');
     }

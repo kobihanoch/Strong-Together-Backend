@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { AddAerobicInput, UserAerobicsResponse } from '@strong-together/shared';
+import type { AddAerobicInputQueryDto, UserAerobicsQueryDto, UserAerobicsRowQueryDto } from '@strong-together/shared';
 import type postgres from 'postgres';
 import { SQL } from '../../infrastructure/db/db.tokens';
 
@@ -66,8 +66,8 @@ export class AerobicsQueries {
     userId: string,
     days: number,
     tz: string = 'Asia/Jerusalem',
-  ): Promise<UserAerobicsResponse> {
-    const [obj] = await this.sql<[{ data: UserAerobicsResponse }]>`
+  ): Promise<UserAerobicsQueryDto> {
+    const [obj] = await this.sql<UserAerobicsRowQueryDto[]>`
       /* Normalize parameters (default tz to UTC if empty) */
       WITH
         params AS (
@@ -203,7 +203,7 @@ export class AerobicsQueries {
   }
 
   // Add a new aerobic record
-  async queryAddAerobicTracking(userId: string, record: AddAerobicInput): Promise<void> {
+  async queryAddAerobicTracking(userId: string, record: AddAerobicInputQueryDto): Promise<void> {
     const { durationMins, durationSec, type } = record;
     await this.sql`
       INSERT INTO

@@ -1,7 +1,8 @@
 import { z } from 'zod/v4';
 import { userDbSchema } from '../../../database';
 
-export const emailVerifyPayloadSchema = z.object({
+/** Claims carried by an email-verification token. */
+export const emailVerifyPayloadDtoSchema = z.object({
   sub: userDbSchema.shape.id,
   jti: z.string(),
   exp: z.number(),
@@ -9,4 +10,4 @@ export const emailVerifyPayloadSchema = z.object({
   typ: z.string(),
 });
 
-export type EmailVerifyPayload = z.infer<typeof emailVerifyPayloadSchema>;
+export type EmailVerifyPayloadDto = z.infer<typeof emailVerifyPayloadDtoSchema>;

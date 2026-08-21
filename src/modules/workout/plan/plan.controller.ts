@@ -6,7 +6,7 @@ import type {
   AddWorkoutBody,
   GetWholeUserWorkoutPlanQuery,
 } from '@strong-together/shared';
-import { addWorkoutRequest, getWholeWorkoutPlanRequest } from '@strong-together/shared';
+import { addWorkoutRequestSchema, getWholeWorkoutPlanRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
@@ -44,7 +44,7 @@ export class WorkoutPlanController {
    */
   @Get('getworkout')
   async getWholeUserWorkoutPlan(
-    @RequestData(new ValidateRequestPipe(getWholeWorkoutPlanRequest))
+    @RequestData(new ValidateRequestPipe(getWholeWorkoutPlanRequestSchema))
     data: { query: GetWholeUserWorkoutPlanQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
@@ -78,7 +78,7 @@ export class WorkoutPlanController {
    */
   @Post('add')
   async addWorkout(
-    @RequestData(new ValidateRequestPipe(addWorkoutRequest))
+    @RequestData(new ValidateRequestPipe(addWorkoutRequestSchema))
     data: { body: AddWorkoutBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<AddWorkoutResponse> {

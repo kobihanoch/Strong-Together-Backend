@@ -1,20 +1,54 @@
-import {
-  deleteProfilePicRequest,
-  getAuthenticatedUserByIdResponseSchema,
-  setProfilePicAndUpdateDBResponseSchema,
-  updateAuthenticatedUserResponseSchema,
-  updateUserRequest,
-  userDataResponseSchema,
-} from './update.schemas';
-import z from 'zod/v4';
+import { z } from 'zod/v4';
+import type { BodyOf, Contract, ResponseOf } from '../../../common';
+import { authenticatedUserForUpdateQueryDtoSchema, userDataQueryDtoSchema } from './update.dtos';
 
-export type UpdateUserBody = z.infer<typeof updateUserRequest.shape.body>;
-export type UpdateAuthenticatedUserResponse = z.infer<typeof updateAuthenticatedUserResponseSchema>;
+// Update authenticated user
 
-export type UserDataResponse = z.infer<typeof userDataResponseSchema>;
+export const updateUserRequestSchema = z.object({
+  body: authenticatedUserForUpdateQueryDtoSchema,
+});
+export const updateAuthenticatedUserResponseSchema = z.object({
+  message: z.string(),
+  emailChanged: z.boolean(),
+  user: userDataQueryDtoSchema,
+});
 
-export type GetAuthenticatedUserByIdResponse = z.infer<typeof getAuthenticatedUserByIdResponseSchema>;
+export const updateAuthenticatedUserContract = {
+  request: updateUserRequestSchema,
+  response: updateAuthenticatedUserResponseSchema,
+} satisfies Contract;
 
-export type DeleteUserProfilePicBody = z.infer<typeof deleteProfilePicRequest.shape.body>;
+// Wrap user data
 
-export type SetProfilePicAndUpdateDBResponse = z.infer<typeof setProfilePicAndUpdateDBResponseSchema>;
+export const userDataResponseSchema = z.object({ userData: userDataQueryDtoSchema });
+export const userDataContract = { response: userDataResponseSchema } satisfies Contract;
+
+// Get authenticated user by ID
+
+export const getAuthenticatedUserByIdResponseSchema = userDataQueryDtoSchema;
+export const getAuthenticatedUserByIdContract = {
+  response: getAuthenticatedUserByIdResponseSchema,
+} satisfies Contract;
+
+// Delete profile picture
+
+export const deleteProfilePicRequestSchema = z.object({ body: z.object({ profilePicPath: z.string() }) });
+export const deleteUserProfilePicContract = { request: deleteProfilePicRequestSchema } satisfies Contract;
+
+// Set profile picture
+
+export const setProfilePicAndUpdateDBResponseSchema = z.object({
+  profilePicPath: z.string(),
+  url: z.string(),
+  message: z.string(),
+});
+export const setProfilePicAndUpdateDBContract = {
+  response: setProfilePicAndUpdateDBResponseSchema,
+} satisfies Contract;
+
+export type UpdateUserBody = BodyOf<typeof updateAuthenticatedUserContract>;
+export type UpdateAuthenticatedUserResponse = ResponseOf<typeof updateAuthenticatedUserContract>;
+export type UserDataResponse = ResponseOf<typeof userDataContract>;
+export type GetAuthenticatedUserByIdResponse = ResponseOf<typeof getAuthenticatedUserByIdContract>;
+export type DeleteUserProfilePicBody = BodyOf<typeof deleteUserProfilePicContract>;
+export type SetProfilePicAndUpdateDBResponse = ResponseOf<typeof setProfilePicAndUpdateDBContract>;

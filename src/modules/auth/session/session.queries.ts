@@ -1,6 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { TokenVersionResult, UserAfterBump } from '@strong-together/shared';
-import type { UserByIndetifier } from '@strong-together/shared';
+import type {
+  LastLoginQueryDto,
+  TokenVersionQueryDto,
+  UserAfterBumpQueryDto,
+  UserByIdentifierQueryDto,
+  UserByIdentifierRowQueryDto,
+} from '@strong-together/shared';
 import type postgres from 'postgres';
 import { SQL } from '../../../infrastructure/db/db.tokens';
 
@@ -8,12 +13,8 @@ import { SQL } from '../../../infrastructure/db/db.tokens';
 export class SessionQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
-  async queryUserByIdentifierForLogin(identifier: string): Promise<UserByIndetifier[]> {
-    type LoginUserDbResult = Omit<UserByIndetifier, 'isVerified' | 'lastLogin'> & {
-      is_verified: boolean;
-      last_login: string | null;
-    };
-    const [row] = await this.sql<{ userData: LoginUserDbResult | null }[]>`
+  async queryUserByIdentifierForLogin(identifier: string): Promise<UserByIdentifierQueryDto[]> {
+    const [row] = await this.sql<UserByIdentifierRowQueryDto[]>`
       SELECT
         guest_api.find_login_user (${identifier}) AS "userData"
     `;
@@ -23,15 +24,15 @@ export class SessionQueries {
   }
 
   async queryLastLogin(userId: string): Promise<Date | null> {
-    const [user] = await this.sql<{ lastLogin: Date | null }[]>`
+    const [user] = await this.sql<LastLoginQueryDto[]>`
       SELECT
         guest_api.last_login (${userId}::UUID) AS "lastLogin"
     `;
     return user?.lastLogin ?? null;
   }
 
-  async queryBumpTokenVersionAndGetSelfData(userId: string): Promise<UserAfterBump[]> {
-    return this.sql<UserAfterBump[]>`
+  async queryBumpTokenVersionAndGetSelfData(userId: string): Promise<UserAfterBumpQueryDto[]> {
+    return this.sql<UserAfterBumpQueryDto[]>`
       UPDATE identity.user AS users
       SET
         token_version = token_version + 1,
@@ -75,8 +76,8 @@ export class SessionQueries {
     `;
   }
 
-  async queryBumpTokenVersionAndGetSelfDataCAS(userId: string, prevTokenVer: number): Promise<UserAfterBump[]> {
-    return this.sql<UserAfterBump[]>`
+  async queryBumpTokenVersionAndGetSelfDataCAS(userId: string, prevTokenVer: number): Promise<UserAfterBumpQueryDto[]> {
+    return this.sql<UserAfterBumpQueryDto[]>`
       UPDATE identity.user AS users
       SET
         token_version = token_version + 1,
@@ -121,8 +122,8 @@ export class SessionQueries {
     `;
   }
 
-  async queryGetCurrentTokenVersion(userId: string): Promise<TokenVersionResult[]> {
-    return this.sql<TokenVersionResult[]>`
+  async queryGetCurrentTokenVersion(userId: string): Promise<TokenVersionQueryDto[]> {
+    return this.sql<TokenVersionQueryDto[]>`
       SELECT
         token_version AS "tokenVersion"
       FROM

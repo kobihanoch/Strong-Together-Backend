@@ -1,19 +1,14 @@
 import { Controller, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
-import type { LoginRequestBody, LoginResponse, LogOutResponse, RefreshTokenResponse } from '@strong-together/shared';
-import { loginRequest } from '@strong-together/shared';
+import type { LoginRequestBody, LoginResponse, LogoutResponse, RefreshTokenResponse } from '@strong-together/shared';
+import { loginRequestSchema } from '@strong-together/shared';
 import type { AppLogger } from '../../../infrastructure/logger';
 import { getRefreshToken } from './session.utils';
 import { SessionService } from './session.service';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../common/guards/auth/authorization.guard';
-import {
-  RateLimit,
-  RateLimitGuard,
-  loginIpRateLimit,
-  loginRateLimit,
-} from '../../../common/guards/rate-limit.guard';
+import { RateLimit, RateLimitGuard, loginIpRateLimit, loginRateLimit } from '../../../common/guards/rate-limit.guard';
 import { CurrentLogger } from '../../../common/decorators/current-logger.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
@@ -39,7 +34,7 @@ export class SessionController {
   @UseGuards(RateLimitGuard)
   @RateLimit(loginRateLimit, loginIpRateLimit)
   async loginUser(
-    @RequestData(new ValidateRequestPipe(loginRequest))
+    @RequestData(new ValidateRequestPipe(loginRequestSchema))
     data: { body: LoginRequestBody },
     @Req() req: AppRequest,
     @CurrentLogger() requestLogger: AppLogger,
@@ -65,7 +60,7 @@ export class SessionController {
   @Post('logout')
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
   @Roles('user')
-  async logoutUser(@Req() req: AppRequest): Promise<LogOutResponse> {
+  async logoutUser(@Req() req: AppRequest): Promise<LogoutResponse> {
     const refreshToken = getRefreshToken(req);
     await this.sessionService.logoutUserData(refreshToken);
     return { message: 'Logged out successfully' };

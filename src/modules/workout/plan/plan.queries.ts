@@ -1,14 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type postgres from 'postgres';
-import type { AddWorkoutSplitPayload, WholeUserWorkoutPlan, WorkoutSplitsMap } from '@strong-together/shared';
+import type {
+  AddWorkoutSplitPayloadQueryDto,
+  ExerciseAssignmentIdQueryDto,
+  WholeUserWorkoutPlanQueryDto,
+  WorkoutPlanIdQueryDto,
+  WorkoutSplitIdQueryDto,
+  WorkoutSplitsRowQueryDto,
+} from '@strong-together/shared';
 import { SQL } from '../../../infrastructure/db/db.tokens';
 
 @Injectable()
 export class WorkoutPlanQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
-  async queryWholeUserWorkoutPlan(userId: string, tz: string): Promise<WholeUserWorkoutPlan[]> {
-    return this.sql<WholeUserWorkoutPlan[]>`
+  async queryWholeUserWorkoutPlan(userId: string, tz: string): Promise<WholeUserWorkoutPlanQueryDto[]> {
+    return this.sql<WholeUserWorkoutPlanQueryDto[]>`
       SELECT
         workoutplans.id::INT,
         workout.get_number_of_splits (workoutplans.id)::INT AS "numberOfSplits",
@@ -116,9 +123,9 @@ export class WorkoutPlanQueries {
     `;
   }
 
-  async queryGetWorkoutSplitsObj(workoutId: number): Promise<{ splits: WorkoutSplitsMap }> {
+  async queryGetWorkoutSplitsObj(workoutId: number): Promise<WorkoutSplitsRowQueryDto> {
     // Build the editable workout-plan map, grouped by split name.
-    const rows = await this.sql<[{ splits: WorkoutSplitsMap }]>`
+    const rows = await this.sql<WorkoutSplitsRowQueryDto[]>`
       SELECT
         JSONB_OBJECT_AGG(
           ws.name,
@@ -191,7 +198,7 @@ export class WorkoutPlanQueries {
 
   async queryAddWorkout(
     userId: string,
-    workoutData: AddWorkoutSplitPayload,
+    workoutData: AddWorkoutSplitPayloadQueryDto,
     workoutName: string = 'My Workout',
   ): Promise<number> {
     const payloadJson = Object.fromEntries(
@@ -203,7 +210,7 @@ export class WorkoutPlanQueries {
     let planId: number;
 
     // Create the active workout plan, or touch its update timestamp when it already exists.
-    const planResult = await this.sql<[{ id: number }]>`
+    const planResult = await this.sql<WorkoutPlanIdQueryDto[]>`
       INSERT INTO
         workout.workout_plan (user_id, is_active, updated_at)
       VALUES
@@ -234,7 +241,7 @@ export class WorkoutPlanQueries {
     const splitMap: Record<string, number> = {};
     for (const splitName of Object.keys(payloadJson)) {
       // Create this split, or reactivate it when the same split name already exists.
-      const [split] = await this.sql<[{ id: number }]>`
+      const [split] = await this.sql<WorkoutSplitIdQueryDto[]>`
         INSERT INTO
           workout.workout_split (workout_id, name, is_active)
         VALUES
@@ -271,7 +278,7 @@ export class WorkoutPlanQueries {
     for (const [splitName, exercises] of Object.entries(payloadJson)) {
       for (const [exerciseIndex, exercise] of exercises.entries()) {
         // Create the exercise assignment, or update its order and reactivate it.
-        const [savedExercise] = await this.sql<[{ id: number }]>`
+        const [savedExercise] = await this.sql<ExerciseAssignmentIdQueryDto[]>`
           INSERT INTO
             workout.exercise_to_workout_split (workout_split_id, exercise_id, order_index, is_active)
           VALUES

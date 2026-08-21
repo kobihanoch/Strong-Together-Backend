@@ -1,5 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { GoalAdherenceResponse, WorkoutRMsResponse } from '@strong-together/shared';
+import type {
+  GoalAdherenceQueryDto,
+  GoalAdherenceRowQueryDto,
+  WorkoutRmsQueryDto,
+  WorkoutRmsRowQueryDto,
+} from '@strong-together/shared';
 import type postgres from 'postgres';
 import { SQL } from '../../infrastructure/db/db.tokens';
 
@@ -17,8 +22,8 @@ import { SQL } from '../../infrastructure/db/db.tokens';
 export class AnalyticsQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
-  async queryGetWorkoutRMs(userId: string): Promise<WorkoutRMsResponse> {
-    const [{ result }] = await this.sql<{ result: WorkoutRMsResponse }[]>`
+  async queryGetWorkoutRMs(userId: string): Promise<WorkoutRmsQueryDto> {
+    const [{ result }] = await this.sql<WorkoutRmsRowQueryDto[]>`
       WITH
         -- All workouts for this user (authoritative source)
         all_workout_summaries AS (
@@ -139,8 +144,8 @@ export class AnalyticsQueries {
    * }
    */
 
-  async queryGoalAdherence(userId: string): Promise<GoalAdherenceResponse> {
-    const [{ result }] = await this.sql<{ result: GoalAdherenceResponse }[]>`
+  async queryGoalAdherence(userId: string): Promise<GoalAdherenceQueryDto> {
+    const [{ result }] = await this.sql<GoalAdherenceRowQueryDto[]>`
       WITH
         -- Planned volume per split+exercise from the user's active plans
         planned AS (

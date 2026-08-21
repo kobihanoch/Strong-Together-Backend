@@ -2,7 +2,7 @@ import { Controller, Get, Post, Res, UseGuards, UseInterceptors } from '@nestjs/
 import type { Response } from 'express';
 import type { AddUserAerobicsBody, GetUserAerobicsQuery, UserAerobicsResponse } from '@strong-together/shared';
 import type { AuthenticatedUser } from '../../common/types/express';
-import { addAerobicsRequest, getAerobicsRequest } from '@strong-together/shared';
+import { addAerobicsRequestSchema, getAerobicsRequestSchema } from '@strong-together/shared';
 import { AerobicsService } from './aerobics.service';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
@@ -40,7 +40,7 @@ export class AerobicsController {
    */
   @Get('get')
   async getUserAerobics(
-    @RequestData(new ValidateRequestPipe(getAerobicsRequest)) data: { query: GetUserAerobicsQuery },
+    @RequestData(new ValidateRequestPipe(getAerobicsRequestSchema)) data: { query: GetUserAerobicsQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<UserAerobicsResponse> {
@@ -62,7 +62,7 @@ export class AerobicsController {
    */
   @Post('add')
   async addUserAerobics(
-    @RequestData(new ValidateRequestPipe(addAerobicsRequest)) data: { body: AddUserAerobicsBody },
+    @RequestData(new ValidateRequestPipe(addAerobicsRequestSchema)) data: { body: AddUserAerobicsBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<UserAerobicsResponse> {
     return this.aerobicsService.addUserAerobicsRecord(user.id, data.body);

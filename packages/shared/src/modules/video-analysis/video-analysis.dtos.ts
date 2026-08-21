@@ -1,7 +1,8 @@
 import { z } from 'zod/v4';
 import { userDbSchema } from '../../database';
 
-export const enqueueAanalyzeVideoParamsSchema = z.object({
+/** Parameters used to enqueue a video-analysis job. */
+export const enqueueAnalyzeVideoParamsDtoSchema = z.object({
   fileKey: z.string(),
   exercise: z.string(),
   userId: userDbSchema.shape.id,
@@ -10,11 +11,13 @@ export const enqueueAanalyzeVideoParamsSchema = z.object({
   baggage: z.string().optional(),
 });
 
-export const analyzeVideoPayloadSchema = enqueueAanalyzeVideoParamsSchema.extend({
+/** Queue payload containing video-analysis parameters and expiration. */
+export const analyzeVideoPayloadDtoSchema = enqueueAnalyzeVideoParamsDtoSchema.extend({
   expiresAt: z.number(),
 });
 
-export const squatRepetitionSchema = z.object({
+/** Analysis result for one detected squat repetition. */
+export const squatRepetitionDtoSchema = z.object({
   depth: z.object({ value: z.number(), status: z.string(), confidence: z.number() }),
   backLean: z.object({ value: z.number(), excessive: z.boolean(), confidence: z.number() }),
   audit: z.object({
@@ -26,7 +29,8 @@ export const squatRepetitionSchema = z.object({
   }),
 });
 
-export const analyzeVideoResultPayloadSchema = <TResultSchema extends z.ZodType>(resultSchema: TResultSchema) =>
+/** Completed-or-failed result payload emitted by a video-analysis worker. */
+export const analyzeVideoResultPayloadDtoSchema = <TResultSchema extends z.ZodType>(resultSchema: TResultSchema) =>
   z.intersection(
     z.object({
       jobId: z.string(),
@@ -40,9 +44,9 @@ export const analyzeVideoResultPayloadSchema = <TResultSchema extends z.ZodType>
     ]),
   );
 
-export type EnqueueAanalyzeVideoParams = z.infer<typeof enqueueAanalyzeVideoParamsSchema>;
-export type AnalyzeVideoPayload = z.infer<typeof analyzeVideoPayloadSchema>;
-export type SquatRepetition = z.infer<typeof squatRepetitionSchema>;
-export type AnalyzeVideoResultPayload<TResult> = z.infer<
-  ReturnType<typeof analyzeVideoResultPayloadSchema<z.ZodType<TResult>>>
+export type EnqueueAnalyzeVideoParamsDto = z.infer<typeof enqueueAnalyzeVideoParamsDtoSchema>;
+export type AnalyzeVideoPayloadDto = z.infer<typeof analyzeVideoPayloadDtoSchema>;
+export type SquatRepetitionDto = z.infer<typeof squatRepetitionDtoSchema>;
+export type AnalyzeVideoResultPayloadDto<TResult> = z.infer<
+  ReturnType<typeof analyzeVideoResultPayloadDtoSchema<z.ZodType<TResult>>>
 >;

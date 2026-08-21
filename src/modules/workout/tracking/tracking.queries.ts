@@ -1,6 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type postgres from 'postgres';
-import type { ExerciseTrackingAndStats, FinishedWorkoutEntry } from '@strong-together/shared';
+import type {
+  ExerciseTrackingAndStatsQueryDto,
+  ExerciseTrackingAndStatsRowQueryDto,
+  ExerciseTrackingIdQueryDto,
+  FinishedWorkoutEntryQueryDto,
+  WorkoutSplitLookupQueryDto,
+  WorkoutSummaryIdQueryDto,
+} from '@strong-together/shared';
 import { SQL } from '../../../infrastructure/db/db.tokens';
 
 @Injectable()
@@ -11,9 +18,9 @@ export class WorkoutTrackingQueries {
     userId: string,
     days: number = 45,
     tz: string = 'Asia/Jerusalem',
-  ): Promise<ExerciseTrackingAndStats> {
+  ): Promise<ExerciseTrackingAndStatsQueryDto> {
     // Load the user's tracking history, statistics, PRs, and response maps in one query.
-    const [{ data }] = await this.sql<[{ data: ExerciseTrackingAndStats }]>`
+    const [{ data }] = await this.sql<ExerciseTrackingAndStatsRowQueryDto[]>`
       WITH
         bounds AS (
           SELECT
@@ -364,12 +371,12 @@ export class WorkoutTrackingQueries {
 
   async queryInsertUserFinishedWorkout(
     userId: string,
-    workoutArray: FinishedWorkoutEntry[],
+    workoutArray: FinishedWorkoutEntryQueryDto[],
     workoutStartUtc: string | null,
     workoutEndUtc: string | null,
   ): Promise<string> {
     // Resolve the workout split that owns the exercises in the finished workout.
-    const [{ workoutSplitId }] = await this.sql<[{ workoutSplitId: number }]>`
+    const [{ workoutSplitId }] = await this.sql<WorkoutSplitLookupQueryDto[]>`
       SELECT
         workout_split_id AS "workoutSplitId"
       FROM
@@ -381,7 +388,7 @@ export class WorkoutTrackingQueries {
     `;
 
     // Create the parent summary for the completed workout.
-    const [{ id: workoutSummaryId }] = await this.sql<[{ id: string }]>`
+    const [{ id: workoutSummaryId }] = await this.sql<WorkoutSummaryIdQueryDto[]>`
       INSERT INTO
         tracking.workout_summary (
           user_id,
@@ -406,7 +413,7 @@ export class WorkoutTrackingQueries {
       }
 
       // Create one tracking record for this exercise; its sets are inserted next.
-      const [{ id: exerciseTrackingId }] = await this.sql<[{ id: number }]>`
+      const [{ id: exerciseTrackingId }] = await this.sql<ExerciseTrackingIdQueryDto[]>`
         INSERT INTO
           tracking.exercise_tracking (exercise_to_split_id, notes, workout_summary_id)
         VALUES

@@ -1,6 +1,6 @@
 import { Controller, Put, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { SaveUserPushTokenBody } from '@strong-together/shared';
-import { saveUserPushTokenRequest } from '@strong-together/shared';
+import { saveUserPushTokenRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
@@ -36,7 +36,7 @@ export class PushTokensController {
    */
   @Put('pushtoken')
   async saveUserPushToken(
-    @RequestData(new ValidateRequestPipe(saveUserPushTokenRequest))
+    @RequestData(new ValidateRequestPipe(saveUserPushTokenRequestSchema))
     data: { body: SaveUserPushTokenBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {

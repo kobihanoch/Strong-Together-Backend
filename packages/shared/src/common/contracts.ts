@@ -6,12 +6,12 @@ export type RequestSchema = z.ZodObject<{
   params?: z.ZodTypeAny;
 }>;
 
-export type Contract = {
-  request: RequestSchema;
-  response: z.ZodTypeAny;
-};
+export type Contract =
+  { request: RequestSchema; response?: z.ZodTypeAny } | { request?: RequestSchema; response: z.ZodTypeAny };
 
-export type RequestOf<TContract extends Contract> = z.infer<TContract['request']>;
+export type RequestOf<TContract extends Contract> = TContract extends { request: infer TRequest extends RequestSchema }
+  ? z.infer<TRequest>
+  : never;
 
 export type BodyOf<TContract extends Contract> = RequestOf<TContract> extends { body: infer TBody } ? TBody : never;
 
@@ -20,4 +20,8 @@ export type QueryOf<TContract extends Contract> = RequestOf<TContract> extends {
 export type ParamsOf<TContract extends Contract> =
   RequestOf<TContract> extends { params: infer TParams } ? TParams : never;
 
-export type ResponseOf<TContract extends Contract> = z.infer<TContract['response']>;
+export type ResponseOf<TContract extends Contract> = TContract extends {
+  response: infer TResponse extends z.ZodTypeAny;
+}
+  ? z.infer<TResponse>
+  : never;

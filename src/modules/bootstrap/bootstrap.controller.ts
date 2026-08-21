@@ -1,5 +1,5 @@
 import { Controller, Get, UseGuards, UseInterceptors } from '@nestjs/common';
-import { bootstrapRequest, type BootstrapRequestQuery, type BootstrapResponse } from '@strong-together/shared';
+import { bootstrapRequestSchema, type BootstrapRequestQuery, type BootstrapResponse } from '@strong-together/shared';
 import { CurrentLogger } from '../../common/decorators/current-logger.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestData } from '../../common/decorators/request-data.decorator';
@@ -39,7 +39,7 @@ export class BootstrapController {
    */
   @Get('get')
   async getBootstrapData(
-    @RequestData(new ValidateRequestPipe(bootstrapRequest)) data: { query: BootstrapRequestQuery },
+    @RequestData(new ValidateRequestPipe(bootstrapRequestSchema)) data: { query: BootstrapRequestQuery },
     @CurrentUser() user: AuthenticatedUser,
     @CurrentLogger() requestLogger: AppLogger,
   ): Promise<BootstrapResponse> {

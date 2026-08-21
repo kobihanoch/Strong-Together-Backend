@@ -18,7 +18,7 @@ import type {
   UpdateAuthenticatedUserResponse,
   UpdateUserBody,
 } from '@strong-together/shared';
-import { deleteProfilePicRequest, updateUserRequest } from '@strong-together/shared';
+import { deleteProfilePicRequestSchema, updateUserRequestSchema } from '@strong-together/shared';
 import type { Response } from 'express';
 import { CurrentLogger } from '../../../common/decorators/current-logger.decorator';
 import { CurrentRequestId } from '../../../common/decorators/current-request-id.decorator';
@@ -88,7 +88,7 @@ export class UpdateUserController {
   @RateLimit(updateUserRateLimitDaily, updateUserRateLimit)
   @Roles('user')
   async updateAuthenticatedUser(
-    @RequestData(new ValidateRequestPipe(updateUserRequest)) data: { body: UpdateUserBody },
+    @RequestData(new ValidateRequestPipe(updateUserRequestSchema)) data: { body: UpdateUserBody },
     @CurrentUser() user: AuthenticatedUser,
     @CurrentRequestId() requestId: string | undefined,
     @Res({ passthrough: true }) res: Response,
@@ -176,7 +176,7 @@ export class UpdateUserController {
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
   @Roles('user')
   async deleteUserProfilePic(
-    @RequestData(new ValidateRequestPipe(deleteProfilePicRequest))
+    @RequestData(new ValidateRequestPipe(deleteProfilePicRequestSchema))
     data: { body: DeleteUserProfilePicBody },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,

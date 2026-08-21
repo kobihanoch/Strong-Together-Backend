@@ -1,7 +1,7 @@
 import { Controller, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import type { GoogleOAuthBody, OAuthLoginResponse } from '@strong-together/shared';
-import { googleOAuthRequest } from '@strong-together/shared';
+import { googleOAuthRequestSchema } from '@strong-together/shared';
 import { CurrentLogger } from '../../../common/decorators/current-logger.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { RateLimit, RateLimitGuard, loginRateLimit } from '../../../common/guards/rate-limit.guard';
@@ -37,7 +37,7 @@ export class GoogleController {
   @UseGuards(RateLimitGuard)
   @RateLimit(loginRateLimit)
   async createOrSignInWithGoogle(
-    @RequestData(new ValidateRequestPipe(googleOAuthRequest))
+    @RequestData(new ValidateRequestPipe(googleOAuthRequestSchema))
     data: { body: GoogleOAuthBody },
     @Req() req: Request,
     @CurrentLogger() requestLogger: AppLogger,

@@ -1,18 +1,41 @@
-import z from 'zod/v4';
+import { z } from 'zod/v4';
+import type { Contract, ParamsOf, QueryOf, ResponseOf } from '../../common';
+import { messageDbSchema } from '../../database';
 import {
-  deleteMessageRequest,
-  deleteMessageResponseSchema,
-  getAllMessagesRequest,
-  getAllUserMessagesResponseSchema,
-  markMessageAsReadRequest,
-  markMessageAsReadResponseSchema,
-} from './messages.schemas';
+  allUserMessageQueryDtoSchema,
+  deletedMessageQueryDtoSchema,
+  messageAsReadQueryDtoSchema,
+} from './messages.dtos';
 
-export type GetAllUserMessagesQuery = z.infer<typeof getAllMessagesRequest.shape.query>;
-export type GetAllUserMessagesResponse = z.infer<typeof getAllUserMessagesResponseSchema>;
+// Get all user messages
 
-export type MarkMessageAsReadParams = z.infer<typeof markMessageAsReadRequest.shape.params>;
-export type MarkMessageAsReadResponse = z.infer<typeof markMessageAsReadResponseSchema>;
+export const getAllMessagesRequestSchema = z.object({ query: z.object({ tz: z.string() }) });
+export const getAllUserMessagesResponseSchema = z.object({ messages: z.array(allUserMessageQueryDtoSchema) });
+export const getAllUserMessagesContract = {
+  request: getAllMessagesRequestSchema,
+  response: getAllUserMessagesResponseSchema,
+} satisfies Contract;
+export type GetAllUserMessagesQuery = QueryOf<typeof getAllUserMessagesContract>;
+export type GetAllUserMessagesResponse = ResponseOf<typeof getAllUserMessagesContract>;
 
-export type DeleteMessageParams = z.infer<typeof deleteMessageRequest.shape.params>;
-export type DeleteMessageResponse = z.infer<typeof deleteMessageResponseSchema>;
+// Mark message as read
+
+export const markMessageAsReadRequestSchema = z.object({ params: z.object({ id: messageDbSchema.shape.id }) });
+export const markMessageAsReadResponseSchema = messageAsReadQueryDtoSchema;
+export const markMessageAsReadContract = {
+  request: markMessageAsReadRequestSchema,
+  response: markMessageAsReadResponseSchema,
+} satisfies Contract;
+export type MarkMessageAsReadParams = ParamsOf<typeof markMessageAsReadContract>;
+export type MarkMessageAsReadResponse = ResponseOf<typeof markMessageAsReadContract>;
+
+// Delete message
+
+export const deleteMessageRequestSchema = z.object({ params: z.object({ id: messageDbSchema.shape.id }) });
+export const deleteMessageResponseSchema = deletedMessageQueryDtoSchema;
+export const deleteMessageContract = {
+  request: deleteMessageRequestSchema,
+  response: deleteMessageResponseSchema,
+} satisfies Contract;
+export type DeleteMessageParams = ParamsOf<typeof deleteMessageContract>;
+export type DeleteMessageResponse = ResponseOf<typeof deleteMessageContract>;

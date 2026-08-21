@@ -1,7 +1,7 @@
 import { Controller, Post, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import type { GenerateTicketBody, GenerateTicketResponse } from '@strong-together/shared';
-import { generateTicketRequest } from '@strong-together/shared';
+import { generateTicketRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestData } from '../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
@@ -36,7 +36,7 @@ export class WebSocketsController {
    */
   @Post('generateticket')
   async generateTicket(
-    @RequestData(new ValidateRequestPipe(generateTicketRequest))
+    @RequestData(new ValidateRequestPipe(generateTicketRequestSchema))
     data: { body: GenerateTicketBody },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
