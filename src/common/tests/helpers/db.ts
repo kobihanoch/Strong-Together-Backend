@@ -79,81 +79,6 @@ export async function getActiveWorkoutSplitNames(userId: string) {
   return rows.map((row: { name: string | null }) => row.name);
 }
 
-export async function getInactiveWorkoutSplitNames(userId: string) {
-  const rows = await sql<{ name: string | null }[]>`
-    SELECT
-      ws.name
-    FROM
-      workout.workout_split ws
-      INNER JOIN workout.workout_plan wp ON wp.id = ws.workout_id
-    WHERE
-      wp.user_id = ${userId}::UUID
-      AND wp.is_active = TRUE
-      AND ws.is_active = FALSE
-    ORDER BY
-      ws.id
-  `;
-
-  return rows.map((row: { name: string | null }) => row.name);
-}
-
-export async function getExercisesForSplit(userId: string, splitName: string) {
-  const rows = await sql<{ exercise_id: number | null; sets: number[] | null; order_index: number | null }[]>`
-    SELECT
-      ets.exercise_id,
-      JSONB_AGG(
-        ets.reps
-        ORDER BY
-          ets.set_order_index
-      ) FILTER (
-        WHERE
-          ets.reps IS NOT NULL
-      ) AS sets,
-      ets.order_index
-    FROM
-      workout.v_exercise_to_workout_split_expanded ets
-      INNER JOIN workout.workout_split ws ON ws.id = ets.workout_split_id
-      INNER JOIN workout.workout_plan wp ON wp.id = ws.workout_id
-    WHERE
-      wp.user_id = ${userId}::UUID
-      AND wp.is_active = TRUE
-      AND ws.is_active = TRUE
-      AND ets.is_active = TRUE
-      AND ws.name = ${splitName}
-    GROUP BY
-      ets.exercise_id,
-      ets.order_index
-    ORDER BY
-      ets.order_index
-  `;
-
-  return rows.map((row: { exercise_id: number | null; sets: number[] | null; order_index: number | null }) => ({
-    exerciseId: row.exercise_id === null ? null : Number(row.exercise_id),
-    sets: row.sets?.map((set: number) => Number(set)) ?? null,
-    orderIndex: row.order_index === null ? null : Number(row.order_index),
-  }));
-}
-
-export async function getInactiveExercisesForSplit(userId: string, splitName: string) {
-  const rows = await sql<{ exercise_id: number | null }[]>`
-    SELECT
-      ets.exercise_id
-    FROM
-      workout.exercise_to_workout_split ets
-      INNER JOIN workout.workout_split ws ON ws.id = ets.workout_split_id
-      INNER JOIN workout.workout_plan wp ON wp.id = ws.workout_id
-    WHERE
-      wp.user_id = ${userId}::UUID
-      AND wp.is_active = TRUE
-      AND ws.name = ${splitName}
-      AND ets.is_active = FALSE
-    ORDER BY
-      ets.id
-  `;
-
-  return rows.map((row: { exercise_id: number | null }) => (row.exercise_id === null ? null : Number(row.exercise_id)));
-}
-
 export async function getWorkoutSummaryCount(userId: string) {
   const [row] = await sql<{ count: string }[]>`
     SELECT
@@ -265,7 +190,7 @@ export async function messageExists(messageId: string) {
   return true;
 }
 
-export async function getAerobicsRowsForUser(userId: string) {
+async function getAerobicsRowsForUser(userId: string) {
   type AerobicTestRow = Pick<AerobicTrackingRow, 'id' | 'type'> & {
     duration_mins: number;
     duration_sec: number;
@@ -446,15 +371,6 @@ export async function getUserLastLoginByUsername(username: string) {
     lastLogin: row?.last_login ?? null,
     databaseNow: row?.database_now ?? null,
   };
-}
-
-export async function getDatabaseNow() {
-  const [row] = await sql<{ database_now: Date }[]>`
-    SELECT
-      NOW() AS database_now
-  `;
-
-  return row.database_now;
 }
 
 export async function waitForUserDeletionByUsername(username: string) {
