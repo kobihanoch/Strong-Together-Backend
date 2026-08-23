@@ -3,10 +3,10 @@ FROM node:20-alpine
 WORKDIR /usr/src/app
 
 COPY package*.json ./
-RUN npm ci
-
 COPY tsconfig.json ./tsconfig.json
+COPY packages/shared ./packages/shared
 COPY src ./src
+RUN npm ci
 
 RUN npx tsc --noEmit
 RUN npm prune --omit=dev

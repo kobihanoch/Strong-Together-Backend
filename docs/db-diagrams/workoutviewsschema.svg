@@ -50,7 +50,7 @@
 <text text-anchor="start" x="914.14" y="-353.15" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">bigint</text>
 <polygon fill="#e7e2dd" stroke="transparent" points="174.61,-271.95 174.61,-331.95 1001.61,-331.95 1001.61,-271.95 174.61,-271.95"/>
 <polygon fill="none" stroke="#29235c" points="174.61,-271.95 174.61,-331.95 1001.61,-331.95 1001.61,-271.95 174.61,-271.95"/>
-<text text-anchor="start" x="185.61" y="-292.15" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">set_order_index &#160;&#160;&#160;</text>
+<text text-anchor="start" x="185.61" y="-292.15" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">set_index &#160;&#160;&#160;</text>
 <text text-anchor="start" x="892.8" y="-293.15" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">integer</text>
 <polygon fill="#e7e2dd" stroke="transparent" points="174.61,-211.95 174.61,-271.95 1001.61,-271.95 1001.61,-211.95 174.61,-211.95"/>
 <polygon fill="none" stroke="#29235c" points="174.61,-211.95 174.61,-271.95 1001.61,-271.95 1001.61,-211.95 174.61,-211.95"/>

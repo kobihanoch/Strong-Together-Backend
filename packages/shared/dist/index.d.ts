@@ -2505,8 +2505,8 @@ declare const exerciseToWorkoutSplitExpandedViewDbSchema: drizzle_zod.BuildSchem
         identity: undefined;
         generated: undefined;
     }, {}, {}>;
-    setOrderIndex: drizzle_orm_pg_core.PgColumn<{
-        name: "set_order_index";
+    setIndex: drizzle_orm_pg_core.PgColumn<{
+        name: "set_index";
         tableName: "v_exercise_to_workout_split_expanded";
         dataType: "number";
         columnType: "PgInteger";

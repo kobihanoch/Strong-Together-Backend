@@ -2286,8 +2286,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "set_order_index": {
-          "name": "set_order_index",
+        "set_index": {
+          "name": "set_index",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -2305,7 +2305,7 @@
           "notNull": false
         }
       },
-      "definition": "\n    SELECT\n      ews.id,\n      ews.workout_split_id,\n      ws.workout_id,\n      ews.exercise_id,\n      ex.name AS exercise,\n      ws.name AS workout_split,\n      workout_set.reps AS reps,\n      workout_set.order_index AS set_order_index,\n      ews.order_index,\n      ews.created_at,\n      ews.is_active\n    FROM\n      workout.exercise_to_workout_split ews\n      JOIN workout.workout_split ws ON ws.id = ews.workout_split_id\n      JOIN workout.exercise ex ON ex.id = ews.exercise_id\n      LEFT JOIN workout.workout_set workout_set ON workout_set.exercise_to_split_id = ews.id\n    GROUP BY\n      ews.id,\n      ews.workout_split_id,\n      ws.workout_id,\n      ews.exercise_id,\n      ex.name,\n      ws.name,\n      workout_set.reps,\n      workout_set.order_index,\n      ews.order_index,\n      ews.created_at,\n      ews.is_active\n  ",
+      "definition": "\n    SELECT\n      ews.id,\n      ews.workout_split_id,\n      ws.workout_id,\n      ews.exercise_id,\n      ex.name AS exercise,\n      ws.name AS workout_split,\n      workout_set.reps AS reps,\n      workout_set.order_index AS set_index,\n      ews.order_index,\n      ews.created_at,\n      ews.is_active\n    FROM\n      workout.exercise_to_workout_split ews\n      JOIN workout.workout_split ws ON ws.id = ews.workout_split_id\n      JOIN workout.exercise ex ON ex.id = ews.exercise_id\n      LEFT JOIN workout.workout_set workout_set ON workout_set.exercise_to_split_id = ews.id\n    GROUP BY\n      ews.id,\n      ews.workout_split_id,\n      ws.workout_id,\n      ews.exercise_id,\n      ex.name,\n      ws.name,\n      workout_set.reps,\n      workout_set.order_index,\n      ews.order_index,\n      ews.created_at,\n      ews.is_active\n  ",
       "name": "v_exercise_to_workout_split_expanded",
       "schema": "workout",
       "isExisting": false,

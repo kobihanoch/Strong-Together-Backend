@@ -1310,7 +1310,7 @@ var exerciseToWorkoutSplitExpandedView = workoutSchema.view("v_exercise_to_worko
   orderIndex: bigint12("order_index", {
     mode: "number"
   }),
-  setOrderIndex: integer5("set_order_index"),
+  setIndex: integer5("set_index"),
   createdAt: timestamp11("created_at", {
     withTimezone: true
   }),
@@ -1326,7 +1326,7 @@ var exerciseToWorkoutSplitExpandedView = workoutSchema.view("v_exercise_to_worko
       ex.name AS exercise,
       ws.name AS workout_split,
       workout_set.reps AS reps,
-      workout_set.order_index AS set_order_index,
+      workout_set.order_index AS set_index,
       ews.order_index,
       ews.created_at,
       ews.is_active
