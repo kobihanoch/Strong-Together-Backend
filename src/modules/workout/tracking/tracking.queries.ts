@@ -169,7 +169,7 @@ export class WorkoutTrackingQueries {
               JSONB_AGG(
                 ets.reps
                 ORDER BY
-                  ets.set_order_index
+                  ets.set_index
               ),
               'exercises',
               JSONB_BUILD_OBJECT(
@@ -182,7 +182,7 @@ export class WorkoutTrackingQueries {
           FROM
             analytics.v_exercise_tracking_expanded et
             LEFT JOIN workout.v_exercise_to_workout_split_expanded ets ON ets.id = et.exercise_to_split_id
-            AND ets.set_order_index = et.set_index
+            AND ets.set_index = et.set_index
             JOIN workout.exercise ex ON ex.id = et.exercise_id
           WHERE
             et.workout_summary_id IN (

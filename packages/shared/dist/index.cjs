@@ -1516,7 +1516,7 @@ var exerciseToWorkoutSplitExpandedView = workoutSchema.view("v_exercise_to_worko
   orderIndex: (0, import_pg_core31.bigint)("order_index", {
     mode: "number"
   }),
-  setOrderIndex: (0, import_pg_core32.integer)("set_order_index"),
+  setIndex: (0, import_pg_core32.integer)("set_index"),
   createdAt: (0, import_pg_core31.timestamp)("created_at", {
     withTimezone: true
   }),
@@ -1532,7 +1532,7 @@ var exerciseToWorkoutSplitExpandedView = workoutSchema.view("v_exercise_to_worko
       ex.name AS exercise,
       ws.name AS workout_split,
       workout_set.reps AS reps,
-      workout_set.order_index AS set_order_index,
+      workout_set.order_index AS set_index,
       ews.order_index,
       ews.created_at,
       ews.is_active

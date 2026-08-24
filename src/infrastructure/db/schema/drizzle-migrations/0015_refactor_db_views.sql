@@ -72,7 +72,7 @@ WITH
       ex.name AS exercise,
       ws.name AS workout_split,
       workout_set.reps AS reps,
-      workout_set.order_index AS set_order_index,
+      workout_set.order_index AS set_index,
       ews.order_index,
       ews.created_at,
       ews.is_active

@@ -7,7 +7,6 @@ import { expectSchema } from '../../common/tests/helpers/assert-schema';
 import { getExerciseToWorkoutSplitId, getUserReminderTimezone } from '../../common/tests/helpers/db';
 import { deleteRedisKeysByPattern, getRedisKey } from '../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../common/tests/helpers/users';
-import { addAerobicsRecord } from '../../common/tests/helpers/aerobics';
 import { addWorkoutPlan, finishWorkout } from '../../common/tests/helpers/workouts';
 import { buildUserTimezoneKeyStable } from './bootstrap.cache';
 
@@ -60,11 +59,13 @@ describe('BootstrapController', () => {
     expect(etsId).not.toBeNull();
     await finishWorkout(app, user.accessToken, [{ exerciseToSplitId: etsId!, weight: [80], reps: [8] }]);
 
-    const aerobics = await addAerobicsRecord(app, user.accessToken, {
-      type: 'Walk',
-      durationMins: 20,
-      durationSec: 0,
-    });
+    const aerobics = await request(app.getHttpServer())
+      .post('/api/aerobics/add')
+      .set(authHeaders(user.accessToken))
+      .send({
+        tz: 'Asia/Jerusalem',
+        record: { type: 'Walk', durationMins: 20, durationSec: 0 },
+      });
     expectSchema(userAerobicsResponseSchema, aerobics.body);
 
     const response = await request(app.getHttpServer())

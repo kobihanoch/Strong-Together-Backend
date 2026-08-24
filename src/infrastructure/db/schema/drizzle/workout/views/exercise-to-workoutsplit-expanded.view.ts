@@ -14,7 +14,7 @@ export const exerciseToWorkoutSplitExpandedView = workoutSchema
     workoutSplit: text('workout_split'),
     reps: integer('reps'),
     orderIndex: bigint('order_index', { mode: 'number' }),
-    setOrderIndex: integer('set_order_index'),
+    setIndex: integer('set_index'),
     createdAt: timestamp('created_at', { withTimezone: true }),
     isActive: boolean('is_active'),
   })
@@ -28,7 +28,7 @@ export const exerciseToWorkoutSplitExpandedView = workoutSchema
       ex.name AS exercise,
       ws.name AS workout_split,
       workout_set.reps AS reps,
-      workout_set.order_index AS set_order_index,
+      workout_set.order_index AS set_index,
       ews.order_index,
       ews.created_at,
       ews.is_active

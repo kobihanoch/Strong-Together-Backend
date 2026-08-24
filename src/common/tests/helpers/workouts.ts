@@ -3,14 +3,6 @@ import { authHeaders } from './auth';
 
 const httpServer = (app: any) => app.getHttpServer();
 
-export function getWorkoutPlan(app: any, accessToken: string, tz = 'Asia/Jerusalem') {
-  return request(httpServer(app)).get('/api/workouts/getworkout').query({ tz }).set(authHeaders(accessToken));
-}
-
-export function getTracking(app: any, accessToken: string, tz = 'Asia/Jerusalem') {
-  return request(httpServer(app)).get('/api/workouts/gettracking').query({ tz }).set(authHeaders(accessToken));
-}
-
 export function addWorkoutPlan(
   app: any,
   accessToken: string,

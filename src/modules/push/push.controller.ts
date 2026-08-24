@@ -72,10 +72,7 @@ export class PushController {
       });
     } catch (error) {
       if (error instanceof Error) {
-        requestLogger.error(
-          { err: error, event: 'push.hourly_enqueue_failed' },
-          'Failed to enqueue hourly reminders',
-        );
+        requestLogger.error({ err: error, event: 'push.hourly_enqueue_failed' }, 'Failed to enqueue hourly reminders');
         res.status(500).json({ success: false, error: error.message });
       }
     }

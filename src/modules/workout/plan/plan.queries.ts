@@ -77,7 +77,7 @@ export class WorkoutPlanQueries {
                             JSONB_AGG(
                               expanded.reps
                               ORDER BY
-                                expanded.set_order_index
+                                expanded.set_index
                             ) FILTER (
                               WHERE
                                 expanded.reps IS NOT NULL
@@ -162,7 +162,7 @@ export class WorkoutPlanQueries {
                       JSONB_AGG(
                         expanded.reps
                         ORDER BY
-                          expanded.set_order_index
+                          expanded.set_index
                       ) FILTER (
                         WHERE
                           expanded.reps IS NOT NULL

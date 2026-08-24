@@ -7,7 +7,7 @@ Table workout.v_exercise_to_workout_split_expanded [note: 'Security-invoker view
   workout_split text
   reps integer
   order_index bigint
-  set_order_index integer
+  set_index integer
   created_at timestamptz
   is_active boolean
 }
