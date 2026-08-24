@@ -1,7 +1,7 @@
 DROP VIEW "analytics"."v_prs";
 
 --> statement-breakpoint
-DROP VIEW "analytics"."v_exercise_tracking_set_simple";
+DROP VIEW IF EXISTS "analytics"."v_exercise_tracking_set_simple";
 
 --> statement-breakpoint
 DROP VIEW "analytics"."v_exercise_tracking_expanded";
