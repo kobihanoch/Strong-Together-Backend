@@ -3,7 +3,7 @@ CREATE ROLE "guest";--> statement-breakpoint
 
 -- The password is deliberately provisioned outside source control.
 ALTER ROLE "app_runtime_user"
-  WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS NOINHERIT;--> statement-breakpoint
+  WITH LOGIN NOCREATEDB NOCREATEROLE NOINHERIT;--> statement-breakpoint
 
 GRANT "guest", "authenticated" TO "app_runtime_user";--> statement-breakpoint
 

@@ -17,6 +17,7 @@
     "db:dev:migrate": "drizzle-kit migrate --config=drizzle.development.config.ts",
     "db:migrate:diff": "drizzle-kit generate --config=drizzle.development.config.ts",
     "db:prod:migrate": "drizzle-kit migrate --config=drizzle.production.config.ts",
+    "db:staging:migrationcheck": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/db-related/test-staging-migrations.ps1",
     "docs:db-diagrams": "tsx scripts/db-related/render-db-diagrams.mts",
     "test:env:up": "cross-env NODE_ENV=test docker compose -f docker-compose.test.yml up --build --remove-orphans -d postgres_test redis_test redis-insight_test localstack_test maildev_test",
     "test:env:down": "docker compose -f docker-compose.test.yml down --remove-orphans",
