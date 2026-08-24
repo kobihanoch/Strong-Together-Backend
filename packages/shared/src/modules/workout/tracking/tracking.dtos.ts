@@ -10,11 +10,21 @@ import {
 } from '../../../database';
 
 /** Finished exercise entry consumed by the workout-insertion query. */
-export const finishedWorkoutEntryQueryDtoSchema = z.object({
-  exerciseToSplitId: exerciseToWorkoutSplitDbSchema.shape.id,
-  weight: z.array(trackingSetDbSchema.shape.weight),
-  reps: z.array(trackingSetDbSchema.shape.reps),
+const trackedSetQueryDtoSchema = z.object({
+  reps: trackingSetDbSchema.shape.reps,
+  weight: trackingSetDbSchema.shape.weight,
+  setIndex: trackingSetDbSchema.shape.setIndex,
+});
+
+const finishedWorkoutEntryBaseQueryDtoSchema = z.object({
+  trackedSets: z.array(trackedSetQueryDtoSchema),
   notes: exerciseTrackingDbSchema.shape.notes.optional(),
+});
+
+export const finishedWorkoutEntryQueryDtoSchema = finishedWorkoutEntryBaseQueryDtoSchema.extend({
+  isExerciseAssignedToSplit: z.boolean(),
+  exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
+  exerciseId: exerciseTrackingDbSchema.shape.exerciseId,
 });
 
 /** Target-muscle metadata nested in a tracking-map item. */

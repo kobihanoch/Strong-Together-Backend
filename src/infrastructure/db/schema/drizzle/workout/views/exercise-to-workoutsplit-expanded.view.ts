@@ -4,8 +4,8 @@ import { sql as drizzleSql } from 'drizzle-orm';
 import { integer } from 'drizzle-orm/pg-core';
 
 // Security-invoker view that expands planned split exercises.
-export const exerciseToWorkoutSplitExpandedView = workoutSchema
-  .view('v_exercise_to_workout_split_expanded', {
+export const exerciseToWorkoutSplitSetExpandedView = workoutSchema
+  .view('v_exercise_to_workout_split_set_expanded', {
     id: bigint('id', { mode: 'number' }),
     workoutSplitId: bigint('workout_split_id', { mode: 'number' }),
     workoutId: bigint('workout_id', { mode: 'number' }),

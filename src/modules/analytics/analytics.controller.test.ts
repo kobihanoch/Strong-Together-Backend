@@ -50,7 +50,17 @@ describe('AnalyticsController', () => {
     await addWorkoutPlan(app, user.accessToken, { A: [{ id: 20, sets: [8, 8, 10], orderIndex: 0 }] });
     const etsId = await getExerciseToWorkoutSplitId(user.userId, 'A', 20);
     expect(etsId).not.toBeNull();
-    await finishWorkout(app, user.accessToken, [{ exerciseToSplitId: etsId!, weight: [80, 80, 75], reps: [8, 8, 10] }]);
+    await finishWorkout(app, user.accessToken, [
+      {
+        isExerciseAssignedToSplit: true,
+        exerciseToSplitId: etsId!,
+        trackedSets: [
+          { weight: 80, reps: 8, setIndex: 0 },
+          { weight: 80, reps: 8, setIndex: 1 },
+          { weight: 75, reps: 10, setIndex: 2 },
+        ],
+      },
+    ]);
 
     const first = await request(app.getHttpServer()).get('/api/analytics/get').set(authHeaders(user.accessToken));
     const second = await request(app.getHttpServer()).get('/api/analytics/get').set(authHeaders(user.accessToken));

@@ -50,7 +50,7 @@ export class AnalyticsQueries {
               ELSE NULL
             END AS est_1rm
           FROM
-            analytics.v_exercise_tracking_expanded et
+            analytics.v_exercise_tracking_set_expanded et
           WHERE
             et.workout_summary_id IN (
               SELECT
@@ -158,7 +158,7 @@ export class AnalyticsQueries {
           FROM
             workout.workout_plan w
             JOIN workout.workout_split ws ON ws.workout_id = w.id
-            JOIN workout.v_exercise_to_workout_split_expanded ews ON ews.workout_split_id = ws.id
+            JOIN workout.v_exercise_to_workout_split_set_expanded ews ON ews.workout_split_id = ws.id
           WHERE
             w.user_id = ${userId}::UUID
             AND w.is_active = TRUE
@@ -189,7 +189,7 @@ export class AnalyticsQueries {
             et.exercise,
             SUM(et.reps) AS reps_sum_per_row
           FROM
-            analytics.v_exercise_tracking_expanded et
+            analytics.v_exercise_tracking_set_expanded et
             JOIN all_workout_summaries aws ON aws.id = et.workout_summary_id
             LEFT JOIN workout.workout_split wspl ON wspl.id = aws.workout_split_id
           GROUP BY

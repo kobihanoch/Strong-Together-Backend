@@ -69,14 +69,14 @@ __export(index_exports, {
   exerciseMapByMuscleRowQueryDtoSchema: () => exerciseMapByMuscleRowQueryDtoSchema,
   exerciseMetadataQueryDtoSchema: () => exerciseMetadataQueryDtoSchema,
   exerciseToWorkoutSplitDbSchema: () => exerciseToWorkoutSplitDbSchema,
-  exerciseToWorkoutSplitExpandedViewDbSchema: () => exerciseToWorkoutSplitExpandedViewDbSchema,
+  exerciseToWorkoutSplitSetExpandedViewDbSchema: () => exerciseToWorkoutSplitSetExpandedViewDbSchema,
   exerciseTrackingAnalysisQueryDtoSchema: () => exerciseTrackingAnalysisQueryDtoSchema,
   exerciseTrackingAndStatsQueryDtoSchema: () => exerciseTrackingAndStatsQueryDtoSchema,
   exerciseTrackingAndStatsRowQueryDtoSchema: () => exerciseTrackingAndStatsRowQueryDtoSchema,
   exerciseTrackingDbSchema: () => exerciseTrackingDbSchema,
-  exerciseTrackingExpandedViewDbSchema: () => exerciseTrackingExpandedViewDbSchema,
   exerciseTrackingIdQueryDtoSchema: () => exerciseTrackingIdQueryDtoSchema,
   exerciseTrackingPrMaxQueryDtoSchema: () => exerciseTrackingPrMaxQueryDtoSchema,
+  exerciseTrackingSetExpandedViewDbSchema: () => exerciseTrackingSetExpandedViewDbSchema,
   exercisesMapByMuscleQueryDtoSchema: () => exercisesMapByMuscleQueryDtoSchema,
   finishUserWorkoutContract: () => finishUserWorkoutContract,
   finishUserWorkoutResponseSchema: () => finishUserWorkoutResponseSchema,
@@ -1497,7 +1497,7 @@ var userRelations = (0, import_drizzle_orm27.relations)(user, ({ many, one }) =>
 var import_pg_core31 = require("drizzle-orm/pg-core");
 var import_drizzle_orm28 = require("drizzle-orm");
 var import_pg_core32 = require("drizzle-orm/pg-core");
-var exerciseToWorkoutSplitExpandedView = workoutSchema.view("v_exercise_to_workout_split_expanded", {
+var exerciseToWorkoutSplitSetExpandedView = workoutSchema.view("v_exercise_to_workout_split_set_expanded", {
   id: (0, import_pg_core31.bigint)("id", {
     mode: "number"
   }),
@@ -1559,7 +1559,7 @@ var exerciseToWorkoutSplitExpandedView = workoutSchema.view("v_exercise_to_worko
 var import_drizzle_orm29 = require("drizzle-orm");
 var import_pg_core33 = require("drizzle-orm/pg-core");
 var import_pg_core34 = require("drizzle-orm/pg-core");
-var exerciseTrackingExpandedView = analyticsSchema.view("v_exercise_tracking_expanded", {
+var exerciseTrackingSetExpandedView = analyticsSchema.view("v_exercise_tracking_set_expanded", {
   id: (0, import_pg_core33.bigint)("id", {
     mode: "number"
   }),
@@ -1586,7 +1586,8 @@ var exerciseTrackingExpandedView = analyticsSchema.view("v_exercise_tracking_exp
   }),
   workoutEndUtc: (0, import_pg_core33.timestamp)("workout_end_utc", {
     withTimezone: true
-  })
+  }),
+  isAssignedToSplit: (0, import_pg_core33.boolean)("is_assigned_to_split")
 }).with({
   securityInvoker: true
 }).as(import_drizzle_orm29.sql`
@@ -1603,7 +1604,11 @@ var exerciseTrackingExpandedView = analyticsSchema.view("v_exercise_tracking_exp
       et.notes,
       et.workout_summary_id,
       wsumm.workout_start_utc,
-      wsumm.workout_end_utc
+      wsumm.workout_end_utc,
+      CASE
+        WHEN et.exercise_to_split_id IS NOT NULL THEN TRUE
+        WHEN et.exercise_id IS NOT NULL THEN FALSE
+      END AS is_assigned_to_split
     FROM
       tracking.exercise_tracking et
       LEFT JOIN tracking.workout_summary wsumm ON wsumm.id = et.workout_summary_id
@@ -1652,7 +1657,7 @@ var prsView = analyticsSchema.view("v_prs", {
       et.workout_start_utc,
       et.workout_end_utc
     FROM
-      analytics.v_exercise_tracking_expanded et
+      analytics.v_exercise_tracking_set_expanded et
     ORDER BY
       et.exercise_id,
       et.weight DESC,
@@ -1670,7 +1675,7 @@ var exerciseDbSchema = (0, import_drizzle_zod.createSelectSchema)(exercise);
 var workoutPlanDbSchema = (0, import_drizzle_zod.createSelectSchema)(workoutPlan);
 var workoutSplitDbSchema = (0, import_drizzle_zod.createSelectSchema)(workoutSplit);
 var exerciseToWorkoutSplitDbSchema = (0, import_drizzle_zod.createSelectSchema)(exerciseToWorkoutSplit);
-var exerciseToWorkoutSplitExpandedViewDbSchema = (0, import_drizzle_zod.createSelectSchema)(exerciseToWorkoutSplitExpandedView);
+var exerciseToWorkoutSplitSetExpandedViewDbSchema = (0, import_drizzle_zod.createSelectSchema)(exerciseToWorkoutSplitSetExpandedView);
 var workoutSetDbSchema = (0, import_drizzle_zod.createSelectSchema)(workoutSet);
 var workoutSummaryDbSchema = (0, import_drizzle_zod.createSelectSchema)(workoutSummary);
 var exerciseTrackingDbSchema = (0, import_drizzle_zod.createSelectSchema)(exerciseTracking);
@@ -1679,7 +1684,7 @@ var aerobicTrackingDbSchema = (0, import_drizzle_zod.createSelectSchema)(aerobic
 var messageDbSchema = (0, import_drizzle_zod.createSelectSchema)(message);
 var userReminderSettingDbSchema = (0, import_drizzle_zod.createSelectSchema)(userReminderSetting);
 var userSplitInformationDbSchema = (0, import_drizzle_zod.createSelectSchema)(userSplitInformation);
-var exerciseTrackingExpandedViewDbSchema = (0, import_drizzle_zod.createSelectSchema)(exerciseTrackingExpandedView);
+var exerciseTrackingSetExpandedViewDbSchema = (0, import_drizzle_zod.createSelectSchema)(exerciseTrackingSetExpandedView);
 var prsViewDbSchema = (0, import_drizzle_zod.createSelectSchema)(prsView);
 
 // src/modules/aerobics/aerobics.contracts.ts
@@ -2160,11 +2165,19 @@ var addWorkoutContract = {
 
 // src/modules/workout/tracking/tracking.dtos.ts
 var import_v418 = require("zod/v4");
-var finishedWorkoutEntryQueryDtoSchema = import_v418.z.object({
-  exerciseToSplitId: exerciseToWorkoutSplitDbSchema.shape.id,
-  weight: import_v418.z.array(trackingSetDbSchema.shape.weight),
-  reps: import_v418.z.array(trackingSetDbSchema.shape.reps),
+var trackedSetQueryDtoSchema = import_v418.z.object({
+  reps: trackingSetDbSchema.shape.reps,
+  weight: trackingSetDbSchema.shape.weight,
+  setIndex: trackingSetDbSchema.shape.setIndex
+});
+var finishedWorkoutEntryBaseQueryDtoSchema = import_v418.z.object({
+  trackedSets: import_v418.z.array(trackedSetQueryDtoSchema),
   notes: exerciseTrackingDbSchema.shape.notes.optional()
+});
+var finishedWorkoutEntryQueryDtoSchema = finishedWorkoutEntryBaseQueryDtoSchema.extend({
+  isExerciseAssignedToSplit: import_v418.z.boolean(),
+  exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
+  exerciseId: exerciseTrackingDbSchema.shape.exerciseId
 });
 var exerciseMetadataQueryDtoSchema = import_v418.z.object({
   targetMuscle: exerciseDbSchema.shape.targetMuscle,
@@ -2634,14 +2647,14 @@ var finishUserWorkoutContract = {
   exerciseMapByMuscleRowQueryDtoSchema,
   exerciseMetadataQueryDtoSchema,
   exerciseToWorkoutSplitDbSchema,
-  exerciseToWorkoutSplitExpandedViewDbSchema,
+  exerciseToWorkoutSplitSetExpandedViewDbSchema,
   exerciseTrackingAnalysisQueryDtoSchema,
   exerciseTrackingAndStatsQueryDtoSchema,
   exerciseTrackingAndStatsRowQueryDtoSchema,
   exerciseTrackingDbSchema,
-  exerciseTrackingExpandedViewDbSchema,
   exerciseTrackingIdQueryDtoSchema,
   exerciseTrackingPrMaxQueryDtoSchema,
+  exerciseTrackingSetExpandedViewDbSchema,
   exercisesMapByMuscleQueryDtoSchema,
   finishUserWorkoutContract,
   finishUserWorkoutResponseSchema,

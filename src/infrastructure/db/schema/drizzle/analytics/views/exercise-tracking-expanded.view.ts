@@ -1,11 +1,11 @@
 import { sql as drizzleSql } from 'drizzle-orm';
-import { bigint, real, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { bigint, boolean, real, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { analyticsSchema } from '../../schemas';
 import { integer } from 'drizzle-orm/pg-core';
 
 // Security-invoker view that joins exercise tracking to workout metadata.
-export const exerciseTrackingExpandedView = analyticsSchema
-  .view('v_exercise_tracking_expanded', {
+export const exerciseTrackingSetExpandedView = analyticsSchema
+  .view('v_exercise_tracking_set_expanded', {
     id: bigint('id', { mode: 'number' }),
     exerciseToSplitId: bigint('exercise_to_split_id', { mode: 'number' }),
     weight: real('weight'),
@@ -19,6 +19,7 @@ export const exerciseTrackingExpandedView = analyticsSchema
     workoutSummaryId: uuid('workout_summary_id'),
     workoutStartUtc: timestamp('workout_start_utc', { withTimezone: true }),
     workoutEndUtc: timestamp('workout_end_utc', { withTimezone: true }),
+    isAssignedToSplit: boolean('is_assigned_to_split'),
   })
   .with({ securityInvoker: true })
   .as(drizzleSql /*sql*/ `
@@ -35,7 +36,11 @@ export const exerciseTrackingExpandedView = analyticsSchema
       et.notes,
       et.workout_summary_id,
       wsumm.workout_start_utc,
-      wsumm.workout_end_utc
+      wsumm.workout_end_utc,
+      CASE
+        WHEN et.exercise_to_split_id IS NOT NULL THEN TRUE
+        WHEN et.exercise_id IS NOT NULL THEN FALSE
+      END AS is_assigned_to_split
     FROM
       tracking.exercise_tracking et
       LEFT JOIN tracking.workout_summary wsumm ON wsumm.id = et.workout_summary_id

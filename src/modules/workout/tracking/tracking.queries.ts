@@ -180,8 +180,8 @@ export class WorkoutTrackingQueries {
               )
             ) AS "exerciseToWorkoutSplit"
           FROM
-            analytics.v_exercise_tracking_expanded et
-            LEFT JOIN workout.v_exercise_to_workout_split_expanded ets ON ets.id = et.exercise_to_split_id
+            analytics.v_exercise_tracking_set_expanded et
+            LEFT JOIN workout.v_exercise_to_workout_split_set_expanded ets ON ets.id = et.exercise_to_split_id
             AND ets.set_index = et.set_index
             JOIN workout.exercise ex ON ex.id = et.exercise_id
           WHERE
@@ -316,10 +316,14 @@ export class WorkoutTrackingQueries {
                     (
                       SELECT
                         JSONB_BUILD_OBJECT(
-                          'exercise', prm.exercise,
-                          'weight', prm.weight,
-                          'reps', prm.reps,
-                          'workoutTimeUtc', prm.workout_time_utc
+                          'exercise',
+                          prm.exercise,
+                          'weight',
+                          prm.weight,
+                          'reps',
+                          prm.reps,
+                          'workoutTimeUtc',
+                          prm.workout_time_utc
                         )
                       FROM
                         pr_max prm
@@ -376,13 +380,14 @@ export class WorkoutTrackingQueries {
     workoutEndUtc: string | null,
   ): Promise<string> {
     // Resolve the workout split that owns the exercises in the finished workout.
+    const firstAssignedExercise = workoutArray.find((exercise) => exercise.isExerciseAssignedToSplit);
     const [{ workoutSplitId }] = await this.sql<WorkoutSplitLookupQueryDto[]>`
       SELECT
         workout_split_id AS "workoutSplitId"
       FROM
         workout.exercise_to_workout_split
       WHERE
-        id = ${workoutArray[0].exerciseToSplitId}
+        id = ${firstAssignedExercise?.exerciseToSplitId ?? null}
       LIMIT
         1;
     `;
@@ -408,17 +413,19 @@ export class WorkoutTrackingQueries {
     `;
 
     for (const exercise of workoutArray) {
-      if (exercise.weight.length !== exercise.reps.length) {
-        throw new Error('Weight and reps arrays must have the same length');
-      }
-
       // Create one tracking record for this exercise; its sets are inserted next.
       const [{ id: exerciseTrackingId }] = await this.sql<ExerciseTrackingIdQueryDto[]>`
         INSERT INTO
-          tracking.exercise_tracking (exercise_to_split_id, notes, workout_summary_id)
+          tracking.exercise_tracking (
+            exercise_to_split_id,
+            exercise_id,
+            notes,
+            workout_summary_id
+          )
         VALUES
           (
-            ${exercise.exerciseToSplitId},
+            ${exercise.isExerciseAssignedToSplit ? exercise.exerciseToSplitId : null},
+            ${exercise.isExerciseAssignedToSplit ? null : exercise.exerciseId},
             ${exercise.notes ?? ''},
             ${workoutSummaryId}::UUID
           )
@@ -426,7 +433,7 @@ export class WorkoutTrackingQueries {
           id;
       `;
 
-      for (let setIndex = 0; setIndex < exercise.reps.length; setIndex += 1) {
+      for (const trackedSet of exercise.trackedSets) {
         // Store the reps and weight for one performed set at its zero-based index.
         await this.sql`
           INSERT INTO
@@ -434,9 +441,9 @@ export class WorkoutTrackingQueries {
           VALUES
             (
               ${exerciseTrackingId},
-              ${setIndex},
-              ${exercise.reps[setIndex]},
-              ${exercise.weight[setIndex]}
+              ${trackedSet.setIndex},
+              ${trackedSet.reps},
+              ${trackedSet.weight}
             );
         `;
       }

@@ -28,7 +28,7 @@ export const prsView = analyticsSchema
       et.workout_start_utc,
       et.workout_end_utc
     FROM
-      analytics.v_exercise_tracking_expanded et
+      analytics.v_exercise_tracking_set_expanded et
     ORDER BY
       et.exercise_id,
       et.weight DESC,

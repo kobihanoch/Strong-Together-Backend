@@ -1291,7 +1291,7 @@ var userRelations = relations14(user, ({ many, one }) => ({
 import { bigint as bigint12, boolean as boolean7, text as text9, timestamp as timestamp11 } from "drizzle-orm/pg-core";
 import { sql as drizzleSql25 } from "drizzle-orm";
 import { integer as integer5 } from "drizzle-orm/pg-core";
-var exerciseToWorkoutSplitExpandedView = workoutSchema.view("v_exercise_to_workout_split_expanded", {
+var exerciseToWorkoutSplitSetExpandedView = workoutSchema.view("v_exercise_to_workout_split_set_expanded", {
   id: bigint12("id", {
     mode: "number"
   }),
@@ -1351,9 +1351,9 @@ var exerciseToWorkoutSplitExpandedView = workoutSchema.view("v_exercise_to_worko
 
 // ../../src/infrastructure/db/schema/drizzle/analytics/views/exercise-tracking-expanded.view.ts
 import { sql as drizzleSql26 } from "drizzle-orm";
-import { bigint as bigint13, real as real2, text as text10, timestamp as timestamp12, uuid as uuid12 } from "drizzle-orm/pg-core";
+import { bigint as bigint13, boolean as boolean8, real as real2, text as text10, timestamp as timestamp12, uuid as uuid12 } from "drizzle-orm/pg-core";
 import { integer as integer6 } from "drizzle-orm/pg-core";
-var exerciseTrackingExpandedView = analyticsSchema.view("v_exercise_tracking_expanded", {
+var exerciseTrackingSetExpandedView = analyticsSchema.view("v_exercise_tracking_set_expanded", {
   id: bigint13("id", {
     mode: "number"
   }),
@@ -1380,7 +1380,8 @@ var exerciseTrackingExpandedView = analyticsSchema.view("v_exercise_tracking_exp
   }),
   workoutEndUtc: timestamp12("workout_end_utc", {
     withTimezone: true
-  })
+  }),
+  isAssignedToSplit: boolean8("is_assigned_to_split")
 }).with({
   securityInvoker: true
 }).as(drizzleSql26`
@@ -1397,7 +1398,11 @@ var exerciseTrackingExpandedView = analyticsSchema.view("v_exercise_tracking_exp
       et.notes,
       et.workout_summary_id,
       wsumm.workout_start_utc,
-      wsumm.workout_end_utc
+      wsumm.workout_end_utc,
+      CASE
+        WHEN et.exercise_to_split_id IS NOT NULL THEN TRUE
+        WHEN et.exercise_id IS NOT NULL THEN FALSE
+      END AS is_assigned_to_split
     FROM
       tracking.exercise_tracking et
       LEFT JOIN tracking.workout_summary wsumm ON wsumm.id = et.workout_summary_id
@@ -1446,7 +1451,7 @@ var prsView = analyticsSchema.view("v_prs", {
       et.workout_start_utc,
       et.workout_end_utc
     FROM
-      analytics.v_exercise_tracking_expanded et
+      analytics.v_exercise_tracking_set_expanded et
     ORDER BY
       et.exercise_id,
       et.weight DESC,
@@ -1464,7 +1469,7 @@ var exerciseDbSchema = createSelectSchema(exercise);
 var workoutPlanDbSchema = createSelectSchema(workoutPlan);
 var workoutSplitDbSchema = createSelectSchema(workoutSplit);
 var exerciseToWorkoutSplitDbSchema = createSelectSchema(exerciseToWorkoutSplit);
-var exerciseToWorkoutSplitExpandedViewDbSchema = createSelectSchema(exerciseToWorkoutSplitExpandedView);
+var exerciseToWorkoutSplitSetExpandedViewDbSchema = createSelectSchema(exerciseToWorkoutSplitSetExpandedView);
 var workoutSetDbSchema = createSelectSchema(workoutSet);
 var workoutSummaryDbSchema = createSelectSchema(workoutSummary);
 var exerciseTrackingDbSchema = createSelectSchema(exerciseTracking);
@@ -1473,7 +1478,7 @@ var aerobicTrackingDbSchema = createSelectSchema(aerobicTracking);
 var messageDbSchema = createSelectSchema(message);
 var userReminderSettingDbSchema = createSelectSchema(userReminderSetting);
 var userSplitInformationDbSchema = createSelectSchema(userSplitInformation);
-var exerciseTrackingExpandedViewDbSchema = createSelectSchema(exerciseTrackingExpandedView);
+var exerciseTrackingSetExpandedViewDbSchema = createSelectSchema(exerciseTrackingSetExpandedView);
 var prsViewDbSchema = createSelectSchema(prsView);
 
 // src/modules/aerobics/aerobics.contracts.ts
@@ -1954,11 +1959,19 @@ var addWorkoutContract = {
 
 // src/modules/workout/tracking/tracking.dtos.ts
 import { z as z18 } from "zod/v4";
-var finishedWorkoutEntryQueryDtoSchema = z18.object({
-  exerciseToSplitId: exerciseToWorkoutSplitDbSchema.shape.id,
-  weight: z18.array(trackingSetDbSchema.shape.weight),
-  reps: z18.array(trackingSetDbSchema.shape.reps),
+var trackedSetQueryDtoSchema = z18.object({
+  reps: trackingSetDbSchema.shape.reps,
+  weight: trackingSetDbSchema.shape.weight,
+  setIndex: trackingSetDbSchema.shape.setIndex
+});
+var finishedWorkoutEntryBaseQueryDtoSchema = z18.object({
+  trackedSets: z18.array(trackedSetQueryDtoSchema),
   notes: exerciseTrackingDbSchema.shape.notes.optional()
+});
+var finishedWorkoutEntryQueryDtoSchema = finishedWorkoutEntryBaseQueryDtoSchema.extend({
+  isExerciseAssignedToSplit: z18.boolean(),
+  exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
+  exerciseId: exerciseTrackingDbSchema.shape.exerciseId
 });
 var exerciseMetadataQueryDtoSchema = z18.object({
   targetMuscle: exerciseDbSchema.shape.targetMuscle,
@@ -2427,14 +2440,14 @@ export {
   exerciseMapByMuscleRowQueryDtoSchema,
   exerciseMetadataQueryDtoSchema,
   exerciseToWorkoutSplitDbSchema,
-  exerciseToWorkoutSplitExpandedViewDbSchema,
+  exerciseToWorkoutSplitSetExpandedViewDbSchema,
   exerciseTrackingAnalysisQueryDtoSchema,
   exerciseTrackingAndStatsQueryDtoSchema,
   exerciseTrackingAndStatsRowQueryDtoSchema,
   exerciseTrackingDbSchema,
-  exerciseTrackingExpandedViewDbSchema,
   exerciseTrackingIdQueryDtoSchema,
   exerciseTrackingPrMaxQueryDtoSchema,
+  exerciseTrackingSetExpandedViewDbSchema,
   exercisesMapByMuscleQueryDtoSchema,
   finishUserWorkoutContract,
   finishUserWorkoutResponseSchema,

@@ -57,7 +57,13 @@ describe('BootstrapController', () => {
     await addWorkoutPlan(app, user.accessToken, { A: [{ id: 20, sets: [8, 8, 10], orderIndex: 0 }] });
     const etsId = await getExerciseToWorkoutSplitId(user.userId, 'A', 20);
     expect(etsId).not.toBeNull();
-    await finishWorkout(app, user.accessToken, [{ exerciseToSplitId: etsId!, weight: [80], reps: [8] }]);
+    await finishWorkout(app, user.accessToken, [
+      {
+        isExerciseAssignedToSplit: true,
+        exerciseToSplitId: etsId!,
+        trackedSets: [{ weight: 80, reps: 8, setIndex: 0 }],
+      },
+    ]);
 
     const aerobics = await request(app.getHttpServer())
       .post('/api/aerobics/add')

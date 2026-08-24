@@ -3,9 +3,9 @@ import {
   aerobicTracking,
   exercise,
   exerciseToWorkoutSplit,
-  exerciseToWorkoutSplitExpandedView,
+  exerciseToWorkoutSplitSetExpandedView,
   exerciseTracking,
-  exerciseTrackingExpandedView,
+  exerciseTrackingSetExpandedView,
   message,
   oauthAccount,
   prsView,
@@ -28,7 +28,7 @@ export const exerciseDbSchema = createSelectSchema(exercise);
 export const workoutPlanDbSchema = createSelectSchema(workoutPlan);
 export const workoutSplitDbSchema = createSelectSchema(workoutSplit);
 export const exerciseToWorkoutSplitDbSchema = createSelectSchema(exerciseToWorkoutSplit);
-export const exerciseToWorkoutSplitExpandedViewDbSchema = createSelectSchema(exerciseToWorkoutSplitExpandedView);
+export const exerciseToWorkoutSplitSetExpandedViewDbSchema = createSelectSchema(exerciseToWorkoutSplitSetExpandedView);
 export const workoutSetDbSchema = createSelectSchema(workoutSet);
 export const workoutSummaryDbSchema = createSelectSchema(workoutSummary);
 export const exerciseTrackingDbSchema = createSelectSchema(exerciseTracking);
@@ -37,7 +37,7 @@ export const aerobicTrackingDbSchema = createSelectSchema(aerobicTracking);
 export const messageDbSchema = createSelectSchema(message);
 export const userReminderSettingDbSchema = createSelectSchema(userReminderSetting);
 export const userSplitInformationDbSchema = createSelectSchema(userSplitInformation);
-export const exerciseTrackingExpandedViewDbSchema = createSelectSchema(exerciseTrackingExpandedView);
+export const exerciseTrackingSetExpandedViewDbSchema = createSelectSchema(exerciseTrackingSetExpandedView);
 export const prsViewDbSchema = createSelectSchema(prsView);
 
 export type UserRow = typeof user.$inferSelect;

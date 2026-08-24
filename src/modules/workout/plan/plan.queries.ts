@@ -30,11 +30,16 @@ export class WorkoutPlanQueries {
             COALESCE(
               JSON_AGG(
                 JSONB_BUILD_OBJECT(
-                  'id', workoutsplits.id,
-                  'workoutId', workoutsplits.workout_id,
-                  'name', workoutsplits.name,
-                  'createdAt', workoutsplits.created_at,
-                  'isActive', workoutsplits.is_active,
+                  'id',
+                  workoutsplits.id,
+                  'workoutId',
+                  workoutsplits.workout_id,
+                  'name',
+                  workoutsplits.name,
+                  'createdAt',
+                  workoutsplits.created_at,
+                  'isActive',
+                  workoutsplits.is_active,
                   'muscleGroup',
                   workout.get_muscle_group (workoutsplits.id),
                   'exerciseToWorkoutSplit',
@@ -85,7 +90,7 @@ export class WorkoutPlanQueries {
                             '[]'::JSONB
                           ) AS sets
                         FROM
-                          workout.v_exercise_to_workout_split_expanded AS expanded
+                          workout.v_exercise_to_workout_split_set_expanded AS expanded
                         WHERE
                           expanded.is_active = TRUE
                         GROUP BY
@@ -170,7 +175,7 @@ export class WorkoutPlanQueries {
                       '[]'::JSONB
                     ) AS sets
                   FROM
-                    workout.v_exercise_to_workout_split_expanded AS expanded
+                    workout.v_exercise_to_workout_split_set_expanded AS expanded
                   WHERE
                     expanded.is_active = TRUE
                   GROUP BY

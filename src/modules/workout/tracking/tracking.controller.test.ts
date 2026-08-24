@@ -42,11 +42,14 @@ async function trackingUser(prefix = 'tracking') {
 }
 
 async function addPlan(user: Awaited<ReturnType<typeof trackingUser>>) {
-  const response = await request(app.getHttpServer()).post('/api/workouts/add').set(authHeaders(user.accessToken)).send({
-    tz: 'Asia/Jerusalem',
-    workoutName: 'Tracking Plan',
-    workoutData: { A: [{ id: 20, sets: [8, 8, 10], orderIndex: 0 }] },
-  });
+  const response = await request(app.getHttpServer())
+    .post('/api/workouts/add')
+    .set(authHeaders(user.accessToken))
+    .send({
+      tz: 'Asia/Jerusalem',
+      workoutName: 'Tracking Plan',
+      workoutData: { A: [{ id: 20, sets: [8, 8, 10], orderIndex: 0 }] },
+    });
   expect(response.status).toBe(201);
   expectSchema(addWorkoutResponseSchema, response.body);
   const etsId = await getExerciseToWorkoutSplitId(user.userId, 'A', 20);
@@ -99,11 +102,25 @@ describe('WorkoutTrackingController', () => {
     const etsId = await addPlan(user);
     const workoutWindow = recentWorkoutWindow();
 
-    const response = await request(app.getHttpServer()).post('/api/workouts/finishworkout').set(authHeaders(user.accessToken)).send({
-      tz: 'Asia/Jerusalem',
-      ...workoutWindow,
-      workout: [{ exerciseToSplitId: etsId, weight: [80, 80, 75], reps: [8, 8, 10], notes: 'Solid set' }],
-    });
+    const response = await request(app.getHttpServer())
+      .post('/api/workouts/finishworkout')
+      .set(authHeaders(user.accessToken))
+      .send({
+        tz: 'Asia/Jerusalem',
+        ...workoutWindow,
+        workout: [
+          {
+            isExerciseAssignedToSplit: true,
+            exerciseToSplitId: etsId,
+            trackedSets: [
+              { weight: 80, reps: 8, setIndex: 0 },
+              { weight: 80, reps: 8, setIndex: 1 },
+              { weight: 75, reps: 10, setIndex: 2 },
+            ],
+            notes: 'Solid set',
+          },
+        ],
+      });
 
     expect(response.status).toBe(201);
     expectSchema(finishUserWorkoutResponseSchema, response.body);
@@ -116,12 +133,15 @@ describe('WorkoutTrackingController', () => {
 
   it('POST /api/workouts/finishworkout rejects empty workouts with 400 and no DB inserts', async () => {
     const user = await trackingUser('tracking_bad');
-    const response = await request(app.getHttpServer()).post('/api/workouts/finishworkout').set(authHeaders(user.accessToken)).send({
-      tz: 'Asia/Jerusalem',
-      workoutStartUtc: '2026-03-22T10:00:00.000Z',
-      workoutEndUtc: '2026-03-22T10:45:00.000Z',
-      workout: [],
-    });
+    const response = await request(app.getHttpServer())
+      .post('/api/workouts/finishworkout')
+      .set(authHeaders(user.accessToken))
+      .send({
+        tz: 'Asia/Jerusalem',
+        workoutStartUtc: '2026-03-22T10:00:00.000Z',
+        workoutEndUtc: '2026-03-22T10:45:00.000Z',
+        workout: [],
+      });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Not a valid workout');

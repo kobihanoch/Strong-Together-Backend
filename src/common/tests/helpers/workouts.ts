@@ -21,9 +21,10 @@ export function finishWorkout(
   app: any,
   accessToken: string,
   workout: Array<{
+    isExerciseAssignedToSplit: true;
     exerciseToSplitId: number;
-    weight: number[];
-    reps: number[];
+    exerciseId?: null;
+    trackedSets: Array<{ weight: number; reps: number; setIndex: number }>;
     notes?: string | null;
   }>,
   tz = 'Asia/Jerusalem',
