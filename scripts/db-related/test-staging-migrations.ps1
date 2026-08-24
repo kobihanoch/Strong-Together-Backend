@@ -43,8 +43,11 @@ DROP SCHEMA IF EXISTS messages CASCADE;
 DROP SCHEMA IF EXISTS reminders CASCADE;
 DROP SCHEMA IF EXISTS tracking CASCADE;
 DROP SCHEMA IF EXISTS workout CASCADE;
+DROP SCHEMA IF EXISTS guest_api CASCADE;
 DROP SCHEMA IF EXISTS drizzle CASCADE;
 DROP SCHEMA IF EXISTS public CASCADE;
+DROP ROLE IF EXISTS app_runtime_user;
+DROP ROLE IF EXISTS guest;
 CREATE SCHEMA public;
 GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO public;
@@ -73,5 +76,5 @@ INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES ('$baselineHa
 $baselineSql | docker run --rm -i --env PGHOST --env PGPORT --env PGUSER --env PGPASSWORD --env PGDATABASE --env PGSSLMODE public.ecr.aws/supabase/postgres:17.6.1.159 psql --variable ON_ERROR_STOP=1
 if ($LASTEXITCODE) { throw 'Failed to mark baseline migration as applied' }
 
-npx drizzle-kit migrate --config=drizzle.staging.config.ts
+npx tsx scripts/db-related/migrate-staging.mts
 if ($LASTEXITCODE) { throw 'Staging migrations failed' }
