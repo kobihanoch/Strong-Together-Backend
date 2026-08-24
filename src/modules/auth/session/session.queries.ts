@@ -19,8 +19,8 @@ export class SessionQueries {
         guest_api.find_login_user (${identifier}) AS "userData"
     `;
     if (!row?.userData) return [];
-    const { is_verified: isVerified, last_login: lastLogin, ...userData } = row.userData;
-    return [{ ...userData, isVerified, lastLogin }];
+    const { password_hash: passwordHash, is_verified: isVerified, last_login: lastLogin, ...userData } = row.userData;
+    return [{ ...userData, passwordHash, isVerified, lastLogin }];
   }
 
   async queryLastLogin(userId: string): Promise<Date | null> {

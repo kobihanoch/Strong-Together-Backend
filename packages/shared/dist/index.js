@@ -1766,15 +1766,17 @@ var userByIdentifierQueryDtoSchema = z13.object({
   name: userDbSchema.shape.name,
   username: userDbSchema.shape.username,
   email: userDbSchema.shape.email.optional(),
-  password: userDbSchema.shape.passwordHash,
+  passwordHash: userDbSchema.shape.passwordHash,
   role: userDbSchema.shape.role,
   isVerified: userDbSchema.shape.isVerified,
   lastLogin: serializedDateSchema.nullable().optional()
 });
 var userByIdentifierRawQueryDtoSchema = userByIdentifierQueryDtoSchema.omit({
   isVerified: true,
-  lastLogin: true
+  lastLogin: true,
+  passwordHash: true
 }).extend({
+  password_hash: userDbSchema.shape.passwordHash,
   is_verified: z13.boolean(),
   last_login: serializedDateSchema.nullable()
 });
@@ -1782,8 +1784,10 @@ var userByIdentifierRowQueryDtoSchema = z13.object({
   userData: userByIdentifierRawQueryDtoSchema.nullable()
 });
 var userByUsernameRawQueryDtoSchema = userByIdentifierQueryDtoSchema.omit({
-  isVerified: true
+  isVerified: true,
+  passwordHash: true
 }).extend({
+  password_hash: userDbSchema.shape.passwordHash,
   is_verified: z13.boolean()
 });
 var userByUsernameRowQueryDtoSchema = z13.object({

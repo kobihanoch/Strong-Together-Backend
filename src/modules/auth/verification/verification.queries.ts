@@ -12,8 +12,8 @@ export class VerificationQueries {
       SELECT guest_api.find_user_by_username(${username}) AS "userData"
     `;
     if (!row?.userData) return [];
-    const { is_verified: isVerified, ...userData } = row.userData;
-    return [{ ...userData, isVerified }];
+    const { password_hash: passwordHash, is_verified: isVerified, ...userData } = row.userData;
+    return [{ ...userData, passwordHash, isVerified }];
   }
 
   async queryUpdateUserVerificationStatus(userId: string, state: boolean): Promise<void> {

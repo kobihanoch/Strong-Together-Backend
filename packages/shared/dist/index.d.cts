@@ -4176,7 +4176,7 @@ declare const userByIdentifierQueryDtoSchema: z.ZodObject<{
     name: z.ZodString;
     username: z.ZodString;
     email: z.ZodOptional<z.ZodString>;
-    password: z.ZodNullable<z.ZodString>;
+    passwordHash: z.ZodNullable<z.ZodString>;
     role: z.ZodString;
     isVerified: z.ZodBoolean;
     lastLogin: z.ZodOptional<z.ZodNullable<z.ZodString>>;
@@ -4188,7 +4188,7 @@ declare const userByIdentifierRawQueryDtoSchema: z.ZodObject<{
     username: z.ZodString;
     email: z.ZodOptional<z.ZodString>;
     role: z.ZodString;
-    password: z.ZodNullable<z.ZodString>;
+    password_hash: z.ZodNullable<z.ZodString>;
     is_verified: z.ZodBoolean;
     last_login: z.ZodNullable<z.ZodString>;
 }, z.core.$strip>;
@@ -4200,7 +4200,7 @@ declare const userByIdentifierRowQueryDtoSchema: z.ZodObject<{
         username: z.ZodString;
         email: z.ZodOptional<z.ZodString>;
         role: z.ZodString;
-        password: z.ZodNullable<z.ZodString>;
+        password_hash: z.ZodNullable<z.ZodString>;
         is_verified: z.ZodBoolean;
         last_login: z.ZodNullable<z.ZodString>;
     }, z.core.$strip>>;
@@ -4213,7 +4213,7 @@ declare const userByUsernameRawQueryDtoSchema: z.ZodObject<{
     email: z.ZodOptional<z.ZodString>;
     role: z.ZodString;
     lastLogin: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    password: z.ZodNullable<z.ZodString>;
+    password_hash: z.ZodNullable<z.ZodString>;
     is_verified: z.ZodBoolean;
 }, z.core.$strip>;
 /** SQL row wrapping a username lookup result under `userData`. */
@@ -4225,7 +4225,7 @@ declare const userByUsernameRowQueryDtoSchema: z.ZodObject<{
         email: z.ZodOptional<z.ZodString>;
         role: z.ZodString;
         lastLogin: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-        password: z.ZodNullable<z.ZodString>;
+        password_hash: z.ZodNullable<z.ZodString>;
         is_verified: z.ZodBoolean;
     }, z.core.$strip>>;
 }, z.core.$strip>;

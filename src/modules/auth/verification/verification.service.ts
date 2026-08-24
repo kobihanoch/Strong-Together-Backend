@@ -65,7 +65,7 @@ export class VerificationService {
 
     const [user = null] = await this.verificationQueries.queryUserByUsername(username);
     if (!user) throw new UnauthorizedException('Invalid credentials');
-    const ok = await bcrypt.compare(password, user.password!);
+    const ok = await bcrypt.compare(password, user.passwordHash!);
     if (!ok) throw new UnauthorizedException('Invalid credentials');
 
     if (user.isVerified) throw new BadRequestException('Account already verified');

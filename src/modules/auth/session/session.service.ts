@@ -33,7 +33,7 @@ export class SessionService {
     const [user = null] = await this.sessionQueries.queryUserByIdentifierForLogin(identifier);
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
-    const isMatch = await bcrypt.compare(password, user.password!);
+    const isMatch = await bcrypt.compare(password, user.passwordHash!);
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
 
     if (!user.isVerified) {

@@ -8,7 +8,7 @@ export const userByIdentifierQueryDtoSchema = z.object({
   name: userDbSchema.shape.name,
   username: userDbSchema.shape.username,
   email: userDbSchema.shape.email.optional(),
-  password: userDbSchema.shape.passwordHash,
+  passwordHash: userDbSchema.shape.passwordHash,
   role: userDbSchema.shape.role,
   isVerified: userDbSchema.shape.isVerified,
   lastLogin: serializedDateSchema.nullable().optional(),
@@ -16,8 +16,12 @@ export const userByIdentifierQueryDtoSchema = z.object({
 
 /** Raw database function payload before snake_case fields are normalized. */
 export const userByIdentifierRawQueryDtoSchema = userByIdentifierQueryDtoSchema
-  .omit({ isVerified: true, lastLogin: true })
-  .extend({ is_verified: z.boolean(), last_login: serializedDateSchema.nullable() });
+  .omit({ isVerified: true, lastLogin: true, passwordHash: true })
+  .extend({
+    password_hash: userDbSchema.shape.passwordHash,
+    is_verified: z.boolean(),
+    last_login: serializedDateSchema.nullable(),
+  });
 
 /** SQL row wrapping an identifier lookup result under `userData`. */
 export const userByIdentifierRowQueryDtoSchema = z.object({
@@ -26,8 +30,8 @@ export const userByIdentifierRowQueryDtoSchema = z.object({
 
 /** Raw username lookup payload before `is_verified` is normalized. */
 export const userByUsernameRawQueryDtoSchema = userByIdentifierQueryDtoSchema
-  .omit({ isVerified: true })
-  .extend({ is_verified: z.boolean() });
+  .omit({ isVerified: true, passwordHash: true })
+  .extend({ password_hash: userDbSchema.shape.passwordHash, is_verified: z.boolean() });
 
 /** SQL row wrapping a username lookup result under `userData`. */
 export const userByUsernameRowQueryDtoSchema = z.object({ userData: userByUsernameRawQueryDtoSchema.nullable() });
