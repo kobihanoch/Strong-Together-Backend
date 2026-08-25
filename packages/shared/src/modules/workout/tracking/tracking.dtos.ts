@@ -96,6 +96,7 @@ const groupedTrackingItemQueryDtoSchema = z.object({
 export const exerciseTrackingAndStatsQueryDtoSchema = z.object({
   trackingStats: z.object({
     workoutCount: z.coerce.number(),
+    hasExerciseTracking: z.boolean(),
     workoutTargets: z.object({
       workoutCountThisWeek: z.coerce.number(),
       workoutCountScheduledPerWeek: z.coerce.number(),

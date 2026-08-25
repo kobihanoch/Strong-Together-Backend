@@ -2053,6 +2053,7 @@ var groupedTrackingItemQueryDtoSchema = z18.object({
 var exerciseTrackingAndStatsQueryDtoSchema = z18.object({
   trackingStats: z18.object({
     workoutCount: z18.coerce.number(),
+    hasExerciseTracking: z18.boolean(),
     workoutTargets: z18.object({
       workoutCountThisWeek: z18.coerce.number(),
       workoutCountScheduledPerWeek: z18.coerce.number(),

@@ -4364,6 +4364,7 @@ declare const bootstrapResponseSchema: z.ZodObject<{
     tracking: z.ZodObject<{
         trackingStats: z.ZodObject<{
             workoutCount: z.ZodCoercedNumber<unknown>;
+            hasExerciseTracking: z.ZodBoolean;
             workoutTargets: z.ZodObject<{
                 workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
                 workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
@@ -4541,6 +4542,7 @@ declare const bootstrapContract: {
         tracking: z.ZodObject<{
             trackingStats: z.ZodObject<{
                 workoutCount: z.ZodCoercedNumber<unknown>;
+                hasExerciseTracking: z.ZodBoolean;
                 workoutTargets: z.ZodObject<{
                     workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
                     workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
@@ -5741,6 +5743,7 @@ declare const getExerciseTrackingRequestSchema: z.ZodObject<{
 declare const getExerciseTrackingResponseSchema: z.ZodObject<{
     trackingStats: z.ZodObject<{
         workoutCount: z.ZodCoercedNumber<unknown>;
+        hasExerciseTracking: z.ZodBoolean;
         workoutTargets: z.ZodObject<{
             workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
             workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
@@ -5836,6 +5839,7 @@ declare const getExerciseTrackingContract: {
     response: z.ZodObject<{
         trackingStats: z.ZodObject<{
             workoutCount: z.ZodCoercedNumber<unknown>;
+            hasExerciseTracking: z.ZodBoolean;
             workoutTargets: z.ZodObject<{
                 workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
                 workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
@@ -5944,6 +5948,7 @@ declare const finishWorkoutRequestSchema: z.ZodObject<{
 declare const finishUserWorkoutResponseSchema: z.ZodObject<{
     trackingStats: z.ZodObject<{
         workoutCount: z.ZodCoercedNumber<unknown>;
+        hasExerciseTracking: z.ZodBoolean;
         workoutTargets: z.ZodObject<{
             workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
             workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
@@ -6052,6 +6057,7 @@ declare const finishUserWorkoutContract: {
     response: z.ZodObject<{
         trackingStats: z.ZodObject<{
             workoutCount: z.ZodCoercedNumber<unknown>;
+            hasExerciseTracking: z.ZodBoolean;
             workoutTargets: z.ZodObject<{
                 workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
                 workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
@@ -6247,6 +6253,7 @@ declare const trackingBySplitNameItemQueryDtoSchema: z.ZodObject<{
 declare const exerciseTrackingAndStatsQueryDtoSchema: z.ZodObject<{
     trackingStats: z.ZodObject<{
         workoutCount: z.ZodCoercedNumber<unknown>;
+        hasExerciseTracking: z.ZodBoolean;
         workoutTargets: z.ZodObject<{
             workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
             workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
@@ -6338,6 +6345,7 @@ declare const exerciseTrackingAndStatsRowQueryDtoSchema: z.ZodObject<{
     data: z.ZodObject<{
         trackingStats: z.ZodObject<{
             workoutCount: z.ZodCoercedNumber<unknown>;
+            hasExerciseTracking: z.ZodBoolean;
             workoutTargets: z.ZodObject<{
                 workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
                 workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;

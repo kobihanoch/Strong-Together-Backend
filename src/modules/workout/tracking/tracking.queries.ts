@@ -357,6 +357,8 @@ export class WorkoutTrackingQueries {
               (SELECT workout_count FROM total_workouts),
               0
             ),
+            'hasExerciseTracking',
+            EXISTS (SELECT 1 FROM bounded_workout_summaries),
             'workoutTargets',
             JSONB_BUILD_OBJECT(
               'workoutCountThisWeek',

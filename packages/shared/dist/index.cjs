@@ -2259,6 +2259,7 @@ var groupedTrackingItemQueryDtoSchema = import_v418.z.object({
 var exerciseTrackingAndStatsQueryDtoSchema = import_v418.z.object({
   trackingStats: import_v418.z.object({
     workoutCount: import_v418.z.coerce.number(),
+    hasExerciseTracking: import_v418.z.boolean(),
     workoutTargets: import_v418.z.object({
       workoutCountThisWeek: import_v418.z.coerce.number(),
       workoutCountScheduledPerWeek: import_v418.z.coerce.number(),
