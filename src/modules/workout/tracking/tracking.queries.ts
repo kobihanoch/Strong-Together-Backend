@@ -451,6 +451,20 @@ export class WorkoutTrackingQueries {
           GROUP BY
             bws.split_name
         ),
+        latest_user_workout_summary AS (
+          SELECT
+            latest_split.order_index
+          FROM
+            tracking.workout_summary latest_summary
+            JOIN workout.workout_split latest_split ON latest_split.id = latest_summary.workout_split_id
+          WHERE
+            latest_summary.user_id = ${userId}::UUID
+          ORDER BY
+            latest_summary.workout_start_utc DESC,
+            latest_summary.id DESC
+          LIMIT
+            1
+        ),
         next_workout_split AS (
           SELECT
             ws.id::INT,
@@ -466,24 +480,17 @@ export class WorkoutTrackingQueries {
             AND ws.is_active = TRUE
           ORDER BY
             CASE
-              WHEN ws.order_index > COALESCE(
-                (
-                  SELECT
-                    latest_split.order_index
-                  FROM
-                    tracking.workout_summary latest_summary
-                    JOIN workout.workout_split latest_split ON latest_split.id = latest_summary.workout_split_id
-                  WHERE
-                    latest_summary.user_id = ${userId}::UUID
-                    AND latest_split.workout_id = wp.id
-                    AND latest_split.is_active = TRUE
-                  ORDER BY
-                    latest_summary.workout_start_utc DESC,
-                    latest_summary.id DESC
-                  LIMIT
-                    1
-                ),
-                0
+              WHEN NOT EXISTS (
+                SELECT
+                  1
+                FROM
+                  latest_user_workout_summary
+              ) THEN 0
+              WHEN ws.order_index > (
+                SELECT
+                  order_index
+                FROM
+                  latest_user_workout_summary
               ) THEN 0
               ELSE 1
             END,

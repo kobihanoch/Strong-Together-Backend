@@ -104,6 +104,55 @@ describe('WorkoutTrackingController', () => {
     expect(await getWorkoutSummaryCount(user.userId)).toBe(0);
   });
 
+  it('GET /api/workouts/gettrackingstats advances from the latest workout summary outside the 45-day window', async () => {
+    const user = await trackingUser('tracking_next_split');
+    const planResponse = await request(app.getHttpServer())
+      .post('/api/workouts/add')
+      .set(authHeaders(user.accessToken))
+      .send({
+        tz: 'Asia/Jerusalem',
+        workoutName: 'Ordered Tracking Plan',
+        workoutData: [
+          { name: 'A', orderIndex: 0, exercises: [{ exerciseId: 20, sets: [8], orderIndex: 0 }] },
+          { name: 'B', orderIndex: 1, exercises: [{ exerciseId: 12, sets: [10], orderIndex: 0 }] },
+        ],
+      });
+    expect(planResponse.status).toBe(201);
+
+    const emptyStatsResponse = await request(app.getHttpServer())
+      .get('/api/workouts/gettrackingstats')
+      .query({ tz: 'Asia/Jerusalem' })
+      .set(authHeaders(user.accessToken));
+    expect(emptyStatsResponse.status).toBe(200);
+    expect(emptyStatsResponse.body.nextWorkoutSplit).toMatchObject({ name: 'A', orderIndex: 0 });
+
+    const splitAExerciseId = await getExerciseToWorkoutSplitId(user.userId, 'A', 20);
+    expect(splitAExerciseId).not.toBeNull();
+    const oldWorkoutStart = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+    const oldWorkoutEnd = new Date(oldWorkoutStart.getTime() + 45 * 60 * 1000);
+    const finishResponse = await request(app.getHttpServer())
+      .post('/api/workouts/finishworkout')
+      .set(authHeaders(user.accessToken))
+      .send({
+        tz: 'Asia/Jerusalem',
+        workoutStartUtc: oldWorkoutStart.toISOString(),
+        workoutEndUtc: oldWorkoutEnd.toISOString(),
+        workout: [
+          {
+            isExerciseAssignedToSplit: true,
+            exerciseToSplitId: splitAExerciseId,
+            exerciseId: 20,
+            trackedSets: [{ weight: 80, reps: 8, setIndex: 0 }],
+          },
+        ],
+      });
+
+    expect(finishResponse.status).toBe(201);
+    expect(finishResponse.body.hasExerciseTracking).toBeUndefined();
+    expect(finishResponse.body.trackingStats.hasExerciseTracking).toBe(false);
+    expect(finishResponse.body.trackingStats.nextWorkoutSplit).toMatchObject({ name: 'B', orderIndex: 1 });
+  });
+
   it('POST /api/workouts/finishworkout creates User C tracking, DB rows, system message, and Redis cache', async () => {
     const user = await trackingUser('tracking_finish');
     const etsId = await addPlan(user);

@@ -745,6 +745,8 @@ Each grouping contains the same tracking-item shape. The grouping key supplies t
 
 `nextWorkoutSplit` and `estimatedOneRepMax` can be `null`. The estimate uses the recorded weight for one rep, Epley for 2–5 reps, Brzycki for 6–10 reps, and O'Connor for 11–12 reps; it is `null` outside that range.
 
+`nextWorkoutSplit` is independent of the 45-day statistics window. It advances from the user's latest workout summary to the next split in the active plan by `orderIndex`, wraps to the lowest active index after the final split, and returns the lowest active index when no summary exists.
+
 ### `GET /api/workouts/getworkout`
 
 Returns the current workout plan for the authenticated user.
