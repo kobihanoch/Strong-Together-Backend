@@ -54,7 +54,9 @@ async function addPlan(user: Awaited<ReturnType<typeof trackingUser>>) {
     .send({
       tz: 'Asia/Jerusalem',
       workoutName: 'Tracking Plan',
-      workoutData: { A: [{ id: 20, sets: [8, 8, 10], orderIndex: 0 }] },
+      workoutData: [
+        { name: 'A', orderIndex: 0, exercises: [{ exerciseId: 20, sets: [8, 8, 10], orderIndex: 0 }] },
+      ],
     });
   expect(response.status).toBe(201);
   expectSchema(addWorkoutResponseSchema, response.body);

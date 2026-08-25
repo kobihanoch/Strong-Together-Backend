@@ -6,7 +6,10 @@ import type {
   AddWorkoutBody,
   GetWholeUserWorkoutPlanQuery,
 } from '@strong-together/shared';
-import { addWorkoutRequestSchema, getWholeWorkoutPlanRequestSchema } from '@strong-together/shared';
+import {
+  addWorkoutRequestSchema,
+  getWholeWorkoutPlanRequestSchema,
+} from '@strong-together/shared';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
@@ -68,7 +71,7 @@ export class WorkoutPlanController {
   }
 
   /**
-   * Create or replace the authenticated user's workout plan.
+   * Create or update the authenticated user's workout plan.
    *
    * Persists the submitted workout structure, invalidates related caches,
    * rebuilds the plan snapshot, and returns the updated plan payload.

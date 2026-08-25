@@ -1,10 +1,15 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
 import { WorkoutPlanQueries } from './plan.queries';
-import type { AddWorkoutBody, AddWorkoutResponse, GetWholeUserWorkoutPlanResponse } from '@strong-together/shared';
+import type {
+  AddWorkoutBody,
+  AddWorkoutResponse,
+  GetWholeUserWorkoutPlanResponse,
+} from '@strong-together/shared';
 
 import { buildPlanKeyStable, TTL_PLAN } from './plan.cache';
 import { buildAnalyticsKeyStable } from '../../analytics/analytics.cache';
+import { buildTrackingMapsKeyStable, buildTrackingStatsKeyStable } from '../tracking/tracking.cache';
 
 @Injectable()
 export class WorkoutPlanService {
@@ -30,45 +35,52 @@ export class WorkoutPlanService {
     const rows = await this.workoutPlanQueries.queryWholeUserWorkoutPlan(userId, tz);
     const [plan] = rows;
     if (!plan) {
-      const empty = { workoutPlan: null, workoutPlanForEditWorkout: null };
+      const empty = { workoutPlan: null };
       await this.cacheService.cacheSetJSON(planKey, empty, TTL_PLAN);
       return { payload: empty, cacheHit: false };
     }
 
-    const { splits } = await this.workoutPlanQueries.queryGetWorkoutSplitsObj(rows[0].id);
-    const payload = { workoutPlan: plan, workoutPlanForEditWorkout: splits };
+    const payload = { workoutPlan: plan };
     await this.cacheService.cacheSetJSON(planKey, payload, TTL_PLAN);
     return { payload, cacheHit: false };
   }
 
   async addWorkoutData(userId: string, body: AddWorkoutBody): Promise<AddWorkoutResponse> {
-    const { workoutData, workoutName, tz } = body;
+    await this.workoutPlanQueries.queryAddWorkout(userId, body.workoutData);
+    return this.refreshWorkoutPlan(userId, body.tz);
+  }
 
-    await this.workoutPlanQueries.queryAddWorkout(userId, workoutData, workoutName);
-
+  private async refreshWorkoutPlan(
+    userId: string,
+    tz: string,
+  ): Promise<AddWorkoutResponse> {
     const planKey = buildPlanKeyStable(userId, tz);
     const analyticsKey = buildAnalyticsKeyStable(userId);
+    const trackingMapsKey = buildTrackingMapsKeyStable(userId, 45, tz);
+    const trackingStatsKey = buildTrackingStatsKeyStable(userId, 45, tz);
+    await Promise.all([
+      this.cacheService.cacheDeleteOtherTimezones(trackingMapsKey),
+      this.cacheService.cacheDeleteOtherTimezones(trackingStatsKey),
+    ]);
     await this.cacheService.cacheDeleteKey(analyticsKey);
     await this.cacheService.cacheDeleteKey(planKey);
+    await this.cacheService.cacheDeleteKey(trackingMapsKey);
+    await this.cacheService.cacheDeleteKey(trackingStatsKey);
 
     const rows = await this.workoutPlanQueries.queryWholeUserWorkoutPlan(userId, tz);
     const [plan] = rows;
     if (!plan) {
       throw new InternalServerErrorException('Workout plan was not created');
     }
-    const { splits } = await this.workoutPlanQueries.queryGetWorkoutSplitsObj(plan.id);
-
     const payload = {
       message: 'Workout created successfully!',
       workoutPlan: plan,
-      workoutPlanForEditWorkout: splits,
     };
 
     await this.cacheService.cacheSetJSON(
       buildPlanKeyStable(userId, tz),
       {
         workoutPlan: plan,
-        workoutPlanForEditWorkout: splits,
       },
       TTL_PLAN,
     );

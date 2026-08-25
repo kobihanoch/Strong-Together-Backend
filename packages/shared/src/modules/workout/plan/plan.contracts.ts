@@ -1,9 +1,8 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, QueryOf, ResponseOf } from '../../../common';
 import {
-  addWorkoutSplitPayloadQueryDtoSchema,
+  saveWorkoutSplitPayloadQueryDtoSchema,
   wholeUserWorkoutPlanQueryDtoSchema,
-  workoutSplitsMapQueryDtoSchema,
 } from './plan.dtos';
 
 // Get whole workout plan
@@ -11,7 +10,6 @@ import {
 export const getWholeWorkoutPlanRequestSchema = z.object({ query: z.object({ tz: z.string().optional() }) });
 export const getWholeUserWorkoutPlanResponseSchema = z.object({
   workoutPlan: wholeUserWorkoutPlanQueryDtoSchema.nullable(),
-  workoutPlanForEditWorkout: workoutSplitsMapQueryDtoSchema.nullable(),
 });
 
 export const getWholeUserWorkoutPlanContract = {
@@ -19,20 +17,21 @@ export const getWholeUserWorkoutPlanContract = {
   response: getWholeUserWorkoutPlanResponseSchema,
 } satisfies Contract;
 
-// Add workout
+const workoutMutationResponseSchema = z.object({
+  message: z.string(),
+  workoutPlan: wholeUserWorkoutPlanQueryDtoSchema,
+});
+
+// Save workout
 
 export const addWorkoutRequestSchema = z.object({
   body: z.object({
-    workoutData: addWorkoutSplitPayloadQueryDtoSchema,
+    workoutData: saveWorkoutSplitPayloadQueryDtoSchema,
     workoutName: z.string().optional(),
     tz: z.string(),
   }),
 });
-export const addWorkoutResponseSchema = z.object({
-  message: z.string(),
-  workoutPlan: wholeUserWorkoutPlanQueryDtoSchema,
-  workoutPlanForEditWorkout: workoutSplitsMapQueryDtoSchema,
-});
+export const addWorkoutResponseSchema = workoutMutationResponseSchema;
 export const addWorkoutContract = {
   request: addWorkoutRequestSchema,
   response: addWorkoutResponseSchema,

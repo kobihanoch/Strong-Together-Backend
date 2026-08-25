@@ -28,7 +28,6 @@ __export(index_exports, {
   addWorkoutContract: () => addWorkoutContract,
   addWorkoutRequestSchema: () => addWorkoutRequestSchema,
   addWorkoutResponseSchema: () => addWorkoutResponseSchema,
-  addWorkoutSplitPayloadQueryDtoSchema: () => addWorkoutSplitPayloadQueryDtoSchema,
   adherenceExerciseStatsQueryDtoSchema: () => adherenceExerciseStatsQueryDtoSchema,
   aerobicTrackingDbSchema: () => aerobicTrackingDbSchema,
   aerobicsDailyRecordQueryDtoSchema: () => aerobicsDailyRecordQueryDtoSchema,
@@ -148,6 +147,8 @@ __export(index_exports, {
   resetPasswordResponseSchema: () => resetPasswordResponseSchema,
   saveUserPushTokenContract: () => saveUserPushTokenContract,
   saveUserPushTokenRequestSchema: () => saveUserPushTokenRequestSchema,
+  saveWorkoutSplitInputQueryDtoSchema: () => saveWorkoutSplitInputQueryDtoSchema,
+  saveWorkoutSplitPayloadQueryDtoSchema: () => saveWorkoutSplitPayloadQueryDtoSchema,
   sendChangePassEmailContract: () => sendChangePassEmailContract,
   sendChangePassEmailRequestSchema: () => sendChangePassEmailRequestSchema,
   sendVerificationMailContract: () => sendVerificationMailContract,
@@ -194,7 +195,6 @@ __export(index_exports, {
   weeklyDataQueryDtoSchema: () => weeklyDataQueryDtoSchema,
   wholeUserWorkoutPlanQueryDtoSchema: () => wholeUserWorkoutPlanQueryDtoSchema,
   workoutExerciseInputQueryDtoSchema: () => workoutExerciseInputQueryDtoSchema,
-  workoutExerciseMetadataQueryDtoSchema: () => workoutExerciseMetadataQueryDtoSchema,
   workoutPlanDbSchema: () => workoutPlanDbSchema,
   workoutPlanIdQueryDtoSchema: () => workoutPlanIdQueryDtoSchema,
   workoutRmRecordQueryDtoSchema: () => workoutRmRecordQueryDtoSchema,
@@ -205,9 +205,6 @@ __export(index_exports, {
   workoutSplitIdQueryDtoSchema: () => workoutSplitIdQueryDtoSchema,
   workoutSplitLookupQueryDtoSchema: () => workoutSplitLookupQueryDtoSchema,
   workoutSplitQueryDtoSchema: () => workoutSplitQueryDtoSchema,
-  workoutSplitsMapItemQueryDtoSchema: () => workoutSplitsMapItemQueryDtoSchema,
-  workoutSplitsMapQueryDtoSchema: () => workoutSplitsMapQueryDtoSchema,
-  workoutSplitsRowQueryDtoSchema: () => workoutSplitsRowQueryDtoSchema,
   workoutSummaryDbSchema: () => workoutSummaryDbSchema,
   workoutSummaryIdQueryDtoSchema: () => workoutSummaryIdQueryDtoSchema
 });
@@ -1124,9 +1121,10 @@ var workoutSplit = workoutSchema.table("workout_split", {
     mode: "number"
   }).notNull(),
   name: (0, import_pg_core23.text)("name").notNull(),
+  orderIndex: (0, import_pg_core23.integer)("order_index").notNull(),
   createdAt: (0, import_pg_core23.timestamp)("created_at", {
     withTimezone: true
-  }).default(import_drizzle_orm20.sql`(now() AT TIME ZONE 'utc')`).notNull(),
+  }).default(import_drizzle_orm20.sql`(NOW() AT TIME ZONE 'utc')`).notNull(),
   isActive: (0, import_pg_core23.boolean)("is_active").default(true).notNull()
 }, (t) => [
   (0, import_pg_core23.primaryKey)({
@@ -1135,7 +1133,7 @@ var workoutSplit = workoutSchema.table("workout_split", {
       t.id
     ]
   }),
-  (0, import_pg_core23.unique)("uq_workout_split_plan_name").on(t.workoutId, t.name),
+  (0, import_pg_core23.uniqueIndex)("uq_active_workout_split_order_index").on(t.workoutId, t.orderIndex).where(import_drizzle_orm20.sql`${t.isActive} = TRUE`),
   (0, import_pg_core23.foreignKey)({
     name: "workout_split_workout_id_fkey",
     columns: [
@@ -2093,28 +2091,38 @@ var import_v417 = require("zod/v4");
 // src/modules/workout/plan/plan.dtos.ts
 var import_v416 = require("zod/v4");
 var workoutExerciseInputQueryDtoSchema = import_v416.z.object({
-  id: exerciseDbSchema.shape.id,
+  exerciseId: exerciseDbSchema.shape.id,
   sets: import_v416.z.array(workoutSetDbSchema.shape.reps),
   orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex
 });
-var addWorkoutSplitPayloadQueryDtoSchema = import_v416.z.record(import_v416.z.string(), import_v416.z.array(workoutExerciseInputQueryDtoSchema).min(1, "Each split must include at least one exercise"));
+var workoutSplitInputBaseQueryDtoSchema = import_v416.z.object({
+  name: workoutSplitDbSchema.shape.name.min(1, "Split name is required"),
+  orderIndex: import_v416.z.number().int().nonnegative(),
+  exercises: import_v416.z.array(workoutExerciseInputQueryDtoSchema).min(1, "Each split must include at least one exercise")
+});
+var saveWorkoutSplitInputQueryDtoSchema = workoutSplitInputBaseQueryDtoSchema.extend({
+  id: workoutSplitDbSchema.shape.id.optional()
+});
+var saveWorkoutSplitPayloadQueryDtoSchema = import_v416.z.array(saveWorkoutSplitInputQueryDtoSchema).min(1, "Workout must include at least one split");
 var exerciseInPlanQueryDtoSchema = import_v416.z.object({
-  id: exerciseToWorkoutSplitDbSchema.shape.id,
+  exerciseToSplitId: exerciseToWorkoutSplitDbSchema.shape.id,
+  exerciseId: exerciseDbSchema.shape.id,
+  name: exerciseDbSchema.shape.name,
   sets: import_v416.z.array(workoutSetDbSchema.shape.reps),
+  orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex,
   isActive: exerciseToWorkoutSplitDbSchema.shape.isActive,
   targetMuscle: exerciseDbSchema.shape.targetMuscle,
-  specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle,
-  exercise: exerciseDbSchema.shape.name,
-  workoutSplit: workoutSplitDbSchema.shape.name
+  specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle
 });
 var workoutSplitQueryDtoSchema = import_v416.z.object({
   id: workoutSplitDbSchema.shape.id,
   workoutId: workoutSplitDbSchema.shape.workoutId,
   name: workoutSplitDbSchema.shape.name,
+  orderIndex: workoutSplitDbSchema.shape.orderIndex,
   createdAt: serializedDateSchema,
   muscleGroup: import_v416.z.string().nullable(),
   isActive: workoutSplitDbSchema.shape.isActive,
-  exerciseToWorkoutSplit: import_v416.z.array(exerciseInPlanQueryDtoSchema)
+  exercises: import_v416.z.array(exerciseInPlanQueryDtoSchema)
 });
 var wholeUserWorkoutPlanQueryDtoSchema = import_v416.z.object({
   id: workoutPlanDbSchema.shape.id,
@@ -2124,22 +2132,6 @@ var wholeUserWorkoutPlanQueryDtoSchema = import_v416.z.object({
   isActive: workoutPlanDbSchema.shape.isActive,
   updatedAt: serializedDateSchema,
   workoutSplits: import_v416.z.array(workoutSplitQueryDtoSchema).nullable()
-});
-var workoutSplitsMapItemQueryDtoSchema = import_v416.z.object({
-  id: exerciseDbSchema.shape.id,
-  name: exerciseDbSchema.shape.name,
-  sets: import_v416.z.array(workoutSetDbSchema.shape.reps),
-  orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex,
-  targetMuscle: exerciseDbSchema.shape.targetMuscle,
-  specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle
-});
-var workoutExerciseMetadataQueryDtoSchema = workoutSplitsMapItemQueryDtoSchema.pick({
-  targetMuscle: true,
-  specificTargetMuscle: true
-});
-var workoutSplitsMapQueryDtoSchema = import_v416.z.record(import_v416.z.string(), import_v416.z.array(workoutSplitsMapItemQueryDtoSchema));
-var workoutSplitsRowQueryDtoSchema = import_v416.z.object({
-  splits: workoutSplitsMapQueryDtoSchema
 });
 var workoutPlanIdQueryDtoSchema = import_v416.z.object({
   id: workoutPlanDbSchema.shape.id
@@ -2158,25 +2150,24 @@ var getWholeWorkoutPlanRequestSchema = import_v417.z.object({
   })
 });
 var getWholeUserWorkoutPlanResponseSchema = import_v417.z.object({
-  workoutPlan: wholeUserWorkoutPlanQueryDtoSchema.nullable(),
-  workoutPlanForEditWorkout: workoutSplitsMapQueryDtoSchema.nullable()
+  workoutPlan: wholeUserWorkoutPlanQueryDtoSchema.nullable()
 });
 var getWholeUserWorkoutPlanContract = {
   request: getWholeWorkoutPlanRequestSchema,
   response: getWholeUserWorkoutPlanResponseSchema
 };
+var workoutMutationResponseSchema = import_v417.z.object({
+  message: import_v417.z.string(),
+  workoutPlan: wholeUserWorkoutPlanQueryDtoSchema
+});
 var addWorkoutRequestSchema = import_v417.z.object({
   body: import_v417.z.object({
-    workoutData: addWorkoutSplitPayloadQueryDtoSchema,
+    workoutData: saveWorkoutSplitPayloadQueryDtoSchema,
     workoutName: import_v417.z.string().optional(),
     tz: import_v417.z.string()
   })
 });
-var addWorkoutResponseSchema = import_v417.z.object({
-  message: import_v417.z.string(),
-  workoutPlan: wholeUserWorkoutPlanQueryDtoSchema,
-  workoutPlanForEditWorkout: workoutSplitsMapQueryDtoSchema
-});
+var addWorkoutResponseSchema = workoutMutationResponseSchema;
 var addWorkoutContract = {
   request: addWorkoutRequestSchema,
   response: addWorkoutResponseSchema
@@ -2265,6 +2256,12 @@ var groupedTrackingItemQueryDtoSchema = import_v418.z.object({
 var exerciseTrackingStatsQueryDtoSchema = import_v418.z.object({
   workoutCount: import_v418.z.coerce.number(),
   hasExerciseTracking: import_v418.z.boolean(),
+  nextWorkoutSplit: import_v418.z.object({
+    id: workoutSplitDbSchema.shape.id,
+    name: workoutSplitDbSchema.shape.name,
+    orderIndex: workoutSplitDbSchema.shape.orderIndex,
+    muscleGroup: import_v418.z.string().nullable()
+  }).nullable(),
   workoutTargets: import_v418.z.object({
     workoutCountThisWeek: import_v418.z.coerce.number(),
     workoutCountScheduledPerWeek: import_v418.z.coerce.number(),
@@ -2681,7 +2678,6 @@ var finishUserWorkoutContract = {
   addWorkoutContract,
   addWorkoutRequestSchema,
   addWorkoutResponseSchema,
-  addWorkoutSplitPayloadQueryDtoSchema,
   adherenceExerciseStatsQueryDtoSchema,
   aerobicTrackingDbSchema,
   aerobicsDailyRecordQueryDtoSchema,
@@ -2801,6 +2797,8 @@ var finishUserWorkoutContract = {
   resetPasswordResponseSchema,
   saveUserPushTokenContract,
   saveUserPushTokenRequestSchema,
+  saveWorkoutSplitInputQueryDtoSchema,
+  saveWorkoutSplitPayloadQueryDtoSchema,
   sendChangePassEmailContract,
   sendChangePassEmailRequestSchema,
   sendVerificationMailContract,
@@ -2847,7 +2845,6 @@ var finishUserWorkoutContract = {
   weeklyDataQueryDtoSchema,
   wholeUserWorkoutPlanQueryDtoSchema,
   workoutExerciseInputQueryDtoSchema,
-  workoutExerciseMetadataQueryDtoSchema,
   workoutPlanDbSchema,
   workoutPlanIdQueryDtoSchema,
   workoutRmRecordQueryDtoSchema,
@@ -2858,9 +2855,6 @@ var finishUserWorkoutContract = {
   workoutSplitIdQueryDtoSchema,
   workoutSplitLookupQueryDtoSchema,
   workoutSplitQueryDtoSchema,
-  workoutSplitsMapItemQueryDtoSchema,
-  workoutSplitsMapQueryDtoSchema,
-  workoutSplitsRowQueryDtoSchema,
   workoutSummaryDbSchema,
   workoutSummaryIdQueryDtoSchema
 });

@@ -451,6 +451,46 @@ export class WorkoutTrackingQueries {
           GROUP BY
             bws.split_name
         ),
+        next_workout_split AS (
+          SELECT
+            ws.id::INT,
+            ws.name,
+            ws.order_index,
+            workout.get_muscle_group (ws.id) AS muscle_group
+          FROM
+            workout.workout_split ws
+            JOIN workout.workout_plan wp ON wp.id = ws.workout_id
+          WHERE
+            wp.user_id = ${userId}::UUID
+            AND wp.is_active = TRUE
+            AND ws.is_active = TRUE
+          ORDER BY
+            CASE
+              WHEN ws.order_index > COALESCE(
+                (
+                  SELECT
+                    latest_split.order_index
+                  FROM
+                    tracking.workout_summary latest_summary
+                    JOIN workout.workout_split latest_split ON latest_split.id = latest_summary.workout_split_id
+                  WHERE
+                    latest_summary.user_id = ${userId}::UUID
+                    AND latest_split.workout_id = wp.id
+                    AND latest_split.is_active = TRUE
+                  ORDER BY
+                    latest_summary.workout_start_utc DESC,
+                    latest_summary.id DESC
+                  LIMIT
+                    1
+                ),
+                0
+              ) THEN 0
+              ELSE 1
+            END,
+            ws.order_index
+          LIMIT
+            1
+        ),
         all_prs AS (
           SELECT
             COALESCE(
@@ -496,6 +536,22 @@ export class WorkoutTrackingQueries {
               1
             FROM
               bounded_workout_summaries
+          ),
+          'nextWorkoutSplit',
+          (
+            SELECT
+              JSONB_BUILD_OBJECT(
+                'id',
+                nws.id,
+                'name',
+                nws.name,
+                'orderIndex',
+                nws.order_index,
+                'muscleGroup',
+                nws.muscle_group
+              )
+            FROM
+              next_workout_split nws
           ),
           'workoutTargets',
           JSONB_BUILD_OBJECT(

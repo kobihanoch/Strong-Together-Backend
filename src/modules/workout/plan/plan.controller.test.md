@@ -18,6 +18,13 @@
 - [x] Confirms DB rows exist.
 - [x] Updates Redis.
 
+### Repeated `POST /api/workouts/add` - User B
+
+- [x] Renames and reorders splits carrying IDs.
+- [x] Creates a new split when its ID is omitted.
+- [x] Preserves split IDs.
+- [x] Validates the response schema.
+
 ## Bad Paths
 
 ### `POST /api/workouts/add`

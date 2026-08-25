@@ -10,10 +10,20 @@ export function addWorkoutPlan(
   workoutName = 'Test Workout',
   tz = 'Asia/Jerusalem',
 ) {
+  const splits = Object.entries(workoutData).map(([name, exercises], orderIndex) => ({
+    name,
+    orderIndex,
+    exercises: exercises.map((exercise, exerciseIndex) => ({
+      exerciseId: exercise.id,
+      sets: exercise.sets,
+      orderIndex: exercise.orderIndex ?? exerciseIndex,
+    })),
+  }));
+
   return request(httpServer(app)).post('/api/workouts/add').set(authHeaders(accessToken)).send({
     tz,
     workoutName,
-    workoutData,
+    workoutData: splits,
   });
 }
 
