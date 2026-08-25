@@ -1570,6 +1570,7 @@ var exerciseTrackingSetExpandedView = analyticsSchema.view("v_exercise_tracking_
   reps: (0, import_pg_core33.bigint)("reps", {
     mode: "number"
   }),
+  orderIndex: (0, import_pg_core34.integer)("order_index"),
   setIndex: (0, import_pg_core34.integer)("set_index"),
   exerciseId: (0, import_pg_core33.bigint)("exercise_id", {
     mode: "number"
@@ -1579,6 +1580,8 @@ var exerciseTrackingSetExpandedView = analyticsSchema.view("v_exercise_tracking_
   }),
   splitName: (0, import_pg_core33.text)("split_name"),
   exercise: (0, import_pg_core33.text)("exercise"),
+  targetMuscle: (0, import_pg_core33.text)("target_muscle"),
+  specificTargetMuscle: (0, import_pg_core33.text)("specific_target_muscle"),
   notes: (0, import_pg_core33.text)("notes"),
   workoutSummaryId: (0, import_pg_core33.uuid)("workout_summary_id"),
   workoutStartUtc: (0, import_pg_core33.timestamp)("workout_start_utc", {
@@ -1596,11 +1599,14 @@ var exerciseTrackingSetExpandedView = analyticsSchema.view("v_exercise_tracking_
       et.exercise_to_split_id,
       tracking_set.weight AS weight,
       tracking_set.reps AS reps,
+      ews.order_index AS order_index,
       tracking_set.set_index AS set_index,
       COALESCE(ews.exercise_id, et.exercise_id) AS exercise_id,
       wsumm.workout_split_id,
       ws.name AS split_name,
       ex.name AS exercise,
+      ex.target_muscle AS target_muscle,
+      ex.specific_target_muscle AS specific_target_muscle,
       et.notes,
       et.workout_summary_id,
       wsumm.workout_start_utc,
@@ -1621,6 +1627,7 @@ var exerciseTrackingSetExpandedView = analyticsSchema.view("v_exercise_tracking_
 // ../../src/infrastructure/db/schema/drizzle/analytics/views/prs.view.ts
 var import_drizzle_orm30 = require("drizzle-orm");
 var import_pg_core35 = require("drizzle-orm/pg-core");
+var import_pg_core36 = require("drizzle-orm/pg-core");
 var prsView = analyticsSchema.view("v_prs", {
   id: (0, import_pg_core35.bigint)("id", {
     mode: "number"
@@ -1632,6 +1639,7 @@ var prsView = analyticsSchema.view("v_prs", {
     mode: "number"
   }),
   exercise: (0, import_pg_core35.text)("exercise"),
+  setIndex: (0, import_pg_core36.integer)("set_index"),
   weight: (0, import_pg_core35.real)("weight"),
   reps: (0, import_pg_core35.bigint)("reps", {
     mode: "number"
@@ -1651,6 +1659,7 @@ var prsView = analyticsSchema.view("v_prs", {
       et.exercise_to_split_id,
       et.exercise_id,
       et.exercise,
+      et.set_index,
       et.weight,
       et.reps,
       et.workout_summary_id,
@@ -2226,12 +2235,54 @@ var trackingByDateItemQueryDtoSchema = trackingMapItemQueryDtoSchema.omit({
 var trackingBySplitNameItemQueryDtoSchema = trackingMapItemQueryDtoSchema.omit({
   splitName: true
 });
+var groupedTrackingItemQueryDtoSchema = import_v418.z.object({
+  exerciseTracking: import_v418.z.object({
+    exerciseTrackingId: exerciseTrackingDbSchema.shape.id,
+    sets: import_v418.z.array(import_v418.z.object({
+      setIndex: trackingSetDbSchema.shape.setIndex,
+      weight: trackingSetDbSchema.shape.weight,
+      reps: trackingSetDbSchema.shape.reps
+    })),
+    notes: exerciseTrackingDbSchema.shape.notes,
+    exerciseAssignment: import_v418.z.object({
+      exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
+      orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex.nullable(),
+      exerciseId: exerciseDbSchema.shape.id,
+      workoutSplitId: workoutSplitDbSchema.shape.id,
+      workoutSplitName: workoutSplitDbSchema.shape.name,
+      exerciseName: exerciseDbSchema.shape.name,
+      targetMuscle: exerciseDbSchema.shape.targetMuscle,
+      specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle
+    })
+  })
+});
 var exerciseTrackingAndStatsQueryDtoSchema = import_v418.z.object({
-  exerciseTrackingAnalysis: exerciseTrackingAnalysisQueryDtoSchema,
-  exerciseTrackingMaps: import_v418.z.object({
-    byDate: import_v418.z.record(import_v418.z.string(), import_v418.z.array(trackingByDateItemQueryDtoSchema)),
-    byExerciseToSplitId: import_v418.z.record(import_v418.z.string(), import_v418.z.array(trackingMapItemQueryDtoSchema)),
-    bySplitName: import_v418.z.record(import_v418.z.string(), import_v418.z.array(trackingBySplitNameItemQueryDtoSchema))
+  trackingStats: import_v418.z.object({
+    workoutCount: import_v418.z.coerce.number(),
+    workoutTargets: import_v418.z.object({
+      workoutCountThisWeek: import_v418.z.coerce.number(),
+      workoutCountScheduledPerWeek: import_v418.z.coerce.number(),
+      weekStreak: import_v418.z.coerce.number()
+    }),
+    lastWorkoutStats: import_v418.z.object({
+      workoutDate: import_v418.z.string().nullable(),
+      workoutSplitName: workoutSplitDbSchema.shape.name.nullable(),
+      exerciseTrackedCount: import_v418.z.coerce.number().nullable(),
+      setTrackedCount: import_v418.z.coerce.number().nullable()
+    }),
+    prs: import_v418.z.array(import_v418.z.object({
+      exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
+      exerciseId: exerciseDbSchema.shape.id,
+      exerciseName: exerciseDbSchema.shape.name,
+      prWeight: trackingSetDbSchema.shape.weight,
+      prReps: trackingSetDbSchema.shape.reps,
+      prSetIndex: trackingSetDbSchema.shape.setIndex
+    }))
+  }),
+  trackingMaps: import_v418.z.object({
+    byDate: import_v418.z.record(import_v418.z.string(), import_v418.z.array(groupedTrackingItemQueryDtoSchema)),
+    byExerciseToSplitId: import_v418.z.record(import_v418.z.string(), import_v418.z.array(groupedTrackingItemQueryDtoSchema)),
+    bySplitName: import_v418.z.record(import_v418.z.string(), import_v418.z.array(groupedTrackingItemQueryDtoSchema))
   })
 });
 var exerciseTrackingAndStatsRowQueryDtoSchema = import_v418.z.object({

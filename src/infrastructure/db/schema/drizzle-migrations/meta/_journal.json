@@ -120,6 +120,13 @@
       "when": 1787594868971,
       "tag": "0016_add_assignment_flag_to_exercise_tracking_expanded",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1787657094834,
+      "tag": "0017_expand_exercise_tracking_and_pr_views",
+      "breakpoints": true
     }
   ]
 }

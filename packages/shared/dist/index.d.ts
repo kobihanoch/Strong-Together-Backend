@@ -3390,6 +3390,23 @@ declare const exerciseTrackingSetExpandedViewDbSchema: drizzle_zod.BuildSchema<"
         identity: undefined;
         generated: undefined;
     }, {}, {}>;
+    orderIndex: drizzle_orm_pg_core.PgColumn<{
+        name: "order_index";
+        tableName: "v_exercise_tracking_set_expanded";
+        dataType: "number";
+        columnType: "PgInteger";
+        data: number;
+        driverParam: string | number;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     setIndex: drizzle_orm_pg_core.PgColumn<{
         name: "set_index";
         tableName: "v_exercise_tracking_set_expanded";
@@ -3460,6 +3477,40 @@ declare const exerciseTrackingSetExpandedViewDbSchema: drizzle_zod.BuildSchema<"
     }, {}, {}>;
     exercise: drizzle_orm_pg_core.PgColumn<{
         name: "exercise";
+        tableName: "v_exercise_tracking_set_expanded";
+        dataType: "string";
+        columnType: "PgText";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    targetMuscle: drizzle_orm_pg_core.PgColumn<{
+        name: "target_muscle";
+        tableName: "v_exercise_tracking_set_expanded";
+        dataType: "string";
+        columnType: "PgText";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    specificTargetMuscle: drizzle_orm_pg_core.PgColumn<{
+        name: "specific_target_muscle";
         tableName: "v_exercise_tracking_set_expanded";
         dataType: "string";
         columnType: "PgText";
@@ -3626,6 +3677,23 @@ declare const prsViewDbSchema: drizzle_zod.BuildSchema<"select", {
         isAutoincrement: false;
         hasRuntimeDefault: false;
         enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    setIndex: drizzle_orm_pg_core.PgColumn<{
+        name: "set_index";
+        tableName: "v_prs";
+        dataType: "number";
+        columnType: "PgInteger";
+        data: number;
+        driverParam: string | number;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
         baseColumn: never;
         identity: undefined;
         generated: undefined;
@@ -4294,79 +4362,91 @@ declare const bootstrapResponseSchema: z.ZodObject<{
         }, z.core.$strip>>>>;
     }, z.core.$strip>;
     tracking: z.ZodObject<{
-        exerciseTrackingAnalysis: z.ZodObject<{
-            uniqueDays: z.ZodNumber;
-            mostFrequentSplit: z.ZodNullable<z.ZodString>;
-            mostFrequentSplitDays: z.ZodNullable<z.ZodNumber>;
-            lastWorkoutDate: z.ZodNullable<z.ZodString>;
-            splitDaysByName: z.ZodRecord<z.ZodString, z.ZodNumber>;
-            prs: z.ZodObject<{
-                prMax: z.ZodNullable<z.ZodObject<{
-                    exercise: z.ZodString;
-                    weight: z.ZodNumber;
-                    reps: z.ZodInt;
-                    workoutTimeUtc: z.ZodString;
-                }, z.core.$strip>>;
+        trackingStats: z.ZodObject<{
+            workoutCount: z.ZodCoercedNumber<unknown>;
+            workoutTargets: z.ZodObject<{
+                workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
+                workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
+                weekStreak: z.ZodCoercedNumber<unknown>;
             }, z.core.$strip>;
-        }, z.core.$strip>;
-        exerciseTrackingMaps: z.ZodObject<{
-            byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-                id: z.ZodInt;
-                exerciseToSplitId: z.ZodInt;
-                orderIndex: z.ZodInt;
-                reps: z.ZodArray<z.ZodInt>;
-                workoutSplitId: z.ZodInt;
+            lastWorkoutStats: z.ZodObject<{
+                workoutDate: z.ZodNullable<z.ZodString>;
+                workoutSplitName: z.ZodNullable<z.ZodString>;
+                exerciseTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+                setTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+            }, z.core.$strip>;
+            prs: z.ZodArray<z.ZodObject<{
+                exerciseToSplitId: z.ZodNullable<z.ZodInt>;
                 exerciseId: z.ZodInt;
-                exercise: z.ZodString;
-                exerciseToWorkoutSplit: z.ZodObject<{
-                    sets: z.ZodArray<z.ZodInt>;
-                    exercises: z.ZodObject<{
+                exerciseName: z.ZodString;
+                prWeight: z.ZodNumber;
+                prReps: z.ZodInt;
+                prSetIndex: z.ZodInt;
+            }, z.core.$strip>>;
+        }, z.core.$strip>;
+        trackingMaps: z.ZodObject<{
+            byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
+                exerciseTracking: z.ZodObject<{
+                    exerciseTrackingId: z.ZodInt;
+                    sets: z.ZodArray<z.ZodObject<{
+                        setIndex: z.ZodInt;
+                        weight: z.ZodNumber;
+                        reps: z.ZodInt;
+                    }, z.core.$strip>>;
+                    notes: z.ZodNullable<z.ZodString>;
+                    exerciseAssignment: z.ZodObject<{
+                        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                        orderIndex: z.ZodNullable<z.ZodInt>;
+                        exerciseId: z.ZodInt;
+                        workoutSplitId: z.ZodInt;
+                        workoutSplitName: z.ZodString;
+                        exerciseName: z.ZodString;
                         targetMuscle: z.ZodString;
                         specificTargetMuscle: z.ZodString;
                     }, z.core.$strip>;
                 }, z.core.$strip>;
-                notes: z.ZodNullable<z.ZodString>;
-                weight: z.ZodArray<z.ZodNumber>;
-                splitName: z.ZodString;
             }, z.core.$strip>>>;
             byExerciseToSplitId: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-                id: z.ZodInt;
-                exerciseToSplitId: z.ZodInt;
-                weight: z.ZodArray<z.ZodNumber>;
-                reps: z.ZodArray<z.ZodInt>;
-                notes: z.ZodNullable<z.ZodString>;
-                exerciseId: z.ZodInt;
-                workoutSplitId: z.ZodInt;
-                splitName: z.ZodString;
-                exercise: z.ZodString;
-                workoutDate: z.ZodString;
-                orderIndex: z.ZodInt;
-                exerciseToWorkoutSplit: z.ZodObject<{
-                    sets: z.ZodArray<z.ZodInt>;
-                    exercises: z.ZodObject<{
+                exerciseTracking: z.ZodObject<{
+                    exerciseTrackingId: z.ZodInt;
+                    sets: z.ZodArray<z.ZodObject<{
+                        setIndex: z.ZodInt;
+                        weight: z.ZodNumber;
+                        reps: z.ZodInt;
+                    }, z.core.$strip>>;
+                    notes: z.ZodNullable<z.ZodString>;
+                    exerciseAssignment: z.ZodObject<{
+                        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                        orderIndex: z.ZodNullable<z.ZodInt>;
+                        exerciseId: z.ZodInt;
+                        workoutSplitId: z.ZodInt;
+                        workoutSplitName: z.ZodString;
+                        exerciseName: z.ZodString;
                         targetMuscle: z.ZodString;
                         specificTargetMuscle: z.ZodString;
                     }, z.core.$strip>;
                 }, z.core.$strip>;
             }, z.core.$strip>>>;
             bySplitName: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-                id: z.ZodInt;
-                exerciseToSplitId: z.ZodInt;
-                orderIndex: z.ZodInt;
-                reps: z.ZodArray<z.ZodInt>;
-                workoutSplitId: z.ZodInt;
-                exerciseId: z.ZodInt;
-                exercise: z.ZodString;
-                exerciseToWorkoutSplit: z.ZodObject<{
-                    sets: z.ZodArray<z.ZodInt>;
-                    exercises: z.ZodObject<{
+                exerciseTracking: z.ZodObject<{
+                    exerciseTrackingId: z.ZodInt;
+                    sets: z.ZodArray<z.ZodObject<{
+                        setIndex: z.ZodInt;
+                        weight: z.ZodNumber;
+                        reps: z.ZodInt;
+                    }, z.core.$strip>>;
+                    notes: z.ZodNullable<z.ZodString>;
+                    exerciseAssignment: z.ZodObject<{
+                        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                        orderIndex: z.ZodNullable<z.ZodInt>;
+                        exerciseId: z.ZodInt;
+                        workoutSplitId: z.ZodInt;
+                        workoutSplitName: z.ZodString;
+                        exerciseName: z.ZodString;
                         targetMuscle: z.ZodString;
                         specificTargetMuscle: z.ZodString;
                     }, z.core.$strip>;
                 }, z.core.$strip>;
-                notes: z.ZodNullable<z.ZodString>;
-                weight: z.ZodArray<z.ZodNumber>;
-                workoutDate: z.ZodString;
             }, z.core.$strip>>>;
         }, z.core.$strip>;
     }, z.core.$strip>;
@@ -4459,79 +4539,91 @@ declare const bootstrapContract: {
             }, z.core.$strip>>>>;
         }, z.core.$strip>;
         tracking: z.ZodObject<{
-            exerciseTrackingAnalysis: z.ZodObject<{
-                uniqueDays: z.ZodNumber;
-                mostFrequentSplit: z.ZodNullable<z.ZodString>;
-                mostFrequentSplitDays: z.ZodNullable<z.ZodNumber>;
-                lastWorkoutDate: z.ZodNullable<z.ZodString>;
-                splitDaysByName: z.ZodRecord<z.ZodString, z.ZodNumber>;
-                prs: z.ZodObject<{
-                    prMax: z.ZodNullable<z.ZodObject<{
-                        exercise: z.ZodString;
-                        weight: z.ZodNumber;
-                        reps: z.ZodInt;
-                        workoutTimeUtc: z.ZodString;
-                    }, z.core.$strip>>;
+            trackingStats: z.ZodObject<{
+                workoutCount: z.ZodCoercedNumber<unknown>;
+                workoutTargets: z.ZodObject<{
+                    workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
+                    workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
+                    weekStreak: z.ZodCoercedNumber<unknown>;
                 }, z.core.$strip>;
-            }, z.core.$strip>;
-            exerciseTrackingMaps: z.ZodObject<{
-                byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-                    id: z.ZodInt;
-                    exerciseToSplitId: z.ZodInt;
-                    orderIndex: z.ZodInt;
-                    reps: z.ZodArray<z.ZodInt>;
-                    workoutSplitId: z.ZodInt;
+                lastWorkoutStats: z.ZodObject<{
+                    workoutDate: z.ZodNullable<z.ZodString>;
+                    workoutSplitName: z.ZodNullable<z.ZodString>;
+                    exerciseTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+                    setTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+                }, z.core.$strip>;
+                prs: z.ZodArray<z.ZodObject<{
+                    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
                     exerciseId: z.ZodInt;
-                    exercise: z.ZodString;
-                    exerciseToWorkoutSplit: z.ZodObject<{
-                        sets: z.ZodArray<z.ZodInt>;
-                        exercises: z.ZodObject<{
+                    exerciseName: z.ZodString;
+                    prWeight: z.ZodNumber;
+                    prReps: z.ZodInt;
+                    prSetIndex: z.ZodInt;
+                }, z.core.$strip>>;
+            }, z.core.$strip>;
+            trackingMaps: z.ZodObject<{
+                byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
+                    exerciseTracking: z.ZodObject<{
+                        exerciseTrackingId: z.ZodInt;
+                        sets: z.ZodArray<z.ZodObject<{
+                            setIndex: z.ZodInt;
+                            weight: z.ZodNumber;
+                            reps: z.ZodInt;
+                        }, z.core.$strip>>;
+                        notes: z.ZodNullable<z.ZodString>;
+                        exerciseAssignment: z.ZodObject<{
+                            exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                            orderIndex: z.ZodNullable<z.ZodInt>;
+                            exerciseId: z.ZodInt;
+                            workoutSplitId: z.ZodInt;
+                            workoutSplitName: z.ZodString;
+                            exerciseName: z.ZodString;
                             targetMuscle: z.ZodString;
                             specificTargetMuscle: z.ZodString;
                         }, z.core.$strip>;
                     }, z.core.$strip>;
-                    notes: z.ZodNullable<z.ZodString>;
-                    weight: z.ZodArray<z.ZodNumber>;
-                    splitName: z.ZodString;
                 }, z.core.$strip>>>;
                 byExerciseToSplitId: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-                    id: z.ZodInt;
-                    exerciseToSplitId: z.ZodInt;
-                    weight: z.ZodArray<z.ZodNumber>;
-                    reps: z.ZodArray<z.ZodInt>;
-                    notes: z.ZodNullable<z.ZodString>;
-                    exerciseId: z.ZodInt;
-                    workoutSplitId: z.ZodInt;
-                    splitName: z.ZodString;
-                    exercise: z.ZodString;
-                    workoutDate: z.ZodString;
-                    orderIndex: z.ZodInt;
-                    exerciseToWorkoutSplit: z.ZodObject<{
-                        sets: z.ZodArray<z.ZodInt>;
-                        exercises: z.ZodObject<{
+                    exerciseTracking: z.ZodObject<{
+                        exerciseTrackingId: z.ZodInt;
+                        sets: z.ZodArray<z.ZodObject<{
+                            setIndex: z.ZodInt;
+                            weight: z.ZodNumber;
+                            reps: z.ZodInt;
+                        }, z.core.$strip>>;
+                        notes: z.ZodNullable<z.ZodString>;
+                        exerciseAssignment: z.ZodObject<{
+                            exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                            orderIndex: z.ZodNullable<z.ZodInt>;
+                            exerciseId: z.ZodInt;
+                            workoutSplitId: z.ZodInt;
+                            workoutSplitName: z.ZodString;
+                            exerciseName: z.ZodString;
                             targetMuscle: z.ZodString;
                             specificTargetMuscle: z.ZodString;
                         }, z.core.$strip>;
                     }, z.core.$strip>;
                 }, z.core.$strip>>>;
                 bySplitName: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-                    id: z.ZodInt;
-                    exerciseToSplitId: z.ZodInt;
-                    orderIndex: z.ZodInt;
-                    reps: z.ZodArray<z.ZodInt>;
-                    workoutSplitId: z.ZodInt;
-                    exerciseId: z.ZodInt;
-                    exercise: z.ZodString;
-                    exerciseToWorkoutSplit: z.ZodObject<{
-                        sets: z.ZodArray<z.ZodInt>;
-                        exercises: z.ZodObject<{
+                    exerciseTracking: z.ZodObject<{
+                        exerciseTrackingId: z.ZodInt;
+                        sets: z.ZodArray<z.ZodObject<{
+                            setIndex: z.ZodInt;
+                            weight: z.ZodNumber;
+                            reps: z.ZodInt;
+                        }, z.core.$strip>>;
+                        notes: z.ZodNullable<z.ZodString>;
+                        exerciseAssignment: z.ZodObject<{
+                            exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                            orderIndex: z.ZodNullable<z.ZodInt>;
+                            exerciseId: z.ZodInt;
+                            workoutSplitId: z.ZodInt;
+                            workoutSplitName: z.ZodString;
+                            exerciseName: z.ZodString;
                             targetMuscle: z.ZodString;
                             specificTargetMuscle: z.ZodString;
                         }, z.core.$strip>;
                     }, z.core.$strip>;
-                    notes: z.ZodNullable<z.ZodString>;
-                    weight: z.ZodArray<z.ZodNumber>;
-                    workoutDate: z.ZodString;
                 }, z.core.$strip>>>;
             }, z.core.$strip>;
         }, z.core.$strip>;
@@ -5647,79 +5739,91 @@ declare const getExerciseTrackingRequestSchema: z.ZodObject<{
     }, z.core.$strip>;
 }, z.core.$strip>;
 declare const getExerciseTrackingResponseSchema: z.ZodObject<{
-    exerciseTrackingAnalysis: z.ZodObject<{
-        uniqueDays: z.ZodNumber;
-        mostFrequentSplit: z.ZodNullable<z.ZodString>;
-        mostFrequentSplitDays: z.ZodNullable<z.ZodNumber>;
-        lastWorkoutDate: z.ZodNullable<z.ZodString>;
-        splitDaysByName: z.ZodRecord<z.ZodString, z.ZodNumber>;
-        prs: z.ZodObject<{
-            prMax: z.ZodNullable<z.ZodObject<{
-                exercise: z.ZodString;
-                weight: z.ZodNumber;
-                reps: z.ZodInt;
-                workoutTimeUtc: z.ZodString;
-            }, z.core.$strip>>;
+    trackingStats: z.ZodObject<{
+        workoutCount: z.ZodCoercedNumber<unknown>;
+        workoutTargets: z.ZodObject<{
+            workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
+            workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
+            weekStreak: z.ZodCoercedNumber<unknown>;
         }, z.core.$strip>;
-    }, z.core.$strip>;
-    exerciseTrackingMaps: z.ZodObject<{
-        byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-            id: z.ZodInt;
-            exerciseToSplitId: z.ZodInt;
-            orderIndex: z.ZodInt;
-            reps: z.ZodArray<z.ZodInt>;
-            workoutSplitId: z.ZodInt;
+        lastWorkoutStats: z.ZodObject<{
+            workoutDate: z.ZodNullable<z.ZodString>;
+            workoutSplitName: z.ZodNullable<z.ZodString>;
+            exerciseTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+            setTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+        }, z.core.$strip>;
+        prs: z.ZodArray<z.ZodObject<{
+            exerciseToSplitId: z.ZodNullable<z.ZodInt>;
             exerciseId: z.ZodInt;
-            exercise: z.ZodString;
-            exerciseToWorkoutSplit: z.ZodObject<{
-                sets: z.ZodArray<z.ZodInt>;
-                exercises: z.ZodObject<{
+            exerciseName: z.ZodString;
+            prWeight: z.ZodNumber;
+            prReps: z.ZodInt;
+            prSetIndex: z.ZodInt;
+        }, z.core.$strip>>;
+    }, z.core.$strip>;
+    trackingMaps: z.ZodObject<{
+        byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
+            exerciseTracking: z.ZodObject<{
+                exerciseTrackingId: z.ZodInt;
+                sets: z.ZodArray<z.ZodObject<{
+                    setIndex: z.ZodInt;
+                    weight: z.ZodNumber;
+                    reps: z.ZodInt;
+                }, z.core.$strip>>;
+                notes: z.ZodNullable<z.ZodString>;
+                exerciseAssignment: z.ZodObject<{
+                    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                    orderIndex: z.ZodNullable<z.ZodInt>;
+                    exerciseId: z.ZodInt;
+                    workoutSplitId: z.ZodInt;
+                    workoutSplitName: z.ZodString;
+                    exerciseName: z.ZodString;
                     targetMuscle: z.ZodString;
                     specificTargetMuscle: z.ZodString;
                 }, z.core.$strip>;
             }, z.core.$strip>;
-            notes: z.ZodNullable<z.ZodString>;
-            weight: z.ZodArray<z.ZodNumber>;
-            splitName: z.ZodString;
         }, z.core.$strip>>>;
         byExerciseToSplitId: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-            id: z.ZodInt;
-            exerciseToSplitId: z.ZodInt;
-            weight: z.ZodArray<z.ZodNumber>;
-            reps: z.ZodArray<z.ZodInt>;
-            notes: z.ZodNullable<z.ZodString>;
-            exerciseId: z.ZodInt;
-            workoutSplitId: z.ZodInt;
-            splitName: z.ZodString;
-            exercise: z.ZodString;
-            workoutDate: z.ZodString;
-            orderIndex: z.ZodInt;
-            exerciseToWorkoutSplit: z.ZodObject<{
-                sets: z.ZodArray<z.ZodInt>;
-                exercises: z.ZodObject<{
+            exerciseTracking: z.ZodObject<{
+                exerciseTrackingId: z.ZodInt;
+                sets: z.ZodArray<z.ZodObject<{
+                    setIndex: z.ZodInt;
+                    weight: z.ZodNumber;
+                    reps: z.ZodInt;
+                }, z.core.$strip>>;
+                notes: z.ZodNullable<z.ZodString>;
+                exerciseAssignment: z.ZodObject<{
+                    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                    orderIndex: z.ZodNullable<z.ZodInt>;
+                    exerciseId: z.ZodInt;
+                    workoutSplitId: z.ZodInt;
+                    workoutSplitName: z.ZodString;
+                    exerciseName: z.ZodString;
                     targetMuscle: z.ZodString;
                     specificTargetMuscle: z.ZodString;
                 }, z.core.$strip>;
             }, z.core.$strip>;
         }, z.core.$strip>>>;
         bySplitName: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-            id: z.ZodInt;
-            exerciseToSplitId: z.ZodInt;
-            orderIndex: z.ZodInt;
-            reps: z.ZodArray<z.ZodInt>;
-            workoutSplitId: z.ZodInt;
-            exerciseId: z.ZodInt;
-            exercise: z.ZodString;
-            exerciseToWorkoutSplit: z.ZodObject<{
-                sets: z.ZodArray<z.ZodInt>;
-                exercises: z.ZodObject<{
+            exerciseTracking: z.ZodObject<{
+                exerciseTrackingId: z.ZodInt;
+                sets: z.ZodArray<z.ZodObject<{
+                    setIndex: z.ZodInt;
+                    weight: z.ZodNumber;
+                    reps: z.ZodInt;
+                }, z.core.$strip>>;
+                notes: z.ZodNullable<z.ZodString>;
+                exerciseAssignment: z.ZodObject<{
+                    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                    orderIndex: z.ZodNullable<z.ZodInt>;
+                    exerciseId: z.ZodInt;
+                    workoutSplitId: z.ZodInt;
+                    workoutSplitName: z.ZodString;
+                    exerciseName: z.ZodString;
                     targetMuscle: z.ZodString;
                     specificTargetMuscle: z.ZodString;
                 }, z.core.$strip>;
             }, z.core.$strip>;
-            notes: z.ZodNullable<z.ZodString>;
-            weight: z.ZodArray<z.ZodNumber>;
-            workoutDate: z.ZodString;
         }, z.core.$strip>>>;
     }, z.core.$strip>;
 }, z.core.$strip>;
@@ -5730,79 +5834,91 @@ declare const getExerciseTrackingContract: {
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodObject<{
-        exerciseTrackingAnalysis: z.ZodObject<{
-            uniqueDays: z.ZodNumber;
-            mostFrequentSplit: z.ZodNullable<z.ZodString>;
-            mostFrequentSplitDays: z.ZodNullable<z.ZodNumber>;
-            lastWorkoutDate: z.ZodNullable<z.ZodString>;
-            splitDaysByName: z.ZodRecord<z.ZodString, z.ZodNumber>;
-            prs: z.ZodObject<{
-                prMax: z.ZodNullable<z.ZodObject<{
-                    exercise: z.ZodString;
-                    weight: z.ZodNumber;
-                    reps: z.ZodInt;
-                    workoutTimeUtc: z.ZodString;
-                }, z.core.$strip>>;
+        trackingStats: z.ZodObject<{
+            workoutCount: z.ZodCoercedNumber<unknown>;
+            workoutTargets: z.ZodObject<{
+                workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
+                workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
+                weekStreak: z.ZodCoercedNumber<unknown>;
             }, z.core.$strip>;
-        }, z.core.$strip>;
-        exerciseTrackingMaps: z.ZodObject<{
-            byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-                id: z.ZodInt;
-                exerciseToSplitId: z.ZodInt;
-                orderIndex: z.ZodInt;
-                reps: z.ZodArray<z.ZodInt>;
-                workoutSplitId: z.ZodInt;
+            lastWorkoutStats: z.ZodObject<{
+                workoutDate: z.ZodNullable<z.ZodString>;
+                workoutSplitName: z.ZodNullable<z.ZodString>;
+                exerciseTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+                setTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+            }, z.core.$strip>;
+            prs: z.ZodArray<z.ZodObject<{
+                exerciseToSplitId: z.ZodNullable<z.ZodInt>;
                 exerciseId: z.ZodInt;
-                exercise: z.ZodString;
-                exerciseToWorkoutSplit: z.ZodObject<{
-                    sets: z.ZodArray<z.ZodInt>;
-                    exercises: z.ZodObject<{
+                exerciseName: z.ZodString;
+                prWeight: z.ZodNumber;
+                prReps: z.ZodInt;
+                prSetIndex: z.ZodInt;
+            }, z.core.$strip>>;
+        }, z.core.$strip>;
+        trackingMaps: z.ZodObject<{
+            byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
+                exerciseTracking: z.ZodObject<{
+                    exerciseTrackingId: z.ZodInt;
+                    sets: z.ZodArray<z.ZodObject<{
+                        setIndex: z.ZodInt;
+                        weight: z.ZodNumber;
+                        reps: z.ZodInt;
+                    }, z.core.$strip>>;
+                    notes: z.ZodNullable<z.ZodString>;
+                    exerciseAssignment: z.ZodObject<{
+                        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                        orderIndex: z.ZodNullable<z.ZodInt>;
+                        exerciseId: z.ZodInt;
+                        workoutSplitId: z.ZodInt;
+                        workoutSplitName: z.ZodString;
+                        exerciseName: z.ZodString;
                         targetMuscle: z.ZodString;
                         specificTargetMuscle: z.ZodString;
                     }, z.core.$strip>;
                 }, z.core.$strip>;
-                notes: z.ZodNullable<z.ZodString>;
-                weight: z.ZodArray<z.ZodNumber>;
-                splitName: z.ZodString;
             }, z.core.$strip>>>;
             byExerciseToSplitId: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-                id: z.ZodInt;
-                exerciseToSplitId: z.ZodInt;
-                weight: z.ZodArray<z.ZodNumber>;
-                reps: z.ZodArray<z.ZodInt>;
-                notes: z.ZodNullable<z.ZodString>;
-                exerciseId: z.ZodInt;
-                workoutSplitId: z.ZodInt;
-                splitName: z.ZodString;
-                exercise: z.ZodString;
-                workoutDate: z.ZodString;
-                orderIndex: z.ZodInt;
-                exerciseToWorkoutSplit: z.ZodObject<{
-                    sets: z.ZodArray<z.ZodInt>;
-                    exercises: z.ZodObject<{
+                exerciseTracking: z.ZodObject<{
+                    exerciseTrackingId: z.ZodInt;
+                    sets: z.ZodArray<z.ZodObject<{
+                        setIndex: z.ZodInt;
+                        weight: z.ZodNumber;
+                        reps: z.ZodInt;
+                    }, z.core.$strip>>;
+                    notes: z.ZodNullable<z.ZodString>;
+                    exerciseAssignment: z.ZodObject<{
+                        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                        orderIndex: z.ZodNullable<z.ZodInt>;
+                        exerciseId: z.ZodInt;
+                        workoutSplitId: z.ZodInt;
+                        workoutSplitName: z.ZodString;
+                        exerciseName: z.ZodString;
                         targetMuscle: z.ZodString;
                         specificTargetMuscle: z.ZodString;
                     }, z.core.$strip>;
                 }, z.core.$strip>;
             }, z.core.$strip>>>;
             bySplitName: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-                id: z.ZodInt;
-                exerciseToSplitId: z.ZodInt;
-                orderIndex: z.ZodInt;
-                reps: z.ZodArray<z.ZodInt>;
-                workoutSplitId: z.ZodInt;
-                exerciseId: z.ZodInt;
-                exercise: z.ZodString;
-                exerciseToWorkoutSplit: z.ZodObject<{
-                    sets: z.ZodArray<z.ZodInt>;
-                    exercises: z.ZodObject<{
+                exerciseTracking: z.ZodObject<{
+                    exerciseTrackingId: z.ZodInt;
+                    sets: z.ZodArray<z.ZodObject<{
+                        setIndex: z.ZodInt;
+                        weight: z.ZodNumber;
+                        reps: z.ZodInt;
+                    }, z.core.$strip>>;
+                    notes: z.ZodNullable<z.ZodString>;
+                    exerciseAssignment: z.ZodObject<{
+                        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                        orderIndex: z.ZodNullable<z.ZodInt>;
+                        exerciseId: z.ZodInt;
+                        workoutSplitId: z.ZodInt;
+                        workoutSplitName: z.ZodString;
+                        exerciseName: z.ZodString;
                         targetMuscle: z.ZodString;
                         specificTargetMuscle: z.ZodString;
                     }, z.core.$strip>;
                 }, z.core.$strip>;
-                notes: z.ZodNullable<z.ZodString>;
-                weight: z.ZodArray<z.ZodNumber>;
-                workoutDate: z.ZodString;
             }, z.core.$strip>>>;
         }, z.core.$strip>;
     }, z.core.$strip>;
@@ -5826,79 +5942,91 @@ declare const finishWorkoutRequestSchema: z.ZodObject<{
     }, z.core.$strip>;
 }, z.core.$strip>;
 declare const finishUserWorkoutResponseSchema: z.ZodObject<{
-    exerciseTrackingAnalysis: z.ZodObject<{
-        uniqueDays: z.ZodNumber;
-        mostFrequentSplit: z.ZodNullable<z.ZodString>;
-        mostFrequentSplitDays: z.ZodNullable<z.ZodNumber>;
-        lastWorkoutDate: z.ZodNullable<z.ZodString>;
-        splitDaysByName: z.ZodRecord<z.ZodString, z.ZodNumber>;
-        prs: z.ZodObject<{
-            prMax: z.ZodNullable<z.ZodObject<{
-                exercise: z.ZodString;
-                weight: z.ZodNumber;
-                reps: z.ZodInt;
-                workoutTimeUtc: z.ZodString;
-            }, z.core.$strip>>;
+    trackingStats: z.ZodObject<{
+        workoutCount: z.ZodCoercedNumber<unknown>;
+        workoutTargets: z.ZodObject<{
+            workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
+            workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
+            weekStreak: z.ZodCoercedNumber<unknown>;
         }, z.core.$strip>;
-    }, z.core.$strip>;
-    exerciseTrackingMaps: z.ZodObject<{
-        byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-            id: z.ZodInt;
-            exerciseToSplitId: z.ZodInt;
-            orderIndex: z.ZodInt;
-            reps: z.ZodArray<z.ZodInt>;
-            workoutSplitId: z.ZodInt;
+        lastWorkoutStats: z.ZodObject<{
+            workoutDate: z.ZodNullable<z.ZodString>;
+            workoutSplitName: z.ZodNullable<z.ZodString>;
+            exerciseTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+            setTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+        }, z.core.$strip>;
+        prs: z.ZodArray<z.ZodObject<{
+            exerciseToSplitId: z.ZodNullable<z.ZodInt>;
             exerciseId: z.ZodInt;
-            exercise: z.ZodString;
-            exerciseToWorkoutSplit: z.ZodObject<{
-                sets: z.ZodArray<z.ZodInt>;
-                exercises: z.ZodObject<{
+            exerciseName: z.ZodString;
+            prWeight: z.ZodNumber;
+            prReps: z.ZodInt;
+            prSetIndex: z.ZodInt;
+        }, z.core.$strip>>;
+    }, z.core.$strip>;
+    trackingMaps: z.ZodObject<{
+        byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
+            exerciseTracking: z.ZodObject<{
+                exerciseTrackingId: z.ZodInt;
+                sets: z.ZodArray<z.ZodObject<{
+                    setIndex: z.ZodInt;
+                    weight: z.ZodNumber;
+                    reps: z.ZodInt;
+                }, z.core.$strip>>;
+                notes: z.ZodNullable<z.ZodString>;
+                exerciseAssignment: z.ZodObject<{
+                    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                    orderIndex: z.ZodNullable<z.ZodInt>;
+                    exerciseId: z.ZodInt;
+                    workoutSplitId: z.ZodInt;
+                    workoutSplitName: z.ZodString;
+                    exerciseName: z.ZodString;
                     targetMuscle: z.ZodString;
                     specificTargetMuscle: z.ZodString;
                 }, z.core.$strip>;
             }, z.core.$strip>;
-            notes: z.ZodNullable<z.ZodString>;
-            weight: z.ZodArray<z.ZodNumber>;
-            splitName: z.ZodString;
         }, z.core.$strip>>>;
         byExerciseToSplitId: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-            id: z.ZodInt;
-            exerciseToSplitId: z.ZodInt;
-            weight: z.ZodArray<z.ZodNumber>;
-            reps: z.ZodArray<z.ZodInt>;
-            notes: z.ZodNullable<z.ZodString>;
-            exerciseId: z.ZodInt;
-            workoutSplitId: z.ZodInt;
-            splitName: z.ZodString;
-            exercise: z.ZodString;
-            workoutDate: z.ZodString;
-            orderIndex: z.ZodInt;
-            exerciseToWorkoutSplit: z.ZodObject<{
-                sets: z.ZodArray<z.ZodInt>;
-                exercises: z.ZodObject<{
+            exerciseTracking: z.ZodObject<{
+                exerciseTrackingId: z.ZodInt;
+                sets: z.ZodArray<z.ZodObject<{
+                    setIndex: z.ZodInt;
+                    weight: z.ZodNumber;
+                    reps: z.ZodInt;
+                }, z.core.$strip>>;
+                notes: z.ZodNullable<z.ZodString>;
+                exerciseAssignment: z.ZodObject<{
+                    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                    orderIndex: z.ZodNullable<z.ZodInt>;
+                    exerciseId: z.ZodInt;
+                    workoutSplitId: z.ZodInt;
+                    workoutSplitName: z.ZodString;
+                    exerciseName: z.ZodString;
                     targetMuscle: z.ZodString;
                     specificTargetMuscle: z.ZodString;
                 }, z.core.$strip>;
             }, z.core.$strip>;
         }, z.core.$strip>>>;
         bySplitName: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-            id: z.ZodInt;
-            exerciseToSplitId: z.ZodInt;
-            orderIndex: z.ZodInt;
-            reps: z.ZodArray<z.ZodInt>;
-            workoutSplitId: z.ZodInt;
-            exerciseId: z.ZodInt;
-            exercise: z.ZodString;
-            exerciseToWorkoutSplit: z.ZodObject<{
-                sets: z.ZodArray<z.ZodInt>;
-                exercises: z.ZodObject<{
+            exerciseTracking: z.ZodObject<{
+                exerciseTrackingId: z.ZodInt;
+                sets: z.ZodArray<z.ZodObject<{
+                    setIndex: z.ZodInt;
+                    weight: z.ZodNumber;
+                    reps: z.ZodInt;
+                }, z.core.$strip>>;
+                notes: z.ZodNullable<z.ZodString>;
+                exerciseAssignment: z.ZodObject<{
+                    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                    orderIndex: z.ZodNullable<z.ZodInt>;
+                    exerciseId: z.ZodInt;
+                    workoutSplitId: z.ZodInt;
+                    workoutSplitName: z.ZodString;
+                    exerciseName: z.ZodString;
                     targetMuscle: z.ZodString;
                     specificTargetMuscle: z.ZodString;
                 }, z.core.$strip>;
             }, z.core.$strip>;
-            notes: z.ZodNullable<z.ZodString>;
-            weight: z.ZodArray<z.ZodNumber>;
-            workoutDate: z.ZodString;
         }, z.core.$strip>>>;
     }, z.core.$strip>;
 }, z.core.$strip>;
@@ -5922,79 +6050,91 @@ declare const finishUserWorkoutContract: {
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodObject<{
-        exerciseTrackingAnalysis: z.ZodObject<{
-            uniqueDays: z.ZodNumber;
-            mostFrequentSplit: z.ZodNullable<z.ZodString>;
-            mostFrequentSplitDays: z.ZodNullable<z.ZodNumber>;
-            lastWorkoutDate: z.ZodNullable<z.ZodString>;
-            splitDaysByName: z.ZodRecord<z.ZodString, z.ZodNumber>;
-            prs: z.ZodObject<{
-                prMax: z.ZodNullable<z.ZodObject<{
-                    exercise: z.ZodString;
-                    weight: z.ZodNumber;
-                    reps: z.ZodInt;
-                    workoutTimeUtc: z.ZodString;
-                }, z.core.$strip>>;
+        trackingStats: z.ZodObject<{
+            workoutCount: z.ZodCoercedNumber<unknown>;
+            workoutTargets: z.ZodObject<{
+                workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
+                workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
+                weekStreak: z.ZodCoercedNumber<unknown>;
             }, z.core.$strip>;
-        }, z.core.$strip>;
-        exerciseTrackingMaps: z.ZodObject<{
-            byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-                id: z.ZodInt;
-                exerciseToSplitId: z.ZodInt;
-                orderIndex: z.ZodInt;
-                reps: z.ZodArray<z.ZodInt>;
-                workoutSplitId: z.ZodInt;
+            lastWorkoutStats: z.ZodObject<{
+                workoutDate: z.ZodNullable<z.ZodString>;
+                workoutSplitName: z.ZodNullable<z.ZodString>;
+                exerciseTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+                setTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+            }, z.core.$strip>;
+            prs: z.ZodArray<z.ZodObject<{
+                exerciseToSplitId: z.ZodNullable<z.ZodInt>;
                 exerciseId: z.ZodInt;
-                exercise: z.ZodString;
-                exerciseToWorkoutSplit: z.ZodObject<{
-                    sets: z.ZodArray<z.ZodInt>;
-                    exercises: z.ZodObject<{
+                exerciseName: z.ZodString;
+                prWeight: z.ZodNumber;
+                prReps: z.ZodInt;
+                prSetIndex: z.ZodInt;
+            }, z.core.$strip>>;
+        }, z.core.$strip>;
+        trackingMaps: z.ZodObject<{
+            byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
+                exerciseTracking: z.ZodObject<{
+                    exerciseTrackingId: z.ZodInt;
+                    sets: z.ZodArray<z.ZodObject<{
+                        setIndex: z.ZodInt;
+                        weight: z.ZodNumber;
+                        reps: z.ZodInt;
+                    }, z.core.$strip>>;
+                    notes: z.ZodNullable<z.ZodString>;
+                    exerciseAssignment: z.ZodObject<{
+                        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                        orderIndex: z.ZodNullable<z.ZodInt>;
+                        exerciseId: z.ZodInt;
+                        workoutSplitId: z.ZodInt;
+                        workoutSplitName: z.ZodString;
+                        exerciseName: z.ZodString;
                         targetMuscle: z.ZodString;
                         specificTargetMuscle: z.ZodString;
                     }, z.core.$strip>;
                 }, z.core.$strip>;
-                notes: z.ZodNullable<z.ZodString>;
-                weight: z.ZodArray<z.ZodNumber>;
-                splitName: z.ZodString;
             }, z.core.$strip>>>;
             byExerciseToSplitId: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-                id: z.ZodInt;
-                exerciseToSplitId: z.ZodInt;
-                weight: z.ZodArray<z.ZodNumber>;
-                reps: z.ZodArray<z.ZodInt>;
-                notes: z.ZodNullable<z.ZodString>;
-                exerciseId: z.ZodInt;
-                workoutSplitId: z.ZodInt;
-                splitName: z.ZodString;
-                exercise: z.ZodString;
-                workoutDate: z.ZodString;
-                orderIndex: z.ZodInt;
-                exerciseToWorkoutSplit: z.ZodObject<{
-                    sets: z.ZodArray<z.ZodInt>;
-                    exercises: z.ZodObject<{
+                exerciseTracking: z.ZodObject<{
+                    exerciseTrackingId: z.ZodInt;
+                    sets: z.ZodArray<z.ZodObject<{
+                        setIndex: z.ZodInt;
+                        weight: z.ZodNumber;
+                        reps: z.ZodInt;
+                    }, z.core.$strip>>;
+                    notes: z.ZodNullable<z.ZodString>;
+                    exerciseAssignment: z.ZodObject<{
+                        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                        orderIndex: z.ZodNullable<z.ZodInt>;
+                        exerciseId: z.ZodInt;
+                        workoutSplitId: z.ZodInt;
+                        workoutSplitName: z.ZodString;
+                        exerciseName: z.ZodString;
                         targetMuscle: z.ZodString;
                         specificTargetMuscle: z.ZodString;
                     }, z.core.$strip>;
                 }, z.core.$strip>;
             }, z.core.$strip>>>;
             bySplitName: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-                id: z.ZodInt;
-                exerciseToSplitId: z.ZodInt;
-                orderIndex: z.ZodInt;
-                reps: z.ZodArray<z.ZodInt>;
-                workoutSplitId: z.ZodInt;
-                exerciseId: z.ZodInt;
-                exercise: z.ZodString;
-                exerciseToWorkoutSplit: z.ZodObject<{
-                    sets: z.ZodArray<z.ZodInt>;
-                    exercises: z.ZodObject<{
+                exerciseTracking: z.ZodObject<{
+                    exerciseTrackingId: z.ZodInt;
+                    sets: z.ZodArray<z.ZodObject<{
+                        setIndex: z.ZodInt;
+                        weight: z.ZodNumber;
+                        reps: z.ZodInt;
+                    }, z.core.$strip>>;
+                    notes: z.ZodNullable<z.ZodString>;
+                    exerciseAssignment: z.ZodObject<{
+                        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                        orderIndex: z.ZodNullable<z.ZodInt>;
+                        exerciseId: z.ZodInt;
+                        workoutSplitId: z.ZodInt;
+                        workoutSplitName: z.ZodString;
+                        exerciseName: z.ZodString;
                         targetMuscle: z.ZodString;
                         specificTargetMuscle: z.ZodString;
                     }, z.core.$strip>;
                 }, z.core.$strip>;
-                notes: z.ZodNullable<z.ZodString>;
-                weight: z.ZodArray<z.ZodNumber>;
-                workoutDate: z.ZodString;
             }, z.core.$strip>>>;
         }, z.core.$strip>;
     }, z.core.$strip>;
@@ -6104,160 +6244,183 @@ declare const trackingBySplitNameItemQueryDtoSchema: z.ZodObject<{
     weight: z.ZodArray<z.ZodNumber>;
     workoutDate: z.ZodString;
 }, z.core.$strip>;
-/** Complete tracking and statistics aggregate returned by the tracking query. */
 declare const exerciseTrackingAndStatsQueryDtoSchema: z.ZodObject<{
-    exerciseTrackingAnalysis: z.ZodObject<{
-        uniqueDays: z.ZodNumber;
-        mostFrequentSplit: z.ZodNullable<z.ZodString>;
-        mostFrequentSplitDays: z.ZodNullable<z.ZodNumber>;
-        lastWorkoutDate: z.ZodNullable<z.ZodString>;
-        splitDaysByName: z.ZodRecord<z.ZodString, z.ZodNumber>;
-        prs: z.ZodObject<{
-            prMax: z.ZodNullable<z.ZodObject<{
-                exercise: z.ZodString;
-                weight: z.ZodNumber;
-                reps: z.ZodInt;
-                workoutTimeUtc: z.ZodString;
-            }, z.core.$strip>>;
+    trackingStats: z.ZodObject<{
+        workoutCount: z.ZodCoercedNumber<unknown>;
+        workoutTargets: z.ZodObject<{
+            workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
+            workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
+            weekStreak: z.ZodCoercedNumber<unknown>;
         }, z.core.$strip>;
-    }, z.core.$strip>;
-    exerciseTrackingMaps: z.ZodObject<{
-        byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-            id: z.ZodInt;
-            exerciseToSplitId: z.ZodInt;
-            orderIndex: z.ZodInt;
-            reps: z.ZodArray<z.ZodInt>;
-            workoutSplitId: z.ZodInt;
+        lastWorkoutStats: z.ZodObject<{
+            workoutDate: z.ZodNullable<z.ZodString>;
+            workoutSplitName: z.ZodNullable<z.ZodString>;
+            exerciseTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+            setTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+        }, z.core.$strip>;
+        prs: z.ZodArray<z.ZodObject<{
+            exerciseToSplitId: z.ZodNullable<z.ZodInt>;
             exerciseId: z.ZodInt;
-            exercise: z.ZodString;
-            exerciseToWorkoutSplit: z.ZodObject<{
-                sets: z.ZodArray<z.ZodInt>;
-                exercises: z.ZodObject<{
+            exerciseName: z.ZodString;
+            prWeight: z.ZodNumber;
+            prReps: z.ZodInt;
+            prSetIndex: z.ZodInt;
+        }, z.core.$strip>>;
+    }, z.core.$strip>;
+    trackingMaps: z.ZodObject<{
+        byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
+            exerciseTracking: z.ZodObject<{
+                exerciseTrackingId: z.ZodInt;
+                sets: z.ZodArray<z.ZodObject<{
+                    setIndex: z.ZodInt;
+                    weight: z.ZodNumber;
+                    reps: z.ZodInt;
+                }, z.core.$strip>>;
+                notes: z.ZodNullable<z.ZodString>;
+                exerciseAssignment: z.ZodObject<{
+                    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                    orderIndex: z.ZodNullable<z.ZodInt>;
+                    exerciseId: z.ZodInt;
+                    workoutSplitId: z.ZodInt;
+                    workoutSplitName: z.ZodString;
+                    exerciseName: z.ZodString;
                     targetMuscle: z.ZodString;
                     specificTargetMuscle: z.ZodString;
                 }, z.core.$strip>;
             }, z.core.$strip>;
-            notes: z.ZodNullable<z.ZodString>;
-            weight: z.ZodArray<z.ZodNumber>;
-            splitName: z.ZodString;
         }, z.core.$strip>>>;
         byExerciseToSplitId: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-            id: z.ZodInt;
-            exerciseToSplitId: z.ZodInt;
-            weight: z.ZodArray<z.ZodNumber>;
-            reps: z.ZodArray<z.ZodInt>;
-            notes: z.ZodNullable<z.ZodString>;
-            exerciseId: z.ZodInt;
-            workoutSplitId: z.ZodInt;
-            splitName: z.ZodString;
-            exercise: z.ZodString;
-            workoutDate: z.ZodString;
-            orderIndex: z.ZodInt;
-            exerciseToWorkoutSplit: z.ZodObject<{
-                sets: z.ZodArray<z.ZodInt>;
-                exercises: z.ZodObject<{
+            exerciseTracking: z.ZodObject<{
+                exerciseTrackingId: z.ZodInt;
+                sets: z.ZodArray<z.ZodObject<{
+                    setIndex: z.ZodInt;
+                    weight: z.ZodNumber;
+                    reps: z.ZodInt;
+                }, z.core.$strip>>;
+                notes: z.ZodNullable<z.ZodString>;
+                exerciseAssignment: z.ZodObject<{
+                    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                    orderIndex: z.ZodNullable<z.ZodInt>;
+                    exerciseId: z.ZodInt;
+                    workoutSplitId: z.ZodInt;
+                    workoutSplitName: z.ZodString;
+                    exerciseName: z.ZodString;
                     targetMuscle: z.ZodString;
                     specificTargetMuscle: z.ZodString;
                 }, z.core.$strip>;
             }, z.core.$strip>;
         }, z.core.$strip>>>;
         bySplitName: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-            id: z.ZodInt;
-            exerciseToSplitId: z.ZodInt;
-            orderIndex: z.ZodInt;
-            reps: z.ZodArray<z.ZodInt>;
-            workoutSplitId: z.ZodInt;
-            exerciseId: z.ZodInt;
-            exercise: z.ZodString;
-            exerciseToWorkoutSplit: z.ZodObject<{
-                sets: z.ZodArray<z.ZodInt>;
-                exercises: z.ZodObject<{
+            exerciseTracking: z.ZodObject<{
+                exerciseTrackingId: z.ZodInt;
+                sets: z.ZodArray<z.ZodObject<{
+                    setIndex: z.ZodInt;
+                    weight: z.ZodNumber;
+                    reps: z.ZodInt;
+                }, z.core.$strip>>;
+                notes: z.ZodNullable<z.ZodString>;
+                exerciseAssignment: z.ZodObject<{
+                    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                    orderIndex: z.ZodNullable<z.ZodInt>;
+                    exerciseId: z.ZodInt;
+                    workoutSplitId: z.ZodInt;
+                    workoutSplitName: z.ZodString;
+                    exerciseName: z.ZodString;
                     targetMuscle: z.ZodString;
                     specificTargetMuscle: z.ZodString;
                 }, z.core.$strip>;
             }, z.core.$strip>;
-            notes: z.ZodNullable<z.ZodString>;
-            weight: z.ZodArray<z.ZodNumber>;
-            workoutDate: z.ZodString;
         }, z.core.$strip>>>;
     }, z.core.$strip>;
 }, z.core.$strip>;
 /** SQL row wrapping the complete tracking aggregate under `data`. */
 declare const exerciseTrackingAndStatsRowQueryDtoSchema: z.ZodObject<{
     data: z.ZodObject<{
-        exerciseTrackingAnalysis: z.ZodObject<{
-            uniqueDays: z.ZodNumber;
-            mostFrequentSplit: z.ZodNullable<z.ZodString>;
-            mostFrequentSplitDays: z.ZodNullable<z.ZodNumber>;
-            lastWorkoutDate: z.ZodNullable<z.ZodString>;
-            splitDaysByName: z.ZodRecord<z.ZodString, z.ZodNumber>;
-            prs: z.ZodObject<{
-                prMax: z.ZodNullable<z.ZodObject<{
-                    exercise: z.ZodString;
-                    weight: z.ZodNumber;
-                    reps: z.ZodInt;
-                    workoutTimeUtc: z.ZodString;
-                }, z.core.$strip>>;
+        trackingStats: z.ZodObject<{
+            workoutCount: z.ZodCoercedNumber<unknown>;
+            workoutTargets: z.ZodObject<{
+                workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
+                workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
+                weekStreak: z.ZodCoercedNumber<unknown>;
             }, z.core.$strip>;
-        }, z.core.$strip>;
-        exerciseTrackingMaps: z.ZodObject<{
-            byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-                id: z.ZodInt;
-                exerciseToSplitId: z.ZodInt;
-                orderIndex: z.ZodInt;
-                reps: z.ZodArray<z.ZodInt>;
-                workoutSplitId: z.ZodInt;
+            lastWorkoutStats: z.ZodObject<{
+                workoutDate: z.ZodNullable<z.ZodString>;
+                workoutSplitName: z.ZodNullable<z.ZodString>;
+                exerciseTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+                setTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
+            }, z.core.$strip>;
+            prs: z.ZodArray<z.ZodObject<{
+                exerciseToSplitId: z.ZodNullable<z.ZodInt>;
                 exerciseId: z.ZodInt;
-                exercise: z.ZodString;
-                exerciseToWorkoutSplit: z.ZodObject<{
-                    sets: z.ZodArray<z.ZodInt>;
-                    exercises: z.ZodObject<{
+                exerciseName: z.ZodString;
+                prWeight: z.ZodNumber;
+                prReps: z.ZodInt;
+                prSetIndex: z.ZodInt;
+            }, z.core.$strip>>;
+        }, z.core.$strip>;
+        trackingMaps: z.ZodObject<{
+            byDate: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
+                exerciseTracking: z.ZodObject<{
+                    exerciseTrackingId: z.ZodInt;
+                    sets: z.ZodArray<z.ZodObject<{
+                        setIndex: z.ZodInt;
+                        weight: z.ZodNumber;
+                        reps: z.ZodInt;
+                    }, z.core.$strip>>;
+                    notes: z.ZodNullable<z.ZodString>;
+                    exerciseAssignment: z.ZodObject<{
+                        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                        orderIndex: z.ZodNullable<z.ZodInt>;
+                        exerciseId: z.ZodInt;
+                        workoutSplitId: z.ZodInt;
+                        workoutSplitName: z.ZodString;
+                        exerciseName: z.ZodString;
                         targetMuscle: z.ZodString;
                         specificTargetMuscle: z.ZodString;
                     }, z.core.$strip>;
                 }, z.core.$strip>;
-                notes: z.ZodNullable<z.ZodString>;
-                weight: z.ZodArray<z.ZodNumber>;
-                splitName: z.ZodString;
             }, z.core.$strip>>>;
             byExerciseToSplitId: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-                id: z.ZodInt;
-                exerciseToSplitId: z.ZodInt;
-                weight: z.ZodArray<z.ZodNumber>;
-                reps: z.ZodArray<z.ZodInt>;
-                notes: z.ZodNullable<z.ZodString>;
-                exerciseId: z.ZodInt;
-                workoutSplitId: z.ZodInt;
-                splitName: z.ZodString;
-                exercise: z.ZodString;
-                workoutDate: z.ZodString;
-                orderIndex: z.ZodInt;
-                exerciseToWorkoutSplit: z.ZodObject<{
-                    sets: z.ZodArray<z.ZodInt>;
-                    exercises: z.ZodObject<{
+                exerciseTracking: z.ZodObject<{
+                    exerciseTrackingId: z.ZodInt;
+                    sets: z.ZodArray<z.ZodObject<{
+                        setIndex: z.ZodInt;
+                        weight: z.ZodNumber;
+                        reps: z.ZodInt;
+                    }, z.core.$strip>>;
+                    notes: z.ZodNullable<z.ZodString>;
+                    exerciseAssignment: z.ZodObject<{
+                        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                        orderIndex: z.ZodNullable<z.ZodInt>;
+                        exerciseId: z.ZodInt;
+                        workoutSplitId: z.ZodInt;
+                        workoutSplitName: z.ZodString;
+                        exerciseName: z.ZodString;
                         targetMuscle: z.ZodString;
                         specificTargetMuscle: z.ZodString;
                     }, z.core.$strip>;
                 }, z.core.$strip>;
             }, z.core.$strip>>>;
             bySplitName: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-                id: z.ZodInt;
-                exerciseToSplitId: z.ZodInt;
-                orderIndex: z.ZodInt;
-                reps: z.ZodArray<z.ZodInt>;
-                workoutSplitId: z.ZodInt;
-                exerciseId: z.ZodInt;
-                exercise: z.ZodString;
-                exerciseToWorkoutSplit: z.ZodObject<{
-                    sets: z.ZodArray<z.ZodInt>;
-                    exercises: z.ZodObject<{
+                exerciseTracking: z.ZodObject<{
+                    exerciseTrackingId: z.ZodInt;
+                    sets: z.ZodArray<z.ZodObject<{
+                        setIndex: z.ZodInt;
+                        weight: z.ZodNumber;
+                        reps: z.ZodInt;
+                    }, z.core.$strip>>;
+                    notes: z.ZodNullable<z.ZodString>;
+                    exerciseAssignment: z.ZodObject<{
+                        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+                        orderIndex: z.ZodNullable<z.ZodInt>;
+                        exerciseId: z.ZodInt;
+                        workoutSplitId: z.ZodInt;
+                        workoutSplitName: z.ZodString;
+                        exerciseName: z.ZodString;
                         targetMuscle: z.ZodString;
                         specificTargetMuscle: z.ZodString;
                     }, z.core.$strip>;
                 }, z.core.$strip>;
-                notes: z.ZodNullable<z.ZodString>;
-                weight: z.ZodArray<z.ZodNumber>;
-                workoutDate: z.ZodString;
             }, z.core.$strip>>>;
         }, z.core.$strip>;
     }, z.core.$strip>;

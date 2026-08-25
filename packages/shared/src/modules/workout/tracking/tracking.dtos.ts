@@ -71,12 +71,55 @@ export const trackingByDateItemQueryDtoSchema = trackingMapItemQueryDtoSchema.om
 /** Tracking item used in maps already grouped by workout split name. */
 export const trackingBySplitNameItemQueryDtoSchema = trackingMapItemQueryDtoSchema.omit({ splitName: true });
 /** Complete tracking and statistics aggregate returned by the tracking query. */
+const groupedTrackingItemQueryDtoSchema = z.object({
+  exerciseTracking: z.object({
+    exerciseTrackingId: exerciseTrackingDbSchema.shape.id,
+    sets: z.array(z.object({
+      setIndex: trackingSetDbSchema.shape.setIndex,
+      weight: trackingSetDbSchema.shape.weight,
+      reps: trackingSetDbSchema.shape.reps,
+    })),
+    notes: exerciseTrackingDbSchema.shape.notes,
+    exerciseAssignment: z.object({
+      exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
+      orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex.nullable(),
+      exerciseId: exerciseDbSchema.shape.id,
+      workoutSplitId: workoutSplitDbSchema.shape.id,
+      workoutSplitName: workoutSplitDbSchema.shape.name,
+      exerciseName: exerciseDbSchema.shape.name,
+      targetMuscle: exerciseDbSchema.shape.targetMuscle,
+      specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle,
+    }),
+  }),
+});
+
 export const exerciseTrackingAndStatsQueryDtoSchema = z.object({
-  exerciseTrackingAnalysis: exerciseTrackingAnalysisQueryDtoSchema,
-  exerciseTrackingMaps: z.object({
-    byDate: z.record(z.string(), z.array(trackingByDateItemQueryDtoSchema)),
-    byExerciseToSplitId: z.record(z.string(), z.array(trackingMapItemQueryDtoSchema)),
-    bySplitName: z.record(z.string(), z.array(trackingBySplitNameItemQueryDtoSchema)),
+  trackingStats: z.object({
+    workoutCount: z.coerce.number(),
+    workoutTargets: z.object({
+      workoutCountThisWeek: z.coerce.number(),
+      workoutCountScheduledPerWeek: z.coerce.number(),
+      weekStreak: z.coerce.number(),
+    }),
+    lastWorkoutStats: z.object({
+      workoutDate: z.string().nullable(),
+      workoutSplitName: workoutSplitDbSchema.shape.name.nullable(),
+      exerciseTrackedCount: z.coerce.number().nullable(),
+      setTrackedCount: z.coerce.number().nullable(),
+    }),
+    prs: z.array(z.object({
+      exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
+      exerciseId: exerciseDbSchema.shape.id,
+      exerciseName: exerciseDbSchema.shape.name,
+      prWeight: trackingSetDbSchema.shape.weight,
+      prReps: trackingSetDbSchema.shape.reps,
+      prSetIndex: trackingSetDbSchema.shape.setIndex,
+    })),
+  }),
+  trackingMaps: z.object({
+    byDate: z.record(z.string(), z.array(groupedTrackingItemQueryDtoSchema)),
+    byExerciseToSplitId: z.record(z.string(), z.array(groupedTrackingItemQueryDtoSchema)),
+    bySplitName: z.record(z.string(), z.array(groupedTrackingItemQueryDtoSchema)),
   }),
 });
 

@@ -77,8 +77,8 @@ describe('WorkoutTrackingController', () => {
     expect(response.status).toBe(200);
     expect(response.headers['x-cache']).toBe('MISS');
     expectSchema(getExerciseTrackingResponseSchema, response.body);
-    expect(response.body.exerciseTrackingAnalysis.uniqueDays).toBe(0);
-    expect(response.body.exerciseTrackingMaps.byDate).toEqual({});
+    expect(response.body.trackingStats.workoutCount).toBe(0);
+    expect(response.body.trackingMaps.byDate).toEqual({});
     expect(await getRedisKey(buildTrackingKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
@@ -93,7 +93,7 @@ describe('WorkoutTrackingController', () => {
 
     expect(response.status).toBe(200);
     expectSchema(getExerciseTrackingResponseSchema, response.body);
-    expect(response.body.exerciseTrackingAnalysis.uniqueDays).toBe(0);
+    expect(response.body.trackingStats.workoutCount).toBe(0);
     expect(await getWorkoutSummaryCount(user.userId)).toBe(0);
   });
 
@@ -124,8 +124,8 @@ describe('WorkoutTrackingController', () => {
 
     expect(response.status).toBe(201);
     expectSchema(finishUserWorkoutResponseSchema, response.body);
-    expect(response.body.exerciseTrackingAnalysis.uniqueDays).toBe(1);
-    expect(response.body.exerciseTrackingMaps.byExerciseToSplitId).toHaveProperty(String(etsId));
+    expect(response.body.trackingStats.workoutCount).toBe(1);
+    expect(response.body.trackingMaps.byExerciseToSplitId).toHaveProperty(String(etsId));
     expect(await getWorkoutSummaryCount(user.userId)).toBe(1);
     expect(await getExerciseTrackingCountForUser(user.userId)).toBe(1);
     expect(await getRedisKey(buildTrackingKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
