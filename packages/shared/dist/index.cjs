@@ -2108,7 +2108,10 @@ var exerciseInPlanQueryDtoSchema = import_v416.z.object({
   exerciseToSplitId: exerciseToWorkoutSplitDbSchema.shape.id,
   exerciseId: exerciseDbSchema.shape.id,
   name: exerciseDbSchema.shape.name,
-  sets: import_v416.z.array(workoutSetDbSchema.shape.reps),
+  sets: import_v416.z.array(import_v416.z.object({
+    orderIndex: workoutSetDbSchema.shape.orderIndex,
+    reps: workoutSetDbSchema.shape.reps
+  })),
   orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex,
   isActive: exerciseToWorkoutSplitDbSchema.shape.isActive,
   targetMuscle: exerciseDbSchema.shape.targetMuscle,

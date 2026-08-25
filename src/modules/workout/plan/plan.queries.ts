@@ -85,7 +85,12 @@ export class WorkoutPlanQueries {
                           expanded.is_active,
                           COALESCE(
                             JSONB_AGG(
-                              expanded.reps
+                              JSONB_BUILD_OBJECT(
+                                'orderIndex',
+                                expanded.set_index,
+                                'reps',
+                                expanded.reps
+                              )
                               ORDER BY
                                 expanded.set_index
                             ) FILTER (

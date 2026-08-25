@@ -4380,7 +4380,10 @@ declare const bootstrapResponseSchema: z.ZodObject<{
                     exerciseToSplitId: z.ZodInt;
                     exerciseId: z.ZodInt;
                     name: z.ZodString;
-                    sets: z.ZodArray<z.ZodInt>;
+                    sets: z.ZodArray<z.ZodObject<{
+                        orderIndex: z.ZodInt;
+                        reps: z.ZodInt;
+                    }, z.core.$strip>>;
                     orderIndex: z.ZodInt;
                     isActive: z.ZodBoolean;
                     targetMuscle: z.ZodString;
@@ -4559,7 +4562,10 @@ declare const bootstrapContract: {
                         exerciseToSplitId: z.ZodInt;
                         exerciseId: z.ZodInt;
                         name: z.ZodString;
-                        sets: z.ZodArray<z.ZodInt>;
+                        sets: z.ZodArray<z.ZodObject<{
+                            orderIndex: z.ZodInt;
+                            reps: z.ZodInt;
+                        }, z.core.$strip>>;
                         orderIndex: z.ZodInt;
                         isActive: z.ZodBoolean;
                         targetMuscle: z.ZodString;
@@ -5488,7 +5494,10 @@ declare const getWholeUserWorkoutPlanResponseSchema: z.ZodObject<{
                 exerciseToSplitId: z.ZodInt;
                 exerciseId: z.ZodInt;
                 name: z.ZodString;
-                sets: z.ZodArray<z.ZodInt>;
+                sets: z.ZodArray<z.ZodObject<{
+                    orderIndex: z.ZodInt;
+                    reps: z.ZodInt;
+                }, z.core.$strip>>;
                 orderIndex: z.ZodInt;
                 isActive: z.ZodBoolean;
                 targetMuscle: z.ZodString;
@@ -5523,7 +5532,10 @@ declare const getWholeUserWorkoutPlanContract: {
                     exerciseToSplitId: z.ZodInt;
                     exerciseId: z.ZodInt;
                     name: z.ZodString;
-                    sets: z.ZodArray<z.ZodInt>;
+                    sets: z.ZodArray<z.ZodObject<{
+                        orderIndex: z.ZodInt;
+                        reps: z.ZodInt;
+                    }, z.core.$strip>>;
                     orderIndex: z.ZodInt;
                     isActive: z.ZodBoolean;
                     targetMuscle: z.ZodString;
@@ -5570,7 +5582,10 @@ declare const addWorkoutResponseSchema: z.ZodObject<{
                 exerciseToSplitId: z.ZodInt;
                 exerciseId: z.ZodInt;
                 name: z.ZodString;
-                sets: z.ZodArray<z.ZodInt>;
+                sets: z.ZodArray<z.ZodObject<{
+                    orderIndex: z.ZodInt;
+                    reps: z.ZodInt;
+                }, z.core.$strip>>;
                 orderIndex: z.ZodInt;
                 isActive: z.ZodBoolean;
                 targetMuscle: z.ZodString;
@@ -5617,7 +5632,10 @@ declare const addWorkoutContract: {
                     exerciseToSplitId: z.ZodInt;
                     exerciseId: z.ZodInt;
                     name: z.ZodString;
-                    sets: z.ZodArray<z.ZodInt>;
+                    sets: z.ZodArray<z.ZodObject<{
+                        orderIndex: z.ZodInt;
+                        reps: z.ZodInt;
+                    }, z.core.$strip>>;
                     orderIndex: z.ZodInt;
                     isActive: z.ZodBoolean;
                     targetMuscle: z.ZodString;
@@ -5664,7 +5682,10 @@ declare const exerciseInPlanQueryDtoSchema: z.ZodObject<{
     exerciseToSplitId: z.ZodInt;
     exerciseId: z.ZodInt;
     name: z.ZodString;
-    sets: z.ZodArray<z.ZodInt>;
+    sets: z.ZodArray<z.ZodObject<{
+        orderIndex: z.ZodInt;
+        reps: z.ZodInt;
+    }, z.core.$strip>>;
     orderIndex: z.ZodInt;
     isActive: z.ZodBoolean;
     targetMuscle: z.ZodString;
@@ -5683,7 +5704,10 @@ declare const workoutSplitQueryDtoSchema: z.ZodObject<{
         exerciseToSplitId: z.ZodInt;
         exerciseId: z.ZodInt;
         name: z.ZodString;
-        sets: z.ZodArray<z.ZodInt>;
+        sets: z.ZodArray<z.ZodObject<{
+            orderIndex: z.ZodInt;
+            reps: z.ZodInt;
+        }, z.core.$strip>>;
         orderIndex: z.ZodInt;
         isActive: z.ZodBoolean;
         targetMuscle: z.ZodString;
@@ -5710,7 +5734,10 @@ declare const wholeUserWorkoutPlanQueryDtoSchema: z.ZodObject<{
             exerciseToSplitId: z.ZodInt;
             exerciseId: z.ZodInt;
             name: z.ZodString;
-            sets: z.ZodArray<z.ZodInt>;
+            sets: z.ZodArray<z.ZodObject<{
+                orderIndex: z.ZodInt;
+                reps: z.ZodInt;
+            }, z.core.$strip>>;
             orderIndex: z.ZodInt;
             isActive: z.ZodBoolean;
             targetMuscle: z.ZodString;

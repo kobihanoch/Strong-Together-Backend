@@ -36,7 +36,12 @@ export const exerciseInPlanQueryDtoSchema = z.object({
   exerciseToSplitId: exerciseToWorkoutSplitDbSchema.shape.id,
   exerciseId: exerciseDbSchema.shape.id,
   name: exerciseDbSchema.shape.name,
-  sets: z.array(workoutSetDbSchema.shape.reps),
+  sets: z.array(
+    z.object({
+      orderIndex: workoutSetDbSchema.shape.orderIndex,
+      reps: workoutSetDbSchema.shape.reps,
+    }),
+  ),
   orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex,
   isActive: exerciseToWorkoutSplitDbSchema.shape.isActive,
   targetMuscle: exerciseDbSchema.shape.targetMuscle,
