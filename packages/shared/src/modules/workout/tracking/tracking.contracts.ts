@@ -1,15 +1,26 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, QueryOf, ResponseOf } from '../../../common';
-import { exerciseTrackingAndStatsQueryDtoSchema, finishedWorkoutEntryQueryDtoSchema } from './tracking.dtos';
+import {
+  exerciseTrackingAndStatsQueryDtoSchema,
+  exerciseTrackingMapsQueryDtoSchema,
+  exerciseTrackingStatsQueryDtoSchema,
+  finishedWorkoutEntryQueryDtoSchema,
+} from './tracking.dtos';
 
 // Get exercise tracking
 
 export const getExerciseTrackingRequestSchema = z.object({ query: z.object({ tz: z.string().optional() }) });
-export const getExerciseTrackingResponseSchema = exerciseTrackingAndStatsQueryDtoSchema;
+export const getExerciseTrackingResponseSchema = exerciseTrackingMapsQueryDtoSchema;
 
 export const getExerciseTrackingContract = {
   request: getExerciseTrackingRequestSchema,
   response: getExerciseTrackingResponseSchema,
+} satisfies Contract;
+
+export const getExerciseTrackingStatsResponseSchema = exerciseTrackingStatsQueryDtoSchema;
+export const getExerciseTrackingStatsContract = {
+  request: getExerciseTrackingRequestSchema,
+  response: getExerciseTrackingStatsResponseSchema,
 } satisfies Contract;
 
 // Finish user workout
@@ -30,5 +41,6 @@ export const finishUserWorkoutContract = {
 
 export type GetExerciseTrackingQuery = QueryOf<typeof getExerciseTrackingContract>;
 export type GetExerciseTrackingResponse = ResponseOf<typeof getExerciseTrackingContract>;
+export type GetExerciseTrackingStatsResponse = ResponseOf<typeof getExerciseTrackingStatsContract>;
 export type FinishUserWorkoutBody = BodyOf<typeof finishUserWorkoutContract>;
 export type FinishUserWorkoutResponse = ResponseOf<typeof finishUserWorkoutContract>;

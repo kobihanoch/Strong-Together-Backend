@@ -75,8 +75,12 @@ __export(index_exports, {
   exerciseTrackingAndStatsRowQueryDtoSchema: () => exerciseTrackingAndStatsRowQueryDtoSchema,
   exerciseTrackingDbSchema: () => exerciseTrackingDbSchema,
   exerciseTrackingIdQueryDtoSchema: () => exerciseTrackingIdQueryDtoSchema,
+  exerciseTrackingMapsQueryDtoSchema: () => exerciseTrackingMapsQueryDtoSchema,
+  exerciseTrackingMapsRowQueryDtoSchema: () => exerciseTrackingMapsRowQueryDtoSchema,
   exerciseTrackingPrMaxQueryDtoSchema: () => exerciseTrackingPrMaxQueryDtoSchema,
   exerciseTrackingSetExpandedViewDbSchema: () => exerciseTrackingSetExpandedViewDbSchema,
+  exerciseTrackingStatsQueryDtoSchema: () => exerciseTrackingStatsQueryDtoSchema,
+  exerciseTrackingStatsRowQueryDtoSchema: () => exerciseTrackingStatsRowQueryDtoSchema,
   exercisesMapByMuscleQueryDtoSchema: () => exercisesMapByMuscleQueryDtoSchema,
   finishUserWorkoutContract: () => finishUserWorkoutContract,
   finishUserWorkoutResponseSchema: () => finishUserWorkoutResponseSchema,
@@ -100,6 +104,8 @@ __export(index_exports, {
   getExerciseTrackingContract: () => getExerciseTrackingContract,
   getExerciseTrackingRequestSchema: () => getExerciseTrackingRequestSchema,
   getExerciseTrackingResponseSchema: () => getExerciseTrackingResponseSchema,
+  getExerciseTrackingStatsContract: () => getExerciseTrackingStatsContract,
+  getExerciseTrackingStatsResponseSchema: () => getExerciseTrackingStatsResponseSchema,
   getPresignedUrlFromS3Contract: () => getPresignedUrlFromS3Contract,
   getPresignedUrlFromS3RequestSchema: () => getPresignedUrlFromS3RequestSchema,
   getPresignedUrlFromS3ResponseSchema: () => getPresignedUrlFromS3ResponseSchema,
@@ -2256,38 +2262,46 @@ var groupedTrackingItemQueryDtoSchema = import_v418.z.object({
     })
   })
 });
-var exerciseTrackingAndStatsQueryDtoSchema = import_v418.z.object({
-  trackingStats: import_v418.z.object({
-    workoutCount: import_v418.z.coerce.number(),
-    hasExerciseTracking: import_v418.z.boolean(),
-    workoutTargets: import_v418.z.object({
-      workoutCountThisWeek: import_v418.z.coerce.number(),
-      workoutCountScheduledPerWeek: import_v418.z.coerce.number(),
-      weekStreak: import_v418.z.coerce.number()
-    }),
-    lastWorkoutStats: import_v418.z.object({
-      workoutDate: import_v418.z.string().nullable(),
-      workoutSplitName: workoutSplitDbSchema.shape.name.nullable(),
-      exerciseTrackedCount: import_v418.z.coerce.number().nullable(),
-      setTrackedCount: import_v418.z.coerce.number().nullable()
-    }),
-    prs: import_v418.z.array(import_v418.z.object({
-      exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
-      exerciseId: exerciseDbSchema.shape.id,
-      exerciseName: exerciseDbSchema.shape.name,
-      prWeight: trackingSetDbSchema.shape.weight,
-      prReps: trackingSetDbSchema.shape.reps,
-      prSetIndex: trackingSetDbSchema.shape.setIndex
-    }))
+var exerciseTrackingStatsQueryDtoSchema = import_v418.z.object({
+  workoutCount: import_v418.z.coerce.number(),
+  hasExerciseTracking: import_v418.z.boolean(),
+  workoutTargets: import_v418.z.object({
+    workoutCountThisWeek: import_v418.z.coerce.number(),
+    workoutCountScheduledPerWeek: import_v418.z.coerce.number(),
+    weekStreak: import_v418.z.coerce.number()
   }),
-  trackingMaps: import_v418.z.object({
-    byDate: import_v418.z.record(import_v418.z.string(), import_v418.z.array(groupedTrackingItemQueryDtoSchema)),
-    byExerciseToSplitId: import_v418.z.record(import_v418.z.string(), import_v418.z.array(groupedTrackingItemQueryDtoSchema)),
-    bySplitName: import_v418.z.record(import_v418.z.string(), import_v418.z.array(groupedTrackingItemQueryDtoSchema))
-  })
+  lastWorkoutStats: import_v418.z.object({
+    workoutDate: import_v418.z.string().nullable(),
+    workoutSplitName: workoutSplitDbSchema.shape.name.nullable(),
+    exerciseTrackedCount: import_v418.z.coerce.number().nullable(),
+    setTrackedCount: import_v418.z.coerce.number().nullable()
+  }),
+  prs: import_v418.z.array(import_v418.z.object({
+    exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
+    exerciseId: exerciseDbSchema.shape.id,
+    exerciseName: exerciseDbSchema.shape.name,
+    prWeight: trackingSetDbSchema.shape.weight,
+    prReps: trackingSetDbSchema.shape.reps,
+    prSetIndex: trackingSetDbSchema.shape.setIndex
+  }))
+});
+var exerciseTrackingMapsQueryDtoSchema = import_v418.z.object({
+  byDate: import_v418.z.record(import_v418.z.string(), import_v418.z.array(groupedTrackingItemQueryDtoSchema)),
+  byExerciseToSplitId: import_v418.z.record(import_v418.z.string(), import_v418.z.array(groupedTrackingItemQueryDtoSchema)),
+  bySplitName: import_v418.z.record(import_v418.z.string(), import_v418.z.array(groupedTrackingItemQueryDtoSchema))
+});
+var exerciseTrackingAndStatsQueryDtoSchema = import_v418.z.object({
+  trackingStats: exerciseTrackingStatsQueryDtoSchema,
+  trackingMaps: exerciseTrackingMapsQueryDtoSchema
 });
 var exerciseTrackingAndStatsRowQueryDtoSchema = import_v418.z.object({
   data: exerciseTrackingAndStatsQueryDtoSchema
+});
+var exerciseTrackingStatsRowQueryDtoSchema = import_v418.z.object({
+  data: exerciseTrackingStatsQueryDtoSchema
+});
+var exerciseTrackingMapsRowQueryDtoSchema = import_v418.z.object({
+  data: exerciseTrackingMapsQueryDtoSchema
 });
 var workoutSplitLookupQueryDtoSchema = import_v418.z.object({
   workoutSplitId: workoutSplitDbSchema.shape.id
@@ -2635,10 +2649,15 @@ var getExerciseTrackingRequestSchema = import_v435.z.object({
     tz: import_v435.z.string().optional()
   })
 });
-var getExerciseTrackingResponseSchema = exerciseTrackingAndStatsQueryDtoSchema;
+var getExerciseTrackingResponseSchema = exerciseTrackingMapsQueryDtoSchema;
 var getExerciseTrackingContract = {
   request: getExerciseTrackingRequestSchema,
   response: getExerciseTrackingResponseSchema
+};
+var getExerciseTrackingStatsResponseSchema = exerciseTrackingStatsQueryDtoSchema;
+var getExerciseTrackingStatsContract = {
+  request: getExerciseTrackingRequestSchema,
+  response: getExerciseTrackingStatsResponseSchema
 };
 var finishWorkoutRequestSchema = import_v435.z.object({
   body: import_v435.z.object({
@@ -2709,8 +2728,12 @@ var finishUserWorkoutContract = {
   exerciseTrackingAndStatsRowQueryDtoSchema,
   exerciseTrackingDbSchema,
   exerciseTrackingIdQueryDtoSchema,
+  exerciseTrackingMapsQueryDtoSchema,
+  exerciseTrackingMapsRowQueryDtoSchema,
   exerciseTrackingPrMaxQueryDtoSchema,
   exerciseTrackingSetExpandedViewDbSchema,
+  exerciseTrackingStatsQueryDtoSchema,
+  exerciseTrackingStatsRowQueryDtoSchema,
   exercisesMapByMuscleQueryDtoSchema,
   finishUserWorkoutContract,
   finishUserWorkoutResponseSchema,
@@ -2734,6 +2757,8 @@ var finishUserWorkoutContract = {
   getExerciseTrackingContract,
   getExerciseTrackingRequestSchema,
   getExerciseTrackingResponseSchema,
+  getExerciseTrackingStatsContract,
+  getExerciseTrackingStatsResponseSchema,
   getPresignedUrlFromS3Contract,
   getPresignedUrlFromS3RequestSchema,
   getPresignedUrlFromS3ResponseSchema,
