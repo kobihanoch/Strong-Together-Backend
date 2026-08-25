@@ -17,7 +17,7 @@ The ERDs are generated from the reviewed DBML sources under `docs/db-diagrams/so
 | `tracking`  | `workout_summary`, `exercise_tracking`, `tracking_set`, `aerobic_tracking`              | Completed workout sessions, set-level strength data, aerobic history                     |
 | `reminders` | `user_reminder_setting`, `user_split_information`                                       | Reminder preferences and inferred split scheduling data                                  |
 | `messages`  | `message`                                                                               | User/system messaging                                                                    |
-| `analytics` | `v_exercise_tracking_expanded`, `v_prs`                                                 | Security-invoker, read-optimized tracking and personal-record views                      |
+| `analytics` | `v_exercise_tracking_set_expanded`, `v_prs`                                             | Security-invoker, set-level tracking and personal-record views                            |
 | `guest_api` | allow-listed `SECURITY DEFINER` functions                                               | Narrow database API for unauthenticated authentication and registration flows            |
 
 ## Identity Schema
@@ -57,16 +57,16 @@ Core objects:
 
 - `workout.exercise`: exercise catalog readable by authenticated users.
 - `workout.workout_plan`: plan owned by a user.
-- `workout.workout_split`: split/day definitions under a plan.
+- `workout.workout_split`: split/day definitions under a plan, ordered by `order_index` within the active plan.
 - `workout.exercise_to_workout_split`: ordered exercises inside a split.
 - `workout.workout_set`: normalized prescribed reps for each ordered set.
-- `workout.v_exercise_to_workout_split_expanded`: security-invoker, row-expanded view of exercise assignments and their normalized prescribed sets. API queries aggregate these rows into arrays and camelCase response objects.
+- `workout.v_exercise_to_workout_split_set_expanded`: security-invoker, row-expanded view of exercise assignments and their normalized prescribed sets. API queries aggregate these rows into arrays and camelCase response objects.
 
 Why this shape matters:
 
 - Exercise metadata stays normalized.
 - User plans can evolve without duplicating the catalog.
-- Ordered split exercises support practical workout UX.
+- Explicit split, exercise, and set order indexes support deterministic workout UX. Active splits have a unique `(workout_id, order_index)` position.
 - RLS policies tie nested split/exercise rows back to the owning plan.
 
 ## Tracking Schema
@@ -105,12 +105,12 @@ The RLS model protects nested set rows by checking ownership through `workout_su
 
 Analytics is modeled through security-invoker views:
 
-- `analytics.v_exercise_tracking_expanded`
+- `analytics.v_exercise_tracking_set_expanded`, including assignment state and exercise muscle metadata
 - `analytics.v_prs`
 
 Security-invoker views are an important choice because they preserve caller RLS behavior. Analytics queries can be expressive and reusable without accidentally becoming privileged read paths.
 
-The API uses these views for higher-level fitness insights such as personal records, RM-oriented data, and goal adherence.
+The API uses these views for tracking maps and statistics. `v_prs` selects the strongest recorded set per exercise. Tracking stats expose that set and estimate its one-rep max with a rep-range-specific formula (Epley, Brzycki, or O'Connor), returning `null` when the recorded rep count is outside the supported range.
 
 ## Reminders Schema
 

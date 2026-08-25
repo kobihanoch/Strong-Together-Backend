@@ -114,7 +114,7 @@ The shared package lives under `packages/shared` but keeps a one-way dependency 
 
 - `WorkoutPlanService` reads/writes plans through `WorkoutPlanQueries` and caches plan payloads with `xt:workoutplan:v1:{userId}:{tz}`.
 - Updating a plan invalidates the plan cache and the analytics cache `xt:analytics:v1:{userId}`.
-- `WorkoutTrackingService` reads/writes tracking data through `WorkoutTrackingQueries`, caches tracking payloads with `xt:tracking:v1:{userId}:{days}:{tz}`, and creates system messages when a workout is completed.
+- `WorkoutTrackingService` reads/writes tracking data through `WorkoutTrackingQueries`, caches maps and stats independently with `xt:tracking:maps:v1:{userId}:{days}:{tz}` and `xt:tracking:stats:v1:{userId}:{days}:{tz}`, and creates system messages when a workout is completed.
 
 ### Messages
 

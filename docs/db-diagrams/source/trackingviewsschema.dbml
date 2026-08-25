@@ -1,4 +1,4 @@
-Table analytics.v_exercise_tracking_expanded [note: 'Security-invoker view over performed tracking data'] {
+Table analytics.v_exercise_tracking_set_expanded [note: 'Security-invoker view over performed tracking sets'] {
   id bigint
   exercise_to_split_id bigint
   weight real
@@ -8,15 +8,18 @@ Table analytics.v_exercise_tracking_expanded [note: 'Security-invoker view over 
   workout_split_id bigint
   split_name text
   exercise text
+  target_muscle text
+  specific_target_muscle text
   notes text
   workout_summary_id uuid
   workout_start_utc timestamptz
   workout_end_utc timestamptz
+  is_assigned_to_split boolean
 }
 
 Table tracking.exercise_tracking { id bigint [pk] }
 Table tracking.tracking_set { id uuid [pk] }
 Table tracking.workout_summary { id uuid [pk] }
 
-Ref: analytics.v_exercise_tracking_expanded.id > tracking.exercise_tracking.id
-Ref: analytics.v_exercise_tracking_expanded.workout_summary_id > tracking.workout_summary.id
+Ref: analytics.v_exercise_tracking_set_expanded.id > tracking.exercise_tracking.id
+Ref: analytics.v_exercise_tracking_set_expanded.workout_summary_id > tracking.workout_summary.id

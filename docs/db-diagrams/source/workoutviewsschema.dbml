@@ -1,4 +1,4 @@
-Table workout.v_exercise_to_workout_split_expanded [note: 'Security-invoker view'] {
+Table workout.v_exercise_to_workout_split_set_expanded [note: 'Security-invoker view'] {
   id bigint
   workout_split_id bigint
   workout_id bigint
@@ -17,6 +17,6 @@ Table workout.workout_split { id bigint [pk] }
 Table workout.exercise { id bigint [pk] }
 Table workout.workout_set { id uuid [pk] }
 
-Ref: workout.v_exercise_to_workout_split_expanded.id > workout.exercise_to_workout_split.id
-Ref: workout.v_exercise_to_workout_split_expanded.workout_split_id > workout.workout_split.id
-Ref: workout.v_exercise_to_workout_split_expanded.exercise_id > workout.exercise.id
+Ref: workout.v_exercise_to_workout_split_set_expanded.id > workout.exercise_to_workout_split.id
+Ref: workout.v_exercise_to_workout_split_set_expanded.workout_split_id > workout.workout_split.id
+Ref: workout.v_exercise_to_workout_split_set_expanded.exercise_id > workout.exercise.id

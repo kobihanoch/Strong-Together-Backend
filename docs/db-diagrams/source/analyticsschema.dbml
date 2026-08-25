@@ -1,4 +1,4 @@
-Table analytics.v_exercise_tracking_expanded [note: 'Security-invoker view'] {
+Table analytics.v_exercise_tracking_set_expanded [note: 'Security-invoker view'] {
   id bigint
   exercise_to_split_id bigint
   weight real
@@ -8,10 +8,13 @@ Table analytics.v_exercise_tracking_expanded [note: 'Security-invoker view'] {
   workout_split_id bigint
   split_name text
   exercise text
+  target_muscle text
+  specific_target_muscle text
   notes text
   workout_summary_id uuid
   workout_start_utc timestamptz
   workout_end_utc timestamptz
+  is_assigned_to_split boolean
 }
 
 Table analytics.v_prs [note: 'Strongest recorded set per exercise; security-invoker view'] {
@@ -19,6 +22,7 @@ Table analytics.v_prs [note: 'Strongest recorded set per exercise; security-invo
   exercise_to_split_id bigint
   exercise_id bigint
   exercise text
+  set_index integer
   weight real
   reps bigint
   workout_summary_id uuid
@@ -26,4 +30,4 @@ Table analytics.v_prs [note: 'Strongest recorded set per exercise; security-invo
   workout_end_utc timestamptz
 }
 
-Ref: analytics.v_prs.id > analytics.v_exercise_tracking_expanded.id
+Ref: analytics.v_prs.id > analytics.v_exercise_tracking_set_expanded.id

@@ -18,10 +18,11 @@ Table workout.workout_split {
   id bigint [pk, increment]
   workout_id bigint [not null, ref: > workout.workout_plan.id]
   name text [not null]
+  order_index integer [not null]
   created_at timestamptz [not null]
   is_active boolean [not null]
 
-  indexes { (workout_id, name) [unique] }
+  indexes { (workout_id, order_index) [unique, note: 'Applies to active splits only'] }
 }
 
 Table workout.exercise_to_workout_split {

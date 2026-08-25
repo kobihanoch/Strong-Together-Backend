@@ -109,6 +109,7 @@ This file focuses on success contracts. Route-specific non-JSON behavior is call
 | `GET` | `/api/workouts/getworkout` | User | Get active workout plan |
 | `POST` | `/api/workouts/add` | User | Create or update workout plan |
 | `GET` | `/api/workouts/gettracking` | User | Get workout tracking snapshot |
+| `GET` | `/api/workouts/gettrackingstats` | User | Get workout tracking statistics |
 | `POST` | `/api/workouts/finishworkout` | User | Persist completed workout |
 | `GET` | `/api/aerobics/get` | User | Get aerobics history |
 | `POST` | `/api/aerobics/add` | User | Add aerobics record |
@@ -654,7 +655,11 @@ The workout-plan endpoints use this shape:
             "exerciseToSplitId": 1,
             "exerciseId": 10,
             "name": "Bench Press",
-            "sets": [8, 8, 6],
+            "sets": [
+              { "orderIndex": 0, "reps": 8 },
+              { "orderIndex": 1, "reps": 8 },
+              { "orderIndex": 2, "reps": 6 }
+            ],
             "orderIndex": 0,
             "isActive": true,
             "targetMuscle": "string",
@@ -669,101 +674,76 @@ The workout-plan endpoints use this shape:
 
 ### Shared tracking response building blocks
 
-The tracking endpoint uses this structure:
+`GET /api/workouts/gettracking` returns tracking maps grouped three ways:
 
 ```json
 {
-  "exerciseTrackingAnalysis": {
-    "uniqueDays": 12,
-    "mostFrequentSplit": "Push",
-    "mostFrequentSplitDays": 5,
-    "lastWorkoutDate": "string | null",
-    "splitDaysByName": {
-      "Push": 5
-    },
-    "prs": {
-      "prMax": {
-        "exercise": "Bench Press",
-        "weight": 100,
-        "reps": 5,
-        "workoutTimeUtc": "string"
+  "byDate": {
+    "2026-04-20": [
+      {
+        "exerciseTracking": {
+          "exerciseTrackingId": 1,
+          "sets": [{ "setIndex": 0, "weight": 100, "reps": 5 }],
+          "notes": "string | null",
+          "exerciseAssignment": {
+            "exerciseToSplitId": 10,
+            "orderIndex": 0,
+            "exerciseId": 20,
+            "workoutSplitId": 30,
+            "workoutSplitName": "Push",
+            "exerciseName": "Bench Press",
+            "targetMuscle": "Chest",
+            "specificTargetMuscle": "Upper Chest"
+          }
+        }
       }
-    }
+    ]
   },
-  "exerciseTrackingMaps": {
-    "byDate": {
-      "2026-04-20": [
-        {
-          "id": 1,
-          "exerciseToSplitId": 10,
-          "weight": [100, 95, 90],
-          "reps": [5, 6, 8],
-          "notes": "string | null",
-          "exerciseId": 20,
-          "workoutSplitId": 30,
-          "splitName": "Push",
-          "exercise": "Bench Press",
-          "orderIndex": 1,
-          "exerciseToWorkoutSplit": {
-            "sets": [5, 6, 8],
-            "exercises": {
-              "targetMuscle": "Chest",
-              "specificTargetMuscle": "Upper Chest"
-            }
-          }
-        }
-      ]
-    },
-    "byExerciseToSplitId": {
-      "10": [
-        {
-          "id": 1,
-          "exerciseToSplitId": 10,
-          "weight": [100, 95, 90],
-          "reps": [5, 6, 8],
-          "notes": "string | null",
-          "exerciseId": 20,
-          "workoutSplitId": 30,
-          "splitName": "Push",
-          "exercise": "Bench Press",
-          "workoutDate": "string",
-          "orderIndex": 1,
-          "exerciseToWorkoutSplit": {
-            "sets": [5, 6, 8],
-            "exercises": {
-              "targetMuscle": "Chest",
-              "specificTargetMuscle": "Upper Chest"
-            }
-          }
-        }
-      ]
-    },
-    "bySplitName": {
-      "Push": [
-        {
-          "id": 1,
-          "exerciseToSplitId": 10,
-          "weight": [100, 95, 90],
-          "reps": [5, 6, 8],
-          "notes": "string | null",
-          "exerciseId": 20,
-          "workoutSplitId": 30,
-          "exercise": "Bench Press",
-          "workoutDate": "string",
-          "orderIndex": 1,
-          "exerciseToWorkoutSplit": {
-            "sets": [5, 6, 8],
-            "exercises": {
-              "targetMuscle": "Chest",
-              "specificTargetMuscle": "Upper Chest"
-            }
-          }
-        }
-      ]
-    }
-  }
+  "byExerciseToSplitId": { "10": [] },
+  "bySplitName": { "Push": [] }
 }
 ```
+
+Each grouping contains the same tracking-item shape. The grouping key supplies the date, assignment ID, or split name respectively.
+
+`GET /api/workouts/gettrackingstats` returns the independent statistics payload:
+
+```json
+{
+  "workoutCount": 12,
+  "hasExerciseTracking": true,
+  "nextWorkoutSplit": {
+    "id": 31,
+    "name": "Pull",
+    "orderIndex": 1,
+    "muscleGroup": "Back"
+  },
+  "workoutTargets": {
+    "workoutCountThisWeek": 3,
+    "workoutCountScheduledPerWeek": 4,
+    "weekStreak": 2
+  },
+  "lastWorkoutStats": {
+    "workoutDate": "2026-04-20",
+    "workoutSplitName": "Push",
+    "exerciseTrackedCount": 5,
+    "setTrackedCount": 15
+  },
+  "prs": [
+    {
+      "exerciseToSplitId": 10,
+      "exerciseId": 20,
+      "exerciseName": "Bench Press",
+      "prWeight": 100,
+      "prReps": 5,
+      "prSetIndex": 0,
+      "estimatedOneRepMax": 116.67
+    }
+  ]
+}
+```
+
+`nextWorkoutSplit` and `estimatedOneRepMax` can be `null`. The estimate uses the recorded weight for one rep, Epley for 2–5 reps, Brzycki for 6–10 reps, and O'Connor for 11–12 reps; it is `null` outside that range.
 
 ### `GET /api/workouts/getworkout`
 
@@ -845,7 +825,11 @@ Successful response:
             "exerciseToSplitId": 1,
             "exerciseId": 10,
             "name": "Bench Press",
-            "sets": [8, 8, 6],
+            "sets": [
+              { "orderIndex": 0, "reps": 8 },
+              { "orderIndex": 1, "reps": 8 },
+              { "orderIndex": 2, "reps": 6 }
+            ],
             "orderIndex": 0,
             "isActive": true,
             "targetMuscle": "string",
@@ -860,7 +844,7 @@ Successful response:
 
 ### `GET /api/workouts/gettracking`
 
-Returns the authenticated user's recent tracking snapshot.
+Returns the authenticated user's tracking maps for the last 45 days.
 
 Access:
 
@@ -876,7 +860,31 @@ Query:
 
 Successful response:
 
-- Returns the full shared tracking shape shown above
+- Returns the shared tracking-maps shape shown above
+
+Notes:
+
+- Returns `X-Cache: HIT` or `X-Cache: MISS`
+
+### `GET /api/workouts/gettrackingstats`
+
+Returns the authenticated user's tracking statistics for the last 45 days.
+
+Access:
+
+- User
+
+Query:
+
+```json
+{
+  "tz": "string"
+}
+```
+
+Successful response:
+
+- Returns the shared tracking-statistics shape shown above
 
 Notes:
 
@@ -896,9 +904,14 @@ Request body:
 {
   "workout": [
     {
+      "isExerciseAssignedToSplit": true,
       "exerciseToSplitId": 10,
-      "weight": [100, 95, 90],
-      "reps": [5, 6, 8],
+      "exerciseId": 20,
+      "trackedSets": [
+        { "setIndex": 0, "weight": 100, "reps": 5 },
+        { "setIndex": 1, "weight": 95, "reps": 6 },
+        { "setIndex": 2, "weight": 90, "reps": 8 }
+      ],
       "notes": "string | null"
     }
   ],
@@ -910,7 +923,7 @@ Request body:
 
 Successful response:
 
-- Returns the full shared tracking shape shown above
+- Returns `{ "trackingStats": ..., "trackingMaps": ... }`, using both shared shapes shown above
 
 ## Aerobics
 
@@ -1348,6 +1361,7 @@ These routes return `X-Cache: HIT` or `X-Cache: MISS`:
 
 - `/api/workouts/getworkout`
 - `/api/workouts/gettracking`
+- `/api/workouts/gettrackingstats`
 - `/api/aerobics/get`
 - `/api/analytics/get`
 
