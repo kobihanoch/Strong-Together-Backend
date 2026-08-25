@@ -227,17 +227,20 @@ export class WorkoutTrackingQueries {
                 'exerciseTrackingId',
                 et.id::int,
                 'sets',
-                JSONB_AGG(
-                  JSONB_BUILD_OBJECT(
-                    'setIndex',
-                    et.set_index,
-                    'weight',
-                    et.weight,
-                    'reps',
-                    et.reps::int
-                  )
-                  ORDER BY
-                    et.set_index ASC
+                COALESCE(
+                  JSONB_AGG(
+                    JSONB_BUILD_OBJECT(
+                      'setIndex',
+                      et.set_index,
+                      'weight',
+                      et.weight,
+                      'reps',
+                      et.reps::int
+                    )
+                    ORDER BY
+                      et.set_index ASC
+                  ) FILTER (WHERE et.set_index IS NOT NULL),
+                  '[]'::JSONB
                 ),
                 'notes',
                 et.notes,
@@ -350,34 +353,26 @@ export class WorkoutTrackingQueries {
           'trackingStats',
           JSONB_BUILD_OBJECT(
             'workoutCount',
-            (
-              SELECT
-                workout_count
-              FROM
-                total_workouts
+            COALESCE(
+              (SELECT workout_count FROM total_workouts),
+              0
             ),
             'workoutTargets',
             JSONB_BUILD_OBJECT(
               'workoutCountThisWeek',
-              (
-                SELECT
-                  count
-                FROM
-                  workouts_count_this_week
+              COALESCE(
+                (SELECT count FROM workouts_count_this_week),
+                0
               ),
               'workoutCountScheduledPerWeek',
-              (
-                SELECT
-                  count
-                FROM
-                  workouts_scheduled_per_week_count
+              COALESCE(
+                (SELECT count FROM workouts_scheduled_per_week_count),
+                0
               ),
               'weekStreak',
-              (
-                SELECT
-                  count
-                FROM
-                  weeks_fits_minimum_scheduled_workouts
+              COALESCE(
+                (SELECT count FROM weeks_fits_minimum_scheduled_workouts),
+                0
               )
             ),
             'lastWorkoutStats',
@@ -402,26 +397,20 @@ export class WorkoutTrackingQueries {
                   last_workout_stats
               ),
               'exerciseTrackedCount',
-              (
-                SELECT
-                  exercise_tracked_count
-                FROM
-                  last_workout_stats
+              COALESCE(
+                (SELECT exercise_tracked_count FROM last_workout_stats),
+                0
               ),
               'setTrackedCount',
-              (
-                SELECT
-                  set_tracked_count
-                FROM
-                  last_workout_stats
+              COALESCE(
+                (SELECT set_tracked_count FROM last_workout_stats),
+                0
               )
             ),
             'prs',
-            (
-              SELECT
-                all_prs_payload
-              FROM
-                all_prs
+            COALESCE(
+              (SELECT all_prs_payload FROM all_prs),
+              '[]'::JSONB
             )
           ),
           'trackingMaps',
