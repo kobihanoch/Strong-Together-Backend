@@ -123,6 +123,7 @@ export const exerciseTrackingStatsQueryDtoSchema = z.object({
       prWeight: trackingSetDbSchema.shape.weight,
       prReps: trackingSetDbSchema.shape.reps,
       prSetIndex: trackingSetDbSchema.shape.setIndex,
+      estimatedOneRepMax: z.number().nullable(),
     }),
   ),
 });

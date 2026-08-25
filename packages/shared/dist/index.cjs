@@ -2279,7 +2279,8 @@ var exerciseTrackingStatsQueryDtoSchema = import_v418.z.object({
     exerciseName: exerciseDbSchema.shape.name,
     prWeight: trackingSetDbSchema.shape.weight,
     prReps: trackingSetDbSchema.shape.reps,
-    prSetIndex: trackingSetDbSchema.shape.setIndex
+    prSetIndex: trackingSetDbSchema.shape.setIndex,
+    estimatedOneRepMax: import_v418.z.number().nullable()
   }))
 });
 var exerciseTrackingMapsQueryDtoSchema = import_v418.z.object({

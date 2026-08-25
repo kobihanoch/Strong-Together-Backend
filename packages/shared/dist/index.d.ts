@@ -4417,6 +4417,7 @@ declare const bootstrapResponseSchema: z.ZodObject<{
                 prWeight: z.ZodNumber;
                 prReps: z.ZodInt;
                 prSetIndex: z.ZodInt;
+                estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
             }, z.core.$strip>>;
         }, z.core.$strip>;
         trackingMaps: z.ZodObject<{
@@ -4595,6 +4596,7 @@ declare const bootstrapContract: {
                     prWeight: z.ZodNumber;
                     prReps: z.ZodInt;
                     prSetIndex: z.ZodInt;
+                    estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
                 }, z.core.$strip>>;
             }, z.core.$strip>;
             trackingMaps: z.ZodObject<{
@@ -5907,6 +5909,7 @@ declare const getExerciseTrackingStatsResponseSchema: z.ZodObject<{
         prWeight: z.ZodNumber;
         prReps: z.ZodInt;
         prSetIndex: z.ZodInt;
+        estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
     }, z.core.$strip>>;
 }, z.core.$strip>;
 declare const getExerciseTrackingStatsContract: {
@@ -5942,6 +5945,7 @@ declare const getExerciseTrackingStatsContract: {
             prWeight: z.ZodNumber;
             prReps: z.ZodInt;
             prSetIndex: z.ZodInt;
+            estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
         }, z.core.$strip>>;
     }, z.core.$strip>;
 };
@@ -5991,6 +5995,7 @@ declare const finishUserWorkoutResponseSchema: z.ZodObject<{
             prWeight: z.ZodNumber;
             prReps: z.ZodInt;
             prSetIndex: z.ZodInt;
+            estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
         }, z.core.$strip>>;
     }, z.core.$strip>;
     trackingMaps: z.ZodObject<{
@@ -6106,6 +6111,7 @@ declare const finishUserWorkoutContract: {
                 prWeight: z.ZodNumber;
                 prReps: z.ZodInt;
                 prSetIndex: z.ZodInt;
+                estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
             }, z.core.$strip>>;
         }, z.core.$strip>;
         trackingMaps: z.ZodObject<{
@@ -6308,6 +6314,7 @@ declare const exerciseTrackingStatsQueryDtoSchema: z.ZodObject<{
         prWeight: z.ZodNumber;
         prReps: z.ZodInt;
         prSetIndex: z.ZodInt;
+        estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
     }, z.core.$strip>>;
 }, z.core.$strip>;
 declare const exerciseTrackingMapsQueryDtoSchema: z.ZodObject<{
@@ -6403,6 +6410,7 @@ declare const exerciseTrackingAndStatsQueryDtoSchema: z.ZodObject<{
             prWeight: z.ZodNumber;
             prReps: z.ZodInt;
             prSetIndex: z.ZodInt;
+            estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
         }, z.core.$strip>>;
     }, z.core.$strip>;
     trackingMaps: z.ZodObject<{
@@ -6501,6 +6509,7 @@ declare const exerciseTrackingAndStatsRowQueryDtoSchema: z.ZodObject<{
                 prWeight: z.ZodNumber;
                 prReps: z.ZodInt;
                 prSetIndex: z.ZodInt;
+                estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
             }, z.core.$strip>>;
         }, z.core.$strip>;
         trackingMaps: z.ZodObject<{
@@ -6598,6 +6607,7 @@ declare const exerciseTrackingStatsRowQueryDtoSchema: z.ZodObject<{
             prWeight: z.ZodNumber;
             prReps: z.ZodInt;
             prSetIndex: z.ZodInt;
+            estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
         }, z.core.$strip>>;
     }, z.core.$strip>;
 }, z.core.$strip>;

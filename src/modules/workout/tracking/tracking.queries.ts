@@ -507,7 +507,17 @@ export class WorkoutTrackingQueries {
                   'prReps',
                   p.reps::INT,
                   'prSetIndex',
-                  p.set_index
+                  p.set_index,
+                  'estimatedOneRepMax',
+                  (
+                    CASE
+                      WHEN p.reps = 1 THEN p.weight::NUMERIC
+                      WHEN p.reps BETWEEN 2 AND 5  THEN (p.weight * (1 + 0.0333 * p.reps))::NUMERIC -- Epley
+                      WHEN p.reps BETWEEN 6 AND 10  THEN (p.weight * 36.0 / (37.0 - p.reps))::NUMERIC -- Brzycki
+                      WHEN p.reps BETWEEN 11 AND 12  THEN (p.weight * (1 + 0.025 * p.reps))::NUMERIC -- O'Connor
+                      ELSE NULL
+                    END
+                  )
                 )
                 ORDER BY
                   p.workout_start_utc DESC

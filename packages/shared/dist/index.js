@@ -2070,7 +2070,8 @@ var exerciseTrackingStatsQueryDtoSchema = z18.object({
     exerciseName: exerciseDbSchema.shape.name,
     prWeight: trackingSetDbSchema.shape.weight,
     prReps: trackingSetDbSchema.shape.reps,
-    prSetIndex: trackingSetDbSchema.shape.setIndex
+    prSetIndex: trackingSetDbSchema.shape.setIndex,
+    estimatedOneRepMax: z18.number().nullable()
   }))
 });
 var exerciseTrackingMapsQueryDtoSchema = z18.object({
