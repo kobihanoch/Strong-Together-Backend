@@ -39,11 +39,6 @@ export class UpdateUserService {
     return { payload: user.userData };
   }
 
-  async updateUsersReminderSettingsTimezone(userId: string, tz: string): Promise<void> {
-    await this
-      .sql`update reminders.user_reminder_setting urs set timezone=${tz}::text where urs.user_id = ${userId}::uuid and urs.timezone is distinct from ${tz}::text;`;
-  }
-
   async updateAuthenticatedUserData(
     userId: string,
     body: UpdateUserBody,

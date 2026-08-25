@@ -3,7 +3,6 @@ export * from './database';
 export * from './modules/aerobics';
 export * from './modules/analytics';
 export * from './modules/auth';
-export * from './modules/bootstrap';
 export * from './modules/exercises';
 export * from './modules/messages';
 export * from './modules/oauth';

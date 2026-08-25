@@ -7,7 +7,6 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AerobicsModule } from './modules/aerobics/aerobics.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { BootstrapModule } from './modules/bootstrap/bootstrap.module';
 import { ExercisesModule } from './modules/exercises/exercises.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { OAuthModule } from './modules/oauth/oauth.module';
@@ -53,7 +52,6 @@ class AppController {
     AerobicsModule,
     AnalyticsModule,
     AuthModule,
-    BootstrapModule,
     ExercisesModule,
     MessagesModule,
     OAuthModule,

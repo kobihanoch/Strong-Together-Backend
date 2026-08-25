@@ -145,7 +145,7 @@ The backend separates **interactive responses** from **background side effects**
 - **Redis Pub/Sub** carries **video-analysis results** from **Python** back into **NestJS**.
 - **Bull/Redis queues** handle **email** and **push jobs**.
 - **Authenticated WebSocket tickets** protect **socket connections**.
-- **Redis caching** accelerates repeated reads for **workouts**, **tracking**, **analytics**, **aerobics**, and **bootstrap flows**.
+- **Redis caching** accelerates repeated reads for **workouts**, **tracking**, **analytics**, and **aerobics**.
 
 **Read more:** [WebSocket Realtime](./docs/websocket-realtime.md) | [API And Engineering Standards](./docs/api-and-standards.md)
 

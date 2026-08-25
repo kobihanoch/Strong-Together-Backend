@@ -79,7 +79,6 @@ Feature modules live under `src/modules`.
 | `analytics`      | Goal adherence and strength analytics                                    | PostgreSQL analytics views, Redis cache                                     |
 | `aerobics`       | Cardio/aerobic tracking                                                  | PostgreSQL, Redis cache                                                     |
 | `oauth`          | Google and Apple sign-in                                                 | Provider token verification, PostgreSQL, messages                           |
-| `bootstrap`      | Initial mobile startup payload aggregation                               | Redis timezone cache plus user/workout/messages/aerobics services           |
 | `exercises`      | Exercise catalog                                                         | PostgreSQL                                                                  |
 
 Infrastructure modules live under `src/infrastructure` and provide reusable clients/adapters such as `DBModule`, `RedisModule`, `CacheModule`, `SocketIOModule`, `AWSModule`, `SupabaseModule`, queue modules, and `MailerModule`.
@@ -189,22 +188,6 @@ xt:aerobics:v1:{userId}:{days}:{tz}
 - Provider queries find, link, or create users and `identity.oauth_account` rows through the allow-listed `guest_api` functions.
 - `SessionQueries` bumps token versions and returns auth payload data.
 - First-login flows can call `SystemMessagesService`.
-
-### Bootstrap
-
-`BootstrapModule` is an aggregation module for mobile startup data. It calls:
-
-- `UpdateUserService`
-- `WorkoutPlanService`
-- `WorkoutTrackingService`
-- `MessagesService`
-- `AerobicsService`
-
-It also caches the requested timezone with:
-
-```text
-xt:timezone:v1:{userId}
-```
 
 ### Exercises
 

@@ -9,7 +9,6 @@ export const redisConfig = {
   enableSocketAdapter: process.env.ENABLE_SOCKET_REDIS_ADAPTER === 'true',
   cacheTtls: {
     trackingSec: Number(process.env.CACHE_TTL_TRACKING_SEC ?? 48 * 60 * 60),
-    timezoneSec: Number(process.env.CACHE_TTL_TIMEZONE_SEC ?? 48 * 60 * 60),
     planSec: Number(process.env.CACHE_TTL_PLAN_SEC ?? 48 * 60 * 60),
     analyticsSec: Number(process.env.CACHE_TTL_ANALYTICS_SEC ?? 60 * 60),
     aerobicsSec: Number(process.env.CACHE_TTL_AEROBICS_SEC ?? 48 * 60 * 60),

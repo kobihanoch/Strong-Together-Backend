@@ -19,7 +19,6 @@ The API is organized under `/api` with domain-oriented route groups:
 | Push | `/api/push` | Scheduled push notification entrypoints |
 | Video analysis | `/api/videoanalysis` | Presigned upload URL generation |
 | WebSockets | `/api/ws` | Authenticated socket ticket generation |
-| Bootstrap | `/api/bootstrap` | Client startup data |
 
 The full route-level reference remains in [api-documentation.md](./api-documentation.md).
 
