@@ -3,6 +3,7 @@ import type { Response } from 'express';
 import type {
   FinishUserWorkoutResponse,
   GetExerciseTrackingResponse,
+  GetExerciseTrackingStatsResponse,
   FinishUserWorkoutBody,
   GetExerciseTrackingQuery,
 } from '@strong-together/shared';
@@ -36,8 +37,8 @@ export class WorkoutTrackingController {
   /**
    * Get the authenticated user's recent exercise tracking history.
    *
-   * Returns tracking analytics and grouped tracking maps for the last 45 days in
-   * the requested timezone, and sets `X-Cache` to reflect cache usage.
+   * Returns grouped tracking maps for the last 45 days in the requested timezone
+   * and sets `X-Cache` to reflect cache usage.
    *
    * Route: GET /api/workouts/gettracking
    * Access: User
@@ -51,7 +52,29 @@ export class WorkoutTrackingController {
   ): Promise<GetExerciseTrackingResponse> {
     const tz = data.query.tz as string;
 
-    const { payload, cacheHit } = await this.workoutTrackingService.getExerciseTrackingData(user.id, 45, true, tz);
+    const { payload, cacheHit } = await this.workoutTrackingService.getExerciseTrackingMaps(user.id, 45, true, tz);
+    res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
+    return payload;
+  }
+
+  /**
+   * Get the authenticated user's exercise tracking stats.
+   *
+   * Returns tracking analytics and sets `X-Cache` to reflect cache usage.
+   *
+   * Route: GET /api/workouts/gettrackingstats
+   * Access: User
+   */
+  @Get('gettrackingstats')
+  async getTrackingStats(
+    @RequestData(new ValidateRequestPipe(getExerciseTrackingRequestSchema))
+    data: { query: GetExerciseTrackingQuery },
+    @CurrentUser() user: AuthenticatedUser,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<GetExerciseTrackingStatsResponse> {
+    const tz = data.query.tz as string;
+
+    const { payload, cacheHit } = await this.workoutTrackingService.getExerciseTrackingStats(user.id, 45, true, tz);
     res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
     return payload;
   }

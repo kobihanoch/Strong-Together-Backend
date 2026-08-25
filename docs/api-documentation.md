@@ -107,7 +107,7 @@ This file focuses on success contracts. Route-specific non-JSON behavior is call
 | `DELETE` | `/api/users/deleteprofilepic` | User | Delete profile image |
 | `PUT` | `/api/users/pushtoken` | User | Save push token |
 | `GET` | `/api/workouts/getworkout` | User | Get active workout plan |
-| `POST` | `/api/workouts/add` | User | Create or replace workout plan |
+| `POST` | `/api/workouts/add` | User | Create or update workout plan |
 | `GET` | `/api/workouts/gettracking` | User | Get workout tracking snapshot |
 | `POST` | `/api/workouts/finishworkout` | User | Persist completed workout |
 | `GET` | `/api/aerobics/get` | User | Get aerobics history |
@@ -630,7 +630,7 @@ Successful response:
 
 ### Shared workout response building blocks
 
-The plan and bootstrap endpoints reuse this workout plan shape:
+The workout-plan endpoints use this shape:
 
 ```json
 {
@@ -646,32 +646,22 @@ The plan and bootstrap endpoints reuse this workout plan shape:
         "id": 1,
         "workoutId": 1,
         "name": "string",
+        "orderIndex": 0,
         "createdAt": "string",
         "muscleGroup": "string | null",
         "isActive": true,
-        "exerciseToWorkoutSplit": [
+        "exercises": [
           {
-            "id": 1,
+            "exerciseToSplitId": 1,
+            "exerciseId": 10,
+            "name": "Bench Press",
             "sets": [8, 8, 6],
+            "orderIndex": 0,
             "isActive": true,
             "targetMuscle": "string",
-            "specificTargetMuscle": "string",
-            "exercise": "string",
-            "workoutSplit": "string"
+            "specificTargetMuscle": "string"
           }
         ]
-      }
-    ]
-  },
-  "workoutPlanForEditWorkout": {
-    "Push": [
-      {
-        "id": 10,
-        "name": "Bench Press",
-        "sets": [8, 8, 6],
-        "orderIndex": 1,
-        "targetMuscle": "Chest",
-        "specificTargetMuscle": "Upper Chest"
       }
     ]
   }
@@ -802,7 +792,7 @@ Notes:
 
 ### `POST /api/workouts/add`
 
-Creates or replaces the authenticated user's workout plan.
+Creates or updates the authenticated user's workout plan. Existing splits include their IDs; new splits omit the ID.
 
 Access:
 
@@ -812,15 +802,19 @@ Request body:
 
 ```json
 {
-  "workoutData": {
-    "Push": [
-      {
-        "id": 10,
-        "sets": [8, 8, 6],
-        "orderIndex": 1
-      }
-    ]
-  },
+  "workoutData": [
+    {
+      "name": "Push",
+      "orderIndex": 0,
+      "exercises": [
+        {
+          "exerciseId": 10,
+          "sets": [8, 8, 6],
+          "orderIndex": 0
+        }
+      ]
+    }
+  ],
   "workoutName": "string",
   "tz": "string"
 }
@@ -843,32 +837,22 @@ Successful response:
         "id": 1,
         "workoutId": 1,
         "name": "string",
+        "orderIndex": 0,
         "createdAt": "string",
         "muscleGroup": "string | null",
         "isActive": true,
-        "exerciseToWorkoutSplit": [
+        "exercises": [
           {
-            "id": 1,
+            "exerciseToSplitId": 1,
+            "exerciseId": 10,
+            "name": "Bench Press",
             "sets": [8, 8, 6],
+            "orderIndex": 0,
             "isActive": true,
             "targetMuscle": "string",
-            "specificTargetMuscle": "string",
-            "exercise": "string",
-            "workoutSplit": "string"
+            "specificTargetMuscle": "string"
           }
         ]
-      }
-    ]
-  },
-  "workoutPlanForEditWorkout": {
-    "Push": [
-      {
-        "id": 10,
-        "name": "Bench Press",
-        "sets": [8, 8, 6],
-        "orderIndex": 1,
-        "targetMuscle": "Chest",
-        "specificTargetMuscle": "Upper Chest"
       }
     ]
   }

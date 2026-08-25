@@ -4,6 +4,7 @@ import {
   addWorkoutResponseSchema,
   finishUserWorkoutResponseSchema,
   getExerciseTrackingResponseSchema,
+  getExerciseTrackingStatsResponseSchema,
   loginResponseSchema,
 } from '@strong-together/shared';
 import { createApp } from '../../../app';
@@ -16,7 +17,7 @@ import {
 } from '../../../common/tests/helpers/db';
 import { deleteRedisKeysByPattern, getRedisKey } from '../../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../../common/tests/helpers/users';
-import { buildTrackingKeyStable } from './tracking.cache';
+import { buildTrackingMapsKeyStable } from './tracking.cache';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 const users = new Set<string>();
@@ -27,7 +28,12 @@ beforeAll(async () => {
 }, 30000);
 
 afterEach(async () => {
-  await Promise.all([...userIds].map((userId) => deleteRedisKeysByPattern(`xt:tracking:v1:${userId}:*`)));
+  await Promise.all(
+    [...userIds].flatMap((userId) => [
+      deleteRedisKeysByPattern(`xt:tracking:maps:v1:${userId}:*`),
+      deleteRedisKeysByPattern(`xt:tracking:stats:v1:${userId}:*`),
+    ]),
+  );
   await cleanupTestUsers(users);
   users.clear();
   userIds.clear();
@@ -48,7 +54,9 @@ async function addPlan(user: Awaited<ReturnType<typeof trackingUser>>) {
     .send({
       tz: 'Asia/Jerusalem',
       workoutName: 'Tracking Plan',
-      workoutData: { A: [{ id: 20, sets: [8, 8, 10], orderIndex: 0 }] },
+      workoutData: [
+        { name: 'A', orderIndex: 0, exercises: [{ exerciseId: 20, sets: [8, 8, 10], orderIndex: 0 }] },
+      ],
     });
   expect(response.status).toBe(201);
   expectSchema(addWorkoutResponseSchema, response.body);
@@ -77,9 +85,8 @@ describe('WorkoutTrackingController', () => {
     expect(response.status).toBe(200);
     expect(response.headers['x-cache']).toBe('MISS');
     expectSchema(getExerciseTrackingResponseSchema, response.body);
-    expect(response.body.exerciseTrackingAnalysis.uniqueDays).toBe(0);
-    expect(response.body.exerciseTrackingMaps.byDate).toEqual({});
-    expect(await getRedisKey(buildTrackingKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
+    expect(response.body.byDate).toEqual({});
+    expect(await getRedisKey(buildTrackingMapsKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
   it('GET /api/workouts/gettracking returns User B schema-valid empty tracking when plan exists but no tracking', async () => {
@@ -87,13 +94,13 @@ describe('WorkoutTrackingController', () => {
     await addPlan(user);
 
     const response = await request(app.getHttpServer())
-      .get('/api/workouts/gettracking')
+      .get('/api/workouts/gettrackingstats')
       .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(user.accessToken));
 
     expect(response.status).toBe(200);
-    expectSchema(getExerciseTrackingResponseSchema, response.body);
-    expect(response.body.exerciseTrackingAnalysis.uniqueDays).toBe(0);
+    expectSchema(getExerciseTrackingStatsResponseSchema, response.body);
+    expect(response.body.workoutCount).toBe(0);
     expect(await getWorkoutSummaryCount(user.userId)).toBe(0);
   });
 
@@ -124,11 +131,11 @@ describe('WorkoutTrackingController', () => {
 
     expect(response.status).toBe(201);
     expectSchema(finishUserWorkoutResponseSchema, response.body);
-    expect(response.body.exerciseTrackingAnalysis.uniqueDays).toBe(1);
-    expect(response.body.exerciseTrackingMaps.byExerciseToSplitId).toHaveProperty(String(etsId));
+    expect(response.body.trackingStats.workoutCount).toBe(1);
+    expect(response.body.trackingMaps.byExerciseToSplitId).toHaveProperty(String(etsId));
     expect(await getWorkoutSummaryCount(user.userId)).toBe(1);
     expect(await getExerciseTrackingCountForUser(user.userId)).toBe(1);
-    expect(await getRedisKey(buildTrackingKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
+    expect(await getRedisKey(buildTrackingMapsKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
   it('POST /api/workouts/finishworkout rejects empty workouts with 400 and no DB inserts', async () => {

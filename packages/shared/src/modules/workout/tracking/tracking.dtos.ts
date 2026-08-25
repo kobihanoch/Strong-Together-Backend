@@ -71,17 +71,78 @@ export const trackingByDateItemQueryDtoSchema = trackingMapItemQueryDtoSchema.om
 /** Tracking item used in maps already grouped by workout split name. */
 export const trackingBySplitNameItemQueryDtoSchema = trackingMapItemQueryDtoSchema.omit({ splitName: true });
 /** Complete tracking and statistics aggregate returned by the tracking query. */
-export const exerciseTrackingAndStatsQueryDtoSchema = z.object({
-  exerciseTrackingAnalysis: exerciseTrackingAnalysisQueryDtoSchema,
-  exerciseTrackingMaps: z.object({
-    byDate: z.record(z.string(), z.array(trackingByDateItemQueryDtoSchema)),
-    byExerciseToSplitId: z.record(z.string(), z.array(trackingMapItemQueryDtoSchema)),
-    bySplitName: z.record(z.string(), z.array(trackingBySplitNameItemQueryDtoSchema)),
+const groupedTrackingItemQueryDtoSchema = z.object({
+  exerciseTracking: z.object({
+    exerciseTrackingId: exerciseTrackingDbSchema.shape.id,
+    sets: z.array(z.object({
+      setIndex: trackingSetDbSchema.shape.setIndex,
+      weight: trackingSetDbSchema.shape.weight,
+      reps: trackingSetDbSchema.shape.reps,
+    })),
+    notes: exerciseTrackingDbSchema.shape.notes,
+    exerciseAssignment: z.object({
+      exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
+      orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex.nullable(),
+      exerciseId: exerciseDbSchema.shape.id,
+      workoutSplitId: workoutSplitDbSchema.shape.id,
+      workoutSplitName: workoutSplitDbSchema.shape.name,
+      exerciseName: exerciseDbSchema.shape.name,
+      targetMuscle: exerciseDbSchema.shape.targetMuscle,
+      specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle,
+    }),
   }),
+});
+
+export const exerciseTrackingStatsQueryDtoSchema = z.object({
+  workoutCount: z.coerce.number(),
+  hasExerciseTracking: z.boolean(),
+  nextWorkoutSplit: z
+    .object({
+      id: workoutSplitDbSchema.shape.id,
+      name: workoutSplitDbSchema.shape.name,
+      orderIndex: workoutSplitDbSchema.shape.orderIndex,
+      muscleGroup: z.string().nullable(),
+    })
+    .nullable(),
+  workoutTargets: z.object({
+    workoutCountThisWeek: z.coerce.number(),
+    workoutCountScheduledPerWeek: z.coerce.number(),
+    weekStreak: z.coerce.number(),
+  }),
+  lastWorkoutStats: z.object({
+    workoutDate: z.string().nullable(),
+    workoutSplitName: workoutSplitDbSchema.shape.name.nullable(),
+    exerciseTrackedCount: z.coerce.number().nullable(),
+    setTrackedCount: z.coerce.number().nullable(),
+  }),
+  prs: z.array(
+    z.object({
+      exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
+      exerciseId: exerciseDbSchema.shape.id,
+      exerciseName: exerciseDbSchema.shape.name,
+      prWeight: trackingSetDbSchema.shape.weight,
+      prReps: trackingSetDbSchema.shape.reps,
+      prSetIndex: trackingSetDbSchema.shape.setIndex,
+      estimatedOneRepMax: z.number().nullable(),
+    }),
+  ),
+});
+
+export const exerciseTrackingMapsQueryDtoSchema = z.object({
+  byDate: z.record(z.string(), z.array(groupedTrackingItemQueryDtoSchema)),
+  byExerciseToSplitId: z.record(z.string(), z.array(groupedTrackingItemQueryDtoSchema)),
+  bySplitName: z.record(z.string(), z.array(groupedTrackingItemQueryDtoSchema)),
+});
+
+export const exerciseTrackingAndStatsQueryDtoSchema = z.object({
+  trackingStats: exerciseTrackingStatsQueryDtoSchema,
+  trackingMaps: exerciseTrackingMapsQueryDtoSchema,
 });
 
 /** SQL row wrapping the complete tracking aggregate under `data`. */
 export const exerciseTrackingAndStatsRowQueryDtoSchema = z.object({ data: exerciseTrackingAndStatsQueryDtoSchema });
+export const exerciseTrackingStatsRowQueryDtoSchema = z.object({ data: exerciseTrackingStatsQueryDtoSchema });
+export const exerciseTrackingMapsRowQueryDtoSchema = z.object({ data: exerciseTrackingMapsQueryDtoSchema });
 
 /** SQL row resolving the workout split for an exercise assignment. */
 export const workoutSplitLookupQueryDtoSchema = z.object({ workoutSplitId: workoutSplitDbSchema.shape.id });
@@ -102,6 +163,10 @@ export type TrackingByDateItemQueryDto = z.infer<typeof trackingByDateItemQueryD
 export type TrackingBySplitNameItemQueryDto = z.infer<typeof trackingBySplitNameItemQueryDtoSchema>;
 export type ExerciseTrackingAndStatsQueryDto = z.infer<typeof exerciseTrackingAndStatsQueryDtoSchema>;
 export type ExerciseTrackingAndStatsRowQueryDto = z.infer<typeof exerciseTrackingAndStatsRowQueryDtoSchema>;
+export type ExerciseTrackingStatsQueryDto = z.infer<typeof exerciseTrackingStatsQueryDtoSchema>;
+export type ExerciseTrackingStatsRowQueryDto = z.infer<typeof exerciseTrackingStatsRowQueryDtoSchema>;
+export type ExerciseTrackingMapsQueryDto = z.infer<typeof exerciseTrackingMapsQueryDtoSchema>;
+export type ExerciseTrackingMapsRowQueryDto = z.infer<typeof exerciseTrackingMapsRowQueryDtoSchema>;
 export type WorkoutSplitLookupQueryDto = z.infer<typeof workoutSplitLookupQueryDtoSchema>;
 export type WorkoutSummaryIdQueryDto = z.infer<typeof workoutSummaryIdQueryDtoSchema>;
 export type ExerciseTrackingIdQueryDto = z.infer<typeof exerciseTrackingIdQueryDtoSchema>;

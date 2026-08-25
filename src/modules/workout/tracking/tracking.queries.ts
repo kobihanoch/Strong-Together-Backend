@@ -1,9 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type postgres from 'postgres';
 import type {
-  ExerciseTrackingAndStatsQueryDto,
-  ExerciseTrackingAndStatsRowQueryDto,
   ExerciseTrackingIdQueryDto,
+  ExerciseTrackingMapsQueryDto,
+  ExerciseTrackingMapsRowQueryDto,
+  ExerciseTrackingStatsQueryDto,
+  ExerciseTrackingStatsRowQueryDto,
   FinishedWorkoutEntryQueryDto,
   WorkoutSplitLookupQueryDto,
   WorkoutSummaryIdQueryDto,
@@ -14,20 +16,21 @@ import { SQL } from '../../../infrastructure/db/db.tokens';
 export class WorkoutTrackingQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
-  async queryGetExerciseTrackingAndStats(
+  async queryGetExerciseTrackingMaps(
     userId: string,
     days: number = 45,
     tz: string = 'Asia/Jerusalem',
-  ): Promise<ExerciseTrackingAndStatsQueryDto> {
-    // Load the user's tracking history, statistics, PRs, and response maps in one query.
-    const [{ data }] = await this.sql<ExerciseTrackingAndStatsRowQueryDto[]>`
+  ): Promise<ExerciseTrackingMapsQueryDto> {
+    const [{ data }] = await this.sql<ExerciseTrackingMapsRowQueryDto[]>`
       WITH
         bounds AS (
           SELECT
-            (NOW() + INTERVAL '1 day') AS upper_bound_utc,
             (
-              NOW() - ${days} * INTERVAL '1 day'
-            ) AS lower_bound_utc
+              (NOW() AT TIME ZONE ${tz})::date - GREATEST(${days} - 1, 0) * INTERVAL '1 day'
+            ) AT TIME ZONE ${tz} AS lower_bound_utc,
+            (
+              (NOW() AT TIME ZONE ${tz})::date + INTERVAL '1 day'
+            ) AT TIME ZONE ${tz} AS upper_bound_utc
         ),
         all_workout_summaries AS (
           SELECT
@@ -50,7 +53,10 @@ export class WorkoutTrackingQueries {
           SELECT
             aws.id AS id,
             aws.split_name AS split_name,
-            aws.workout_time_local AS workout_time_local
+            aws.workout_start_utc AS workout_start_utc,
+            aws.workout_end_utc AS workout_end_utc,
+            aws.workout_time_local AS workout_time_local,
+            TO_CHAR(aws.workout_time_local::date, 'YYYY-MM-DD') AS workout_date_local_string
           FROM
             all_workout_summaries aws
           WHERE
@@ -59,160 +65,100 @@ export class WorkoutTrackingQueries {
                 lower_bound_utc
               FROM
                 bounds
-              LIMIT
-                1
             )
             AND aws.workout_start_utc < (
               SELECT
                 upper_bound_utc
               FROM
                 bounds
-              LIMIT
-                1
             )
         ),
-        unique_days AS (
-          SELECT
-            COUNT(aws.id) AS workout_count
-          FROM
-            all_workout_summaries aws
-        ),
-        split_performs AS (
-          SELECT
-            aws.split_name AS name,
-            COUNT(aws.id) AS count
-          FROM
-            all_workout_summaries aws
-          GROUP BY
-            aws.split_name
-        ),
-        most_frequent_split AS (
-          SELECT
-            sp.name,
-            sp.count
-          FROM
-            split_performs sp
-          ORDER BY
-            sp.count DESC
-          LIMIT
-            1
-        ),
-        last_workout_date AS (
-          SELECT
-            aws.workout_time_local::date AS last_date
-          FROM
-            all_workout_summaries aws
-          ORDER BY
-            aws.workout_time_local DESC
-          LIMIT
-            1
-        ),
-        all_prs AS (
-          SELECT
-            p.exercise_to_split_id AS etsid,
-            p.exercise_id,
-            p.exercise,
-            p.weight,
-            p.reps,
-            (
-              (
-                p.workout_start_utc AT TIME ZONE ${tz}
-              )::date
-            ) AS workout_date_utc
-          FROM
-            analytics.v_prs p
-            JOIN all_workout_summaries aws ON p.workout_summary_id = aws.id
-        ),
-        pr_max AS (
-          SELECT
-            ap.exercise,
-            ap.weight,
-            ap.reps,
-            ap.workout_date_utc AS workout_time_utc
-          FROM
-            all_prs ap
-          ORDER BY
-            weight DESC,
-            reps DESC,
-            workout_time_utc DESC
-          LIMIT
-            1
-        ),
+        -- All exercise tracking
         all_exercise_trackings AS (
           SELECT
-            et.id,
+            -- For maps building
+            bws.workout_date_local_string AS "workoutDate",
             et.exercise_to_split_id AS "exerciseToSplitId",
-            ARRAY_AGG(
-              et.weight
-              ORDER BY
-                et.set_index
-            ) AS weight,
-            ARRAY_AGG(
-              et.reps
-              ORDER BY
-                et.set_index
-            ) AS reps,
-            et.exercise_id AS "exerciseId",
-            et.workout_split_id AS "workoutSplitId",
             et.split_name AS "splitName",
-            et.exercise,
-            et.notes,
-            ets.order_index AS "orderIndex",
-            TO_CHAR(
-              (
-                et.workout_start_utc at TIME ZONE ${tz}
-              )::date,
-              'YYYY-MM-DD'
-            ) AS "workoutDate",
+            et.order_index AS "orderIndex",
             JSONB_BUILD_OBJECT(
-              'sets',
-              JSONB_AGG(
-                ets.reps
-                ORDER BY
-                  ets.set_index
-              ),
-              'exercises',
+              'exerciseTracking',
               JSONB_BUILD_OBJECT(
-                'targetMuscle',
-                ex.target_muscle,
-                'specificTargetMuscle',
-                ex.specific_target_muscle
+                'exerciseTrackingId',
+                et.id::INT,
+                'sets',
+                COALESCE(
+                  JSONB_AGG(
+                    JSONB_BUILD_OBJECT(
+                      'setIndex',
+                      et.set_index,
+                      'weight',
+                      et.weight,
+                      'reps',
+                      et.reps::INT
+                    )
+                    ORDER BY
+                      et.set_index ASC
+                  ) FILTER (
+                    WHERE
+                      et.set_index IS NOT NULL
+                  ),
+                  '[]'::JSONB
+                ),
+                'notes',
+                et.notes,
+                'exerciseAssignment',
+                JSONB_BUILD_OBJECT(
+                  'exerciseToSplitId',
+                  et.exercise_to_split_id::INT,
+                  'orderIndex',
+                  et.order_index,
+                  'exerciseId',
+                  et.exercise_id::INT,
+                  'workoutSplitId',
+                  et.workout_split_id::INT,
+                  'workoutSplitName',
+                  et.split_name,
+                  'exerciseName',
+                  et.exercise,
+                  'targetMuscle',
+                  et.target_muscle,
+                  'specificTargetMuscle',
+                  et.specific_target_muscle
+                )
               )
-            ) AS "exerciseToWorkoutSplit"
+            ) AS exercise_tracking_payload
           FROM
             analytics.v_exercise_tracking_set_expanded et
-            LEFT JOIN workout.v_exercise_to_workout_split_set_expanded ets ON ets.id = et.exercise_to_split_id
-            AND ets.set_index = et.set_index
-            JOIN workout.exercise ex ON ex.id = et.exercise_id
-          WHERE
-            et.workout_summary_id IN (
-              SELECT
-                id
-              FROM
-                bounded_workout_summaries
-            )
+            JOIN bounded_workout_summaries bws ON bws.id = et.workout_summary_id
           GROUP BY
+            bws.workout_date_local_string,
             et.id,
             et.exercise_to_split_id,
             et.exercise_id,
             et.workout_split_id,
             et.split_name,
             et.exercise,
-            et.notes,
-            et.workout_start_utc,
-            ets.order_index,
-            ex.target_muscle,
-            ex.specific_target_muscle
+            et.order_index,
+            et.target_muscle,
+            et.specific_target_muscle,
+            et.notes
+          ORDER BY
+            et.order_index ASC
         ),
+        -- Maps
         by_date AS (
           SELECT
-            JSONB_OBJECT_AGG(workout_date_local_string, items) AS map
+            COALESCE(
+              JSONB_OBJECT_AGG(workout_date_local_string, items),
+              '{}'::JSONB
+            ) AS map
           FROM
             (
               SELECT
                 aet."workoutDate" AS workout_date_local_string,
                 JSONB_AGG(
-                  TO_JSONB(aet) - 'workoutDate'
+                  aet.exercise_tracking_payload
                   ORDER BY
                     aet."orderIndex" ASC
                 ) AS items
@@ -224,13 +170,16 @@ export class WorkoutTrackingQueries {
         ),
         by_etsid AS (
           SELECT
-            JSONB_OBJECT_AGG("exerciseToSplitId", items) AS map
+            COALESCE(
+              JSONB_OBJECT_AGG("exerciseToSplitId"::TEXT, items),
+              '{}'::JSONB
+            ) AS map
           FROM
             (
               SELECT
                 aet."exerciseToSplitId",
                 JSONB_AGG(
-                  TO_JSONB(aet)
+                  aet.exercise_tracking_payload
                   ORDER BY
                     aet."workoutDate" DESC
                 ) AS items
@@ -244,48 +193,412 @@ export class WorkoutTrackingQueries {
         ),
         by_split_name AS (
           SELECT
-            JSONB_OBJECT_AGG("splitName", items) AS map
+            COALESCE(JSONB_OBJECT_AGG("splitName", items), '{}'::JSONB) AS map
           FROM
             (
               SELECT
                 aet."splitName",
                 JSONB_AGG(
-                  TO_JSONB(aet) - 'splitName'
+                  aet.exercise_tracking_payload
                   ORDER BY
                     aet."workoutDate" DESC
                 ) AS items
               FROM
                 all_exercise_trackings aet
+              WHERE
+                aet."splitName" IS NOT NULL
               GROUP BY
                 aet."splitName"
             ) t
         )
       SELECT
         JSONB_BUILD_OBJECT(
-          'exerciseTrackingAnalysis',
-          JSONB_BUILD_OBJECT(
-            'uniqueDays',
+          'byDate',
+          COALESCE(
+            (
+              SELECT
+                bdm.map
+              FROM
+                by_date bdm
+            ),
+            '{}'::JSONB
+          ),
+          'byExerciseToSplitId',
+          COALESCE(
+            (
+              SELECT
+                betsid.map
+              FROM
+                by_etsid betsid
+            ),
+            '{}'::JSONB
+          ),
+          'bySplitName',
+          COALESCE(
+            (
+              SELECT
+                bsn.map
+              FROM
+                by_split_name bsn
+            ),
+            '{}'::JSONB
+          )
+        ) AS data
+    `;
+
+    return data;
+  }
+
+  async queryGetExerciseTrackingStats(
+    userId: string,
+    days: number = 45,
+    tz: string = 'Asia/Jerusalem',
+  ): Promise<ExerciseTrackingStatsQueryDto> {
+    const [{ data }] = await this.sql<ExerciseTrackingStatsRowQueryDto[]>`
+      WITH
+        bounds AS (
+          SELECT
+            (
+              (NOW() AT TIME ZONE ${tz})::date - GREATEST(${days} - 1, 0) * INTERVAL '1 day'
+            ) AT TIME ZONE ${tz} AS lower_bound_utc,
+            (
+              (NOW() AT TIME ZONE ${tz})::date + INTERVAL '1 day'
+            ) AT TIME ZONE ${tz} AS upper_bound_utc
+        ),
+        all_workout_summaries AS (
+          SELECT
+            wsum.id,
+            ws.name AS split_name,
+            wsum.workout_start_utc AT TIME ZONE ${tz} AS workout_time_local,
+            wsum.workout_start_utc
+          FROM
+            tracking.workout_summary wsum
+            JOIN workout.workout_split ws ON ws.id = wsum.workout_split_id
+          WHERE
+            wsum.user_id = ${userId}::UUID
+        ),
+        bounded_workout_summaries AS (
+          SELECT
+            aws.id,
+            aws.split_name,
+            aws.workout_start_utc,
+            aws.workout_time_local
+          FROM
+            all_workout_summaries aws
+          WHERE
+            aws.workout_start_utc >= (
+              SELECT
+                lower_bound_utc
+              FROM
+                bounds
+            )
+            AND aws.workout_start_utc < (
+              SELECT
+                upper_bound_utc
+              FROM
+                bounds
+            )
+        ),
+        total_workouts AS (
+          SELECT
+            COUNT(aws.id)::INT AS workout_count
+          FROM
+            all_workout_summaries aws
+        ),
+        workouts_scheduled_per_week_count AS (
+          SELECT
+            COUNT(ws.id)::INT AS count
+          FROM
+            workout.workout_split ws
+            JOIN workout.workout_plan wp ON ws.workout_id = wp.id
+          WHERE
+            wp.user_id = ${userId}::UUID
+            AND wp.is_active = TRUE
+            AND ws.is_active = TRUE
+        ),
+        qualifying_weeks AS (
+          SELECT
+            DATE_TRUNC(
+              'week',
+              (
+                aws.workout_start_utc AT TIME ZONE ${tz}
+              ) + INTERVAL '1 day'
+            ) - INTERVAL '1 day' AS week_start
+          FROM
+            all_workout_summaries aws
+          WHERE
+            aws.workout_start_utc < (
+              SELECT
+                upper_bound_utc
+              FROM
+                bounds
+            )
+          GROUP BY
+            1
+          HAVING
+            COUNT(aws.id) >= (
+              SELECT
+                count
+              FROM
+                workouts_scheduled_per_week_count
+            )
+            AND (
+              SELECT
+                count
+              FROM
+                workouts_scheduled_per_week_count
+            ) > 0
+        ),
+        streak_anchor AS (
+          SELECT
+            CASE
+              WHEN EXISTS (
+                SELECT
+                  1
+                FROM
+                  qualifying_weeks qw
+                WHERE
+                  qw.week_start = current_week.week_start
+              ) THEN current_week.week_start
+              ELSE current_week.week_start - INTERVAL '1 week'
+            END AS week_start
+          FROM
+            (
+              SELECT
+                DATE_TRUNC(
+                  'week',
+                  (NOW() AT TIME ZONE ${tz}) + INTERVAL '1 day'
+                ) - INTERVAL '1 day' AS week_start
+            ) current_week
+        ),
+        weeks_fits_minimum_scheduled_workouts AS (
+          SELECT
+            COUNT(*)::INT AS count
+          FROM
+            (
+              SELECT
+                qw.week_start,
+                ROW_NUMBER() OVER (
+                  ORDER BY
+                    qw.week_start DESC
+                ) AS streak_position
+              FROM
+                qualifying_weeks qw
+              WHERE
+                qw.week_start <= (
+                  SELECT
+                    week_start
+                  FROM
+                    streak_anchor
+                )
+            ) ranked_weeks
+          WHERE
+            week_start = (
+              SELECT
+                week_start
+              FROM
+                streak_anchor
+            ) - (streak_position - 1) * INTERVAL '1 week'
+        ),
+        workouts_count_this_week AS (
+          SELECT
+            COUNT(bws.id)::INT AS count
+          FROM
+            bounded_workout_summaries bws
+          WHERE
+            bws.workout_start_utc >= (
+              DATE_TRUNC(
+                'week',
+                (NOW() AT TIME ZONE ${tz}) + INTERVAL '1 day'
+              ) - INTERVAL '1 day'
+            ) AT TIME ZONE ${tz}
+        ),
+        last_workout_date AS (
+          SELECT
+            aws.workout_time_local::date AS last_date
+          FROM
+            all_workout_summaries aws
+          ORDER BY
+            aws.workout_time_local DESC
+          LIMIT
+            1
+        ),
+        last_bounded_workout AS (
+          SELECT
+            bws.id AS last_id
+          FROM
+            bounded_workout_summaries bws
+          ORDER BY
+            bws.workout_time_local DESC
+          LIMIT
+            1
+        ),
+        last_workout_stats AS (
+          SELECT
+            COUNT(DISTINCT et.id)::INT AS exercise_tracked_count,
+            COUNT(et.set_index)::INT AS set_tracked_count,
+            bws.split_name
+          FROM
+            analytics.v_exercise_tracking_set_expanded et
+            JOIN all_workout_summaries bws ON bws.id = et.workout_summary_id
+          WHERE
+            bws.id = (
+              SELECT
+                last_id
+              FROM
+                last_bounded_workout
+            )
+          GROUP BY
+            bws.split_name
+        ),
+        next_workout_split AS (
+          SELECT
+            ws.id::INT,
+            ws.name,
+            ws.order_index,
+            workout.get_muscle_group (ws.id) AS muscle_group
+          FROM
+            workout.workout_split ws
+            JOIN workout.workout_plan wp ON wp.id = ws.workout_id
+          WHERE
+            wp.user_id = ${userId}::UUID
+            AND wp.is_active = TRUE
+            AND ws.is_active = TRUE
+          ORDER BY
+            CASE
+              WHEN ws.order_index > COALESCE(
+                (
+                  SELECT
+                    latest_split.order_index
+                  FROM
+                    tracking.workout_summary latest_summary
+                    JOIN workout.workout_split latest_split ON latest_split.id = latest_summary.workout_split_id
+                  WHERE
+                    latest_summary.user_id = ${userId}::UUID
+                    AND latest_split.workout_id = wp.id
+                    AND latest_split.is_active = TRUE
+                  ORDER BY
+                    latest_summary.workout_start_utc DESC,
+                    latest_summary.id DESC
+                  LIMIT
+                    1
+                ),
+                0
+              ) THEN 0
+              ELSE 1
+            END,
+            ws.order_index
+          LIMIT
+            1
+        ),
+        all_prs AS (
+          SELECT
+            COALESCE(
+              JSONB_AGG(
+                JSONB_BUILD_OBJECT(
+                  'exerciseToSplitId',
+                  p.exercise_to_split_id::INT,
+                  'exerciseId',
+                  p.exercise_id::INT,
+                  'exerciseName',
+                  p.exercise,
+                  'prWeight',
+                  p.weight,
+                  'prReps',
+                  p.reps::INT,
+                  'prSetIndex',
+                  p.set_index,
+                  'estimatedOneRepMax',
+                  (
+                    CASE
+                      WHEN p.reps = 1 THEN p.weight::NUMERIC
+                      WHEN p.reps BETWEEN 2 AND 5  THEN (p.weight * (1 + 0.0333 * p.reps))::NUMERIC -- Epley
+                      WHEN p.reps BETWEEN 6 AND 10  THEN (p.weight * 36.0 / (37.0 - p.reps))::NUMERIC -- Brzycki
+                      WHEN p.reps BETWEEN 11 AND 12  THEN (p.weight * (1 + 0.025 * p.reps))::NUMERIC -- O'Connor
+                      ELSE NULL
+                    END
+                  )
+                )
+                ORDER BY
+                  p.workout_start_utc DESC
+              ),
+              '[]'::JSONB
+            ) AS all_prs_payload
+          FROM
+            analytics.v_prs p
+            JOIN all_workout_summaries aws ON p.workout_summary_id = aws.id
+        )
+      SELECT
+        JSONB_BUILD_OBJECT(
+          'workoutCount',
+          COALESCE(
             (
               SELECT
                 workout_count
               FROM
-                unique_days
+                total_workouts
             ),
-            'mostFrequentSplit',
-            (
-              SELECT
-                name
-              FROM
-                most_frequent_split
+            0
+          ),
+          'hasExerciseTracking',
+          EXISTS (
+            SELECT
+              1
+            FROM
+              bounded_workout_summaries
+          ),
+          'nextWorkoutSplit',
+          (
+            SELECT
+              JSONB_BUILD_OBJECT(
+                'id',
+                nws.id,
+                'name',
+                nws.name,
+                'orderIndex',
+                nws.order_index,
+                'muscleGroup',
+                nws.muscle_group
+              )
+            FROM
+              next_workout_split nws
+          ),
+          'workoutTargets',
+          JSONB_BUILD_OBJECT(
+            'workoutCountThisWeek',
+            COALESCE(
+              (
+                SELECT
+                  count
+                FROM
+                  workouts_count_this_week
+              ),
+              0
             ),
-            'mostFrequentSplitDays',
-            (
-              SELECT
-                count
-              FROM
-                most_frequent_split
+            'workoutCountScheduledPerWeek',
+            COALESCE(
+              (
+                SELECT
+                  count
+                FROM
+                  workouts_scheduled_per_week_count
+              ),
+              0
             ),
-            'lastWorkoutDate',
+            'weekStreak',
+            COALESCE(
+              (
+                SELECT
+                  count
+                FROM
+                  weeks_fits_minimum_scheduled_workouts
+              ),
+              0
+            )
+          ),
+          'lastWorkoutStats',
+          JSONB_BUILD_OBJECT(
+            'workoutDate',
             TO_CHAR(
               (
                 SELECT
@@ -295,77 +608,43 @@ export class WorkoutTrackingQueries {
               ),
               'YYYY-MM-DD'
             ),
-            'splitDaysByName',
+            'workoutSplitName',
             (
-              COALESCE(
-                (
-                  SELECT
-                    JSONB_OBJECT_AGG(sp.name, sp.count)
-                  FROM
-                    split_performs sp
-                ),
-                '{}'::JSONB
-              )
+              SELECT
+                split_name
+              FROM
+                last_workout_stats
             ),
-            'prs',
-            (
-              JSONB_BUILD_OBJECT(
-                'prMax',
-                (
-                  COALESCE(
-                    (
-                      SELECT
-                        JSONB_BUILD_OBJECT(
-                          'exercise',
-                          prm.exercise,
-                          'weight',
-                          prm.weight,
-                          'reps',
-                          prm.reps,
-                          'workoutTimeUtc',
-                          prm.workout_time_utc
-                        )
-                      FROM
-                        pr_max prm
-                    ),
-                    NULL
-                  )
-                )
-              )
+            'exerciseTrackedCount',
+            COALESCE(
+              (
+                SELECT
+                  exercise_tracked_count
+                FROM
+                  last_workout_stats
+              ),
+              0
+            ),
+            'setTrackedCount',
+            COALESCE(
+              (
+                SELECT
+                  set_tracked_count
+                FROM
+                  last_workout_stats
+              ),
+              0
             )
           ),
-          'exerciseTrackingMaps',
-          JSONB_BUILD_OBJECT(
-            'byDate',
-            COALESCE(
-              (
-                SELECT
-                  bdm.map
-                FROM
-                  by_date bdm
-              ),
-              '{}'::JSONB
+          'prs',
+          COALESCE(
+            (
+              SELECT
+                all_prs_payload
+              FROM
+                all_prs
             ),
-            'byExerciseToSplitId',
-            COALESCE(
-              (
-                SELECT
-                  betsid.map
-                FROM
-                  by_etsid betsid
-              ),
-              '{}'::JSONB
-            ),
-            'bySplitName',
-            COALESCE(
-              (
-                SELECT
-                  bsn.map
-                FROM
-                  by_split_name bsn
-              ),
-              '{}'::JSONB
-            )
+            '[]'::JSONB
           )
         ) AS data
     `;

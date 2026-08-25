@@ -297,7 +297,7 @@ SET
   search_path = pg_catalog AS $function$
   SELECT to_jsonb(u)
   FROM (
-    SELECT id, name, username, password_hash AS password, role, is_verified
+    SELECT id, name, username, password_hash, role, is_verified
     FROM identity."user"
     WHERE username = username_in
     LIMIT 1
@@ -310,7 +310,7 @@ SET
   search_path = pg_catalog AS $function$
   SELECT to_jsonb(u)
   FROM (
-    SELECT id, name, username, email, password_hash AS password, last_login, is_verified, role
+    SELECT id, name, username, email, password_hash, last_login, is_verified, role
     FROM identity."user"
     WHERE auth_provider = 'app'
       AND (username = identifier_in OR email = identifier_in)

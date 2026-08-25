@@ -47,7 +47,7 @@ describe('WorkoutPlanController', () => {
     expect(response.status).toBe(200);
     expect(response.headers['x-cache']).toBe('MISS');
     expectSchema(getWholeUserWorkoutPlanResponseSchema, response.body);
-    expect(response.body).toEqual({ workoutPlan: null, workoutPlanForEditWorkout: null });
+    expect(response.body).toEqual({ workoutPlan: null });
     expect(await getRedisKey(buildPlanKeyStable(user.userId, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
@@ -59,16 +59,19 @@ describe('WorkoutPlanController', () => {
       .send({
         tz: 'Asia/Jerusalem',
         workoutName: 'Controller Plan',
-        workoutData: {
-          A: [{ id: 20, sets: [8, 8, 10], orderIndex: 0 }],
-          B: [{ id: 12, sets: [10, 10], orderIndex: 0 }],
-        },
+        workoutData: [
+          { name: 'A', orderIndex: 0, exercises: [{ exerciseId: 20, sets: [8, 8, 10], orderIndex: 0 }] },
+          { name: 'B', orderIndex: 1, exercises: [{ exerciseId: 12, sets: [10, 10], orderIndex: 0 }] },
+        ],
       });
 
     expect(response.status).toBe(201);
     expectSchema(addWorkoutResponseSchema, response.body);
     expect(response.body.message).toBe('Workout created successfully!');
-    expect(response.body.workoutPlanForEditWorkout).toHaveProperty('A');
+    expect(response.body.workoutPlan.workoutSplits).toMatchObject([
+      { name: 'A', orderIndex: 0 },
+      { name: 'B', orderIndex: 1 },
+    ]);
     expect(await getActiveWorkoutSplitNames(user.userId)).toEqual(['A', 'B']);
     expect(await getRedisKey(buildPlanKeyStable(user.userId, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
@@ -81,7 +84,7 @@ describe('WorkoutPlanController', () => {
       .send({
         tz: 'Asia/Jerusalem',
         workoutName: 'Cache Plan',
-        workoutData: { A: [{ id: 20, sets: [5, 5], orderIndex: 0 }] },
+        workoutData: [{ name: 'A', orderIndex: 0, exercises: [{ exerciseId: 20, sets: [5, 5], orderIndex: 0 }] }],
       });
 
     const first = await request(app.getHttpServer())
@@ -100,6 +103,42 @@ describe('WorkoutPlanController', () => {
     expectSchema(getWholeUserWorkoutPlanResponseSchema, second.body);
   });
 
+  it('POST /api/workouts/add renames and reorders splits with IDs and creates splits without IDs', async () => {
+    const user = await workoutUser('plan_update');
+    const created = await request(app.getHttpServer())
+      .post('/api/workouts/add')
+      .set(authHeaders(user.accessToken))
+      .send({
+        tz: 'Asia/Jerusalem',
+        workoutData: [
+          { name: 'A', orderIndex: 0, exercises: [{ exerciseId: 20, sets: [8], orderIndex: 0 }] },
+          { name: 'B', orderIndex: 1, exercises: [{ exerciseId: 12, sets: [10], orderIndex: 0 }] },
+        ],
+      });
+
+    const [splitA, splitB] = created.body.workoutPlan.workoutSplits;
+    const updated = await request(app.getHttpServer())
+      .post('/api/workouts/add')
+      .set(authHeaders(user.accessToken))
+      .send({
+        tz: 'Asia/Jerusalem',
+        workoutData: [
+          { id: splitB.id, name: 'Pull', orderIndex: 0, exercises: [{ exerciseId: 12, sets: [10], orderIndex: 0 }] },
+          { id: splitA.id, name: 'Push', orderIndex: 1, exercises: [{ exerciseId: 20, sets: [8], orderIndex: 0 }] },
+          { name: 'Legs', orderIndex: 2, exercises: [{ exerciseId: 12, sets: [12], orderIndex: 0 }] },
+        ],
+      });
+
+    expect(updated.status).toBe(200);
+    expectSchema(addWorkoutResponseSchema, updated.body);
+    expect(updated.body.message).toBe('Workout created successfully!');
+    expect(updated.body.workoutPlan.workoutSplits).toMatchObject([
+      { id: splitB.id, name: 'Pull', orderIndex: 0 },
+      { id: splitA.id, name: 'Push', orderIndex: 1 },
+      { name: 'Legs', orderIndex: 2 },
+    ]);
+  });
+
   it('POST /api/workouts/add rejects invalid empty splits with 400', async () => {
     const user = await workoutUser('plan_bad');
     const response = await request(app.getHttpServer())
@@ -108,7 +147,7 @@ describe('WorkoutPlanController', () => {
       .send({
         tz: 'Asia/Jerusalem',
         workoutName: 'Bad Plan',
-        workoutData: { A: [] },
+        workoutData: [{ name: 'A', orderIndex: 0, exercises: [] }],
       });
 
     expect(response.status).toBe(400);
@@ -126,7 +165,7 @@ describe('WorkoutPlanController', () => {
       .send({
         tz: 'Asia/Jerusalem',
         workoutName: 'No Auth',
-        workoutData: { A: [{ id: 20, sets: [1], orderIndex: 0 }] },
+        workoutData: [{ name: 'A', orderIndex: 0, exercises: [{ exerciseId: 20, sets: [1], orderIndex: 0 }] }],
       });
 
     expect(getResponse.status).toBe(401);

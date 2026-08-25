@@ -1,11 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import type {
   ExerciseTrackingAndStatsQueryDto,
+  ExerciseTrackingMapsQueryDto,
+  ExerciseTrackingStatsQueryDto,
   FinishUserWorkoutBody,
   FinishUserWorkoutResponse,
 } from '@strong-together/shared';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
-import { buildTrackingKeyStable, TTL_TRACKING } from './tracking.cache';
+import { buildTrackingMapsKeyStable, buildTrackingStatsKeyStable, TTL_TRACKING } from './tracking.cache';
 import { WorkoutTrackingQueries } from './tracking.queries';
 import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
 
@@ -17,13 +19,13 @@ export class WorkoutTrackingService {
     private readonly workoutTrackingQueries: WorkoutTrackingQueries,
   ) {}
 
-  async getExerciseTrackingData(
+  async getExerciseTrackingMaps(
     userId: string,
     days: number = 45,
     fromCache: boolean = true,
     tz: string,
-  ): Promise<{ payload: ExerciseTrackingAndStatsQueryDto; cacheHit: boolean }> {
-    const key = buildTrackingKeyStable(userId, days, tz);
+  ): Promise<{ payload: ExerciseTrackingMapsQueryDto; cacheHit: boolean }> {
+    const key = buildTrackingMapsKeyStable(userId, days, tz);
     if (fromCache) {
       await this.cacheService.cacheDeleteOtherTimezones(key);
       const cached = await this.cacheService.cacheGetJSON(key);
@@ -32,10 +34,48 @@ export class WorkoutTrackingService {
       }
     }
 
-    const data = await this.workoutTrackingQueries.queryGetExerciseTrackingAndStats(userId, days, tz);
+    const data = await this.workoutTrackingQueries.queryGetExerciseTrackingMaps(userId, days, tz);
     const payload = data;
     await this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING);
     return { payload, cacheHit: false };
+  }
+
+  async getExerciseTrackingStats(
+    userId: string,
+    days: number = 45,
+    fromCache: boolean = true,
+    tz: string,
+  ): Promise<{ payload: ExerciseTrackingStatsQueryDto; cacheHit: boolean }> {
+    const key = buildTrackingStatsKeyStable(userId, days, tz);
+    if (fromCache) {
+      await this.cacheService.cacheDeleteOtherTimezones(key);
+      const cached = await this.cacheService.cacheGetJSON(key);
+      if (cached) {
+        return { payload: cached, cacheHit: true };
+      }
+    }
+
+    const data = await this.workoutTrackingQueries.queryGetExerciseTrackingStats(userId, days, tz);
+    const payload = data;
+    await this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING);
+    return { payload, cacheHit: false };
+  }
+
+  async getExerciseTrackingData(
+    userId: string,
+    days: number = 45,
+    fromCache: boolean = true,
+    tz: string,
+  ): Promise<{ payload: ExerciseTrackingAndStatsQueryDto; cacheHit: boolean }> {
+    const [mapsResult, statsResult] = await Promise.all([
+      this.getExerciseTrackingMaps(userId, days, fromCache, tz),
+      this.getExerciseTrackingStats(userId, days, fromCache, tz),
+    ]);
+
+    return {
+      payload: { trackingMaps: mapsResult.payload, trackingStats: statsResult.payload },
+      cacheHit: mapsResult.cacheHit && statsResult.cacheHit,
+    };
   }
 
   async finishUserWorkoutData(userId: string, body: FinishUserWorkoutBody): Promise<FinishUserWorkoutResponse> {
@@ -48,11 +88,14 @@ export class WorkoutTrackingService {
       throw new BadRequestException('Not a valid workout');
     }
 
-    await this.workoutTrackingQueries.queryInsertUserFinishedWorkout(userId, workoutArray, workoutStartUtc, workoutEndUtc);
+    await this.workoutTrackingQueries.queryInsertUserFinishedWorkout(
+      userId,
+      workoutArray,
+      workoutStartUtc,
+      workoutEndUtc,
+    );
 
     const { payload } = await this.getExerciseTrackingData(userId, 45, false, tz);
-    await this.cacheService.cacheSetJSON(buildTrackingKeyStable(userId, 45, tz), payload, TTL_TRACKING);
-
     this.systemMessagesService.sendSystemMessageToUserWorkoutDone(userId);
     return payload;
   }

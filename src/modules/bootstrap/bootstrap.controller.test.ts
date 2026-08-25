@@ -45,7 +45,7 @@ describe('BootstrapController', () => {
     expectSchema(bootstrapResponseSchema, response.body);
     expect(response.body.user.id).toBe(user.userId);
     expect(response.body.workout).toEqual({ workoutPlan: null, workoutPlanForEditWorkout: null });
-    expect(response.body.tracking.exerciseTrackingAnalysis.uniqueDays).toBe(0);
+    expect(response.body.tracking.trackingStats.workoutCount).toBe(0);
     expect(response.body.messages).toEqual({ messages: [] });
     expect(response.body.aerobics).toEqual({ daily: {}, weekly: {} });
     expect(await getUserReminderTimezone(user.userId)).toBe('Europe/London');
@@ -82,7 +82,7 @@ describe('BootstrapController', () => {
     expect(response.status).toBe(200);
     expectSchema(bootstrapResponseSchema, response.body);
     expect(response.body.workout.workoutPlan.numberOfSplits).toBe(1);
-    expect(response.body.tracking.exerciseTrackingAnalysis.uniqueDays).toBe(1);
+    expect(response.body.tracking.trackingStats.workoutCount).toBe(1);
     expect(response.body.messages.messages).toHaveLength(1);
     expect(Object.keys(response.body.aerobics.daily)).toHaveLength(1);
   });
