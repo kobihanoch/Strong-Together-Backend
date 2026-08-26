@@ -18,6 +18,14 @@ export class SessionService {
     private readonly sessionQueries: SessionQueries,
   ) {}
 
+  /**
+   * Authenticates user.
+   * @param identifier - The username or email address.
+   * @param password - The plaintext password.
+   * @param jkt - The DPoP key thumbprint.
+   * @param requestLogger - The request-scoped logger.
+   * @returns The login user result.
+   */
   async loginUserData(
     identifier: string,
     password: string,
@@ -96,6 +104,10 @@ export class SessionService {
     };
   }
 
+  /**
+   * Logs out user.
+   * @param refreshToken - The refresh token to process.
+   */
   async logoutUserData(refreshToken: string | null | undefined): Promise<void> {
     const decodedRefresh = decodeRefreshToken(refreshToken ?? null) as AccessTokenPayloadDto | null;
 
@@ -107,6 +119,12 @@ export class SessionService {
     }
   }
 
+  /**
+   * Refreshes access token.
+   * @param refreshToken - The refresh token to process.
+   * @param dpopJkt - The DPoP key thumbprint.
+   * @returns The refresh access token result.
+   */
   async refreshAccessTokenData(
     refreshToken: string | null | undefined,
     dpopJkt: string | null | undefined,

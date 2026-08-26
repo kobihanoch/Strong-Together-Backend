@@ -15,6 +15,9 @@ import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe
 import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import type { AppRequest } from '../../../common/types/express';
 
+/**
+ * Handles session HTTP requests.
+ */
 @Controller('api/auth')
 @UseInterceptors(RlsTxInterceptor)
 export class SessionController {
@@ -27,8 +30,14 @@ export class SessionController {
    * performs first-login side effects when needed, and returns a fresh access and
    * refresh token pair.
    *
-   * Route: POST /api/auth/login
+   * @remarks Route: POST /api/auth/login
    * Access: Public
+   *
+   * @param data - The validated request data.
+   * @param req - The HTTP request.
+   * @param requestLogger - The request-scoped logger.
+   * @param res - The HTTP response.
+   * @returns The response payload.
    */
   @Post('login')
   @UseGuards(RateLimitGuard)
@@ -54,8 +63,11 @@ export class SessionController {
    * Decodes the submitted refresh token when present, clears the stored push
    * token, bumps token version state, and returns a success message.
    *
-   * Route: POST /api/auth/logout
+   * @remarks Route: POST /api/auth/logout
    * Access: User
+   *
+   * @param req - The HTTP request.
+   * @returns The response payload.
    */
   @Post('logout')
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
@@ -73,15 +85,16 @@ export class SessionController {
    * rotates token version state, and returns a fresh access and refresh token
    * pair.
    *
-   * Route: POST /api/auth/refresh
+   * @remarks Route: POST /api/auth/refresh
    * Access: Public
+   *
+   * @param req - The HTTP request.
+   * @param res - The HTTP response.
+   * @returns The response payload.
    */
   @Post('refresh')
   @UseGuards(DpopGuard)
-  async refreshAccessToken(
-    @Req() req: AppRequest,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<RefreshTokenResponse> {
+  async refreshAccessToken(@Req() req: AppRequest, @Res({ passthrough: true }) res: Response): Promise<RefreshTokenResponse> {
     const dpopJkt = req.dpopJkt;
     const refreshToken = getRefreshToken(req);
     const payload = await this.sessionService.refreshAccessTokenData(refreshToken, dpopJkt);

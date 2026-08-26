@@ -11,6 +11,11 @@ export class AnalyticsService {
     private readonly cacheService: CacheService,
   ) {}
 
+  /**
+   * Retrieves analytics.
+   * @param userId - The user identifier.
+   * @returns The analytics result.
+   */
   async getAnalyticsData(
     userId: string,
   ): Promise<{ payload: GetAnalyticsResponse; cacheHit: boolean; analyticsKey: string }> {

@@ -1,23 +1,16 @@
 import { Controller, Post, Put, Req, UseGuards, UseInterceptors } from '@nestjs/common';
-import type {
-  ResetPasswordBody,
-  ResetPasswordQuery,
-  ResetPasswordResponse,
-  SendChangePassEmailBody,
-} from '@strong-together/shared';
+import type { ResetPasswordBody, ResetPasswordQuery, ResetPasswordResponse, SendChangePassEmailBody } from '@strong-together/shared';
 import { resetPasswordRequestSchema, sendChangePassEmailRequestSchema } from '@strong-together/shared';
 import { PasswordService } from './password.service';
-import {
-  RateLimit,
-  RateLimitGuard,
-  resetPasswordEmailRateLimit,
-  resetPasswordEmailRateLimitDaily,
-} from '../../../common/guards/rate-limit.guard';
+import { RateLimit, RateLimitGuard, resetPasswordEmailRateLimit, resetPasswordEmailRateLimitDaily } from '../../../common/guards/rate-limit.guard';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import type { AppRequest } from '../../../common/types/express';
 
+/**
+ * Handles password HTTP requests.
+ */
 @Controller('api/auth')
 @UseInterceptors(RlsTxInterceptor)
 export class PasswordController {
@@ -29,8 +22,11 @@ export class PasswordController {
    * Accepts a username or email address and dispatches a reset email without
    * revealing whether the account exists.
    *
-   * Route: POST /api/auth/forgotpassemail
+   * @remarks Route: POST /api/auth/forgotpassemail
    * Access: Public
+   *
+   * @param data - The validated request data.
+   * @param req - The HTTP request.
    */
   @Post('forgotpassemail')
   @UseGuards(RateLimitGuard)
@@ -50,8 +46,11 @@ export class PasswordController {
    * updates the stored password hash, and invalidates older sessions by bumping
    * token version state.
    *
-   * Route: PUT /api/auth/resetpassword
+   * @remarks Route: PUT /api/auth/resetpassword
    * Access: Public
+   *
+   * @param data - The validated request data.
+   * @returns The response payload.
    */
   @Put('resetpassword')
   async resetPassword(

@@ -11,6 +11,14 @@ export class AerobicsService {
     private readonly cacheService: CacheService,
   ) {}
 
+  /**
+   * Retrieves aerobics.
+   * @param userId - The user identifier.
+   * @param days - The days.
+   * @param fromCache - The from cache.
+   * @param tz - The IANA time-zone name.
+   * @returns The aerobics result.
+   */
   async getAerobicsData(
     userId: string,
     days: number = 45,
@@ -33,6 +41,12 @@ export class AerobicsService {
     return { payload: rows, cacheHit: false };
   }
 
+  /**
+   * Adds user aerobics record.
+   * @param userId - The user identifier.
+   * @param body - The validated request body.
+   * @returns The add user aerobics record result.
+   */
   async addUserAerobicsRecord(userId: string, body: AddUserAerobicsBody): Promise<UserAerobicsResponse> {
     await this.aerobicsQueries.queryAddAerobicTracking(userId, body.record);
 

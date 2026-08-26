@@ -37,8 +37,15 @@ export class VideoAnalysisController {
    * metadata, and returns the upload URL the client should use for direct video
    * upload.
    *
-   * Route: POST /api/videoanalysis/getpresignedurl
+   * @remarks Route: POST /api/videoanalysis/getpresignedurl
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param requestId - The request id.
+   * @param requestLogger - The request-scoped logger.
+   * @param req - The HTTP request.
+   * @returns The response payload.
    */
   @Post('getpresignedurl')
   async getPresignedUrlFromS3(

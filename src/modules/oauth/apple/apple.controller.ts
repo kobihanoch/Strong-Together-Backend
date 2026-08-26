@@ -30,8 +30,14 @@ export class AppleController {
    * Verifies the Apple identity token, links or creates the local user record as
    * needed, and returns the session payload.
    *
-   * Route: POST /api/oauth/apple
+   * @remarks Route: POST /api/oauth/apple
    * Access: Public
+   *
+   * @param data - The validated request data.
+   * @param req - The HTTP request.
+   * @param requestLogger - The request-scoped logger.
+   * @param res - The HTTP response.
+   * @returns The response payload.
    */
   @Post('apple')
   @UseGuards(RateLimitGuard)

@@ -22,6 +22,11 @@ export class VerificationService {
     private readonly cacheSerice: CacheService,
   ) {}
 
+  /**
+   * Verifies user account.
+   * @param token - The token to process.
+   * @returns The verify user account result.
+   */
   async verifyUserAccountData(token: string | undefined): Promise<{ statusCode: number; html: string }> {
     if (!token) throw new BadRequestException('Missing token');
     const decoded = decodeVerifyToken(token);
@@ -47,6 +52,11 @@ export class VerificationService {
     return { statusCode: 200, html: generateVerifiedHTML() };
   }
 
+  /**
+   * Sends verification mail.
+   * @param body - The validated request body.
+   * @param requestId - The request correlation identifier.
+   */
   async sendVerificationMailData(body: SendVerificationMailBody, requestId?: string): Promise<void> {
     const { email } = body;
     const [row] = await this.sql<{ userData: { id: string; name: string | null; username: string } | null }[]>`
@@ -60,6 +70,11 @@ export class VerificationService {
     });
   }
 
+  /**
+   * Change email and verify.
+   * @param body - The validated request body.
+   * @param requestId - The request correlation identifier.
+   */
   async changeEmailAndVerifyData(body: ChangeEmailAndVerifyBody, requestId?: string): Promise<void> {
     const { username, password, newEmail } = body;
 
@@ -85,6 +100,11 @@ export class VerificationService {
     );
   }
 
+  /**
+   * Checks user verify.
+   * @param username - The username.
+   * @returns The check user verify result.
+   */
   async checkUserVerifyData(username: string): Promise<{ isVerified: boolean }> {
     const [user] = await this.sql<{ is_verified: boolean | null }[]>`
       SELECT guest_api.verification_state(${username}) AS is_verified

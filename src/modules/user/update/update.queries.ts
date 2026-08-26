@@ -14,6 +14,11 @@ import { SQL } from '../../../infrastructure/db/db.tokens';
 export class UpdateUserQueries {
   constructor(@Inject(SQL) private readonly sql: Sql) {}
 
+  /**
+   * Authenticated user by id.
+   * @param userId - The user identifier.
+   * @returns The authenticated user by id result.
+   */
   async queryAuthenticatedUserById(userId: string): Promise<UserDataRowQueryDto[]> {
     return this.sql<UserDataRowQueryDto[]>`
       SELECT
@@ -41,6 +46,13 @@ export class UpdateUserQueries {
     `;
   }
 
+  /**
+   * Username or email conflict.
+   * @param username - The username.
+   * @param email - The email address.
+   * @param userId - The user identifier.
+   * @returns The username or email conflict result.
+   */
   async queryUsernameOrEmailConflict(username: string, email: string, userId: string): Promise<boolean> {
     // Cast params to text so Postgres knows their type even when null
     const rows = await this.sql<UserConflictQueryDto[]>`
@@ -68,6 +80,12 @@ export class UpdateUserQueries {
     return rows[0]?.conflict === true;
   }
 
+  /**
+   * Updates authenticated user.
+   * @param userId - The user identifier.
+   * @param options - The options.
+   * @returns The update authenticated user result.
+   */
   async queryUpdateAuthenticatedUser(
     userId: string,
     { username, fullName, email: emailCandidate }: AuthenticatedUserForUpdateQueryDto,
@@ -131,6 +149,10 @@ export class UpdateUserQueries {
     return rows;
   }
 
+  /**
+   * Deletes user by id.
+   * @param id - The record identifier.
+   */
   async queryDeleteUserById(id: string): Promise<void> {
     await this.sql`
       DELETE FROM identity.user
@@ -139,6 +161,11 @@ export class UpdateUserQueries {
     `;
   }
 
+  /**
+   * User username pic and name.
+   * @param id - The record identifier.
+   * @returns The user username pic and name result.
+   */
   async queryUserUsernamePicAndName(
     id: string,
   ): Promise<UserMessageIdentityQueryDto[]> {
@@ -155,6 +182,11 @@ export class UpdateUserQueries {
     `;
   }
 
+  /**
+   * Retrieves user profile pic url.
+   * @param userId - The user identifier.
+   * @returns The user profile pic url result.
+   */
   async queryGetUserProfilePicURL(userId: string): Promise<UserProfilePicQueryDto[]> {
     return this.sql<UserProfilePicQueryDto[]>`
       SELECT
@@ -168,6 +200,12 @@ export class UpdateUserQueries {
     `;
   }
 
+  /**
+   * Updates user profile pic url.
+   * @param userId - The user identifier.
+   * @param newURL - The new url.
+   * @returns The update user profile pic url result.
+   */
   async queryUpdateUserProfilePicURL(
     userId: string,
     newURL: string | null,

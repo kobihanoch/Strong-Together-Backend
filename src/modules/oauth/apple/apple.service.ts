@@ -19,6 +19,13 @@ export class AppleService {
     private readonly appleQueries: AppleQueries,
   ) {}
 
+  /**
+   * Creates or sign in with apple.
+   * @param body - The validated request body.
+   * @param jkt - The DPoP key thumbprint.
+   * @param requestLogger - The request-scoped logger.
+   * @returns The create or sign in with apple result.
+   */
   async createOrSignInWithAppleData(
     body: AppleOAuthBody,
     jkt: string,

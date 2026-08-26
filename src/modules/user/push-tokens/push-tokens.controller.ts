@@ -31,8 +31,11 @@ export class PushTokensController {
    *
    * Persists the submitted device push token for future notification delivery.
    *
-   * Route: PUT /api/users/pushtoken
+   * @remarks Route: PUT /api/users/pushtoken
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
    */
   @Put('pushtoken')
   async saveUserPushToken(

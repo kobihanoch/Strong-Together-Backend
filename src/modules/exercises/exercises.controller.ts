@@ -21,15 +21,17 @@ import { ExercisesService } from './exercises.service';
 export class ExercisesController {
   constructor(private readonly exercisesService: ExercisesService) {}
 
-/**
- * Get the exercise catalog grouped for workout-building flows.
- *
- * Returns the full exercise map used by the client when composing or editing
- * workout plans.
- *
- * Route: GET /api/exercises/getall
- * Access: User
- */
+  /**
+   * Get the exercise catalog grouped for workout-building flows.
+   *
+   * Returns the full exercise map used by the client when composing or editing
+   * workout plans.
+   *
+   * @remarks Route: GET /api/exercises/getall
+   * Access: User
+   *
+   * @returns The response payload.
+   */
   @Get('getall')
   async getAllExercises(): Promise<GetAllExercisesResponse> {
     return this.exercisesService.getAllExercisesData();

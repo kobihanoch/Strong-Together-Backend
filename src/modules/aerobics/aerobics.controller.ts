@@ -35,8 +35,13 @@ export class AerobicsController {
    * sets the `X-Cache` response header to indicate whether the payload was served
    * from cache.
    *
-   * Route: GET /api/aerobics/get
+   * @remarks Route: GET /api/aerobics/get
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param res - The HTTP response.
+   * @returns The response payload.
    */
   @Get('get')
   async getUserAerobics(
@@ -57,8 +62,12 @@ export class AerobicsController {
    * Persists the submitted aerobics entry, refreshes the user's aerobics cache,
    * and returns the updated aerobics snapshot for the requested timezone.
    *
-   * Route: POST /api/aerobics/add
+   * @remarks Route: POST /api/aerobics/add
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @returns The response payload.
    */
   @Post('add')
   async addUserAerobics(

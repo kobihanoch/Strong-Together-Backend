@@ -27,8 +27,13 @@ export class CreateUserController {
    * Creates the user, initializes default reminder settings, and sends the first
    * verification email.
    *
-   * Route: POST /api/users/create
+   * @remarks Route: POST /api/users/create
    * Access: Public
+   *
+   * @param data - The validated request data.
+   * @param requestId - The request id.
+   * @param res - The HTTP response.
+   * @returns The response payload.
    */
   @Post('create')
   async createUser(

@@ -12,6 +12,12 @@ export type PushBatchResponse = {
 };
 
 // Returns { ok: true, id? } OR { ok: false, permanent: true, reason }
+/**
+ * Sends a push notification to an Expo push token.
+ * @param token - The token to process.
+ * @param title - The notification title.
+ * @param body - The validated request body.
+ */
 export async function sendPushNotification(token: string, title: string, body: string) {
   if (!token || typeof token !== 'string' || token.length < 10)
     return { ok: false, permanent: true, reason: 'Invalid token' };
@@ -55,6 +61,10 @@ export async function sendPushNotification(token: string, title: string, body: s
   return { ok: false, permanent: true, reason: `${code}: ${reason}` };
 }
 
+/**
+ * Determines whether an Expo error code represents a transient failure.
+ * @param code - The provider error code.
+ */
 function isExpoTransientCode(code = '') {
   const c = String(code).toLowerCase();
   return (
@@ -73,10 +83,21 @@ export class PushService {
     private readonly pushNotificationsProducerService: PushNotificationsProducerService,
   ) {}
 
+  /**
+   * Sends a push notification to an Expo push token.
+   * @param token - The token to process.
+   * @param title - The notification title.
+   * @param body - The validated request body.
+   */
   async sendPushNotification(token: string, title: string, body: string) {
     return sendPushNotification(token, title, body);
   }
 
+  /**
+   * Sends daily push.
+   * @param requestId - The request correlation identifier.
+   * @returns The send daily push result.
+   */
   async sendDailyPushData(requestId?: string): Promise<PushBatchResponse> {
     const users = await this.pushQueries.queryGetAllUsersWithNotificationsEnabled();
 
@@ -94,6 +115,11 @@ export class PushService {
     return { success: true, message: 'Daily notifications enqueued', userCount: users.length };
   }
 
+  /**
+   * Sends hourly reminder push.
+   * @param requestId - The request correlation identifier.
+   * @returns The send hourly reminder push result.
+   */
   async sendHourlyReminderPushData(requestId?: string): Promise<PushBatchResponse> {
     const users = await this.pushQueries.queryGetAllUsersToSendHourlyReminder();
     const pushNotifications: NotificationPayload[] = [];

@@ -17,6 +17,14 @@ export class SupabaseStorageService {
   constructor(@Inject(S3_CLIENT) private readonly s3: S3Client) {}
 
   // In dev/test this writes to LocalStack S3. In prod it keeps using Supabase Storage.
+  /**
+   * Uploads buffer to supabase.
+   * @param bucket - The bucket.
+   * @param key - The cache key.
+   * @param buffer - The buffer.
+   * @param contentType - The content type.
+   * @returns The upload buffer to supabase result.
+   */
   async uploadBufferToSupabase(
     bucket: string,
     key: string,
@@ -55,6 +63,10 @@ export class SupabaseStorageService {
   }
 
   // Path format: "<bucket>/<key>".
+  /**
+   * Deletes from supabase.
+   * @param path - The stored object path.
+   */
   async deleteFromSupabase(path: string): Promise<void> {
     if (localStorage) {
       const [bucket, ...keyParts] = path.split('/');

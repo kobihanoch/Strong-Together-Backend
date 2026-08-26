@@ -21,6 +21,11 @@ export class PasswordService {
     private readonly cacheService: CacheService,
   ) {}
 
+  /**
+   * Sends change pass email.
+   * @param body - The validated request body.
+   * @param requestId - The request correlation identifier.
+   */
   async sendChangePassEmailData(body: SendChangePassEmailBody, requestId?: string): Promise<void> {
     const { identifier } = body;
     if (!identifier) throw new BadRequestException('Please fill username or email');
@@ -40,6 +45,12 @@ export class PasswordService {
     );
   }
 
+  /**
+   * Reset password.
+   * @param token - The token to process.
+   * @param newPassword - The replacement plaintext password.
+   * @returns The reset password result.
+   */
   async resetPasswordData(token: string | undefined, newPassword: string): Promise<ResetPasswordResponse> {
     if (!token) throw new BadRequestException('Missing token');
     const decoded = decodeForgotPasswordToken(token);

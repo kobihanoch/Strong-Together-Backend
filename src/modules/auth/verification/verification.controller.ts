@@ -1,11 +1,6 @@
 import { Controller, Get, Post, Put, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
-import type {
-  ChangeEmailAndVerifyBody,
-  CheckUserVerifyQuery,
-  SendVerificationMailBody,
-  VerifyUserAccountQuery,
-} from '@strong-together/shared';
+import type { ChangeEmailAndVerifyBody, CheckUserVerifyQuery, SendVerificationMailBody, VerifyUserAccountQuery } from '@strong-together/shared';
 import {
   changeEmailAndVerifyRequestSchema,
   checkUserVerifyRequestSchema,
@@ -24,6 +19,9 @@ import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe
 import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import type { AppRequest } from '../../../common/types/express';
 
+/**
+ * Handles verification HTTP requests.
+ */
 @Controller('api/auth')
 @UseInterceptors(RlsTxInterceptor)
 export class VerificationController {
@@ -36,8 +34,11 @@ export class VerificationController {
    * JTI cache, updates the user's verification state, and returns an HTML result
    * page.
    *
-   * Route: GET /api/auth/verify
+   * @remarks Route: GET /api/auth/verify
    * Access: Public
+   *
+   * @param data - The validated request data.
+   * @param res - The HTTP response.
    */
   @Get('verify')
   async verifyUserAccount(
@@ -55,8 +56,11 @@ export class VerificationController {
    * Resolves the user by email and, when found, dispatches a fresh verification
    * email without exposing whether the address exists.
    *
-   * Route: POST /api/auth/sendverificationemail
+   * @remarks Route: POST /api/auth/sendverificationemail
    * Access: Public
+   *
+   * @param data - The validated request data.
+   * @param req - The HTTP request.
    */
   @Post('sendverificationemail')
   @UseGuards(RateLimitGuard)
@@ -76,8 +80,11 @@ export class VerificationController {
    * email address when allowed, and dispatches a fresh verification email to the
    * new address.
    *
-   * Route: PUT /api/auth/changeemailverify
+   * @remarks Route: PUT /api/auth/changeemailverify
    * Access: Public
+   *
+   * @param data - The validated request data.
+   * @param req - The HTTP request.
    */
   @Put('changeemailverify')
   @UseGuards(RateLimitGuard)
@@ -95,8 +102,11 @@ export class VerificationController {
    *
    * Returns a minimal verification-state payload for the supplied username.
    *
-   * Route: GET /api/auth/checkuserverify
+   * @remarks Route: GET /api/auth/checkuserverify
    * Access: Public
+   *
+   * @param data - The validated request data.
+   * @returns The response payload.
    */
   @Get('checkuserverify')
   async checkUserVerify(

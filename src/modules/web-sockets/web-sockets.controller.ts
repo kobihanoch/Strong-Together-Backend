@@ -31,8 +31,13 @@ export class WebSocketsController {
    * Returns a short-lived signed token that the client can use to establish a
    * Socket.IO session.
    *
-   * Route: POST /api/ws/generateticket
+   * @remarks Route: POST /api/ws/generateticket
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param res - The HTTP response.
+   * @returns The response payload.
    */
   @Post('generateticket')
   async generateTicket(

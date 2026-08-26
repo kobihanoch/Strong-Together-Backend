@@ -7,6 +7,10 @@ import { SQL } from '../../infrastructure/db/db.tokens';
 export class PushQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
+  /**
+   * Retrieves all users with notifications enabled.
+   * @returns The all users with notifications enabled result.
+   */
   async queryGetAllUsersWithNotificationsEnabled(): Promise<UserWithNotificationsEnabledQueryDto[]> {
     const rows = await this.sql<UserWithNotificationsEnabledQueryDto[]>`
       SELECT push_token AS "pushToken", name FROM identity.user WHERE push_token IS NOT NULL`;
@@ -14,6 +18,10 @@ export class PushQueries {
     return rows;
   }
 
+  /**
+   * Retrieves all users to send hourly reminder.
+   * @returns The all users to send hourly reminder result.
+   */
   async queryGetAllUsersToSendHourlyReminder(): Promise<UserToHourlyReminderQueryDto[]> {
     const users = await this.sql<UserToHourlyReminderQueryDto[]>`
       SELECT

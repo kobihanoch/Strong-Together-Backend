@@ -19,6 +19,14 @@ export class WorkoutTrackingService {
     private readonly workoutTrackingQueries: WorkoutTrackingQueries,
   ) {}
 
+  /**
+   * Retrieves exercise tracking maps.
+   * @param userId - The user identifier.
+   * @param days - The days.
+   * @param fromCache - The from cache.
+   * @param tz - The IANA time-zone name.
+   * @returns The exercise tracking maps result.
+   */
   async getExerciseTrackingMaps(
     userId: string,
     days: number = 45,
@@ -40,6 +48,14 @@ export class WorkoutTrackingService {
     return { payload, cacheHit: false };
   }
 
+  /**
+   * Retrieves exercise tracking stats.
+   * @param userId - The user identifier.
+   * @param days - The days.
+   * @param fromCache - The from cache.
+   * @param tz - The IANA time-zone name.
+   * @returns The exercise tracking stats result.
+   */
   async getExerciseTrackingStats(
     userId: string,
     days: number = 45,
@@ -61,6 +77,14 @@ export class WorkoutTrackingService {
     return { payload, cacheHit: false };
   }
 
+  /**
+   * Retrieves exercise tracking.
+   * @param userId - The user identifier.
+   * @param days - The days.
+   * @param fromCache - The from cache.
+   * @param tz - The IANA time-zone name.
+   * @returns The exercise tracking result.
+   */
   async getExerciseTrackingData(
     userId: string,
     days: number = 45,
@@ -78,6 +102,12 @@ export class WorkoutTrackingService {
     };
   }
 
+  /**
+   * Persists user workout.
+   * @param userId - The user identifier.
+   * @param body - The validated request body.
+   * @returns The finish user workout result.
+   */
   async finishUserWorkoutData(userId: string, body: FinishUserWorkoutBody): Promise<FinishUserWorkoutResponse> {
     const workoutArray = body.workout;
     const tz = body.tz || 'Asia/Jerusalem';

@@ -7,6 +7,12 @@ import { SQL } from '../../../infrastructure/db/db.tokens';
 export class CreateUserQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
+  /**
+   * User exists by username or email.
+   * @param username - The username.
+   * @param email - The email address.
+   * @returns The user exists by username or email result.
+   */
   async queryUserExistsByUsernameOrEmail(
     username: string | null,
     email: string | null,
@@ -22,6 +28,15 @@ export class CreateUserQueries {
   }
 
   // Creates a new user and reminder settings
+  /**
+   * Inserts user.
+   * @param username - The username.
+   * @param fullName - The user full name.
+   * @param email - The email address.
+   * @param gender - The gender.
+   * @param hash - The hash.
+   * @returns The insert user result.
+   */
   async queryInsertUser(
     username: string,
     fullName: string,

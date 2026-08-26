@@ -22,6 +22,11 @@ import { SQL } from '../../infrastructure/db/db.tokens';
 export class AnalyticsQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
+  /**
+   * Retrieves workout rms.
+   * @param userId - The user identifier.
+   * @returns The workout rms result.
+   */
   async queryGetWorkoutRMs(userId: string): Promise<WorkoutRmsQueryDto> {
     const [{ result }] = await this.sql<WorkoutRmsRowQueryDto[]>`
       WITH

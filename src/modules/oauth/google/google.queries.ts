@@ -13,6 +13,11 @@ import { SQL } from '../../../infrastructure/db/db.tokens';
 export class GoogleQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
+  /**
+   * Finds user id with google user id.
+   * @param googleUserId - The google user id.
+   * @returns The user id with google user id result.
+   */
   async queryFindUserIdWithGoogleUserId(googleUserId: string): Promise<OAuthLookupQueryDto> {
     const rows = await this.sql<OAuthLookupRowQueryDto[]>`
       SELECT guest_api.oauth_lookup('google', ${googleUserId}) AS oauth_data`;
@@ -39,6 +44,16 @@ export class GoogleQueries {
     return { userId: row?.user_id ?? null };
   }
 
+  /**
+   * Creates user with google info.
+   * @param candidateUsername - The candidate username.
+   * @param email - The email address.
+   * @param fullName - The user full name.
+   * @param oauthMissingFields - The oauth missing fields.
+   * @param googleSub - The google sub.
+   * @param googleEmail - The google email.
+   * @returns The create user with google info result.
+   */
   async queryCreateUserWithGoogleInfo(
     candidateUsername: string | null,
     email: string | null = null,

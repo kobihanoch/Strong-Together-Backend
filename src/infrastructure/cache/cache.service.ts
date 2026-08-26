@@ -12,6 +12,10 @@ export class CacheService {
 
   constructor(@Inject(REDIS_CLIENT) private readonly redis: RedisClientType) {}
 
+  /**
+   * Deletes redis keys.
+   * @param keys - The cache keys to delete.
+   */
   async deleteRedisKeys(keys: string[]): Promise<void> {
     if (!this.enabled || !this.redis || keys.length === 0) return;
 
@@ -22,6 +26,11 @@ export class CacheService {
     }
   }
 
+  /**
+   * Cache get json.
+   * @param key - The cache key.
+   * @returns The cache get json result.
+   */
   async cacheGetJSON<T = any>(key: string): Promise<T | null> {
     if (!this.enabled || !this.redis) return null;
     try {
@@ -36,6 +45,12 @@ export class CacheService {
     }
   }
 
+  /**
+   * Cache set json.
+   * @param key - The cache key.
+   * @param obj - The obj.
+   * @param ttlSec - The lifetime in seconds.
+   */
   async cacheSetJSON<T = any>(key: string, obj: T, ttlSec: number): Promise<void> {
     if (!this.enabled || !this.redis) return;
     try {
@@ -48,6 +63,10 @@ export class CacheService {
     }
   }
 
+  /**
+   * Cache delete key.
+   * @param key - The cache key.
+   */
   async cacheDeleteKey(key: string): Promise<void> {
     if (!this.enabled || !this.redis) return;
     try {
@@ -57,6 +76,10 @@ export class CacheService {
     }
   }
 
+  /**
+   * Cache delete other timezones.
+   * @param currentKey - The cache key to retain.
+   */
   async cacheDeleteOtherTimezones(currentKey: string): Promise<void> {
     if (!this.enabled || !this.redis || !currentKey) return;
 
@@ -116,6 +139,13 @@ export class CacheService {
     }
   }
 
+  /**
+   * Cache store jti.
+   * @param prefix - The cache namespace prefix.
+   * @param jti - The JWT identifier.
+   * @param ttlSec - The lifetime in seconds.
+   * @returns The cache store jti result.
+   */
   async cacheStoreJti(prefix: string, jti: string, ttlSec: number): Promise<boolean> {
     if (!this.enabled || !this.redis) return true;
 

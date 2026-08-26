@@ -13,6 +13,11 @@ export class SystemMessagesService {
     private readonly messagesService: MessagesService,
   ) {}
 
+  /**
+   * Creates a system message and delivers it to the recipient.
+   * @param receiverId - The recipient user identifier.
+   * @param msg - The message to deliver.
+   */
   private async createAndSend(receiverId: string, msg: { header: string; text: string }) {
     const senderId = appConfig.systemUserId as string;
 
@@ -52,10 +57,19 @@ export class SystemMessagesService {
     return row;
   }
 
+  /**
+   * Sends system message to user workout done.
+   * @param receiverId - The recipient user identifier.
+   */
   async sendSystemMessageToUserWorkoutDone(receiverId: string) {
     return this.createAndSend(receiverId, getEndOfWorkoutMessage());
   }
 
+  /**
+   * Sends system message to user when first login.
+   * @param receiverId - The recipient user identifier.
+   * @param receiverName - The recipient display name.
+   */
   async sendSystemMessageToUserWhenFirstLogin(receiverId: string, receiverName: string) {
     return this.createAndSend(receiverId, getFirstLoginMessage(receiverName));
   }

@@ -7,6 +7,10 @@ import { SQL } from '../../infrastructure/db/db.tokens';
 export class ExercisesQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
+  /**
+   * Retrieves exercise map by muscle.
+   * @returns The exercise map by muscle result.
+   */
   async queryGetExerciseMapByMuscle(): Promise<ExercisesMapByMuscleQueryDto> {
     const rows = await this.sql<ExerciseMapByMuscleRowQueryDto[]>`
       SELECT jsonb_build_object(

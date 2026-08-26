@@ -14,6 +14,13 @@ type EmailContext = {
 export class UpdateEmailsService {
   constructor(private readonly emailsProducerService: EmailsProducerService) {}
 
+  /**
+   * Sends verification email for email update.
+   * @param newEmail - The new email.
+   * @param userId - The user identifier.
+   * @param fullName - The user full name.
+   * @param context - Context propagated to the email job.
+   */
   async sendVerificationEmailForEmailUpdate(
     newEmail: string,
     userId: string,

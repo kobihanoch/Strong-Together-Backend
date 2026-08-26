@@ -62,6 +62,13 @@ import { SQL } from '../../infrastructure/db/db.tokens';
 export class AerobicsQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
+  /**
+   * Retrieves user aerobics for ndays.
+   * @param userId - The user identifier.
+   * @param days - The days.
+   * @param tz - The IANA time-zone name.
+   * @returns The user aerobics for ndays result.
+   */
   async queryGetUserAerobicsForNDays(
     userId: string,
     days: number,
@@ -203,6 +210,11 @@ export class AerobicsQueries {
   }
 
   // Add a new aerobic record
+  /**
+   * Adds aerobic tracking.
+   * @param userId - The user identifier.
+   * @param record - The aerobic tracking record.
+   */
   async queryAddAerobicTracking(userId: string, record: AddAerobicInputQueryDto): Promise<void> {
     const { durationMins, durationSec, type } = record;
     await this.sql`

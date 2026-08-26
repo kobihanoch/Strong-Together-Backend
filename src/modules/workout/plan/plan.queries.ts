@@ -16,6 +16,12 @@ export class WorkoutPlanQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
   // Return the complete active plan in the same shape used by clients for display and editing.
+  /**
+   * Whole user workout plan.
+   * @param userId - The user identifier.
+   * @param tz - The IANA time-zone name.
+   * @returns The whole user workout plan result.
+   */
   async queryWholeUserWorkoutPlan(userId: string, tz: string): Promise<WholeUserWorkoutPlanQueryDto[]> {
     return this.sql<WholeUserWorkoutPlanQueryDto[]>`
       SELECT
@@ -138,6 +144,12 @@ export class WorkoutPlanQueries {
   }
 
   // Save a complete plan snapshot: IDs update existing splits, while missing IDs create new splits.
+  /**
+   * Adds workout.
+   * @param userId - The user identifier.
+   * @param workoutData - The workout plan payload.
+   * @returns The add workout result.
+   */
   async queryAddWorkout(userId: string, workoutData: SaveWorkoutSplitPayloadQueryDto): Promise<number> {
     const [plan] = await this.sql<WorkoutPlanIdQueryDto[]>`
       INSERT INTO
@@ -173,6 +185,12 @@ export class WorkoutPlanQueries {
     return plan.id;
   }
 
+  /**
+   * Inserts a workout split and returns its identifier.
+   * @param planId - The workout plan identifier.
+   * @param split - The workout split to persist.
+   * @returns The insert workout split result.
+   */
   private async insertWorkoutSplit(planId: number, split: SaveWorkoutSplitInputQueryDto): Promise<number> {
     // A split without an ID is new and receives a stable database identity.
     const [{ id }] = await this.sql<WorkoutSplitIdQueryDto[]>`
@@ -186,6 +204,12 @@ export class WorkoutPlanQueries {
     return id;
   }
 
+  /**
+   * Updates a workout split and returns its identifier.
+   * @param planId - The workout plan identifier.
+   * @param split - The workout split to persist.
+   * @returns The update workout split result.
+   */
   private async updateWorkoutSplit(planId: number, split: SaveWorkoutSplitInputQueryDto): Promise<number> {
     // Preserve the split identity when it is renamed, reordered, or reactivated.
     if (split.id === undefined) {
@@ -210,6 +234,11 @@ export class WorkoutPlanQueries {
     return updated.id;
   }
 
+  /**
+   * Replaces the exercises and sets assigned to workout splits.
+   * @param planId - The workout plan identifier.
+   * @param splits - The workout splits to process.
+   */
   private async replaceWorkoutExercises(
     planId: number,
     splits: Array<{ id: number; exercises: WorkoutExerciseInputQueryDto[] }>,

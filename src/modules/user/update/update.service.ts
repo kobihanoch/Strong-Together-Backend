@@ -32,6 +32,11 @@ export class UpdateUserService {
     private readonly cacheService: CacheService,
   ) {}
 
+  /**
+   * Retrieves user.
+   * @param userId - The user identifier.
+   * @returns The user result.
+   */
   async getUserData(userId: string): Promise<{ payload: UserDataResponse['userData'] }> {
     const rows = await this.updateUserQueries.queryAuthenticatedUserById(userId);
     const [user] = rows;
@@ -39,6 +44,13 @@ export class UpdateUserService {
     return { payload: user.userData };
   }
 
+  /**
+   * Updates authenticated user.
+   * @param userId - The user identifier.
+   * @param body - The validated request body.
+   * @param requestId - The request correlation identifier.
+   * @returns The update authenticated user result.
+   */
   async updateAuthenticatedUserData(
     userId: string,
     body: UpdateUserBody,
@@ -79,6 +91,12 @@ export class UpdateUserService {
     };
   }
 
+  /**
+   * Updates self email.
+   * @param token - The token to process.
+   * @param requestLogger - The request-scoped logger.
+   * @returns The update self email result.
+   */
   async updateSelfEmailData(
     token: string | undefined,
     requestLogger: AppLogger,
@@ -125,10 +143,21 @@ export class UpdateUserService {
     return { statusCode: 200, html: generateEmailChangeSuccessHTML() };
   }
 
+  /**
+   * Deletes self user.
+   * @param userId - The user identifier.
+   */
   async deleteSelfUserData(userId: string): Promise<void> {
     await this.updateUserQueries.queryDeleteUserById(userId);
   }
 
+  /**
+   * Sets profile pic and update db.
+   * @param userId - The user identifier.
+   * @param file - The uploaded image file.
+   * @param requestLogger - The request-scoped logger.
+   * @returns The set profile pic and update db result.
+   */
   async setProfilePicAndUpdateDBData(
     userId: string,
     file: Express.Multer.File | undefined,
@@ -168,6 +197,11 @@ export class UpdateUserService {
     return { profilePicPath: newPath, url: publicUrl, message: 'Upload success' };
   }
 
+  /**
+   * Deletes user profile pic.
+   * @param userId - The user identifier.
+   * @param body - The validated request body.
+   */
   async deleteUserProfilePicData(userId: string, body: DeleteUserProfilePicBody): Promise<void> {
     await this.supabaseStorageService.deleteFromSupabase(body.profilePicPath);
     await this.updateUserQueries.queryUpdateUserProfilePicURL(userId, null);

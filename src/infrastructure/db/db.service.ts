@@ -23,6 +23,9 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
     this.sqlInstance = this.initSqlBehavior();
   }
 
+  /**
+   * Initializes the service when its module starts.
+   */
   async onModuleInit() {
     try {
       await this.sql`select 1 as connected`;
@@ -32,10 +35,19 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
     }
   }
 
+  /**
+   * Releases service resources when its module shuts down.
+   */
   async onModuleDestroy() {
     await this.dbClient.end({ timeout: 5 });
   }
 
+  /**
+   * Run with rls tx.
+   * @param userId - The user identifier.
+   * @param fn - The fn.
+   * @returns The run with rls tx result.
+   */
   async runWithRlsTx<T>(userId: string | undefined, fn: () => Promise<T>): Promise<T> {
     return (await this.dbClient.begin(async (tx) => {
       if (!userId) {
@@ -49,6 +61,10 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
     })) as T;
   }
 
+  /**
+   * Promotes current rls tx to authenticated.
+   * @param userId - The user identifier.
+   */
   async promoteCurrentRlsTxToAuthenticated(userId: string): Promise<void> {
     const store = this.als.getStore();
     if (!store) throw new Error('No active RLS transaction');
@@ -58,11 +74,20 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
     store.userId = userId;
   }
 
+  /**
+   * Is transient conn error.
+   * @param err - The error to inspect.
+   * @returns The is transient conn error result.
+   */
   private isTransientConnError(err: any): boolean {
     const msg = String(err?.message || '');
     return /CONNECTION_ENDED|ECONNRESET|terminat(ed|ion)/i.test(msg);
   }
 
+  /**
+   * Init sql behavior.
+   * @returns The init sql behavior result.
+   */
   private initSqlBehavior(): postgres.Sql {
     // Global tagged template: prefers the request-bound tx when present
     const proxy = (async (strings: TemplateStringsArray, ...values: any[]) => {

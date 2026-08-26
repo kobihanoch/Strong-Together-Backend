@@ -16,6 +16,13 @@ import { SQL } from '../../../infrastructure/db/db.tokens';
 export class WorkoutTrackingQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
+  /**
+   * Retrieves exercise tracking maps.
+   * @param userId - The user identifier.
+   * @param days - The days.
+   * @param tz - The IANA time-zone name.
+   * @returns The exercise tracking maps result.
+   */
   async queryGetExerciseTrackingMaps(
     userId: string,
     days: number = 45,
@@ -249,6 +256,13 @@ export class WorkoutTrackingQueries {
     return data;
   }
 
+  /**
+   * Retrieves exercise tracking stats.
+   * @param userId - The user identifier.
+   * @param days - The days.
+   * @param tz - The IANA time-zone name.
+   * @returns The exercise tracking stats result.
+   */
   async queryGetExerciseTrackingStats(
     userId: string,
     days: number = 45,
@@ -659,6 +673,14 @@ export class WorkoutTrackingQueries {
     return data;
   }
 
+  /**
+   * Inserts user finished workout.
+   * @param userId - The user identifier.
+   * @param workoutArray - The completed workout records.
+   * @param workoutStartUtc - The workout start utc.
+   * @param workoutEndUtc - The workout end utc.
+   * @returns The insert user finished workout result.
+   */
   async queryInsertUserFinishedWorkout(
     userId: string,
     workoutArray: FinishedWorkoutEntryQueryDto[],

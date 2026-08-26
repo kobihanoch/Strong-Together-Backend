@@ -22,6 +22,12 @@ import { SQL } from '../../infrastructure/db/db.tokens';
 export class MessagesQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
+  /**
+   * All user messages.
+   * @param userId - The user identifier.
+   * @param tz - The IANA time-zone name.
+   * @returns The all user messages result.
+   */
   async queryAllUserMessages(userId: string, tz: string = 'Asia/Jerusalem'): Promise<AllUserMessageQueryDto[]> {
     const rows = await this.sql<AllUserMessageQueryDto[]>`
       SELECT
@@ -44,6 +50,12 @@ export class MessagesQueries {
     return rows;
   }
 
+  /**
+   * Marks user message as read.
+   * @param messageId - The message identifier.
+   * @param userId - The user identifier.
+   * @returns The mark user message as read result.
+   */
   async queryMarkUserMessageAsRead(messageId: string, userId: string): Promise<MessageAsReadQueryDto[]> {
     return this.sql<MessageAsReadQueryDto[]>`
       UPDATE messages.message AS m
@@ -58,6 +70,12 @@ export class MessagesQueries {
     `;
   }
 
+  /**
+   * Deletes message.
+   * @param messageId - The message identifier.
+   * @param userId - The user identifier.
+   * @returns The delete message result.
+   */
   async queryDeleteMessage(messageId: string, userId: string): Promise<DeletedMessageQueryDto[]> {
     return this.sql<DeletedMessageQueryDto[]>`
       DELETE FROM messages.message AS m

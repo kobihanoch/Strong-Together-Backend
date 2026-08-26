@@ -1,15 +1,4 @@
-import {
-  Controller,
-  Delete,
-  Get,
-  NotFoundException,
-  Put,
-  Query,
-  Res,
-  UploadedFile,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Delete, Get, NotFoundException, Put, Query, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type {
   DeleteUserProfilePicBody,
@@ -27,12 +16,7 @@ import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../common/guards/auth/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
-import {
-  RateLimit,
-  RateLimitGuard,
-  updateUserRateLimit,
-  updateUserRateLimitDaily,
-} from '../../../common/guards/rate-limit.guard';
+import { RateLimit, RateLimitGuard, updateUserRateLimit, updateUserRateLimitDaily } from '../../../common/guards/rate-limit.guard';
 import { imageUploadOptions } from '../../../common/interceptors/image-upload.config';
 import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
@@ -63,8 +47,11 @@ export class UpdateUserController {
    *
    * Returns the current user's persisted profile payload.
    *
-   * Route: GET /api/users/get
+   * @remarks Route: GET /api/users/get
    * Access: User
+   *
+   * @param user - The authenticated user.
+   * @returns The response payload.
    */
   @Get('get')
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
@@ -80,8 +67,14 @@ export class UpdateUserController {
    * Persists allowed profile fields and sends an email-verification flow when
    * the submitted email differs from the current one.
    *
-   * Route: PUT /api/users/updateself
+   * @remarks Route: PUT /api/users/updateself
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param requestId - The request id.
+   * @param res - The HTTP response.
+   * @returns The response payload.
    */
   @Put('updateself')
   @UseGuards(RateLimitGuard, DpopGuard, AuthenticationGuard, AuthorizationGuard)
@@ -108,15 +101,15 @@ export class UpdateUserController {
    * Validates the signed change-email token, enforces one-time use, updates the
    * email address, and returns an HTML result page.
    *
-   * Route: GET /api/users/changeemail
+   * @remarks Route: GET /api/users/changeemail
    * Access: Public
+   *
+   * @param token - The token.
+   * @param requestLogger - The request-scoped logger.
+   * @param res - The HTTP response.
    */
   @Get('changeemail')
-  async updateSelfEmail(
-    @Query('token') token: string | undefined,
-    @CurrentLogger() requestLogger: AppLogger,
-    @Res() res: Response,
-  ): Promise<void> {
+  async updateSelfEmail(@Query('token') token: string | undefined, @CurrentLogger() requestLogger: AppLogger, @Res() res: Response): Promise<void> {
     const { statusCode, html } = await this.updateUserService.updateSelfEmailData(token, requestLogger);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -128,8 +121,11 @@ export class UpdateUserController {
    *
    * Removes the current user's account and returns a success message.
    *
-   * Route: DELETE /api/users/deleteself
+   * @remarks Route: DELETE /api/users/deleteself
    * Access: User
+   *
+   * @param user - The authenticated user.
+   * @returns The response payload.
    */
   @Delete('deleteself')
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
@@ -145,8 +141,14 @@ export class UpdateUserController {
    * Stores the uploaded image in Supabase Storage, updates the user's profile
    * image path, and schedules cleanup of the previous image when applicable.
    *
-   * Route: PUT /api/users/setprofilepic
+   * @remarks Route: PUT /api/users/setprofilepic
    * Access: User
+   *
+   * @param user - The authenticated user.
+   * @param file - The uploaded file.
+   * @param requestLogger - The request-scoped logger.
+   * @param res - The HTTP response.
+   * @returns The response payload.
    */
   @Put('setprofilepic')
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
@@ -169,8 +171,12 @@ export class UpdateUserController {
    * Removes the stored image from object storage and clears the profile image
    * reference from the user's record.
    *
-   * Route: DELETE /api/users/deleteprofilepic
+   * @remarks Route: DELETE /api/users/deleteprofilepic
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param res - The HTTP response.
    */
   @Delete('deleteprofilepic')
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)

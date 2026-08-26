@@ -11,6 +11,12 @@ export class CreateUserService {
     private readonly verificationEmailsService: VerificationEmailsService,
   ) {}
 
+  /**
+   * Creates user.
+   * @param body - The validated request body.
+   * @param requestId - The request correlation identifier.
+   * @returns The create user result.
+   */
   async createUserData(body: CreateUserBody, requestId?: string): Promise<CreateUserResponse> {
     const { username, fullName, email, password, gender } = body;
     const rowsExists = await this.createUserQueries.queryUserExistsByUsernameOrEmail(username, email);

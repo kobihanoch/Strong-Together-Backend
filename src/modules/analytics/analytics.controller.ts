@@ -33,14 +33,15 @@ export class AnalyticsController {
    * and goal-adherence metrics. The handler also sets the `X-Cache` response
    * header to indicate whether the payload was served from cache.
    *
-   * Route: GET /api/analytics/get
+   * @remarks Route: GET /api/analytics/get
    * Access: User
+   *
+   * @param user - The authenticated user.
+   * @param res - The HTTP response.
+   * @returns The response payload.
    */
   @Get('get')
-  async getAnalytics(
-    @CurrentUser() user: AuthenticatedUser,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<GetAnalyticsResponse> {
+  async getAnalytics(@CurrentUser() user: AuthenticatedUser, @Res({ passthrough: true }) res: Response): Promise<GetAnalyticsResponse> {
     const { payload, cacheHit, analyticsKey } = await this.analyticsService.getAnalyticsData(user.id);
 
     if (cacheHit) {

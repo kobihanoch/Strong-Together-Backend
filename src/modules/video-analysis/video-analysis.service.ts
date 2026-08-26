@@ -24,6 +24,11 @@ export class VideoAnalysisService {
     private readonly s3Service: S3Service,
   ) {}
 
+  /**
+   * Retrieves presigned url.
+   * @param options - The options.
+   * @returns The presigned url result.
+   */
   async getPresignedUrlData({
     exercise,
     fileType,
@@ -74,6 +79,9 @@ export class VideoAnalysisService {
     };
   }
 
+  /**
+   * Emit video analysis results.
+   */
   emitVideoAnalysisResults = (userId: UserRow['id'], results: AnalyzeVideoResultPayloadDto<SquatRepetitionDto>) => {
     this.socketIOService.emitToUser(userId, `video_analysis_results`, results);
   };

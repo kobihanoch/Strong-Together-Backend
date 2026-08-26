@@ -7,11 +7,7 @@ import type {
   MarkMessageAsReadParams,
   MarkMessageAsReadResponse,
 } from '@strong-together/shared';
-import {
-  deleteMessageRequestSchema,
-  getAllMessagesRequestSchema,
-  markMessageAsReadRequestSchema,
-} from '@strong-together/shared';
+import { deleteMessageRequestSchema, getAllMessagesRequestSchema, markMessageAsReadRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestData } from '../../common/decorators/request-data.decorator';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
@@ -45,8 +41,12 @@ export class MessagesController {
    * Returns all messages for the current user, localized to the requested
    * timezone.
    *
-   * Route: GET /api/messages/getmessages
+   * @remarks Route: GET /api/messages/getmessages
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @returns The response payload.
    */
   @Get('getmessages')
   async getAllUserMessages(
@@ -55,21 +55,21 @@ export class MessagesController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<GetAllUserMessagesResponse> {
     const tz = data.query.tz;
-    // Get messages
     const { payload } = await this.messagesService.getAllMessagesData(user.id, tz);
     return payload;
   }
-
-  // -----------------------------------
-
   /**
    * Mark a message as read for the authenticated user.
    *
    * Updates the target message only when it belongs to the current user and
    * returns the updated read state.
    *
-   * Route: PUT /api/messages/markasread/:id
+   * @remarks Route: PUT /api/messages/markasread/:id
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @returns The response payload.
    */
   @Put('markasread/:id')
   async markUserMessageAsRead(
@@ -87,8 +87,12 @@ export class MessagesController {
    * Removes the target message when the current user is allowed to access it and
    * returns the deleted message identifier.
    *
-   * Route: DELETE /api/messages/delete/:id
+   * @remarks Route: DELETE /api/messages/delete/:id
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @returns The response payload.
    */
   @Delete('delete/:id')
   async deleteMessage(

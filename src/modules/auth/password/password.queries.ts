@@ -6,6 +6,11 @@ import { SQL } from '../../../infrastructure/db/db.tokens';
 export class PasswordQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
+  /**
+   * Updates user password.
+   * @param userId - The user identifier.
+   * @param newPass - The replacement password hash.
+   */
   async queryUpdateUserPassword(userId: string, newPass: string): Promise<void> {
     await this.sql`
       UPDATE identity.user

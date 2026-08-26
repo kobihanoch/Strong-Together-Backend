@@ -40,13 +40,17 @@ export class WorkoutTrackingController {
    * Returns grouped tracking maps for the last 45 days in the requested timezone
    * and sets `X-Cache` to reflect cache usage.
    *
-   * Route: GET /api/workouts/gettracking
+   * @remarks Route: GET /api/workouts/gettracking
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param res - The HTTP response.
+   * @returns The response payload.
    */
   @Get('gettracking')
   async getExerciseTracking(
-    @RequestData(new ValidateRequestPipe(getExerciseTrackingRequestSchema))
-    data: { query: GetExerciseTrackingQuery },
+    @RequestData(new ValidateRequestPipe(getExerciseTrackingRequestSchema)) data: { query: GetExerciseTrackingQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GetExerciseTrackingResponse> {
@@ -62,13 +66,17 @@ export class WorkoutTrackingController {
    *
    * Returns tracking analytics and sets `X-Cache` to reflect cache usage.
    *
-   * Route: GET /api/workouts/gettrackingstats
+   * @remarks Route: GET /api/workouts/gettrackingstats
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param res - The HTTP response.
+   * @returns The response payload.
    */
   @Get('gettrackingstats')
   async getTrackingStats(
-    @RequestData(new ValidateRequestPipe(getExerciseTrackingRequestSchema))
-    data: { query: GetExerciseTrackingQuery },
+    @RequestData(new ValidateRequestPipe(getExerciseTrackingRequestSchema)) data: { query: GetExerciseTrackingQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GetExerciseTrackingStatsResponse> {
@@ -85,13 +93,16 @@ export class WorkoutTrackingController {
    * Stores the submitted workout summary and tracking rows, refreshes tracking
    * cache state, and returns the updated tracking payload.
    *
-   * Route: POST /api/workouts/finishworkout
+   * @remarks Route: POST /api/workouts/finishworkout
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @returns The response payload.
    */
   @Post('finishworkout')
   async finishUserWorkout(
-    @RequestData(new ValidateRequestPipe(finishWorkoutRequestSchema))
-    data: { body: FinishUserWorkoutBody },
+    @RequestData(new ValidateRequestPipe(finishWorkoutRequestSchema)) data: { body: FinishUserWorkoutBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<FinishUserWorkoutResponse> {
     const payload = await this.workoutTrackingService.finishUserWorkoutData(user.id, data.body);

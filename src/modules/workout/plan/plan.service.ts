@@ -18,6 +18,13 @@ export class WorkoutPlanService {
     private readonly cacheService: CacheService,
   ) {}
 
+  /**
+   * Retrieves workout plan.
+   * @param userId - The user identifier.
+   * @param fromCache - The from cache.
+   * @param tz - The IANA time-zone name.
+   * @returns The workout plan result.
+   */
   async getWorkoutPlanData(
     userId: string,
     fromCache: boolean = true,
@@ -45,11 +52,23 @@ export class WorkoutPlanService {
     return { payload, cacheHit: false };
   }
 
+  /**
+   * Adds workout.
+   * @param userId - The user identifier.
+   * @param body - The validated request body.
+   * @returns The add workout result.
+   */
   async addWorkoutData(userId: string, body: AddWorkoutBody): Promise<AddWorkoutResponse> {
     await this.workoutPlanQueries.queryAddWorkout(userId, body.workoutData);
     return this.refreshWorkoutPlan(userId, body.tz);
   }
 
+  /**
+   * Refreshes the cached workout plan for a user.
+   * @param userId - The user identifier.
+   * @param tz - The IANA time-zone name.
+   * @returns The refresh workout plan result.
+   */
   private async refreshWorkoutPlan(
     userId: string,
     tz: string,

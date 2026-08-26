@@ -18,6 +18,13 @@ export class GoogleService {
     private readonly googleQueries: GoogleQueries,
   ) {}
 
+  /**
+   * Creates or sign in with google.
+   * @param body - The validated request body.
+   * @param jkt - The DPoP key thumbprint.
+   * @param requestLogger - The request-scoped logger.
+   * @returns The create or sign in with google result.
+   */
   async createOrSignInWithGoogleData(
     body: GoogleOAuthBody,
     jkt: string,

@@ -5,6 +5,12 @@ import type { GenerateTicketResponse } from '@strong-together/shared';
 
 @Injectable()
 export class WebSocketsService {
+  /**
+   * Generates ticket.
+   * @param userId - The user identifier.
+   * @param username - The username.
+   * @returns The generate ticket result.
+   */
   async generateTicketData(userId: string, username?: string): Promise<GenerateTicketResponse> {
     const payload = {
       id: userId,
