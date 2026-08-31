@@ -13,7 +13,7 @@ export const message = messagesSchema.table(
     subject: text('subject').default('Subject').notNull(),
     msg: text('msg').default('Hello World').notNull(),
     sentAt: timestamp('sent_at', { withTimezone: true })
-      .default(drizzleSql`(now() AT TIME ZONE 'utc')`)
+      .defaultNow()
       .notNull(),
     isRead: boolean('is_read').default(false).notNull(),
   },

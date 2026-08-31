@@ -16,7 +16,7 @@ export const exerciseToWorkoutSplit = workoutSchema.table(
     workoutSplitId: bigint('workout_split_id', { mode: 'number' }).notNull(),
     exerciseId: bigint('exercise_id', { mode: 'number' }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true })
-      .default(drizzleSql`(now() AT TIME ZONE 'utc')`)
+      .defaultNow()
       .notNull(),
     orderIndex: bigint('order_index', { mode: 'number' }).notNull(),
     isActive: boolean('is_active').default(true).notNull(),

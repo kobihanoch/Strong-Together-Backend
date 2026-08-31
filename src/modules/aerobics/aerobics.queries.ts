@@ -57,7 +57,7 @@ import { SQL } from '../../infrastructure/db/db.tokens';
  */
 // Exact same response contract, except:
 // 1) Grouping is by local date derived from workout_time_utc in the provided tz
-// 2) In the weekly records array, we attach 'workout_time_utc' as the local timestamp (string) in that tz
+// 2) In the weekly records array, workoutTimeLocal is a local timestamp string in that tz.
 @Injectable()
 export class AerobicsQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
@@ -83,7 +83,18 @@ export class AerobicsQueries {
             ${days}::INT AS days,
             COALESCE(NULLIF(${tz}, ''), 'UTC') AS tz
         ),
-        /* Base is last N days filtered in UTC, but we also compute the local timestamp in the given tz */
+        /* Convert local calendar-day boundaries back to instants. This remains correct across DST offset changes. */
+        bounds AS (
+          SELECT
+            (
+              (NOW() AT TIME ZONE p.tz)::date - GREATEST(p.days - 1, 0) * INTERVAL '1 day'
+            ) AT TIME ZONE p.tz AS lower_bound_utc,
+            (
+              (NOW() AT TIME ZONE p.tz)::date + INTERVAL '1 day'
+            ) AT TIME ZONE p.tz AS upper_bound_utc
+          FROM params p
+        ),
+        /* Base contains the requested local calendar days and their local wall-clock timestamps. */
         base AS (
           SELECT
             at.id,
@@ -115,12 +126,13 @@ export class AerobicsQueries {
               'durationSec',
               at.duration_sec % 60
             ) AS ROW
-          FROM
-            tracking.aerobic_tracking at,
-            params p
+          FROM tracking.aerobic_tracking at
+          CROSS JOIN params p
+          CROSS JOIN bounds b
           WHERE
             at.user_id = p.user_id
-            AND at.workout_time_utc >= (NOW() AT TIME ZONE 'UTC' - (p.days || ' days')::INTERVAL)
+            AND at.workout_time_utc >= b.lower_bound_utc
+            AND at.workout_time_utc < b.upper_bound_utc
         ),
         /* Norm is gathering relevant information for later (week starts on Sunday, like your original DOW logic) */
         norm AS (
@@ -131,13 +143,9 @@ export class AerobicsQueries {
             b.id,
             b.local_ts,
             b.local_date,
-            /* Compute week_start from local_date */
+            /* PostgreSQL weeks start Monday; shifting one day preserves the API's Sunday week start. */
             (
-              b.local_date::date - EXTRACT(
-                dow
-                FROM
-                  b.local_date::date
-              )::INT
+              DATE_TRUNC('week', b.local_date::timestamp + INTERVAL '1 day') - INTERVAL '1 day'
             )::date AS week_start
           FROM
             base b
@@ -158,8 +166,7 @@ export class AerobicsQueries {
         ),
         /* Weekly map:
         - totals are per week (same as before)
-        - records array contains each row payload with an extra 'workout_time_utc'
-        that is actually the local timestamp string in the given tz (by your request) */
+        - records contain the local wall-clock timestamp in the requested timezone */
         weekly AS (
           SELECT
             n.week_start::TEXT AS ws,
@@ -170,7 +177,7 @@ export class AerobicsQueries {
               SUM(n.ds),
               'records',
               JSONB_AGG(
-                TO_JSONB(n.row) || JSONB_BUILD_OBJECT('workoutTimeUtc', n.local_ts::TEXT)
+                TO_JSONB(n.row) || JSONB_BUILD_OBJECT('workoutTimeLocal', n.local_ts::TEXT)
                 ORDER BY
                   n.id ASC
               )

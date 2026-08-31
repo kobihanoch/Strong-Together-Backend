@@ -1,4 +1,4 @@
-import { relations, sql as drizzleSql } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
 import { boolean, foreignKey, integer, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { user } from '../../identity/user/table';
 import { remindersSchema } from '../../schemas';
@@ -11,7 +11,7 @@ export const userReminderSetting = remindersSchema.table(
     workoutRemindersEnabled: boolean('workout_reminders_enabled').default(true).notNull(),
     reminderOffsetMinutes: integer('reminder_offset_minutes').default(60).notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
-      .default(drizzleSql`timezone('UTC', now())`)
+      .defaultNow()
       .notNull(),
     timezone: text('timezone').default("'UTC'::text"),
   },

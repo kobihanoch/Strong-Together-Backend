@@ -17,10 +17,10 @@ export const user = identitySchema.table(
     name: text('name').notNull(),
     gender: text('gender').default('Unknown').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true })
-      .default(drizzleSql`(now() AT TIME ZONE 'utc')`)
+      .defaultNow()
       .notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
-      .default(drizzleSql`(now() AT TIME ZONE 'utc')`)
+      .defaultNow()
       .notNull(),
     profilePicPath: text('profile_pic_path'),
     id: uuid('id').defaultRandom().notNull(),

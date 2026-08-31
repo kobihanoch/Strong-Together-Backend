@@ -12,7 +12,7 @@ export const workoutPlan = workoutSchema.table(
     userId: uuid('user_id').notNull(),
     isActive: boolean('is_active').default(true).notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
-      .default(drizzleSql`(now() AT TIME ZONE 'utc')`)
+      .defaultNow()
       .notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },

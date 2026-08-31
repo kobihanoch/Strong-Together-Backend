@@ -16,7 +16,7 @@ export const userSplitInformation = remindersSchema
       estimatedTimeUtc: timestamp('estimated_time_utc', { withTimezone: true }).notNull(),
       confidence: numeric('confidence', { precision: 3, scale: 2 }).default('1.00').notNull(),
       lastComputedAt: timestamp('last_computed_at', { withTimezone: true })
-        .default(drizzleSql`timezone('UTC', now())`)
+        .defaultNow()
         .notNull(),
       preferredWeekday: integer('preferred_weekday'),
     },

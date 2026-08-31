@@ -51,7 +51,7 @@ export class SessionQueries {
       UPDATE identity.user AS users
       SET
         token_version = token_version + 1,
-        last_login = NOW() AT TIME ZONE 'utc'
+        last_login = NOW()
       WHERE
         id = ${userId}::UUID
       RETURNING
@@ -102,7 +102,7 @@ export class SessionQueries {
       UPDATE identity.user AS users
       SET
         token_version = token_version + 1,
-        last_login = NOW() AT TIME ZONE 'utc'
+        last_login = NOW()
       WHERE
         id = ${userId}::UUID
         AND token_version = ${prevTokenVer}

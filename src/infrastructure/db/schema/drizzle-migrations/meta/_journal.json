@@ -134,6 +134,13 @@
       "when": 1787687275264,
       "tag": "0018_added_order_index_to_workout_split",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1788210344872,
+      "tag": "0019_use_now_for_timestamptz",
+      "breakpoints": true
     }
   ]
 }

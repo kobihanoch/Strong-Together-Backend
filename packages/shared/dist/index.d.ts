@@ -3867,7 +3867,7 @@ declare const userAerobicsResponseSchema: z.ZodObject<{
             type: z.ZodString;
             durationSec: z.ZodInt;
             durationMins: z.ZodInt;
-            workoutTimeUtc: z.ZodString;
+            workoutTimeLocal: z.ZodString;
         }, z.core.$strip>>;
         totalDurationSec: z.ZodNumber;
         totalDurationMins: z.ZodNumber;
@@ -3890,7 +3890,7 @@ declare const getUserAerobicsContract: {
                 type: z.ZodString;
                 durationSec: z.ZodInt;
                 durationMins: z.ZodInt;
-                workoutTimeUtc: z.ZodString;
+                workoutTimeLocal: z.ZodString;
             }, z.core.$strip>>;
             totalDurationSec: z.ZodNumber;
             totalDurationMins: z.ZodNumber;
@@ -3918,7 +3918,7 @@ declare const aerobicsWeeklyRecordQueryDtoSchema: z.ZodObject<{
     type: z.ZodString;
     durationSec: z.ZodInt;
     durationMins: z.ZodInt;
-    workoutTimeUtc: z.ZodString;
+    workoutTimeLocal: z.ZodString;
 }, z.core.$strip>;
 /** Weekly aerobic aggregation containing records and duration totals. */
 declare const weeklyDataQueryDtoSchema: z.ZodObject<{
@@ -3926,7 +3926,7 @@ declare const weeklyDataQueryDtoSchema: z.ZodObject<{
         type: z.ZodString;
         durationSec: z.ZodInt;
         durationMins: z.ZodInt;
-        workoutTimeUtc: z.ZodString;
+        workoutTimeLocal: z.ZodString;
     }, z.core.$strip>>;
     totalDurationSec: z.ZodNumber;
     totalDurationMins: z.ZodNumber;
@@ -3943,7 +3943,7 @@ declare const userAerobicsQueryDtoSchema: z.ZodObject<{
             type: z.ZodString;
             durationSec: z.ZodInt;
             durationMins: z.ZodInt;
-            workoutTimeUtc: z.ZodString;
+            workoutTimeLocal: z.ZodString;
         }, z.core.$strip>>;
         totalDurationSec: z.ZodNumber;
         totalDurationMins: z.ZodNumber;
@@ -3962,7 +3962,7 @@ declare const userAerobicsRowQueryDtoSchema: z.ZodObject<{
                 type: z.ZodString;
                 durationSec: z.ZodInt;
                 durationMins: z.ZodInt;
-                workoutTimeUtc: z.ZodString;
+                workoutTimeLocal: z.ZodString;
             }, z.core.$strip>>;
             totalDurationSec: z.ZodNumber;
             totalDurationMins: z.ZodNumber;

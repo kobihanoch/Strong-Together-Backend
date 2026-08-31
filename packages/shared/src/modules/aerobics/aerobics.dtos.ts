@@ -17,7 +17,7 @@ export const aerobicsDailyRecordQueryDtoSchema = z.object({
 });
 /** Weekly aerobic record with its localized workout timestamp. */
 export const aerobicsWeeklyRecordQueryDtoSchema = aerobicsDailyRecordQueryDtoSchema.extend({
-  workoutTimeUtc: serializedDateSchema,
+  workoutTimeLocal: serializedDateSchema,
 });
 /** Weekly aerobic aggregation containing records and duration totals. */
 export const weeklyDataQueryDtoSchema = z.object({

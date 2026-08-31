@@ -18,7 +18,7 @@ beforeAll(async () => {
 }, 30000);
 
 afterEach(async () => {
-  await Promise.all([...userIds].map((userId) => deleteRedisKeysByPattern(`xt:aerobics:v1:${userId}:*`)));
+  await Promise.all([...userIds].map((userId) => deleteRedisKeysByPattern(`xt:aerobics:v2:${userId}:*`)));
   await cleanupTestUsers(users);
   users.clear();
   userIds.clear();
@@ -59,6 +59,8 @@ describe('AerobicsController', () => {
     expect(Object.values(response.body.daily)[0]).toEqual([
       expect.objectContaining({ type: 'Walk', durationMins: 30, durationSec: 15 }),
     ]);
+    const [weekly] = Object.values(userAerobicsResponseSchema.parse(response.body).weekly);
+    expect(weekly?.records[0]).toEqual(expect.objectContaining({ workoutTimeLocal: expect.any(String) }));
 
     const rows = await waitForAerobicsRowsForUser(user.userId, 1);
     expect(rows).toHaveLength(1);

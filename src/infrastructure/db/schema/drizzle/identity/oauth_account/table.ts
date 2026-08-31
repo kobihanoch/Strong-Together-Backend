@@ -1,4 +1,4 @@
-import { relations, sql as drizzleSql } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
 import { foreignKey, primaryKey, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 import { identitySchema } from '../../schemas';
 import { user } from '../user/table';
@@ -12,7 +12,7 @@ export const oauthAccount = identitySchema.table(
     providerUserId: text('provider_user_id').notNull(),
     providerEmail: text('provider_email').notNull(),
     linkedAt: timestamp('linked_at', { withTimezone: true })
-      .default(drizzleSql`(now() AT TIME ZONE 'utc')`)
+      .defaultNow()
       .notNull(),
     missingFields: text('missing_fields'),
   },

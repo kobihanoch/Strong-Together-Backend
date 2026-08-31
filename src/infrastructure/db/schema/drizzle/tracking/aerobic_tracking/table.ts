@@ -1,4 +1,4 @@
-import { relations, sql as drizzleSql } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
 import { bigint, foreignKey, index, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { user } from '../../identity/user/table';
 import { trackingSchema } from '../../schemas';
@@ -12,7 +12,7 @@ export const aerobicTracking = trackingSchema.table(
     type: text('type').notNull(),
     durationSec: bigint('duration_sec', { mode: 'number' }).default(0).notNull(),
     workoutTimeUtc: timestamp('workout_time_utc', { withTimezone: true })
-      .default(drizzleSql`(now() AT TIME ZONE 'utc')`)
+      .defaultNow()
       .notNull(),
   },
   (t) => [

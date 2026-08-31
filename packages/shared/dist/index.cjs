@@ -297,7 +297,7 @@ var message = messagesSchema.table("message", {
   msg: (0, import_pg_core4.text)("msg").default("Hello World").notNull(),
   sentAt: (0, import_pg_core4.timestamp)("sent_at", {
     withTimezone: true
-  }).default(import_drizzle_orm2.sql`(now() AT TIME ZONE 'utc')`).notNull(),
+  }).defaultNow().notNull(),
   isRead: (0, import_pg_core4.boolean)("is_read").default(false).notNull()
 }, (t) => [
   (0, import_pg_core4.primaryKey)({
@@ -394,7 +394,7 @@ var userReminderSetting = remindersSchema.table("user_reminder_setting", {
   reminderOffsetMinutes: (0, import_pg_core6.integer)("reminder_offset_minutes").default(60).notNull(),
   updatedAt: (0, import_pg_core6.timestamp)("updated_at", {
     withTimezone: true
-  }).default(import_drizzle_orm4.sql`timezone('UTC', now())`).notNull(),
+  }).defaultNow().notNull(),
   timezone: (0, import_pg_core6.text)("timezone").default("'UTC'::text")
 }, (t) => [
   (0, import_pg_core6.primaryKey)({
@@ -587,7 +587,7 @@ var exerciseToWorkoutSplit = workoutSchema.table("exercise_to_workout_split", {
   }).notNull(),
   createdAt: (0, import_pg_core10.timestamp)("created_at", {
     withTimezone: true
-  }).default(import_drizzle_orm8.sql`(now() AT TIME ZONE 'utc')`).notNull(),
+  }).defaultNow().notNull(),
   orderIndex: (0, import_pg_core10.bigint)("order_index", {
     mode: "number"
   }).notNull(),
@@ -1034,7 +1034,7 @@ var workoutPlan = workoutSchema.table("workout_plan", {
   isActive: (0, import_pg_core21.boolean)("is_active").default(true).notNull(),
   updatedAt: (0, import_pg_core21.timestamp)("updated_at", {
     withTimezone: true
-  }).default(import_drizzle_orm18.sql`(now() AT TIME ZONE 'utc')`).notNull(),
+  }).defaultNow().notNull(),
   createdAt: (0, import_pg_core21.timestamp)("created_at", {
     withTimezone: true
   }).defaultNow().notNull()
@@ -1121,7 +1121,7 @@ var workoutSplit = workoutSchema.table("workout_split", {
   orderIndex: (0, import_pg_core23.integer)("order_index").notNull(),
   createdAt: (0, import_pg_core23.timestamp)("created_at", {
     withTimezone: true
-  }).default(import_drizzle_orm20.sql`(NOW() AT TIME ZONE 'utc')`).notNull(),
+  }).defaultNow().notNull(),
   isActive: (0, import_pg_core23.boolean)("is_active").default(true).notNull()
 }, (t) => [
   (0, import_pg_core23.primaryKey)({
@@ -1177,7 +1177,7 @@ var userSplitInformation = remindersSchema.table("user_split_information", {
   }).default("1.00").notNull(),
   lastComputedAt: (0, import_pg_core24.timestamp)("last_computed_at", {
     withTimezone: true
-  }).default(import_drizzle_orm21.sql`timezone('UTC', now())`).notNull(),
+  }).defaultNow().notNull(),
   preferredWeekday: (0, import_pg_core24.integer)("preferred_weekday")
 }, (t) => [
   (0, import_pg_core24.primaryKey)({
@@ -1280,7 +1280,7 @@ var aerobicTracking = trackingSchema.table("aerobic_tracking", {
   }).default(0).notNull(),
   workoutTimeUtc: (0, import_pg_core26.timestamp)("workout_time_utc", {
     withTimezone: true
-  }).default(import_drizzle_orm23.sql`(now() AT TIME ZONE 'utc')`).notNull()
+  }).defaultNow().notNull()
 }, (t) => [
   (0, import_pg_core26.primaryKey)({
     name: "aerobic_tracking_pkey",
@@ -1359,7 +1359,7 @@ var oauthAccount = identitySchema.table("oauth_account", {
   providerEmail: (0, import_pg_core28.text)("provider_email").notNull(),
   linkedAt: (0, import_pg_core28.timestamp)("linked_at", {
     withTimezone: true
-  }).default(import_drizzle_orm25.sql`(now() AT TIME ZONE 'utc')`).notNull(),
+  }).defaultNow().notNull(),
   missingFields: (0, import_pg_core28.text)("missing_fields")
 }, (t) => [
   (0, import_pg_core28.primaryKey)({
@@ -1446,10 +1446,10 @@ var user = identitySchema.table("user", {
   gender: (0, import_pg_core30.text)("gender").default("Unknown").notNull(),
   createdAt: (0, import_pg_core30.timestamp)("created_at", {
     withTimezone: true
-  }).default(import_drizzle_orm27.sql`(now() AT TIME ZONE 'utc')`).notNull(),
+  }).defaultNow().notNull(),
   updatedAt: (0, import_pg_core30.timestamp)("updated_at", {
     withTimezone: true
-  }).default(import_drizzle_orm27.sql`(now() AT TIME ZONE 'utc')`).notNull(),
+  }).defaultNow().notNull(),
   profilePicPath: (0, import_pg_core30.text)("profile_pic_path"),
   id: (0, import_pg_core30.uuid)("id").defaultRandom().notNull(),
   pushToken: (0, import_pg_core30.text)("push_token"),
@@ -1713,7 +1713,7 @@ var aerobicsDailyRecordQueryDtoSchema = import_v42.z.object({
   durationMins: aerobicTrackingDbSchema.shape.durationSec
 });
 var aerobicsWeeklyRecordQueryDtoSchema = aerobicsDailyRecordQueryDtoSchema.extend({
-  workoutTimeUtc: serializedDateSchema
+  workoutTimeLocal: serializedDateSchema
 });
 var weeklyDataQueryDtoSchema = import_v42.z.object({
   records: import_v42.z.array(aerobicsWeeklyRecordQueryDtoSchema),

@@ -960,13 +960,13 @@ Successful response:
     ]
   },
   "weekly": {
-    "2026-W17": {
+    "2026-04-19": {
       "records": [
         {
           "type": "string",
           "durationSec": 0,
           "durationMins": 30,
-          "workoutTimeUtc": "string"
+          "workoutTimeLocal": "string"
         }
       ],
       "totalDurationSec": 0,
