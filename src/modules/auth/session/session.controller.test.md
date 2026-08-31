@@ -35,7 +35,9 @@
 
 ### `POST /api/auth/logout`
 
-- [x] Rejects missing access token with `401`.
+- [x] Accepts a valid refresh token without requiring an access token.
+- [x] Rejects a missing refresh token with `401`.
+- [x] Accepts an expired refresh token for push-token cleanup.
 
 ## Edge Cases
 

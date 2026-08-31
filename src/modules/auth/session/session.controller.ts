@@ -6,8 +6,6 @@ import type { AppLogger } from '../../../infrastructure/logger';
 import { getRefreshToken } from './session.utils';
 import { SessionService } from './session.service';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
-import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
-import { AuthorizationGuard, Roles } from '../../../common/guards/auth/authorization.guard';
 import { RateLimit, RateLimitGuard, loginIpRateLimit, loginRateLimit } from '../../../common/guards/rate-limit.guard';
 import { CurrentLogger } from '../../../common/decorators/current-logger.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
@@ -64,17 +62,17 @@ export class SessionController {
    * token, bumps token version state, and returns a success message.
    *
    * @remarks Route: POST /api/auth/logout
-   * Access: User
+   * Access: Refresh token, with DPoP proof when enabled
    *
    * @param req - The HTTP request.
    * @returns The response payload.
    */
   @Post('logout')
-  @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
-  @Roles('user')
+  @UseGuards(DpopGuard)
   async logoutUser(@Req() req: AppRequest): Promise<LogoutResponse> {
+    const jkt = req.dpopJkt;
     const refreshToken = getRefreshToken(req);
-    await this.sessionService.logoutUserData(refreshToken);
+    await this.sessionService.logoutUserData(refreshToken, jkt);
     return { message: 'Logged out successfully' };
   }
 

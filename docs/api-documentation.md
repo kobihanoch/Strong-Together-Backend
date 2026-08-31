@@ -90,7 +90,7 @@ This file focuses on success contracts. Route-specific non-JSON behavior is call
 | `GET` | `/` | Public | Liveness text |
 | `GET` | `/health` | Public | Health check |
 | `POST` | `/api/auth/login` | Public | Credential login |
-| `POST` | `/api/auth/logout` | User | Logout current session |
+| `POST` | `/api/auth/logout` | Refresh token + DPoP | Logout current session and unregister push delivery |
 | `POST` | `/api/auth/refresh` | Public | Rotate token pair |
 | `POST` | `/api/auth/forgotpassemail` | Public | Send reset email |
 | `PUT` | `/api/auth/resetpassword` | Public | Reset password from token |
@@ -192,16 +192,17 @@ Notes:
 
 ### `POST /api/auth/logout`
 
-Invalidates the authenticated user's current session.
+Invalidates the refresh-token session and clears its user's Expo push token.
 
 Access:
 
-- User
+- Refresh token in `x-refresh-token`; DPoP proof when DPoP is enabled
 
 Request:
 
 - no JSON body required
-- authenticated session required
+- access token is not required
+- expired refresh tokens are accepted for logout cleanup when their signature and DPoP binding remain valid
 
 Successful response:
 

@@ -8,7 +8,7 @@ import type { AppLogger } from '../../../infrastructure/logger';
 import { DBService } from '../../../infrastructure/db/db.service';
 import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
 import { SessionQueries } from './session.queries';
-import { decodeRefreshToken } from './session.utils';
+import { decodeRefreshToken, decodeRefreshTokenForLogout } from './session.utils';
 
 @Injectable()
 export class SessionService {
@@ -26,12 +26,7 @@ export class SessionService {
    * @param requestLogger - The request-scoped logger.
    * @returns The login user result.
    */
-  async loginUserData(
-    identifier: string,
-    password: string,
-    jkt: string | undefined,
-    requestLogger: AppLogger,
-  ): Promise<LoginResponse> {
+  async loginUserData(identifier: string, password: string, jkt: string | undefined, requestLogger: AppLogger): Promise<LoginResponse> {
     if (appConfig.dpopEnabled) {
       if (!jkt) {
         throw new BadRequestException('DPoP-Key-Binding header is missing.');
@@ -56,10 +51,7 @@ export class SessionService {
       try {
         await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(user.id, user.name!);
       } catch (e) {
-        requestLogger.error(
-          { err: e, event: 'auth.first_login_message_failed', userId: user.id },
-          'Failed to send first-login message',
-        );
+        requestLogger.error({ err: e, event: 'auth.first_login_message_failed', userId: user.id }, 'Failed to send first-login message');
       }
     }
 
@@ -107,16 +99,22 @@ export class SessionService {
   /**
    * Logs out user.
    * @param refreshToken - The refresh token to process.
+   * @param dpopJkt - The verified DPoP key thumbprint for this request.
    */
-  async logoutUserData(refreshToken: string | null | undefined): Promise<void> {
-    const decodedRefresh = decodeRefreshToken(refreshToken ?? null) as AccessTokenPayloadDto | null;
+  async logoutUserData(refreshToken: string | null | undefined, dpopJkt?: string): Promise<void> {
+    if (!refreshToken) throw new UnauthorizedException('No refresh token provided');
 
-    if (decodedRefresh) {
-      await Promise.all([
-        this.sessionQueries.queryUpdateExpoPushTokenToNull(decodedRefresh.id),
-        this.sessionQueries.queryBumpTokenVersionAndGetSelfData(decodedRefresh.id),
-      ]);
+    const decodedRefresh = decodeRefreshTokenForLogout(refreshToken) as AccessTokenPayloadDto | null;
+    if (!decodedRefresh) throw new UnauthorizedException('Invalid refresh token');
+
+    if (appConfig.dpopEnabled) {
+      if (!dpopJkt || !decodedRefresh.cnf?.jkt || decodedRefresh.cnf.jkt !== dpopJkt) {
+        throw new UnauthorizedException('Proof-of-Possession failed (JKT mismatch).');
+      }
     }
+
+    await this.dbService.promoteCurrentRlsTxToAuthenticated(decodedRefresh.id);
+    await this.sessionQueries.queryLogoutUser(decodedRefresh.id);
   }
 
   /**
@@ -125,10 +123,7 @@ export class SessionService {
    * @param dpopJkt - The DPoP key thumbprint.
    * @returns The refresh access token result.
    */
-  async refreshAccessTokenData(
-    refreshToken: string | null | undefined,
-    dpopJkt: string | null | undefined,
-  ): Promise<RefreshTokenResponse> {
+  async refreshAccessTokenData(refreshToken: string | null | undefined, dpopJkt: string | null | undefined): Promise<RefreshTokenResponse> {
     if (appConfig.dpopEnabled) {
       if (!dpopJkt) {
         throw new UnauthorizedException('Invalid credentials');

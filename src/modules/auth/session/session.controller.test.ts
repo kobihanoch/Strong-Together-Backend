@@ -13,6 +13,7 @@ import {
   setUserPushTokenByUsername,
 } from '../../../common/tests/helpers/db';
 import { authHeaders, logoutHeaders, refreshHeaders } from '../../../common/tests/helpers/auth';
+import { authConfig } from '../../../config/auth.config';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 const createdUsernames = new Set<string>();
@@ -206,11 +207,44 @@ describe('SessionController', () => {
       expect(protectedResponse.body.message).toBe('New login required');
     });
 
-    it('rejects logout without an access token with 401', async () => {
+    it('logs out without an access token when the refresh token is valid', async () => {
+      const user = await createSessionUser();
+      await setUserPushTokenByUsername(user.username, 'ExponentPushToken[refresh-only-logout]');
+      const loginResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+        identifier: user.username,
+        password: user.password,
+      });
+
+      const response = await request(app.getHttpServer())
+        .post('/api/auth/logout')
+        .set(refreshHeaders(loginResponse.body.refreshToken));
+
+      expect(response.status).toBe(201);
+      expect((await getUserSessionStateByUsername(user.username))?.pushToken).toBeNull();
+    });
+
+    it('rejects logout without a refresh token with 401', async () => {
       const response = await request(app.getHttpServer()).post('/api/auth/logout').set('x-app-version', '4.5.0');
 
       expect(response.status).toBe(401);
-      expect(response.body.message).toBe('No access token provided');
+      expect(response.body.message).toBe('No refresh token provided');
+    });
+
+    it('accepts a recently expired refresh token for notification cleanup', async () => {
+      const user = await createSessionUser();
+      await setUserPushTokenByUsername(user.username, 'ExponentPushToken[expired-refresh-logout]');
+      const expiredRefreshToken = jwt.sign(
+        { id: user.userId, role: 'user', tokenVer: 1 },
+        authConfig.jwtRefreshSecret,
+        { expiresIn: -1 },
+      );
+
+      const response = await request(app.getHttpServer())
+        .post('/api/auth/logout')
+        .set(refreshHeaders(expiredRefreshToken));
+
+      expect(response.status).toBe(201);
+      expect((await getUserSessionStateByUsername(user.username))?.pushToken).toBeNull();
     });
   });
 });

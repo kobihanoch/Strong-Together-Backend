@@ -172,4 +172,16 @@ export class SessionQueries {
         id = ${userId}::UUID
     `;
   }
+
+  /** Clears notification delivery state and invalidates the current session atomically. */
+  async queryLogoutUser(userId: string): Promise<void> {
+    await this.sql`
+      UPDATE identity.user
+      SET
+        push_token = NULL,
+        token_version = token_version + 1
+      WHERE
+        id = ${userId}::UUID
+    `;
+  }
 }

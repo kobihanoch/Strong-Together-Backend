@@ -13,6 +13,15 @@ export const decodeRefreshToken = (refreshToken: string | null): AccessTokenPayl
   }
 };
 
+export const decodeRefreshTokenForLogout = (refreshToken: string | null): AccessTokenPayloadDto | null => {
+  if (!refreshToken) return null;
+  try {
+    return jwt.verify(refreshToken, authConfig.jwtRefreshSecret, { ignoreExpiration: true }) as AccessTokenPayloadDto;
+  } catch {
+    return null;
+  }
+};
+
 /*
  * Extracts the refresh token from the x-refresh-token header.
  */
