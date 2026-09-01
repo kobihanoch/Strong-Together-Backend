@@ -5,18 +5,21 @@
 ### `POST /api/auth/login`
 
 - [x] Accepts valid credentials.
+- [x] Returns `200 OK`.
 - [x] Returns auth tokens.
 - [x] Updates DB session state.
 
 ### `POST /api/auth/refresh`
 
 - [x] Rotates access and refresh tokens.
+- [x] Returns `200 OK`.
 - [x] Persists the new session state.
 - [x] Invalidates the previous refresh token.
 
 ### `POST /api/auth/logout`
 
 - [x] Logs out the authenticated session.
+- [x] Returns `200 OK`.
 - [x] Clears the push token.
 - [x] Invalidates the old access token.
 

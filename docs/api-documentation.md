@@ -176,6 +176,8 @@ Request body:
 
 Successful response:
 
+- Status: `200 OK`
+
 ```json
 {
   "message": "string",
@@ -206,6 +208,8 @@ Request:
 
 Successful response:
 
+- Status: `200 OK`
+
 ```json
 {
   "message": "Logged out successfully"
@@ -227,6 +231,8 @@ Request:
 - refresh token is expected by the server utility layer
 
 Successful response:
+
+- Status: `200 OK`
 
 ```json
 {

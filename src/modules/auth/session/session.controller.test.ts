@@ -62,7 +62,7 @@ describe('SessionController', () => {
         password: user.password,
       });
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       expectSchema(loginResponseSchema, response.body);
       expect(response.body).toMatchObject({
         message: 'Login successful',
@@ -87,7 +87,7 @@ describe('SessionController', () => {
         .set('x-app-version', '4.5.0')
         .send({ identifier: user.email, password: user.password });
 
-      expect(loginResponse.status).toBe(201);
+      expect(loginResponse.status).toBe(200);
 
       const messagesResponse = await request(app.getHttpServer())
         .get('/api/messages')
@@ -144,7 +144,7 @@ describe('SessionController', () => {
         .post('/api/auth/refresh')
         .set(refreshHeaders(loginResponse.body.refreshToken));
 
-      expect(refreshResponse.status).toBe(201);
+      expect(refreshResponse.status).toBe(200);
       expectSchema(refreshTokenResponseSchema, refreshResponse.body);
       expect(refreshResponse.body).toMatchObject({
         message: 'Access token refreshed',
@@ -192,7 +192,7 @@ describe('SessionController', () => {
         .post('/api/auth/logout')
         .set(logoutHeaders(loginResponse.body.accessToken, loginResponse.body.refreshToken));
 
-      expect(logoutResponse.status).toBe(201);
+      expect(logoutResponse.status).toBe(200);
       expectSchema(logoutResponseSchema, logoutResponse.body);
       expect(logoutResponse.body.message).toBe('Logged out successfully');
 
@@ -219,7 +219,7 @@ describe('SessionController', () => {
         .post('/api/auth/logout')
         .set(refreshHeaders(loginResponse.body.refreshToken));
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       expect((await getUserSessionStateByUsername(user.username))?.pushToken).toBeNull();
     });
 
@@ -243,7 +243,7 @@ describe('SessionController', () => {
         .post('/api/auth/logout')
         .set(refreshHeaders(expiredRefreshToken));
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       expect((await getUserSessionStateByUsername(user.username))?.pushToken).toBeNull();
     });
   });

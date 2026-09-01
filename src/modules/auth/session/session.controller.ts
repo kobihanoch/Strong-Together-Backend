@@ -1,4 +1,4 @@
-import { Controller, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
 import type { LoginRequestBody, LoginResponse, LogoutResponse, RefreshTokenResponse } from '@strong-together/shared';
 import { loginRequestSchema } from '@strong-together/shared';
@@ -38,6 +38,7 @@ export class SessionController {
    * @returns The response payload.
    */
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   @UseGuards(RateLimitGuard)
   @RateLimit(loginRateLimit, loginIpRateLimit)
   async loginUser(
@@ -68,6 +69,7 @@ export class SessionController {
    * @returns The response payload.
    */
   @Post('logout')
+  @HttpCode(HttpStatus.OK)
   @UseGuards(DpopGuard)
   async logoutUser(@Req() req: AppRequest): Promise<LogoutResponse> {
     const jkt = req.dpopJkt;
@@ -91,6 +93,7 @@ export class SessionController {
    * @returns The response payload.
    */
   @Post('refresh')
+  @HttpCode(HttpStatus.OK)
   @UseGuards(DpopGuard)
   async refreshAccessToken(@Req() req: AppRequest, @Res({ passthrough: true }) res: Response): Promise<RefreshTokenResponse> {
     const dpopJkt = req.dpopJkt;
