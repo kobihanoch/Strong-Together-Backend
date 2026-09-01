@@ -67,6 +67,8 @@ __export(index_exports, {
   enqueueAnalyzeVideoParamsDtoSchema: () => enqueueAnalyzeVideoParamsDtoSchema,
   exerciseAssignmentIdQueryDtoSchema: () => exerciseAssignmentIdQueryDtoSchema,
   exerciseDbSchema: () => exerciseDbSchema,
+  exerciseHistoryQueryDtoSchema: () => exerciseHistoryQueryDtoSchema,
+  exerciseHistoryRowQueryDtoSchema: () => exerciseHistoryRowQueryDtoSchema,
   exerciseInPlanQueryDtoSchema: () => exerciseInPlanQueryDtoSchema,
   exerciseMapByMuscleRowQueryDtoSchema: () => exerciseMapByMuscleRowQueryDtoSchema,
   exerciseMetadataQueryDtoSchema: () => exerciseMetadataQueryDtoSchema,
@@ -94,6 +96,8 @@ __export(index_exports, {
   getAnalyticsResponseSchema: () => getAnalyticsResponseSchema,
   getCurrentUserContract: () => getCurrentUserContract,
   getCurrentUserResponseSchema: () => getCurrentUserResponseSchema,
+  getExerciseHistoryContract: () => getExerciseHistoryContract,
+  getExerciseHistoryResponseSchema: () => getExerciseHistoryResponseSchema,
   getVerificationStatusContract: () => getVerificationStatusContract,
   getVerificationStatusRequestSchema: () => getVerificationStatusRequestSchema,
   getWorkoutHistoryContract: () => getWorkoutHistoryContract,
@@ -2565,6 +2569,7 @@ var groupedTrackingItemQueryDtoSchema = import_v433.z.object({
     })
   })
 });
+var trackingByExerciseToSplitIdItemQueryDtoSchema = groupedTrackingItemQueryDtoSchema.shape.exerciseTracking;
 var exerciseTrackingStatsQueryDtoSchema = import_v433.z.object({
   workoutCount: import_v433.z.coerce.number(),
   hasExerciseTracking: import_v433.z.boolean(),
@@ -2601,6 +2606,11 @@ var exerciseTrackingMapsQueryDtoSchema = import_v433.z.object({
     exerciseTracked: import_v433.z.array(groupedTrackingItemQueryDtoSchema)
   }))
 });
+var exerciseHistoryQueryDtoSchema = import_v433.z.object({
+  byExerciseToSplitId: import_v433.z.record(import_v433.z.string(), import_v433.z.object({
+    exerciseTracked: import_v433.z.array(trackingByExerciseToSplitIdItemQueryDtoSchema)
+  }))
+});
 var exerciseTrackingAndStatsQueryDtoSchema = import_v433.z.object({
   trackingStats: exerciseTrackingStatsQueryDtoSchema,
   trackingMaps: exerciseTrackingMapsQueryDtoSchema
@@ -2613,6 +2623,9 @@ var exerciseTrackingStatsRowQueryDtoSchema = import_v433.z.object({
 });
 var exerciseTrackingMapsRowQueryDtoSchema = import_v433.z.object({
   data: exerciseTrackingMapsQueryDtoSchema
+});
+var exerciseHistoryRowQueryDtoSchema = import_v433.z.object({
+  data: exerciseHistoryQueryDtoSchema
 });
 var workoutSplitLookupQueryDtoSchema = import_v433.z.object({
   workoutSplitId: workoutSplitDbSchema.shape.id
@@ -2634,6 +2647,11 @@ var getWorkoutHistoryResponseSchema = exerciseTrackingMapsQueryDtoSchema;
 var getWorkoutHistoryContract = {
   request: getWorkoutHistoryRequestSchema,
   response: getWorkoutHistoryResponseSchema
+};
+var getExerciseHistoryResponseSchema = exerciseHistoryQueryDtoSchema;
+var getExerciseHistoryContract = {
+  request: getWorkoutHistoryRequestSchema,
+  response: getExerciseHistoryResponseSchema
 };
 var getWorkoutStatisticsResponseSchema = exerciseTrackingStatsQueryDtoSchema;
 var getWorkoutStatisticsContract = {
@@ -2701,6 +2719,8 @@ var createWorkoutSessionContract = {
   enqueueAnalyzeVideoParamsDtoSchema,
   exerciseAssignmentIdQueryDtoSchema,
   exerciseDbSchema,
+  exerciseHistoryQueryDtoSchema,
+  exerciseHistoryRowQueryDtoSchema,
   exerciseInPlanQueryDtoSchema,
   exerciseMapByMuscleRowQueryDtoSchema,
   exerciseMetadataQueryDtoSchema,
@@ -2728,6 +2748,8 @@ var createWorkoutSessionContract = {
   getAnalyticsResponseSchema,
   getCurrentUserContract,
   getCurrentUserResponseSchema,
+  getExerciseHistoryContract,
+  getExerciseHistoryResponseSchema,
   getVerificationStatusContract,
   getVerificationStatusRequestSchema,
   getWorkoutHistoryContract,

@@ -2359,6 +2359,7 @@ var groupedTrackingItemQueryDtoSchema = z33.object({
     })
   })
 });
+var trackingByExerciseToSplitIdItemQueryDtoSchema = groupedTrackingItemQueryDtoSchema.shape.exerciseTracking;
 var exerciseTrackingStatsQueryDtoSchema = z33.object({
   workoutCount: z33.coerce.number(),
   hasExerciseTracking: z33.boolean(),
@@ -2395,6 +2396,11 @@ var exerciseTrackingMapsQueryDtoSchema = z33.object({
     exerciseTracked: z33.array(groupedTrackingItemQueryDtoSchema)
   }))
 });
+var exerciseHistoryQueryDtoSchema = z33.object({
+  byExerciseToSplitId: z33.record(z33.string(), z33.object({
+    exerciseTracked: z33.array(trackingByExerciseToSplitIdItemQueryDtoSchema)
+  }))
+});
 var exerciseTrackingAndStatsQueryDtoSchema = z33.object({
   trackingStats: exerciseTrackingStatsQueryDtoSchema,
   trackingMaps: exerciseTrackingMapsQueryDtoSchema
@@ -2407,6 +2413,9 @@ var exerciseTrackingStatsRowQueryDtoSchema = z33.object({
 });
 var exerciseTrackingMapsRowQueryDtoSchema = z33.object({
   data: exerciseTrackingMapsQueryDtoSchema
+});
+var exerciseHistoryRowQueryDtoSchema = z33.object({
+  data: exerciseHistoryQueryDtoSchema
 });
 var workoutSplitLookupQueryDtoSchema = z33.object({
   workoutSplitId: workoutSplitDbSchema.shape.id
@@ -2428,6 +2437,11 @@ var getWorkoutHistoryResponseSchema = exerciseTrackingMapsQueryDtoSchema;
 var getWorkoutHistoryContract = {
   request: getWorkoutHistoryRequestSchema,
   response: getWorkoutHistoryResponseSchema
+};
+var getExerciseHistoryResponseSchema = exerciseHistoryQueryDtoSchema;
+var getExerciseHistoryContract = {
+  request: getWorkoutHistoryRequestSchema,
+  response: getExerciseHistoryResponseSchema
 };
 var getWorkoutStatisticsResponseSchema = exerciseTrackingStatsQueryDtoSchema;
 var getWorkoutStatisticsContract = {
@@ -2494,6 +2508,8 @@ export {
   enqueueAnalyzeVideoParamsDtoSchema,
   exerciseAssignmentIdQueryDtoSchema,
   exerciseDbSchema,
+  exerciseHistoryQueryDtoSchema,
+  exerciseHistoryRowQueryDtoSchema,
   exerciseInPlanQueryDtoSchema,
   exerciseMapByMuscleRowQueryDtoSchema,
   exerciseMetadataQueryDtoSchema,
@@ -2521,6 +2537,8 @@ export {
   getAnalyticsResponseSchema,
   getCurrentUserContract,
   getCurrentUserResponseSchema,
+  getExerciseHistoryContract,
+  getExerciseHistoryResponseSchema,
   getVerificationStatusContract,
   getVerificationStatusRequestSchema,
   getWorkoutHistoryContract,

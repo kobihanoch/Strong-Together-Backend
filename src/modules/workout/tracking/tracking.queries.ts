@@ -2,6 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import type postgres from 'postgres';
 import type {
   ExerciseTrackingIdQueryDto,
+  ExerciseHistoryQueryDto,
+  ExerciseHistoryRowQueryDto,
   ExerciseTrackingMapsQueryDto,
   ExerciseTrackingMapsRowQueryDto,
   ExerciseTrackingStatsQueryDto,
@@ -101,52 +103,49 @@ export class WorkoutTrackingQueries {
             et.split_name AS "splitName",
             et.order_index AS "orderIndex",
             JSONB_BUILD_OBJECT(
-              'exerciseTracking',
-              JSONB_BUILD_OBJECT(
-                'exerciseTrackingId',
-                et.id::INT,
-                'sets',
-                COALESCE(
-                  JSONB_AGG(
-                    JSONB_BUILD_OBJECT(
-                      'setIndex',
-                      et.set_index,
-                      'weight',
-                      et.weight,
-                      'reps',
-                      et.reps::INT
-                    )
-                    ORDER BY
-                      et.set_index ASC
-                  ) FILTER (
-                    WHERE
-                      et.set_index IS NOT NULL
-                  ),
-                  '[]'::JSONB
+              'exerciseTrackingId',
+              et.id::INT,
+              'sets',
+              COALESCE(
+                JSONB_AGG(
+                  JSONB_BUILD_OBJECT(
+                    'setIndex',
+                    et.set_index,
+                    'weight',
+                    et.weight,
+                    'reps',
+                    et.reps::INT
+                  )
+                  ORDER BY
+                    et.set_index ASC
+                ) FILTER (
+                  WHERE
+                    et.set_index IS NOT NULL
                 ),
-                'notes',
-                et.notes,
-                'exerciseAssignment',
-                JSONB_BUILD_OBJECT(
-                  'exerciseToSplitId',
-                  et.exercise_to_split_id::INT,
-                  'orderIndex',
-                  et.order_index,
-                  'exerciseId',
-                  et.exercise_id::INT,
-                  'workoutSplitId',
-                  et.workout_split_id::INT,
-                  'workoutSplitName',
-                  et.split_name,
-                  'exerciseName',
-                  et.exercise,
-                  'targetMuscle',
-                  et.target_muscle,
-                  'specificTargetMuscle',
-                  et.specific_target_muscle
-                )
+                '[]'::JSONB
+              ),
+              'notes',
+              et.notes,
+              'exerciseAssignment',
+              JSONB_BUILD_OBJECT(
+                'exerciseToSplitId',
+                et.exercise_to_split_id::INT,
+                'orderIndex',
+                et.order_index,
+                'exerciseId',
+                et.exercise_id::INT,
+                'workoutSplitId',
+                et.workout_split_id::INT,
+                'workoutSplitName',
+                et.split_name,
+                'exerciseName',
+                et.exercise,
+                'targetMuscle',
+                et.target_muscle,
+                'specificTargetMuscle',
+                et.specific_target_muscle
               )
-            ) AS exercise_tracking_payload
+            ) AS exercise_tracking_flat_payload
           FROM
             analytics.v_exercise_tracking_set_expanded et
             JOIN bounded_workout_summaries bws ON bws.id = et.workout_summary_id
@@ -181,7 +180,7 @@ export class WorkoutTrackingQueries {
                   dbd.duration_minutes,
                   'exerciseTracked',
                   JSONB_AGG(
-                    aet.exercise_tracking_payload
+                    JSONB_BUILD_OBJECT('exerciseTracking', aet.exercise_tracking_flat_payload)
                     ORDER BY
                       aet."orderIndex" ASC
                   )
@@ -207,6 +206,123 @@ export class WorkoutTrackingQueries {
             '{}'::JSONB
           )
         ) AS data
+    `;
+
+    return data;
+  }
+
+  /**
+   * Retrieves tracking history grouped by exercise assignment.
+   *
+   * Each assignment's tracking entries are returned without the
+   * `exerciseTracking` wrapper and ordered by workout time descending.
+   *
+   * @param userId - The user identifier.
+   * @param days - The number of recent calendar days to include.
+   * @param tz - The IANA time-zone name used to calculate date boundaries.
+   * @returns Exercise tracking grouped by exercise-to-split identifier.
+   */
+  async queryGetExerciseHistory(
+    userId: string,
+    days: number = 45,
+    tz: string = 'Asia/Jerusalem',
+  ): Promise<ExerciseHistoryQueryDto> {
+    const [{ data }] = await this.sql<ExerciseHistoryRowQueryDto[]>`
+      WITH
+        bounds AS (
+          SELECT
+            (
+              (NOW() AT TIME ZONE ${tz})::date - GREATEST(${days} - 1, 0) * INTERVAL '1 day'
+            ) AT TIME ZONE ${tz} AS lower_bound_utc,
+            (
+              (NOW() AT TIME ZONE ${tz})::date + INTERVAL '1 day'
+            ) AT TIME ZONE ${tz} AS upper_bound_utc
+        ),
+        exercise_trackings AS (
+          SELECT
+            et.exercise_to_split_id AS "exerciseToSplitId",
+            et.workout_start_utc AS "workoutStartUtc",
+            et.id AS "exerciseTrackingId",
+            JSONB_BUILD_OBJECT(
+              'exerciseTrackingId',
+              et.id::INT,
+              'sets',
+              COALESCE(
+                JSONB_AGG(
+                  JSONB_BUILD_OBJECT(
+                    'setIndex',
+                    et.set_index,
+                    'weight',
+                    et.weight,
+                    'reps',
+                    et.reps::INT
+                  )
+                  ORDER BY et.set_index ASC
+                ) FILTER (WHERE et.set_index IS NOT NULL),
+                '[]'::JSONB
+              ),
+              'notes',
+              et.notes,
+              'exerciseAssignment',
+              JSONB_BUILD_OBJECT(
+                'exerciseToSplitId',
+                et.exercise_to_split_id::INT,
+                'orderIndex',
+                et.order_index,
+                'exerciseId',
+                et.exercise_id::INT,
+                'workoutSplitId',
+                et.workout_split_id::INT,
+                'workoutSplitName',
+                et.split_name,
+                'exerciseName',
+                et.exercise,
+                'targetMuscle',
+                et.target_muscle,
+                'specificTargetMuscle',
+                et.specific_target_muscle
+              )
+            ) AS payload
+          FROM
+            analytics.v_exercise_tracking_set_expanded et
+            JOIN tracking.workout_summary wsum ON wsum.id = et.workout_summary_id
+          WHERE
+            wsum.user_id = ${userId}::UUID
+            AND et.exercise_to_split_id IS NOT NULL
+            AND wsum.workout_start_utc >= (SELECT lower_bound_utc FROM bounds)
+            AND wsum.workout_start_utc < (SELECT upper_bound_utc FROM bounds)
+          GROUP BY
+            et.id,
+            et.exercise_to_split_id,
+            et.exercise_id,
+            et.workout_split_id,
+            et.split_name,
+            et.exercise,
+            et.order_index,
+            et.target_muscle,
+            et.specific_target_muscle,
+            et.notes,
+            et.workout_start_utc
+        ),
+        by_exercise_to_split_id AS (
+          SELECT
+            COALESCE(JSONB_OBJECT_AGG("exerciseToSplitId"::TEXT, items), '{}'::JSONB) AS map
+          FROM
+            (
+              SELECT
+                "exerciseToSplitId",
+                JSONB_BUILD_OBJECT(
+                  'exerciseTracked',
+                  JSONB_AGG(payload ORDER BY "workoutStartUtc" DESC, "exerciseTrackingId" DESC)
+                ) AS items
+              FROM exercise_trackings
+              GROUP BY "exerciseToSplitId"
+            ) grouped
+        )
+      SELECT JSONB_BUILD_OBJECT(
+        'byExerciseToSplitId',
+        COALESCE((SELECT map FROM by_exercise_to_split_id), '{}'::JSONB)
+      ) AS data
     `;
 
     return data;

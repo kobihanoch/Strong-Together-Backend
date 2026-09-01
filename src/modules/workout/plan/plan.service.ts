@@ -9,7 +9,7 @@ import type {
 
 import { buildPlanKeyStable, TTL_PLAN } from './plan.cache';
 import { buildAnalyticsKeyStable } from '../../analytics/analytics.cache';
-import { buildTrackingMapsKeyStable, buildTrackingStatsKeyStable } from '../tracking/tracking.cache';
+import { buildWorkoutHistoryKeyStable, buildWorkoutStatisticsKeyStable } from '../tracking/tracking.cache';
 
 @Injectable()
 export class WorkoutPlanService {
@@ -75,16 +75,16 @@ export class WorkoutPlanService {
   ): Promise<ReplaceWorkoutPlanResponse> {
     const planKey = buildPlanKeyStable(userId, tz);
     const analyticsKey = buildAnalyticsKeyStable(userId);
-    const trackingMapsKey = buildTrackingMapsKeyStable(userId, 45, tz);
-    const trackingStatsKey = buildTrackingStatsKeyStable(userId, 45, tz);
+    const workoutHistoryKey = buildWorkoutHistoryKeyStable(userId, 45, tz);
+    const workoutStatisticsKey = buildWorkoutStatisticsKeyStable(userId, 45, tz);
     await Promise.all([
-      this.cacheService.cacheDeleteOtherTimezones(trackingMapsKey),
-      this.cacheService.cacheDeleteOtherTimezones(trackingStatsKey),
+      this.cacheService.cacheDeleteOtherTimezones(workoutHistoryKey),
+      this.cacheService.cacheDeleteOtherTimezones(workoutStatisticsKey),
     ]);
     await this.cacheService.cacheDeleteKey(analyticsKey);
     await this.cacheService.cacheDeleteKey(planKey);
-    await this.cacheService.cacheDeleteKey(trackingMapsKey);
-    await this.cacheService.cacheDeleteKey(trackingStatsKey);
+    await this.cacheService.cacheDeleteKey(workoutHistoryKey);
+    await this.cacheService.cacheDeleteKey(workoutStatisticsKey);
 
     const rows = await this.workoutPlanQueries.queryWholeUserWorkoutPlan(userId, tz);
     const [plan] = rows;

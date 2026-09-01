@@ -93,6 +93,8 @@ const groupedTrackingItemQueryDtoSchema = z.object({
   }),
 });
 
+const trackingByExerciseToSplitIdItemQueryDtoSchema = groupedTrackingItemQueryDtoSchema.shape.exerciseTracking;
+
 export const exerciseTrackingStatsQueryDtoSchema = z.object({
   workoutCount: z.coerce.number(),
   hasExerciseTracking: z.boolean(),
@@ -138,6 +140,15 @@ export const exerciseTrackingMapsQueryDtoSchema = z.object({
   ),
 });
 
+export const exerciseHistoryQueryDtoSchema = z.object({
+  byExerciseToSplitId: z.record(
+    z.string(),
+    z.object({
+      exerciseTracked: z.array(trackingByExerciseToSplitIdItemQueryDtoSchema),
+    }),
+  ),
+});
+
 export const exerciseTrackingAndStatsQueryDtoSchema = z.object({
   trackingStats: exerciseTrackingStatsQueryDtoSchema,
   trackingMaps: exerciseTrackingMapsQueryDtoSchema,
@@ -147,6 +158,7 @@ export const exerciseTrackingAndStatsQueryDtoSchema = z.object({
 export const exerciseTrackingAndStatsRowQueryDtoSchema = z.object({ data: exerciseTrackingAndStatsQueryDtoSchema });
 export const exerciseTrackingStatsRowQueryDtoSchema = z.object({ data: exerciseTrackingStatsQueryDtoSchema });
 export const exerciseTrackingMapsRowQueryDtoSchema = z.object({ data: exerciseTrackingMapsQueryDtoSchema });
+export const exerciseHistoryRowQueryDtoSchema = z.object({ data: exerciseHistoryQueryDtoSchema });
 
 /** SQL row resolving the workout split for an exercise assignment. */
 export const workoutSplitLookupQueryDtoSchema = z.object({ workoutSplitId: workoutSplitDbSchema.shape.id });
@@ -171,6 +183,8 @@ export type ExerciseTrackingStatsQueryDto = z.infer<typeof exerciseTrackingStats
 export type ExerciseTrackingStatsRowQueryDto = z.infer<typeof exerciseTrackingStatsRowQueryDtoSchema>;
 export type ExerciseTrackingMapsQueryDto = z.infer<typeof exerciseTrackingMapsQueryDtoSchema>;
 export type ExerciseTrackingMapsRowQueryDto = z.infer<typeof exerciseTrackingMapsRowQueryDtoSchema>;
+export type ExerciseHistoryQueryDto = z.infer<typeof exerciseHistoryQueryDtoSchema>;
+export type ExerciseHistoryRowQueryDto = z.infer<typeof exerciseHistoryRowQueryDtoSchema>;
 export type WorkoutSplitLookupQueryDto = z.infer<typeof workoutSplitLookupQueryDtoSchema>;
 export type WorkoutSummaryIdQueryDto = z.infer<typeof workoutSummaryIdQueryDtoSchema>;
 export type ExerciseTrackingIdQueryDto = z.infer<typeof exerciseTrackingIdQueryDtoSchema>;

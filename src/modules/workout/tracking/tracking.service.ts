@@ -1,13 +1,19 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import type {
   ExerciseTrackingAndStatsQueryDto,
+  ExerciseHistoryQueryDto,
   ExerciseTrackingMapsQueryDto,
   ExerciseTrackingStatsQueryDto,
   CreateWorkoutSessionBody,
   CreateWorkoutSessionResponse,
 } from '@strong-together/shared';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
-import { buildTrackingMapsKeyStable, buildTrackingStatsKeyStable, TTL_TRACKING } from './tracking.cache';
+import {
+  buildExerciseHistoryKeyStable,
+  buildWorkoutHistoryKeyStable,
+  buildWorkoutStatisticsKeyStable,
+  TTL_TRACKING,
+} from './tracking.cache';
 import { WorkoutTrackingQueries } from './tracking.queries';
 import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
 
@@ -33,7 +39,7 @@ export class WorkoutTrackingService {
     fromCache: boolean = true,
     tz: string,
   ): Promise<{ payload: ExerciseTrackingMapsQueryDto; cacheHit: boolean }> {
-    const key = buildTrackingMapsKeyStable(userId, days, tz);
+    const key = buildWorkoutHistoryKeyStable(userId, days, tz);
     if (fromCache) {
       await this.cacheService.cacheDeleteOtherTimezones(key);
       const cached = await this.cacheService.cacheGetJSON(key);
@@ -44,6 +50,36 @@ export class WorkoutTrackingService {
 
     const data = await this.workoutTrackingQueries.queryGetExerciseTrackingMaps(userId, days, tz);
     const payload = data;
+    await this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING);
+    return { payload, cacheHit: false };
+  }
+
+  /**
+   * Retrieves exercise history grouped by exercise assignment.
+   *
+   * Reads the feature-specific cache when enabled and stores a fresh query
+   * result when the cache is bypassed or empty.
+   *
+   * @param userId - The user identifier.
+   * @param days - The number of recent calendar days to include.
+   * @param fromCache - Whether to read an existing cached response.
+   * @param tz - The IANA time-zone name used to calculate date boundaries.
+   * @returns The exercise-history payload and whether it came from cache.
+   */
+  async getExerciseHistoryData(
+    userId: string,
+    days: number = 45,
+    fromCache: boolean = true,
+    tz: string,
+  ): Promise<{ payload: ExerciseHistoryQueryDto; cacheHit: boolean }> {
+    const key = buildExerciseHistoryKeyStable(userId, days, tz);
+    if (fromCache) {
+      await this.cacheService.cacheDeleteOtherTimezones(key);
+      const cached = await this.cacheService.cacheGetJSON(key);
+      if (cached) return { payload: cached, cacheHit: true };
+    }
+
+    const payload = await this.workoutTrackingQueries.queryGetExerciseHistory(userId, days, tz);
     await this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING);
     return { payload, cacheHit: false };
   }
@@ -62,7 +98,7 @@ export class WorkoutTrackingService {
     fromCache: boolean = true,
     tz: string,
   ): Promise<{ payload: ExerciseTrackingStatsQueryDto; cacheHit: boolean }> {
-    const key = buildTrackingStatsKeyStable(userId, days, tz);
+    const key = buildWorkoutStatisticsKeyStable(userId, days, tz);
     if (fromCache) {
       await this.cacheService.cacheDeleteOtherTimezones(key);
       const cached = await this.cacheService.cacheGetJSON(key);
@@ -125,7 +161,10 @@ export class WorkoutTrackingService {
       workoutEndUtc,
     );
 
-    const { payload } = await this.getWorkoutHistoryAndStatisticsData(userId, 45, false, tz);
+    const [{ payload }] = await Promise.all([
+      this.getWorkoutHistoryAndStatisticsData(userId, 45, false, tz),
+      this.getExerciseHistoryData(userId, 45, false, tz),
+    ]);
     this.systemMessagesService.sendSystemMessageToUserWorkoutDone(userId);
     return payload;
   }

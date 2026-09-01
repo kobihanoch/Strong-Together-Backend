@@ -1,11 +1,15 @@
 import { redisConfig } from '../../../config/redis.config';
 
 export const TTL_TRACKING = redisConfig.cacheTtls.trackingSec;
-const TRACKING_MAPS_NS = 'xt:tracking:maps:v1';
-const TRACKING_STATS_NS = 'xt:tracking:stats:v1';
+const WORKOUT_HISTORY_NS = 'xt:tracking:workout-history:v1';
+const WORKOUT_STATISTICS_NS = 'xt:tracking:workout-statistics:v1';
+const EXERCISE_HISTORY_NS = 'xt:tracking:exercise-history:v1';
 
-export const buildTrackingMapsKeyStable = (userId: string, days: number, tz: string): string =>
-  `${TRACKING_MAPS_NS}:${userId}:${days}:${tz}`;
+export const buildWorkoutHistoryKeyStable = (userId: string, days: number, tz: string): string =>
+  `${WORKOUT_HISTORY_NS}:${userId}:${days}:${tz}`;
 
-export const buildTrackingStatsKeyStable = (userId: string, days: number, tz: string): string =>
-  `${TRACKING_STATS_NS}:${userId}:${days}:${tz}`;
+export const buildWorkoutStatisticsKeyStable = (userId: string, days: number, tz: string): string =>
+  `${WORKOUT_STATISTICS_NS}:${userId}:${days}:${tz}`;
+
+export const buildExerciseHistoryKeyStable = (userId: string, days: number, tz: string): string =>
+  `${EXERCISE_HISTORY_NS}:${userId}:${days}:${tz}`;

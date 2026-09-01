@@ -3,6 +3,7 @@ import type { Response } from 'express';
 import type {
   CreateWorkoutSessionResponse,
   GetWorkoutHistoryResponse,
+  GetExerciseHistoryResponse,
   GetWorkoutStatisticsResponse,
   CreateWorkoutSessionBody,
   GetWorkoutHistoryQuery,
@@ -23,6 +24,8 @@ import { WorkoutTrackingService } from './tracking.service';
  *
  * Preserves the existing route paths and behavior from the Express version:
  * - GET /api/workout-history
+ * - GET /api/exercise-history
+ * - GET /api/workout-statistics
  * - POST /api/workout-sessions
  *
  * Access: User
@@ -54,9 +57,35 @@ export class WorkoutTrackingController {
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GetWorkoutHistoryResponse> {
-    const tz = data.query.tz as string;
+    const tz = data.query.tz || 'Asia/Jerusalem';
 
     const { payload, cacheHit } = await this.workoutTrackingService.getWorkoutHistoryData(user.id, 45, true, tz);
+    res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
+    return payload;
+  }
+
+  /**
+   * Get the authenticated user's exercise history grouped by exercise assignment.
+   *
+   * Returns tracking from the last 45 days, with each assignment's entries
+   * ordered from newest to oldest, and sets `X-Cache` to reflect cache usage.
+   *
+   * @remarks Route: GET /api/exercise-history
+   * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param res - The HTTP response.
+   * @returns The exercise history grouped by exercise-to-split identifier.
+   */
+  @Get('exercise-history')
+  async getExerciseHistory(
+    @RequestData(new ValidateRequestPipe(getWorkoutHistoryRequestSchema)) data: { query: GetWorkoutHistoryQuery },
+    @CurrentUser() user: AuthenticatedUser,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<GetExerciseHistoryResponse> {
+    const tz = data.query.tz || 'Asia/Jerusalem';
+    const { payload, cacheHit } = await this.workoutTrackingService.getExerciseHistoryData(user.id, 45, true, tz);
     res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
     return payload;
   }
@@ -80,7 +109,7 @@ export class WorkoutTrackingController {
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GetWorkoutStatisticsResponse> {
-    const tz = data.query.tz as string;
+    const tz = data.query.tz || 'Asia/Jerusalem';
 
     const { payload, cacheHit } = await this.workoutTrackingService.getWorkoutStatisticsData(user.id, 45, true, tz);
     res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');

@@ -681,14 +681,45 @@ The workout-plan endpoints use this shape:
 
 ### Shared tracking response building blocks
 
-`GET /api/workout-history` returns tracking maps grouped three ways:
+`GET /api/workout-history` returns tracking grouped by workout date:
 
 ```json
 {
   "byDate": {
-    "2026-04-20": [
-      {
-        "exerciseTracking": {
+    "2026-04-20": {
+      "durationMins": 45,
+      "exerciseTracked": [
+        {
+          "exerciseTracking": {
+            "exerciseTrackingId": 1,
+            "sets": [{ "setIndex": 0, "weight": 100, "reps": 5 }],
+            "notes": "string | null",
+            "exerciseAssignment": {
+              "exerciseToSplitId": 10,
+              "orderIndex": 0,
+              "exerciseId": 20,
+              "workoutSplitId": 30,
+              "workoutSplitName": "Push",
+              "exerciseName": "Bench Press",
+              "targetMuscle": "Chest",
+              "specificTargetMuscle": "Upper Chest"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+`GET /api/exercise-history` returns tracking grouped by exercise assignment:
+
+```json
+{
+  "byExerciseToSplitId": {
+    "10": {
+      "exerciseTracked": [
+        {
           "exerciseTrackingId": 1,
           "sets": [{ "setIndex": 0, "weight": 100, "reps": 5 }],
           "notes": "string | null",
@@ -703,15 +734,13 @@ The workout-plan endpoints use this shape:
             "specificTargetMuscle": "Upper Chest"
           }
         }
-      }
-    ]
-  },
-  "byExerciseToSplitId": { "10": [] },
-  "bySplitName": { "Push": [] }
+      ]
+    }
+  }
 }
 ```
 
-Each grouping contains the same tracking-item shape. The grouping key supplies the date, assignment ID, or split name respectively.
+This response omits workout duration and flattens the `exerciseTracking` wrapper. Each assignment's entries are ordered by workout date descending, so the first entry is the newest.
 
 `GET /api/workout-statistics` returns the independent statistics payload:
 

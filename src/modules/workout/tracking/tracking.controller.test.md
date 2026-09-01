@@ -16,6 +16,13 @@
 - [x] Handles an existing plan with no tracking.
 - [x] Returns a schema-valid empty tracking payload.
 
+### `GET /api/exercise-history` - grouped exercise history
+
+- [x] Groups tracking by `exerciseToSplitId`.
+- [x] Omits duration and the `exerciseTracking` wrapper.
+- [x] Orders exercise history newest first.
+- [x] Returns and refreshes its dedicated cache entry.
+
 ### `POST /api/workout-sessions` - User C
 
 - [x] Creates tracking data.
