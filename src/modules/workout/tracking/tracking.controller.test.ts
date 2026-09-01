@@ -228,6 +228,8 @@ describe('WorkoutTrackingController', () => {
     expect(grouped.durationMins).toBeUndefined();
     expect(grouped.exerciseTracked).toHaveLength(2);
     expect(grouped.exerciseTracked[0].exerciseTracking).toBeUndefined();
+    expect(grouped.exerciseTracked[0].notes).toBeUndefined();
+    expect(grouped.exerciseTracked[0].workoutStartLocal).toBeTypeOf('string');
     expect(grouped.exerciseTracked.map((item: { sets: { weight: number }[] }) => item.sets[0].weight)).toEqual([
       90, 70,
     ]);

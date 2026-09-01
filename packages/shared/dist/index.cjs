@@ -2569,7 +2569,11 @@ var groupedTrackingItemQueryDtoSchema = import_v433.z.object({
     })
   })
 });
-var trackingByExerciseToSplitIdItemQueryDtoSchema = groupedTrackingItemQueryDtoSchema.shape.exerciseTracking;
+var trackingByExerciseToSplitIdItemQueryDtoSchema = groupedTrackingItemQueryDtoSchema.shape.exerciseTracking.omit({
+  notes: true
+}).extend({
+  workoutStartLocal: serializedDateSchema
+});
 var exerciseTrackingStatsQueryDtoSchema = import_v433.z.object({
   workoutCount: import_v433.z.coerce.number(),
   hasExerciseTracking: import_v433.z.boolean(),

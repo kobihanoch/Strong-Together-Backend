@@ -721,8 +721,8 @@ The workout-plan endpoints use this shape:
       "exerciseTracked": [
         {
           "exerciseTrackingId": 1,
+          "workoutStartLocal": "2026-04-20T13:30:00.000",
           "sets": [{ "setIndex": 0, "weight": 100, "reps": 5 }],
-          "notes": "string | null",
           "exerciseAssignment": {
             "exerciseToSplitId": 10,
             "orderIndex": 0,
@@ -740,7 +740,7 @@ The workout-plan endpoints use this shape:
 }
 ```
 
-This response omits workout duration and flattens the `exerciseTracking` wrapper. Each assignment's entries are ordered by workout date descending, so the first entry is the newest.
+This response omits workout duration and notes, flattens the `exerciseTracking` wrapper, and includes `workoutStartLocal` converted using the requested timezone. Each assignment's entries are ordered by workout date descending, so the first entry is the newest.
 
 `GET /api/workout-statistics` returns the independent statistics payload:
 

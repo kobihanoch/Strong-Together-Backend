@@ -93,7 +93,9 @@ const groupedTrackingItemQueryDtoSchema = z.object({
   }),
 });
 
-const trackingByExerciseToSplitIdItemQueryDtoSchema = groupedTrackingItemQueryDtoSchema.shape.exerciseTracking;
+const trackingByExerciseToSplitIdItemQueryDtoSchema = groupedTrackingItemQueryDtoSchema.shape.exerciseTracking
+  .omit({ notes: true })
+  .extend({ workoutStartLocal: serializedDateSchema });
 
 export const exerciseTrackingStatsQueryDtoSchema = z.object({
   workoutCount: z.coerce.number(),

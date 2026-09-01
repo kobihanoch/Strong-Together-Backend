@@ -2359,7 +2359,11 @@ var groupedTrackingItemQueryDtoSchema = z33.object({
     })
   })
 });
-var trackingByExerciseToSplitIdItemQueryDtoSchema = groupedTrackingItemQueryDtoSchema.shape.exerciseTracking;
+var trackingByExerciseToSplitIdItemQueryDtoSchema = groupedTrackingItemQueryDtoSchema.shape.exerciseTracking.omit({
+  notes: true
+}).extend({
+  workoutStartLocal: serializedDateSchema
+});
 var exerciseTrackingStatsQueryDtoSchema = z33.object({
   workoutCount: z33.coerce.number(),
   hasExerciseTracking: z33.boolean(),

@@ -214,8 +214,9 @@ export class WorkoutTrackingQueries {
   /**
    * Retrieves tracking history grouped by exercise assignment.
    *
-   * Each assignment's tracking entries are returned without the
-   * `exerciseTracking` wrapper and ordered by workout time descending.
+   * Each assignment's tracking entries omit notes and the `exerciseTracking`
+   * wrapper, include the timezone-adjusted local start time, and are ordered
+   * by workout time descending.
    *
    * @param userId - The user identifier.
    * @param days - The number of recent calendar days to include.
@@ -246,6 +247,11 @@ export class WorkoutTrackingQueries {
             JSONB_BUILD_OBJECT(
               'exerciseTrackingId',
               et.id::INT,
+              'workoutStartLocal',
+              TO_CHAR(
+                et.workout_start_utc AT TIME ZONE ${tz},
+                'YYYY-MM-DD"T"HH24:MI:SS.MS'
+              ),
               'sets',
               COALESCE(
                 JSONB_AGG(
@@ -261,8 +267,6 @@ export class WorkoutTrackingQueries {
                 ) FILTER (WHERE et.set_index IS NOT NULL),
                 '[]'::JSONB
               ),
-              'notes',
-              et.notes,
               'exerciseAssignment',
               JSONB_BUILD_OBJECT(
                 'exerciseToSplitId',

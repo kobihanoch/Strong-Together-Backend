@@ -5479,7 +5479,6 @@ declare const getExerciseHistoryResponseSchema: z.ZodObject<{
                 weight: z.ZodNumber;
                 reps: z.ZodInt;
             }, z.core.$strip>>;
-            notes: z.ZodNullable<z.ZodString>;
             exerciseAssignment: z.ZodObject<{
                 exerciseToSplitId: z.ZodNullable<z.ZodInt>;
                 orderIndex: z.ZodNullable<z.ZodInt>;
@@ -5490,6 +5489,7 @@ declare const getExerciseHistoryResponseSchema: z.ZodObject<{
                 targetMuscle: z.ZodString;
                 specificTargetMuscle: z.ZodString;
             }, z.core.$strip>;
+            workoutStartLocal: z.ZodString;
         }, z.core.$strip>>;
     }, z.core.$strip>>;
 }, z.core.$strip>;
@@ -5508,7 +5508,6 @@ declare const getExerciseHistoryContract: {
                     weight: z.ZodNumber;
                     reps: z.ZodInt;
                 }, z.core.$strip>>;
-                notes: z.ZodNullable<z.ZodString>;
                 exerciseAssignment: z.ZodObject<{
                     exerciseToSplitId: z.ZodNullable<z.ZodInt>;
                     orderIndex: z.ZodNullable<z.ZodInt>;
@@ -5519,6 +5518,7 @@ declare const getExerciseHistoryContract: {
                     targetMuscle: z.ZodString;
                     specificTargetMuscle: z.ZodString;
                 }, z.core.$strip>;
+                workoutStartLocal: z.ZodString;
             }, z.core.$strip>>;
         }, z.core.$strip>>;
     }, z.core.$strip>;
@@ -5916,7 +5916,6 @@ declare const exerciseHistoryQueryDtoSchema: z.ZodObject<{
                 weight: z.ZodNumber;
                 reps: z.ZodInt;
             }, z.core.$strip>>;
-            notes: z.ZodNullable<z.ZodString>;
             exerciseAssignment: z.ZodObject<{
                 exerciseToSplitId: z.ZodNullable<z.ZodInt>;
                 orderIndex: z.ZodNullable<z.ZodInt>;
@@ -5927,6 +5926,7 @@ declare const exerciseHistoryQueryDtoSchema: z.ZodObject<{
                 targetMuscle: z.ZodString;
                 specificTargetMuscle: z.ZodString;
             }, z.core.$strip>;
+            workoutStartLocal: z.ZodString;
         }, z.core.$strip>>;
     }, z.core.$strip>>;
 }, z.core.$strip>;
@@ -6119,7 +6119,6 @@ declare const exerciseHistoryRowQueryDtoSchema: z.ZodObject<{
                     weight: z.ZodNumber;
                     reps: z.ZodInt;
                 }, z.core.$strip>>;
-                notes: z.ZodNullable<z.ZodString>;
                 exerciseAssignment: z.ZodObject<{
                     exerciseToSplitId: z.ZodNullable<z.ZodInt>;
                     orderIndex: z.ZodNullable<z.ZodInt>;
@@ -6130,6 +6129,7 @@ declare const exerciseHistoryRowQueryDtoSchema: z.ZodObject<{
                     targetMuscle: z.ZodString;
                     specificTargetMuscle: z.ZodString;
                 }, z.core.$strip>;
+                workoutStartLocal: z.ZodString;
             }, z.core.$strip>>;
         }, z.core.$strip>>;
     }, z.core.$strip>;
