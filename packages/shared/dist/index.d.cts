@@ -3829,7 +3829,7 @@ type ExerciseToWorkoutSplitRow = typeof exerciseToWorkoutSplit.$inferSelect;
 type WorkoutSummaryRow = typeof workoutSummary.$inferSelect;
 type ExerciseTrackingRow = typeof exerciseTracking.$inferSelect;
 
-declare const addAerobicsRequestSchema: z.ZodObject<{
+declare const createAerobicEntryRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         tz: z.ZodString;
         record: z.ZodObject<{
@@ -3839,7 +3839,7 @@ declare const addAerobicsRequestSchema: z.ZodObject<{
         }, z.core.$strip>;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const addUserAerobicsContract: {
+declare const createAerobicEntryContract: {
     request: z.ZodObject<{
         body: z.ZodObject<{
             tz: z.ZodString;
@@ -3851,12 +3851,12 @@ declare const addUserAerobicsContract: {
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
-declare const getAerobicsRequestSchema: z.ZodObject<{
+declare const getAerobicHistoryRequestSchema: z.ZodObject<{
     query: z.ZodObject<{
         tz: z.ZodOptional<z.ZodString>;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const userAerobicsResponseSchema: z.ZodObject<{
+declare const getAerobicHistoryResponseSchema: z.ZodObject<{
     daily: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
         type: z.ZodString;
         durationSec: z.ZodInt;
@@ -3873,7 +3873,7 @@ declare const userAerobicsResponseSchema: z.ZodObject<{
         totalDurationMins: z.ZodNumber;
     }, z.core.$strip>>;
 }, z.core.$strip>;
-declare const getUserAerobicsContract: {
+declare const getAerobicHistoryContract: {
     request: z.ZodObject<{
         query: z.ZodObject<{
             tz: z.ZodOptional<z.ZodString>;
@@ -3897,9 +3897,9 @@ declare const getUserAerobicsContract: {
         }, z.core.$strip>>;
     }, z.core.$strip>;
 };
-type AddUserAerobicsBody = BodyOf<typeof addUserAerobicsContract>;
-type GetUserAerobicsQuery = QueryOf<typeof getUserAerobicsContract>;
-type UserAerobicsResponse = ResponseOf<typeof getUserAerobicsContract>;
+type CreateAerobicEntryBody = BodyOf<typeof createAerobicEntryContract>;
+type GetAerobicHistoryQuery = QueryOf<typeof getAerobicHistoryContract>;
+type GetAerobicHistoryResponse = ResponseOf<typeof getAerobicHistoryContract>;
 
 /** Aerobic record accepted by the insert query. */
 declare const addAerobicInputQueryDtoSchema: z.ZodObject<{
@@ -4056,12 +4056,12 @@ type AdherenceExerciseStatsQueryDto = z.infer<typeof adherenceExerciseStatsQuery
 type GoalAdherenceQueryDto = z.infer<typeof goalAdherenceQueryDtoSchema>;
 type GoalAdherenceRowQueryDto = z.infer<typeof goalAdherenceRowQueryDtoSchema>;
 
-declare const sendChangePassEmailRequestSchema: z.ZodObject<{
+declare const createPasswordResetRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         identifier: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const sendChangePassEmailContract: {
+declare const createPasswordResetRequestContract: {
     request: z.ZodObject<{
         body: z.ZodObject<{
             identifier: z.ZodString;
@@ -4092,7 +4092,7 @@ declare const resetPasswordContract: {
         ok: z.ZodBoolean;
     }, z.core.$strip>;
 };
-type SendChangePassEmailBody = BodyOf<typeof sendChangePassEmailContract>;
+type CreatePasswordResetRequestBody = BodyOf<typeof createPasswordResetRequestContract>;
 type ResetPasswordBody = BodyOf<typeof resetPasswordContract>;
 type ResetPasswordQuery = QueryOf<typeof resetPasswordContract>;
 type ResetPasswordResponse = ResponseOf<typeof resetPasswordContract>;
@@ -4205,38 +4205,38 @@ type UserAfterBumpQueryDto = z.infer<typeof userAfterBumpQueryDtoSchema>;
 type TokenVersionQueryDto = z.infer<typeof tokenVersionQueryDtoSchema>;
 type LastLoginQueryDto = z.infer<typeof lastLoginQueryDtoSchema>;
 
-declare const verifyAccountRequestSchema: z.ZodObject<{
+declare const verifyEmailRequestSchema: z.ZodObject<{
     query: z.ZodObject<{
         token: z.ZodOptional<z.ZodString>;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const verifyUserAccountContract: {
+declare const verifyEmailContract: {
     request: z.ZodObject<{
         query: z.ZodObject<{
             token: z.ZodOptional<z.ZodString>;
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
-declare const sendVerificationMailRequestSchema: z.ZodObject<{
+declare const createVerificationEmailRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         email: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const sendVerificationMailContract: {
+declare const createVerificationEmailContract: {
     request: z.ZodObject<{
         body: z.ZodObject<{
             email: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
-declare const changeEmailAndVerifyRequestSchema: z.ZodObject<{
+declare const updateUnverifiedAccountEmailRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         username: z.ZodString;
         password: z.ZodString;
         newEmail: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const changeEmailAndVerifyContract: {
+declare const updateUnverifiedAccountEmailContract: {
     request: z.ZodObject<{
         body: z.ZodObject<{
             username: z.ZodString;
@@ -4245,22 +4245,22 @@ declare const changeEmailAndVerifyContract: {
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
-declare const checkUserVerifyRequestSchema: z.ZodObject<{
+declare const getVerificationStatusRequestSchema: z.ZodObject<{
     query: z.ZodObject<{
         username: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const checkUserVerifyContract: {
+declare const getVerificationStatusContract: {
     request: z.ZodObject<{
         query: z.ZodObject<{
             username: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
-type VerifyUserAccountQuery = QueryOf<typeof verifyUserAccountContract>;
-type SendVerificationMailBody = BodyOf<typeof sendVerificationMailContract>;
-type ChangeEmailAndVerifyBody = BodyOf<typeof changeEmailAndVerifyContract>;
-type CheckUserVerifyQuery = QueryOf<typeof checkUserVerifyContract>;
+type VerifyEmailQuery = QueryOf<typeof verifyEmailContract>;
+type CreateVerificationEmailBody = BodyOf<typeof createVerificationEmailContract>;
+type UpdateUnverifiedAccountEmailBody = BodyOf<typeof updateUnverifiedAccountEmailContract>;
+type GetVerificationStatusQuery = QueryOf<typeof getVerificationStatusContract>;
 
 /** Claims carried by an email-verification token. */
 declare const emailVerifyPayloadDtoSchema: z.ZodObject<{
@@ -4337,19 +4337,19 @@ type UserByIdentifierRowQueryDto = z.infer<typeof userByIdentifierRowQueryDtoSch
 type UserByUsernameRawQueryDto = z.infer<typeof userByUsernameRawQueryDtoSchema>;
 type UserByUsernameRowQueryDto = z.infer<typeof userByUsernameRowQueryDtoSchema>;
 
-declare const getAllExercisesResponseSchema: zod_v4.ZodRecord<zod_v4.ZodString, zod_v4.ZodArray<zod_v4.ZodObject<{
+declare const listExercisesResponseSchema: zod_v4.ZodRecord<zod_v4.ZodString, zod_v4.ZodArray<zod_v4.ZodObject<{
     id: zod_v4.ZodInt;
     name: zod_v4.ZodString;
     specificTargetMuscle: zod_v4.ZodString;
 }, zod_v4_core.$strip>>>;
-declare const getAllExercisesContract: {
+declare const listExercisesContract: {
     response: zod_v4.ZodRecord<zod_v4.ZodString, zod_v4.ZodArray<zod_v4.ZodObject<{
         id: zod_v4.ZodInt;
         name: zod_v4.ZodString;
         specificTargetMuscle: zod_v4.ZodString;
     }, zod_v4_core.$strip>>>;
 };
-type GetAllExercisesResponse = ResponseOf<typeof getAllExercisesContract>;
+type ListExercisesResponse = ResponseOf<typeof listExercisesContract>;
 
 /** Exercise row included in the muscle-grouped exercise query result. */
 declare const getAllExercisesExerciseQueryDtoSchema: z.ZodObject<{
@@ -4377,12 +4377,12 @@ type GetAllExercisesExerciseQueryDto = z.infer<typeof getAllExercisesExerciseQue
 type ExercisesMapByMuscleQueryDto = z.infer<typeof exercisesMapByMuscleQueryDtoSchema>;
 type ExerciseMapByMuscleRowQueryDto = z.infer<typeof exerciseMapByMuscleRowQueryDtoSchema>;
 
-declare const getAllMessagesRequestSchema: z.ZodObject<{
+declare const listMessagesRequestSchema: z.ZodObject<{
     query: z.ZodObject<{
         tz: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const getAllUserMessagesResponseSchema: z.ZodObject<{
+declare const listMessagesResponseSchema: z.ZodObject<{
     messages: z.ZodArray<z.ZodObject<{
         id: z.ZodUUID;
         subject: z.ZodString;
@@ -4393,7 +4393,7 @@ declare const getAllUserMessagesResponseSchema: z.ZodObject<{
         senderProfilePicPath: z.ZodNullable<z.ZodString>;
     }, z.core.$strip>>;
 }, z.core.$strip>;
-declare const getAllUserMessagesContract: {
+declare const listMessagesContract: {
     request: z.ZodObject<{
         query: z.ZodObject<{
             tz: z.ZodString;
@@ -4411,8 +4411,8 @@ declare const getAllUserMessagesContract: {
         }, z.core.$strip>>;
     }, z.core.$strip>;
 };
-type GetAllUserMessagesQuery = QueryOf<typeof getAllUserMessagesContract>;
-type GetAllUserMessagesResponse = ResponseOf<typeof getAllUserMessagesContract>;
+type ListMessagesQuery = QueryOf<typeof listMessagesContract>;
+type ListMessagesResponse = ResponseOf<typeof listMessagesContract>;
 declare const markMessageAsReadRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
         id: z.ZodUUID;
@@ -4737,28 +4737,28 @@ type CreatedUserRawQueryDto = z.infer<typeof createdUserRawQueryDtoSchema>;
 type CreatedUserRowQueryDto = z.infer<typeof createdUserRowQueryDtoSchema>;
 type UserExistsQueryDto = z.infer<typeof userExistsQueryDtoSchema>;
 
-declare const saveUserPushTokenRequestSchema: z.ZodObject<{
+declare const replacePushTokenRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         token: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const saveUserPushTokenContract: {
+declare const replacePushTokenContract: {
     request: z.ZodObject<{
         body: z.ZodObject<{
             token: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
-type SaveUserPushTokenBody = BodyOf<typeof saveUserPushTokenContract>;
+type ReplacePushTokenBody = BodyOf<typeof replacePushTokenContract>;
 
-declare const updateUserRequestSchema: z.ZodObject<{
+declare const updateCurrentUserRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         username: z.ZodOptional<z.ZodString>;
         fullName: z.ZodOptional<z.ZodString>;
         email: z.ZodOptional<z.ZodString>;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const updateAuthenticatedUserResponseSchema: z.ZodObject<{
+declare const updateCurrentUserResponseSchema: z.ZodObject<{
     message: z.ZodString;
     emailChanged: z.ZodBoolean;
     user: z.ZodObject<{
@@ -4779,7 +4779,7 @@ declare const updateAuthenticatedUserResponseSchema: z.ZodObject<{
         lastLogin: z.ZodNullable<z.ZodString>;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const updateAuthenticatedUserContract: {
+declare const updateCurrentUserContract: {
     request: z.ZodObject<{
         body: z.ZodObject<{
             username: z.ZodOptional<z.ZodString>;
@@ -4849,7 +4849,7 @@ declare const userDataContract: {
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
-declare const getAuthenticatedUserByIdResponseSchema: z.ZodObject<{
+declare const getCurrentUserResponseSchema: z.ZodObject<{
     id: z.ZodUUID;
     username: z.ZodString;
     email: z.ZodString;
@@ -4866,7 +4866,7 @@ declare const getAuthenticatedUserByIdResponseSchema: z.ZodObject<{
     authProvider: z.ZodString;
     lastLogin: z.ZodNullable<z.ZodString>;
 }, z.core.$strip>;
-declare const getAuthenticatedUserByIdContract: {
+declare const getCurrentUserContract: {
     response: z.ZodObject<{
         id: z.ZodUUID;
         username: z.ZodString;
@@ -4885,36 +4885,36 @@ declare const getAuthenticatedUserByIdContract: {
         lastLogin: z.ZodNullable<z.ZodString>;
     }, z.core.$strip>;
 };
-declare const deleteProfilePicRequestSchema: z.ZodObject<{
+declare const deleteProfilePictureRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         profilePicPath: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const deleteUserProfilePicContract: {
+declare const deleteProfilePictureContract: {
     request: z.ZodObject<{
         body: z.ZodObject<{
             profilePicPath: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
-declare const setProfilePicAndUpdateDBResponseSchema: z.ZodObject<{
+declare const replaceProfilePictureResponseSchema: z.ZodObject<{
     profilePicPath: z.ZodString;
     url: z.ZodString;
     message: z.ZodString;
 }, z.core.$strip>;
-declare const setProfilePicAndUpdateDBContract: {
+declare const replaceProfilePictureContract: {
     response: z.ZodObject<{
         profilePicPath: z.ZodString;
         url: z.ZodString;
         message: z.ZodString;
     }, z.core.$strip>;
 };
-type UpdateUserBody = BodyOf<typeof updateAuthenticatedUserContract>;
-type UpdateAuthenticatedUserResponse = ResponseOf<typeof updateAuthenticatedUserContract>;
+type UpdateCurrentUserBody = BodyOf<typeof updateCurrentUserContract>;
+type UpdateCurrentUserResponse = ResponseOf<typeof updateCurrentUserContract>;
 type UserDataResponse = ResponseOf<typeof userDataContract>;
-type GetAuthenticatedUserByIdResponse = ResponseOf<typeof getAuthenticatedUserByIdContract>;
-type DeleteUserProfilePicBody = BodyOf<typeof deleteUserProfilePicContract>;
-type SetProfilePicAndUpdateDBResponse = ResponseOf<typeof setProfilePicAndUpdateDBContract>;
+type GetCurrentUserResponse = ResponseOf<typeof getCurrentUserContract>;
+type DeleteProfilePictureBody = BodyOf<typeof deleteProfilePictureContract>;
+type ReplaceProfilePictureResponse = ResponseOf<typeof replaceProfilePictureContract>;
 
 /** Fields consumed by the authenticated-user update query. */
 declare const authenticatedUserForUpdateQueryDtoSchema: z.ZodObject<{
@@ -4993,19 +4993,19 @@ type UserConflictQueryDto = z.infer<typeof userConflictQueryDtoSchema>;
 type UserMessageIdentityQueryDto = z.infer<typeof userMessageIdentityQueryDtoSchema>;
 type UserProfilePicQueryDto = z.infer<typeof userProfilePicQueryDtoSchema>;
 
-declare const getPresignedUrlFromS3RequestSchema: z.ZodObject<{
+declare const createVideoUploadUrlRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         exercise: z.ZodString;
         fileType: z.ZodString;
         jobId: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const getPresignedUrlFromS3ResponseSchema: z.ZodObject<{
+declare const createVideoUploadUrlResponseSchema: z.ZodObject<{
     uploadUrl: z.ZodString;
     fileKey: z.ZodString;
     requestId: z.ZodString;
 }, z.core.$strip>;
-declare const getPresignedUrlFromS3Contract: {
+declare const createVideoUploadUrlContract: {
     request: z.ZodObject<{
         body: z.ZodObject<{
             exercise: z.ZodString;
@@ -5019,8 +5019,8 @@ declare const getPresignedUrlFromS3Contract: {
         requestId: z.ZodString;
     }, z.core.$strip>;
 };
-type GetPresignedUrlFromS3Body = BodyOf<typeof getPresignedUrlFromS3Contract>;
-type GetPresignedUrlFromS3Response = ResponseOf<typeof getPresignedUrlFromS3Contract>;
+type CreateVideoUploadUrlBody = BodyOf<typeof createVideoUploadUrlContract>;
+type CreateVideoUploadUrlResponse = ResponseOf<typeof createVideoUploadUrlContract>;
 
 /** Parameters used to enqueue a video-analysis job. */
 declare const enqueueAnalyzeVideoParamsDtoSchema: z.ZodObject<{
@@ -5081,15 +5081,15 @@ type AnalyzeVideoPayloadDto = z.infer<typeof analyzeVideoPayloadDtoSchema>;
 type SquatRepetitionDto = z.infer<typeof squatRepetitionDtoSchema>;
 type AnalyzeVideoResultPayloadDto<TResult> = z.infer<ReturnType<typeof analyzeVideoResultPayloadDtoSchema<z.ZodType<TResult>>>>;
 
-declare const generateTicketRequestSchema: z.ZodObject<{
+declare const createWebSocketTicketRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         username: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const generateTicketResponseSchema: z.ZodObject<{
+declare const createWebSocketTicketResponseSchema: z.ZodObject<{
     ticket: z.ZodString;
 }, z.core.$strip>;
-declare const generateTicketContract: {
+declare const createWebSocketTicketContract: {
     request: z.ZodObject<{
         body: z.ZodObject<{
             username: z.ZodString;
@@ -5099,15 +5099,15 @@ declare const generateTicketContract: {
         ticket: z.ZodString;
     }, z.core.$strip>;
 };
-type GenerateTicketBody = BodyOf<typeof generateTicketContract>;
-type GenerateTicketResponse = ResponseOf<typeof generateTicketContract>;
+type CreateWebSocketTicketBody = BodyOf<typeof createWebSocketTicketContract>;
+type CreateWebSocketTicketResponse = ResponseOf<typeof createWebSocketTicketContract>;
 
-declare const getWholeWorkoutPlanRequestSchema: z.ZodObject<{
+declare const getWorkoutPlanRequestSchema: z.ZodObject<{
     query: z.ZodObject<{
         tz: z.ZodOptional<z.ZodString>;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const getWholeUserWorkoutPlanResponseSchema: z.ZodObject<{
+declare const getWorkoutPlanResponseSchema: z.ZodObject<{
     workoutPlan: z.ZodNullable<z.ZodObject<{
         id: z.ZodInt;
         numberOfSplits: z.ZodNumber;
@@ -5140,7 +5140,7 @@ declare const getWholeUserWorkoutPlanResponseSchema: z.ZodObject<{
         }, z.core.$strip>>>;
     }, z.core.$strip>>;
 }, z.core.$strip>;
-declare const getWholeUserWorkoutPlanContract: {
+declare const getWorkoutPlanContract: {
     request: z.ZodObject<{
         query: z.ZodObject<{
             tz: z.ZodOptional<z.ZodString>;
@@ -5180,7 +5180,7 @@ declare const getWholeUserWorkoutPlanContract: {
         }, z.core.$strip>>;
     }, z.core.$strip>;
 };
-declare const addWorkoutRequestSchema: z.ZodObject<{
+declare const replaceWorkoutPlanRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         workoutData: z.ZodArray<z.ZodObject<{
             name: z.ZodString;
@@ -5196,7 +5196,7 @@ declare const addWorkoutRequestSchema: z.ZodObject<{
         tz: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const addWorkoutResponseSchema: z.ZodObject<{
+declare const replaceWorkoutPlanResponseSchema: z.ZodObject<{
     message: z.ZodString;
     workoutPlan: z.ZodObject<{
         id: z.ZodInt;
@@ -5230,7 +5230,7 @@ declare const addWorkoutResponseSchema: z.ZodObject<{
         }, z.core.$strip>>>;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const addWorkoutContract: {
+declare const replaceWorkoutPlanContract: {
     request: z.ZodObject<{
         body: z.ZodObject<{
             workoutData: z.ZodArray<z.ZodObject<{
@@ -5282,10 +5282,10 @@ declare const addWorkoutContract: {
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
-type GetWholeUserWorkoutPlanQuery = QueryOf<typeof getWholeUserWorkoutPlanContract>;
-type GetWholeUserWorkoutPlanResponse = ResponseOf<typeof getWholeUserWorkoutPlanContract>;
-type AddWorkoutBody = BodyOf<typeof addWorkoutContract>;
-type AddWorkoutResponse = ResponseOf<typeof addWorkoutContract>;
+type GetWorkoutPlanQuery = QueryOf<typeof getWorkoutPlanContract>;
+type GetWorkoutPlanResponse = ResponseOf<typeof getWorkoutPlanContract>;
+type ReplaceWorkoutPlanBody = BodyOf<typeof replaceWorkoutPlanContract>;
+type ReplaceWorkoutPlanResponse = ResponseOf<typeof replaceWorkoutPlanContract>;
 
 /** Exercise input stored while adding a workout plan. */
 declare const workoutExerciseInputQueryDtoSchema: z.ZodObject<{
@@ -5406,12 +5406,12 @@ type WorkoutPlanIdQueryDto = z.infer<typeof workoutPlanIdQueryDtoSchema>;
 type WorkoutSplitIdQueryDto = z.infer<typeof workoutSplitIdQueryDtoSchema>;
 type ExerciseAssignmentIdQueryDto = z.infer<typeof exerciseAssignmentIdQueryDtoSchema>;
 
-declare const getExerciseTrackingRequestSchema: z.ZodObject<{
+declare const getWorkoutHistoryRequestSchema: z.ZodObject<{
     query: z.ZodObject<{
         tz: z.ZodOptional<z.ZodString>;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const getExerciseTrackingResponseSchema: z.ZodObject<{
+declare const getWorkoutHistoryResponseSchema: z.ZodObject<{
     byDate: z.ZodRecord<z.ZodString, z.ZodObject<{
         durationMins: z.ZodNumber;
         exerciseTracked: z.ZodArray<z.ZodObject<{
@@ -5437,7 +5437,7 @@ declare const getExerciseTrackingResponseSchema: z.ZodObject<{
         }, z.core.$strip>>;
     }, z.core.$strip>>;
 }, z.core.$strip>;
-declare const getExerciseTrackingContract: {
+declare const getWorkoutHistoryContract: {
     request: z.ZodObject<{
         query: z.ZodObject<{
             tz: z.ZodOptional<z.ZodString>;
@@ -5470,7 +5470,7 @@ declare const getExerciseTrackingContract: {
         }, z.core.$strip>>;
     }, z.core.$strip>;
 };
-declare const getExerciseTrackingStatsResponseSchema: z.ZodObject<{
+declare const getWorkoutStatisticsResponseSchema: z.ZodObject<{
     workoutCount: z.ZodCoercedNumber<unknown>;
     hasExerciseTracking: z.ZodBoolean;
     nextWorkoutSplit: z.ZodNullable<z.ZodObject<{
@@ -5500,7 +5500,7 @@ declare const getExerciseTrackingStatsResponseSchema: z.ZodObject<{
         estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
     }, z.core.$strip>>;
 }, z.core.$strip>;
-declare const getExerciseTrackingStatsContract: {
+declare const getWorkoutStatisticsContract: {
     request: z.ZodObject<{
         query: z.ZodObject<{
             tz: z.ZodOptional<z.ZodString>;
@@ -5537,7 +5537,7 @@ declare const getExerciseTrackingStatsContract: {
         }, z.core.$strip>>;
     }, z.core.$strip>;
 };
-declare const finishWorkoutRequestSchema: z.ZodObject<{
+declare const createWorkoutSessionRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         workout: z.ZodArray<z.ZodObject<{
             trackedSets: z.ZodArray<z.ZodObject<{
@@ -5555,7 +5555,7 @@ declare const finishWorkoutRequestSchema: z.ZodObject<{
         workoutEndUtc: z.ZodNullable<z.ZodOptional<z.ZodString>>;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const finishUserWorkoutResponseSchema: z.ZodObject<{
+declare const createWorkoutSessionResponseSchema: z.ZodObject<{
     trackingStats: z.ZodObject<{
         workoutCount: z.ZodCoercedNumber<unknown>;
         hasExerciseTracking: z.ZodBoolean;
@@ -5613,7 +5613,7 @@ declare const finishUserWorkoutResponseSchema: z.ZodObject<{
         }, z.core.$strip>>;
     }, z.core.$strip>;
 }, z.core.$strip>;
-declare const finishUserWorkoutContract: {
+declare const createWorkoutSessionContract: {
     request: z.ZodObject<{
         body: z.ZodObject<{
             workout: z.ZodArray<z.ZodObject<{
@@ -5691,11 +5691,11 @@ declare const finishUserWorkoutContract: {
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
-type GetExerciseTrackingQuery = QueryOf<typeof getExerciseTrackingContract>;
-type GetExerciseTrackingResponse = ResponseOf<typeof getExerciseTrackingContract>;
-type GetExerciseTrackingStatsResponse = ResponseOf<typeof getExerciseTrackingStatsContract>;
-type FinishUserWorkoutBody = BodyOf<typeof finishUserWorkoutContract>;
-type FinishUserWorkoutResponse = ResponseOf<typeof finishUserWorkoutContract>;
+type GetWorkoutHistoryQuery = QueryOf<typeof getWorkoutHistoryContract>;
+type GetWorkoutHistoryResponse = ResponseOf<typeof getWorkoutHistoryContract>;
+type GetWorkoutStatisticsResponse = ResponseOf<typeof getWorkoutStatisticsContract>;
+type CreateWorkoutSessionBody = BodyOf<typeof createWorkoutSessionContract>;
+type CreateWorkoutSessionResponse = ResponseOf<typeof createWorkoutSessionContract>;
 
 declare const finishedWorkoutEntryQueryDtoSchema: z.ZodObject<{
     trackedSets: z.ZodArray<z.ZodObject<{
@@ -6061,4 +6061,4 @@ type WorkoutSummaryIdQueryDto = z.infer<typeof workoutSummaryIdQueryDtoSchema>;
 type ExerciseTrackingIdQueryDto = z.infer<typeof exerciseTrackingIdQueryDtoSchema>;
 type FinishedWorkoutEntryQueryDto = z.infer<typeof finishedWorkoutEntryQueryDtoSchema>;
 
-export { type AccessTokenPayloadDto, type AddAerobicInputQueryDto, type AddUserAerobicsBody, type AddWorkoutBody, type AddWorkoutResponse, type AdherenceExerciseStatsQueryDto, type AerobicTrackingRow, type AerobicsDailyRecordQueryDto, type AerobicsWeeklyRecordQueryDto, type AllUserMessageQueryDto, type AnalyzeVideoPayloadDto, type AnalyzeVideoResultPayloadDto, type AppleOAuthBody, type AppleTokenVerificationResultDto, type AuthenticatedUserForUpdateQueryDto, type BodyOf, type ChangeEmailAndVerifyBody, type ChangeEmailTokenPayloadDto, type CheckUserVerifyQuery, type Contract, type CreateUserBody, type CreateUserResponse, type CreatedUserQueryDto, type CreatedUserRawQueryDto, type CreatedUserRowQueryDto, type DeleteMessageParams, type DeleteMessageResponse, type DeleteUserProfilePicBody, type DeletedMessageQueryDto, type EmailVerifyPayloadDto, type EnqueueAnalyzeVideoParamsDto, type ExerciseAssignmentIdQueryDto, type ExerciseInPlanQueryDto, type ExerciseMapByMuscleRowQueryDto, type ExerciseMetadataQueryDto, type ExerciseRow, type ExerciseToWorkoutSplitRow, type ExerciseTrackingAnalysisQueryDto, type ExerciseTrackingAndStatsQueryDto, type ExerciseTrackingAndStatsRowQueryDto, type ExerciseTrackingIdQueryDto, type ExerciseTrackingMapsQueryDto, type ExerciseTrackingMapsRowQueryDto, type ExerciseTrackingPrMaxQueryDto, type ExerciseTrackingRow, type ExerciseTrackingStatsQueryDto, type ExerciseTrackingStatsRowQueryDto, type ExercisesMapByMuscleQueryDto, type FinishUserWorkoutBody, type FinishUserWorkoutResponse, type FinishedWorkoutEntryQueryDto, type ForgotPasswordPayloadDto, type GenerateTicketBody, type GenerateTicketResponse, type GetAllExercisesExerciseQueryDto, type GetAllExercisesResponse, type GetAllUserMessagesQuery, type GetAllUserMessagesResponse, type GetAnalyticsResponse, type GetAuthenticatedUserByIdResponse, type GetExerciseTrackingQuery, type GetExerciseTrackingResponse, type GetExerciseTrackingStatsResponse, type GetPresignedUrlFromS3Body, type GetPresignedUrlFromS3Response, type GetUserAerobicsQuery, type GetWholeUserWorkoutPlanQuery, type GetWholeUserWorkoutPlanResponse, type GoalAdherenceQueryDto, type GoalAdherenceRowQueryDto, type GoogleOAuthBody, type GoogleTokenVerificationResultDto, type LastLoginQueryDto, type LoginRequestBody, type LoginResponse, type LogoutResponse, type MarkMessageAsReadParams, type MarkMessageAsReadResponse, type MessageAfterSendQueryDto, type MessageAsReadQueryDto, type MessageRow, type OAuthCreatedUserRowQueryDto, type OAuthLinkQueryDto, type OAuthLinkRowQueryDto, type OAuthLoginResponse, type OAuthLookupQueryDto, type OAuthLookupRawQueryDto, type OAuthLookupRowQueryDto, type ParamsOf, type QueryOf, type RefreshTokenResponse, type RequestOf, type RequestSchema, type ResetPasswordBody, type ResetPasswordQuery, type ResetPasswordResponse, type ResponseOf, type SaveUserPushTokenBody, type SaveWorkoutSplitInputQueryDto, type SaveWorkoutSplitPayloadQueryDto, type SendChangePassEmailBody, type SendVerificationMailBody, type SetProfilePicAndUpdateDBResponse, type SquatRepetitionDto, type TokenVersionQueryDto, type TrackingByDateItemQueryDto, type TrackingBySplitNameItemQueryDto, type TrackingMapItemQueryDto, type UpdateAuthenticatedUserResponse, type UpdateUserBody, type UserAerobicsQueryDto, type UserAerobicsResponse, type UserAerobicsRowQueryDto, type UserAfterBumpQueryDto, type UserByIdentifierQueryDto, type UserByIdentifierRawQueryDto, type UserByIdentifierRowQueryDto, type UserByUsernameRawQueryDto, type UserByUsernameRowQueryDto, type UserConflictQueryDto, type UserDataQueryDto, type UserDataResponse, type UserDataRowQueryDto, type UserExistsQueryDto, type UserInsert, type UserMessageIdentityQueryDto, type UserProfilePicQueryDto, type UserRow, type UserToHourlyReminderQueryDto, type UserWithNotificationsEnabledQueryDto, type VerifyUserAccountQuery, type WeeklyDataQueryDto, type WholeUserWorkoutPlanQueryDto, type WorkoutExerciseInputQueryDto, type WorkoutPlanIdQueryDto, type WorkoutPlanRow, type WorkoutRmRecordQueryDto, type WorkoutRmsQueryDto, type WorkoutRmsRowQueryDto, type WorkoutSplitIdQueryDto, type WorkoutSplitLookupQueryDto, type WorkoutSplitQueryDto, type WorkoutSplitRow, type WorkoutSummaryIdQueryDto, type WorkoutSummaryRow, accessTokenPayloadDtoSchema, addAerobicInputQueryDtoSchema, addAerobicsRequestSchema, addUserAerobicsContract, addWorkoutContract, addWorkoutRequestSchema, addWorkoutResponseSchema, adherenceExerciseStatsQueryDtoSchema, aerobicTrackingDbSchema, aerobicsDailyRecordQueryDtoSchema, aerobicsWeeklyRecordQueryDtoSchema, allUserMessageQueryDtoSchema, analyzeVideoPayloadDtoSchema, analyzeVideoResultPayloadDtoSchema, appleOAuthContract, appleOAuthRequestSchema, appleTokenVerificationResultDtoSchema, authenticatedUserForUpdateQueryDtoSchema, changeEmailAndVerifyContract, changeEmailAndVerifyRequestSchema, changeEmailTokenPayloadDtoSchema, checkUserVerifyContract, checkUserVerifyRequestSchema, createUserContract, createUserRequestSchema, createUserResponseSchema, createUserUserSchema, createdUserQueryDtoSchema, createdUserRawQueryDtoSchema, createdUserRowQueryDtoSchema, deleteMessageContract, deleteMessageRequestSchema, deleteMessageResponseSchema, deleteProfilePicRequestSchema, deleteUserProfilePicContract, deletedMessageQueryDtoSchema, emailVerifyPayloadDtoSchema, enqueueAnalyzeVideoParamsDtoSchema, exerciseAssignmentIdQueryDtoSchema, exerciseDbSchema, exerciseInPlanQueryDtoSchema, exerciseMapByMuscleRowQueryDtoSchema, exerciseMetadataQueryDtoSchema, exerciseToWorkoutSplitDbSchema, exerciseToWorkoutSplitSetExpandedViewDbSchema, exerciseTrackingAnalysisQueryDtoSchema, exerciseTrackingAndStatsQueryDtoSchema, exerciseTrackingAndStatsRowQueryDtoSchema, exerciseTrackingDbSchema, exerciseTrackingIdQueryDtoSchema, exerciseTrackingMapsQueryDtoSchema, exerciseTrackingMapsRowQueryDtoSchema, exerciseTrackingPrMaxQueryDtoSchema, exerciseTrackingSetExpandedViewDbSchema, exerciseTrackingStatsQueryDtoSchema, exerciseTrackingStatsRowQueryDtoSchema, exercisesMapByMuscleQueryDtoSchema, finishUserWorkoutContract, finishUserWorkoutResponseSchema, finishWorkoutRequestSchema, finishedWorkoutEntryQueryDtoSchema, forgotPasswordPayloadDtoSchema, generateTicketContract, generateTicketRequestSchema, generateTicketResponseSchema, getAerobicsRequestSchema, getAllExercisesContract, getAllExercisesExerciseQueryDtoSchema, getAllExercisesResponseSchema, getAllMessagesRequestSchema, getAllUserMessagesContract, getAllUserMessagesResponseSchema, getAnalyticsContract, getAnalyticsResponseSchema, getAuthenticatedUserByIdContract, getAuthenticatedUserByIdResponseSchema, getExerciseTrackingContract, getExerciseTrackingRequestSchema, getExerciseTrackingResponseSchema, getExerciseTrackingStatsContract, getExerciseTrackingStatsResponseSchema, getPresignedUrlFromS3Contract, getPresignedUrlFromS3RequestSchema, getPresignedUrlFromS3ResponseSchema, getUserAerobicsContract, getWholeUserWorkoutPlanContract, getWholeUserWorkoutPlanResponseSchema, getWholeWorkoutPlanRequestSchema, goalAdherenceQueryDtoSchema, goalAdherenceRowQueryDtoSchema, googleOAuthContract, googleOAuthRequestSchema, googleTokenVerificationResultDtoSchema, lastLoginQueryDtoSchema, loginContract, loginRequestSchema, loginResponseSchema, logoutContract, logoutResponseSchema, markMessageAsReadContract, markMessageAsReadRequestSchema, markMessageAsReadResponseSchema, messageAfterSendQueryDtoSchema, messageAsReadQueryDtoSchema, messageDbSchema, oAuthCreatedUserRowQueryDtoSchema, oAuthLinkQueryDtoSchema, oAuthLinkRowQueryDtoSchema, oAuthLoginContract, oAuthLoginResponseSchema, oAuthLookupQueryDtoSchema, oAuthLookupRawQueryDtoSchema, oAuthLookupRowQueryDtoSchema, oauthAccountDbSchema, proceedLoginResponseSchema, prsViewDbSchema, refreshTokenContract, refreshTokenResponseSchema, resetPasswordContract, resetPasswordRequestSchema, resetPasswordResponseSchema, saveUserPushTokenContract, saveUserPushTokenRequestSchema, saveWorkoutSplitInputQueryDtoSchema, saveWorkoutSplitPayloadQueryDtoSchema, sendChangePassEmailContract, sendChangePassEmailRequestSchema, sendVerificationMailContract, sendVerificationMailRequestSchema, serializedDateSchema, setProfilePicAndUpdateDBContract, setProfilePicAndUpdateDBResponseSchema, squatRepetitionDtoSchema, timezoneSchema, tokenVersionQueryDtoSchema, trackingByDateItemQueryDtoSchema, trackingBySplitNameItemQueryDtoSchema, trackingMapItemQueryDtoSchema, trackingSetDbSchema, updateAuthenticatedUserContract, updateAuthenticatedUserResponseSchema, updateUserRequestSchema, userAerobicsQueryDtoSchema, userAerobicsResponseSchema, userAerobicsRowQueryDtoSchema, userAfterBumpQueryDtoSchema, userByIdentifierQueryDtoSchema, userByIdentifierRawQueryDtoSchema, userByIdentifierRowQueryDtoSchema, userByUsernameRawQueryDtoSchema, userByUsernameRowQueryDtoSchema, userConflictQueryDtoSchema, userDataContract, userDataQueryDtoSchema, userDataResponseSchema, userDataRowQueryDtoSchema, userDbSchema, userExistsQueryDtoSchema, userInsertDbSchema, userMessageIdentityQueryDtoSchema, userProfilePicQueryDtoSchema, userReminderSettingDbSchema, userSplitInformationDbSchema, userToHourlyReminderQueryDtoSchema, userUpdateDbSchema, userWithNotificationsEnabledQueryDtoSchema, verifyAccountRequestSchema, verifyUserAccountContract, weeklyDataQueryDtoSchema, wholeUserWorkoutPlanQueryDtoSchema, workoutExerciseInputQueryDtoSchema, workoutPlanDbSchema, workoutPlanIdQueryDtoSchema, workoutRmRecordQueryDtoSchema, workoutRmsQueryDtoSchema, workoutRmsRowQueryDtoSchema, workoutSetDbSchema, workoutSplitDbSchema, workoutSplitIdQueryDtoSchema, workoutSplitLookupQueryDtoSchema, workoutSplitQueryDtoSchema, workoutSummaryDbSchema, workoutSummaryIdQueryDtoSchema };
+export { type AccessTokenPayloadDto, type AddAerobicInputQueryDto, type AdherenceExerciseStatsQueryDto, type AerobicTrackingRow, type AerobicsDailyRecordQueryDto, type AerobicsWeeklyRecordQueryDto, type AllUserMessageQueryDto, type AnalyzeVideoPayloadDto, type AnalyzeVideoResultPayloadDto, type AppleOAuthBody, type AppleTokenVerificationResultDto, type AuthenticatedUserForUpdateQueryDto, type BodyOf, type ChangeEmailTokenPayloadDto, type Contract, type CreateAerobicEntryBody, type CreatePasswordResetRequestBody, type CreateUserBody, type CreateUserResponse, type CreateVerificationEmailBody, type CreateVideoUploadUrlBody, type CreateVideoUploadUrlResponse, type CreateWebSocketTicketBody, type CreateWebSocketTicketResponse, type CreateWorkoutSessionBody, type CreateWorkoutSessionResponse, type CreatedUserQueryDto, type CreatedUserRawQueryDto, type CreatedUserRowQueryDto, type DeleteMessageParams, type DeleteMessageResponse, type DeleteProfilePictureBody, type DeletedMessageQueryDto, type EmailVerifyPayloadDto, type EnqueueAnalyzeVideoParamsDto, type ExerciseAssignmentIdQueryDto, type ExerciseInPlanQueryDto, type ExerciseMapByMuscleRowQueryDto, type ExerciseMetadataQueryDto, type ExerciseRow, type ExerciseToWorkoutSplitRow, type ExerciseTrackingAnalysisQueryDto, type ExerciseTrackingAndStatsQueryDto, type ExerciseTrackingAndStatsRowQueryDto, type ExerciseTrackingIdQueryDto, type ExerciseTrackingMapsQueryDto, type ExerciseTrackingMapsRowQueryDto, type ExerciseTrackingPrMaxQueryDto, type ExerciseTrackingRow, type ExerciseTrackingStatsQueryDto, type ExerciseTrackingStatsRowQueryDto, type ExercisesMapByMuscleQueryDto, type FinishedWorkoutEntryQueryDto, type ForgotPasswordPayloadDto, type GetAerobicHistoryQuery, type GetAerobicHistoryResponse, type GetAllExercisesExerciseQueryDto, type GetAnalyticsResponse, type GetCurrentUserResponse, type GetVerificationStatusQuery, type GetWorkoutHistoryQuery, type GetWorkoutHistoryResponse, type GetWorkoutPlanQuery, type GetWorkoutPlanResponse, type GetWorkoutStatisticsResponse, type GoalAdherenceQueryDto, type GoalAdherenceRowQueryDto, type GoogleOAuthBody, type GoogleTokenVerificationResultDto, type LastLoginQueryDto, type ListExercisesResponse, type ListMessagesQuery, type ListMessagesResponse, type LoginRequestBody, type LoginResponse, type LogoutResponse, type MarkMessageAsReadParams, type MarkMessageAsReadResponse, type MessageAfterSendQueryDto, type MessageAsReadQueryDto, type MessageRow, type OAuthCreatedUserRowQueryDto, type OAuthLinkQueryDto, type OAuthLinkRowQueryDto, type OAuthLoginResponse, type OAuthLookupQueryDto, type OAuthLookupRawQueryDto, type OAuthLookupRowQueryDto, type ParamsOf, type QueryOf, type RefreshTokenResponse, type ReplaceProfilePictureResponse, type ReplacePushTokenBody, type ReplaceWorkoutPlanBody, type ReplaceWorkoutPlanResponse, type RequestOf, type RequestSchema, type ResetPasswordBody, type ResetPasswordQuery, type ResetPasswordResponse, type ResponseOf, type SaveWorkoutSplitInputQueryDto, type SaveWorkoutSplitPayloadQueryDto, type SquatRepetitionDto, type TokenVersionQueryDto, type TrackingByDateItemQueryDto, type TrackingBySplitNameItemQueryDto, type TrackingMapItemQueryDto, type UpdateCurrentUserBody, type UpdateCurrentUserResponse, type UpdateUnverifiedAccountEmailBody, type UserAerobicsQueryDto, type UserAerobicsRowQueryDto, type UserAfterBumpQueryDto, type UserByIdentifierQueryDto, type UserByIdentifierRawQueryDto, type UserByIdentifierRowQueryDto, type UserByUsernameRawQueryDto, type UserByUsernameRowQueryDto, type UserConflictQueryDto, type UserDataQueryDto, type UserDataResponse, type UserDataRowQueryDto, type UserExistsQueryDto, type UserInsert, type UserMessageIdentityQueryDto, type UserProfilePicQueryDto, type UserRow, type UserToHourlyReminderQueryDto, type UserWithNotificationsEnabledQueryDto, type VerifyEmailQuery, type WeeklyDataQueryDto, type WholeUserWorkoutPlanQueryDto, type WorkoutExerciseInputQueryDto, type WorkoutPlanIdQueryDto, type WorkoutPlanRow, type WorkoutRmRecordQueryDto, type WorkoutRmsQueryDto, type WorkoutRmsRowQueryDto, type WorkoutSplitIdQueryDto, type WorkoutSplitLookupQueryDto, type WorkoutSplitQueryDto, type WorkoutSplitRow, type WorkoutSummaryIdQueryDto, type WorkoutSummaryRow, accessTokenPayloadDtoSchema, addAerobicInputQueryDtoSchema, adherenceExerciseStatsQueryDtoSchema, aerobicTrackingDbSchema, aerobicsDailyRecordQueryDtoSchema, aerobicsWeeklyRecordQueryDtoSchema, allUserMessageQueryDtoSchema, analyzeVideoPayloadDtoSchema, analyzeVideoResultPayloadDtoSchema, appleOAuthContract, appleOAuthRequestSchema, appleTokenVerificationResultDtoSchema, authenticatedUserForUpdateQueryDtoSchema, changeEmailTokenPayloadDtoSchema, createAerobicEntryContract, createAerobicEntryRequestSchema, createPasswordResetRequestContract, createPasswordResetRequestSchema, createUserContract, createUserRequestSchema, createUserResponseSchema, createUserUserSchema, createVerificationEmailContract, createVerificationEmailRequestSchema, createVideoUploadUrlContract, createVideoUploadUrlRequestSchema, createVideoUploadUrlResponseSchema, createWebSocketTicketContract, createWebSocketTicketRequestSchema, createWebSocketTicketResponseSchema, createWorkoutSessionContract, createWorkoutSessionRequestSchema, createWorkoutSessionResponseSchema, createdUserQueryDtoSchema, createdUserRawQueryDtoSchema, createdUserRowQueryDtoSchema, deleteMessageContract, deleteMessageRequestSchema, deleteMessageResponseSchema, deleteProfilePictureContract, deleteProfilePictureRequestSchema, deletedMessageQueryDtoSchema, emailVerifyPayloadDtoSchema, enqueueAnalyzeVideoParamsDtoSchema, exerciseAssignmentIdQueryDtoSchema, exerciseDbSchema, exerciseInPlanQueryDtoSchema, exerciseMapByMuscleRowQueryDtoSchema, exerciseMetadataQueryDtoSchema, exerciseToWorkoutSplitDbSchema, exerciseToWorkoutSplitSetExpandedViewDbSchema, exerciseTrackingAnalysisQueryDtoSchema, exerciseTrackingAndStatsQueryDtoSchema, exerciseTrackingAndStatsRowQueryDtoSchema, exerciseTrackingDbSchema, exerciseTrackingIdQueryDtoSchema, exerciseTrackingMapsQueryDtoSchema, exerciseTrackingMapsRowQueryDtoSchema, exerciseTrackingPrMaxQueryDtoSchema, exerciseTrackingSetExpandedViewDbSchema, exerciseTrackingStatsQueryDtoSchema, exerciseTrackingStatsRowQueryDtoSchema, exercisesMapByMuscleQueryDtoSchema, finishedWorkoutEntryQueryDtoSchema, forgotPasswordPayloadDtoSchema, getAerobicHistoryContract, getAerobicHistoryRequestSchema, getAerobicHistoryResponseSchema, getAllExercisesExerciseQueryDtoSchema, getAnalyticsContract, getAnalyticsResponseSchema, getCurrentUserContract, getCurrentUserResponseSchema, getVerificationStatusContract, getVerificationStatusRequestSchema, getWorkoutHistoryContract, getWorkoutHistoryRequestSchema, getWorkoutHistoryResponseSchema, getWorkoutPlanContract, getWorkoutPlanRequestSchema, getWorkoutPlanResponseSchema, getWorkoutStatisticsContract, getWorkoutStatisticsResponseSchema, goalAdherenceQueryDtoSchema, goalAdherenceRowQueryDtoSchema, googleOAuthContract, googleOAuthRequestSchema, googleTokenVerificationResultDtoSchema, lastLoginQueryDtoSchema, listExercisesContract, listExercisesResponseSchema, listMessagesContract, listMessagesRequestSchema, listMessagesResponseSchema, loginContract, loginRequestSchema, loginResponseSchema, logoutContract, logoutResponseSchema, markMessageAsReadContract, markMessageAsReadRequestSchema, markMessageAsReadResponseSchema, messageAfterSendQueryDtoSchema, messageAsReadQueryDtoSchema, messageDbSchema, oAuthCreatedUserRowQueryDtoSchema, oAuthLinkQueryDtoSchema, oAuthLinkRowQueryDtoSchema, oAuthLoginContract, oAuthLoginResponseSchema, oAuthLookupQueryDtoSchema, oAuthLookupRawQueryDtoSchema, oAuthLookupRowQueryDtoSchema, oauthAccountDbSchema, proceedLoginResponseSchema, prsViewDbSchema, refreshTokenContract, refreshTokenResponseSchema, replaceProfilePictureContract, replaceProfilePictureResponseSchema, replacePushTokenContract, replacePushTokenRequestSchema, replaceWorkoutPlanContract, replaceWorkoutPlanRequestSchema, replaceWorkoutPlanResponseSchema, resetPasswordContract, resetPasswordRequestSchema, resetPasswordResponseSchema, saveWorkoutSplitInputQueryDtoSchema, saveWorkoutSplitPayloadQueryDtoSchema, serializedDateSchema, squatRepetitionDtoSchema, timezoneSchema, tokenVersionQueryDtoSchema, trackingByDateItemQueryDtoSchema, trackingBySplitNameItemQueryDtoSchema, trackingMapItemQueryDtoSchema, trackingSetDbSchema, updateCurrentUserContract, updateCurrentUserRequestSchema, updateCurrentUserResponseSchema, updateUnverifiedAccountEmailContract, updateUnverifiedAccountEmailRequestSchema, userAerobicsQueryDtoSchema, userAerobicsRowQueryDtoSchema, userAfterBumpQueryDtoSchema, userByIdentifierQueryDtoSchema, userByIdentifierRawQueryDtoSchema, userByIdentifierRowQueryDtoSchema, userByUsernameRawQueryDtoSchema, userByUsernameRowQueryDtoSchema, userConflictQueryDtoSchema, userDataContract, userDataQueryDtoSchema, userDataResponseSchema, userDataRowQueryDtoSchema, userDbSchema, userExistsQueryDtoSchema, userInsertDbSchema, userMessageIdentityQueryDtoSchema, userProfilePicQueryDtoSchema, userReminderSettingDbSchema, userSplitInformationDbSchema, userToHourlyReminderQueryDtoSchema, userUpdateDbSchema, userWithNotificationsEnabledQueryDtoSchema, verifyEmailContract, verifyEmailRequestSchema, weeklyDataQueryDtoSchema, wholeUserWorkoutPlanQueryDtoSchema, workoutExerciseInputQueryDtoSchema, workoutPlanDbSchema, workoutPlanIdQueryDtoSchema, workoutRmRecordQueryDtoSchema, workoutRmsQueryDtoSchema, workoutRmsRowQueryDtoSchema, workoutSetDbSchema, workoutSplitDbSchema, workoutSplitIdQueryDtoSchema, workoutSplitLookupQueryDtoSchema, workoutSplitQueryDtoSchema, workoutSummaryDbSchema, workoutSummaryIdQueryDtoSchema };

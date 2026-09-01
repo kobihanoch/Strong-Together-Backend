@@ -6,21 +6,21 @@
 
 ## Happy Paths
 
-### `GET /api/messages/getmessages` - User A
+### `GET /api/messages` - User A
 
 - [x] Returns an empty messages list.
 - [x] Validates the response schema.
 
-### `GET /api/messages/getmessages` - workout flow
+### `GET /api/messages` - workout flow
 
 - [x] Creates a system message through the workout DB flow.
 - [x] Returns the generated system message.
 
-### `PUT /api/messages/markasread/:id`
+### `PATCH /api/messages/:id/read`
 
 - [x] Updates message read state in DB.
 
-### `DELETE /api/messages/delete/:id`
+### `DELETE /api/messages/:id`
 
 - [x] Deletes the message row from DB.
 

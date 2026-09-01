@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import type {
   AnalyzeVideoResultPayloadDto,
-  GetPresignedUrlFromS3Response,
+  CreateVideoUploadUrlResponse,
   SquatRepetitionDto,
   UserRow,
 } from '@strong-together/shared';
@@ -29,7 +29,7 @@ export class VideoAnalysisService {
    * @param options - The options.
    * @returns The presigned url result.
    */
-  async getPresignedUrlData({
+  async createVideoUploadUrlData({
     exercise,
     fileType,
     jobId,
@@ -45,7 +45,7 @@ export class VideoAnalysisService {
     requestId?: string;
     sentryTrace: string;
     baggage: string;
-  }): Promise<{ payload: GetPresignedUrlFromS3Response; fileKey: string }> {
+  }): Promise<{ payload: CreateVideoUploadUrlResponse; fileKey: string }> {
     const fileKey = `${exercise}_${userId}_${Date.now()}`;
     const resolvedRequestId = requestId || '';
 

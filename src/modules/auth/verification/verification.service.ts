@@ -6,7 +6,7 @@ import { VerificationQueries } from './verification.queries';
 import { CreateUserQueries } from '../../user/create/create.queries';
 import { VerificationEmailsService } from './verification-emails/verification-emails.service';
 import { generateVerificationFailedHTML, generateVerifiedHTML } from './verification.views';
-import type { ChangeEmailAndVerifyBody, SendVerificationMailBody } from '@strong-together/shared';
+import type { UpdateUnverifiedAccountEmailBody, CreateVerificationEmailBody } from '@strong-together/shared';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
 import { DBService } from '../../../infrastructure/db/db.service';
 import { decodeVerifyToken } from './verification.utils';
@@ -27,7 +27,7 @@ export class VerificationService {
    * @param token - The token to process.
    * @returns The verify user account result.
    */
-  async verifyUserAccountData(token: string | undefined): Promise<{ statusCode: number; html: string }> {
+  async verifyEmailData(token: string | undefined): Promise<{ statusCode: number; html: string }> {
     if (!token) throw new BadRequestException('Missing token');
     const decoded = decodeVerifyToken(token);
     if (!decoded) {
@@ -57,7 +57,7 @@ export class VerificationService {
    * @param body - The validated request body.
    * @param requestId - The request correlation identifier.
    */
-  async sendVerificationMailData(body: SendVerificationMailBody, requestId?: string): Promise<void> {
+  async createVerificationEmailData(body: CreateVerificationEmailBody, requestId?: string): Promise<void> {
     const { email } = body;
     const [row] = await this.sql<{ userData: { id: string; name: string | null; username: string } | null }[]>`
       SELECT guest_api.find_user_for_email(${email}) AS "userData"
@@ -75,7 +75,7 @@ export class VerificationService {
    * @param body - The validated request body.
    * @param requestId - The request correlation identifier.
    */
-  async changeEmailAndVerifyData(body: ChangeEmailAndVerifyBody, requestId?: string): Promise<void> {
+  async updateUnverifiedAccountEmailData(body: UpdateUnverifiedAccountEmailBody, requestId?: string): Promise<void> {
     const { username, password, newEmail } = body;
 
     const [user = null] = await this.verificationQueries.queryUserByUsername(username);
@@ -105,7 +105,7 @@ export class VerificationService {
    * @param username - The username.
    * @returns The check user verify result.
    */
-  async checkUserVerifyData(username: string): Promise<{ isVerified: boolean }> {
+  async getVerificationStatusData(username: string): Promise<{ isVerified: boolean }> {
     const [user] = await this.sql<{ is_verified: boolean | null }[]>`
       SELECT guest_api.verification_state(${username}) AS is_verified
     `;

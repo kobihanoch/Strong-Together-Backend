@@ -7,7 +7,7 @@ import { expectSchema } from '../../common/tests/helpers/assert-schema';
 import { configureHourlyReminderForUser, getWorkoutSplitId } from '../../common/tests/helpers/db';
 import { clearPushQueue, getLatestPushJob, getPushQueueJobCount } from '../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../common/tests/helpers/users';
-import { addWorkoutPlan } from '../../common/tests/helpers/workouts';
+import { replaceWorkoutPlan } from '../../common/tests/helpers/workouts';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 const users = new Set<string>();
@@ -26,14 +26,14 @@ afterEach(async () => {
 });
 
 describe('PushController', () => {
-  it('GET /api/push/daily enqueues Redis-backed push notification jobs', async () => {
+  it('POST /api/push-jobs/daily enqueues Redis-backed push notification jobs', async () => {
     const user = await createAndLoginTestUser(app, 'push_daily');
     users.add(user.username);
     expectSchema(loginResponseSchema, user.loginResponse.body);
     const pushToken = 'ExponentPushToken[daily-controller-token]';
-    await request(app.getHttpServer()).put('/api/users/pushtoken').set(authHeaders(user.accessToken)).send({ token: pushToken });
+    await request(app.getHttpServer()).put('/api/users/me/push-token').set(authHeaders(user.accessToken)).send({ token: pushToken });
 
-    const response = await request(app.getHttpServer()).get('/api/push/daily').set('x-app-version', '4.5.0');
+    const response = await request(app.getHttpServer()).post('/api/push-jobs/daily').set('x-app-version', '4.5.0');
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ success: true, message: 'Daily notifications enqueued' });
@@ -41,17 +41,17 @@ describe('PushController', () => {
     expect((await getLatestPushJob())?.data).toMatchObject({ token: pushToken, body: 'Ready to go workout?' });
   });
 
-  it('GET /api/push/hourlyreminder enqueues delayed reminder jobs from DB reminder state', async () => {
+  it('POST /api/push-jobs/hourly-reminders enqueues delayed reminder jobs from DB reminder state', async () => {
     const user = await createAndLoginTestUser(app, 'push_hourly');
     users.add(user.username);
     const pushToken = 'ExponentPushToken[hourly-controller-token]';
-    await request(app.getHttpServer()).put('/api/users/pushtoken').set(authHeaders(user.accessToken)).send({ token: pushToken });
-    await addWorkoutPlan(app, user.accessToken, { A: [{ id: 20, sets: [8], orderIndex: 0 }] });
+    await request(app.getHttpServer()).put('/api/users/me/push-token').set(authHeaders(user.accessToken)).send({ token: pushToken });
+    await replaceWorkoutPlan(app, user.accessToken, { A: [{ id: 20, sets: [8], orderIndex: 0 }] });
     const splitId = await getWorkoutSplitId(user.userId, 'A');
     expect(splitId).not.toBeNull();
     await configureHourlyReminderForUser(user.userId, splitId!, new Date(Date.now() + 5 * 60 * 1000).toISOString());
 
-    const response = await request(app.getHttpServer()).get('/api/push/hourlyreminder').set('x-app-version', '4.5.0');
+    const response = await request(app.getHttpServer()).post('/api/push-jobs/hourly-reminders').set('x-app-version', '4.5.0');
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);

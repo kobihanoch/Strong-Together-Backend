@@ -6,17 +6,17 @@
 
 ## Happy Paths
 
-### `GET /api/workouts/gettracking` - User A
+### `GET /api/workout-history` - User A
 
 - [x] Returns empty tracking.
 - [x] Warms Redis.
 
-### `GET /api/workouts/gettracking` - User B
+### `GET /api/workout-history` - User B
 
 - [x] Handles an existing plan with no tracking.
 - [x] Returns a schema-valid empty tracking payload.
 
-### `POST /api/workouts/finishworkout` - User C
+### `POST /api/workout-sessions` - User C
 
 - [x] Creates tracking data.
 - [x] Persists DB rows.
@@ -25,7 +25,7 @@
 
 ## Bad Paths
 
-### `POST /api/workouts/finishworkout`
+### `POST /api/workout-sessions`
 
 - [x] Rejects empty workouts with `400`.
 - [x] Avoids DB inserts on failure.

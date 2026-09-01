@@ -1,5 +1,5 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import type { ResetPasswordResponse, SendChangePassEmailBody } from '@strong-together/shared';
+import type { ResetPasswordResponse, CreatePasswordResetRequestBody } from '@strong-together/shared';
 import bcrypt from 'bcryptjs';
 import { PasswordQueries } from './password.queries';
 import { SessionQueries } from '../session/session.queries';
@@ -26,7 +26,7 @@ export class PasswordService {
    * @param body - The validated request body.
    * @param requestId - The request correlation identifier.
    */
-  async sendChangePassEmailData(body: SendChangePassEmailBody, requestId?: string): Promise<void> {
+  async createPasswordResetRequestData(body: CreatePasswordResetRequestBody, requestId?: string): Promise<void> {
     const { identifier } = body;
     if (!identifier) throw new BadRequestException('Please fill username or email');
     const [row] = await this.sql<{

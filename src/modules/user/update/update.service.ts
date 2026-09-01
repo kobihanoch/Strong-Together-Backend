@@ -1,10 +1,10 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type {
   ChangeEmailTokenPayloadDto,
-  DeleteUserProfilePicBody,
-  SetProfilePicAndUpdateDBResponse,
-  UpdateAuthenticatedUserResponse,
-  UpdateUserBody,
+  DeleteProfilePictureBody,
+  ReplaceProfilePictureResponse,
+  UpdateCurrentUserResponse,
+  UpdateCurrentUserBody,
   UserDataResponse,
 } from '@strong-together/shared';
 import mime from 'mime';
@@ -51,11 +51,11 @@ export class UpdateUserService {
    * @param requestId - The request correlation identifier.
    * @returns The update authenticated user result.
    */
-  async updateAuthenticatedUserData(
+  async updateCurrentUserData(
     userId: string,
-    body: UpdateUserBody,
+    body: UpdateCurrentUserBody,
     requestId?: string,
-  ): Promise<UpdateAuthenticatedUserResponse> {
+  ): Promise<UpdateCurrentUserResponse> {
     const { username, fullName, email } = body;
     const { payload: currentUser } = await this.getUserData(userId);
 
@@ -158,11 +158,11 @@ export class UpdateUserService {
    * @param requestLogger - The request-scoped logger.
    * @returns The set profile pic and update db result.
    */
-  async setProfilePicAndUpdateDBData(
+  async replaceProfilePictureData(
     userId: string,
     file: Express.Multer.File | undefined,
     requestLogger: AppLogger,
-  ): Promise<SetProfilePicAndUpdateDBResponse> {
+  ): Promise<ReplaceProfilePictureResponse> {
     if (!file) throw new BadRequestException('No file provided');
 
     const ext = path.extname(file.originalname) || `.${mime.getExtension(file.mimetype) || 'jpg'}`;
@@ -202,7 +202,7 @@ export class UpdateUserService {
    * @param userId - The user identifier.
    * @param body - The validated request body.
    */
-  async deleteUserProfilePicData(userId: string, body: DeleteUserProfilePicBody): Promise<void> {
+  async deleteProfilePictureData(userId: string, body: DeleteProfilePictureBody): Promise<void> {
     await this.supabaseStorageService.deleteFromSupabase(body.profilePicPath);
     await this.updateUserQueries.queryUpdateUserProfilePicURL(userId, null);
   }

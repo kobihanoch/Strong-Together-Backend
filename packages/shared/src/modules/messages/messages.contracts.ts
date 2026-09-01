@@ -7,16 +7,16 @@ import {
   messageAsReadQueryDtoSchema,
 } from './messages.dtos';
 
-// Get all user messages
+// List messages
 
-export const getAllMessagesRequestSchema = z.object({ query: z.object({ tz: z.string() }) });
-export const getAllUserMessagesResponseSchema = z.object({ messages: z.array(allUserMessageQueryDtoSchema) });
-export const getAllUserMessagesContract = {
-  request: getAllMessagesRequestSchema,
-  response: getAllUserMessagesResponseSchema,
+export const listMessagesRequestSchema = z.object({ query: z.object({ tz: z.string() }) });
+export const listMessagesResponseSchema = z.object({ messages: z.array(allUserMessageQueryDtoSchema) });
+export const listMessagesContract = {
+  request: listMessagesRequestSchema,
+  response: listMessagesResponseSchema,
 } satisfies Contract;
-export type GetAllUserMessagesQuery = QueryOf<typeof getAllUserMessagesContract>;
-export type GetAllUserMessagesResponse = ResponseOf<typeof getAllUserMessagesContract>;
+export type ListMessagesQuery = QueryOf<typeof listMessagesContract>;
+export type ListMessagesResponse = ResponseOf<typeof listMessagesContract>;
 
 // Mark message as read
 

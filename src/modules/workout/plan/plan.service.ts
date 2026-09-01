@@ -2,9 +2,9 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
 import { WorkoutPlanQueries } from './plan.queries';
 import type {
-  AddWorkoutBody,
-  AddWorkoutResponse,
-  GetWholeUserWorkoutPlanResponse,
+  ReplaceWorkoutPlanBody,
+  ReplaceWorkoutPlanResponse,
+  GetWorkoutPlanResponse,
 } from '@strong-together/shared';
 
 import { buildPlanKeyStable, TTL_PLAN } from './plan.cache';
@@ -29,11 +29,11 @@ export class WorkoutPlanService {
     userId: string,
     fromCache: boolean = true,
     tz: string = 'Asia/Jerusalem',
-  ): Promise<{ payload: GetWholeUserWorkoutPlanResponse; cacheHit: boolean }> {
+  ): Promise<{ payload: GetWorkoutPlanResponse; cacheHit: boolean }> {
     const planKey = buildPlanKeyStable(userId, tz);
     if (fromCache) {
       await this.cacheService.cacheDeleteOtherTimezones(planKey);
-      const cached = await this.cacheService.cacheGetJSON<GetWholeUserWorkoutPlanResponse>(planKey);
+      const cached = await this.cacheService.cacheGetJSON<GetWorkoutPlanResponse>(planKey);
       if (cached) {
         return { payload: cached, cacheHit: true };
       }
@@ -58,7 +58,7 @@ export class WorkoutPlanService {
    * @param body - The validated request body.
    * @returns The add workout result.
    */
-  async addWorkoutData(userId: string, body: AddWorkoutBody): Promise<AddWorkoutResponse> {
+  async replaceWorkoutPlanData(userId: string, body: ReplaceWorkoutPlanBody): Promise<ReplaceWorkoutPlanResponse> {
     await this.workoutPlanQueries.queryAddWorkout(userId, body.workoutData);
     return this.refreshWorkoutPlan(userId, body.tz);
   }
@@ -72,7 +72,7 @@ export class WorkoutPlanService {
   private async refreshWorkoutPlan(
     userId: string,
     tz: string,
-  ): Promise<AddWorkoutResponse> {
+  ): Promise<ReplaceWorkoutPlanResponse> {
     const planKey = buildPlanKeyStable(userId, tz);
     const analyticsKey = buildAnalyticsKeyStable(userId);
     const trackingMapsKey = buildTrackingMapsKeyStable(userId, 45, tz);

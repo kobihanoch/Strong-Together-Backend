@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ExercisesQueries } from './exercises.queries';
-import type { GetAllExercisesResponse } from '@strong-together/shared';
+import type { ListExercisesResponse } from '@strong-together/shared';
 
 @Injectable()
 export class ExercisesService {
@@ -10,7 +10,7 @@ export class ExercisesService {
    * Retrieves all exercises.
    * @returns The all exercises result.
    */
-  async getAllExercisesData(): Promise<GetAllExercisesResponse> {
+  async listExercisesData(): Promise<ListExercisesResponse> {
     return this.exercisesQueries.queryGetExerciseMapByMuscle();
   }
 }

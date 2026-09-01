@@ -90,7 +90,7 @@ describe('SessionController', () => {
       expect(loginResponse.status).toBe(201);
 
       const messagesResponse = await request(app.getHttpServer())
-        .get('/api/messages/getmessages')
+        .get('/api/messages')
         .query({ tz: 'Asia/Jerusalem' })
         .set(authHeaders(loginResponse.body.accessToken));
 
@@ -201,7 +201,7 @@ describe('SessionController', () => {
       expect(afterLogout?.tokenVersion).toBe((beforeLogout?.tokenVersion ?? 0) + 1);
 
       const protectedResponse = await request(app.getHttpServer())
-        .get('/api/users/get')
+        .get('/api/users/me')
         .set(authHeaders(loginResponse.body.accessToken));
       expect(protectedResponse.status).toBe(401);
       expect(protectedResponse.body.message).toBe('New login required');

@@ -6,19 +6,19 @@
 
 ## Happy Paths
 
-### `GET /api/workouts/getworkout` - User A
+### `GET /api/workout-plan` - User A
 
 - [x] Returns an empty workout plan.
 - [x] Warms Redis.
 
-### `POST /api/workouts/add` - User B
+### `PUT /api/workout-plan` - User B
 
 - [x] Creates a workout plan.
 - [x] Validates the response schema.
 - [x] Confirms DB rows exist.
 - [x] Updates Redis.
 
-### Repeated `POST /api/workouts/add` - User B
+### Repeated `PUT /api/workout-plan` - User B
 
 - [x] Renames and reorders splits carrying IDs.
 - [x] Creates a new split when its ID is omitted.
@@ -27,7 +27,7 @@
 
 ## Bad Paths
 
-### `POST /api/workouts/add`
+### `PUT /api/workout-plan`
 
 - [x] Rejects invalid empty splits with `400`.
 

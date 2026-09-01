@@ -1,10 +1,10 @@
 import type { Contract, ResponseOf } from '../../common';
 import { exercisesMapByMuscleQueryDtoSchema } from './exercises.dtos';
 
-// Get all exercises
+// List exercises
 
-export const getAllExercisesResponseSchema = exercisesMapByMuscleQueryDtoSchema;
+export const listExercisesResponseSchema = exercisesMapByMuscleQueryDtoSchema;
 
-export const getAllExercisesContract = { response: getAllExercisesResponseSchema } satisfies Contract;
+export const listExercisesContract = { response: listExercisesResponseSchema } satisfies Contract;
 
-export type GetAllExercisesResponse = ResponseOf<typeof getAllExercisesContract>;
+export type ListExercisesResponse = ResponseOf<typeof listExercisesContract>;

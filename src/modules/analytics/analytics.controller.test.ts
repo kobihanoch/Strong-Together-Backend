@@ -7,7 +7,7 @@ import { expectSchema } from '../../common/tests/helpers/assert-schema';
 import { getExerciseToWorkoutSplitId, getWorkoutSummaryCount } from '../../common/tests/helpers/db';
 import { deleteRedisKeysByPattern, getRedisKey } from '../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../common/tests/helpers/users';
-import { addWorkoutPlan, finishWorkout } from '../../common/tests/helpers/workouts';
+import { replaceWorkoutPlan, finishWorkout } from '../../common/tests/helpers/workouts';
 import { buildAnalyticsKeyStable } from './analytics.cache';
 
 let app: Awaited<ReturnType<typeof createApp>>;
@@ -34,9 +34,9 @@ async function analyticsUser(prefix = 'analytics') {
 }
 
 describe('AnalyticsController', () => {
-  it('GET /api/analytics/get returns empty User A analytics and warms Redis', async () => {
+  it('GET /api/analytics returns empty User A analytics and warms Redis', async () => {
     const user = await analyticsUser('analytics_empty');
-    const response = await request(app.getHttpServer()).get('/api/analytics/get').set(authHeaders(user.accessToken));
+    const response = await request(app.getHttpServer()).get('/api/analytics').set(authHeaders(user.accessToken));
 
     expect(response.status).toBe(200);
     expect(response.headers['x-cache']).toBe('MISS');
@@ -45,9 +45,9 @@ describe('AnalyticsController', () => {
     expect(await getRedisKey(buildAnalyticsKeyStable(user.userId))).toBeTypeOf('string');
   });
 
-  it('GET /api/analytics/get returns User C aggregates from DB-backed workout flow and Redis HIT', async () => {
+  it('GET /api/analytics returns User C aggregates from DB-backed workout flow and Redis HIT', async () => {
     const user = await analyticsUser('analytics_full');
-    await addWorkoutPlan(app, user.accessToken, { A: [{ id: 20, sets: [8, 8, 10], orderIndex: 0 }] });
+    await replaceWorkoutPlan(app, user.accessToken, { A: [{ id: 20, sets: [8, 8, 10], orderIndex: 0 }] });
     const etsId = await getExerciseToWorkoutSplitId(user.userId, 'A', 20);
     expect(etsId).not.toBeNull();
     await finishWorkout(app, user.accessToken, [
@@ -62,8 +62,8 @@ describe('AnalyticsController', () => {
       },
     ]);
 
-    const first = await request(app.getHttpServer()).get('/api/analytics/get').set(authHeaders(user.accessToken));
-    const second = await request(app.getHttpServer()).get('/api/analytics/get').set(authHeaders(user.accessToken));
+    const first = await request(app.getHttpServer()).get('/api/analytics').set(authHeaders(user.accessToken));
+    const second = await request(app.getHttpServer()).get('/api/analytics').set(authHeaders(user.accessToken));
 
     expect(first.status).toBe(200);
     expect(second.status).toBe(200);
@@ -75,8 +75,8 @@ describe('AnalyticsController', () => {
     expect(second.body.goals).toHaveProperty('A');
   });
 
-  it('GET /api/analytics/get rejects unauthenticated requests with 401', async () => {
-    const response = await request(app.getHttpServer()).get('/api/analytics/get').set('x-app-version', '4.5.0');
+  it('GET /api/analytics rejects unauthenticated requests with 401', async () => {
+    const response = await request(app.getHttpServer()).get('/api/analytics').set('x-app-version', '4.5.0');
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('No access token provided');

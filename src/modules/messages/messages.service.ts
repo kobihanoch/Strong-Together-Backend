@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type {
   DeleteMessageResponse,
-  GetAllUserMessagesResponse,
+  ListMessagesResponse,
   MarkMessageAsReadResponse,
   MessageAfterSendQueryDto,
 } from '@strong-together/shared';
@@ -21,10 +21,10 @@ export class MessagesService {
    * @param tz - The IANA time-zone name.
    * @returns The all messages result.
    */
-  async getAllMessagesData(
+  async listMessagesData(
     userId: string,
     tz: string = 'Asia/Jerusalem',
-  ): Promise<{ payload: GetAllUserMessagesResponse }> {
+  ): Promise<{ payload: ListMessagesResponse }> {
     const rows = await this.messagesQueries.queryAllUserMessages(userId, tz);
 
     return {

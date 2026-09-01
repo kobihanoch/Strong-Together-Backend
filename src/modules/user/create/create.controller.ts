@@ -12,7 +12,7 @@ import { CreateUserService } from './create.service';
  * User-registration routes.
  *
  * Preserves the existing route path and behavior from the Express version:
- * - POST /api/users/create
+ * - POST /api/users
  *
  * Access: Public
  */
@@ -27,7 +27,7 @@ export class CreateUserController {
    * Creates the user, initializes default reminder settings, and sends the first
    * verification email.
    *
-   * @remarks Route: POST /api/users/create
+   * @remarks Route: POST /api/users
    * Access: Public
    *
    * @param data - The validated request data.
@@ -35,7 +35,7 @@ export class CreateUserController {
    * @param res - The HTTP response.
    * @returns The response payload.
    */
-  @Post('create')
+  @Post()
   async createUser(
     @RequestData(new ValidateRequestPipe(createUserRequestSchema))
     data: { body: CreateUserBody },

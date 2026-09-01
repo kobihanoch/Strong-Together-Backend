@@ -1,6 +1,6 @@
 import { Controller, Put, UseGuards, UseInterceptors } from '@nestjs/common';
-import type { SaveUserPushTokenBody } from '@strong-together/shared';
-import { saveUserPushTokenRequestSchema } from '@strong-together/shared';
+import type { ReplacePushTokenBody } from '@strong-together/shared';
+import { replacePushTokenRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
@@ -15,7 +15,7 @@ import { PushTokensService } from './push-tokens.service';
  * User push-token routes.
  *
  * Preserves the existing route path and behavior from the Express version:
- * - PUT /api/users/pushtoken
+ * - PUT /api/users/me/push-token
  *
  * Access: User
  */
@@ -31,18 +31,18 @@ export class PushTokensController {
    *
    * Persists the submitted device push token for future notification delivery.
    *
-   * @remarks Route: PUT /api/users/pushtoken
+   * @remarks Route: PUT /api/users/me/push-token
    * Access: User
    *
    * @param data - The validated request data.
    * @param user - The authenticated user.
    */
-  @Put('pushtoken')
-  async saveUserPushToken(
-    @RequestData(new ValidateRequestPipe(saveUserPushTokenRequestSchema))
-    data: { body: SaveUserPushTokenBody },
+  @Put('me/push-token')
+  async replacePushToken(
+    @RequestData(new ValidateRequestPipe(replacePushTokenRequestSchema))
+    data: { body: ReplacePushTokenBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.pushTokensService.saveUserPushTokenData(user.id, data.body);
+    await this.pushTokensService.replacePushTokenData(user.id, data.body);
   }
 }

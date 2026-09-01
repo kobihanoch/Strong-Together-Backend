@@ -6,13 +6,13 @@
 
 ## Happy Paths
 
-### `GET /api/analytics/get` - User A
+### `GET /api/analytics` - User A
 
 - [x] Returns empty analytics.
 - [x] Validates the response schema.
 - [x] Warms Redis.
 
-### `GET /api/analytics/get` - User C
+### `GET /api/analytics` - User C
 
 - [x] Builds analytics from DB-backed workout data.
 - [x] Returns aggregate values.
@@ -20,7 +20,7 @@
 
 ## Bad Paths
 
-### `GET /api/analytics/get`
+### `GET /api/analytics`
 
 - [x] Rejects missing auth with `401`.
 

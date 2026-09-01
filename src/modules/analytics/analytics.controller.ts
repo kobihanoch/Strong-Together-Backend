@@ -14,7 +14,7 @@ import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
  * Analytics routes for authenticated users.
  *
  * Preserves the existing route path and behavior from the Express version:
- * - GET /api/analytics/get
+ * - GET /api/analytics
  *
  * Access: User
  */
@@ -33,14 +33,14 @@ export class AnalyticsController {
    * and goal-adherence metrics. The handler also sets the `X-Cache` response
    * header to indicate whether the payload was served from cache.
    *
-   * @remarks Route: GET /api/analytics/get
+   * @remarks Route: GET /api/analytics
    * Access: User
    *
    * @param user - The authenticated user.
    * @param res - The HTTP response.
    * @returns The response payload.
    */
-  @Get('get')
+  @Get()
   async getAnalytics(@CurrentUser() user: AuthenticatedUser, @Res({ passthrough: true }) res: Response): Promise<GetAnalyticsResponse> {
     const { payload, cacheHit, analyticsKey } = await this.analyticsService.getAnalyticsData(user.id);
 

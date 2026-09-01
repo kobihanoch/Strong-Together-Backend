@@ -6,12 +6,12 @@ Each test creates or authenticates the user it needs, then verifies that same us
 
 ## Happy Paths
 
-### `GET /api/users/get`
+### `GET /api/users/me`
 
 - [x] Returns the authenticated user from DB.
 - [x] Validates the response schema.
 
-### `PUT /api/users/updateself`
+### `PATCH /api/users/me`
 
 - [x] Updates profile fields in DB.
 - [x] Preserves response schema.
@@ -19,11 +19,11 @@ Each test creates or authenticates the user it needs, then verifies that same us
 ### Email change flow
 
 - [x] Enqueues email-change job.
-- [x] Confirms email change through `GET /api/users/changeemail`.
+- [x] Confirms email change through `GET /api/users/email-change`.
 - [x] Stores Redis JTI to prevent token reuse.
 - [x] Updates DB email.
 
-### `DELETE /api/users/deleteself`
+### `DELETE /api/users/me`
 
 - [x] Removes the user row from DB.
 

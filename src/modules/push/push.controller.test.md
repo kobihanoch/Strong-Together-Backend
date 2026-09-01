@@ -2,11 +2,11 @@
 
 ## Happy Paths
 
-### `GET /api/push/daily`
+### `POST /api/push-jobs/daily`
 
 - [x] Enqueues Redis-backed push notification jobs.
 
-### `GET /api/push/hourlyreminder`
+### `POST /api/push-jobs/hourly-reminders`
 
 - [x] Reads reminder state from DB.
 - [x] Enqueues delayed reminder jobs.

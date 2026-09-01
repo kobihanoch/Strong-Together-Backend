@@ -1,10 +1,10 @@
 import request from 'supertest';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
-  addWorkoutResponseSchema,
-  finishUserWorkoutResponseSchema,
-  getExerciseTrackingResponseSchema,
-  getExerciseTrackingStatsResponseSchema,
+  replaceWorkoutPlanResponseSchema,
+  createWorkoutSessionResponseSchema,
+  getWorkoutHistoryResponseSchema,
+  getWorkoutStatisticsResponseSchema,
   loginResponseSchema,
 } from '@strong-together/shared';
 import { createApp } from '../../../app';
@@ -49,7 +49,7 @@ async function trackingUser(prefix = 'tracking') {
 
 async function addPlan(user: Awaited<ReturnType<typeof trackingUser>>) {
   const response = await request(app.getHttpServer())
-    .post('/api/workouts/add')
+    .put('/api/workout-plan')
     .set(authHeaders(user.accessToken))
     .send({
       tz: 'Asia/Jerusalem',
@@ -59,7 +59,7 @@ async function addPlan(user: Awaited<ReturnType<typeof trackingUser>>) {
       ],
     });
   expect(response.status).toBe(201);
-  expectSchema(addWorkoutResponseSchema, response.body);
+  expectSchema(replaceWorkoutPlanResponseSchema, response.body);
   const etsId = await getExerciseToWorkoutSplitId(user.userId, 'A', 20);
   expect(etsId).not.toBeNull();
   return etsId!;
@@ -75,39 +75,39 @@ function recentWorkoutWindow() {
 }
 
 describe('WorkoutTrackingController', () => {
-  it('GET /api/workouts/gettracking returns User A empty tracking and warms Redis', async () => {
+  it('GET /api/workout-history returns User A empty tracking and warms Redis', async () => {
     const user = await trackingUser('tracking_empty');
     const response = await request(app.getHttpServer())
-      .get('/api/workouts/gettracking')
+      .get('/api/workout-history')
       .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(user.accessToken));
 
     expect(response.status).toBe(200);
     expect(response.headers['x-cache']).toBe('MISS');
-    expectSchema(getExerciseTrackingResponseSchema, response.body);
+    expectSchema(getWorkoutHistoryResponseSchema, response.body);
     expect(response.body.byDate).toEqual({});
     expect(await getRedisKey(buildTrackingMapsKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
-  it('GET /api/workouts/gettracking returns User B schema-valid empty tracking when plan exists but no tracking', async () => {
+  it('GET /api/workout-history returns User B schema-valid empty tracking when plan exists but no tracking', async () => {
     const user = await trackingUser('tracking_plan');
     await addPlan(user);
 
     const response = await request(app.getHttpServer())
-      .get('/api/workouts/gettrackingstats')
+      .get('/api/workout-statistics')
       .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(user.accessToken));
 
     expect(response.status).toBe(200);
-    expectSchema(getExerciseTrackingStatsResponseSchema, response.body);
+    expectSchema(getWorkoutStatisticsResponseSchema, response.body);
     expect(response.body.workoutCount).toBe(0);
     expect(await getWorkoutSummaryCount(user.userId)).toBe(0);
   });
 
-  it('GET /api/workouts/gettrackingstats advances from the latest workout summary outside the 45-day window', async () => {
+  it('GET /api/workout-statistics advances from the latest workout summary outside the 45-day window', async () => {
     const user = await trackingUser('tracking_next_split');
     const planResponse = await request(app.getHttpServer())
-      .post('/api/workouts/add')
+      .put('/api/workout-plan')
       .set(authHeaders(user.accessToken))
       .send({
         tz: 'Asia/Jerusalem',
@@ -120,7 +120,7 @@ describe('WorkoutTrackingController', () => {
     expect(planResponse.status).toBe(201);
 
     const emptyStatsResponse = await request(app.getHttpServer())
-      .get('/api/workouts/gettrackingstats')
+      .get('/api/workout-statistics')
       .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(user.accessToken));
     expect(emptyStatsResponse.status).toBe(200);
@@ -131,7 +131,7 @@ describe('WorkoutTrackingController', () => {
     const oldWorkoutStart = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     const oldWorkoutEnd = new Date(oldWorkoutStart.getTime() + 45 * 60 * 1000);
     const finishResponse = await request(app.getHttpServer())
-      .post('/api/workouts/finishworkout')
+      .post('/api/workout-sessions')
       .set(authHeaders(user.accessToken))
       .send({
         tz: 'Asia/Jerusalem',
@@ -153,13 +153,13 @@ describe('WorkoutTrackingController', () => {
     expect(finishResponse.body.trackingStats.nextWorkoutSplit).toMatchObject({ name: 'B', orderIndex: 1 });
   });
 
-  it('POST /api/workouts/finishworkout creates User C tracking, DB rows, system message, and Redis cache', async () => {
+  it('POST /api/workout-sessions creates User C tracking, DB rows, system message, and Redis cache', async () => {
     const user = await trackingUser('tracking_finish');
     const etsId = await addPlan(user);
     const workoutWindow = recentWorkoutWindow();
 
     const response = await request(app.getHttpServer())
-      .post('/api/workouts/finishworkout')
+      .post('/api/workout-sessions')
       .set(authHeaders(user.accessToken))
       .send({
         tz: 'Asia/Jerusalem',
@@ -179,7 +179,7 @@ describe('WorkoutTrackingController', () => {
       });
 
     expect(response.status).toBe(201);
-    expectSchema(finishUserWorkoutResponseSchema, response.body);
+    expectSchema(createWorkoutSessionResponseSchema, response.body);
     expect(response.body.trackingStats.workoutCount).toBe(1);
     expect(response.body.trackingMaps.byExerciseToSplitId).toHaveProperty(String(etsId));
     expect(await getWorkoutSummaryCount(user.userId)).toBe(1);
@@ -187,10 +187,10 @@ describe('WorkoutTrackingController', () => {
     expect(await getRedisKey(buildTrackingMapsKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
-  it('POST /api/workouts/finishworkout rejects empty workouts with 400 and no DB inserts', async () => {
+  it('POST /api/workout-sessions rejects empty workouts with 400 and no DB inserts', async () => {
     const user = await trackingUser('tracking_bad');
     const response = await request(app.getHttpServer())
-      .post('/api/workouts/finishworkout')
+      .post('/api/workout-sessions')
       .set(authHeaders(user.accessToken))
       .send({
         tz: 'Asia/Jerusalem',
@@ -206,11 +206,11 @@ describe('WorkoutTrackingController', () => {
 
   it('GET and POST /api/workouts tracking endpoints reject unauthenticated requests with 401', async () => {
     const getResponse = await request(app.getHttpServer())
-      .get('/api/workouts/gettracking')
+      .get('/api/workout-history')
       .query({ tz: 'Asia/Jerusalem' })
       .set('x-app-version', '4.5.0');
     const postResponse = await request(app.getHttpServer())
-      .post('/api/workouts/finishworkout')
+      .post('/api/workout-sessions')
       .set('x-app-version', '4.5.0')
       .send({ tz: 'Asia/Jerusalem', workout: [] });
 

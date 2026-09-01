@@ -42,7 +42,7 @@ export class UpdateEmailsService {
       { expiresIn: '10m' },
     );
 
-    const confirmUrl = `${appConfig.emailApiBaseUrl}/api/users/changeemail?token=${encodeURIComponent(token)}`;
+    const confirmUrl = `${appConfig.emailApiBaseUrl}/api/users/email-change?token=${encodeURIComponent(token)}`;
 
     const html = generateConfirmEmailChange({
       fullName,

@@ -1,8 +1,8 @@
 import { Controller, Get, Post, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
-import type { AddUserAerobicsBody, GetUserAerobicsQuery, UserAerobicsResponse } from '@strong-together/shared';
+import type { CreateAerobicEntryBody, GetAerobicHistoryQuery, GetAerobicHistoryResponse } from '@strong-together/shared';
 import type { AuthenticatedUser } from '../../common/types/express';
-import { addAerobicsRequestSchema, getAerobicsRequestSchema } from '@strong-together/shared';
+import { createAerobicEntryRequestSchema, getAerobicHistoryRequestSchema } from '@strong-together/shared';
 import { AerobicsService } from './aerobics.service';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
@@ -16,8 +16,8 @@ import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
  * Aerobics routes for authenticated users.
  *
  * Preserves the existing route paths and behavior from the Express version:
- * - GET /api/aerobics/get
- * - POST /api/aerobics/add
+ * - GET /api/aerobics
+ * - POST /api/aerobics
  *
  * Access: User
  */
@@ -35,7 +35,7 @@ export class AerobicsController {
    * sets the `X-Cache` response header to indicate whether the payload was served
    * from cache.
    *
-   * @remarks Route: GET /api/aerobics/get
+   * @remarks Route: GET /api/aerobics
    * Access: User
    *
    * @param data - The validated request data.
@@ -43,12 +43,12 @@ export class AerobicsController {
    * @param res - The HTTP response.
    * @returns The response payload.
    */
-  @Get('get')
-  async getUserAerobics(
-    @RequestData(new ValidateRequestPipe(getAerobicsRequestSchema)) data: { query: GetUserAerobicsQuery },
+  @Get()
+  async getAerobicHistory(
+    @RequestData(new ValidateRequestPipe(getAerobicHistoryRequestSchema)) data: { query: GetAerobicHistoryQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<UserAerobicsResponse> {
+  ): Promise<GetAerobicHistoryResponse> {
     const tz = data.query.tz;
     const { payload, cacheHit } = await this.aerobicsService.getAerobicsData(user.id, 45, true, tz);
 
@@ -62,18 +62,18 @@ export class AerobicsController {
    * Persists the submitted aerobics entry, refreshes the user's aerobics cache,
    * and returns the updated aerobics snapshot for the requested timezone.
    *
-   * @remarks Route: POST /api/aerobics/add
+   * @remarks Route: POST /api/aerobics
    * Access: User
    *
    * @param data - The validated request data.
    * @param user - The authenticated user.
    * @returns The response payload.
    */
-  @Post('add')
-  async addUserAerobics(
-    @RequestData(new ValidateRequestPipe(addAerobicsRequestSchema)) data: { body: AddUserAerobicsBody },
+  @Post()
+  async createAerobicEntry(
+    @RequestData(new ValidateRequestPipe(createAerobicEntryRequestSchema)) data: { body: CreateAerobicEntryBody },
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<UserAerobicsResponse> {
-    return this.aerobicsService.addUserAerobicsRecord(user.id, data.body);
+  ): Promise<GetAerobicHistoryResponse> {
+    return this.aerobicsService.createAerobicEntryData(user.id, data.body);
   }
 }

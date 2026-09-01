@@ -1,7 +1,7 @@
 import { Controller, Post, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
-import type { GenerateTicketBody, GenerateTicketResponse } from '@strong-together/shared';
-import { generateTicketRequestSchema } from '@strong-together/shared';
+import type { CreateWebSocketTicketBody, CreateWebSocketTicketResponse } from '@strong-together/shared';
+import { createWebSocketTicketRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestData } from '../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
@@ -15,11 +15,11 @@ import { WebSocketsService } from './web-sockets.service';
  * WebSocket helper routes for authenticated users.
  *
  * Preserves the existing route path and behavior from the Express version:
- * - POST /api/ws/generateticket
+ * - POST /api/websocket-tickets
  *
  * Access: User
  */
-@Controller('api/ws')
+@Controller('api/websocket-tickets')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class WebSocketsController {
@@ -31,7 +31,7 @@ export class WebSocketsController {
    * Returns a short-lived signed token that the client can use to establish a
    * Socket.IO session.
    *
-   * @remarks Route: POST /api/ws/generateticket
+   * @remarks Route: POST /api/websocket-tickets
    * Access: User
    *
    * @param data - The validated request data.
@@ -39,14 +39,14 @@ export class WebSocketsController {
    * @param res - The HTTP response.
    * @returns The response payload.
    */
-  @Post('generateticket')
-  async generateTicket(
-    @RequestData(new ValidateRequestPipe(generateTicketRequestSchema))
-    data: { body: GenerateTicketBody },
+  @Post()
+  async createWebSocketTicket(
+    @RequestData(new ValidateRequestPipe(createWebSocketTicketRequestSchema))
+    data: { body: CreateWebSocketTicketBody },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<GenerateTicketResponse> {
-    const payload = await this.webSocketsService.generateTicketData(user.id, data.body.username);
+  ): Promise<CreateWebSocketTicketResponse> {
+    const payload = await this.webSocketsService.createWebSocketTicketData(user.id, data.body.username);
     res.status(201);
     return payload;
   }

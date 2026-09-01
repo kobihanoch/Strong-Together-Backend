@@ -21,12 +21,12 @@ afterEach(async () => {
 });
 
 describe('CreateUserController', () => {
-  it('POST /api/users/create creates user, validates schema, DB row, password hash, and reminder settings', async () => {
+  it('POST /api/users creates user, validates schema, DB row, password hash, and reminder settings', async () => {
     const username = `create_${crypto.randomUUID().slice(0, 8)}`;
     const email = `${username}@example.com`;
     users.add(username);
 
-    const response = await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
+    const response = await request(app.getHttpServer()).post('/api/users').set('x-app-version', '4.5.0').send({
       username,
       fullName: '',
       email,
@@ -44,10 +44,10 @@ describe('CreateUserController', () => {
     expect(await hasReminderSettings(created!.id)).toBe(true);
   });
 
-  it('POST /api/users/create rejects invalid or duplicate users with 400', async () => {
+  it('POST /api/users rejects invalid or duplicate users with 400', async () => {
     const username = `dupe${crypto.randomUUID().slice(0, 8)}`;
     users.add(username);
-    await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
+    await request(app.getHttpServer()).post('/api/users').set('x-app-version', '4.5.0').send({
       username,
       fullName: 'Duplicate Base',
       email: `${username}@example.com`,
@@ -55,14 +55,14 @@ describe('CreateUserController', () => {
       gender: 'Male',
     });
 
-    const invalid = await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
+    const invalid = await request(app.getHttpServer()).post('/api/users').set('x-app-version', '4.5.0').send({
       username: 'ab',
       fullName: 'Bad',
       email: 'not-an-email',
       password: 'short',
       gender: 'Male',
     });
-    const duplicate = await request(app.getHttpServer()).post('/api/users/create').set('x-app-version', '4.5.0').send({
+    const duplicate = await request(app.getHttpServer()).post('/api/users').set('x-app-version', '4.5.0').send({
       username,
       fullName: 'Duplicate',
       email: 'duplicate_create@example.com',

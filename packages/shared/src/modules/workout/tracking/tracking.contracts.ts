@@ -9,23 +9,23 @@ import {
 
 // Get exercise tracking
 
-export const getExerciseTrackingRequestSchema = z.object({ query: z.object({ tz: z.string().optional() }) });
-export const getExerciseTrackingResponseSchema = exerciseTrackingMapsQueryDtoSchema;
+export const getWorkoutHistoryRequestSchema = z.object({ query: z.object({ tz: z.string().optional() }) });
+export const getWorkoutHistoryResponseSchema = exerciseTrackingMapsQueryDtoSchema;
 
-export const getExerciseTrackingContract = {
-  request: getExerciseTrackingRequestSchema,
-  response: getExerciseTrackingResponseSchema,
+export const getWorkoutHistoryContract = {
+  request: getWorkoutHistoryRequestSchema,
+  response: getWorkoutHistoryResponseSchema,
 } satisfies Contract;
 
-export const getExerciseTrackingStatsResponseSchema = exerciseTrackingStatsQueryDtoSchema;
-export const getExerciseTrackingStatsContract = {
-  request: getExerciseTrackingRequestSchema,
-  response: getExerciseTrackingStatsResponseSchema,
+export const getWorkoutStatisticsResponseSchema = exerciseTrackingStatsQueryDtoSchema;
+export const getWorkoutStatisticsContract = {
+  request: getWorkoutHistoryRequestSchema,
+  response: getWorkoutStatisticsResponseSchema,
 } satisfies Contract;
 
 // Finish user workout
 
-export const finishWorkoutRequestSchema = z.object({
+export const createWorkoutSessionRequestSchema = z.object({
   body: z.object({
     workout: z.array(finishedWorkoutEntryQueryDtoSchema),
     tz: z.string().optional(),
@@ -33,14 +33,14 @@ export const finishWorkoutRequestSchema = z.object({
     workoutEndUtc: z.string().datetime('workoutEndUtc must be a valid ISO datetime').optional().nullable(),
   }),
 });
-export const finishUserWorkoutResponseSchema = exerciseTrackingAndStatsQueryDtoSchema;
-export const finishUserWorkoutContract = {
-  request: finishWorkoutRequestSchema,
-  response: finishUserWorkoutResponseSchema,
+export const createWorkoutSessionResponseSchema = exerciseTrackingAndStatsQueryDtoSchema;
+export const createWorkoutSessionContract = {
+  request: createWorkoutSessionRequestSchema,
+  response: createWorkoutSessionResponseSchema,
 } satisfies Contract;
 
-export type GetExerciseTrackingQuery = QueryOf<typeof getExerciseTrackingContract>;
-export type GetExerciseTrackingResponse = ResponseOf<typeof getExerciseTrackingContract>;
-export type GetExerciseTrackingStatsResponse = ResponseOf<typeof getExerciseTrackingStatsContract>;
-export type FinishUserWorkoutBody = BodyOf<typeof finishUserWorkoutContract>;
-export type FinishUserWorkoutResponse = ResponseOf<typeof finishUserWorkoutContract>;
+export type GetWorkoutHistoryQuery = QueryOf<typeof getWorkoutHistoryContract>;
+export type GetWorkoutHistoryResponse = ResponseOf<typeof getWorkoutHistoryContract>;
+export type GetWorkoutStatisticsResponse = ResponseOf<typeof getWorkoutStatisticsContract>;
+export type CreateWorkoutSessionBody = BodyOf<typeof createWorkoutSessionContract>;
+export type CreateWorkoutSessionResponse = ResponseOf<typeof createWorkoutSessionContract>;

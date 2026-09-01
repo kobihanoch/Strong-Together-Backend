@@ -155,8 +155,8 @@ The current implementation delivers analysis results in realtime and does not pe
 
 `PushModule` exposes scheduler-style enqueue routes:
 
-- `GET /api/push/daily`
-- `GET /api/push/hourlyreminder`
+- `POST /api/push-jobs/daily`
+- `POST /api/push-jobs/hourly-reminders`
 
 The push trigger routes are currently public for compatibility. They are not allowed to gain broad guest database privileges; the target architecture is an authenticated scheduler/worker using a dedicated cron runtime role and allow-listed `cron_api` functions.
 

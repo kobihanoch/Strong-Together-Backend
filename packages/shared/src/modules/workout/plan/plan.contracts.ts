@@ -7,14 +7,14 @@ import {
 
 // Get whole workout plan
 
-export const getWholeWorkoutPlanRequestSchema = z.object({ query: z.object({ tz: z.string().optional() }) });
-export const getWholeUserWorkoutPlanResponseSchema = z.object({
+export const getWorkoutPlanRequestSchema = z.object({ query: z.object({ tz: z.string().optional() }) });
+export const getWorkoutPlanResponseSchema = z.object({
   workoutPlan: wholeUserWorkoutPlanQueryDtoSchema.nullable(),
 });
 
-export const getWholeUserWorkoutPlanContract = {
-  request: getWholeWorkoutPlanRequestSchema,
-  response: getWholeUserWorkoutPlanResponseSchema,
+export const getWorkoutPlanContract = {
+  request: getWorkoutPlanRequestSchema,
+  response: getWorkoutPlanResponseSchema,
 } satisfies Contract;
 
 const workoutMutationResponseSchema = z.object({
@@ -24,20 +24,20 @@ const workoutMutationResponseSchema = z.object({
 
 // Save workout
 
-export const addWorkoutRequestSchema = z.object({
+export const replaceWorkoutPlanRequestSchema = z.object({
   body: z.object({
     workoutData: saveWorkoutSplitPayloadQueryDtoSchema,
     workoutName: z.string().optional(),
     tz: z.string(),
   }),
 });
-export const addWorkoutResponseSchema = workoutMutationResponseSchema;
-export const addWorkoutContract = {
-  request: addWorkoutRequestSchema,
-  response: addWorkoutResponseSchema,
+export const replaceWorkoutPlanResponseSchema = workoutMutationResponseSchema;
+export const replaceWorkoutPlanContract = {
+  request: replaceWorkoutPlanRequestSchema,
+  response: replaceWorkoutPlanResponseSchema,
 } satisfies Contract;
 
-export type GetWholeUserWorkoutPlanQuery = QueryOf<typeof getWholeUserWorkoutPlanContract>;
-export type GetWholeUserWorkoutPlanResponse = ResponseOf<typeof getWholeUserWorkoutPlanContract>;
-export type AddWorkoutBody = BodyOf<typeof addWorkoutContract>;
-export type AddWorkoutResponse = ResponseOf<typeof addWorkoutContract>;
+export type GetWorkoutPlanQuery = QueryOf<typeof getWorkoutPlanContract>;
+export type GetWorkoutPlanResponse = ResponseOf<typeof getWorkoutPlanContract>;
+export type ReplaceWorkoutPlanBody = BodyOf<typeof replaceWorkoutPlanContract>;
+export type ReplaceWorkoutPlanResponse = ResponseOf<typeof replaceWorkoutPlanContract>;

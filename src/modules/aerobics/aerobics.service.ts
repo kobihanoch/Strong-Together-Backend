@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AerobicsQueries } from './aerobics.queries';
-import type { AddUserAerobicsBody, UserAerobicsResponse } from '@strong-together/shared';
+import type { CreateAerobicEntryBody, GetAerobicHistoryResponse } from '@strong-together/shared';
 import { buildAerobicsKeyStable, TTL_AEROBICS } from './aerobics.cache';
 import { CacheService } from '../../infrastructure/cache/cache.service';
 
@@ -24,12 +24,12 @@ export class AerobicsService {
     days: number = 45,
     fromCache: boolean = true,
     tz: string = 'Asia/Jerusalem',
-  ): Promise<{ payload: UserAerobicsResponse; cacheHit: boolean }> {
+  ): Promise<{ payload: GetAerobicHistoryResponse; cacheHit: boolean }> {
     const aerobicsKey = buildAerobicsKeyStable(userId, days, tz);
 
     if (fromCache) {
       await this.cacheService.cacheDeleteOtherTimezones(aerobicsKey);
-      const cached = await this.cacheService.cacheGetJSON<UserAerobicsResponse>(aerobicsKey);
+      const cached = await this.cacheService.cacheGetJSON<GetAerobicHistoryResponse>(aerobicsKey);
       if (cached) {
         return { payload: cached, cacheHit: true };
       }
@@ -47,7 +47,7 @@ export class AerobicsService {
    * @param body - The validated request body.
    * @returns The add user aerobics record result.
    */
-  async addUserAerobicsRecord(userId: string, body: AddUserAerobicsBody): Promise<UserAerobicsResponse> {
+  async createAerobicEntryData(userId: string, body: CreateAerobicEntryBody): Promise<GetAerobicHistoryResponse> {
     await this.aerobicsQueries.queryAddAerobicTracking(userId, body.record);
 
     const { payload } = await this.getAerobicsData(userId, 45, false, body.tz);

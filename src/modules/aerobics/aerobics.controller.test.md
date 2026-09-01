@@ -2,12 +2,12 @@
 
 ## Happy Paths
 
-### `GET /api/aerobics/get`
+### `GET /api/aerobics`
 
 - [x] Returns an empty schema-valid aerobics payload.
 - [x] Warms Redis with the aerobics response.
 
-### `POST /api/aerobics/add`
+### `POST /api/aerobics`
 
 - [x] Persists the aerobic record.
 - [x] Returns updated daily and weekly aggregates.
@@ -15,7 +15,7 @@
 
 ## Bad Paths
 
-### `POST /api/aerobics/add`
+### `POST /api/aerobics`
 
 - [x] Rejects invalid payloads with `400`.
 

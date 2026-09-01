@@ -3,9 +3,9 @@ import type { BodyOf, Contract, QueryOf, ResponseOf } from '../../../common';
 
 // Send password-change email
 
-export const sendChangePassEmailRequestSchema = z.object({ body: z.object({ identifier: z.string() }) });
+export const createPasswordResetRequestSchema = z.object({ body: z.object({ identifier: z.string() }) });
 
-export const sendChangePassEmailContract = { request: sendChangePassEmailRequestSchema } satisfies Contract;
+export const createPasswordResetRequestContract = { request: createPasswordResetRequestSchema } satisfies Contract;
 
 // Reset password
 
@@ -19,7 +19,7 @@ export const resetPasswordContract = {
   response: resetPasswordResponseSchema,
 } satisfies Contract;
 
-export type SendChangePassEmailBody = BodyOf<typeof sendChangePassEmailContract>;
+export type CreatePasswordResetRequestBody = BodyOf<typeof createPasswordResetRequestContract>;
 export type ResetPasswordBody = BodyOf<typeof resetPasswordContract>;
 export type ResetPasswordQuery = QueryOf<typeof resetPasswordContract>;
 export type ResetPasswordResponse = ResponseOf<typeof resetPasswordContract>;

@@ -3,8 +3,8 @@ import type {
   ExerciseTrackingAndStatsQueryDto,
   ExerciseTrackingMapsQueryDto,
   ExerciseTrackingStatsQueryDto,
-  FinishUserWorkoutBody,
-  FinishUserWorkoutResponse,
+  CreateWorkoutSessionBody,
+  CreateWorkoutSessionResponse,
 } from '@strong-together/shared';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
 import { buildTrackingMapsKeyStable, buildTrackingStatsKeyStable, TTL_TRACKING } from './tracking.cache';
@@ -27,7 +27,7 @@ export class WorkoutTrackingService {
    * @param tz - The IANA time-zone name.
    * @returns The exercise tracking maps result.
    */
-  async getExerciseTrackingMaps(
+  async getWorkoutHistoryData(
     userId: string,
     days: number = 45,
     fromCache: boolean = true,
@@ -56,7 +56,7 @@ export class WorkoutTrackingService {
    * @param tz - The IANA time-zone name.
    * @returns The exercise tracking stats result.
    */
-  async getExerciseTrackingStats(
+  async getWorkoutStatisticsData(
     userId: string,
     days: number = 45,
     fromCache: boolean = true,
@@ -85,15 +85,15 @@ export class WorkoutTrackingService {
    * @param tz - The IANA time-zone name.
    * @returns The exercise tracking result.
    */
-  async getExerciseTrackingData(
+  async getWorkoutHistoryAndStatisticsData(
     userId: string,
     days: number = 45,
     fromCache: boolean = true,
     tz: string,
   ): Promise<{ payload: ExerciseTrackingAndStatsQueryDto; cacheHit: boolean }> {
     const [mapsResult, statsResult] = await Promise.all([
-      this.getExerciseTrackingMaps(userId, days, fromCache, tz),
-      this.getExerciseTrackingStats(userId, days, fromCache, tz),
+      this.getWorkoutHistoryData(userId, days, fromCache, tz),
+      this.getWorkoutStatisticsData(userId, days, fromCache, tz),
     ]);
 
     return {
@@ -108,7 +108,7 @@ export class WorkoutTrackingService {
    * @param body - The validated request body.
    * @returns The finish user workout result.
    */
-  async finishUserWorkoutData(userId: string, body: FinishUserWorkoutBody): Promise<FinishUserWorkoutResponse> {
+  async createWorkoutSessionData(userId: string, body: CreateWorkoutSessionBody): Promise<CreateWorkoutSessionResponse> {
     const workoutArray = body.workout;
     const tz = body.tz || 'Asia/Jerusalem';
     const workoutStartUtc = body.workoutStartUtc || null;
@@ -125,7 +125,7 @@ export class WorkoutTrackingService {
       workoutEndUtc,
     );
 
-    const { payload } = await this.getExerciseTrackingData(userId, 45, false, tz);
+    const { payload } = await this.getWorkoutHistoryAndStatisticsData(userId, 45, false, tz);
     this.systemMessagesService.sendSystemMessageToUserWorkoutDone(userId);
     return payload;
   }

@@ -17,8 +17,8 @@ The API is organized under `/api` with domain-oriented route groups:
 | Messages | `/api/messages` | Inbox, read state, deletion |
 | OAuth | `/api/oauth` | Google and Apple sign-in |
 | Push | `/api/push` | Scheduled push notification entrypoints |
-| Video analysis | `/api/videoanalysis` | Presigned upload URL generation |
-| WebSockets | `/api/ws` | Authenticated socket ticket generation |
+| Video analysis | `/api/video-analysis` | Presigned upload URL generation |
+| WebSockets | `/api/websocket-tickets` | Authenticated socket ticket generation |
 
 The full route-level reference remains in [api-documentation.md](./api-documentation.md).
 
@@ -106,7 +106,7 @@ Sentry:
 
 Redis is used for cache and Pub/Sub concerns. Cache-backed endpoints can expose `X-Cache: HIT|MISS` headers.
 
-Socket.IO is used for authenticated realtime delivery. The API exposes a ticket route under `/api/ws/generateticket`; downstream realtime events can then target a user rather than broadcasting sensitive payloads.
+Socket.IO is used for authenticated realtime delivery. The API exposes a ticket route under `/api/websocket-tickets`; downstream realtime events can then target a user rather than broadcasting sensitive payloads.
 
 ## Data Access Standard
 

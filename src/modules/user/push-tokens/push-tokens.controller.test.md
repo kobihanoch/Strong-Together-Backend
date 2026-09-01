@@ -2,14 +2,14 @@
 
 ## Happy Paths
 
-### `PUT /api/users/pushtoken`
+### `PUT /api/users/me/push-token`
 
 - [x] Persists the push token in DB.
 - [x] Returns a schema-valid user response.
 
 ## Bad Paths
 
-### `PUT /api/users/pushtoken`
+### `PUT /api/users/me/push-token`
 
 - [x] Rejects bad payloads with `400`.
 - [x] Rejects missing auth with `401`.

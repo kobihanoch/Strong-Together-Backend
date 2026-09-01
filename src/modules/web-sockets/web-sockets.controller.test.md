@@ -2,14 +2,14 @@
 
 ## Happy Paths
 
-### `POST /api/ws/generateticket`
+### `POST /api/websocket-tickets`
 
 - [x] Returns a signed socket ticket.
 - [x] Includes socket authorization claims.
 
 ## Bad Paths
 
-### `POST /api/ws/generateticket`
+### `POST /api/websocket-tickets`
 
 - [x] Rejects missing username with `400`.
 - [x] Rejects missing auth with `401`.

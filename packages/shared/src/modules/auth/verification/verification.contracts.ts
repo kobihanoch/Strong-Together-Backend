@@ -4,36 +4,38 @@ import { userDbSchema } from '../../../database';
 
 // Verify user account
 
-export const verifyAccountRequestSchema = z.object({ query: z.object({ token: z.string().optional() }) });
+export const verifyEmailRequestSchema = z.object({ query: z.object({ token: z.string().optional() }) });
 
-export const verifyUserAccountContract = { request: verifyAccountRequestSchema } satisfies Contract;
+export const verifyEmailContract = { request: verifyEmailRequestSchema } satisfies Contract;
 
 // Send verification email
 
-export const sendVerificationMailRequestSchema = z.object({
+export const createVerificationEmailRequestSchema = z.object({
   body: z.object({ email: userDbSchema.shape.email.trim().email('Invalid email') }),
 });
-export const sendVerificationMailContract = { request: sendVerificationMailRequestSchema } satisfies Contract;
+export const createVerificationEmailContract = { request: createVerificationEmailRequestSchema } satisfies Contract;
 
 // Change email and verify
 
-export const changeEmailAndVerifyRequestSchema = z.object({
+export const updateUnverifiedAccountEmailRequestSchema = z.object({
   body: z.object({
     username: userDbSchema.shape.username,
     password: z.string(),
     newEmail: userDbSchema.shape.email.trim().email('Invalid email'),
   }),
 });
-export const changeEmailAndVerifyContract = { request: changeEmailAndVerifyRequestSchema } satisfies Contract;
+export const updateUnverifiedAccountEmailContract = {
+  request: updateUnverifiedAccountEmailRequestSchema,
+} satisfies Contract;
 
 // Check verification status
 
-export const checkUserVerifyRequestSchema = z.object({
+export const getVerificationStatusRequestSchema = z.object({
   query: z.object({ username: userDbSchema.shape.username }),
 });
-export const checkUserVerifyContract = { request: checkUserVerifyRequestSchema } satisfies Contract;
+export const getVerificationStatusContract = { request: getVerificationStatusRequestSchema } satisfies Contract;
 
-export type VerifyUserAccountQuery = QueryOf<typeof verifyUserAccountContract>;
-export type SendVerificationMailBody = BodyOf<typeof sendVerificationMailContract>;
-export type ChangeEmailAndVerifyBody = BodyOf<typeof changeEmailAndVerifyContract>;
-export type CheckUserVerifyQuery = QueryOf<typeof checkUserVerifyContract>;
+export type VerifyEmailQuery = QueryOf<typeof verifyEmailContract>;
+export type CreateVerificationEmailBody = BodyOf<typeof createVerificationEmailContract>;
+export type UpdateUnverifiedAccountEmailBody = BodyOf<typeof updateUnverifiedAccountEmailContract>;
+export type GetVerificationStatusQuery = QueryOf<typeof getVerificationStatusContract>;

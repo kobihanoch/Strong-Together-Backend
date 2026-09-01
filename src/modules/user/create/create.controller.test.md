@@ -6,7 +6,7 @@ The signup test creates a fresh user and then verifies the DB state for that sam
 
 ## Happy Paths
 
-### `POST /api/users/create`
+### `POST /api/users`
 
 - [x] Creates the user.
 - [x] Validates the response schema.
@@ -16,7 +16,7 @@ The signup test creates a fresh user and then verifies the DB state for that sam
 
 ## Bad Paths
 
-### `POST /api/users/create`
+### `POST /api/users`
 
 - [x] Rejects invalid user payloads with `400`.
 - [x] Rejects duplicate users with `400`.

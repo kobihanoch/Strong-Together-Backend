@@ -1523,24 +1523,24 @@ var userAerobicsRowQueryDtoSchema = z2.object({
 });
 
 // src/modules/aerobics/aerobics.contracts.ts
-var addAerobicsRequestSchema = z3.object({
+var createAerobicEntryRequestSchema = z3.object({
   body: z3.object({
     tz: z3.string(),
     record: addAerobicInputQueryDtoSchema
   })
 });
-var addUserAerobicsContract = {
-  request: addAerobicsRequestSchema
+var createAerobicEntryContract = {
+  request: createAerobicEntryRequestSchema
 };
-var getAerobicsRequestSchema = z3.object({
+var getAerobicHistoryRequestSchema = z3.object({
   query: z3.object({
     tz: z3.string().optional()
   })
 });
-var userAerobicsResponseSchema = userAerobicsQueryDtoSchema;
-var getUserAerobicsContract = {
-  request: getAerobicsRequestSchema,
-  response: userAerobicsResponseSchema
+var getAerobicHistoryResponseSchema = userAerobicsQueryDtoSchema;
+var getAerobicHistoryContract = {
+  request: getAerobicHistoryRequestSchema,
+  response: getAerobicHistoryResponseSchema
 };
 
 // src/modules/analytics/analytics.contracts.ts
@@ -1579,13 +1579,13 @@ var getAnalyticsContract = {
 
 // src/modules/auth/password/password.contracts.ts
 import { z as z6 } from "zod/v4";
-var sendChangePassEmailRequestSchema = z6.object({
+var createPasswordResetRequestSchema = z6.object({
   body: z6.object({
     identifier: z6.string()
   })
 });
-var sendChangePassEmailContract = {
-  request: sendChangePassEmailRequestSchema
+var createPasswordResetRequestContract = {
+  request: createPasswordResetRequestSchema
 };
 var resetPasswordRequestSchema = z6.object({
   body: z6.object({
@@ -1724,39 +1724,39 @@ var lastLoginQueryDtoSchema = z10.object({
 
 // src/modules/auth/verification/verification.contracts.ts
 import { z as z11 } from "zod/v4";
-var verifyAccountRequestSchema = z11.object({
+var verifyEmailRequestSchema = z11.object({
   query: z11.object({
     token: z11.string().optional()
   })
 });
-var verifyUserAccountContract = {
-  request: verifyAccountRequestSchema
+var verifyEmailContract = {
+  request: verifyEmailRequestSchema
 };
-var sendVerificationMailRequestSchema = z11.object({
+var createVerificationEmailRequestSchema = z11.object({
   body: z11.object({
     email: userDbSchema.shape.email.trim().email("Invalid email")
   })
 });
-var sendVerificationMailContract = {
-  request: sendVerificationMailRequestSchema
+var createVerificationEmailContract = {
+  request: createVerificationEmailRequestSchema
 };
-var changeEmailAndVerifyRequestSchema = z11.object({
+var updateUnverifiedAccountEmailRequestSchema = z11.object({
   body: z11.object({
     username: userDbSchema.shape.username,
     password: z11.string(),
     newEmail: userDbSchema.shape.email.trim().email("Invalid email")
   })
 });
-var changeEmailAndVerifyContract = {
-  request: changeEmailAndVerifyRequestSchema
+var updateUnverifiedAccountEmailContract = {
+  request: updateUnverifiedAccountEmailRequestSchema
 };
-var checkUserVerifyRequestSchema = z11.object({
+var getVerificationStatusRequestSchema = z11.object({
   query: z11.object({
     username: userDbSchema.shape.username
   })
 });
-var checkUserVerifyContract = {
-  request: checkUserVerifyRequestSchema
+var getVerificationStatusContract = {
+  request: getVerificationStatusRequestSchema
 };
 
 // src/modules/auth/verification/verification.dtos.ts
@@ -1819,9 +1819,9 @@ var exerciseMapByMuscleRowQueryDtoSchema = z14.object({
 });
 
 // src/modules/exercises/exercises.contracts.ts
-var getAllExercisesResponseSchema = exercisesMapByMuscleQueryDtoSchema;
-var getAllExercisesContract = {
-  response: getAllExercisesResponseSchema
+var listExercisesResponseSchema = exercisesMapByMuscleQueryDtoSchema;
+var listExercisesContract = {
+  response: listExercisesResponseSchema
 };
 
 // src/modules/messages/messages.contracts.ts
@@ -1860,17 +1860,17 @@ var messageAfterSendQueryDtoSchema = z15.object({
 });
 
 // src/modules/messages/messages.contracts.ts
-var getAllMessagesRequestSchema = z16.object({
+var listMessagesRequestSchema = z16.object({
   query: z16.object({
     tz: z16.string()
   })
 });
-var getAllUserMessagesResponseSchema = z16.object({
+var listMessagesResponseSchema = z16.object({
   messages: z16.array(allUserMessageQueryDtoSchema)
 });
-var getAllUserMessagesContract = {
-  request: getAllMessagesRequestSchema,
-  response: getAllUserMessagesResponseSchema
+var listMessagesContract = {
+  request: listMessagesRequestSchema,
+  response: listMessagesResponseSchema
 };
 var markMessageAsReadRequestSchema = z16.object({
   params: z16.object({
@@ -2050,28 +2050,28 @@ var createUserContract = {
 
 // src/modules/user/push-tokens/push-tokens.contracts.ts
 import { z as z26 } from "zod/v4";
-var saveUserPushTokenRequestSchema = z26.object({
+var replacePushTokenRequestSchema = z26.object({
   body: z26.object({
     token: userDbSchema.shape.pushToken.unwrap()
   })
 });
-var saveUserPushTokenContract = {
-  request: saveUserPushTokenRequestSchema
+var replacePushTokenContract = {
+  request: replacePushTokenRequestSchema
 };
 
 // src/modules/user/update/update.contracts.ts
 import { z as z27 } from "zod/v4";
-var updateUserRequestSchema = z27.object({
+var updateCurrentUserRequestSchema = z27.object({
   body: authenticatedUserForUpdateQueryDtoSchema
 });
-var updateAuthenticatedUserResponseSchema = z27.object({
+var updateCurrentUserResponseSchema = z27.object({
   message: z27.string(),
   emailChanged: z27.boolean(),
   user: userDataQueryDtoSchema
 });
-var updateAuthenticatedUserContract = {
-  request: updateUserRequestSchema,
-  response: updateAuthenticatedUserResponseSchema
+var updateCurrentUserContract = {
+  request: updateCurrentUserRequestSchema,
+  response: updateCurrentUserResponseSchema
 };
 var userDataResponseSchema = z27.object({
   userData: userDataQueryDtoSchema
@@ -2079,44 +2079,44 @@ var userDataResponseSchema = z27.object({
 var userDataContract = {
   response: userDataResponseSchema
 };
-var getAuthenticatedUserByIdResponseSchema = userDataQueryDtoSchema;
-var getAuthenticatedUserByIdContract = {
-  response: getAuthenticatedUserByIdResponseSchema
+var getCurrentUserResponseSchema = userDataQueryDtoSchema;
+var getCurrentUserContract = {
+  response: getCurrentUserResponseSchema
 };
-var deleteProfilePicRequestSchema = z27.object({
+var deleteProfilePictureRequestSchema = z27.object({
   body: z27.object({
     profilePicPath: z27.string()
   })
 });
-var deleteUserProfilePicContract = {
-  request: deleteProfilePicRequestSchema
+var deleteProfilePictureContract = {
+  request: deleteProfilePictureRequestSchema
 };
-var setProfilePicAndUpdateDBResponseSchema = z27.object({
+var replaceProfilePictureResponseSchema = z27.object({
   profilePicPath: z27.string(),
   url: z27.string(),
   message: z27.string()
 });
-var setProfilePicAndUpdateDBContract = {
-  response: setProfilePicAndUpdateDBResponseSchema
+var replaceProfilePictureContract = {
+  response: replaceProfilePictureResponseSchema
 };
 
 // src/modules/video-analysis/video-analysis.contracts.ts
 import { z as z28 } from "zod/v4";
-var getPresignedUrlFromS3RequestSchema = z28.object({
+var createVideoUploadUrlRequestSchema = z28.object({
   body: z28.object({
     exercise: exerciseDbSchema.shape.name,
     fileType: z28.string(),
     jobId: z28.string()
   })
 });
-var getPresignedUrlFromS3ResponseSchema = z28.object({
+var createVideoUploadUrlResponseSchema = z28.object({
   uploadUrl: z28.string(),
   fileKey: z28.string(),
   requestId: z28.string()
 });
-var getPresignedUrlFromS3Contract = {
-  request: getPresignedUrlFromS3RequestSchema,
-  response: getPresignedUrlFromS3ResponseSchema
+var createVideoUploadUrlContract = {
+  request: createVideoUploadUrlRequestSchema,
+  response: createVideoUploadUrlResponseSchema
 };
 
 // src/modules/video-analysis/video-analysis.dtos.ts
@@ -2171,17 +2171,17 @@ var analyzeVideoResultPayloadDtoSchema = /* @__PURE__ */ __name((resultSchema) =
 
 // src/modules/web-sockets/web-sockets.contracts.ts
 import { z as z30 } from "zod/v4";
-var generateTicketRequestSchema = z30.object({
+var createWebSocketTicketRequestSchema = z30.object({
   body: z30.object({
     username: userDbSchema.shape.username
   })
 });
-var generateTicketResponseSchema = z30.object({
+var createWebSocketTicketResponseSchema = z30.object({
   ticket: z30.string()
 });
-var generateTicketContract = {
-  request: generateTicketRequestSchema,
-  response: generateTicketResponseSchema
+var createWebSocketTicketContract = {
+  request: createWebSocketTicketRequestSchema,
+  response: createWebSocketTicketResponseSchema
 };
 
 // src/modules/workout/plan/plan.contracts.ts
@@ -2247,33 +2247,33 @@ var exerciseAssignmentIdQueryDtoSchema = z31.object({
 });
 
 // src/modules/workout/plan/plan.contracts.ts
-var getWholeWorkoutPlanRequestSchema = z32.object({
+var getWorkoutPlanRequestSchema = z32.object({
   query: z32.object({
     tz: z32.string().optional()
   })
 });
-var getWholeUserWorkoutPlanResponseSchema = z32.object({
+var getWorkoutPlanResponseSchema = z32.object({
   workoutPlan: wholeUserWorkoutPlanQueryDtoSchema.nullable()
 });
-var getWholeUserWorkoutPlanContract = {
-  request: getWholeWorkoutPlanRequestSchema,
-  response: getWholeUserWorkoutPlanResponseSchema
+var getWorkoutPlanContract = {
+  request: getWorkoutPlanRequestSchema,
+  response: getWorkoutPlanResponseSchema
 };
 var workoutMutationResponseSchema = z32.object({
   message: z32.string(),
   workoutPlan: wholeUserWorkoutPlanQueryDtoSchema
 });
-var addWorkoutRequestSchema = z32.object({
+var replaceWorkoutPlanRequestSchema = z32.object({
   body: z32.object({
     workoutData: saveWorkoutSplitPayloadQueryDtoSchema,
     workoutName: z32.string().optional(),
     tz: z32.string()
   })
 });
-var addWorkoutResponseSchema = workoutMutationResponseSchema;
-var addWorkoutContract = {
-  request: addWorkoutRequestSchema,
-  response: addWorkoutResponseSchema
+var replaceWorkoutPlanResponseSchema = workoutMutationResponseSchema;
+var replaceWorkoutPlanContract = {
+  request: replaceWorkoutPlanRequestSchema,
+  response: replaceWorkoutPlanResponseSchema
 };
 
 // src/modules/workout/tracking/tracking.contracts.ts
@@ -2419,22 +2419,22 @@ var exerciseTrackingIdQueryDtoSchema = z33.object({
 });
 
 // src/modules/workout/tracking/tracking.contracts.ts
-var getExerciseTrackingRequestSchema = z34.object({
+var getWorkoutHistoryRequestSchema = z34.object({
   query: z34.object({
     tz: z34.string().optional()
   })
 });
-var getExerciseTrackingResponseSchema = exerciseTrackingMapsQueryDtoSchema;
-var getExerciseTrackingContract = {
-  request: getExerciseTrackingRequestSchema,
-  response: getExerciseTrackingResponseSchema
+var getWorkoutHistoryResponseSchema = exerciseTrackingMapsQueryDtoSchema;
+var getWorkoutHistoryContract = {
+  request: getWorkoutHistoryRequestSchema,
+  response: getWorkoutHistoryResponseSchema
 };
-var getExerciseTrackingStatsResponseSchema = exerciseTrackingStatsQueryDtoSchema;
-var getExerciseTrackingStatsContract = {
-  request: getExerciseTrackingRequestSchema,
-  response: getExerciseTrackingStatsResponseSchema
+var getWorkoutStatisticsResponseSchema = exerciseTrackingStatsQueryDtoSchema;
+var getWorkoutStatisticsContract = {
+  request: getWorkoutHistoryRequestSchema,
+  response: getWorkoutStatisticsResponseSchema
 };
-var finishWorkoutRequestSchema = z34.object({
+var createWorkoutSessionRequestSchema = z34.object({
   body: z34.object({
     workout: z34.array(finishedWorkoutEntryQueryDtoSchema),
     tz: z34.string().optional(),
@@ -2442,19 +2442,14 @@ var finishWorkoutRequestSchema = z34.object({
     workoutEndUtc: z34.string().datetime("workoutEndUtc must be a valid ISO datetime").optional().nullable()
   })
 });
-var finishUserWorkoutResponseSchema = exerciseTrackingAndStatsQueryDtoSchema;
-var finishUserWorkoutContract = {
-  request: finishWorkoutRequestSchema,
-  response: finishUserWorkoutResponseSchema
+var createWorkoutSessionResponseSchema = exerciseTrackingAndStatsQueryDtoSchema;
+var createWorkoutSessionContract = {
+  request: createWorkoutSessionRequestSchema,
+  response: createWorkoutSessionResponseSchema
 };
 export {
   accessTokenPayloadDtoSchema,
   addAerobicInputQueryDtoSchema,
-  addAerobicsRequestSchema,
-  addUserAerobicsContract,
-  addWorkoutContract,
-  addWorkoutRequestSchema,
-  addWorkoutResponseSchema,
   adherenceExerciseStatsQueryDtoSchema,
   aerobicTrackingDbSchema,
   aerobicsDailyRecordQueryDtoSchema,
@@ -2466,23 +2461,34 @@ export {
   appleOAuthRequestSchema,
   appleTokenVerificationResultDtoSchema,
   authenticatedUserForUpdateQueryDtoSchema,
-  changeEmailAndVerifyContract,
-  changeEmailAndVerifyRequestSchema,
   changeEmailTokenPayloadDtoSchema,
-  checkUserVerifyContract,
-  checkUserVerifyRequestSchema,
+  createAerobicEntryContract,
+  createAerobicEntryRequestSchema,
+  createPasswordResetRequestContract,
+  createPasswordResetRequestSchema,
   createUserContract,
   createUserRequestSchema,
   createUserResponseSchema,
   createUserUserSchema,
+  createVerificationEmailContract,
+  createVerificationEmailRequestSchema,
+  createVideoUploadUrlContract,
+  createVideoUploadUrlRequestSchema,
+  createVideoUploadUrlResponseSchema,
+  createWebSocketTicketContract,
+  createWebSocketTicketRequestSchema,
+  createWebSocketTicketResponseSchema,
+  createWorkoutSessionContract,
+  createWorkoutSessionRequestSchema,
+  createWorkoutSessionResponseSchema,
   createdUserQueryDtoSchema,
   createdUserRawQueryDtoSchema,
   createdUserRowQueryDtoSchema,
   deleteMessageContract,
   deleteMessageRequestSchema,
   deleteMessageResponseSchema,
-  deleteProfilePicRequestSchema,
-  deleteUserProfilePicContract,
+  deleteProfilePictureContract,
+  deleteProfilePictureRequestSchema,
   deletedMessageQueryDtoSchema,
   emailVerifyPayloadDtoSchema,
   enqueueAnalyzeVideoParamsDtoSchema,
@@ -2505,43 +2511,37 @@ export {
   exerciseTrackingStatsQueryDtoSchema,
   exerciseTrackingStatsRowQueryDtoSchema,
   exercisesMapByMuscleQueryDtoSchema,
-  finishUserWorkoutContract,
-  finishUserWorkoutResponseSchema,
-  finishWorkoutRequestSchema,
   finishedWorkoutEntryQueryDtoSchema,
   forgotPasswordPayloadDtoSchema,
-  generateTicketContract,
-  generateTicketRequestSchema,
-  generateTicketResponseSchema,
-  getAerobicsRequestSchema,
-  getAllExercisesContract,
+  getAerobicHistoryContract,
+  getAerobicHistoryRequestSchema,
+  getAerobicHistoryResponseSchema,
   getAllExercisesExerciseQueryDtoSchema,
-  getAllExercisesResponseSchema,
-  getAllMessagesRequestSchema,
-  getAllUserMessagesContract,
-  getAllUserMessagesResponseSchema,
   getAnalyticsContract,
   getAnalyticsResponseSchema,
-  getAuthenticatedUserByIdContract,
-  getAuthenticatedUserByIdResponseSchema,
-  getExerciseTrackingContract,
-  getExerciseTrackingRequestSchema,
-  getExerciseTrackingResponseSchema,
-  getExerciseTrackingStatsContract,
-  getExerciseTrackingStatsResponseSchema,
-  getPresignedUrlFromS3Contract,
-  getPresignedUrlFromS3RequestSchema,
-  getPresignedUrlFromS3ResponseSchema,
-  getUserAerobicsContract,
-  getWholeUserWorkoutPlanContract,
-  getWholeUserWorkoutPlanResponseSchema,
-  getWholeWorkoutPlanRequestSchema,
+  getCurrentUserContract,
+  getCurrentUserResponseSchema,
+  getVerificationStatusContract,
+  getVerificationStatusRequestSchema,
+  getWorkoutHistoryContract,
+  getWorkoutHistoryRequestSchema,
+  getWorkoutHistoryResponseSchema,
+  getWorkoutPlanContract,
+  getWorkoutPlanRequestSchema,
+  getWorkoutPlanResponseSchema,
+  getWorkoutStatisticsContract,
+  getWorkoutStatisticsResponseSchema,
   goalAdherenceQueryDtoSchema,
   goalAdherenceRowQueryDtoSchema,
   googleOAuthContract,
   googleOAuthRequestSchema,
   googleTokenVerificationResultDtoSchema,
   lastLoginQueryDtoSchema,
+  listExercisesContract,
+  listExercisesResponseSchema,
+  listMessagesContract,
+  listMessagesRequestSchema,
+  listMessagesResponseSchema,
   loginContract,
   loginRequestSchema,
   loginResponseSchema,
@@ -2566,20 +2566,19 @@ export {
   prsViewDbSchema,
   refreshTokenContract,
   refreshTokenResponseSchema,
+  replaceProfilePictureContract,
+  replaceProfilePictureResponseSchema,
+  replacePushTokenContract,
+  replacePushTokenRequestSchema,
+  replaceWorkoutPlanContract,
+  replaceWorkoutPlanRequestSchema,
+  replaceWorkoutPlanResponseSchema,
   resetPasswordContract,
   resetPasswordRequestSchema,
   resetPasswordResponseSchema,
-  saveUserPushTokenContract,
-  saveUserPushTokenRequestSchema,
   saveWorkoutSplitInputQueryDtoSchema,
   saveWorkoutSplitPayloadQueryDtoSchema,
-  sendChangePassEmailContract,
-  sendChangePassEmailRequestSchema,
-  sendVerificationMailContract,
-  sendVerificationMailRequestSchema,
   serializedDateSchema,
-  setProfilePicAndUpdateDBContract,
-  setProfilePicAndUpdateDBResponseSchema,
   squatRepetitionDtoSchema,
   timezoneSchema,
   tokenVersionQueryDtoSchema,
@@ -2587,11 +2586,12 @@ export {
   trackingBySplitNameItemQueryDtoSchema,
   trackingMapItemQueryDtoSchema,
   trackingSetDbSchema,
-  updateAuthenticatedUserContract,
-  updateAuthenticatedUserResponseSchema,
-  updateUserRequestSchema,
+  updateCurrentUserContract,
+  updateCurrentUserRequestSchema,
+  updateCurrentUserResponseSchema,
+  updateUnverifiedAccountEmailContract,
+  updateUnverifiedAccountEmailRequestSchema,
   userAerobicsQueryDtoSchema,
-  userAerobicsResponseSchema,
   userAerobicsRowQueryDtoSchema,
   userAfterBumpQueryDtoSchema,
   userByIdentifierQueryDtoSchema,
@@ -2614,8 +2614,8 @@ export {
   userToHourlyReminderQueryDtoSchema,
   userUpdateDbSchema,
   userWithNotificationsEnabledQueryDtoSchema,
-  verifyAccountRequestSchema,
-  verifyUserAccountContract,
+  verifyEmailContract,
+  verifyEmailRequestSchema,
   weeklyDataQueryDtoSchema,
   wholeUserWorkoutPlanQueryDtoSchema,
   workoutExerciseInputQueryDtoSchema,

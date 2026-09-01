@@ -33,7 +33,7 @@ export class VerificationEmailsService {
       authConfig.jwtVerifySecret, // strong secret in env
       { expiresIn: '1h' }, // claims
     );
-    const verifyUrl = `${appConfig.emailApiBaseUrl}/api/auth/verify?token=${encodeURIComponent(token)}`;
+    const verifyUrl = `${appConfig.emailApiBaseUrl}/api/auth/email-verification?token=${encodeURIComponent(token)}`;
     const html = generateValidateUserEmail({
       fullName,
       verifyUrl,

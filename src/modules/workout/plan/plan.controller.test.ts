@@ -1,8 +1,8 @@
 import request from 'supertest';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
-  addWorkoutResponseSchema,
-  getWholeUserWorkoutPlanResponseSchema,
+  replaceWorkoutPlanResponseSchema,
+  getWorkoutPlanResponseSchema,
   loginResponseSchema,
 } from '@strong-together/shared';
 import { createApp } from '../../../app';
@@ -37,24 +37,24 @@ async function workoutUser(prefix = 'plan') {
 }
 
 describe('WorkoutPlanController', () => {
-  it('GET /api/workouts/getworkout returns User A empty plan and warms Redis', async () => {
+  it('GET /api/workout-plan returns User A empty plan and warms Redis', async () => {
     const user = await workoutUser('plan_empty');
     const response = await request(app.getHttpServer())
-      .get('/api/workouts/getworkout')
+      .get('/api/workout-plan')
       .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(user.accessToken));
 
     expect(response.status).toBe(200);
     expect(response.headers['x-cache']).toBe('MISS');
-    expectSchema(getWholeUserWorkoutPlanResponseSchema, response.body);
+    expectSchema(getWorkoutPlanResponseSchema, response.body);
     expect(response.body).toEqual({ workoutPlan: null });
     expect(await getRedisKey(buildPlanKeyStable(user.userId, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
-  it('POST /api/workouts/add creates User B plan, returns schema, asserts DB and Redis', async () => {
+  it('PUT /api/workout-plan creates User B plan, returns schema, asserts DB and Redis', async () => {
     const user = await workoutUser('plan_add');
     const response = await request(app.getHttpServer())
-      .post('/api/workouts/add')
+      .put('/api/workout-plan')
       .set(authHeaders(user.accessToken))
       .send({
         tz: 'Asia/Jerusalem',
@@ -66,7 +66,7 @@ describe('WorkoutPlanController', () => {
       });
 
     expect(response.status).toBe(201);
-    expectSchema(addWorkoutResponseSchema, response.body);
+    expectSchema(replaceWorkoutPlanResponseSchema, response.body);
     expect(response.body.message).toBe('Workout created successfully!');
     expect(response.body.workoutPlan.workoutSplits).toMatchObject([
       { name: 'A', orderIndex: 0 },
@@ -76,10 +76,10 @@ describe('WorkoutPlanController', () => {
     expect(await getRedisKey(buildPlanKeyStable(user.userId, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
-  it('GET /api/workouts/getworkout returns User B plan from Redis on repeated reads', async () => {
+  it('GET /api/workout-plan returns User B plan from Redis on repeated reads', async () => {
     const user = await workoutUser('plan_cache');
     await request(app.getHttpServer())
-      .post('/api/workouts/add')
+      .put('/api/workout-plan')
       .set(authHeaders(user.accessToken))
       .send({
         tz: 'Asia/Jerusalem',
@@ -88,11 +88,11 @@ describe('WorkoutPlanController', () => {
       });
 
     const first = await request(app.getHttpServer())
-      .get('/api/workouts/getworkout')
+      .get('/api/workout-plan')
       .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(user.accessToken));
     const second = await request(app.getHttpServer())
-      .get('/api/workouts/getworkout')
+      .get('/api/workout-plan')
       .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(user.accessToken));
 
@@ -100,13 +100,13 @@ describe('WorkoutPlanController', () => {
     expect(second.status).toBe(200);
     expect(first.headers['x-cache']).toBe('HIT');
     expect(second.headers['x-cache']).toBe('HIT');
-    expectSchema(getWholeUserWorkoutPlanResponseSchema, second.body);
+    expectSchema(getWorkoutPlanResponseSchema, second.body);
   });
 
-  it('POST /api/workouts/add renames and reorders splits with IDs and creates splits without IDs', async () => {
+  it('PUT /api/workout-plan renames and reorders splits with IDs and creates splits without IDs', async () => {
     const user = await workoutUser('plan_update');
     const created = await request(app.getHttpServer())
-      .post('/api/workouts/add')
+      .put('/api/workout-plan')
       .set(authHeaders(user.accessToken))
       .send({
         tz: 'Asia/Jerusalem',
@@ -118,7 +118,7 @@ describe('WorkoutPlanController', () => {
 
     const [splitA, splitB] = created.body.workoutPlan.workoutSplits;
     const updated = await request(app.getHttpServer())
-      .post('/api/workouts/add')
+      .put('/api/workout-plan')
       .set(authHeaders(user.accessToken))
       .send({
         tz: 'Asia/Jerusalem',
@@ -130,7 +130,7 @@ describe('WorkoutPlanController', () => {
       });
 
     expect(updated.status).toBe(200);
-    expectSchema(addWorkoutResponseSchema, updated.body);
+    expectSchema(replaceWorkoutPlanResponseSchema, updated.body);
     expect(updated.body.message).toBe('Workout created successfully!');
     expect(updated.body.workoutPlan.workoutSplits).toMatchObject([
       { id: splitB.id, name: 'Pull', orderIndex: 0 },
@@ -139,10 +139,10 @@ describe('WorkoutPlanController', () => {
     ]);
   });
 
-  it('POST /api/workouts/add rejects invalid empty splits with 400', async () => {
+  it('PUT /api/workout-plan rejects invalid empty splits with 400', async () => {
     const user = await workoutUser('plan_bad');
     const response = await request(app.getHttpServer())
-      .post('/api/workouts/add')
+      .put('/api/workout-plan')
       .set(authHeaders(user.accessToken))
       .send({
         tz: 'Asia/Jerusalem',
@@ -156,11 +156,11 @@ describe('WorkoutPlanController', () => {
 
   it('GET and POST /api/workouts plan endpoints reject unauthenticated requests with 401', async () => {
     const getResponse = await request(app.getHttpServer())
-      .get('/api/workouts/getworkout')
+      .get('/api/workout-plan')
       .query({ tz: 'Asia/Jerusalem' })
       .set('x-app-version', '4.5.0');
     const postResponse = await request(app.getHttpServer())
-      .post('/api/workouts/add')
+      .put('/api/workout-plan')
       .set('x-app-version', '4.5.0')
       .send({
         tz: 'Asia/Jerusalem',

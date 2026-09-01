@@ -92,38 +92,38 @@ This file focuses on success contracts. Route-specific non-JSON behavior is call
 | `POST` | `/api/auth/login` | Public | Credential login |
 | `POST` | `/api/auth/logout` | Refresh token + DPoP | Logout current session and unregister push delivery |
 | `POST` | `/api/auth/refresh` | Public | Rotate token pair |
-| `POST` | `/api/auth/forgotpassemail` | Public | Send reset email |
-| `PUT` | `/api/auth/resetpassword` | Public | Reset password from token |
-| `GET` | `/api/auth/verify` | Public | Complete verification callback |
-| `POST` | `/api/auth/sendverificationemail` | Public | Send verification email |
-| `PUT` | `/api/auth/changeemailverify` | Public | Change email for unverified account |
-| `GET` | `/api/auth/checkuserverify` | Public | Check verification state by username |
-| `POST` | `/api/users/create` | Public | Create user account |
-| `GET` | `/api/users/get` | User | Get current user profile |
-| `PUT` | `/api/users/updateself` | User | Update current user profile |
-| `GET` | `/api/users/changeemail` | Public | Complete email-change callback |
-| `DELETE` | `/api/users/deleteself` | User | Delete current user |
-| `PUT` | `/api/users/setprofilepic` | User | Upload profile image |
-| `DELETE` | `/api/users/deleteprofilepic` | User | Delete profile image |
-| `PUT` | `/api/users/pushtoken` | User | Save push token |
-| `GET` | `/api/workouts/getworkout` | User | Get active workout plan |
-| `POST` | `/api/workouts/add` | User | Create or update workout plan |
-| `GET` | `/api/workouts/gettracking` | User | Get workout tracking snapshot |
-| `GET` | `/api/workouts/gettrackingstats` | User | Get workout tracking statistics |
-| `POST` | `/api/workouts/finishworkout` | User | Persist completed workout |
-| `GET` | `/api/aerobics/get` | User | Get aerobics history |
-| `POST` | `/api/aerobics/add` | User | Add aerobics record |
-| `GET` | `/api/analytics/get` | User | Get analytics snapshot |
-| `GET` | `/api/exercises/getall` | User | Get exercise catalog |
-| `GET` | `/api/messages/getmessages` | User | Get inbox |
-| `PUT` | `/api/messages/markasread/:id` | User | Mark message as read |
-| `DELETE` | `/api/messages/delete/:id` | User | Delete message |
+| `POST` | `/api/auth/password-reset-requests` | Public | Send reset email |
+| `PUT` | `/api/auth/password-resets` | Public | Reset password from token |
+| `GET` | `/api/auth/email-verification` | Public | Complete verification callback |
+| `POST` | `/api/auth/verification-emails` | Public | Send verification email |
+| `PUT` | `/api/auth/unverified-account/email` | Public | Change email for unverified account |
+| `GET` | `/api/auth/verification-status` | Public | Check verification state by username |
+| `POST` | `/api/users` | Public | Create user account |
+| `GET` | `/api/users/me` | User | Get current user profile |
+| `PUT` | `/api/users/me` | User | Update current user profile |
+| `GET` | `/api/users/email-change` | Public | Complete email-change callback |
+| `DELETE` | `/api/users/me` | User | Delete current user |
+| `PUT` | `/api/users/me/profile-picture` | User | Upload profile image |
+| `DELETE` | `/api/users/me/profile-picture` | User | Delete profile image |
+| `PUT` | `/api/users/me/push-token` | User | Save push token |
+| `GET` | `/api/workout-plan` | User | Get active workout plan |
+| `POST` | `/api/workout-plan` | User | Create or update workout plan |
+| `GET` | `/api/workout-history` | User | Get workout tracking snapshot |
+| `GET` | `/api/workout-statistics` | User | Get workout tracking statistics |
+| `POST` | `/api/workout-sessions` | User | Persist completed workout |
+| `GET` | `/api/aerobics` | User | Get aerobics history |
+| `POST` | `/api/aerobics` | User | Add aerobics record |
+| `GET` | `/api/analytics` | User | Get analytics snapshot |
+| `GET` | `/api/exercises` | User | Get exercise catalog |
+| `GET` | `/api/messages` | User | Get inbox |
+| `PUT` | `/api/messages/:id` | User | Mark message as read |
+| `DELETE` | `/api/messages/:id` | User | Delete message |
 | `POST` | `/api/oauth/apple` | Public | Apple OAuth login |
 | `POST` | `/api/oauth/google` | Public | Google OAuth login |
-| `GET` | `/api/push/daily` | Public (temporary) | Trigger daily push enqueue; scheduled-job authentication is still required |
-| `GET` | `/api/push/hourlyreminder` | Public (temporary) | Trigger hourly reminder enqueue; scheduled-job authentication is still required |
-| `POST` | `/api/videoanalysis/getpresignedurl` | User | Generate direct-upload URL |
-| `POST` | `/api/ws/generateticket` | User | Generate websocket ticket |
+| `GET` | `/api/push-jobs/daily` | Public (temporary) | Trigger daily push enqueue; scheduled-job authentication is still required |
+| `GET` | `/api/push-jobs/hourly-reminders` | Public (temporary) | Trigger hourly reminder enqueue; scheduled-job authentication is still required |
+| `POST` | `/api/video-analysis/upload-urls` | User | Generate direct-upload URL |
+| `POST` | `/api/websocket-tickets` | User | Generate websocket ticket |
 
 ## Core Routes
 
@@ -241,7 +241,7 @@ Notes:
 
 - The route returns `Cache-Control: no-store`.
 
-### `POST /api/auth/forgotpassemail`
+### `POST /api/auth/password-reset-requests`
 
 Sends a password reset email when the submitted identifier maps to a user.
 
@@ -262,7 +262,7 @@ Successful response:
 
 - Empty `200 OK` body
 
-### `PUT /api/auth/resetpassword`
+### `POST /api/auth/password-resets`
 
 Resets a password using a token from the password-reset email.
 
@@ -294,7 +294,7 @@ Successful response:
 }
 ```
 
-### `GET /api/auth/verify`
+### `GET /api/auth/email-verification`
 
 Completes account verification from an email callback.
 
@@ -319,7 +319,7 @@ Notes:
 - Returns `text/html`
 - Returns `Cache-Control: no-store`
 
-### `POST /api/auth/sendverificationemail`
+### `POST /api/auth/verification-emails`
 
 Sends a verification email for an existing email address when allowed.
 
@@ -340,7 +340,7 @@ Successful response:
 
 - Empty `200 OK` body
 
-### `PUT /api/auth/changeemailverify`
+### `PATCH /api/auth/unverified-account/email`
 
 Changes the email address on an unverified account and sends a fresh verification email.
 
@@ -363,7 +363,7 @@ Successful response:
 
 - Empty `200 OK` body
 
-### `GET /api/auth/checkuserverify`
+### `GET /api/auth/verification-status`
 
 Checks whether a username belongs to a verified account.
 
@@ -389,7 +389,7 @@ Successful response:
 
 ## Users
 
-### `POST /api/users/create`
+### `POST /api/users`
 
 Creates a new local user account.
 
@@ -437,7 +437,7 @@ Notes:
 
 - Controller sets HTTP status `201 Created`.
 
-### `GET /api/users/get`
+### `GET /api/users/me`
 
 Returns the authenticated user's persisted profile.
 
@@ -467,7 +467,7 @@ Successful response:
 }
 ```
 
-### `PUT /api/users/updateself`
+### `PATCH /api/users/me`
 
 Updates editable profile fields for the authenticated user.
 
@@ -517,7 +517,7 @@ Successful response:
 }
 ```
 
-### `GET /api/users/changeemail`
+### `GET /api/users/email-change`
 
 Completes an email-change flow via signed token callback.
 
@@ -538,7 +538,7 @@ Notes:
 - Returns `text/html`
 - Returns `Cache-Control: no-store`
 
-### `DELETE /api/users/deleteself`
+### `DELETE /api/users/me`
 
 Deletes the authenticated user's account.
 
@@ -554,7 +554,7 @@ Successful response:
 }
 ```
 
-### `PUT /api/users/setprofilepic`
+### `PUT /api/users/me/profile-picture`
 
 Uploads a new profile picture and updates the stored profile image path.
 
@@ -587,7 +587,7 @@ Notes:
 - Controller sets HTTP status `201 Created`.
 - The route uses `FileInterceptor('file', imageUploadOptions)`.
 
-### `DELETE /api/users/deleteprofilepic`
+### `DELETE /api/users/me/profile-picture`
 
 Deletes the authenticated user's profile image.
 
@@ -607,7 +607,7 @@ Successful response:
 
 - Empty `200 OK` body
 
-### `PUT /api/users/pushtoken`
+### `PUT /api/users/me/push-token`
 
 Stores or updates the authenticated user's push token.
 
@@ -675,7 +675,7 @@ The workout-plan endpoints use this shape:
 
 ### Shared tracking response building blocks
 
-`GET /api/workouts/gettracking` returns tracking maps grouped three ways:
+`GET /api/workout-history` returns tracking maps grouped three ways:
 
 ```json
 {
@@ -707,7 +707,7 @@ The workout-plan endpoints use this shape:
 
 Each grouping contains the same tracking-item shape. The grouping key supplies the date, assignment ID, or split name respectively.
 
-`GET /api/workouts/gettrackingstats` returns the independent statistics payload:
+`GET /api/workout-statistics` returns the independent statistics payload:
 
 ```json
 {
@@ -748,7 +748,7 @@ Each grouping contains the same tracking-item shape. The grouping key supplies t
 
 `nextWorkoutSplit` is independent of the 45-day statistics window. It advances from the user's latest workout summary to the next split in the active plan by `orderIndex`, wraps to the lowest active index after the final split, and returns the lowest active index when no summary exists.
 
-### `GET /api/workouts/getworkout`
+### `GET /api/workout-plan`
 
 Returns the current workout plan for the authenticated user.
 
@@ -772,7 +772,7 @@ Notes:
 
 - Returns `X-Cache: HIT` or `X-Cache: MISS`
 
-### `POST /api/workouts/add`
+### `PUT /api/workout-plan`
 
 Creates or updates the authenticated user's workout plan. Existing splits include their IDs; new splits omit the ID.
 
@@ -845,7 +845,7 @@ Successful response:
 }
 ```
 
-### `GET /api/workouts/gettracking`
+### `GET /api/workout-history`
 
 Returns the authenticated user's tracking maps for the last 45 days.
 
@@ -869,7 +869,7 @@ Notes:
 
 - Returns `X-Cache: HIT` or `X-Cache: MISS`
 
-### `GET /api/workouts/gettrackingstats`
+### `GET /api/workout-statistics`
 
 Returns the authenticated user's tracking statistics for the last 45 days.
 
@@ -893,7 +893,7 @@ Notes:
 
 - Returns `X-Cache: HIT` or `X-Cache: MISS`
 
-### `POST /api/workouts/finishworkout`
+### `POST /api/workout-sessions`
 
 Persists a completed workout and returns the updated tracking snapshot.
 
@@ -930,7 +930,7 @@ Successful response:
 
 ## Aerobics
 
-### `GET /api/aerobics/get`
+### `GET /api/aerobics`
 
 Returns grouped aerobics history for the authenticated user.
 
@@ -980,7 +980,7 @@ Notes:
 
 - Returns `X-Cache: HIT` or `X-Cache: MISS`
 
-### `POST /api/aerobics/add`
+### `POST /api/aerobics`
 
 Creates a new aerobics record and returns the refreshed aerobics snapshot.
 
@@ -1003,11 +1003,11 @@ Request body:
 
 Successful response:
 
-- Returns the same `UserAerobicsResponse` structure shown above
+- Returns the same `GetAerobicHistoryResponse` structure shown above
 
 ## Analytics
 
-### `GET /api/analytics/get`
+### `GET /api/analytics`
 
 Returns the current analytics snapshot for the authenticated user.
 
@@ -1045,7 +1045,7 @@ Notes:
 
 ## Exercises
 
-### `GET /api/exercises/getall`
+### `GET /api/exercises`
 
 Returns the exercise catalog grouped by key.
 
@@ -1069,7 +1069,7 @@ Successful response:
 
 ## Messages
 
-### `GET /api/messages/getmessages`
+### `GET /api/messages`
 
 Returns the authenticated user's inbox.
 
@@ -1103,7 +1103,7 @@ Successful response:
 }
 ```
 
-### `PUT /api/messages/markasread/:id`
+### `PATCH /api/messages/:id/read`
 
 Marks a message as read.
 
@@ -1128,7 +1128,7 @@ Successful response:
 }
 ```
 
-### `DELETE /api/messages/delete/:id`
+### `DELETE /api/messages/:id`
 
 Deletes a message from the user's inbox.
 
@@ -1239,7 +1239,7 @@ Notes:
 
 ## Push
 
-### `GET /api/push/daily`
+### `POST /api/push-jobs/daily`
 
 Triggers the daily push enqueue flow.
 
@@ -1265,7 +1265,7 @@ Failure shape:
 }
 ```
 
-### `GET /api/push/hourlyreminder`
+### `POST /api/push-jobs/hourly-reminders`
 
 Triggers the hourly reminder enqueue flow.
 
@@ -1293,7 +1293,7 @@ Failure shape:
 
 ## Video Analysis
 
-### `POST /api/videoanalysis/getpresignedurl`
+### `POST /api/video-analysis/upload-urls`
 
 Generates a presigned S3 upload URL for video-analysis ingestion.
 
@@ -1328,7 +1328,7 @@ Successful response:
 
 ## WebSockets
 
-### `POST /api/ws/generateticket`
+### `POST /api/websocket-tickets`
 
 Generates a short-lived websocket ticket for the authenticated user.
 
@@ -1362,25 +1362,25 @@ Notes:
 
 These routes return `X-Cache: HIT` or `X-Cache: MISS`:
 
-- `/api/workouts/getworkout`
-- `/api/workouts/gettracking`
-- `/api/workouts/gettrackingstats`
-- `/api/aerobics/get`
-- `/api/analytics/get`
+- `/api/workout-plan`
+- `/api/workout-history`
+- `/api/workout-statistics`
+- `/api/aerobics`
+- `/api/analytics`
 
 ### HTML routes
 
 These routes do not return JSON:
 
-- `/api/auth/verify`
-- `/api/users/changeemail`
+- `/api/auth/email-verification`
+- `/api/users/email-change`
 
 ### Infra-coupled routes
 
 These routes touch external infrastructure directly:
 
-- `/api/videoanalysis/getpresignedurl` uses S3 presigning
-- `/api/push/daily` and `/api/push/hourlyreminder` enqueue background work
+- `/api/video-analysis/upload-urls` uses S3 presigning
+- `/api/push-jobs/daily` and `/api/push-jobs/hourly-reminders` enqueue background work
 - auth mail flows rely on mailer / queue infrastructure
 - profile image routes use object storage through `SupabaseStorageService`; prod uses Supabase Storage, dev/test use LocalStack S3
 

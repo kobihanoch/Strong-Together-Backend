@@ -77,7 +77,7 @@ Only genuinely computed or transport-only fields are defined directly with Zod. 
 Contracts expose public HTTP TypeScript names inferred from schemas. They do not redefine fields:
 
 ```ts
-export type GetAllUserMessagesResponse = z.infer<typeof getAllUserMessagesResponseSchema>;
+export type ListMessagesResponse = z.infer<typeof listMessagesResponseSchema>;
 export type FinishWorkoutBody = z.infer<typeof finishWorkoutRequest.shape.body>;
 ```
 

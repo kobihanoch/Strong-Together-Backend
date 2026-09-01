@@ -6,7 +6,7 @@ The video-analysis system is designed around direct upload, asynchronous process
 
 ## End-To-End Flow
 
-1. The mobile client calls `POST /api/videoanalysis/getpresignedurl`.
+1. The mobile client calls `POST /api/video-analysis/upload-urls`.
 2. `VideoAnalysisController` validates the request with `getPresignedUrlS3Request` from `@strong-together/shared`.
 3. `DpopGuard`, `AuthenticationGuard`, `AuthorizationGuard`, and `RlsTxInterceptor` protect the route.
 4. `VideoAnalysisService` creates a file key using `exercise`, `userId`, and timestamp.

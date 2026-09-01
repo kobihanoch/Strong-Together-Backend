@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../../config/auth.config';
-import type { GenerateTicketResponse } from '@strong-together/shared';
+import type { CreateWebSocketTicketResponse } from '@strong-together/shared';
 
 @Injectable()
 export class WebSocketsService {
@@ -11,7 +11,7 @@ export class WebSocketsService {
    * @param username - The username.
    * @returns The generate ticket result.
    */
-  async generateTicketData(userId: string, username?: string): Promise<GenerateTicketResponse> {
+  async createWebSocketTicketData(userId: string, username?: string): Promise<CreateWebSocketTicketResponse> {
     const payload = {
       id: userId,
       username,

@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Put, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
-import type { AddWorkoutResponse, GetWholeUserWorkoutPlanResponse, AddWorkoutBody, GetWholeUserWorkoutPlanQuery } from '@strong-together/shared';
-import { addWorkoutRequestSchema, getWholeWorkoutPlanRequestSchema } from '@strong-together/shared';
+import type { ReplaceWorkoutPlanResponse, GetWorkoutPlanResponse, ReplaceWorkoutPlanBody, GetWorkoutPlanQuery } from '@strong-together/shared';
+import { replaceWorkoutPlanRequestSchema, getWorkoutPlanRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
@@ -16,12 +16,12 @@ import { WorkoutPlanService } from './plan.service';
  * Workout-plan routes for authenticated users.
  *
  * Preserves the existing route paths and behavior from the Express version:
- * - GET /api/workouts/getworkout
- * - POST /api/workouts/add
+ * - GET /api/workout-plan
+ * - PUT /api/workout-plan
  *
  * Access: User
  */
-@Controller('api/workouts')
+@Controller('api/workout-plan')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @UseInterceptors(RlsTxInterceptor)
 @Roles('user')
@@ -34,7 +34,7 @@ export class WorkoutPlanController {
    * Returns the current workout plan and editable split structure for the
    * requested timezone, and sets `X-Cache` to reflect cache usage.
    *
-   * @remarks Route: GET /api/workouts/getworkout
+   * @remarks Route: GET /api/workout-plan
    * Access: User
    *
    * @param data - The validated request data.
@@ -42,13 +42,13 @@ export class WorkoutPlanController {
    * @param res - The HTTP response.
    * @returns The response payload.
    */
-  @Get('getworkout')
-  async getWholeUserWorkoutPlan(
-    @RequestData(new ValidateRequestPipe(getWholeWorkoutPlanRequestSchema))
-    data: { query: GetWholeUserWorkoutPlanQuery },
+  @Get()
+  async getWorkoutPlan(
+    @RequestData(new ValidateRequestPipe(getWorkoutPlanRequestSchema))
+    data: { query: GetWorkoutPlanQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<GetWholeUserWorkoutPlanResponse> {
+  ): Promise<GetWorkoutPlanResponse> {
     const tz = data.query.tz;
     const { payload, cacheHit } = await this.workoutPlanService.getWorkoutPlanData(user.id, true, tz);
     res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
@@ -73,20 +73,20 @@ export class WorkoutPlanController {
    * Persists the submitted workout structure, invalidates related caches,
    * rebuilds the plan snapshot, and returns the updated plan payload.
    *
-   * @remarks Route: POST /api/workouts/add
+   * @remarks Route: PUT /api/workout-plan
    * Access: User
    *
    * @param data - The validated request data.
    * @param user - The authenticated user.
    * @returns The response payload.
    */
-  @Post('add')
-  async addWorkout(
-    @RequestData(new ValidateRequestPipe(addWorkoutRequestSchema))
-    data: { body: AddWorkoutBody },
+  @Put()
+  async replaceWorkoutPlan(
+    @RequestData(new ValidateRequestPipe(replaceWorkoutPlanRequestSchema))
+    data: { body: ReplaceWorkoutPlanBody },
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<AddWorkoutResponse> {
-    const payload = await this.workoutPlanService.addWorkoutData(user.id, data.body);
+  ): Promise<ReplaceWorkoutPlanResponse> {
+    const payload = await this.workoutPlanService.replaceWorkoutPlanData(user.id, data.body);
     return payload;
   }
 }

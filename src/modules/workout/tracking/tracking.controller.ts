@@ -1,13 +1,13 @@
 import { Controller, Get, Post, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
 import type {
-  FinishUserWorkoutResponse,
-  GetExerciseTrackingResponse,
-  GetExerciseTrackingStatsResponse,
-  FinishUserWorkoutBody,
-  GetExerciseTrackingQuery,
+  CreateWorkoutSessionResponse,
+  GetWorkoutHistoryResponse,
+  GetWorkoutStatisticsResponse,
+  CreateWorkoutSessionBody,
+  GetWorkoutHistoryQuery,
 } from '@strong-together/shared';
-import { finishWorkoutRequestSchema, getExerciseTrackingRequestSchema } from '@strong-together/shared';
+import { createWorkoutSessionRequestSchema, getWorkoutHistoryRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
@@ -22,12 +22,12 @@ import { WorkoutTrackingService } from './tracking.service';
  * Workout-tracking routes for authenticated users.
  *
  * Preserves the existing route paths and behavior from the Express version:
- * - GET /api/workouts/gettracking
- * - POST /api/workouts/finishworkout
+ * - GET /api/workout-history
+ * - POST /api/workout-sessions
  *
  * Access: User
  */
-@Controller('api/workouts')
+@Controller('api')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @UseInterceptors(RlsTxInterceptor)
 @Roles('user')
@@ -40,7 +40,7 @@ export class WorkoutTrackingController {
    * Returns grouped tracking maps for the last 45 days in the requested timezone
    * and sets `X-Cache` to reflect cache usage.
    *
-   * @remarks Route: GET /api/workouts/gettracking
+   * @remarks Route: GET /api/workout-history
    * Access: User
    *
    * @param data - The validated request data.
@@ -48,15 +48,15 @@ export class WorkoutTrackingController {
    * @param res - The HTTP response.
    * @returns The response payload.
    */
-  @Get('gettracking')
-  async getExerciseTracking(
-    @RequestData(new ValidateRequestPipe(getExerciseTrackingRequestSchema)) data: { query: GetExerciseTrackingQuery },
+  @Get('workout-history')
+  async getWorkoutHistory(
+    @RequestData(new ValidateRequestPipe(getWorkoutHistoryRequestSchema)) data: { query: GetWorkoutHistoryQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<GetExerciseTrackingResponse> {
+  ): Promise<GetWorkoutHistoryResponse> {
     const tz = data.query.tz as string;
 
-    const { payload, cacheHit } = await this.workoutTrackingService.getExerciseTrackingMaps(user.id, 45, true, tz);
+    const { payload, cacheHit } = await this.workoutTrackingService.getWorkoutHistoryData(user.id, 45, true, tz);
     res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
     return payload;
   }
@@ -66,7 +66,7 @@ export class WorkoutTrackingController {
    *
    * Returns tracking analytics and sets `X-Cache` to reflect cache usage.
    *
-   * @remarks Route: GET /api/workouts/gettrackingstats
+   * @remarks Route: GET /api/workout-statistics
    * Access: User
    *
    * @param data - The validated request data.
@@ -74,15 +74,15 @@ export class WorkoutTrackingController {
    * @param res - The HTTP response.
    * @returns The response payload.
    */
-  @Get('gettrackingstats')
-  async getTrackingStats(
-    @RequestData(new ValidateRequestPipe(getExerciseTrackingRequestSchema)) data: { query: GetExerciseTrackingQuery },
+  @Get('workout-statistics')
+  async getWorkoutStatistics(
+    @RequestData(new ValidateRequestPipe(getWorkoutHistoryRequestSchema)) data: { query: GetWorkoutHistoryQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<GetExerciseTrackingStatsResponse> {
+  ): Promise<GetWorkoutStatisticsResponse> {
     const tz = data.query.tz as string;
 
-    const { payload, cacheHit } = await this.workoutTrackingService.getExerciseTrackingStats(user.id, 45, true, tz);
+    const { payload, cacheHit } = await this.workoutTrackingService.getWorkoutStatisticsData(user.id, 45, true, tz);
     res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
     return payload;
   }
@@ -93,19 +93,19 @@ export class WorkoutTrackingController {
    * Stores the submitted workout summary and tracking rows, refreshes tracking
    * cache state, and returns the updated tracking payload.
    *
-   * @remarks Route: POST /api/workouts/finishworkout
+   * @remarks Route: POST /api/workout-sessions
    * Access: User
    *
    * @param data - The validated request data.
    * @param user - The authenticated user.
    * @returns The response payload.
    */
-  @Post('finishworkout')
-  async finishUserWorkout(
-    @RequestData(new ValidateRequestPipe(finishWorkoutRequestSchema)) data: { body: FinishUserWorkoutBody },
+  @Post('workout-sessions')
+  async createWorkoutSession(
+    @RequestData(new ValidateRequestPipe(createWorkoutSessionRequestSchema)) data: { body: CreateWorkoutSessionBody },
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<FinishUserWorkoutResponse> {
-    const payload = await this.workoutTrackingService.finishUserWorkoutData(user.id, data.body);
+  ): Promise<CreateWorkoutSessionResponse> {
+    const payload = await this.workoutTrackingService.createWorkoutSessionData(user.id, data.body);
     return payload;
   }
 }

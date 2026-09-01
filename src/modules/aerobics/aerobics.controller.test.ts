@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { loginResponseSchema, userAerobicsResponseSchema } from '@strong-together/shared';
+import { loginResponseSchema, getAerobicHistoryResponseSchema } from '@strong-together/shared';
 import { createApp } from '../../app';
 import { authHeaders } from '../../common/tests/helpers/auth';
 import { expectSchema } from '../../common/tests/helpers/assert-schema';
@@ -33,33 +33,33 @@ async function aerobicUser(prefix = 'aerobics') {
 }
 
 describe('AerobicsController', () => {
-  it('GET /api/aerobics/get returns an empty schema-valid payload and warms Redis', async () => {
+  it('GET /api/aerobics returns an empty schema-valid payload and warms Redis', async () => {
     const user = await aerobicUser();
     const response = await request(app.getHttpServer())
-      .get('/api/aerobics/get')
+      .get('/api/aerobics')
       .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(user.accessToken));
 
     expect(response.status).toBe(200);
     expect(response.headers['x-cache']).toBe('MISS');
-    expectSchema(userAerobicsResponseSchema, response.body);
+    expectSchema(getAerobicHistoryResponseSchema, response.body);
     expect(response.body).toEqual({ daily: {}, weekly: {} });
     expect(await getRedisKey(buildAerobicsKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
-  it('POST /api/aerobics/add persists a record, returns aggregates, and updates Redis', async () => {
+  it('POST /api/aerobics persists a record, returns aggregates, and updates Redis', async () => {
     const user = await aerobicUser();
-    const response = await request(app.getHttpServer()).post('/api/aerobics/add').set(authHeaders(user.accessToken)).send({
+    const response = await request(app.getHttpServer()).post('/api/aerobics').set(authHeaders(user.accessToken)).send({
       tz: 'Asia/Jerusalem',
       record: { type: 'Walk', durationMins: 30, durationSec: 15 },
     });
 
     expect(response.status).toBe(201);
-    expectSchema(userAerobicsResponseSchema, response.body);
+    expectSchema(getAerobicHistoryResponseSchema, response.body);
     expect(Object.values(response.body.daily)[0]).toEqual([
       expect.objectContaining({ type: 'Walk', durationMins: 30, durationSec: 15 }),
     ]);
-    const [weekly] = Object.values(userAerobicsResponseSchema.parse(response.body).weekly);
+    const [weekly] = Object.values(getAerobicHistoryResponseSchema.parse(response.body).weekly);
     expect(weekly?.records[0]).toEqual(expect.objectContaining({ workoutTimeLocal: expect.any(String) }));
 
     const rows = await waitForAerobicsRowsForUser(user.userId, 1);
@@ -68,15 +68,15 @@ describe('AerobicsController', () => {
     expect(await getRedisKey(buildAerobicsKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
-  it('GET /api/aerobics/get returns Redis HIT on repeated reads', async () => {
+  it('GET /api/aerobics returns Redis HIT on repeated reads', async () => {
     const user = await aerobicUser('aerobics_cache');
 
     const first = await request(app.getHttpServer())
-      .get('/api/aerobics/get')
+      .get('/api/aerobics')
       .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(user.accessToken));
     const second = await request(app.getHttpServer())
-      .get('/api/aerobics/get')
+      .get('/api/aerobics')
       .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(user.accessToken));
 
@@ -84,12 +84,12 @@ describe('AerobicsController', () => {
     expect(second.status).toBe(200);
     expect(first.headers['x-cache']).toBe('MISS');
     expect(second.headers['x-cache']).toBe('HIT');
-    expectSchema(userAerobicsResponseSchema, second.body);
+    expectSchema(getAerobicHistoryResponseSchema, second.body);
   });
 
-  it('POST /api/aerobics/add rejects invalid payloads with 400', async () => {
+  it('POST /api/aerobics rejects invalid payloads with 400', async () => {
     const user = await aerobicUser('aerobics_bad');
-    const response = await request(app.getHttpServer()).post('/api/aerobics/add').set(authHeaders(user.accessToken)).send({
+    const response = await request(app.getHttpServer()).post('/api/aerobics').set(authHeaders(user.accessToken)).send({
       tz: 'Asia/Jerusalem',
       record: { type: 'Walk', durationMins: '30', durationSec: 0 },
     });
@@ -99,10 +99,10 @@ describe('AerobicsController', () => {
 
   it('GET and POST /api/aerobics reject unauthenticated requests with 401', async () => {
     const getResponse = await request(app.getHttpServer())
-      .get('/api/aerobics/get')
+      .get('/api/aerobics')
       .query({ tz: 'Asia/Jerusalem' })
       .set('x-app-version', '4.5.0');
-    const postResponse = await request(app.getHttpServer()).post('/api/aerobics/add').set('x-app-version', '4.5.0').send({
+    const postResponse = await request(app.getHttpServer()).post('/api/aerobics').set('x-app-version', '4.5.0').send({
       tz: 'Asia/Jerusalem',
       record: { type: 'Walk', durationMins: 30, durationSec: 0 },
     });

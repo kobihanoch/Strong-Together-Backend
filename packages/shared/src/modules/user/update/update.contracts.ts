@@ -4,18 +4,18 @@ import { authenticatedUserForUpdateQueryDtoSchema, userDataQueryDtoSchema } from
 
 // Update authenticated user
 
-export const updateUserRequestSchema = z.object({
+export const updateCurrentUserRequestSchema = z.object({
   body: authenticatedUserForUpdateQueryDtoSchema,
 });
-export const updateAuthenticatedUserResponseSchema = z.object({
+export const updateCurrentUserResponseSchema = z.object({
   message: z.string(),
   emailChanged: z.boolean(),
   user: userDataQueryDtoSchema,
 });
 
-export const updateAuthenticatedUserContract = {
-  request: updateUserRequestSchema,
-  response: updateAuthenticatedUserResponseSchema,
+export const updateCurrentUserContract = {
+  request: updateCurrentUserRequestSchema,
+  response: updateCurrentUserResponseSchema,
 } satisfies Contract;
 
 // Wrap user data
@@ -25,30 +25,30 @@ export const userDataContract = { response: userDataResponseSchema } satisfies C
 
 // Get authenticated user by ID
 
-export const getAuthenticatedUserByIdResponseSchema = userDataQueryDtoSchema;
-export const getAuthenticatedUserByIdContract = {
-  response: getAuthenticatedUserByIdResponseSchema,
+export const getCurrentUserResponseSchema = userDataQueryDtoSchema;
+export const getCurrentUserContract = {
+  response: getCurrentUserResponseSchema,
 } satisfies Contract;
 
 // Delete profile picture
 
-export const deleteProfilePicRequestSchema = z.object({ body: z.object({ profilePicPath: z.string() }) });
-export const deleteUserProfilePicContract = { request: deleteProfilePicRequestSchema } satisfies Contract;
+export const deleteProfilePictureRequestSchema = z.object({ body: z.object({ profilePicPath: z.string() }) });
+export const deleteProfilePictureContract = { request: deleteProfilePictureRequestSchema } satisfies Contract;
 
 // Set profile picture
 
-export const setProfilePicAndUpdateDBResponseSchema = z.object({
+export const replaceProfilePictureResponseSchema = z.object({
   profilePicPath: z.string(),
   url: z.string(),
   message: z.string(),
 });
-export const setProfilePicAndUpdateDBContract = {
-  response: setProfilePicAndUpdateDBResponseSchema,
+export const replaceProfilePictureContract = {
+  response: replaceProfilePictureResponseSchema,
 } satisfies Contract;
 
-export type UpdateUserBody = BodyOf<typeof updateAuthenticatedUserContract>;
-export type UpdateAuthenticatedUserResponse = ResponseOf<typeof updateAuthenticatedUserContract>;
+export type UpdateCurrentUserBody = BodyOf<typeof updateCurrentUserContract>;
+export type UpdateCurrentUserResponse = ResponseOf<typeof updateCurrentUserContract>;
 export type UserDataResponse = ResponseOf<typeof userDataContract>;
-export type GetAuthenticatedUserByIdResponse = ResponseOf<typeof getAuthenticatedUserByIdContract>;
-export type DeleteUserProfilePicBody = BodyOf<typeof deleteUserProfilePicContract>;
-export type SetProfilePicAndUpdateDBResponse = ResponseOf<typeof setProfilePicAndUpdateDBContract>;
+export type GetCurrentUserResponse = ResponseOf<typeof getCurrentUserContract>;
+export type DeleteProfilePictureBody = BodyOf<typeof deleteProfilePictureContract>;
+export type ReplaceProfilePictureResponse = ResponseOf<typeof replaceProfilePictureContract>;

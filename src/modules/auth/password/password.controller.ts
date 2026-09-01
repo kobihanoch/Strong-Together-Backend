@@ -1,6 +1,6 @@
-import { Controller, Post, Put, Req, UseGuards, UseInterceptors } from '@nestjs/common';
-import type { ResetPasswordBody, ResetPasswordQuery, ResetPasswordResponse, SendChangePassEmailBody } from '@strong-together/shared';
-import { resetPasswordRequestSchema, sendChangePassEmailRequestSchema } from '@strong-together/shared';
+import { Controller, Post, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import type { ResetPasswordBody, ResetPasswordQuery, ResetPasswordResponse, CreatePasswordResetRequestBody } from '@strong-together/shared';
+import { resetPasswordRequestSchema, createPasswordResetRequestSchema } from '@strong-together/shared';
 import { PasswordService } from './password.service';
 import { RateLimit, RateLimitGuard, resetPasswordEmailRateLimit, resetPasswordEmailRateLimitDaily } from '../../../common/guards/rate-limit.guard';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
@@ -22,21 +22,21 @@ export class PasswordController {
    * Accepts a username or email address and dispatches a reset email without
    * revealing whether the account exists.
    *
-   * @remarks Route: POST /api/auth/forgotpassemail
+   * @remarks Route: POST /api/auth/password-reset-requests
    * Access: Public
    *
    * @param data - The validated request data.
    * @param req - The HTTP request.
    */
-  @Post('forgotpassemail')
+  @Post('password-reset-requests')
   @UseGuards(RateLimitGuard)
   @RateLimit(resetPasswordEmailRateLimitDaily, resetPasswordEmailRateLimit)
-  async sendChangePassEmail(
-    @RequestData(new ValidateRequestPipe(sendChangePassEmailRequestSchema))
-    data: { body: SendChangePassEmailBody },
+  async createPasswordResetRequest(
+    @RequestData(new ValidateRequestPipe(createPasswordResetRequestSchema))
+    data: { body: CreatePasswordResetRequestBody },
     @Req() req: AppRequest,
   ): Promise<void> {
-    await this.passwordService.sendChangePassEmailData(data.body, req.requestId);
+    await this.passwordService.createPasswordResetRequestData(data.body, req.requestId);
   }
 
   /**
@@ -46,13 +46,13 @@ export class PasswordController {
    * updates the stored password hash, and invalidates older sessions by bumping
    * token version state.
    *
-   * @remarks Route: PUT /api/auth/resetpassword
+   * @remarks Route: POST /api/auth/password-resets
    * Access: Public
    *
    * @param data - The validated request data.
    * @returns The response payload.
    */
-  @Put('resetpassword')
+  @Post('password-resets')
   async resetPassword(
     @RequestData(new ValidateRequestPipe(resetPasswordRequestSchema))
     data: {
