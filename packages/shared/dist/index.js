@@ -2223,6 +2223,7 @@ var workoutSplitQueryDtoSchema = z31.object({
   orderIndex: workoutSplitDbSchema.shape.orderIndex,
   createdAt: serializedDateSchema,
   muscleGroup: z31.string().nullable(),
+  estimatedDurationMinutes: z31.number().nullable(),
   isActive: workoutSplitDbSchema.shape.isActive,
   exercises: z31.array(exerciseInPlanQueryDtoSchema)
 });
@@ -2389,9 +2390,10 @@ var exerciseTrackingStatsQueryDtoSchema = z33.object({
   }))
 });
 var exerciseTrackingMapsQueryDtoSchema = z33.object({
-  byDate: z33.record(z33.string(), z33.array(groupedTrackingItemQueryDtoSchema)),
-  byExerciseToSplitId: z33.record(z33.string(), z33.array(groupedTrackingItemQueryDtoSchema)),
-  bySplitName: z33.record(z33.string(), z33.array(groupedTrackingItemQueryDtoSchema))
+  byDate: z33.record(z33.string(), z33.object({
+    durationMins: z33.number(),
+    exerciseTracked: z33.array(groupedTrackingItemQueryDtoSchema)
+  }))
 });
 var exerciseTrackingAndStatsQueryDtoSchema = z33.object({
   trackingStats: exerciseTrackingStatsQueryDtoSchema,

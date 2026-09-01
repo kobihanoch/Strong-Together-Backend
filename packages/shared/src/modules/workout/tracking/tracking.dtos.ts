@@ -129,9 +129,13 @@ export const exerciseTrackingStatsQueryDtoSchema = z.object({
 });
 
 export const exerciseTrackingMapsQueryDtoSchema = z.object({
-  byDate: z.record(z.string(), z.array(groupedTrackingItemQueryDtoSchema)),
-  byExerciseToSplitId: z.record(z.string(), z.array(groupedTrackingItemQueryDtoSchema)),
-  bySplitName: z.record(z.string(), z.array(groupedTrackingItemQueryDtoSchema)),
+  byDate: z.record(
+    z.string(),
+    z.object({
+      durationMins: z.number(),
+      exerciseTracked: z.array(groupedTrackingItemQueryDtoSchema),
+    }),
+  ),
 });
 
 export const exerciseTrackingAndStatsQueryDtoSchema = z.object({

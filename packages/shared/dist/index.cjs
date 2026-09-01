@@ -2429,6 +2429,7 @@ var workoutSplitQueryDtoSchema = import_v431.z.object({
   orderIndex: workoutSplitDbSchema.shape.orderIndex,
   createdAt: serializedDateSchema,
   muscleGroup: import_v431.z.string().nullable(),
+  estimatedDurationMinutes: import_v431.z.number().nullable(),
   isActive: workoutSplitDbSchema.shape.isActive,
   exercises: import_v431.z.array(exerciseInPlanQueryDtoSchema)
 });
@@ -2595,9 +2596,10 @@ var exerciseTrackingStatsQueryDtoSchema = import_v433.z.object({
   }))
 });
 var exerciseTrackingMapsQueryDtoSchema = import_v433.z.object({
-  byDate: import_v433.z.record(import_v433.z.string(), import_v433.z.array(groupedTrackingItemQueryDtoSchema)),
-  byExerciseToSplitId: import_v433.z.record(import_v433.z.string(), import_v433.z.array(groupedTrackingItemQueryDtoSchema)),
-  bySplitName: import_v433.z.record(import_v433.z.string(), import_v433.z.array(groupedTrackingItemQueryDtoSchema))
+  byDate: import_v433.z.record(import_v433.z.string(), import_v433.z.object({
+    durationMins: import_v433.z.number(),
+    exerciseTracked: import_v433.z.array(groupedTrackingItemQueryDtoSchema)
+  }))
 });
 var exerciseTrackingAndStatsQueryDtoSchema = import_v433.z.object({
   trackingStats: exerciseTrackingStatsQueryDtoSchema,

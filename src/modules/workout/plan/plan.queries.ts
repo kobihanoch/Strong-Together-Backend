@@ -24,6 +24,36 @@ export class WorkoutPlanQueries {
    */
   async queryWholeUserWorkoutPlan(userId: string, tz: string): Promise<WholeUserWorkoutPlanQueryDto[]> {
     return this.sql<WholeUserWorkoutPlanQueryDto[]>`
+      WITH
+        ranked_workout_durations AS (
+          SELECT
+            summaries.workout_split_id,
+            EXTRACT(
+              EPOCH
+              FROM
+                (summaries.workout_end_utc - summaries.workout_start_utc)
+            ) / 60 AS duration_minutes,
+            ROW_NUMBER() OVER (
+              PARTITION BY summaries.workout_split_id
+              ORDER BY summaries.workout_start_utc DESC
+            ) AS recency_rank
+          FROM tracking.workout_summary summaries
+          WHERE summaries.user_id = ${userId}::UUID
+            AND summaries.workout_end_utc > summaries.workout_start_utc
+            AND summaries.workout_end_utc - summaries.workout_start_utc <= INTERVAL '4 hours'
+        ),
+        split_duration_estimates AS (
+          SELECT
+            durations.workout_split_id,
+            ROUND(
+              PERCENTILE_CONT(0.5) WITHIN GROUP (
+                ORDER BY durations.duration_minutes
+              )
+            )::INT AS estimated_duration_minutes
+          FROM ranked_workout_durations durations
+          WHERE durations.recency_rank <= 10
+          GROUP BY durations.workout_split_id
+        )
       SELECT
         workoutplans.id::INT,
         workout.get_number_of_splits (workoutplans.id)::INT AS "numberOfSplits",
@@ -52,6 +82,8 @@ export class WorkoutPlanQueries {
                   workoutsplits.is_active,
                   'muscleGroup',
                   workout.get_muscle_group (workoutsplits.id),
+                  'estimatedDurationMinutes',
+                  duration_estimates.estimated_duration_minutes,
                   'exercises',
                   (
                     SELECT
@@ -129,6 +161,7 @@ export class WorkoutPlanQueries {
             )
           FROM
             workout.workout_split AS workoutsplits
+            LEFT JOIN split_duration_estimates duration_estimates ON duration_estimates.workout_split_id = workoutsplits.id
           WHERE
             workoutsplits.workout_id = workoutplans.id
             AND workoutsplits.is_active = TRUE

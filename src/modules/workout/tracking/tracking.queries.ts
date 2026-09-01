@@ -23,11 +23,7 @@ export class WorkoutTrackingQueries {
    * @param tz - The IANA time-zone name.
    * @returns The exercise tracking maps result.
    */
-  async queryGetExerciseTrackingMaps(
-    userId: string,
-    days: number = 45,
-    tz: string = 'Asia/Jerusalem',
-  ): Promise<ExerciseTrackingMapsQueryDto> {
+  async queryGetExerciseTrackingMaps(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<ExerciseTrackingMapsQueryDto> {
     const [{ data }] = await this.sql<ExerciseTrackingMapsRowQueryDto[]>`
       WITH
         bounds AS (
@@ -63,6 +59,13 @@ export class WorkoutTrackingQueries {
             aws.workout_start_utc AS workout_start_utc,
             aws.workout_end_utc AS workout_end_utc,
             aws.workout_time_local AS workout_time_local,
+            ROUND(
+              EXTRACT(
+                EPOCH
+                FROM
+                  (aws.workout_end_utc - aws.workout_start_utc)
+              ) / 60
+            )::INT AS duration_minutes,
             TO_CHAR(aws.workout_time_local::date, 'YYYY-MM-DD') AS workout_date_local_string
           FROM
             all_workout_summaries aws
@@ -79,6 +82,15 @@ export class WorkoutTrackingQueries {
               FROM
                 bounds
             )
+        ),
+        duration_by_date AS (
+          SELECT
+            bws.workout_date_local_string,
+            COALESCE(SUM(bws.duration_minutes), 0)::INT AS duration_minutes
+          FROM
+            bounded_workout_summaries bws
+          GROUP BY
+            bws.workout_date_local_string
         ),
         -- All exercise tracking
         all_exercise_trackings AS (
@@ -164,58 +176,22 @@ export class WorkoutTrackingQueries {
             (
               SELECT
                 aet."workoutDate" AS workout_date_local_string,
-                JSONB_AGG(
-                  aet.exercise_tracking_payload
-                  ORDER BY
-                    aet."orderIndex" ASC
+                JSONB_BUILD_OBJECT(
+                  'durationMins',
+                  dbd.duration_minutes,
+                  'exerciseTracked',
+                  JSONB_AGG(
+                    aet.exercise_tracking_payload
+                    ORDER BY
+                      aet."orderIndex" ASC
+                  )
                 ) AS items
               FROM
                 all_exercise_trackings aet
+                JOIN duration_by_date dbd ON dbd.workout_date_local_string = aet."workoutDate"
               GROUP BY
-                aet."workoutDate"
-            ) t
-        ),
-        by_etsid AS (
-          SELECT
-            COALESCE(
-              JSONB_OBJECT_AGG("exerciseToSplitId"::TEXT, items),
-              '{}'::JSONB
-            ) AS map
-          FROM
-            (
-              SELECT
-                aet."exerciseToSplitId",
-                JSONB_AGG(
-                  aet.exercise_tracking_payload
-                  ORDER BY
-                    aet."workoutDate" DESC
-                ) AS items
-              FROM
-                all_exercise_trackings aet
-              WHERE
-                aet."exerciseToSplitId" IS NOT NULL
-              GROUP BY
-                aet."exerciseToSplitId"
-            ) t
-        ),
-        by_split_name AS (
-          SELECT
-            COALESCE(JSONB_OBJECT_AGG("splitName", items), '{}'::JSONB) AS map
-          FROM
-            (
-              SELECT
-                aet."splitName",
-                JSONB_AGG(
-                  aet.exercise_tracking_payload
-                  ORDER BY
-                    aet."workoutDate" DESC
-                ) AS items
-              FROM
-                all_exercise_trackings aet
-              WHERE
-                aet."splitName" IS NOT NULL
-              GROUP BY
-                aet."splitName"
+                aet."workoutDate",
+                dbd.duration_minutes
             ) t
         )
       SELECT
@@ -227,26 +203,6 @@ export class WorkoutTrackingQueries {
                 bdm.map
               FROM
                 by_date bdm
-            ),
-            '{}'::JSONB
-          ),
-          'byExerciseToSplitId',
-          COALESCE(
-            (
-              SELECT
-                betsid.map
-              FROM
-                by_etsid betsid
-            ),
-            '{}'::JSONB
-          ),
-          'bySplitName',
-          COALESCE(
-            (
-              SELECT
-                bsn.map
-              FROM
-                by_split_name bsn
             ),
             '{}'::JSONB
           )
@@ -263,11 +219,7 @@ export class WorkoutTrackingQueries {
    * @param tz - The IANA time-zone name.
    * @returns The exercise tracking stats result.
    */
-  async queryGetExerciseTrackingStats(
-    userId: string,
-    days: number = 45,
-    tz: string = 'Asia/Jerusalem',
-  ): Promise<ExerciseTrackingStatsQueryDto> {
+  async queryGetExerciseTrackingStats(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<ExerciseTrackingStatsQueryDto> {
     const [{ data }] = await this.sql<ExerciseTrackingStatsRowQueryDto[]>`
       WITH
         bounds AS (

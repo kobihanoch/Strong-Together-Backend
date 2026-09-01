@@ -55,6 +55,7 @@ export const workoutSplitQueryDtoSchema = z.object({
   orderIndex: workoutSplitDbSchema.shape.orderIndex,
   createdAt: serializedDateSchema,
   muscleGroup: z.string().nullable(),
+  estimatedDurationMinutes: z.number().nullable(),
   isActive: workoutSplitDbSchema.shape.isActive,
   exercises: z.array(exerciseInPlanQueryDtoSchema),
 });
