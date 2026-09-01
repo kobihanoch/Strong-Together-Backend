@@ -613,7 +613,9 @@ export class WorkoutTrackingQueries {
                   )
                 )
                 ORDER BY
-                  p.workout_start_utc DESC
+                  p.workout_start_utc DESC,
+                  p.weight DESC,
+                  p.id DESC
               ),
               '[]'::JSONB
             ) AS all_prs_payload
