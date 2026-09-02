@@ -37,10 +37,8 @@ export class GoogleService {
       idToken,
     )) as GoogleTokenVerificationResultDto;
 
-    let { userId, missingFields } = await this.googleQueries.queryFindUserIdWithGoogleUserId(googleSub);
+    let { userId } = await this.googleQueries.queryFindUserIdWithGoogleUserId(googleSub);
     const userExistOnOAuthUsers = !!userId;
-    let missingFieldsPayload = null;
-    if (userExistOnOAuthUsers && missingFields) missingFieldsPayload = missingFields.split(',');
 
     if (!userExistOnOAuthUsers) {
       let isLinked = false;
@@ -64,25 +62,16 @@ export class GoogleService {
         );
         const username = email?.split('@')[0].toLowerCase() || null;
 
-        const isValidEmail = !!email;
-        const isValidFullname = true;
-        let missingFields = '';
-        if (!isValidEmail) missingFields += 'email,';
-        if (!isValidFullname) missingFields += 'name';
-
         const userIdFromRegister = await this.googleQueries.queryCreateUserWithGoogleInfo(
           username,
-          isValidEmail ? email : null,
+          email,
           fullName,
-          missingFields !== '' ? missingFields : null,
           googleSub,
           email,
         );
         userId = userIdFromRegister;
 
         requestLogger.info({ event: 'oauth.google_registration_completed', userId }, 'Google OAuth user created');
-
-        if (missingFields !== '') missingFieldsPayload = missingFields.split(',');
       }
     }
 
@@ -96,7 +85,7 @@ export class GoogleService {
     await this.dbService.promoteCurrentRlsTxToAuthenticated(finalUserId);
     const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(finalUserId);
     const [{ tokenVersion, userData }] = rowsUserData;
-    if (hasNeverLoggedIn && !missingFieldsPayload) {
+    if (hasNeverLoggedIn) {
       try {
         await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
       } catch (e) {
@@ -133,7 +122,6 @@ export class GoogleService {
     return {
       message: 'Login successful',
       user: userData.id,
-      missingFields: missingFieldsPayload,
       accessToken,
       refreshToken,
     };

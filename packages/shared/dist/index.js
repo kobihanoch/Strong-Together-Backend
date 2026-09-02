@@ -1153,8 +1153,7 @@ var oauthAccount = identitySchema.table("oauth_account", {
   providerEmail: text7("provider_email").notNull(),
   linkedAt: timestamp9("linked_at", {
     withTimezone: true
-  }).defaultNow().notNull(),
-  missingFields: text7("missing_fields")
+  }).defaultNow().notNull()
 }, (t) => [
   primaryKey13({
     name: "oauth_account_pkey",
@@ -1948,8 +1947,7 @@ var oAuthLoginResponseSchema = z21.object({
   message: z21.string(),
   user: userDbSchema.shape.id,
   accessToken: z21.string(),
-  refreshToken: z21.string(),
-  missingFields: z21.array(z21.string()).nullable()
+  refreshToken: z21.string()
 });
 var proceedLoginResponseSchema = loginResponseSchema;
 var oAuthLoginContract = {
@@ -1959,12 +1957,10 @@ var oAuthLoginContract = {
 // src/modules/oauth/oauth.dtos.ts
 import { z as z22 } from "zod/v4";
 var oAuthLookupQueryDtoSchema = z22.object({
-  userId: userDbSchema.shape.id.nullable(),
-  missingFields: z22.string().nullable()
+  userId: userDbSchema.shape.id.nullable()
 });
 var oAuthLookupRawQueryDtoSchema = z22.object({
-  user_id: userDbSchema.shape.id,
-  missing_fields: z22.string().nullable()
+  user_id: userDbSchema.shape.id
 });
 var oAuthLookupRowQueryDtoSchema = z22.object({
   oauth_data: oAuthLookupRawQueryDtoSchema.nullable()

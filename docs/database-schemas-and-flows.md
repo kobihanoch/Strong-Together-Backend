@@ -6,7 +6,7 @@ The ERDs are generated from the reviewed DBML sources under `docs/db-diagrams/so
 
 ## Chen ERD
 
-![Chen ERD](media/dberd.png)
+![Chen ERD](media/dberd.jpg)
 
 ## Schema Map
 
@@ -17,7 +17,7 @@ The ERDs are generated from the reviewed DBML sources under `docs/db-diagrams/so
 | `tracking`  | `workout_summary`, `exercise_tracking`, `tracking_set`, `aerobic_tracking`              | Completed workout sessions, set-level strength data, aerobic history                     |
 | `reminders` | `user_reminder_setting`, `user_split_information`                                       | Reminder preferences and inferred split scheduling data                                  |
 | `messages`  | `message`                                                                               | User/system messaging                                                                    |
-| `analytics` | `v_exercise_tracking_set_expanded`, `v_prs`                                             | Security-invoker, set-level tracking and personal-record views                            |
+| `analytics` | `v_exercise_tracking_set_expanded`, `v_prs`                                             | Security-invoker, set-level tracking and personal-record views                           |
 | `guest_api` | allow-listed `SECURITY DEFINER` functions                                               | Narrow database API for unauthenticated authentication and registration flows            |
 
 ## Identity Schema

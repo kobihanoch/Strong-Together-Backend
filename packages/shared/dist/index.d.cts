@@ -2002,23 +2002,6 @@ declare const oauthAccountDbSchema: drizzle_zod.BuildSchema<"select", {
         identity: undefined;
         generated: undefined;
     }, {}, {}>;
-    missingFields: drizzle_orm_pg_core.PgColumn<{
-        name: "missing_fields";
-        tableName: "oauth_account";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
 }, undefined, undefined>;
 declare const exerciseDbSchema: drizzle_zod.BuildSchema<"select", {
     id: drizzle_orm_pg_core.PgColumn<{
@@ -4557,7 +4540,6 @@ declare const oAuthLoginResponseSchema: z.ZodObject<{
     user: z.ZodUUID;
     accessToken: z.ZodString;
     refreshToken: z.ZodString;
-    missingFields: z.ZodNullable<z.ZodArray<z.ZodString>>;
 }, z.core.$strip>;
 declare const proceedLoginResponseSchema: z.ZodObject<{
     message: z.ZodString;
@@ -4571,7 +4553,6 @@ declare const oAuthLoginContract: {
         user: z.ZodUUID;
         accessToken: z.ZodString;
         refreshToken: z.ZodString;
-        missingFields: z.ZodNullable<z.ZodArray<z.ZodString>>;
     }, z.core.$strip>;
 };
 type OAuthLoginResponse = ResponseOf<typeof oAuthLoginContract>;
@@ -4579,18 +4560,15 @@ type OAuthLoginResponse = ResponseOf<typeof oAuthLoginContract>;
 /** Normalized OAuth-account lookup result returned by query adapters. */
 declare const oAuthLookupQueryDtoSchema: z.ZodObject<{
     userId: z.ZodNullable<z.ZodUUID>;
-    missingFields: z.ZodNullable<z.ZodString>;
 }, z.core.$strip>;
 /** Raw OAuth lookup function payload using database column names. */
 declare const oAuthLookupRawQueryDtoSchema: z.ZodObject<{
     user_id: z.ZodUUID;
-    missing_fields: z.ZodNullable<z.ZodString>;
 }, z.core.$strip>;
 /** SQL row wrapping the raw OAuth lookup payload under `oauth_data`. */
 declare const oAuthLookupRowQueryDtoSchema: z.ZodObject<{
     oauth_data: z.ZodNullable<z.ZodObject<{
         user_id: z.ZodUUID;
-        missing_fields: z.ZodNullable<z.ZodString>;
     }, z.core.$strip>>;
 }, z.core.$strip>;
 /** Normalized result of attempting to link an OAuth account by email. */

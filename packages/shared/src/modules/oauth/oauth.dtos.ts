@@ -4,13 +4,11 @@ import { userDbSchema } from '../../database';
 /** Normalized OAuth-account lookup result returned by query adapters. */
 export const oAuthLookupQueryDtoSchema = z.object({
   userId: userDbSchema.shape.id.nullable(),
-  missingFields: z.string().nullable(),
 });
 
 /** Raw OAuth lookup function payload using database column names. */
 export const oAuthLookupRawQueryDtoSchema = z.object({
   user_id: userDbSchema.shape.id,
-  missing_fields: z.string().nullable(),
 });
 
 /** SQL row wrapping the raw OAuth lookup payload under `oauth_data`. */

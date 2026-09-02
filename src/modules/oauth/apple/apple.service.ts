@@ -53,13 +53,8 @@ export class AppleService {
 
     const resolvedEmail = tokenEmail ?? email ?? null;
 
-    let { userId, missingFields } = await this.appleQueries.queryFindUserIdWithAppleUserId(appleSub);
+    let { userId } = await this.appleQueries.queryFindUserIdWithAppleUserId(appleSub);
     const userExistOnOAuthUsers = !!userId;
-
-    let missingFieldsPayload = null;
-    if (userExistOnOAuthUsers && missingFields) {
-      missingFieldsPayload = missingFields.split(',');
-    }
 
     if (!userExistOnOAuthUsers) {
       let isLinked = false;
@@ -74,26 +69,16 @@ export class AppleService {
 
       if (!isLinked) {
         const username = resolvedEmail?.split('@')[0].toLowerCase() || null;
-        const isValidEmail = !!resolvedEmail;
         const candidateFullName = normalizedName;
-        const isValidFullname = true;
-        let missingFields = '';
-        if (!isValidEmail) missingFields += 'email,';
-        if (!isValidFullname) missingFields += 'name';
 
         const newUserId = await this.appleQueries.queryCreateUserWithAppleInfo(
           username,
-          isValidEmail ? resolvedEmail : null,
+          resolvedEmail,
           candidateFullName,
-          missingFields !== '' ? missingFields : null,
           appleSub,
           resolvedEmail,
         );
         userId = newUserId;
-
-        if (missingFields !== '') {
-          missingFieldsPayload = missingFields.split(',');
-        }
       }
     }
 
@@ -103,7 +88,7 @@ export class AppleService {
     const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(finalUserId);
     const [{ tokenVersion, userData }] = rowsUserData;
 
-    if (hasNeverLoggedIn && !missingFieldsPayload) {
+    if (hasNeverLoggedIn) {
       try {
         await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
       } catch (e) {
@@ -140,7 +125,6 @@ export class AppleService {
     return {
       message: 'Login successful',
       user: userData.id,
-      missingFields: missingFieldsPayload,
       accessToken,
       refreshToken,
     };

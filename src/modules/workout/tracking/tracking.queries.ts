@@ -168,8 +168,12 @@ export class WorkoutTrackingQueries {
         by_date AS (
           SELECT
             COALESCE(
-              JSONB_OBJECT_AGG(workout_date_local_string, items),
-              '{}'::JSONB
+              JSON_OBJECT_AGG(
+                workout_date_local_string,
+                items
+                ORDER BY workout_date_local_string DESC
+              ),
+              '{}'::JSON
             ) AS map
           FROM
             (
@@ -194,7 +198,7 @@ export class WorkoutTrackingQueries {
             ) t
         )
       SELECT
-        JSONB_BUILD_OBJECT(
+        JSON_BUILD_OBJECT(
           'byDate',
           COALESCE(
             (
@@ -203,7 +207,7 @@ export class WorkoutTrackingQueries {
               FROM
                 by_date bdm
             ),
-            '{}'::JSONB
+            '{}'::JSON
           )
         ) AS data
     `;

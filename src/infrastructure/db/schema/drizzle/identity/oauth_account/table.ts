@@ -11,10 +11,7 @@ export const oauthAccount = identitySchema.table(
     provider: text('provider').notNull(),
     providerUserId: text('provider_user_id').notNull(),
     providerEmail: text('provider_email').notNull(),
-    linkedAt: timestamp('linked_at', { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    missingFields: text('missing_fields'),
+    linkedAt: timestamp('linked_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     primaryKey({ name: 'oauth_account_pkey', columns: [t.id] }),

@@ -1224,15 +1224,13 @@ Successful response:
   "message": "string",
   "user": "string",
   "accessToken": "string",
-  "refreshToken": "string | null",
-  "missingFields": ["string"] 
+  "refreshToken": "string | null"
 }
 ```
 
 Notes:
 
 - Returns `Cache-Control: no-store`
-- `missingFields` is present in the shared response contract for profile completion flows
 
 ### `POST /api/oauth/google`
 
@@ -1263,8 +1261,7 @@ Successful response:
   "message": "string",
   "user": "string",
   "accessToken": "string",
-  "refreshToken": "string | null",
-  "missingFields": ["string"]
+  "refreshToken": "string | null"
 }
 ```
 

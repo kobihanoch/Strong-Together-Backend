@@ -1363,8 +1363,7 @@ var oauthAccount = identitySchema.table("oauth_account", {
   providerEmail: (0, import_pg_core28.text)("provider_email").notNull(),
   linkedAt: (0, import_pg_core28.timestamp)("linked_at", {
     withTimezone: true
-  }).defaultNow().notNull(),
-  missingFields: (0, import_pg_core28.text)("missing_fields")
+  }).defaultNow().notNull()
 }, (t) => [
   (0, import_pg_core28.primaryKey)({
     name: "oauth_account_pkey",
@@ -2158,8 +2157,7 @@ var oAuthLoginResponseSchema = import_v421.z.object({
   message: import_v421.z.string(),
   user: userDbSchema.shape.id,
   accessToken: import_v421.z.string(),
-  refreshToken: import_v421.z.string(),
-  missingFields: import_v421.z.array(import_v421.z.string()).nullable()
+  refreshToken: import_v421.z.string()
 });
 var proceedLoginResponseSchema = loginResponseSchema;
 var oAuthLoginContract = {
@@ -2169,12 +2167,10 @@ var oAuthLoginContract = {
 // src/modules/oauth/oauth.dtos.ts
 var import_v422 = require("zod/v4");
 var oAuthLookupQueryDtoSchema = import_v422.z.object({
-  userId: userDbSchema.shape.id.nullable(),
-  missingFields: import_v422.z.string().nullable()
+  userId: userDbSchema.shape.id.nullable()
 });
 var oAuthLookupRawQueryDtoSchema = import_v422.z.object({
-  user_id: userDbSchema.shape.id,
-  missing_fields: import_v422.z.string().nullable()
+  user_id: userDbSchema.shape.id
 });
 var oAuthLookupRowQueryDtoSchema = import_v422.z.object({
   oauth_data: oAuthLookupRawQueryDtoSchema.nullable()

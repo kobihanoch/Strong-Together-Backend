@@ -23,7 +23,6 @@ Table identity.oauth_account {
   provider_user_id text [not null]
   provider_email text [not null]
   linked_at timestamptz [not null]
-  missing_fields text
 
   indexes { (provider, provider_user_id) [unique] }
 }

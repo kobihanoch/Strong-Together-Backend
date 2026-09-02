@@ -23,7 +23,6 @@ export class GoogleQueries {
       SELECT guest_api.oauth_lookup('google', ${googleUserId}) AS oauth_data`;
     return {
       userId: rows[0]?.oauth_data?.user_id || null,
-      missingFields: rows[0]?.oauth_data?.missing_fields || null,
     };
   }
 
@@ -49,7 +48,6 @@ export class GoogleQueries {
    * @param candidateUsername - The candidate username.
    * @param email - The email address.
    * @param fullName - The user full name.
-   * @param oauthMissingFields - The oauth missing fields.
    * @param googleSub - The google sub.
    * @param googleEmail - The google email.
    * @returns The create user with google info result.
@@ -58,13 +56,12 @@ export class GoogleQueries {
     candidateUsername: string | null,
     email: string | null = null,
     fullName: string | null = null,
-    oauthMissingFields: string | null = null,
     googleSub: string,
     googleEmail: string | null,
   ): Promise<string> {
     const [row] = await this.sql<OAuthCreatedUserRowQueryDto[]>`
       SELECT guest_api.oauth_create_user(
-        'google', ${candidateUsername}, ${email}, ${fullName}, ${oauthMissingFields}, ${googleSub}, ${googleEmail}
+        'google', ${candidateUsername}, ${email}, ${fullName}, ${googleSub}, ${googleEmail}
       ) AS user_id
     `;
     return row.user_id;

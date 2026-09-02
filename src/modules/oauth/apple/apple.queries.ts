@@ -13,13 +13,12 @@ import { SQL } from '../../../infrastructure/db/db.tokens';
 export class AppleQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
-  /** Same shape as the Google version: returns { userId, missingFields } */
+  /** Finds the user linked to an Apple account. */
   async queryFindUserIdWithAppleUserId(appleUserId: string): Promise<OAuthLookupQueryDto> {
     const rows = await this.sql<OAuthLookupRowQueryDto[]>`
       SELECT guest_api.oauth_lookup('apple', ${appleUserId}) AS oauth_data`;
     return {
       userId: rows[0]?.oauth_data?.user_id || null,
-      missingFields: rows[0]?.oauth_data?.missing_fields || null,
     };
   }
 
@@ -38,13 +37,12 @@ export class AppleQueries {
     candidateUsername: string | null,
     email: string | null = null,
     fullName: string | null = null,
-    oauthMissingFields: string | null = null,
     appleSub: string,
     appleEmail: string | null,
   ): Promise<string> {
     const [row] = await this.sql<OAuthCreatedUserRowQueryDto[]>`
       SELECT guest_api.oauth_create_user(
-        'apple', ${candidateUsername}, ${email}, ${fullName}, ${oauthMissingFields}, ${appleSub}, ${appleEmail}
+        'apple', ${candidateUsername}, ${email}, ${fullName}, ${appleSub}, ${appleEmail}
       ) AS user_id
     `;
     return row.user_id;

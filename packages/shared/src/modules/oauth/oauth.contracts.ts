@@ -10,7 +10,6 @@ export const oAuthLoginResponseSchema = z.object({
   user: userDbSchema.shape.id,
   accessToken: z.string(),
   refreshToken: z.string(),
-  missingFields: z.array(z.string()).nullable(),
 });
 export const proceedLoginResponseSchema = loginResponseSchema;
 
