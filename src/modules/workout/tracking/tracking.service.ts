@@ -4,6 +4,7 @@ import type {
   ExerciseHistoryQueryDto,
   ExerciseTrackingMapsQueryDto,
   ExerciseTrackingStatsQueryDto,
+  PersonalRecordsQueryDto,
   CreateWorkoutSessionBody,
   CreateWorkoutSessionResponse,
 } from '@strong-together/shared';
@@ -12,6 +13,7 @@ import {
   buildExerciseHistoryKeyStable,
   buildWorkoutHistoryKeyStable,
   buildWorkoutStatisticsKeyStable,
+  buildPersonalRecordsKeyStable,
   TTL_TRACKING,
 } from './tracking.cache';
 import { WorkoutTrackingQueries } from './tracking.queries';
@@ -114,6 +116,28 @@ export class WorkoutTrackingService {
   }
 
   /**
+   * Retrieves and caches all current personal records for a user.
+   *
+   * @param userId - The authenticated user's identifier.
+   * @param fromCache - Whether to read an existing cached response.
+   * @returns The personal-record payload and whether it came from cache.
+   */
+  async getPersonalRecordsData(
+    userId: string,
+    fromCache: boolean = true,
+  ): Promise<{ payload: PersonalRecordsQueryDto; cacheHit: boolean }> {
+    const key = buildPersonalRecordsKeyStable(userId);
+    if (fromCache) {
+      const cached = await this.cacheService.cacheGetJSON(key);
+      if (cached) return { payload: cached, cacheHit: true };
+    }
+
+    const payload = await this.workoutTrackingQueries.queryGetAllPersonalRecords(userId);
+    await this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING);
+    return { payload, cacheHit: false };
+  }
+
+  /**
    * Retrieves exercise tracking.
    * @param userId - The user identifier.
    * @param days - The days.
@@ -164,6 +188,7 @@ export class WorkoutTrackingService {
     const [{ payload }] = await Promise.all([
       this.getWorkoutHistoryAndStatisticsData(userId, 45, false, tz),
       this.getExerciseHistoryData(userId, 45, false, tz),
+      this.getPersonalRecordsData(userId, false),
     ]);
     this.systemMessagesService.sendSystemMessageToUserWorkoutDone(userId);
     return payload;

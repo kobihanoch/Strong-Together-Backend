@@ -9,6 +9,8 @@ import type {
   ExerciseTrackingStatsQueryDto,
   ExerciseTrackingStatsRowQueryDto,
   FinishedWorkoutEntryQueryDto,
+  PersonalRecordsQueryDto,
+  PersonalRecordsRowQueryDto,
   WorkoutSplitLookupQueryDto,
   WorkoutSummaryIdQueryDto,
 } from '@strong-together/shared';
@@ -171,7 +173,8 @@ export class WorkoutTrackingQueries {
               JSON_OBJECT_AGG(
                 workout_date_local_string,
                 items
-                ORDER BY workout_date_local_string DESC
+                ORDER BY
+                  workout_date_local_string DESC
               ),
               '{}'::JSON
             ) AS map
@@ -227,11 +230,7 @@ export class WorkoutTrackingQueries {
    * @param tz - The IANA time-zone name used to calculate date boundaries.
    * @returns Exercise tracking grouped by exercise-to-split identifier.
    */
-  async queryGetExerciseHistory(
-    userId: string,
-    days: number = 45,
-    tz: string = 'Asia/Jerusalem',
-  ): Promise<ExerciseHistoryQueryDto> {
+  async queryGetExerciseHistory(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<ExerciseHistoryQueryDto> {
     const [{ data }] = await this.sql<ExerciseHistoryRowQueryDto[]>`
       WITH
         bounds AS (
@@ -267,8 +266,12 @@ export class WorkoutTrackingQueries {
                     'reps',
                     et.reps::INT
                   )
-                  ORDER BY et.set_index ASC
-                ) FILTER (WHERE et.set_index IS NOT NULL),
+                  ORDER BY
+                    et.set_index ASC
+                ) FILTER (
+                  WHERE
+                    et.set_index IS NOT NULL
+                ),
                 '[]'::JSONB
               ),
               'exerciseAssignment',
@@ -297,8 +300,18 @@ export class WorkoutTrackingQueries {
           WHERE
             wsum.user_id = ${userId}::UUID
             AND et.exercise_to_split_id IS NOT NULL
-            AND wsum.workout_start_utc >= (SELECT lower_bound_utc FROM bounds)
-            AND wsum.workout_start_utc < (SELECT upper_bound_utc FROM bounds)
+            AND wsum.workout_start_utc >= (
+              SELECT
+                lower_bound_utc
+              FROM
+                bounds
+            )
+            AND wsum.workout_start_utc < (
+              SELECT
+                upper_bound_utc
+              FROM
+                bounds
+            )
           GROUP BY
             et.id,
             et.exercise_to_split_id,
@@ -314,23 +327,42 @@ export class WorkoutTrackingQueries {
         ),
         by_exercise_to_split_id AS (
           SELECT
-            COALESCE(JSONB_OBJECT_AGG("exerciseToSplitId"::TEXT, items), '{}'::JSONB) AS map
+            COALESCE(
+              JSONB_OBJECT_AGG("exerciseToSplitId"::TEXT, items),
+              '{}'::JSONB
+            ) AS map
           FROM
             (
               SELECT
                 "exerciseToSplitId",
                 JSONB_BUILD_OBJECT(
                   'exerciseTracked',
-                  JSONB_AGG(payload ORDER BY "workoutStartUtc" DESC, "exerciseTrackingId" DESC)
+                  JSONB_AGG(
+                    payload
+                    ORDER BY
+                      "workoutStartUtc" DESC,
+                      "exerciseTrackingId" DESC
+                  )
                 ) AS items
-              FROM exercise_trackings
-              GROUP BY "exerciseToSplitId"
+              FROM
+                exercise_trackings
+              GROUP BY
+                "exerciseToSplitId"
             ) grouped
         )
-      SELECT JSONB_BUILD_OBJECT(
-        'byExerciseToSplitId',
-        COALESCE((SELECT map FROM by_exercise_to_split_id), '{}'::JSONB)
-      ) AS data
+      SELECT
+        JSONB_BUILD_OBJECT(
+          'byExerciseToSplitId',
+          COALESCE(
+            (
+              SELECT
+                map
+              FROM
+                by_exercise_to_split_id
+            ),
+            '{}'::JSONB
+          )
+        ) AS data
     `;
 
     return data;
@@ -624,8 +656,19 @@ export class WorkoutTrackingQueries {
               '[]'::JSONB
             ) AS all_prs_payload
           FROM
-            analytics.v_prs p
-            JOIN all_workout_summaries aws ON p.workout_summary_id = aws.id
+            (
+              SELECT
+                p.*
+              FROM
+                analytics.v_prs p
+                JOIN all_workout_summaries aws ON p.workout_summary_id = aws.id
+              ORDER BY
+                p.workout_start_utc DESC,
+                p.weight DESC,
+                p.id DESC
+              LIMIT
+                1
+            ) p
         )
       SELECT
         JSONB_BUILD_OBJECT(
@@ -735,7 +778,7 @@ export class WorkoutTrackingQueries {
               0
             )
           ),
-          'prs',
+          'latestPr',
           COALESCE(
             (
               SELECT
@@ -746,6 +789,62 @@ export class WorkoutTrackingQueries {
             '[]'::JSONB
           )
         ) AS data
+    `;
+
+    return data;
+  }
+
+  /**
+   * Retrieves all current personal records for a user.
+   *
+   * A personal record is the strongest tracked set selected by
+   * `analytics.v_prs` for an exercise. Each result is stored under its
+   * exercise identifier.
+   *
+   * @param userId - The authenticated user's identifier.
+   * @returns All personal records keyed by exercise identifier.
+   */
+  async queryGetAllPersonalRecords(userId: string): Promise<PersonalRecordsQueryDto> {
+    const [{ data }] = await this.sql<PersonalRecordsRowQueryDto[]>`
+      SELECT
+        JSONB_BUILD_OBJECT(
+          'prs',
+          COALESCE(
+            JSONB_OBJECT_AGG(
+              p.exercise_id::INT,
+              JSONB_BUILD_OBJECT(
+                'exerciseToSplitId',
+                p.exercise_to_split_id::INT,
+                'exerciseName',
+                p.exercise,
+                'prWeight',
+                p.weight,
+                'prReps',
+                p.reps::INT,
+                'prSetIndex',
+                p.set_index,
+                'estimatedOneRepMax',
+                CASE
+                  WHEN p.reps = 1 THEN p.weight::NUMERIC
+                  WHEN p.reps BETWEEN 2 AND 5  THEN (p.weight * (1 + 0.0333 * p.reps))::NUMERIC
+                  WHEN p.reps BETWEEN 6 AND 10  THEN (p.weight * 36.0 / (37.0 - p.reps))::NUMERIC
+                  WHEN p.reps BETWEEN 11 AND 12  THEN (p.weight * (1 + 0.025 * p.reps))::NUMERIC
+                  ELSE NULL
+                END
+              )
+              ORDER BY
+                p.workout_start_utc DESC,
+                p.weight DESC,
+                p.id DESC
+            ),
+            '{}'::JSONB
+          )
+        ) AS data
+      FROM
+        analytics.v_prs p
+        JOIN tracking.workout_summary wsum ON wsum.id = p.workout_summary_id
+      WHERE
+        wsum.user_id = ${userId}::UUID
     `;
 
     return data;

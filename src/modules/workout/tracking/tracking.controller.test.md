@@ -23,6 +23,12 @@
 - [x] Orders exercise history newest first.
 - [x] Returns and refreshes its dedicated cache entry.
 
+### `GET /api/personal-records` - all personal records
+
+- [x] Returns the same PR object shape used by workout statistics.
+- [x] Returns all current exercise PRs keyed by exercise ID.
+- [x] Reads the dedicated personal-records cache warmed after a workout.
+
 ### `POST /api/workout-sessions` - User C
 
 - [x] Creates tracking data.

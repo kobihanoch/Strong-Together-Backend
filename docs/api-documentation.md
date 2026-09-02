@@ -765,7 +765,7 @@ This response omits workout duration and notes, flattens the `exerciseTracking` 
     "exerciseTrackedCount": 5,
     "setTrackedCount": 15
   },
-  "prs": [
+  "latestPr": [
     {
       "exerciseToSplitId": 10,
       "exerciseId": 20,
@@ -778,6 +778,27 @@ This response omits workout duration and notes, flattens the `exerciseTracking` 
   ]
 }
 ```
+
+The statistics `latestPr` array contains at most one item: the current PR whose workout was logged most recently.
+
+`GET /api/personal-records` returns every current exercise PR using the same object shape:
+
+```json
+{
+  "prs": {
+    "20": {
+      "exerciseToSplitId": 10,
+      "exerciseName": "Bench Press",
+      "prWeight": 100,
+      "prReps": 5,
+      "prSetIndex": 0,
+      "estimatedOneRepMax": 116.67
+    }
+  }
+}
+```
+
+Each record is stored under its exercise ID. The endpoint requires a user session and returns `X-Cache: HIT` or `X-Cache: MISS`.
 
 `nextWorkoutSplit` and `estimatedOneRepMax` can be `null`. The estimate uses the recorded weight for one rep, Epley for 2–5 reps, Brzycki for 6–10 reps, and O'Connor for 11–12 reps; it is `null` outside that range.
 

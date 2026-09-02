@@ -7,6 +7,7 @@ import type {
   GetWorkoutStatisticsResponse,
   CreateWorkoutSessionBody,
   GetWorkoutHistoryQuery,
+  GetPersonalRecordsResponse,
 } from '@strong-together/shared';
 import { createWorkoutSessionRequestSchema, getWorkoutHistoryRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -26,6 +27,7 @@ import { WorkoutTrackingService } from './tracking.service';
  * - GET /api/workout-history
  * - GET /api/exercise-history
  * - GET /api/workout-statistics
+ * - GET /api/personal-records
  * - POST /api/workout-sessions
  *
  * Access: User
@@ -112,6 +114,29 @@ export class WorkoutTrackingController {
     const tz = data.query.tz || 'Asia/Jerusalem';
 
     const { payload, cacheHit } = await this.workoutTrackingService.getWorkoutStatisticsData(user.id, 45, true, tz);
+    res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
+    return payload;
+  }
+
+  /**
+   * Get all current personal records for the authenticated user.
+   *
+   * Returns the strongest logged set for every tracked exercise as an object
+   * keyed by exercise identifier. Sets `X-Cache` to reflect cache usage.
+   *
+   * @remarks Route: GET /api/personal-records
+   * Access: User
+   *
+   * @param user - The authenticated user.
+   * @param res - The HTTP response.
+   * @returns All current personal records.
+   */
+  @Get('personal-records')
+  async getPersonalRecords(
+    @CurrentUser() user: AuthenticatedUser,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<GetPersonalRecordsResponse> {
+    const { payload, cacheHit } = await this.workoutTrackingService.getPersonalRecordsData(user.id, true);
     res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
     return payload;
   }

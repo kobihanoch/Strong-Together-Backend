@@ -2360,6 +2360,20 @@ var trackingByExerciseToSplitIdItemQueryDtoSchema = groupedTrackingItemQueryDtoS
 }).extend({
   workoutStartLocal: serializedDateSchema
 });
+var personalRecordQueryDtoSchema = z33.object({
+  exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
+  exerciseId: exerciseDbSchema.shape.id,
+  exerciseName: exerciseDbSchema.shape.name,
+  prWeight: trackingSetDbSchema.shape.weight,
+  prReps: trackingSetDbSchema.shape.reps,
+  prSetIndex: trackingSetDbSchema.shape.setIndex,
+  estimatedOneRepMax: z33.number().nullable()
+});
+var personalRecordsQueryDtoSchema = z33.object({
+  prs: z33.record(z33.string(), personalRecordQueryDtoSchema.omit({
+    exerciseId: true
+  }))
+});
 var exerciseTrackingStatsQueryDtoSchema = z33.object({
   workoutCount: z33.coerce.number(),
   hasExerciseTracking: z33.boolean(),
@@ -2380,15 +2394,7 @@ var exerciseTrackingStatsQueryDtoSchema = z33.object({
     exerciseTrackedCount: z33.coerce.number().nullable(),
     setTrackedCount: z33.coerce.number().nullable()
   }),
-  prs: z33.array(z33.object({
-    exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
-    exerciseId: exerciseDbSchema.shape.id,
-    exerciseName: exerciseDbSchema.shape.name,
-    prWeight: trackingSetDbSchema.shape.weight,
-    prReps: trackingSetDbSchema.shape.reps,
-    prSetIndex: trackingSetDbSchema.shape.setIndex,
-    estimatedOneRepMax: z33.number().nullable()
-  }))
+  latestPr: z33.array(personalRecordQueryDtoSchema).max(1)
 });
 var exerciseTrackingMapsQueryDtoSchema = z33.object({
   byDate: z33.record(z33.string(), z33.object({
@@ -2416,6 +2422,9 @@ var exerciseTrackingMapsRowQueryDtoSchema = z33.object({
 });
 var exerciseHistoryRowQueryDtoSchema = z33.object({
   data: exerciseHistoryQueryDtoSchema
+});
+var personalRecordsRowQueryDtoSchema = z33.object({
+  data: personalRecordsQueryDtoSchema
 });
 var workoutSplitLookupQueryDtoSchema = z33.object({
   workoutSplitId: workoutSplitDbSchema.shape.id
@@ -2460,6 +2469,10 @@ var createWorkoutSessionResponseSchema = exerciseTrackingAndStatsQueryDtoSchema;
 var createWorkoutSessionContract = {
   request: createWorkoutSessionRequestSchema,
   response: createWorkoutSessionResponseSchema
+};
+var getPersonalRecordsResponseSchema = personalRecordsQueryDtoSchema;
+var getPersonalRecordsContract = {
+  response: getPersonalRecordsResponseSchema
 };
 export {
   accessTokenPayloadDtoSchema,
@@ -2539,6 +2552,8 @@ export {
   getCurrentUserResponseSchema,
   getExerciseHistoryContract,
   getExerciseHistoryResponseSchema,
+  getPersonalRecordsContract,
+  getPersonalRecordsResponseSchema,
   getVerificationStatusContract,
   getVerificationStatusRequestSchema,
   getWorkoutHistoryContract,
@@ -2580,6 +2595,9 @@ export {
   oAuthLookupRawQueryDtoSchema,
   oAuthLookupRowQueryDtoSchema,
   oauthAccountDbSchema,
+  personalRecordQueryDtoSchema,
+  personalRecordsQueryDtoSchema,
+  personalRecordsRowQueryDtoSchema,
   proceedLoginResponseSchema,
   prsViewDbSchema,
   refreshTokenContract,

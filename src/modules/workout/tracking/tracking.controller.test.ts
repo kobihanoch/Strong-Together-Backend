@@ -6,6 +6,7 @@ import {
   getWorkoutHistoryResponseSchema,
   getExerciseHistoryResponseSchema,
   getWorkoutStatisticsResponseSchema,
+  getPersonalRecordsResponseSchema,
   loginResponseSchema,
 } from '@strong-together/shared';
 import { createApp } from '../../../app';
@@ -18,7 +19,11 @@ import {
 } from '../../../common/tests/helpers/db';
 import { deleteRedisKeysByPattern, getRedisKey } from '../../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../../common/tests/helpers/users';
-import { buildExerciseHistoryKeyStable, buildWorkoutHistoryKeyStable } from './tracking.cache';
+import {
+  buildExerciseHistoryKeyStable,
+  buildPersonalRecordsKeyStable,
+  buildWorkoutHistoryKeyStable,
+} from './tracking.cache';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 const users = new Set<string>();
@@ -34,6 +39,7 @@ afterEach(async () => {
       deleteRedisKeysByPattern(`xt:tracking:workout-history:v*:${userId}:*`),
       deleteRedisKeysByPattern(`xt:tracking:workout-statistics:v*:${userId}:*`),
       deleteRedisKeysByPattern(`xt:tracking:exercise-history:v*:${userId}:*`),
+      deleteRedisKeysByPattern(`xt:tracking:personal-records:v*:${userId}`),
     ]),
   );
   await cleanupTestUsers(users);
@@ -89,6 +95,15 @@ describe('WorkoutTrackingController', () => {
     expectSchema(getWorkoutHistoryResponseSchema, response.body);
     expect(response.body.byDate).toEqual({});
     expect(await getRedisKey(buildWorkoutHistoryKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
+
+    const personalRecordsResponse = await request(app.getHttpServer())
+      .get('/api/personal-records')
+      .set(authHeaders(user.accessToken));
+    expect(personalRecordsResponse.status).toBe(200);
+    expect(personalRecordsResponse.headers['x-cache']).toBe('MISS');
+    expectSchema(getPersonalRecordsResponseSchema, personalRecordsResponse.body);
+    expect(personalRecordsResponse.body.prs).toEqual({});
+    expect(await getRedisKey(buildPersonalRecordsKeyStable(user.userId))).toBeTypeOf('string');
   });
 
   it('GET /api/workout-history returns User B schema-valid empty tracking when plan exists but no tracking', async () => {
@@ -186,6 +201,15 @@ describe('WorkoutTrackingController', () => {
     expect(await getWorkoutSummaryCount(user.userId)).toBe(1);
     expect(await getExerciseTrackingCountForUser(user.userId)).toBe(1);
     expect(await getRedisKey(buildWorkoutHistoryKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
+
+    const personalRecordsResponse = await request(app.getHttpServer())
+      .get('/api/personal-records')
+      .set(authHeaders(user.accessToken));
+    expect(personalRecordsResponse.status).toBe(200);
+    expect(personalRecordsResponse.headers['x-cache']).toBe('HIT');
+    expectSchema(getPersonalRecordsResponseSchema, personalRecordsResponse.body);
+    expect(Object.keys(personalRecordsResponse.body.prs)).toHaveLength(1);
+    expect(await getRedisKey(buildPersonalRecordsKeyStable(user.userId))).toBeTypeOf('string');
   });
 
   it('GET /api/exercise-history groups flattened tracking by exercise assignment newest first and caches it', async () => {
@@ -262,6 +286,9 @@ describe('WorkoutTrackingController', () => {
       .get('/api/exercise-history')
       .query({ tz: 'Asia/Jerusalem' })
       .set('x-app-version', '4.5.0');
+    const getPersonalRecordsResponse = await request(app.getHttpServer())
+      .get('/api/personal-records')
+      .set('x-app-version', '4.5.0');
     const postResponse = await request(app.getHttpServer())
       .post('/api/workout-sessions')
       .set('x-app-version', '4.5.0')
@@ -269,6 +296,7 @@ describe('WorkoutTrackingController', () => {
 
     expect(getResponse.status).toBe(401);
     expect(getExerciseResponse.status).toBe(401);
+    expect(getPersonalRecordsResponse.status).toBe(401);
     expect(postResponse.status).toBe(401);
   });
 });

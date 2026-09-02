@@ -6,6 +6,7 @@ import {
   exerciseTrackingStatsQueryDtoSchema,
   exerciseHistoryQueryDtoSchema,
   finishedWorkoutEntryQueryDtoSchema,
+  personalRecordsQueryDtoSchema,
 } from './tracking.dtos';
 
 // Get exercise tracking
@@ -46,9 +47,15 @@ export const createWorkoutSessionContract = {
   response: createWorkoutSessionResponseSchema,
 } satisfies Contract;
 
+export const getPersonalRecordsResponseSchema = personalRecordsQueryDtoSchema;
+export const getPersonalRecordsContract = {
+  response: getPersonalRecordsResponseSchema,
+} satisfies Contract;
+
 export type GetWorkoutHistoryQuery = QueryOf<typeof getWorkoutHistoryContract>;
 export type GetWorkoutHistoryResponse = ResponseOf<typeof getWorkoutHistoryContract>;
 export type GetExerciseHistoryResponse = ResponseOf<typeof getExerciseHistoryContract>;
 export type GetWorkoutStatisticsResponse = ResponseOf<typeof getWorkoutStatisticsContract>;
+export type GetPersonalRecordsResponse = ResponseOf<typeof getPersonalRecordsContract>;
 export type CreateWorkoutSessionBody = BodyOf<typeof createWorkoutSessionContract>;
 export type CreateWorkoutSessionResponse = ResponseOf<typeof createWorkoutSessionContract>;

@@ -110,7 +110,7 @@ Analytics is modeled through security-invoker views:
 
 Security-invoker views are an important choice because they preserve caller RLS behavior. Analytics queries can be expressive and reusable without accidentally becoming privileged read paths.
 
-The API uses these views for tracking maps and statistics. `v_prs` selects the strongest recorded set per exercise. Tracking stats expose that set and estimate its one-rep max with a rep-range-specific formula (Epley, Brzycki, or O'Connor), returning `null` when the recorded rep count is outside the supported range.
+The API uses these views for tracking maps and statistics. `v_prs` selects the strongest recorded set per exercise. Tracking stats expose only the most recently logged current PR under `latestPr`, while `GET /api/personal-records` exposes all current PRs as an object keyed by exercise ID. Both estimate one-rep max with a rep-range-specific formula (Epley, Brzycki, or O'Connor), returning `null` when the recorded rep count is outside the supported range.
 
 ## Reminders Schema
 
