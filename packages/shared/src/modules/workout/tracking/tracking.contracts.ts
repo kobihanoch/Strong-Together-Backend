@@ -19,9 +19,10 @@ export const getWorkoutHistoryContract = {
   response: getWorkoutHistoryResponseSchema,
 } satisfies Contract;
 
+export const getExerciseHistoryRequestSchema = z.object({ query: z.object({ tz: z.string().optional() }) });
 export const getExerciseHistoryResponseSchema = exerciseHistoryQueryDtoSchema;
 export const getExerciseHistoryContract = {
-  request: getWorkoutHistoryRequestSchema,
+  request: getExerciseHistoryRequestSchema,
   response: getExerciseHistoryResponseSchema,
 } satisfies Contract;
 
@@ -48,11 +49,15 @@ export const createWorkoutSessionContract = {
 } satisfies Contract;
 
 export const getPersonalRecordsResponseSchema = personalRecordsQueryDtoSchema;
+export const getPersonalRecordsRequestSchema = z.object({ query: z.object({ tz: z.string().optional() }) });
 export const getPersonalRecordsContract = {
+  request: getPersonalRecordsRequestSchema,
   response: getPersonalRecordsResponseSchema,
 } satisfies Contract;
 
 export type GetWorkoutHistoryQuery = QueryOf<typeof getWorkoutHistoryContract>;
+export type GetExerciseHistoryQuery = QueryOf<typeof getExerciseHistoryContract>;
+export type GetPersonalRecordsQuery = QueryOf<typeof getPersonalRecordsContract>;
 export type GetWorkoutHistoryResponse = ResponseOf<typeof getWorkoutHistoryContract>;
 export type GetExerciseHistoryResponse = ResponseOf<typeof getExerciseHistoryContract>;
 export type GetWorkoutStatisticsResponse = ResponseOf<typeof getWorkoutStatisticsContract>;

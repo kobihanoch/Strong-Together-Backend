@@ -120,19 +120,22 @@ export class WorkoutTrackingService {
    *
    * @param userId - The authenticated user's identifier.
    * @param fromCache - Whether to read an existing cached response.
+   * @param tz - The IANA time-zone name used for local workout timestamps.
    * @returns The personal-record payload and whether it came from cache.
    */
   async getPersonalRecordsData(
     userId: string,
     fromCache: boolean = true,
+    tz: string,
   ): Promise<{ payload: PersonalRecordsQueryDto; cacheHit: boolean }> {
-    const key = buildPersonalRecordsKeyStable(userId);
+    const key = buildPersonalRecordsKeyStable(userId, tz);
     if (fromCache) {
+      await this.cacheService.cacheDeleteOtherTimezones(key);
       const cached = await this.cacheService.cacheGetJSON(key);
       if (cached) return { payload: cached, cacheHit: true };
     }
 
-    const payload = await this.workoutTrackingQueries.queryGetAllPersonalRecords(userId);
+    const payload = await this.workoutTrackingQueries.queryGetAllPersonalRecords(userId, tz);
     await this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING);
     return { payload, cacheHit: false };
   }
@@ -188,7 +191,7 @@ export class WorkoutTrackingService {
     const [{ payload }] = await Promise.all([
       this.getWorkoutHistoryAndStatisticsData(userId, 45, false, tz),
       this.getExerciseHistoryData(userId, 45, false, tz),
-      this.getPersonalRecordsData(userId, false),
+      this.getPersonalRecordsData(userId, false, tz),
     ]);
     this.systemMessagesService.sendSystemMessageToUserWorkoutDone(userId);
     return payload;

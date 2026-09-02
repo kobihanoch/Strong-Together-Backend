@@ -2367,7 +2367,8 @@ var personalRecordQueryDtoSchema = z33.object({
   prWeight: trackingSetDbSchema.shape.weight,
   prReps: trackingSetDbSchema.shape.reps,
   prSetIndex: trackingSetDbSchema.shape.setIndex,
-  estimatedOneRepMax: z33.number().nullable()
+  estimatedOneRepMax: z33.number().nullable(),
+  workoutStartLocal: serializedDateSchema
 });
 var personalRecordsQueryDtoSchema = z33.object({
   prs: z33.record(z33.string(), personalRecordQueryDtoSchema.omit({
@@ -2447,9 +2448,14 @@ var getWorkoutHistoryContract = {
   request: getWorkoutHistoryRequestSchema,
   response: getWorkoutHistoryResponseSchema
 };
+var getExerciseHistoryRequestSchema = z34.object({
+  query: z34.object({
+    tz: z34.string().optional()
+  })
+});
 var getExerciseHistoryResponseSchema = exerciseHistoryQueryDtoSchema;
 var getExerciseHistoryContract = {
-  request: getWorkoutHistoryRequestSchema,
+  request: getExerciseHistoryRequestSchema,
   response: getExerciseHistoryResponseSchema
 };
 var getWorkoutStatisticsResponseSchema = exerciseTrackingStatsQueryDtoSchema;
@@ -2471,7 +2477,13 @@ var createWorkoutSessionContract = {
   response: createWorkoutSessionResponseSchema
 };
 var getPersonalRecordsResponseSchema = personalRecordsQueryDtoSchema;
+var getPersonalRecordsRequestSchema = z34.object({
+  query: z34.object({
+    tz: z34.string().optional()
+  })
+});
 var getPersonalRecordsContract = {
+  request: getPersonalRecordsRequestSchema,
   response: getPersonalRecordsResponseSchema
 };
 export {
@@ -2551,8 +2563,10 @@ export {
   getCurrentUserContract,
   getCurrentUserResponseSchema,
   getExerciseHistoryContract,
+  getExerciseHistoryRequestSchema,
   getExerciseHistoryResponseSchema,
   getPersonalRecordsContract,
+  getPersonalRecordsRequestSchema,
   getPersonalRecordsResponseSchema,
   getVerificationStatusContract,
   getVerificationStatusRequestSchema,

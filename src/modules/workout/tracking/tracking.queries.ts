@@ -646,6 +646,11 @@ export class WorkoutTrackingQueries {
                       WHEN p.reps BETWEEN 11 AND 12  THEN (p.weight * (1 + 0.025 * p.reps))::NUMERIC -- O'Connor
                       ELSE NULL
                     END
+                  ),
+                  'workoutStartLocal',
+                  TO_CHAR(
+                    p.workout_start_utc AT TIME ZONE ${tz},
+                    'YYYY-MM-DD"T"HH24:MI:SS.MS'
                   )
                 )
                 ORDER BY
@@ -802,9 +807,10 @@ export class WorkoutTrackingQueries {
    * exercise identifier.
    *
    * @param userId - The authenticated user's identifier.
+   * @param tz - The IANA time-zone name used for local workout timestamps.
    * @returns All personal records keyed by exercise identifier.
    */
-  async queryGetAllPersonalRecords(userId: string): Promise<PersonalRecordsQueryDto> {
+  async queryGetAllPersonalRecords(userId: string, tz: string): Promise<PersonalRecordsQueryDto> {
     const [{ data }] = await this.sql<PersonalRecordsRowQueryDto[]>`
       SELECT
         JSONB_BUILD_OBJECT(
@@ -830,7 +836,12 @@ export class WorkoutTrackingQueries {
                   WHEN p.reps BETWEEN 6 AND 10  THEN (p.weight * 36.0 / (37.0 - p.reps))::NUMERIC
                   WHEN p.reps BETWEEN 11 AND 12  THEN (p.weight * (1 + 0.025 * p.reps))::NUMERIC
                   ELSE NULL
-                END
+                END,
+                'workoutStartLocal',
+                TO_CHAR(
+                  p.workout_start_utc AT TIME ZONE ${tz},
+                  'YYYY-MM-DD"T"HH24:MI:SS.MS'
+                )
               )
               ORDER BY
                 p.workout_start_utc DESC,

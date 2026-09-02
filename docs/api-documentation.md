@@ -773,7 +773,8 @@ This response omits workout duration and notes, flattens the `exerciseTracking` 
       "prWeight": 100,
       "prReps": 5,
       "prSetIndex": 0,
-      "estimatedOneRepMax": 116.67
+      "estimatedOneRepMax": 116.67,
+      "workoutStartLocal": "2026-04-20T13:30:00.000"
     }
   ]
 }
@@ -792,13 +793,14 @@ The statistics `latestPr` array contains at most one item: the current PR whose 
       "prWeight": 100,
       "prReps": 5,
       "prSetIndex": 0,
-      "estimatedOneRepMax": 116.67
+      "estimatedOneRepMax": 116.67,
+      "workoutStartLocal": "2026-04-20T13:30:00.000"
     }
   }
 }
 ```
 
-Each record is stored under its exercise ID. The endpoint requires a user session and returns `X-Cache: HIT` or `X-Cache: MISS`.
+Each record is stored under its exercise ID. Pass the optional `tz` query parameter to select the IANA timezone used for `workoutStartLocal`; it defaults to `Asia/Jerusalem`. The endpoint requires a user session and returns `X-Cache: HIT` or `X-Cache: MISS`.
 
 `nextWorkoutSplit` and `estimatedOneRepMax` can be `null`. The estimate uses the recorded weight for one rep, Epley for 2–5 reps, Brzycki for 6–10 reps, and O'Connor for 11–12 reps; it is `null` outside that range.
 

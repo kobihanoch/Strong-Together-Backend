@@ -39,7 +39,7 @@ afterEach(async () => {
       deleteRedisKeysByPattern(`xt:tracking:workout-history:v*:${userId}:*`),
       deleteRedisKeysByPattern(`xt:tracking:workout-statistics:v*:${userId}:*`),
       deleteRedisKeysByPattern(`xt:tracking:exercise-history:v*:${userId}:*`),
-      deleteRedisKeysByPattern(`xt:tracking:personal-records:v*:${userId}`),
+      deleteRedisKeysByPattern(`xt:tracking:personal-records:v*:${userId}:*`),
     ]),
   );
   await cleanupTestUsers(users);
@@ -98,12 +98,13 @@ describe('WorkoutTrackingController', () => {
 
     const personalRecordsResponse = await request(app.getHttpServer())
       .get('/api/personal-records')
+      .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(user.accessToken));
     expect(personalRecordsResponse.status).toBe(200);
     expect(personalRecordsResponse.headers['x-cache']).toBe('MISS');
     expectSchema(getPersonalRecordsResponseSchema, personalRecordsResponse.body);
     expect(personalRecordsResponse.body.prs).toEqual({});
-    expect(await getRedisKey(buildPersonalRecordsKeyStable(user.userId))).toBeTypeOf('string');
+    expect(await getRedisKey(buildPersonalRecordsKeyStable(user.userId, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
   it('GET /api/workout-history returns User B schema-valid empty tracking when plan exists but no tracking', async () => {
@@ -204,12 +205,15 @@ describe('WorkoutTrackingController', () => {
 
     const personalRecordsResponse = await request(app.getHttpServer())
       .get('/api/personal-records')
+      .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(user.accessToken));
     expect(personalRecordsResponse.status).toBe(200);
     expect(personalRecordsResponse.headers['x-cache']).toBe('HIT');
     expectSchema(getPersonalRecordsResponseSchema, personalRecordsResponse.body);
     expect(Object.keys(personalRecordsResponse.body.prs)).toHaveLength(1);
-    expect(await getRedisKey(buildPersonalRecordsKeyStable(user.userId))).toBeTypeOf('string');
+    const [personalRecord] = Object.values(personalRecordsResponse.body.prs) as { workoutStartLocal: unknown }[];
+    expect(personalRecord.workoutStartLocal).toBeTypeOf('string');
+    expect(await getRedisKey(buildPersonalRecordsKeyStable(user.userId, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
   it('GET /api/exercise-history groups flattened tracking by exercise assignment newest first and caches it', async () => {

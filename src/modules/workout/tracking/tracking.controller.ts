@@ -8,8 +8,15 @@ import type {
   CreateWorkoutSessionBody,
   GetWorkoutHistoryQuery,
   GetPersonalRecordsResponse,
+  GetExerciseHistoryQuery,
+  GetPersonalRecordsQuery,
 } from '@strong-together/shared';
-import { createWorkoutSessionRequestSchema, getWorkoutHistoryRequestSchema } from '@strong-together/shared';
+import {
+  createWorkoutSessionRequestSchema,
+  getExerciseHistoryRequestSchema,
+  getPersonalRecordsRequestSchema,
+  getWorkoutHistoryRequestSchema,
+} from '@strong-together/shared';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
@@ -82,7 +89,7 @@ export class WorkoutTrackingController {
    */
   @Get('exercise-history')
   async getExerciseHistory(
-    @RequestData(new ValidateRequestPipe(getWorkoutHistoryRequestSchema)) data: { query: GetWorkoutHistoryQuery },
+    @RequestData(new ValidateRequestPipe(getExerciseHistoryRequestSchema)) data: { query: GetExerciseHistoryQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GetExerciseHistoryResponse> {
@@ -127,16 +134,19 @@ export class WorkoutTrackingController {
    * @remarks Route: GET /api/personal-records
    * Access: User
    *
+   * @param data - The validated request data containing the timezone.
    * @param user - The authenticated user.
    * @param res - The HTTP response.
    * @returns All current personal records.
    */
   @Get('personal-records')
   async getPersonalRecords(
+    @RequestData(new ValidateRequestPipe(getPersonalRecordsRequestSchema)) data: { query: GetPersonalRecordsQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GetPersonalRecordsResponse> {
-    const { payload, cacheHit } = await this.workoutTrackingService.getPersonalRecordsData(user.id, true);
+    const tz = data.query.tz || 'Asia/Jerusalem';
+    const { payload, cacheHit } = await this.workoutTrackingService.getPersonalRecordsData(user.id, true, tz);
     res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
     return payload;
   }

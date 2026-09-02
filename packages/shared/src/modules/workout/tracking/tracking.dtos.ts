@@ -105,6 +105,7 @@ export const personalRecordQueryDtoSchema = z.object({
   prReps: trackingSetDbSchema.shape.reps,
   prSetIndex: trackingSetDbSchema.shape.setIndex,
   estimatedOneRepMax: z.number().nullable(),
+  workoutStartLocal: serializedDateSchema,
 });
 
 export const personalRecordsQueryDtoSchema = z.object({

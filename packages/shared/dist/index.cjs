@@ -97,8 +97,10 @@ __export(index_exports, {
   getCurrentUserContract: () => getCurrentUserContract,
   getCurrentUserResponseSchema: () => getCurrentUserResponseSchema,
   getExerciseHistoryContract: () => getExerciseHistoryContract,
+  getExerciseHistoryRequestSchema: () => getExerciseHistoryRequestSchema,
   getExerciseHistoryResponseSchema: () => getExerciseHistoryResponseSchema,
   getPersonalRecordsContract: () => getPersonalRecordsContract,
+  getPersonalRecordsRequestSchema: () => getPersonalRecordsRequestSchema,
   getPersonalRecordsResponseSchema: () => getPersonalRecordsResponseSchema,
   getVerificationStatusContract: () => getVerificationStatusContract,
   getVerificationStatusRequestSchema: () => getVerificationStatusRequestSchema,
@@ -2582,7 +2584,8 @@ var personalRecordQueryDtoSchema = import_v433.z.object({
   prWeight: trackingSetDbSchema.shape.weight,
   prReps: trackingSetDbSchema.shape.reps,
   prSetIndex: trackingSetDbSchema.shape.setIndex,
-  estimatedOneRepMax: import_v433.z.number().nullable()
+  estimatedOneRepMax: import_v433.z.number().nullable(),
+  workoutStartLocal: serializedDateSchema
 });
 var personalRecordsQueryDtoSchema = import_v433.z.object({
   prs: import_v433.z.record(import_v433.z.string(), personalRecordQueryDtoSchema.omit({
@@ -2662,9 +2665,14 @@ var getWorkoutHistoryContract = {
   request: getWorkoutHistoryRequestSchema,
   response: getWorkoutHistoryResponseSchema
 };
+var getExerciseHistoryRequestSchema = import_v434.z.object({
+  query: import_v434.z.object({
+    tz: import_v434.z.string().optional()
+  })
+});
 var getExerciseHistoryResponseSchema = exerciseHistoryQueryDtoSchema;
 var getExerciseHistoryContract = {
-  request: getWorkoutHistoryRequestSchema,
+  request: getExerciseHistoryRequestSchema,
   response: getExerciseHistoryResponseSchema
 };
 var getWorkoutStatisticsResponseSchema = exerciseTrackingStatsQueryDtoSchema;
@@ -2686,7 +2694,13 @@ var createWorkoutSessionContract = {
   response: createWorkoutSessionResponseSchema
 };
 var getPersonalRecordsResponseSchema = personalRecordsQueryDtoSchema;
+var getPersonalRecordsRequestSchema = import_v434.z.object({
+  query: import_v434.z.object({
+    tz: import_v434.z.string().optional()
+  })
+});
 var getPersonalRecordsContract = {
+  request: getPersonalRecordsRequestSchema,
   response: getPersonalRecordsResponseSchema
 };
 // Annotate the CommonJS export names for ESM import in node:
@@ -2767,8 +2781,10 @@ var getPersonalRecordsContract = {
   getCurrentUserContract,
   getCurrentUserResponseSchema,
   getExerciseHistoryContract,
+  getExerciseHistoryRequestSchema,
   getExerciseHistoryResponseSchema,
   getPersonalRecordsContract,
+  getPersonalRecordsRequestSchema,
   getPersonalRecordsResponseSchema,
   getVerificationStatusContract,
   getVerificationStatusRequestSchema,

@@ -16,4 +16,5 @@ export const buildWorkoutStatisticsKeyStable = (userId: string, days: number, tz
 export const buildExerciseHistoryKeyStable = (userId: string, days: number, tz: string): string =>
   `${EXERCISE_HISTORY_NS}:${userId}:${days}:${tz}`;
 
-export const buildPersonalRecordsKeyStable = (userId: string): string => `${PERSONAL_RECORDS_NS}:${userId}`;
+export const buildPersonalRecordsKeyStable = (userId: string, tz: string): string =>
+  `${PERSONAL_RECORDS_NS}:${userId}:${tz}`;
