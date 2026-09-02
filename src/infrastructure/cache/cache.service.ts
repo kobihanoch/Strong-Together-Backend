@@ -1,5 +1,6 @@
 import { gunzipSync, gzipSync } from 'zlib';
 import { appConfig } from '../../config/app.config';
+import { redisConfig } from '../../config/redis.config';
 import { createLogger } from '../logger';
 import { Inject, Injectable } from '@nestjs/common';
 import { RedisClientType } from 'redis';
@@ -33,6 +34,8 @@ export class CacheService {
    */
   async cacheGetJSON<T = any>(key: string): Promise<T | null> {
     if (!this.enabled || !this.redis) return null;
+    const keyVersion = key.match(/:v(\d+)(?=:|$)/)?.[1];
+    if (keyVersion !== String(redisConfig.cacheVersion)) return null;
     try {
       const b64 = await this.redis.get(key);
       if (!b64) return null;

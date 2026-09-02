@@ -27,6 +27,7 @@ SYSTEM_USER_ID=00000000-0000-0000-0000-000000000000
 # Feature flags
 DPOP_ENABLED=false
 CACHE_ENABLED=true
+CACHE_VERSION=2
 ENABLE_SOCKET_REDIS_ADAPTER=true
 
 # Database
@@ -89,6 +90,8 @@ LOG_LEVEL=debug
 ENABLE_DEBUG_WINDOW=0
 ```
 
+`CACHE_VERSION` must be a positive integer such as `1`, `2`, or `3`. It is embedded as `vN` in every application cache key. Cache reads treat keys with a missing or different version as misses, so incrementing this value invalidates earlier application-cache formats without requiring immediate deletion.
+
 ## Test Template
 
 The test environment uses isolated infrastructure and different ports. Values below are placeholders for local tests only.
@@ -102,6 +105,7 @@ SYSTEM_USER_ID=00000000-0000-0000-0000-000000000000
 
 DPOP_ENABLED=false
 CACHE_ENABLED=true
+CACHE_VERSION=2
 ENABLE_SOCKET_REDIS_ADAPTER=true
 
 DATABASE_URL=postgres://app_runtime_user:app_runtime_test@127.0.0.1:5433/strongtogether_test
@@ -171,7 +175,7 @@ Production secrets should be generated uniquely per environment. Do not reuse lo
 | Database | `DATABASE_URL` (non-superuser application runtime), `DRIZZLE_DATABASE_URL` (local/test admin tooling), `PROD_DATABASE_URL` (production migration tooling) |
 | Auth | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_VERIFY_SECRET`, `JWT_FORGOT_PASSWORD_SECRET`, `CHANGE_EMAIL_SECRET`, `JWT_SOCKET_SECRET`, `APPLE_ALLOWED_AUDS` |
 | Redis | `REDIS_HOST`, `REDIS_PORT`, `REDIS_URL`, `REDIS_USERNAME`, `REDIS_PASSWORD` |
-| Cache TTLs | `CACHE_TTL_TRACKING_SEC`, `CACHE_TTL_PLAN_SEC`, `CACHE_TTL_ANALYTICS_SEC`, `CACHE_TTL_AEROBICS_SEC` |
+| Cache configuration | `CACHE_VERSION`, `CACHE_TTL_TRACKING_SEC`, `CACHE_TTL_PLAN_SEC`, `CACHE_TTL_ANALYTICS_SEC`, `CACHE_TTL_AEROBICS_SEC` |
 | AWS / LocalStack | `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_BUCKET_NAME`, `AWS_S3_ENDPOINT_URL`, `AWS_S3_PRESIGN_ENDPOINT_URL`, `AWS_SQS_ENDPOINT_URL`, `AWS_ANALYSIS_SQS_QUEUE_URL` |
 | Supabase-compatible storage | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE`, `BUCKET_NAME` |
 | Email | `RESEND_API_KEY`, `MAILDEV_API_URL`, `MAILDEV_SMTP_HOST`, `MAILDEV_SMTP_PORT` |

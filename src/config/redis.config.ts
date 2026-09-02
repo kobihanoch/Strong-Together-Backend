@@ -1,5 +1,10 @@
 import './app.config';
 
+const cacheVersionRaw = process.env.CACHE_VERSION;
+if (!cacheVersionRaw || !/^[1-9]\d*$/.test(cacheVersionRaw)) {
+  throw new Error('CACHE_VERSION must be a positive integer');
+}
+
 export const redisConfig = {
   username: process.env.REDIS_USERNAME,
   password: process.env.REDIS_PASSWORD,
@@ -7,6 +12,7 @@ export const redisConfig = {
   port: Number(process.env.REDIS_PORT ?? 6379),
   url: process.env.REDIS_URL ?? 'redis://127.0.0.1:6379',
   enableSocketAdapter: process.env.ENABLE_SOCKET_REDIS_ADAPTER === 'true',
+  cacheVersion: Number(cacheVersionRaw),
   cacheTtls: {
     trackingSec: Number(process.env.CACHE_TTL_TRACKING_SEC ?? 48 * 60 * 60),
     planSec: Number(process.env.CACHE_TTL_PLAN_SEC ?? 48 * 60 * 60),
