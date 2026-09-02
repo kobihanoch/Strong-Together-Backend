@@ -3,6 +3,7 @@ import type { JWTPayload } from 'jose';
 import * as jose from 'jose';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import type { GoogleTokenVerificationResultDto } from '@strong-together/shared';
+import { buildOAuthDisplayName } from '../oauth.utils';
 
 interface GoogleJwtPayload extends JWTPayload {
   email?: string | null;
@@ -39,7 +40,7 @@ export async function verifyGoogleIdToken(
     googleSub: payload.sub as string,
     email: payload.email || null,
     emailVerified: payload.email_verified === true,
-    fullName: payload.name || 'New User',
+    fullName: buildOAuthDisplayName(payload.name),
     picture: payload.picture || null,
     raw: payload,
   };

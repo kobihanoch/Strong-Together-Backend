@@ -2,6 +2,7 @@ import type { JWTPayload } from 'jose';
 import * as jose from 'jose';
 import { authConfig } from '../../../config/auth.config';
 import type { AppleTokenVerificationResultDto } from '@strong-together/shared';
+import { buildOAuthDisplayName } from '../oauth.utils';
 
 interface AppleJwtPayload extends JWTPayload {
   email?: string | null;
@@ -54,7 +55,7 @@ export async function verifyAppleIdToken({
   const email = payload.email ?? null;
   const emailVerified = payload.email_verified === 'true' || payload.email_verified === true;
 
-  const fullName = name?.givenName + ' ' + name?.familyName || 'New User';
+  const fullName = buildOAuthDisplayName(name?.givenName, name?.familyName);
 
   return { appleSub, email, emailVerified, fullName, payload };
 }
