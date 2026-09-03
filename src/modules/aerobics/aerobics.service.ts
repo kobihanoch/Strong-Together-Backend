@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AerobicsQueries } from './aerobics.queries';
-import type { CreateAerobicEntryBody, GetAerobicHistoryResponse } from '@strong-together/shared';
+import type { AddAerobicInputQueryDto, CreateAerobicEntryBody, GetAerobicHistoryResponse } from '@strong-together/shared';
 import { buildAerobicsKeyStable, TTL_AEROBICS } from './aerobics.cache';
 import { CacheService } from '../../infrastructure/cache/cache.service';
 
@@ -45,15 +45,54 @@ export class AerobicsService {
    * Adds user aerobics record.
    * @param userId - The user identifier.
    * @param body - The validated request body.
+   * @param tz - The IANA timezone used for the returned history.
    * @returns The add user aerobics record result.
    */
-  async createAerobicEntryData(userId: string, body: CreateAerobicEntryBody): Promise<GetAerobicHistoryResponse> {
+  async createAerobicEntryData(
+    userId: string,
+    body: CreateAerobicEntryBody,
+    tz: string,
+  ): Promise<GetAerobicHistoryResponse> {
     await this.aerobicsQueries.queryAddAerobicTracking(userId, body.record);
 
-    const { payload } = await this.getAerobicsData(userId, 45, false, body.tz);
-    const aerobicsKey = buildAerobicsKeyStable(userId, 45, body.tz);
+    const aerobicsKey = buildAerobicsKeyStable(userId, 45, tz);
+    await this.cacheService.cacheDeleteOtherTimezones(aerobicsKey);
+    return (await this.getAerobicsData(userId, 45, false, tz)).payload;
+  }
 
-    await this.cacheService.cacheSetJSON(aerobicsKey, payload, TTL_AEROBICS);
-    return payload;
+  /**
+   * Updates an owned aerobic entry and refreshes the requested cache view.
+   *
+   * @param userId - The authenticated user's identifier.
+   * @param id - The aerobic entry identifier.
+   * @param record - The replacement aerobic values.
+   * @param tz - The IANA timezone used for the returned history.
+   * @returns The refreshed aerobic history.
+   */
+  async updateAerobicEntryData(
+    userId: string,
+    id: number,
+    record: AddAerobicInputQueryDto,
+    tz: string,
+  ): Promise<GetAerobicHistoryResponse> {
+    const updatedId = await this.aerobicsQueries.queryUpdateAerobicTracking(userId, id, record);
+    if (updatedId === null) throw new NotFoundException('Aerobic entry not found');
+    await this.cacheService.cacheDeleteOtherTimezones(buildAerobicsKeyStable(userId, 45, tz));
+    return (await this.getAerobicsData(userId, 45, false, tz)).payload;
+  }
+
+  /**
+   * Deletes an owned aerobic entry and refreshes the requested cache view.
+   *
+   * @param userId - The authenticated user's identifier.
+   * @param id - The aerobic entry identifier.
+   * @param tz - The IANA timezone used for the returned history.
+   * @returns The refreshed aerobic history.
+   */
+  async deleteAerobicEntryData(userId: string, id: number, tz: string): Promise<GetAerobicHistoryResponse> {
+    const deletedId = await this.aerobicsQueries.queryDeleteAerobicTracking(userId, id);
+    if (deletedId === null) throw new NotFoundException('Aerobic entry not found');
+    await this.cacheService.cacheDeleteOtherTimezones(buildAerobicsKeyStable(userId, 45, tz));
+    return (await this.getAerobicsData(userId, 45, false, tz)).payload;
   }
 }

@@ -24,6 +24,7 @@ __export(index_exports, {
   accessTokenPayloadDtoSchema: () => accessTokenPayloadDtoSchema,
   addAerobicInputQueryDtoSchema: () => addAerobicInputQueryDtoSchema,
   adherenceExerciseStatsQueryDtoSchema: () => adherenceExerciseStatsQueryDtoSchema,
+  aerobicMutationRowQueryDtoSchema: () => aerobicMutationRowQueryDtoSchema,
   aerobicTrackingDbSchema: () => aerobicTrackingDbSchema,
   aerobicsDailyRecordQueryDtoSchema: () => aerobicsDailyRecordQueryDtoSchema,
   aerobicsWeeklyRecordQueryDtoSchema: () => aerobicsWeeklyRecordQueryDtoSchema,
@@ -57,6 +58,8 @@ __export(index_exports, {
   createdUserQueryDtoSchema: () => createdUserQueryDtoSchema,
   createdUserRawQueryDtoSchema: () => createdUserRawQueryDtoSchema,
   createdUserRowQueryDtoSchema: () => createdUserRowQueryDtoSchema,
+  deleteAerobicEntryContract: () => deleteAerobicEntryContract,
+  deleteAerobicEntryRequestSchema: () => deleteAerobicEntryRequestSchema,
   deleteMessageContract: () => deleteMessageContract,
   deleteMessageRequestSchema: () => deleteMessageRequestSchema,
   deleteMessageResponseSchema: () => deleteMessageResponseSchema,
@@ -170,6 +173,8 @@ __export(index_exports, {
   trackingBySplitNameItemQueryDtoSchema: () => trackingBySplitNameItemQueryDtoSchema,
   trackingMapItemQueryDtoSchema: () => trackingMapItemQueryDtoSchema,
   trackingSetDbSchema: () => trackingSetDbSchema,
+  updateAerobicEntryContract: () => updateAerobicEntryContract,
+  updateAerobicEntryRequestSchema: () => updateAerobicEntryRequestSchema,
   updateCurrentUserContract: () => updateCurrentUserContract,
   updateCurrentUserRequestSchema: () => updateCurrentUserRequestSchema,
   updateCurrentUserResponseSchema: () => updateCurrentUserResponseSchema,
@@ -1718,6 +1723,7 @@ var addAerobicInputQueryDtoSchema = import_v42.z.object({
   type: aerobicTrackingDbSchema.shape.type
 });
 var aerobicsDailyRecordQueryDtoSchema = import_v42.z.object({
+  id: aerobicTrackingDbSchema.shape.id,
   type: aerobicTrackingDbSchema.shape.type,
   durationSec: aerobicTrackingDbSchema.shape.durationSec,
   durationMins: aerobicTrackingDbSchema.shape.durationSec
@@ -1737,11 +1743,16 @@ var userAerobicsQueryDtoSchema = import_v42.z.object({
 var userAerobicsRowQueryDtoSchema = import_v42.z.object({
   data: userAerobicsQueryDtoSchema
 });
+var aerobicMutationRowQueryDtoSchema = import_v42.z.object({
+  id: aerobicTrackingDbSchema.shape.id
+});
 
 // src/modules/aerobics/aerobics.contracts.ts
 var createAerobicEntryRequestSchema = import_v43.z.object({
+  query: import_v43.z.object({
+    tz: import_v43.z.string().optional()
+  }),
   body: import_v43.z.object({
-    tz: import_v43.z.string(),
     record: addAerobicInputQueryDtoSchema
   })
 });
@@ -1756,6 +1767,32 @@ var getAerobicHistoryRequestSchema = import_v43.z.object({
 var getAerobicHistoryResponseSchema = userAerobicsQueryDtoSchema;
 var getAerobicHistoryContract = {
   request: getAerobicHistoryRequestSchema,
+  response: getAerobicHistoryResponseSchema
+};
+var aerobicEntryIdParamsSchema = import_v43.z.object({
+  id: import_v43.z.coerce.number().int().positive()
+});
+var updateAerobicEntryRequestSchema = import_v43.z.object({
+  params: aerobicEntryIdParamsSchema,
+  query: import_v43.z.object({
+    tz: import_v43.z.string().optional()
+  }),
+  body: import_v43.z.object({
+    record: addAerobicInputQueryDtoSchema
+  })
+});
+var updateAerobicEntryContract = {
+  request: updateAerobicEntryRequestSchema,
+  response: getAerobicHistoryResponseSchema
+};
+var deleteAerobicEntryRequestSchema = import_v43.z.object({
+  params: aerobicEntryIdParamsSchema,
+  query: import_v43.z.object({
+    tz: import_v43.z.string().optional()
+  })
+});
+var deleteAerobicEntryContract = {
+  request: deleteAerobicEntryRequestSchema,
   response: getAerobicHistoryResponseSchema
 };
 
@@ -2708,6 +2745,7 @@ var getPersonalRecordsContract = {
   accessTokenPayloadDtoSchema,
   addAerobicInputQueryDtoSchema,
   adherenceExerciseStatsQueryDtoSchema,
+  aerobicMutationRowQueryDtoSchema,
   aerobicTrackingDbSchema,
   aerobicsDailyRecordQueryDtoSchema,
   aerobicsWeeklyRecordQueryDtoSchema,
@@ -2741,6 +2779,8 @@ var getPersonalRecordsContract = {
   createdUserQueryDtoSchema,
   createdUserRawQueryDtoSchema,
   createdUserRowQueryDtoSchema,
+  deleteAerobicEntryContract,
+  deleteAerobicEntryRequestSchema,
   deleteMessageContract,
   deleteMessageRequestSchema,
   deleteMessageResponseSchema,
@@ -2854,6 +2894,8 @@ var getPersonalRecordsContract = {
   trackingBySplitNameItemQueryDtoSchema,
   trackingMapItemQueryDtoSchema,
   trackingSetDbSchema,
+  updateAerobicEntryContract,
+  updateAerobicEntryRequestSchema,
   updateCurrentUserContract,
   updateCurrentUserRequestSchema,
   updateCurrentUserResponseSchema,

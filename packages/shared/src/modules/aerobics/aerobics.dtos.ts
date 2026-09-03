@@ -11,6 +11,7 @@ export const addAerobicInputQueryDtoSchema = z.object({
 
 /** Daily aerobic record produced by the aerobics aggregation query. */
 export const aerobicsDailyRecordQueryDtoSchema = z.object({
+  id: aerobicTrackingDbSchema.shape.id,
   type: aerobicTrackingDbSchema.shape.type,
   durationSec: aerobicTrackingDbSchema.shape.durationSec,
   durationMins: aerobicTrackingDbSchema.shape.durationSec,
@@ -35,6 +36,9 @@ export const userAerobicsQueryDtoSchema = z.object({
 /** SQL row wrapping the aerobics aggregate under the selected `data` alias. */
 export const userAerobicsRowQueryDtoSchema = z.object({ data: userAerobicsQueryDtoSchema });
 
+/** Row returned after mutating an aerobic entry owned by a user. */
+export const aerobicMutationRowQueryDtoSchema = z.object({ id: aerobicTrackingDbSchema.shape.id });
+
 // SQL query input DTOs
 
 export type AddAerobicInputQueryDto = z.infer<typeof addAerobicInputQueryDtoSchema>;
@@ -43,3 +47,4 @@ export type AerobicsWeeklyRecordQueryDto = z.infer<typeof aerobicsWeeklyRecordQu
 export type WeeklyDataQueryDto = z.infer<typeof weeklyDataQueryDtoSchema>;
 export type UserAerobicsQueryDto = z.infer<typeof userAerobicsQueryDtoSchema>;
 export type UserAerobicsRowQueryDto = z.infer<typeof userAerobicsRowQueryDtoSchema>;
+export type AerobicMutationRowQueryDto = z.infer<typeof aerobicMutationRowQueryDtoSchema>;

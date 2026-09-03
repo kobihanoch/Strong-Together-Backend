@@ -1011,6 +1011,7 @@ Successful response:
   "daily": {
     "2026-04-20": [
       {
+        "id": 1,
         "type": "string",
         "durationSec": 0,
         "durationMins": 30
@@ -1021,6 +1022,7 @@ Successful response:
     "2026-04-19": {
       "records": [
         {
+          "id": 1,
           "type": "string",
           "durationSec": 0,
           "durationMins": 30,
@@ -1046,11 +1048,18 @@ Access:
 
 - User
 
+Query:
+
+```json
+{
+  "tz": "string"
+}
+```
+
 Request body:
 
 ```json
 {
-  "tz": "string",
   "record": {
     "durationMins": 30,
     "durationSec": 0,
@@ -1062,6 +1071,60 @@ Request body:
 Successful response:
 
 - Returns the same `GetAerobicHistoryResponse` structure shown above
+
+### `PUT /api/aerobics/:id`
+
+Replaces an aerobics entry owned by the authenticated user and returns the refreshed aerobics snapshot.
+
+Access:
+
+- User
+
+Query:
+
+```json
+{
+  "tz": "string"
+}
+```
+
+Request body:
+
+```json
+{
+  "record": {
+    "durationMins": 32,
+    "durationSec": 15,
+    "type": "Run"
+  }
+}
+```
+
+Successful response:
+
+- Returns the same `GetAerobicHistoryResponse` structure shown above
+- Returns `404` when the entry does not exist or belongs to another user
+
+### `DELETE /api/aerobics/:id`
+
+Deletes an aerobics entry owned by the authenticated user and returns the refreshed aerobics snapshot.
+
+Access:
+
+- User
+
+Query:
+
+```json
+{
+  "tz": "string"
+}
+```
+
+Successful response:
+
+- Returns the same `GetAerobicHistoryResponse` structure shown above
+- Returns `404` when the entry does not exist or belongs to another user
 
 ## Analytics
 

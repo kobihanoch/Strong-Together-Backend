@@ -1,64 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { AddAerobicInputQueryDto, UserAerobicsQueryDto, UserAerobicsRowQueryDto } from '@strong-together/shared';
+import type { AddAerobicInputQueryDto, AerobicMutationRowQueryDto, UserAerobicsQueryDto, UserAerobicsRowQueryDto } from '@strong-together/shared';
 import type postgres from 'postgres';
 import { SQL } from '../../infrastructure/db/db.tokens';
 
-// Gets all records from last 45 days mapped by dates
-/**
- *  "daily": {
-        "2025-09-02": [
-            {
-                "type": "Walk",
-                "duration_sec": 0,
-                "duration_mins": 30
-            }
-        ],
-        "2025-09-03": [
-            {
-                "type": "Walk",
-                "duration_sec": 0,
-                "duration_mins": 30
-            }
-        ],
-        "2025-09-04": [
-            {
-                "type": "Walk",
-                "duration_sec": 0,
-                "duration_mins": 30
-            }
-        ]
-    },
-    "weekly": {
-        "2025-08-31": {
-            "records": [
-                {
-                    "type": "Walk",
-                    "duration_sec": 0,
-                    "workout_date": "2025-09-02",
-                    "duration_mins": 30
-                },
-                {
-                    "type": "Walk",
-                    "duration_sec": 0,
-                    "workout_date": "2025-09-03",
-                    "duration_mins": 30
-                },
-                {
-                    "type": "Walk",
-                    "duration_sec": 0,
-                    "workout_date": "2025-09-04",
-                    "duration_mins": 30
-                }
-            ],
-            "total_duration_sec": 0,
-            "total_duration_mins": 90
-        }
-    }
- */
-// Exact same response contract, except:
-// 1) Grouping is by local date derived from workout_time_utc in the provided tz
-// 2) In the weekly records array, workoutTimeLocal is a local timestamp string in that tz.
-@Injectable()
 export class AerobicsQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
@@ -69,11 +13,7 @@ export class AerobicsQueries {
    * @param tz - The IANA time-zone name.
    * @returns The user aerobics for ndays result.
    */
-  async queryGetUserAerobicsForNDays(
-    userId: string,
-    days: number,
-    tz: string = 'Asia/Jerusalem',
-  ): Promise<UserAerobicsQueryDto> {
+  async queryGetUserAerobicsForNDays(userId: string, days: number, tz: string = 'Asia/Jerusalem'): Promise<UserAerobicsQueryDto> {
     const [obj] = await this.sql<UserAerobicsRowQueryDto[]>`
       /* Normalize parameters (default tz to UTC if empty) */
       WITH
@@ -89,10 +29,9 @@ export class AerobicsQueries {
             (
               (NOW() AT TIME ZONE p.tz)::date - GREATEST(p.days - 1, 0) * INTERVAL '1 day'
             ) AT TIME ZONE p.tz AS lower_bound_utc,
-            (
-              (NOW() AT TIME ZONE p.tz)::date + INTERVAL '1 day'
-            ) AT TIME ZONE p.tz AS upper_bound_utc
-          FROM params p
+            ((NOW() AT TIME ZONE p.tz)::date + INTERVAL '1 day') AT TIME ZONE p.tz AS upper_bound_utc
+          FROM
+            params p
         ),
         /* Base contains the requested local calendar days and their local wall-clock timestamps. */
         base AS (
@@ -119,6 +58,8 @@ export class AerobicsQueries {
               )
             )::date AS local_date,
             JSONB_BUILD_OBJECT(
+              'id',
+              at.id,
               'type',
               at.type,
               'durationMins',
@@ -126,9 +67,10 @@ export class AerobicsQueries {
               'durationSec',
               at.duration_sec % 60
             ) AS ROW
-          FROM tracking.aerobic_tracking at
-          CROSS JOIN params p
-          CROSS JOIN bounds b
+          FROM
+            tracking.aerobic_tracking at
+            CROSS JOIN params p
+            CROSS JOIN bounds b
           WHERE
             at.user_id = p.user_id
             AND at.workout_time_utc >= b.lower_bound_utc
@@ -145,7 +87,7 @@ export class AerobicsQueries {
             b.local_date,
             /* PostgreSQL weeks start Monday; shifting one day preserves the API's Sunday week start. */
             (
-              DATE_TRUNC('week', b.local_date::timestamp + INTERVAL '1 day') - INTERVAL '1 day'
+              DATE_TRUNC('week', b.local_date::TIMESTAMP + INTERVAL '1 day') - INTERVAL '1 day'
             )::date AS week_start
           FROM
             base b
@@ -234,5 +176,48 @@ export class AerobicsQueries {
           ${durationMins * 60 + durationSec}
         )
     `;
+  }
+
+  /**
+   * Updates an aerobic entry owned by the authenticated user.
+   *
+   * @param userId - The authenticated user's identifier.
+   * @param id - The aerobic entry identifier.
+   * @param record - The replacement aerobic entry values.
+   * @returns The updated entry identifier, or `null` when it was not found.
+   */
+  async queryUpdateAerobicTracking(userId: string, id: number, record: AddAerobicInputQueryDto): Promise<number | null> {
+    const { durationMins, durationSec, type } = record;
+    const [row] = await this.sql<AerobicMutationRowQueryDto[]>`
+      UPDATE tracking.aerobic_tracking
+      SET
+        type = ${type},
+        duration_sec = ${durationMins * 60 + durationSec}
+      WHERE
+        id = ${id}::BIGINT
+        AND user_id = ${userId}::UUID
+      RETURNING
+        id
+    `;
+    return row?.id ?? null;
+  }
+
+  /**
+   * Deletes an aerobic entry owned by the authenticated user.
+   *
+   * @param userId - The authenticated user's identifier.
+   * @param id - The aerobic entry identifier.
+   * @returns The deleted entry identifier, or `null` when it was not found.
+   */
+  async queryDeleteAerobicTracking(userId: string, id: number): Promise<number | null> {
+    const [row] = await this.sql<AerobicMutationRowQueryDto[]>`
+      DELETE FROM tracking.aerobic_tracking
+      WHERE
+        id = ${id}::BIGINT
+        AND user_id = ${userId}::UUID
+      RETURNING
+        id
+    `;
+    return row?.id ?? null;
   }
 }

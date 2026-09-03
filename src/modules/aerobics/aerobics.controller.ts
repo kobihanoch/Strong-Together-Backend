@@ -1,8 +1,25 @@
-import { Controller, Get, Post, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Delete, Get, Post, Put, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
-import type { CreateAerobicEntryBody, GetAerobicHistoryQuery, GetAerobicHistoryResponse } from '@strong-together/shared';
+import type {
+  CreateAerobicEntryBody,
+  CreateAerobicEntryQuery,
+  DeleteAerobicEntryParams,
+  DeleteAerobicEntryQuery,
+  DeleteAerobicEntryResponse,
+  GetAerobicHistoryQuery,
+  GetAerobicHistoryResponse,
+  UpdateAerobicEntryBody,
+  UpdateAerobicEntryParams,
+  UpdateAerobicEntryQuery,
+  UpdateAerobicEntryResponse,
+} from '@strong-together/shared';
 import type { AuthenticatedUser } from '../../common/types/express';
-import { createAerobicEntryRequestSchema, getAerobicHistoryRequestSchema } from '@strong-together/shared';
+import {
+  createAerobicEntryRequestSchema,
+  deleteAerobicEntryRequestSchema,
+  getAerobicHistoryRequestSchema,
+  updateAerobicEntryRequestSchema,
+} from '@strong-together/shared';
 import { AerobicsService } from './aerobics.service';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
@@ -18,6 +35,8 @@ import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
  * Preserves the existing route paths and behavior from the Express version:
  * - GET /api/aerobics
  * - POST /api/aerobics
+ * - PUT /api/aerobics/:id
+ * - DELETE /api/aerobics/:id
  *
  * Access: User
  */
@@ -71,9 +90,64 @@ export class AerobicsController {
    */
   @Post()
   async createAerobicEntry(
-    @RequestData(new ValidateRequestPipe(createAerobicEntryRequestSchema)) data: { body: CreateAerobicEntryBody },
+    @RequestData(new ValidateRequestPipe(createAerobicEntryRequestSchema)) data: {
+      query: CreateAerobicEntryQuery;
+      body: CreateAerobicEntryBody;
+    },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<GetAerobicHistoryResponse> {
-    return this.aerobicsService.createAerobicEntryData(user.id, data.body);
+    return this.aerobicsService.createAerobicEntryData(user.id, data.body, data.query.tz || 'Asia/Jerusalem');
+  }
+
+  /**
+   * Replace an aerobic entry owned by the authenticated user.
+   *
+   * @remarks Route: PUT /api/aerobics/:id
+   * Access: User
+   *
+   * @param data - The validated path parameters and request body.
+   * @param user - The authenticated user.
+   * @returns The refreshed aerobic history.
+   */
+  @Put(':id')
+  async updateAerobicEntry(
+    @RequestData(new ValidateRequestPipe(updateAerobicEntryRequestSchema)) data: {
+      params: UpdateAerobicEntryParams;
+      query: UpdateAerobicEntryQuery;
+      body: UpdateAerobicEntryBody;
+    },
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<UpdateAerobicEntryResponse> {
+    return this.aerobicsService.updateAerobicEntryData(
+      user.id,
+      data.params.id,
+      data.body.record,
+      data.query.tz || 'Asia/Jerusalem',
+    );
+  }
+
+  /**
+   * Delete an aerobic entry owned by the authenticated user.
+   *
+   * @remarks Route: DELETE /api/aerobics/:id
+   * Access: User
+   *
+   * @param data - The validated path parameters and query.
+   * @param user - The authenticated user.
+   * @returns The refreshed aerobic history.
+   */
+  @Delete(':id')
+  async deleteAerobicEntry(
+    @RequestData(new ValidateRequestPipe(deleteAerobicEntryRequestSchema)) data: {
+      params: DeleteAerobicEntryParams;
+      query: DeleteAerobicEntryQuery;
+    },
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<DeleteAerobicEntryResponse> {
+    return this.aerobicsService.deleteAerobicEntryData(
+      user.id,
+      data.params.id,
+      data.query.tz || 'Asia/Jerusalem',
+    );
   }
 }
