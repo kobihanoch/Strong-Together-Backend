@@ -11,6 +11,7 @@ export * from './tracking/workout_summary/table';
 export * from './tracking/exercise_tracking/table';
 export * from './tracking/tracking_set/table';
 export * from './tracking/aerobic_tracking/table';
+export * from './tracking/views';
 export * from './reminders/user_reminder_setting/table';
 export * from './reminders/user_split_information/table';
 export * from './messages/messages/table';

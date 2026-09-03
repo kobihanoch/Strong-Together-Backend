@@ -115,7 +115,6 @@ This file focuses on success contracts. Route-specific non-JSON behavior is call
 | `POST` | `/api/aerobics` | User | Add aerobics record |
 | `PUT` | `/api/aerobics/:id` | User | Replace aerobics record; returns 204 |
 | `DELETE` | `/api/aerobics/:id` | User | Delete aerobics record; returns 204 |
-| `GET` | `/api/analytics` | User | Get analytics snapshot |
 | `GET` | `/api/exercises` | User | Get exercise catalog |
 | `GET` | `/api/messages` | User | Get inbox |
 | `PATCH` | `/api/messages/:id/read` | User | Mark message as read; returns 204 |
@@ -1046,44 +1045,6 @@ Successful response:
 - Empty `204 No Content` body
 - Returns `404` when the entry does not exist or belongs to another user
 
-## Analytics
-
-### `GET /api/analytics`
-
-Returns the current analytics snapshot for the authenticated user.
-
-Access:
-
-- User
-
-Successful response:
-
-```json
-{
-  "oneRepMaxes": {
-    "Bench Press": {
-      "exercise": "Bench Press",
-      "prWeight": 100,
-      "prReps": 5,
-      "max1Rm": 116.67
-    }
-  },
-  "goals": {
-    "Push": {
-      "Bench Press": {
-        "planned": 12,
-        "actual": 10,
-        "adherencePct": 83.33
-      }
-    }
-  }
-}
-```
-
-Notes:
-
-- Returns `X-Cache: HIT` or `X-Cache: MISS`
-
 ## Exercises
 
 ### `GET /api/exercises`
@@ -1404,12 +1365,11 @@ keys affected by the mutation, and the next related GET request repopulates them
 - `POST /api/workout-sessions` deletes the requested timezone's 45-day workout
   history, workout statistics, exercise history, and personal-records keys.
 - `PUT /api/workout-plan` deletes the requested timezone's plan, workout-history,
-  and workout-statistics keys, plus the user's timezone-independent analytics key.
+  and workout-statistics keys.
 - Aerobics `POST`, `PUT`, and `DELETE` delete the requested timezone's 45-day
   aerobics key.
 
 These mutations do not call broad cross-timezone cache deletion.
-- `/api/analytics`
 
 ### HTML routes
 

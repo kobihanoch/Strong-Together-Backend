@@ -4,7 +4,6 @@ import { WorkoutPlanQueries } from './plan.queries';
 import type { ReplaceWorkoutPlanBody, GetWorkoutPlanResponse } from '@strong-together/shared';
 
 import { buildPlanKeyStable, TTL_PLAN } from './plan.cache';
-import { buildAnalyticsKeyStable } from '../../analytics/analytics.cache';
 import { buildWorkoutHistoryKeyStable, buildWorkoutStatisticsKeyStable } from '../tracking/tracking.cache';
 
 @Injectable()
@@ -66,11 +65,9 @@ export class WorkoutPlanService {
    */
   private async deleteWorkoutPlanCaches(userId: string, tz: string): Promise<void> {
     const planKey = buildPlanKeyStable(userId, tz);
-    const analyticsKey = buildAnalyticsKeyStable(userId);
     const workoutHistoryKey = buildWorkoutHistoryKeyStable(userId, 45, tz);
     const workoutStatisticsKey = buildWorkoutStatisticsKeyStable(userId, 45, tz);
     await Promise.all([
-      this.cacheService.cacheDeleteKey(analyticsKey),
       this.cacheService.cacheDeleteKey(planKey),
       this.cacheService.cacheDeleteKey(workoutHistoryKey),
       this.cacheService.cacheDeleteKey(workoutStatisticsKey),

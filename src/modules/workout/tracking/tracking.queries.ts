@@ -665,7 +665,7 @@ export class WorkoutTrackingQueries {
               SELECT
                 p.*
               FROM
-                analytics.v_prs p
+                tracking.v_prs p
                 JOIN all_workout_summaries aws ON p.workout_summary_id = aws.id
               ORDER BY
                 p.workout_start_utc DESC,
@@ -803,7 +803,7 @@ export class WorkoutTrackingQueries {
    * Retrieves all current personal records for a user.
    *
    * A personal record is the strongest tracked set selected by
-   * `analytics.v_prs` for an exercise. Each result is stored under its
+   * `tracking.v_prs` for an exercise. Each result is stored under its
    * exercise identifier.
    *
    * @param userId - The authenticated user's identifier.
@@ -852,7 +852,7 @@ export class WorkoutTrackingQueries {
           )
         ) AS data
       FROM
-        analytics.v_prs p
+        tracking.v_prs p
         JOIN tracking.workout_summary wsum ON wsum.id = p.workout_summary_id
       WHERE
         wsum.user_id = ${userId}::UUID

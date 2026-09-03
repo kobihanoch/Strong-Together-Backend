@@ -12,7 +12,6 @@ The API is organized under `/api` with domain-oriented route groups:
 | Users | `/api/users` | Account creation, profile, profile picture, push token |
 | Workouts | `/api/workouts` | Plan reads/writes and completed workout tracking |
 | Aerobics | `/api/aerobics` | Cardio history |
-| Analytics | `/api/analytics` | Fitness insights and aggregated progress |
 | Exercises | `/api/exercises` | Exercise catalog |
 | Messages | `/api/messages` | Inbox, read state, deletion |
 | OAuth | `/api/oauth` | Google and Apple sign-in |

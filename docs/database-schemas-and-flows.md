@@ -97,20 +97,20 @@ Important indexes:
 
 The RLS model protects nested set rows by checking ownership through `workout_summary`.
 
-## Analytics Schema
+## Analytics and Tracking Views
 
 ### Views
 
 ![Analytics Schema](./db-diagrams/analyticsschema.svg)
 
-Analytics is modeled through security-invoker views:
+Exercise tracking exposes security-invoker views across the owning domains:
 
 - `analytics.v_exercise_tracking_set_expanded`, including assignment state and exercise muscle metadata
-- `analytics.v_prs`
+- `tracking.v_prs`
 
-Security-invoker views are an important choice because they preserve caller RLS behavior. Analytics queries can be expressive and reusable without accidentally becoming privileged read paths.
+Security-invoker views preserve caller RLS behavior and avoid privileged read paths.
 
-The API uses these views for tracking maps and statistics. `v_prs` selects the strongest recorded set per exercise. Tracking stats expose only the most recently logged current PR under `latestPr`, while `GET /api/personal-records` exposes all current PRs as an object keyed by exercise ID. Both include `workoutStartLocal`, converted from the stored UTC timestamp with the requested IANA timezone, and estimate one-rep max with a rep-range-specific formula (Epley, Brzycki, or O'Connor), returning `null` when the recorded rep count is outside the supported range.
+The tracking API uses these views for maps, statistics, and personal records. `tracking.v_prs` selects the strongest recorded set per exercise. Tracking stats expose only the most recently logged current PR under `latestPr`, while `GET /api/personal-records` exposes all current PRs as an object keyed by exercise ID. Both include `workoutStartLocal`, converted from the stored UTC timestamp with the requested IANA timezone, and estimate one-rep max with a rep-range-specific formula (Epley, Brzycki, or O'Connor), returning `null` when the recorded rep count is outside the supported range.
 
 ## Reminders Schema
 

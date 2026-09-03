@@ -100,7 +100,6 @@ Focused suites:
 npm run test:auth
 npm run test:users
 npm run test:workouts
-npm run test:analytics
 npm run test:videoanalysis
 npm run test:websockets
 ```
