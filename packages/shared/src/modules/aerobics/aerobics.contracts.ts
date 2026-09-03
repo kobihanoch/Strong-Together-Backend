@@ -9,7 +9,11 @@ export const createAerobicEntryRequestSchema = z.object({
   body: z.object({ record: addAerobicInputQueryDtoSchema }),
 });
 
-export const createAerobicEntryContract = { request: createAerobicEntryRequestSchema } satisfies Contract;
+export const createAerobicEntryResponseSchema = z.void();
+export const createAerobicEntryContract = {
+  request: createAerobicEntryRequestSchema,
+  response: createAerobicEntryResponseSchema,
+} satisfies Contract;
 
 // Get aerobic history
 
@@ -29,7 +33,7 @@ export const updateAerobicEntryRequestSchema = z.object({
 });
 export const updateAerobicEntryContract = {
   request: updateAerobicEntryRequestSchema,
-  response: getAerobicHistoryResponseSchema,
+  response: z.void(),
 } satisfies Contract;
 
 export const deleteAerobicEntryRequestSchema = z.object({
@@ -38,7 +42,7 @@ export const deleteAerobicEntryRequestSchema = z.object({
 });
 export const deleteAerobicEntryContract = {
   request: deleteAerobicEntryRequestSchema,
-  response: getAerobicHistoryResponseSchema,
+  response: z.void(),
 } satisfies Contract;
 
 export type CreateAerobicEntryBody = BodyOf<typeof createAerobicEntryContract>;

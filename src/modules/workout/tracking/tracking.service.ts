@@ -6,7 +6,6 @@ import type {
   ExerciseTrackingStatsQueryDto,
   PersonalRecordsQueryDto,
   CreateWorkoutSessionBody,
-  CreateWorkoutSessionResponse,
 } from '@strong-together/shared';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
 import {
@@ -166,12 +165,12 @@ export class WorkoutTrackingService {
   }
 
   /**
-   * Persists user workout.
+   * Persists a completed workout and deletes the affected 45-day tracking,
+   * statistics, exercise-history, and personal-record cache keys for its timezone.
    * @param userId - The user identifier.
    * @param body - The validated request body.
-   * @returns The finish user workout result.
    */
-  async createWorkoutSessionData(userId: string, body: CreateWorkoutSessionBody): Promise<CreateWorkoutSessionResponse> {
+  async createWorkoutSessionData(userId: string, body: CreateWorkoutSessionBody): Promise<void> {
     const workoutArray = body.workout;
     const tz = body.tz || 'Asia/Jerusalem';
     const workoutStartUtc = body.workoutStartUtc || null;
@@ -181,19 +180,14 @@ export class WorkoutTrackingService {
       throw new BadRequestException('Not a valid workout');
     }
 
-    await this.workoutTrackingQueries.queryInsertUserFinishedWorkout(
-      userId,
-      workoutArray,
-      workoutStartUtc,
-      workoutEndUtc,
-    );
+    await this.workoutTrackingQueries.queryInsertUserFinishedWorkout(userId, workoutArray, workoutStartUtc, workoutEndUtc);
 
-    const [{ payload }] = await Promise.all([
-      this.getWorkoutHistoryAndStatisticsData(userId, 45, false, tz),
-      this.getExerciseHistoryData(userId, 45, false, tz),
-      this.getPersonalRecordsData(userId, false, tz),
+    await Promise.all([
+      this.cacheService.cacheDeleteKey(buildWorkoutHistoryKeyStable(userId, 45, tz)),
+      this.cacheService.cacheDeleteKey(buildWorkoutStatisticsKeyStable(userId, 45, tz)),
+      this.cacheService.cacheDeleteKey(buildExerciseHistoryKeyStable(userId, 45, tz)),
+      this.cacheService.cacheDeleteKey(buildPersonalRecordsKeyStable(userId, tz)),
     ]);
     this.systemMessagesService.sendSystemMessageToUserWorkoutDone(userId);
-    return payload;
   }
 }

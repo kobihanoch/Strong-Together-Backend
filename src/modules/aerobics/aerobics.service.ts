@@ -42,57 +42,42 @@ export class AerobicsService {
   }
 
   /**
-   * Adds user aerobics record.
+   * Adds an aerobic record and deletes its exact 45-day cache key.
    * @param userId - The user identifier.
    * @param body - The validated request body.
-   * @param tz - The IANA timezone used for the returned history.
-   * @returns The add user aerobics record result.
+   * @param tz - The IANA timezone identifying the affected cache key.
    */
-  async createAerobicEntryData(
-    userId: string,
-    body: CreateAerobicEntryBody,
-    tz: string,
-  ): Promise<GetAerobicHistoryResponse> {
+  async createAerobicEntryData(userId: string, body: CreateAerobicEntryBody, tz: string): Promise<void> {
     await this.aerobicsQueries.queryAddAerobicTracking(userId, body.record);
 
     const aerobicsKey = buildAerobicsKeyStable(userId, 45, tz);
-    await this.cacheService.cacheDeleteOtherTimezones(aerobicsKey);
-    return (await this.getAerobicsData(userId, 45, false, tz)).payload;
+    await this.cacheService.cacheDeleteKey(aerobicsKey);
   }
 
   /**
-   * Updates an owned aerobic entry and refreshes the requested cache view.
+   * Updates an owned aerobic entry and deletes its exact 45-day cache key.
    *
    * @param userId - The authenticated user's identifier.
    * @param id - The aerobic entry identifier.
    * @param record - The replacement aerobic values.
-   * @param tz - The IANA timezone used for the returned history.
-   * @returns The refreshed aerobic history.
+   * @param tz - The IANA timezone identifying the affected cache key.
    */
-  async updateAerobicEntryData(
-    userId: string,
-    id: number,
-    record: AddAerobicInputQueryDto,
-    tz: string,
-  ): Promise<GetAerobicHistoryResponse> {
+  async updateAerobicEntryData(userId: string, id: number, record: AddAerobicInputQueryDto, tz: string): Promise<void> {
     const updatedId = await this.aerobicsQueries.queryUpdateAerobicTracking(userId, id, record);
     if (updatedId === null) throw new NotFoundException('Aerobic entry not found');
-    await this.cacheService.cacheDeleteOtherTimezones(buildAerobicsKeyStable(userId, 45, tz));
-    return (await this.getAerobicsData(userId, 45, false, tz)).payload;
+    await this.cacheService.cacheDeleteKey(buildAerobicsKeyStable(userId, 45, tz));
   }
 
   /**
-   * Deletes an owned aerobic entry and refreshes the requested cache view.
+   * Deletes an owned aerobic entry and deletes its exact 45-day cache key.
    *
    * @param userId - The authenticated user's identifier.
    * @param id - The aerobic entry identifier.
-   * @param tz - The IANA timezone used for the returned history.
-   * @returns The refreshed aerobic history.
+   * @param tz - The IANA timezone identifying the affected cache key.
    */
-  async deleteAerobicEntryData(userId: string, id: number, tz: string): Promise<GetAerobicHistoryResponse> {
+  async deleteAerobicEntryData(userId: string, id: number, tz: string): Promise<void> {
     const deletedId = await this.aerobicsQueries.queryDeleteAerobicTracking(userId, id);
     if (deletedId === null) throw new NotFoundException('Aerobic entry not found');
-    await this.cacheService.cacheDeleteOtherTimezones(buildAerobicsKeyStable(userId, 45, tz));
-    return (await this.getAerobicsData(userId, 45, false, tz)).payload;
+    await this.cacheService.cacheDeleteKey(buildAerobicsKeyStable(userId, 45, tz));
   }
 }

@@ -1,6 +1,6 @@
-import { Controller, Get, Put, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Put, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
-import type { ReplaceWorkoutPlanResponse, GetWorkoutPlanResponse, ReplaceWorkoutPlanBody, GetWorkoutPlanQuery } from '@strong-together/shared';
+import type { GetWorkoutPlanResponse, ReplaceWorkoutPlanBody, GetWorkoutPlanQuery } from '@strong-together/shared';
 import { replaceWorkoutPlanRequestSchema, getWorkoutPlanRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
@@ -70,23 +70,22 @@ export class WorkoutPlanController {
   /**
    * Create or update the authenticated user's workout plan.
    *
-   * Persists the submitted workout structure, invalidates related caches,
-   * rebuilds the plan snapshot, and returns the updated plan payload.
+   * Persists the submitted workout structure, deletes the exact related cache
+   * keys, and responds with 204 No Content without rebuilding the plan snapshot.
    *
    * @remarks Route: PUT /api/workout-plan
    * Access: User
    *
    * @param data - The validated request data.
    * @param user - The authenticated user.
-   * @returns The response payload.
    */
   @Put()
+  @HttpCode(HttpStatus.NO_CONTENT)
   async replaceWorkoutPlan(
     @RequestData(new ValidateRequestPipe(replaceWorkoutPlanRequestSchema))
     data: { body: ReplaceWorkoutPlanBody },
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<ReplaceWorkoutPlanResponse> {
-    const payload = await this.workoutPlanService.replaceWorkoutPlanData(user.id, data.body);
-    return payload;
+  ): Promise<void> {
+    await this.workoutPlanService.replaceWorkoutPlanData(user.id, data.body);
   }
 }

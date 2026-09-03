@@ -1,7 +1,6 @@
-import { Controller, Get, Post, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Post, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
 import type {
-  CreateWorkoutSessionResponse,
   GetWorkoutHistoryResponse,
   GetExerciseHistoryResponse,
   GetWorkoutStatisticsResponse,
@@ -154,22 +153,21 @@ export class WorkoutTrackingController {
   /**
    * Persist a completed workout for the authenticated user.
    *
-   * Stores the submitted workout summary and tracking rows, refreshes tracking
-   * cache state, and returns the updated tracking payload.
+   * Stores the submitted workout summary and tracking rows, deletes the exact
+   * affected tracking cache keys, and responds with 204 No Content.
    *
    * @remarks Route: POST /api/workout-sessions
    * Access: User
    *
    * @param data - The validated request data.
    * @param user - The authenticated user.
-   * @returns The response payload.
    */
   @Post('workout-sessions')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async createWorkoutSession(
     @RequestData(new ValidateRequestPipe(createWorkoutSessionRequestSchema)) data: { body: CreateWorkoutSessionBody },
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<CreateWorkoutSessionResponse> {
-    const payload = await this.workoutTrackingService.createWorkoutSessionData(user.id, data.body);
-    return payload;
+  ): Promise<void> {
+    await this.workoutTrackingService.createWorkoutSessionData(user.id, data.body);
   }
 }

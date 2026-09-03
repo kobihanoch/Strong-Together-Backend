@@ -19,10 +19,12 @@
 ### `PATCH /api/messages/:id/read`
 
 - [x] Updates message read state in DB.
+- [x] Returns `204 No Content`.
 
 ### `DELETE /api/messages/:id`
 
 - [x] Deletes the message row from DB.
+- [x] Returns `204 No Content`.
 
 ## Bad Paths
 

@@ -7,11 +7,7 @@ import { authenticatedUserForUpdateQueryDtoSchema, userDataQueryDtoSchema } from
 export const updateCurrentUserRequestSchema = z.object({
   body: authenticatedUserForUpdateQueryDtoSchema,
 });
-export const updateCurrentUserResponseSchema = z.object({
-  message: z.string(),
-  emailChanged: z.boolean(),
-  user: userDataQueryDtoSchema,
-});
+export const updateCurrentUserResponseSchema = z.void();
 
 export const updateCurrentUserContract = {
   request: updateCurrentUserRequestSchema,

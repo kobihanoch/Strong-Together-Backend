@@ -93,30 +93,32 @@ This file focuses on success contracts. Route-specific non-JSON behavior is call
 | `POST` | `/api/auth/logout` | Refresh token + DPoP | Logout current session and unregister push delivery |
 | `POST` | `/api/auth/refresh` | Public | Rotate token pair |
 | `POST` | `/api/auth/password-reset-requests` | Public | Send reset email |
-| `PUT` | `/api/auth/password-resets` | Public | Reset password from token |
+| `POST` | `/api/auth/password-resets` | Public | Reset password from token; returns 204 |
 | `GET` | `/api/auth/email-verification` | Public | Complete verification callback |
 | `POST` | `/api/auth/verification-emails` | Public | Send verification email |
-| `PUT` | `/api/auth/unverified-account/email` | Public | Change email for unverified account |
+| `PATCH` | `/api/auth/unverified-account/email` | Public | Change email for unverified account |
 | `GET` | `/api/auth/verification-status` | Public | Check verification state by username |
 | `POST` | `/api/users` | Public | Create user account |
 | `GET` | `/api/users/me` | User | Get current user profile |
-| `PUT` | `/api/users/me` | User | Update current user profile |
+| `PATCH` | `/api/users/me` | User | Update current user profile; returns 204 |
 | `GET` | `/api/users/email-change` | Public | Complete email-change callback |
 | `DELETE` | `/api/users/me` | User | Delete current user |
 | `PUT` | `/api/users/me/profile-picture` | User | Upload profile image |
 | `DELETE` | `/api/users/me/profile-picture` | User | Delete profile image |
 | `PUT` | `/api/users/me/push-token` | User | Save push token |
 | `GET` | `/api/workout-plan` | User | Get active workout plan |
-| `POST` | `/api/workout-plan` | User | Create or update workout plan |
+| `PUT` | `/api/workout-plan` | User | Create or update workout plan; returns 204 |
 | `GET` | `/api/workout-history` | User | Get workout tracking snapshot |
 | `GET` | `/api/workout-statistics` | User | Get workout tracking statistics |
 | `POST` | `/api/workout-sessions` | User | Persist completed workout |
 | `GET` | `/api/aerobics` | User | Get aerobics history |
 | `POST` | `/api/aerobics` | User | Add aerobics record |
+| `PUT` | `/api/aerobics/:id` | User | Replace aerobics record; returns 204 |
+| `DELETE` | `/api/aerobics/:id` | User | Delete aerobics record; returns 204 |
 | `GET` | `/api/analytics` | User | Get analytics snapshot |
 | `GET` | `/api/exercises` | User | Get exercise catalog |
 | `GET` | `/api/messages` | User | Get inbox |
-| `PUT` | `/api/messages/:id` | User | Mark message as read |
+| `PATCH` | `/api/messages/:id/read` | User | Mark message as read; returns 204 |
 | `DELETE` | `/api/messages/:id` | User | Delete message |
 | `POST` | `/api/oauth/apple` | Public | Apple OAuth login |
 | `POST` | `/api/oauth/google` | Public | Google OAuth login |
@@ -294,11 +296,7 @@ Request body:
 
 Successful response:
 
-```json
-{
-  "ok": true
-}
-```
+- Empty `204 No Content` body
 
 ### `GET /api/auth/email-verification`
 
@@ -424,20 +422,7 @@ Allowed `gender` values:
 
 Successful response:
 
-```json
-{
-  "message": "string",
-  "user": {
-    "id": "string",
-    "username": "string",
-    "name": "string",
-    "email": "string | null",
-    "gender": "string",
-    "role": "string",
-    "createdAt": "string"
-  }
-}
-```
+- Empty `201 Created` body
 
 Notes:
 
@@ -499,29 +484,7 @@ Notes:
 
 Successful response:
 
-```json
-{
-  "message": "string",
-  "emailChanged": true,
-  "user": {
-    "id": "string",
-    "username": "string",
-    "email": "string | null",
-    "name": "string",
-    "gender": "string",
-    "createdAt": "string",
-    "updatedAt": "string",
-    "profilePicPath": "string | null",
-    "pushToken": "string | null",
-    "role": "string",
-    "isFirstLogin": false,
-    "tokenVersion": 1,
-    "isVerified": true,
-    "authProvider": "string",
-    "lastLogin": "string | null"
-  }
-}
-```
+- Empty `204 No Content` body
 
 ### `GET /api/users/email-change`
 
@@ -554,11 +517,7 @@ Access:
 
 Successful response:
 
-```json
-{
-  "message": "User deleted successfully"
-}
-```
+- Empty `204 No Content` body
 
 ### `PUT /api/users/me/profile-picture`
 
@@ -862,46 +821,7 @@ Request body:
 
 Successful response:
 
-```json
-{
-  "message": "string",
-  "workoutPlan": {
-    "id": 1,
-    "numberOfSplits": 4,
-    "createdAt": "string",
-    "userId": "string",
-    "isActive": true,
-    "updatedAt": "string",
-    "workoutSplits": [
-      {
-        "id": 1,
-        "workoutId": 1,
-        "name": "string",
-        "orderIndex": 0,
-        "createdAt": "string",
-        "muscleGroup": "string | null",
-        "isActive": true,
-        "exercises": [
-          {
-            "exerciseToSplitId": 1,
-            "exerciseId": 10,
-            "name": "Bench Press",
-            "sets": [
-              { "orderIndex": 0, "reps": 8 },
-              { "orderIndex": 1, "reps": 8 },
-              { "orderIndex": 2, "reps": 6 }
-            ],
-            "orderIndex": 0,
-            "isActive": true,
-            "targetMuscle": "string",
-            "specificTargetMuscle": "string"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+- Empty `204 No Content` body. Fetch `GET /api/workout-plan?tz=...` when the updated plan is needed.
 
 ### `GET /api/workout-history`
 
@@ -953,7 +873,7 @@ Notes:
 
 ### `POST /api/workout-sessions`
 
-Persists a completed workout and returns the updated tracking snapshot.
+Persists a completed workout and deletes its directly affected cache keys.
 
 Access:
 
@@ -984,7 +904,7 @@ Request body:
 
 Successful response:
 
-- Returns `{ "trackingStats": ..., "trackingMaps": ... }`, using both shared shapes shown above
+- Empty `204 No Content` body. Fetch the relevant tracking GET endpoints when updated data is needed.
 
 ## Aerobics
 
@@ -1042,7 +962,7 @@ Notes:
 
 ### `POST /api/aerobics`
 
-Creates a new aerobics record and returns the refreshed aerobics snapshot.
+Creates a new aerobics record and deletes its exact 45-day cache key.
 
 Access:
 
@@ -1070,11 +990,11 @@ Request body:
 
 Successful response:
 
-- Returns the same `GetAerobicHistoryResponse` structure shown above
+- Empty `204 No Content` body
 
 ### `PUT /api/aerobics/:id`
 
-Replaces an aerobics entry owned by the authenticated user and returns the refreshed aerobics snapshot.
+Replaces an aerobics entry owned by the authenticated user and deletes its exact 45-day cache key.
 
 Access:
 
@@ -1102,12 +1022,12 @@ Request body:
 
 Successful response:
 
-- Returns the same `GetAerobicHistoryResponse` structure shown above
+- Empty `204 No Content` body
 - Returns `404` when the entry does not exist or belongs to another user
 
 ### `DELETE /api/aerobics/:id`
 
-Deletes an aerobics entry owned by the authenticated user and returns the refreshed aerobics snapshot.
+Deletes an aerobics entry owned by the authenticated user and deletes its exact 45-day cache key.
 
 Access:
 
@@ -1123,7 +1043,7 @@ Query:
 
 Successful response:
 
-- Returns the same `GetAerobicHistoryResponse` structure shown above
+- Empty `204 No Content` body
 - Returns `404` when the entry does not exist or belongs to another user
 
 ## Analytics
@@ -1242,12 +1162,7 @@ Path params:
 
 Successful response:
 
-```json
-{
-  "id": "string",
-  "isRead": true
-}
-```
+- Empty `204 No Content` body
 
 ### `DELETE /api/messages/:id`
 
@@ -1267,11 +1182,7 @@ Path params:
 
 Successful response:
 
-```json
-{
-  "id": "string"
-}
-```
+- Empty `204 No Content` body
 
 ## OAuth
 
@@ -1484,6 +1395,20 @@ These routes return `X-Cache: HIT` or `X-Cache: MISS`:
 - `/api/workout-history`
 - `/api/workout-statistics`
 - `/api/aerobics`
+
+### Mutation cache behavior
+
+Mutation endpoints do not rebuild response caches. They directly delete only the
+keys affected by the mutation, and the next related GET request repopulates them.
+
+- `POST /api/workout-sessions` deletes the requested timezone's 45-day workout
+  history, workout statistics, exercise history, and personal-records keys.
+- `PUT /api/workout-plan` deletes the requested timezone's plan, workout-history,
+  and workout-statistics keys, plus the user's timezone-independent analytics key.
+- Aerobics `POST`, `PUT`, and `DELETE` delete the requested timezone's 45-day
+  aerobics key.
+
+These mutations do not call broad cross-timezone cache deletion.
 - `/api/analytics`
 
 ### HTML routes

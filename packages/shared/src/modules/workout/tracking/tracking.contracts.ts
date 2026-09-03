@@ -1,7 +1,6 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, QueryOf, ResponseOf } from '../../../common';
 import {
-  exerciseTrackingAndStatsQueryDtoSchema,
   exerciseTrackingMapsQueryDtoSchema,
   exerciseTrackingStatsQueryDtoSchema,
   exerciseHistoryQueryDtoSchema,
@@ -42,7 +41,7 @@ export const createWorkoutSessionRequestSchema = z.object({
     workoutEndUtc: z.string().datetime('workoutEndUtc must be a valid ISO datetime').optional().nullable(),
   }),
 });
-export const createWorkoutSessionResponseSchema = exerciseTrackingAndStatsQueryDtoSchema;
+export const createWorkoutSessionResponseSchema = z.void();
 export const createWorkoutSessionContract = {
   request: createWorkoutSessionRequestSchema,
   response: createWorkoutSessionResponseSchema,

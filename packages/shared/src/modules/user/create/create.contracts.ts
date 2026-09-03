@@ -17,20 +17,14 @@ const fullNameSchema = userDbSchema.shape.name
 export const createUserRequestSchema = z.object({
   body: z.object({
     username: usernameSchema,
-    fullName: z.preprocess(
-      (value) => (value == null || (typeof value === 'string' && value.trim() === '') ? 'User' : value),
-      fullNameSchema,
-    ),
+    fullName: z.preprocess((value) => (value == null || (typeof value === 'string' && value.trim() === '') ? 'User' : value), fullNameSchema),
     email: userDbSchema.shape.email.trim().toLowerCase().email('Invalid email format'),
     password: z.string().min(8, 'Password must be at least 8 characters long'),
-    gender: z.preprocess(
-      (value) => (value === '' || value == null ? 'Unknown' : value),
-      z.enum(['Male', 'Female', 'Other', 'Unknown']),
-    ),
+    gender: z.preprocess((value) => (value === '' || value == null ? 'Unknown' : value), z.enum(['Male', 'Female', 'Other', 'Unknown'])),
   }),
 });
 export const createUserUserSchema = createdUserQueryDtoSchema;
-export const createUserResponseSchema = z.object({ message: z.string(), user: createdUserQueryDtoSchema });
+export const createUserResponseSchema = z.void();
 
 export const createUserContract = {
   request: createUserRequestSchema,

@@ -1,11 +1,6 @@
 import request from 'supertest';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import {
-  deleteMessageResponseSchema,
-  listMessagesResponseSchema,
-  loginResponseSchema,
-  markMessageAsReadResponseSchema,
-} from '@strong-together/shared';
+import { listMessagesResponseSchema, loginResponseSchema } from '@strong-together/shared';
 import { createApp } from '../../app';
 import { authHeaders } from '../../common/tests/helpers/auth';
 import { expectSchema } from '../../common/tests/helpers/assert-schema';
@@ -43,10 +38,7 @@ async function createWorkoutMessage(user: Awaited<ReturnType<typeof messageUser>
       trackedSets: [{ weight: 80, reps: 8, setIndex: 0 }],
     },
   ]);
-  const messages = await request(app.getHttpServer())
-    .get('/api/messages')
-    .query({ tz: 'Asia/Jerusalem' })
-    .set(authHeaders(user.accessToken));
+  const messages = await request(app.getHttpServer()).get('/api/messages').query({ tz: 'Asia/Jerusalem' }).set(authHeaders(user.accessToken));
   expectSchema(listMessagesResponseSchema, messages.body);
   return messages.body.messages[0].id as string;
 }
@@ -54,10 +46,7 @@ async function createWorkoutMessage(user: Awaited<ReturnType<typeof messageUser>
 describe('MessagesController', () => {
   it('GET /api/messages returns empty User A messages with schema', async () => {
     const user = await messageUser('messages_empty');
-    const response = await request(app.getHttpServer())
-      .get('/api/messages')
-      .query({ tz: 'Asia/Jerusalem' })
-      .set(authHeaders(user.accessToken));
+    const response = await request(app.getHttpServer()).get('/api/messages').query({ tz: 'Asia/Jerusalem' }).set(authHeaders(user.accessToken));
 
     expect(response.status).toBe(200);
     expectSchema(listMessagesResponseSchema, response.body);
@@ -76,13 +65,10 @@ describe('MessagesController', () => {
     const user = await messageUser('messages_read');
     const messageId = await createWorkoutMessage(user);
 
-    const response = await request(app.getHttpServer())
-      .patch(`/api/messages/${messageId}/read`)
-      .set(authHeaders(user.accessToken));
+    const response = await request(app.getHttpServer()).patch(`/api/messages/${messageId}/read`).set(authHeaders(user.accessToken));
 
-    expect(response.status).toBe(200);
-    expectSchema(markMessageAsReadResponseSchema, response.body);
-    expect(response.body).toEqual({ id: messageId, isRead: true });
+    expect(response.status).toBe(204);
+    expect(response.text).toBe('');
     expect(await getMessageReadState(messageId)).toBe(true);
   });
 
@@ -90,23 +76,17 @@ describe('MessagesController', () => {
     const user = await messageUser('messages_delete');
     const messageId = await createWorkoutMessage(user);
 
-    const response = await request(app.getHttpServer())
-      .delete(`/api/messages/${messageId}`)
-      .set(authHeaders(user.accessToken));
+    const response = await request(app.getHttpServer()).delete(`/api/messages/${messageId}`).set(authHeaders(user.accessToken));
 
-    expect(response.status).toBe(200);
-    expectSchema(deleteMessageResponseSchema, response.body);
-    expect(response.body).toEqual({ id: messageId });
+    expect(response.status).toBe(204);
+    expect(response.text).toBe('');
     expect(await messageExists(messageId)).toBe(false);
   });
 
   it('message endpoints return 400/401/404 for bad, unauthenticated, and missing resources', async () => {
     const user = await messageUser('messages_bad');
     const noTz = await request(app.getHttpServer()).get('/api/messages').set(authHeaders(user.accessToken));
-    const noAuth = await request(app.getHttpServer())
-      .get('/api/messages')
-      .query({ tz: 'Asia/Jerusalem' })
-      .set('x-app-version', '4.5.0');
+    const noAuth = await request(app.getHttpServer()).get('/api/messages').query({ tz: 'Asia/Jerusalem' }).set('x-app-version', '4.5.0');
     const missing = await request(app.getHttpServer())
       .patch('/api/messages/11111111-1111-1111-8111-111111111111/read')
       .set(authHeaders(user.accessToken));

@@ -38,6 +38,7 @@ __export(index_exports, {
   changeEmailTokenPayloadDtoSchema: () => changeEmailTokenPayloadDtoSchema,
   createAerobicEntryContract: () => createAerobicEntryContract,
   createAerobicEntryRequestSchema: () => createAerobicEntryRequestSchema,
+  createAerobicEntryResponseSchema: () => createAerobicEntryResponseSchema,
   createPasswordResetRequestContract: () => createPasswordResetRequestContract,
   createPasswordResetRequestSchema: () => createPasswordResetRequestSchema,
   createUserContract: () => createUserContract,
@@ -1756,8 +1757,10 @@ var createAerobicEntryRequestSchema = import_v43.z.object({
     record: addAerobicInputQueryDtoSchema
   })
 });
+var createAerobicEntryResponseSchema = import_v43.z.void();
 var createAerobicEntryContract = {
-  request: createAerobicEntryRequestSchema
+  request: createAerobicEntryRequestSchema,
+  response: createAerobicEntryResponseSchema
 };
 var getAerobicHistoryRequestSchema = import_v43.z.object({
   query: import_v43.z.object({
@@ -1783,7 +1786,7 @@ var updateAerobicEntryRequestSchema = import_v43.z.object({
 });
 var updateAerobicEntryContract = {
   request: updateAerobicEntryRequestSchema,
-  response: getAerobicHistoryResponseSchema
+  response: import_v43.z.void()
 };
 var deleteAerobicEntryRequestSchema = import_v43.z.object({
   params: aerobicEntryIdParamsSchema,
@@ -1793,7 +1796,7 @@ var deleteAerobicEntryRequestSchema = import_v43.z.object({
 });
 var deleteAerobicEntryContract = {
   request: deleteAerobicEntryRequestSchema,
-  response: getAerobicHistoryResponseSchema
+  response: import_v43.z.void()
 };
 
 // src/modules/analytics/analytics.contracts.ts
@@ -1848,9 +1851,7 @@ var resetPasswordRequestSchema = import_v46.z.object({
     token: import_v46.z.string().optional()
   })
 });
-var resetPasswordResponseSchema = import_v46.z.object({
-  ok: import_v46.z.boolean()
-});
+var resetPasswordResponseSchema = import_v46.z.void();
 var resetPasswordContract = {
   request: resetPasswordRequestSchema,
   response: resetPasswordResponseSchema
@@ -2130,7 +2131,7 @@ var markMessageAsReadRequestSchema = import_v416.z.object({
     id: messageDbSchema.shape.id
   })
 });
-var markMessageAsReadResponseSchema = messageAsReadQueryDtoSchema;
+var markMessageAsReadResponseSchema = import_v416.z.void();
 var markMessageAsReadContract = {
   request: markMessageAsReadRequestSchema,
   response: markMessageAsReadResponseSchema
@@ -2140,7 +2141,7 @@ var deleteMessageRequestSchema = import_v416.z.object({
     id: messageDbSchema.shape.id
   })
 });
-var deleteMessageResponseSchema = deletedMessageQueryDtoSchema;
+var deleteMessageResponseSchema = import_v416.z.void();
 var deleteMessageContract = {
   request: deleteMessageRequestSchema,
   response: deleteMessageResponseSchema
@@ -2289,10 +2290,7 @@ var createUserRequestSchema = import_v425.z.object({
   })
 });
 var createUserUserSchema = createdUserQueryDtoSchema;
-var createUserResponseSchema = import_v425.z.object({
-  message: import_v425.z.string(),
-  user: createdUserQueryDtoSchema
-});
+var createUserResponseSchema = import_v425.z.void();
 var createUserContract = {
   request: createUserRequestSchema,
   response: createUserResponseSchema
@@ -2314,11 +2312,7 @@ var import_v427 = require("zod/v4");
 var updateCurrentUserRequestSchema = import_v427.z.object({
   body: authenticatedUserForUpdateQueryDtoSchema
 });
-var updateCurrentUserResponseSchema = import_v427.z.object({
-  message: import_v427.z.string(),
-  emailChanged: import_v427.z.boolean(),
-  user: userDataQueryDtoSchema
-});
+var updateCurrentUserResponseSchema = import_v427.z.void();
 var updateCurrentUserContract = {
   request: updateCurrentUserRequestSchema,
   response: updateCurrentUserResponseSchema
@@ -2509,10 +2503,6 @@ var getWorkoutPlanContract = {
   request: getWorkoutPlanRequestSchema,
   response: getWorkoutPlanResponseSchema
 };
-var workoutMutationResponseSchema = import_v432.z.object({
-  message: import_v432.z.string(),
-  workoutPlan: wholeUserWorkoutPlanQueryDtoSchema
-});
 var replaceWorkoutPlanRequestSchema = import_v432.z.object({
   body: import_v432.z.object({
     workoutData: saveWorkoutSplitPayloadQueryDtoSchema,
@@ -2520,7 +2510,7 @@ var replaceWorkoutPlanRequestSchema = import_v432.z.object({
     tz: import_v432.z.string()
   })
 });
-var replaceWorkoutPlanResponseSchema = workoutMutationResponseSchema;
+var replaceWorkoutPlanResponseSchema = import_v432.z.void();
 var replaceWorkoutPlanContract = {
   request: replaceWorkoutPlanRequestSchema,
   response: replaceWorkoutPlanResponseSchema
@@ -2725,7 +2715,7 @@ var createWorkoutSessionRequestSchema = import_v434.z.object({
     workoutEndUtc: import_v434.z.string().datetime("workoutEndUtc must be a valid ISO datetime").optional().nullable()
   })
 });
-var createWorkoutSessionResponseSchema = exerciseTrackingAndStatsQueryDtoSchema;
+var createWorkoutSessionResponseSchema = import_v434.z.void();
 var createWorkoutSessionContract = {
   request: createWorkoutSessionRequestSchema,
   response: createWorkoutSessionResponseSchema
@@ -2759,6 +2749,7 @@ var getPersonalRecordsContract = {
   changeEmailTokenPayloadDtoSchema,
   createAerobicEntryContract,
   createAerobicEntryRequestSchema,
+  createAerobicEntryResponseSchema,
   createPasswordResetRequestContract,
   createPasswordResetRequestSchema,
   createUserContract,

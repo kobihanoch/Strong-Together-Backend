@@ -48,19 +48,13 @@ describe('WebSocketsController', () => {
     const user = await createAndLoginTestUser(app, 'ws_bad');
     users.add(user.username);
 
-    const response = await request(app.getHttpServer())
-      .post('/api/websocket-tickets')
-      .set(authHeaders(user.accessToken))
-      .send({});
+    const response = await request(app.getHttpServer()).post('/api/websocket-tickets').set(authHeaders(user.accessToken)).send({});
 
     expect(response.status).toBe(400);
   });
 
   it('POST /api/websocket-tickets rejects unauthenticated requests with 401', async () => {
-    const response = await request(app.getHttpServer())
-      .post('/api/websocket-tickets')
-      .set('x-app-version', '4.5.0')
-      .send({ username: 'missing' });
+    const response = await request(app.getHttpServer()).post('/api/websocket-tickets').set('x-app-version', '4.5.0').send({ username: 'missing' });
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('No access token provided');

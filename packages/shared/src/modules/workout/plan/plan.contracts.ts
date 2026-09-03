@@ -1,9 +1,6 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, QueryOf, ResponseOf } from '../../../common';
-import {
-  saveWorkoutSplitPayloadQueryDtoSchema,
-  wholeUserWorkoutPlanQueryDtoSchema,
-} from './plan.dtos';
+import { saveWorkoutSplitPayloadQueryDtoSchema, wholeUserWorkoutPlanQueryDtoSchema } from './plan.dtos';
 
 // Get whole workout plan
 
@@ -17,11 +14,6 @@ export const getWorkoutPlanContract = {
   response: getWorkoutPlanResponseSchema,
 } satisfies Contract;
 
-const workoutMutationResponseSchema = z.object({
-  message: z.string(),
-  workoutPlan: wholeUserWorkoutPlanQueryDtoSchema,
-});
-
 // Save workout
 
 export const replaceWorkoutPlanRequestSchema = z.object({
@@ -31,7 +23,7 @@ export const replaceWorkoutPlanRequestSchema = z.object({
     tz: z.string(),
   }),
 });
-export const replaceWorkoutPlanResponseSchema = workoutMutationResponseSchema;
+export const replaceWorkoutPlanResponseSchema = z.void();
 export const replaceWorkoutPlanContract = {
   request: replaceWorkoutPlanRequestSchema,
   response: replaceWorkoutPlanResponseSchema,

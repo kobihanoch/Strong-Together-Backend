@@ -1,12 +1,6 @@
-import { Controller, Delete, Get, NotFoundException, Patch, Put, Query, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Put, Query, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type {
-  DeleteProfilePictureBody,
-  GetCurrentUserResponse,
-  ReplaceProfilePictureResponse,
-  UpdateCurrentUserResponse,
-  UpdateCurrentUserBody,
-} from '@strong-together/shared';
+import type { DeleteProfilePictureBody, GetCurrentUserResponse, ReplaceProfilePictureResponse, UpdateCurrentUserBody } from '@strong-together/shared';
 import { deleteProfilePictureRequestSchema, updateCurrentUserRequestSchema } from '@strong-together/shared';
 import type { Response } from 'express';
 import { CurrentLogger } from '../../../common/decorators/current-logger.decorator';
@@ -64,8 +58,8 @@ export class UpdateUserController {
   /**
    * Update the authenticated user's profile details.
    *
-   * Persists allowed profile fields and sends an email-verification flow when
-   * the submitted email differs from the current one.
+   * Persists allowed profile fields, sends an email-verification flow when the
+   * submitted email differs, and responds with 204 No Content.
    *
    * @remarks Route: PATCH /api/users/me
    * Access: User
@@ -73,10 +67,9 @@ export class UpdateUserController {
    * @param data - The validated request data.
    * @param user - The authenticated user.
    * @param requestId - The request id.
-   * @param res - The HTTP response.
-   * @returns The response payload.
    */
   @Patch('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(RateLimitGuard, DpopGuard, AuthenticationGuard, AuthorizationGuard)
   @RateLimit(updateUserRateLimitDaily, updateUserRateLimit)
   @Roles('user')
@@ -84,15 +77,8 @@ export class UpdateUserController {
     @RequestData(new ValidateRequestPipe(updateCurrentUserRequestSchema)) data: { body: UpdateCurrentUserBody },
     @CurrentUser() user: AuthenticatedUser,
     @CurrentRequestId() requestId: string | undefined,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<UpdateCurrentUserResponse> {
-    const payload = await this.updateUserService.updateCurrentUserData(user.id, data.body, requestId);
-
-    if (payload.message === 'User not found') {
-      throw new NotFoundException('User not found');
-    }
-
-    return payload;
+  ): Promise<void> {
+    await this.updateUserService.updateCurrentUserData(user.id, data.body, requestId);
   }
 
   /**
@@ -119,20 +105,19 @@ export class UpdateUserController {
   /**
    * Delete the authenticated user's account.
    *
-   * Removes the current user's account and returns a success message.
+   * Removes the current user's account and responds with 204 No Content.
    *
    * @remarks Route: DELETE /api/users/me
    * Access: User
    *
    * @param user - The authenticated user.
-   * @returns The response payload.
    */
   @Delete('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
   @Roles('user')
-  async deleteSelfUser(@CurrentUser() user: AuthenticatedUser): Promise<{ message: string }> {
+  async deleteSelfUser(@CurrentUser() user: AuthenticatedUser): Promise<void> {
     await this.updateUserService.deleteSelfUserData(user.id);
-    return { message: 'User deleted successfully' };
   }
 
   /**

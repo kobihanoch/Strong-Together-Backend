@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import request from 'supertest';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { loginResponseSchema, resetPasswordResponseSchema } from '@strong-together/shared';
+import { loginResponseSchema } from '@strong-together/shared';
 import { createApp } from '../../../app';
 import { createForgotPasswordToken } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
@@ -75,9 +75,8 @@ describe('PasswordController', () => {
       .set('x-app-version', '4.5.0')
       .send({ newPassword: 'Reset1234!' });
 
-    expect(response.status).toBe(200);
-    expectSchema(resetPasswordResponseSchema, response.body);
-    expect(response.body.ok).toBe(true);
+    expect(response.status).toBe(204);
+    expect(response.text).toBe('');
 
     const after = await getUserAuthStateByUsername(user.username);
     expect(after?.password).toBeTypeOf('string');

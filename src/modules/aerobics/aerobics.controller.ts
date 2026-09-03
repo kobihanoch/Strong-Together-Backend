@@ -1,17 +1,15 @@
-import { Controller, Delete, Get, Post, Put, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Post, Put, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
 import type {
   CreateAerobicEntryBody,
   CreateAerobicEntryQuery,
   DeleteAerobicEntryParams,
   DeleteAerobicEntryQuery,
-  DeleteAerobicEntryResponse,
   GetAerobicHistoryQuery,
   GetAerobicHistoryResponse,
   UpdateAerobicEntryBody,
   UpdateAerobicEntryParams,
   UpdateAerobicEntryQuery,
-  UpdateAerobicEntryResponse,
 } from '@strong-together/shared';
 import type { AuthenticatedUser } from '../../common/types/express';
 import {
@@ -78,76 +76,72 @@ export class AerobicsController {
   /**
    * Create a new aerobics tracking record for the authenticated user.
    *
-   * Persists the submitted aerobics entry, refreshes the user's aerobics cache,
-   * and returns the updated aerobics snapshot for the requested timezone.
+   * Persists the submitted aerobics entry, deletes its exact 45-day cache key,
+   * and responds with 204 No Content.
    *
    * @remarks Route: POST /api/aerobics
    * Access: User
    *
    * @param data - The validated request data.
    * @param user - The authenticated user.
-   * @returns The response payload.
    */
   @Post()
+  @HttpCode(HttpStatus.NO_CONTENT)
   async createAerobicEntry(
-    @RequestData(new ValidateRequestPipe(createAerobicEntryRequestSchema)) data: {
+    @RequestData(new ValidateRequestPipe(createAerobicEntryRequestSchema))
+    data: {
       query: CreateAerobicEntryQuery;
       body: CreateAerobicEntryBody;
     },
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<GetAerobicHistoryResponse> {
-    return this.aerobicsService.createAerobicEntryData(user.id, data.body, data.query.tz || 'Asia/Jerusalem');
+  ): Promise<void> {
+    await this.aerobicsService.createAerobicEntryData(user.id, data.body, data.query.tz || 'Asia/Jerusalem');
   }
 
   /**
-   * Replace an aerobic entry owned by the authenticated user.
+   * Replaces an owned aerobic entry, deletes its exact 45-day cache key, and
+   * responds with 204 No Content.
    *
    * @remarks Route: PUT /api/aerobics/:id
    * Access: User
    *
    * @param data - The validated path parameters and request body.
    * @param user - The authenticated user.
-   * @returns The refreshed aerobic history.
    */
   @Put(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async updateAerobicEntry(
-    @RequestData(new ValidateRequestPipe(updateAerobicEntryRequestSchema)) data: {
+    @RequestData(new ValidateRequestPipe(updateAerobicEntryRequestSchema))
+    data: {
       params: UpdateAerobicEntryParams;
       query: UpdateAerobicEntryQuery;
       body: UpdateAerobicEntryBody;
     },
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<UpdateAerobicEntryResponse> {
-    return this.aerobicsService.updateAerobicEntryData(
-      user.id,
-      data.params.id,
-      data.body.record,
-      data.query.tz || 'Asia/Jerusalem',
-    );
+  ): Promise<void> {
+    await this.aerobicsService.updateAerobicEntryData(user.id, data.params.id, data.body.record, data.query.tz || 'Asia/Jerusalem');
   }
 
   /**
-   * Delete an aerobic entry owned by the authenticated user.
+   * Deletes an owned aerobic entry, deletes its exact 45-day cache key, and
+   * responds with 204 No Content.
    *
    * @remarks Route: DELETE /api/aerobics/:id
    * Access: User
    *
    * @param data - The validated path parameters and query.
    * @param user - The authenticated user.
-   * @returns The refreshed aerobic history.
    */
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async deleteAerobicEntry(
-    @RequestData(new ValidateRequestPipe(deleteAerobicEntryRequestSchema)) data: {
+    @RequestData(new ValidateRequestPipe(deleteAerobicEntryRequestSchema))
+    data: {
       params: DeleteAerobicEntryParams;
       query: DeleteAerobicEntryQuery;
     },
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<DeleteAerobicEntryResponse> {
-    return this.aerobicsService.deleteAerobicEntryData(
-      user.id,
-      data.params.id,
-      data.query.tz || 'Asia/Jerusalem',
-    );
+  ): Promise<void> {
+    await this.aerobicsService.deleteAerobicEntryData(user.id, data.params.id, data.query.tz || 'Asia/Jerusalem');
   }
 }

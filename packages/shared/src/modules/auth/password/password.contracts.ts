@@ -13,7 +13,7 @@ export const resetPasswordRequestSchema = z.object({
   body: z.object({ newPassword: z.string().min(8, 'Password must be at least 8 characters long') }),
   query: z.object({ token: z.string().optional() }),
 });
-export const resetPasswordResponseSchema = z.object({ ok: z.boolean() });
+export const resetPasswordResponseSchema = z.void();
 export const resetPasswordContract = {
   request: resetPasswordRequestSchema,
   response: resetPasswordResponseSchema,

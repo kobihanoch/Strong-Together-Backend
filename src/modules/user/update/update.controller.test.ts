@@ -1,12 +1,7 @@
 import crypto from 'crypto';
 import request from 'supertest';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import {
-  getCurrentUserResponseSchema,
-  loginResponseSchema,
-  replaceProfilePictureResponseSchema,
-  updateCurrentUserResponseSchema,
-} from '@strong-together/shared';
+import { getCurrentUserResponseSchema, loginResponseSchema, replaceProfilePictureResponseSchema } from '@strong-together/shared';
 import { createApp } from '../../../app';
 import { authHeaders, createChangeEmailToken } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
@@ -57,7 +52,7 @@ describe('UpdateUserController', () => {
     expect(response.body).toMatchObject({ id: user.userId, username: user.username, email: user.email });
   });
 
-  it('PATCH /api/users/me updates DB profile and preserves response schema', async () => {
+  it('PATCH /api/users/me updates the DB profile and returns 204', async () => {
     const user = await createAndLoginTestUser(app, 'user_update');
     users.add(user.username);
     const nextUsername = `upd${crypto.randomUUID().slice(0, 6)}`;
@@ -68,10 +63,8 @@ describe('UpdateUserController', () => {
       fullName: 'Updated User',
     });
 
-    expect(response.status).toBe(200);
-    expectSchema(updateCurrentUserResponseSchema, response.body);
-    expect(response.body.emailChanged).toBe(false);
-    expect(response.body.user.username).toBe(nextUsername);
+    expect(response.status).toBe(204);
+    expect(response.text).toBe('');
     expect((await getUserAuthStateByUsername(nextUsername))?.name).toBe('Updated User');
     users.delete(user.username);
   });
@@ -85,9 +78,8 @@ describe('UpdateUserController', () => {
       email: newEmail,
     });
 
-    expect(update.status).toBe(200);
-    expectSchema(updateCurrentUserResponseSchema, update.body);
-    expect(update.body.emailChanged).toBe(true);
+    expect(update.status).toBe(204);
+    expect(update.text).toBe('');
     expect((await getUserAuthStateByUsername(user.username))?.email).toBe(user.email);
     expect(await getEmailQueueJobCount()).toBe(1);
     const latestJob = await getLatestEmailJob();
@@ -98,14 +90,8 @@ describe('UpdateUserController', () => {
     expect(JSON.stringify(await waitForMaildevMessage('Confirm'))).toContain(newEmail);
 
     const token = createChangeEmailToken(user.userId, newEmail);
-    const confirm = await request(app.getHttpServer())
-      .get('/api/users/email-change')
-      .query({ token })
-      .set('x-app-version', '4.5.0');
-    const reused = await request(app.getHttpServer())
-      .get('/api/users/email-change')
-      .query({ token })
-      .set('x-app-version', '4.5.0');
+    const confirm = await request(app.getHttpServer()).get('/api/users/email-change').query({ token }).set('x-app-version', '4.5.0');
+    const reused = await request(app.getHttpServer()).get('/api/users/email-change').query({ token }).set('x-app-version', '4.5.0');
 
     expect(confirm.status).toBe(200);
     expect(confirm.headers['content-type']).toContain('text/html');
@@ -119,8 +105,8 @@ describe('UpdateUserController', () => {
 
     const response = await request(app.getHttpServer()).delete('/api/users/me').set(authHeaders(user.accessToken));
 
-    expect(response.status).toBe(200);
-    expect(response.body.message).toBe('User deleted successfully');
+    expect(response.status).toBe(204);
+    expect(response.text).toBe('');
     expect(await waitForUserDeletionByUsername(user.username)).toBeNull();
     users.delete(user.username);
   });
@@ -162,10 +148,7 @@ describe('UpdateUserController', () => {
     users.add(user.username);
 
     const noFile = await request(app.getHttpServer()).put('/api/users/me/profile-picture').set(authHeaders(user.accessToken));
-    const badDelete = await request(app.getHttpServer())
-      .delete('/api/users/me/profile-picture')
-      .set(authHeaders(user.accessToken))
-      .send({});
+    const badDelete = await request(app.getHttpServer()).delete('/api/users/me/profile-picture').set(authHeaders(user.accessToken)).send({});
 
     expect(noFile.status).toBe(400);
     expect(noFile.body.message).toBe('No file provided');

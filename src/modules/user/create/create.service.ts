@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import { CreateUserQueries } from './create.queries';
-import type { CreateUserBody, CreateUserResponse } from '@strong-together/shared';
+import type { CreateUserBody } from '@strong-together/shared';
 import { VerificationEmailsService } from '../../auth/verification/verification-emails/verification-emails.service';
 
 @Injectable()
@@ -12,12 +12,11 @@ export class CreateUserService {
   ) {}
 
   /**
-   * Creates user.
+   * Creates a local user and sends the initial verification email.
    * @param body - The validated request body.
    * @param requestId - The request correlation identifier.
-   * @returns The create user result.
    */
-  async createUserData(body: CreateUserBody, requestId?: string): Promise<CreateUserResponse> {
+  async createUserData(body: CreateUserBody, requestId?: string): Promise<void> {
     const { username, fullName, email, password, gender } = body;
     const rowsExists = await this.createUserQueries.queryUserExistsByUsernameOrEmail(username, email);
     const [user] = rowsExists;
@@ -31,7 +30,5 @@ export class CreateUserService {
     await this.verificationEmailsService.sendVerificationEmail(email as string, created.id, fullName, {
       ...(requestId ? { requestId } : {}),
     });
-
-    return { message: 'User created successfully!', user: created };
   }
 }

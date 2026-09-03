@@ -1,12 +1,5 @@
-import { Controller, Delete, Get, Patch, UseGuards, UseInterceptors } from '@nestjs/common';
-import type {
-  DeleteMessageParams,
-  DeleteMessageResponse,
-  ListMessagesQuery,
-  ListMessagesResponse,
-  MarkMessageAsReadParams,
-  MarkMessageAsReadResponse,
-} from '@strong-together/shared';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, UseGuards, UseInterceptors } from '@nestjs/common';
+import type { DeleteMessageParams, ListMessagesQuery, ListMessagesResponse, MarkMessageAsReadParams } from '@strong-together/shared';
 import { deleteMessageRequestSchema, listMessagesRequestSchema, markMessageAsReadRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestData } from '../../common/decorators/request-data.decorator';
@@ -62,45 +55,43 @@ export class MessagesController {
    * Mark a message as read for the authenticated user.
    *
    * Updates the target message only when it belongs to the current user and
-   * returns the updated read state.
+   * responds with 204 No Content.
    *
    * @remarks Route: PATCH /api/messages/:id/read
    * Access: User
    *
    * @param data - The validated request data.
    * @param user - The authenticated user.
-   * @returns The response payload.
    */
   @Patch(':id/read')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async markUserMessageAsRead(
     @RequestData(new ValidateRequestPipe(markMessageAsReadRequestSchema))
     data: { params: MarkMessageAsReadParams },
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<MarkMessageAsReadResponse> {
-    const payload = await this.messagesService.markUserMessageAsReadData(data.params.id, user.id);
-    return payload;
+  ): Promise<void> {
+    await this.messagesService.markUserMessageAsReadData(data.params.id, user.id);
   }
 
   /**
    * Delete a message visible to the authenticated user.
    *
    * Removes the target message when the current user is allowed to access it and
-   * returns the deleted message identifier.
+   * responds with 204 No Content.
    *
    * @remarks Route: DELETE /api/messages/:id
    * Access: User
    *
    * @param data - The validated request data.
    * @param user - The authenticated user.
-   * @returns The response payload.
    */
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async deleteMessage(
     @RequestData(new ValidateRequestPipe(deleteMessageRequestSchema))
     data: { params: DeleteMessageParams },
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<DeleteMessageResponse> {
-    const payload = await this.messagesService.deleteMessageData(data.params.id, user.id);
-    return payload;
+  ): Promise<void> {
+    await this.messagesService.deleteMessageData(data.params.id, user.id);
   }
 }

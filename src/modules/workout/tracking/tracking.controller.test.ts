@@ -1,8 +1,6 @@
 import request from 'supertest';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
-  replaceWorkoutPlanResponseSchema,
-  createWorkoutSessionResponseSchema,
   getWorkoutHistoryResponseSchema,
   getExerciseHistoryResponseSchema,
   getWorkoutStatisticsResponseSchema,
@@ -12,18 +10,10 @@ import {
 import { createApp } from '../../../app';
 import { authHeaders } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
-import {
-  getExerciseToWorkoutSplitId,
-  getExerciseTrackingCountForUser,
-  getWorkoutSummaryCount,
-} from '../../../common/tests/helpers/db';
+import { getExerciseToWorkoutSplitId, getExerciseTrackingCountForUser, getWorkoutSummaryCount } from '../../../common/tests/helpers/db';
 import { deleteRedisKeysByPattern, getRedisKey } from '../../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../../common/tests/helpers/users';
-import {
-  buildExerciseHistoryKeyStable,
-  buildPersonalRecordsKeyStable,
-  buildWorkoutHistoryKeyStable,
-} from './tracking.cache';
+import { buildExerciseHistoryKeyStable, buildPersonalRecordsKeyStable, buildWorkoutHistoryKeyStable } from './tracking.cache';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 const users = new Set<string>();
@@ -62,12 +52,9 @@ async function addPlan(user: Awaited<ReturnType<typeof trackingUser>>) {
     .send({
       tz: 'Asia/Jerusalem',
       workoutName: 'Tracking Plan',
-      workoutData: [
-        { name: 'A', orderIndex: 0, exercises: [{ exerciseId: 20, sets: [8, 8, 10], orderIndex: 0 }] },
-      ],
+      workoutData: [{ name: 'A', orderIndex: 0, exercises: [{ exerciseId: 20, sets: [8, 8, 10], orderIndex: 0 }] }],
     });
-  expect(response.status).toBe(201);
-  expectSchema(replaceWorkoutPlanResponseSchema, response.body);
+  expect(response.status).toBe(204);
   const etsId = await getExerciseToWorkoutSplitId(user.userId, 'A', 20);
   expect(etsId).not.toBeNull();
   return etsId!;
@@ -135,7 +122,7 @@ describe('WorkoutTrackingController', () => {
           { name: 'B', orderIndex: 1, exercises: [{ exerciseId: 12, sets: [10], orderIndex: 0 }] },
         ],
       });
-    expect(planResponse.status).toBe(201);
+    expect(planResponse.status).toBe(204);
 
     const emptyStatsResponse = await request(app.getHttpServer())
       .get('/api/workout-statistics')
@@ -165,13 +152,16 @@ describe('WorkoutTrackingController', () => {
         ],
       });
 
-    expect(finishResponse.status).toBe(201);
-    expect(finishResponse.body.hasExerciseTracking).toBeUndefined();
-    expect(finishResponse.body.trackingStats.hasExerciseTracking).toBe(false);
-    expect(finishResponse.body.trackingStats.nextWorkoutSplit).toMatchObject({ name: 'B', orderIndex: 1 });
+    expect(finishResponse.status).toBe(204);
+    const updatedStatsResponse = await request(app.getHttpServer())
+      .get('/api/workout-statistics')
+      .query({ tz: 'Asia/Jerusalem' })
+      .set(authHeaders(user.accessToken));
+    expect(updatedStatsResponse.body.hasExerciseTracking).toBe(false);
+    expect(updatedStatsResponse.body.nextWorkoutSplit).toMatchObject({ name: 'B', orderIndex: 1 });
   });
 
-  it('POST /api/workout-sessions creates User C tracking, DB rows, system message, and Redis cache', async () => {
+  it('POST /api/workout-sessions creates tracking, deletes related cache keys, and returns 204', async () => {
     const user = await trackingUser('tracking_finish');
     const etsId = await addPlan(user);
     const workoutWindow = recentWorkoutWindow();
@@ -196,12 +186,11 @@ describe('WorkoutTrackingController', () => {
         ],
       });
 
-    expect(response.status).toBe(201);
-    expectSchema(createWorkoutSessionResponseSchema, response.body);
-    expect(response.body.trackingStats.workoutCount).toBe(1);
+    expect(response.status).toBe(204);
+    expect(response.text).toBe('');
     expect(await getWorkoutSummaryCount(user.userId)).toBe(1);
     expect(await getExerciseTrackingCountForUser(user.userId)).toBe(1);
-    expect(await getRedisKey(buildWorkoutHistoryKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
+    expect(await getRedisKey(buildWorkoutHistoryKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeNull();
 
     const personalRecordsResponse = await request(app.getHttpServer())
       .get('/api/personal-records')
@@ -241,7 +230,7 @@ describe('WorkoutTrackingController', () => {
             },
           ],
         });
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(204);
     }
 
     const response = await request(app.getHttpServer())
@@ -258,23 +247,18 @@ describe('WorkoutTrackingController', () => {
     expect(grouped.exerciseTracked[0].exerciseTracking).toBeUndefined();
     expect(grouped.exerciseTracked[0].notes).toBeUndefined();
     expect(grouped.exerciseTracked[0].workoutStartLocal).toBeTypeOf('string');
-    expect(grouped.exerciseTracked.map((item: { sets: { weight: number }[] }) => item.sets[0].weight)).toEqual([
-      90, 70,
-    ]);
+    expect(grouped.exerciseTracked.map((item: { sets: { weight: number }[] }) => item.sets[0].weight)).toEqual([90, 70]);
     expect(await getRedisKey(buildExerciseHistoryKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
   it('POST /api/workout-sessions rejects empty workouts with 400 and no DB inserts', async () => {
     const user = await trackingUser('tracking_bad');
-    const response = await request(app.getHttpServer())
-      .post('/api/workout-sessions')
-      .set(authHeaders(user.accessToken))
-      .send({
-        tz: 'Asia/Jerusalem',
-        workoutStartUtc: '2026-03-22T10:00:00.000Z',
-        workoutEndUtc: '2026-03-22T10:45:00.000Z',
-        workout: [],
-      });
+    const response = await request(app.getHttpServer()).post('/api/workout-sessions').set(authHeaders(user.accessToken)).send({
+      tz: 'Asia/Jerusalem',
+      workoutStartUtc: '2026-03-22T10:00:00.000Z',
+      workoutEndUtc: '2026-03-22T10:45:00.000Z',
+      workout: [],
+    });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Not a valid workout');
@@ -282,17 +266,12 @@ describe('WorkoutTrackingController', () => {
   });
 
   it('GET and POST /api/workouts tracking endpoints reject unauthenticated requests with 401', async () => {
-    const getResponse = await request(app.getHttpServer())
-      .get('/api/workout-history')
-      .query({ tz: 'Asia/Jerusalem' })
-      .set('x-app-version', '4.5.0');
+    const getResponse = await request(app.getHttpServer()).get('/api/workout-history').query({ tz: 'Asia/Jerusalem' }).set('x-app-version', '4.5.0');
     const getExerciseResponse = await request(app.getHttpServer())
       .get('/api/exercise-history')
       .query({ tz: 'Asia/Jerusalem' })
       .set('x-app-version', '4.5.0');
-    const getPersonalRecordsResponse = await request(app.getHttpServer())
-      .get('/api/personal-records')
-      .set('x-app-version', '4.5.0');
+    const getPersonalRecordsResponse = await request(app.getHttpServer()).get('/api/personal-records').set('x-app-version', '4.5.0');
     const postResponse = await request(app.getHttpServer())
       .post('/api/workout-sessions')
       .set('x-app-version', '4.5.0')

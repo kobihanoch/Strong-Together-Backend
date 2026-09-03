@@ -1,11 +1,7 @@
 import { z } from 'zod/v4';
 import type { Contract, ParamsOf, QueryOf, ResponseOf } from '../../common';
 import { messageDbSchema } from '../../database';
-import {
-  allUserMessageQueryDtoSchema,
-  deletedMessageQueryDtoSchema,
-  messageAsReadQueryDtoSchema,
-} from './messages.dtos';
+import { allUserMessageQueryDtoSchema } from './messages.dtos';
 
 // List messages
 
@@ -21,7 +17,7 @@ export type ListMessagesResponse = ResponseOf<typeof listMessagesContract>;
 // Mark message as read
 
 export const markMessageAsReadRequestSchema = z.object({ params: z.object({ id: messageDbSchema.shape.id }) });
-export const markMessageAsReadResponseSchema = messageAsReadQueryDtoSchema;
+export const markMessageAsReadResponseSchema = z.void();
 export const markMessageAsReadContract = {
   request: markMessageAsReadRequestSchema,
   response: markMessageAsReadResponseSchema,
@@ -32,7 +28,7 @@ export type MarkMessageAsReadResponse = ResponseOf<typeof markMessageAsReadContr
 // Delete message
 
 export const deleteMessageRequestSchema = z.object({ params: z.object({ id: messageDbSchema.shape.id }) });
-export const deleteMessageResponseSchema = deletedMessageQueryDtoSchema;
+export const deleteMessageResponseSchema = z.void();
 export const deleteMessageContract = {
   request: deleteMessageRequestSchema,
   response: deleteMessageResponseSchema,

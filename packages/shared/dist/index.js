@@ -1534,8 +1534,10 @@ var createAerobicEntryRequestSchema = z3.object({
     record: addAerobicInputQueryDtoSchema
   })
 });
+var createAerobicEntryResponseSchema = z3.void();
 var createAerobicEntryContract = {
-  request: createAerobicEntryRequestSchema
+  request: createAerobicEntryRequestSchema,
+  response: createAerobicEntryResponseSchema
 };
 var getAerobicHistoryRequestSchema = z3.object({
   query: z3.object({
@@ -1561,7 +1563,7 @@ var updateAerobicEntryRequestSchema = z3.object({
 });
 var updateAerobicEntryContract = {
   request: updateAerobicEntryRequestSchema,
-  response: getAerobicHistoryResponseSchema
+  response: z3.void()
 };
 var deleteAerobicEntryRequestSchema = z3.object({
   params: aerobicEntryIdParamsSchema,
@@ -1571,7 +1573,7 @@ var deleteAerobicEntryRequestSchema = z3.object({
 });
 var deleteAerobicEntryContract = {
   request: deleteAerobicEntryRequestSchema,
-  response: getAerobicHistoryResponseSchema
+  response: z3.void()
 };
 
 // src/modules/analytics/analytics.contracts.ts
@@ -1626,9 +1628,7 @@ var resetPasswordRequestSchema = z6.object({
     token: z6.string().optional()
   })
 });
-var resetPasswordResponseSchema = z6.object({
-  ok: z6.boolean()
-});
+var resetPasswordResponseSchema = z6.void();
 var resetPasswordContract = {
   request: resetPasswordRequestSchema,
   response: resetPasswordResponseSchema
@@ -1908,7 +1908,7 @@ var markMessageAsReadRequestSchema = z16.object({
     id: messageDbSchema.shape.id
   })
 });
-var markMessageAsReadResponseSchema = messageAsReadQueryDtoSchema;
+var markMessageAsReadResponseSchema = z16.void();
 var markMessageAsReadContract = {
   request: markMessageAsReadRequestSchema,
   response: markMessageAsReadResponseSchema
@@ -1918,7 +1918,7 @@ var deleteMessageRequestSchema = z16.object({
     id: messageDbSchema.shape.id
   })
 });
-var deleteMessageResponseSchema = deletedMessageQueryDtoSchema;
+var deleteMessageResponseSchema = z16.void();
 var deleteMessageContract = {
   request: deleteMessageRequestSchema,
   response: deleteMessageResponseSchema
@@ -2067,10 +2067,7 @@ var createUserRequestSchema = z25.object({
   })
 });
 var createUserUserSchema = createdUserQueryDtoSchema;
-var createUserResponseSchema = z25.object({
-  message: z25.string(),
-  user: createdUserQueryDtoSchema
-});
+var createUserResponseSchema = z25.void();
 var createUserContract = {
   request: createUserRequestSchema,
   response: createUserResponseSchema
@@ -2092,11 +2089,7 @@ import { z as z27 } from "zod/v4";
 var updateCurrentUserRequestSchema = z27.object({
   body: authenticatedUserForUpdateQueryDtoSchema
 });
-var updateCurrentUserResponseSchema = z27.object({
-  message: z27.string(),
-  emailChanged: z27.boolean(),
-  user: userDataQueryDtoSchema
-});
+var updateCurrentUserResponseSchema = z27.void();
 var updateCurrentUserContract = {
   request: updateCurrentUserRequestSchema,
   response: updateCurrentUserResponseSchema
@@ -2287,10 +2280,6 @@ var getWorkoutPlanContract = {
   request: getWorkoutPlanRequestSchema,
   response: getWorkoutPlanResponseSchema
 };
-var workoutMutationResponseSchema = z32.object({
-  message: z32.string(),
-  workoutPlan: wholeUserWorkoutPlanQueryDtoSchema
-});
 var replaceWorkoutPlanRequestSchema = z32.object({
   body: z32.object({
     workoutData: saveWorkoutSplitPayloadQueryDtoSchema,
@@ -2298,7 +2287,7 @@ var replaceWorkoutPlanRequestSchema = z32.object({
     tz: z32.string()
   })
 });
-var replaceWorkoutPlanResponseSchema = workoutMutationResponseSchema;
+var replaceWorkoutPlanResponseSchema = z32.void();
 var replaceWorkoutPlanContract = {
   request: replaceWorkoutPlanRequestSchema,
   response: replaceWorkoutPlanResponseSchema
@@ -2503,7 +2492,7 @@ var createWorkoutSessionRequestSchema = z34.object({
     workoutEndUtc: z34.string().datetime("workoutEndUtc must be a valid ISO datetime").optional().nullable()
   })
 });
-var createWorkoutSessionResponseSchema = exerciseTrackingAndStatsQueryDtoSchema;
+var createWorkoutSessionResponseSchema = z34.void();
 var createWorkoutSessionContract = {
   request: createWorkoutSessionRequestSchema,
   response: createWorkoutSessionResponseSchema
@@ -2536,6 +2525,7 @@ export {
   changeEmailTokenPayloadDtoSchema,
   createAerobicEntryContract,
   createAerobicEntryRequestSchema,
+  createAerobicEntryResponseSchema,
   createPasswordResetRequestContract,
   createPasswordResetRequestSchema,
   createUserContract,

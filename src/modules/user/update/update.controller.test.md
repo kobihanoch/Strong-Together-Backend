@@ -14,7 +14,7 @@ Each test creates or authenticates the user it needs, then verifies that same us
 ### `PATCH /api/users/me`
 
 - [x] Updates profile fields in DB.
-- [x] Preserves response schema.
+- [x] Returns `204 No Content`.
 
 ### Email change flow
 
@@ -26,6 +26,7 @@ Each test creates or authenticates the user it needs, then verifies that same us
 ### `DELETE /api/users/me`
 
 - [x] Removes the user row from DB.
+- [x] Returns `204 No Content`.
 
 ### Profile image endpoints
 

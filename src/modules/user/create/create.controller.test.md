@@ -9,7 +9,7 @@ The signup test creates a fresh user and then verifies the DB state for that sam
 ### `POST /api/users`
 
 - [x] Creates the user.
-- [x] Validates the response schema.
+- [x] Returns `201 Created` with an empty body.
 - [x] Confirms the DB row exists.
 - [x] Confirms the password is hashed.
 - [x] Creates reminder settings.

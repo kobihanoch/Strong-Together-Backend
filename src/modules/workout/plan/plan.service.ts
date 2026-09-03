@@ -1,11 +1,7 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
 import { WorkoutPlanQueries } from './plan.queries';
-import type {
-  ReplaceWorkoutPlanBody,
-  ReplaceWorkoutPlanResponse,
-  GetWorkoutPlanResponse,
-} from '@strong-together/shared';
+import type { ReplaceWorkoutPlanBody, GetWorkoutPlanResponse } from '@strong-together/shared';
 
 import { buildPlanKeyStable, TTL_PLAN } from './plan.cache';
 import { buildAnalyticsKeyStable } from '../../analytics/analytics.cache';
@@ -53,57 +49,31 @@ export class WorkoutPlanService {
   }
 
   /**
-   * Adds workout.
+   * Replaces the workout plan and deletes its directly affected cache keys.
    * @param userId - The user identifier.
    * @param body - The validated request body.
-   * @returns The add workout result.
    */
-  async replaceWorkoutPlanData(userId: string, body: ReplaceWorkoutPlanBody): Promise<ReplaceWorkoutPlanResponse> {
+  async replaceWorkoutPlanData(userId: string, body: ReplaceWorkoutPlanBody): Promise<void> {
     await this.workoutPlanQueries.queryAddWorkout(userId, body.workoutData);
-    return this.refreshWorkoutPlan(userId, body.tz);
+    await this.deleteWorkoutPlanCaches(userId, body.tz);
   }
 
   /**
-   * Refreshes the cached workout plan for a user.
+   * Deletes the plan, analytics, workout-history, and workout-statistics cache
+   * keys directly affected by replacing a user's plan.
    * @param userId - The user identifier.
    * @param tz - The IANA time-zone name.
-   * @returns The refresh workout plan result.
    */
-  private async refreshWorkoutPlan(
-    userId: string,
-    tz: string,
-  ): Promise<ReplaceWorkoutPlanResponse> {
+  private async deleteWorkoutPlanCaches(userId: string, tz: string): Promise<void> {
     const planKey = buildPlanKeyStable(userId, tz);
     const analyticsKey = buildAnalyticsKeyStable(userId);
     const workoutHistoryKey = buildWorkoutHistoryKeyStable(userId, 45, tz);
     const workoutStatisticsKey = buildWorkoutStatisticsKeyStable(userId, 45, tz);
     await Promise.all([
-      this.cacheService.cacheDeleteOtherTimezones(workoutHistoryKey),
-      this.cacheService.cacheDeleteOtherTimezones(workoutStatisticsKey),
+      this.cacheService.cacheDeleteKey(analyticsKey),
+      this.cacheService.cacheDeleteKey(planKey),
+      this.cacheService.cacheDeleteKey(workoutHistoryKey),
+      this.cacheService.cacheDeleteKey(workoutStatisticsKey),
     ]);
-    await this.cacheService.cacheDeleteKey(analyticsKey);
-    await this.cacheService.cacheDeleteKey(planKey);
-    await this.cacheService.cacheDeleteKey(workoutHistoryKey);
-    await this.cacheService.cacheDeleteKey(workoutStatisticsKey);
-
-    const rows = await this.workoutPlanQueries.queryWholeUserWorkoutPlan(userId, tz);
-    const [plan] = rows;
-    if (!plan) {
-      throw new InternalServerErrorException('Workout plan was not created');
-    }
-    const payload = {
-      message: 'Workout created successfully!',
-      workoutPlan: plan,
-    };
-
-    await this.cacheService.cacheSetJSON(
-      buildPlanKeyStable(userId, tz),
-      {
-        workoutPlan: plan,
-      },
-      TTL_PLAN,
-    );
-
-    return payload;
   }
 }

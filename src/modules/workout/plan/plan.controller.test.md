@@ -14,16 +14,16 @@
 ### `PUT /api/workout-plan` - User B
 
 - [x] Creates a workout plan.
-- [x] Validates the response schema.
+- [x] Returns `204 No Content`.
 - [x] Confirms DB rows exist.
-- [x] Updates Redis.
+- [x] Deletes directly affected cache keys.
 
 ### Repeated `PUT /api/workout-plan` - User B
 
 - [x] Renames and reorders splits carrying IDs.
 - [x] Creates a new split when its ID is omitted.
 - [x] Preserves split IDs.
-- [x] Validates the response schema.
+- [x] Returns `204 No Content`.
 
 ## Bad Paths
 
@@ -39,7 +39,7 @@
 
 ### Repeated plan read
 
-- [x] User B plan can be served from Redis on repeated reads.
+- [x] The first read rebuilds the deleted cache entry and the repeated read is a Redis hit.
 
 ### Empty plan
 

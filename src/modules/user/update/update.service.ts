@@ -3,7 +3,6 @@ import type {
   ChangeEmailTokenPayloadDto,
   DeleteProfilePictureBody,
   ReplaceProfilePictureResponse,
-  UpdateCurrentUserResponse,
   UpdateCurrentUserBody,
   UserDataResponse,
 } from '@strong-together/shared';
@@ -45,17 +44,13 @@ export class UpdateUserService {
   }
 
   /**
-   * Updates authenticated user.
+   * Updates the authenticated user and starts email verification when the
+   * submitted email differs from the persisted address.
    * @param userId - The user identifier.
    * @param body - The validated request body.
    * @param requestId - The request correlation identifier.
-   * @returns The update authenticated user result.
    */
-  async updateCurrentUserData(
-    userId: string,
-    body: UpdateCurrentUserBody,
-    requestId?: string,
-  ): Promise<UpdateCurrentUserResponse> {
+  async updateCurrentUserData(userId: string, body: UpdateCurrentUserBody, requestId?: string): Promise<void> {
     const { username, fullName, email } = body;
     const { payload: currentUser } = await this.getUserData(userId);
 
@@ -70,25 +65,17 @@ export class UpdateUserService {
     }
 
     const [updated] = rowsUpdated;
-    if (!updated) return { message: 'User not found' } as any;
+    if (!updated) throw new NotFoundException('User not found');
 
     const { userData } = updated;
     const currentEmail = (currentUser.email || '').trim().toLowerCase();
     const candidate = (email || '').trim().toLowerCase();
 
-    let emailChanged = false;
     if (candidate && candidate !== currentEmail) {
       await this.updateEmailsService.sendVerificationEmailForEmailUpdate(candidate, userId, userData.name || 'there', {
         ...(requestId ? { requestId } : {}),
       });
-      emailChanged = true;
     }
-
-    return {
-      message: 'User updated successfully',
-      emailChanged,
-      user: updated.userData,
-    };
   }
 
   /**
@@ -97,10 +84,7 @@ export class UpdateUserService {
    * @param requestLogger - The request-scoped logger.
    * @returns The update self email result.
    */
-  async updateSelfEmailData(
-    token: string | undefined,
-    requestLogger: AppLogger,
-  ): Promise<{ statusCode: number; html: string }> {
+  async updateSelfEmailData(token: string | undefined, requestLogger: AppLogger): Promise<{ statusCode: number; html: string }> {
     if (!token) return { statusCode: 401, html: generateEmailChangeFailedHTML('Missing token') };
 
     const decoded = decodeChangeEmailToken(token) as ChangeEmailTokenPayloadDto | null;

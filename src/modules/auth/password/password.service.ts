@@ -1,5 +1,5 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import type { ResetPasswordResponse, CreatePasswordResetRequestBody } from '@strong-together/shared';
+import type { CreatePasswordResetRequestBody } from '@strong-together/shared';
 import bcrypt from 'bcryptjs';
 import { PasswordQueries } from './password.queries';
 import { SessionQueries } from '../session/session.queries';
@@ -29,29 +29,28 @@ export class PasswordService {
   async createPasswordResetRequestData(body: CreatePasswordResetRequestBody, requestId?: string): Promise<void> {
     const { identifier } = body;
     if (!identifier) throw new BadRequestException('Please fill username or email');
-    const [row] = await this.sql<{
-      userData: { id: string; email: string; name: string; username: string } | null;
-    }[]>`SELECT guest_api.find_login_user(${identifier}) AS "userData"`;
+    const [row] = await this.sql<
+      {
+        userData: { id: string; email: string; name: string; username: string } | null;
+      }[]
+    >`
+      SELECT
+        guest_api.find_login_user (${identifier}) AS "userData"
+    `;
     const user = row?.userData ?? null;
     if (!user) return;
 
-    await this.passwordEmailsService.sendForgotPasswordEmail(
-      user.email,
-      user.id,
-      user.name ? user.name : user.username,
-      {
-        ...(requestId ? { requestId } : {}),
-      },
-    );
+    await this.passwordEmailsService.sendForgotPasswordEmail(user.email, user.id, user.name ? user.name : user.username, {
+      ...(requestId ? { requestId } : {}),
+    });
   }
 
   /**
    * Reset password.
    * @param token - The token to process.
    * @param newPassword - The replacement plaintext password.
-   * @returns The reset password result.
    */
-  async resetPasswordData(token: string | undefined, newPassword: string): Promise<ResetPasswordResponse> {
+  async resetPasswordData(token: string | undefined, newPassword: string): Promise<void> {
     if (!token) throw new BadRequestException('Missing token');
     const decoded = decodeForgotPasswordToken(token);
     if (!decoded) {
@@ -74,10 +73,6 @@ export class PasswordService {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(newPassword, salt);
     await this.dbService.promoteCurrentRlsTxToAuthenticated(sub);
-    await Promise.all([
-      this.passwordQueries.queryUpdateUserPassword(sub, hash),
-      this.sessionQueries.queryBumpTokenVersionAndGetSelfData(sub),
-    ]);
-    return { ok: true };
+    await Promise.all([this.passwordQueries.queryUpdateUserPassword(sub, hash), this.sessionQueries.queryBumpTokenVersionAndGetSelfData(sub)]);
   }
 }

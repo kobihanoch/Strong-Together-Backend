@@ -120,10 +120,13 @@ describe('SessionController', () => {
       expect(wrongPassword.status).toBe(401);
       expect(wrongPassword.body.message).toBe('Invalid credentials');
 
-      const missingUser = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
-        identifier: `missing_${crypto.randomUUID().slice(0, 8)}@example.com`,
-        password: user.password,
-      });
+      const missingUser = await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .set('x-app-version', '4.5.0')
+        .send({
+          identifier: `missing_${crypto.randomUUID().slice(0, 8)}@example.com`,
+          password: user.password,
+        });
 
       expect(missingUser.status).toBe(401);
       expect(missingUser.body.message).toBe('Invalid credentials');
@@ -140,9 +143,7 @@ describe('SessionController', () => {
       expectSchema(loginResponseSchema, loginResponse.body);
 
       const beforeRefresh = await getUserSessionStateByUsername(user.username);
-      const refreshResponse = await request(app.getHttpServer())
-        .post('/api/auth/refresh')
-        .set(refreshHeaders(loginResponse.body.refreshToken));
+      const refreshResponse = await request(app.getHttpServer()).post('/api/auth/refresh').set(refreshHeaders(loginResponse.body.refreshToken));
 
       expect(refreshResponse.status).toBe(200);
       expectSchema(refreshTokenResponseSchema, refreshResponse.body);
@@ -156,9 +157,7 @@ describe('SessionController', () => {
       expect(tokenVersion(refreshResponse.body.accessToken)).toBe(afterRefresh?.tokenVersion);
       expect(tokenVersion(refreshResponse.body.refreshToken)).toBe(afterRefresh?.tokenVersion);
 
-      const staleRefreshResponse = await request(app.getHttpServer())
-        .post('/api/auth/refresh')
-        .set(refreshHeaders(loginResponse.body.refreshToken));
+      const staleRefreshResponse = await request(app.getHttpServer()).post('/api/auth/refresh').set(refreshHeaders(loginResponse.body.refreshToken));
       expect(staleRefreshResponse.status).toBe(401);
       expect(staleRefreshResponse.body.message).toBe('New login required');
     });
@@ -168,9 +167,7 @@ describe('SessionController', () => {
       expect(missing.status).toBe(401);
       expect(missing.body.message).toBe('No refresh token provided');
 
-      const invalid = await request(app.getHttpServer())
-        .post('/api/auth/refresh')
-        .set(refreshHeaders('not-a-real-token'));
+      const invalid = await request(app.getHttpServer()).post('/api/auth/refresh').set(refreshHeaders('not-a-real-token'));
       expect(invalid.status).toBe(401);
       expect(invalid.body.message).toBe('Invalid or expired refresh token');
     });
@@ -200,9 +197,7 @@ describe('SessionController', () => {
       expect(afterLogout?.pushToken).toBeNull();
       expect(afterLogout?.tokenVersion).toBe((beforeLogout?.tokenVersion ?? 0) + 1);
 
-      const protectedResponse = await request(app.getHttpServer())
-        .get('/api/users/me')
-        .set(authHeaders(loginResponse.body.accessToken));
+      const protectedResponse = await request(app.getHttpServer()).get('/api/users/me').set(authHeaders(loginResponse.body.accessToken));
       expect(protectedResponse.status).toBe(401);
       expect(protectedResponse.body.message).toBe('New login required');
     });
@@ -215,9 +210,7 @@ describe('SessionController', () => {
         password: user.password,
       });
 
-      const response = await request(app.getHttpServer())
-        .post('/api/auth/logout')
-        .set(refreshHeaders(loginResponse.body.refreshToken));
+      const response = await request(app.getHttpServer()).post('/api/auth/logout').set(refreshHeaders(loginResponse.body.refreshToken));
 
       expect(response.status).toBe(200);
       expect((await getUserSessionStateByUsername(user.username))?.pushToken).toBeNull();
@@ -233,15 +226,9 @@ describe('SessionController', () => {
     it('accepts a recently expired refresh token for notification cleanup', async () => {
       const user = await createSessionUser();
       await setUserPushTokenByUsername(user.username, 'ExponentPushToken[expired-refresh-logout]');
-      const expiredRefreshToken = jwt.sign(
-        { id: user.userId, role: 'user', tokenVer: 1 },
-        authConfig.jwtRefreshSecret,
-        { expiresIn: -1 },
-      );
+      const expiredRefreshToken = jwt.sign({ id: user.userId, role: 'user', tokenVer: 1 }, authConfig.jwtRefreshSecret, { expiresIn: -1 });
 
-      const response = await request(app.getHttpServer())
-        .post('/api/auth/logout')
-        .set(refreshHeaders(expiredRefreshToken));
+      const response = await request(app.getHttpServer()).post('/api/auth/logout').set(refreshHeaders(expiredRefreshToken));
 
       expect(response.status).toBe(200);
       expect((await getUserSessionStateByUsername(user.username))?.pushToken).toBeNull();

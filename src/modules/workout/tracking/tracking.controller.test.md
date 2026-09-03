@@ -27,14 +27,15 @@
 
 - [x] Returns the same PR object shape used by workout statistics.
 - [x] Returns all current exercise PRs keyed by exercise ID.
-- [x] Reads the dedicated personal-records cache warmed after a workout.
+- [x] Reads and warms the dedicated personal-records cache on demand.
 
 ### `POST /api/workout-sessions` - User C
 
 - [x] Creates tracking data.
 - [x] Persists DB rows.
 - [x] Creates a system message.
-- [x] Updates Redis cache.
+- [x] Deletes the directly affected cache keys.
+- [x] Returns `204 No Content`.
 
 ## Bad Paths
 

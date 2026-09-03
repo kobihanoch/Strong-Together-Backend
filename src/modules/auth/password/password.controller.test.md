@@ -14,6 +14,7 @@
 - [x] Stores reset JTI in Redis.
 - [x] Allows login with the new password.
 - [x] Blocks login with the old password.
+- [x] Returns `204 No Content`.
 
 ## Bad Paths
 
