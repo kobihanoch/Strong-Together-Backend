@@ -1,16 +1,6 @@
 import { sql as drizzleSql, relations } from 'drizzle-orm';
-import {
-  bigint,
-  boolean,
-  foreignKey,
-  index,
-  integer,
-  primaryKey,
-  text,
-  timestamp,
-  uniqueIndex,
-} from 'drizzle-orm/pg-core';
-import { userSplitInformation } from '../../reminders/user_split_information/table';
+import { bigint, boolean, foreignKey, index, integer, primaryKey, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { workoutSchedule } from '../../schedules/workout_schedule/table';
 import { workoutSchema } from '../../schemas';
 import { workoutSummary } from '../../tracking/workout_summary/table';
 import { exerciseToWorkoutSplit } from '../exercisetoworkoutsplit/table';
@@ -24,9 +14,7 @@ export const workoutSplit = workoutSchema.table(
     workoutId: bigint('workout_id', { mode: 'number' }).notNull(),
     name: text('name').notNull(),
     orderIndex: integer('order_index').notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     isActive: boolean('is_active').default(true).notNull(),
   },
   (t) => [
@@ -45,5 +33,5 @@ export const workoutSplitRelations = relations(workoutSplit, ({ many, one }) => 
   workoutPlan: one(workoutPlan, { fields: [workoutSplit.workoutId], references: [workoutPlan.id] }),
   exerciseAssignments: many(exerciseToWorkoutSplit),
   workoutSummaries: many(workoutSummary),
-  splitInformation: many(userSplitInformation),
+  schedules: many(workoutSchedule),
 }));

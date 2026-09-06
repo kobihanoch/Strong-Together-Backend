@@ -195,7 +195,6 @@ __export(index_exports, {
   userMessageIdentityQueryDtoSchema: () => userMessageIdentityQueryDtoSchema,
   userProfilePicQueryDtoSchema: () => userProfilePicQueryDtoSchema,
   userReminderSettingDbSchema: () => userReminderSettingDbSchema,
-  userSplitInformationDbSchema: () => userSplitInformationDbSchema,
   userToHourlyReminderQueryDtoSchema: () => userToHourlyReminderQueryDtoSchema,
   userUpdateDbSchema: () => userUpdateDbSchema,
   userWithNotificationsEnabledQueryDtoSchema: () => userWithNotificationsEnabledQueryDtoSchema,
@@ -206,6 +205,7 @@ __export(index_exports, {
   workoutExerciseInputQueryDtoSchema: () => workoutExerciseInputQueryDtoSchema,
   workoutPlanDbSchema: () => workoutPlanDbSchema,
   workoutPlanIdQueryDtoSchema: () => workoutPlanIdQueryDtoSchema,
+  workoutScheduleDbSchema: () => workoutScheduleDbSchema,
   workoutSetDbSchema: () => workoutSetDbSchema,
   workoutSplitDbSchema: () => workoutSplitDbSchema,
   workoutSplitIdQueryDtoSchema: () => workoutSplitIdQueryDtoSchema,
@@ -244,6 +244,7 @@ var identitySchema = (0, import_pg_core2.pgSchema)("identity");
 var workoutSchema = (0, import_pg_core2.pgSchema)("workout");
 var trackingSchema = (0, import_pg_core2.pgSchema)("tracking");
 var remindersSchema = (0, import_pg_core2.pgSchema)("reminders");
+var schedulesSchema = (0, import_pg_core2.pgSchema)("schedules");
 var analyticsSchema = (0, import_pg_core2.pgSchema)("analytics");
 var messagesSchema = (0, import_pg_core2.pgSchema)("messages");
 var authProviders = identitySchema.enum("Auth Providers", [
@@ -253,8 +254,8 @@ var authProviders = identitySchema.enum("Auth Providers", [
 ]);
 
 // ../../src/infrastructure/db/schema/drizzle/identity/user/table.ts
-var import_drizzle_orm27 = require("drizzle-orm");
-var import_pg_core30 = require("drizzle-orm/pg-core");
+var import_drizzle_orm28 = require("drizzle-orm");
+var import_pg_core31 = require("drizzle-orm/pg-core");
 
 // ../../src/infrastructure/db/schema/drizzle/messages/messages/table.ts
 var import_drizzle_orm2 = require("drizzle-orm");
@@ -398,20 +399,24 @@ __name(userReminderSettingPolicies, "userReminderSettingPolicies");
 
 // ../../src/infrastructure/db/schema/drizzle/reminders/user_reminder_setting/table.ts
 var userReminderSetting = remindersSchema.table("user_reminder_setting", {
+  id: (0, import_pg_core6.uuid)("id").defaultRandom().notNull(),
   userId: (0, import_pg_core6.uuid)("user_id").notNull(),
-  workoutRemindersEnabled: (0, import_pg_core6.boolean)("workout_reminders_enabled").default(true).notNull(),
-  reminderOffsetMinutes: (0, import_pg_core6.integer)("reminder_offset_minutes").default(60).notNull(),
+  reminderEnabled: (0, import_pg_core6.boolean)("reminder_enabled").default(false).notNull(),
+  createdAt: (0, import_pg_core6.timestamp)("created_at", {
+    withTimezone: true
+  }).defaultNow().notNull(),
   updatedAt: (0, import_pg_core6.timestamp)("updated_at", {
     withTimezone: true
   }).defaultNow().notNull(),
-  timezone: (0, import_pg_core6.text)("timezone").default("'UTC'::text")
+  timeZone: (0, import_pg_core6.text)("time_zone").notNull()
 }, (t) => [
   (0, import_pg_core6.primaryKey)({
     name: "user_reminder_setting_pkey",
     columns: [
-      t.userId
+      t.id
     ]
   }),
+  (0, import_pg_core6.unique)("user_reminder_setting_user_id_key").on(t.userId),
   (0, import_pg_core6.foreignKey)({
     name: "user_reminder_setting_user_id_fkey",
     columns: [
@@ -434,9 +439,9 @@ var userReminderSettingRelations = (0, import_drizzle_orm4.relations)(userRemind
   })
 }));
 
-// ../../src/infrastructure/db/schema/drizzle/reminders/user_split_information/table.ts
-var import_drizzle_orm21 = require("drizzle-orm");
-var import_pg_core24 = require("drizzle-orm/pg-core");
+// ../../src/infrastructure/db/schema/drizzle/schedules/workout_schedule/table.ts
+var import_drizzle_orm22 = require("drizzle-orm");
+var import_pg_core25 = require("drizzle-orm/pg-core");
 
 // ../../src/infrastructure/db/schema/drizzle/workout/workout_split/table.ts
 var import_drizzle_orm20 = require("drizzle-orm");
@@ -1163,64 +1168,107 @@ var workoutSplitRelations = (0, import_drizzle_orm20.relations)(workoutSplit, ({
   }),
   exerciseAssignments: many(exerciseToWorkoutSplit),
   workoutSummaries: many(workoutSummary),
-  splitInformation: many(userSplitInformation)
+  schedules: many(workoutSchedule)
 }));
 
-// ../../src/infrastructure/db/schema/drizzle/reminders/user_split_information/table.ts
-var userSplitInformation = remindersSchema.table("user_split_information", {
-  id: (0, import_pg_core24.bigint)("id", {
+// ../../src/infrastructure/db/schema/drizzle/schedules/workout_schedule/policies.ts
+var import_drizzle_orm21 = require("drizzle-orm");
+var import_pg_core24 = require("drizzle-orm/pg-core");
+var uid9 = import_drizzle_orm21.sql`"identity"."current_user_id" ()`;
+function workoutSchedulePolicies(t) {
+  const owns = import_drizzle_orm21.sql`${uid9} = ${t.userId}`;
+  const ownsSplit = import_drizzle_orm21.sql`
+    EXISTS (
+      SELECT
+        1
+      FROM
+        "workout"."workout_split" ws
+        JOIN "workout"."workout_plan" wp ON wp."id" = ws."workout_id"
+      WHERE
+        ws."id" = ${t.workoutSplitId}
+        AND wp."user_id" = ${uid9}
+    )
+  `;
+  const mayWrite = import_drizzle_orm21.sql`
+    ${owns}
+    AND ${ownsSplit}
+  `;
+  return [
+    (0, import_pg_core24.pgPolicy)("auth can SELECT own workout schedules", {
+      for: "select",
+      to: authenticatedRole,
+      using: owns
+    }),
+    (0, import_pg_core24.pgPolicy)("auth can INSERT own workout schedules", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: mayWrite
+    }),
+    (0, import_pg_core24.pgPolicy)("auth can UPDATE own workout schedules", {
+      for: "update",
+      to: authenticatedRole,
+      using: owns,
+      withCheck: mayWrite
+    }),
+    (0, import_pg_core24.pgPolicy)("auth can DELETE own workout schedules", {
+      for: "delete",
+      to: authenticatedRole,
+      using: owns
+    })
+  ];
+}
+__name(workoutSchedulePolicies, "workoutSchedulePolicies");
+
+// ../../src/infrastructure/db/schema/drizzle/schedules/workout_schedule/table.ts
+var workoutSchedule = schedulesSchema.table("workout_schedule", {
+  id: (0, import_pg_core25.uuid)("id").defaultRandom().notNull(),
+  userId: (0, import_pg_core25.uuid)("user_id").notNull(),
+  workoutSplitId: (0, import_pg_core25.bigint)("workout_split_id", {
     mode: "number"
-  }).generatedByDefaultAsIdentity({
-    name: "user_split_information_id_seq"
   }).notNull(),
-  userId: (0, import_pg_core24.uuid)("user_id").notNull(),
-  workoutSplitId: (0, import_pg_core24.bigint)("workout_split_id", {
-    mode: "number"
+  dayOfWeek: (0, import_pg_core25.integer)("day_of_week").notNull(),
+  startTime: (0, import_pg_core25.time)("start_time", {
+    precision: 0
   }).notNull(),
-  estimatedTimeUtc: (0, import_pg_core24.timestamp)("estimated_time_utc", {
-    withTimezone: true
-  }).notNull(),
-  confidence: (0, import_pg_core24.numeric)("confidence", {
-    precision: 3,
-    scale: 2
-  }).default("1.00").notNull(),
-  lastComputedAt: (0, import_pg_core24.timestamp)("last_computed_at", {
+  createdAt: (0, import_pg_core25.timestamp)("created_at", {
     withTimezone: true
   }).defaultNow().notNull(),
-  preferredWeekday: (0, import_pg_core24.integer)("preferred_weekday")
+  updatedAt: (0, import_pg_core25.timestamp)("updated_at", {
+    withTimezone: true
+  }).defaultNow().notNull()
 }, (t) => [
-  (0, import_pg_core24.primaryKey)({
-    name: "user_split_information_pkey",
+  (0, import_pg_core25.primaryKey)({
+    name: "workout_schedule_pkey",
     columns: [
       t.id
     ]
   }),
-  (0, import_pg_core24.unique)("user_split_information_user_id_workout_split_id_key").on(t.userId, t.workoutSplitId),
-  (0, import_pg_core24.foreignKey)({
-    name: "user_split_information_user_id_fkey",
+  (0, import_pg_core25.unique)("workout_schedule_user_split_weekday_key").on(t.userId, t.workoutSplitId, t.dayOfWeek),
+  (0, import_pg_core25.check)("workout_schedule_day_of_week_check", import_drizzle_orm22.sql`${t.dayOfWeek} BETWEEN 0 AND 6`),
+  (0, import_pg_core25.foreignKey)({
+    name: "workout_schedule_user_id_fkey",
     columns: [
       t.userId
     ],
     foreignColumns: [
       user.id
     ]
-  }).onDelete("cascade"),
-  (0, import_pg_core24.foreignKey)({
-    name: "user_split_information_workout_split_id_fkey",
+  }).onUpdate("cascade").onDelete("cascade"),
+  (0, import_pg_core25.foreignKey)({
+    name: "workout_schedule_workout_split_id_fkey",
     columns: [
       t.workoutSplitId
     ],
     foreignColumns: [
       workoutSplit.id
     ]
-  }).onDelete("cascade"),
-  (0, import_pg_core24.index)("user_split_information_confidence_idx").on(t.preferredWeekday, t.confidence).where(import_drizzle_orm21.sql`${t.confidence} >= 0.60`),
-  (0, import_pg_core24.index)("user_split_information_user_weekday_idx").on(t.userId, t.preferredWeekday).where(import_drizzle_orm21.sql`${t.preferredWeekday} is not null`)
+  }).onUpdate("cascade").onDelete("cascade"),
+  ...workoutSchedulePolicies(t)
 ]).enableRLS();
-var userSplitInformationRelations = (0, import_drizzle_orm21.relations)(userSplitInformation, ({ one }) => ({
+var workoutScheduleRelations = (0, import_drizzle_orm22.relations)(workoutSchedule, ({ one }) => ({
   user: one(user, {
     fields: [
-      userSplitInformation.userId
+      workoutSchedule.userId
     ],
     references: [
       user.id
@@ -1228,7 +1276,7 @@ var userSplitInformationRelations = (0, import_drizzle_orm21.relations)(userSpli
   }),
   workoutSplit: one(workoutSplit, {
     fields: [
-      userSplitInformation.workoutSplitId
+      workoutSchedule.workoutSplitId
     ],
     references: [
       workoutSplit.id
@@ -1237,39 +1285,39 @@ var userSplitInformationRelations = (0, import_drizzle_orm21.relations)(userSpli
 }));
 
 // ../../src/infrastructure/db/schema/drizzle/tracking/aerobic_tracking/table.ts
-var import_drizzle_orm23 = require("drizzle-orm");
-var import_pg_core26 = require("drizzle-orm/pg-core");
+var import_drizzle_orm24 = require("drizzle-orm");
+var import_pg_core27 = require("drizzle-orm/pg-core");
 
 // ../../src/infrastructure/db/schema/drizzle/tracking/aerobic_tracking/policies.ts
-var import_drizzle_orm22 = require("drizzle-orm");
-var import_pg_core25 = require("drizzle-orm/pg-core");
-var uid9 = import_drizzle_orm22.sql`"identity"."current_user_id"()`;
+var import_drizzle_orm23 = require("drizzle-orm");
+var import_pg_core26 = require("drizzle-orm/pg-core");
+var uid10 = import_drizzle_orm23.sql`"identity"."current_user_id"()`;
 function aerobicTrackingPolicies(t) {
   return [
     // Lets authenticated users read only their own aerobic tracking rows.
-    (0, import_pg_core25.pgPolicy)("Enable read access for auth users on aerobic_tracking", {
+    (0, import_pg_core26.pgPolicy)("Enable read access for auth users on aerobic_tracking", {
       for: "select",
       to: authenticatedRole,
-      using: import_drizzle_orm22.sql`${uid9} = ${t.userId}`
+      using: import_drizzle_orm23.sql`${uid10} = ${t.userId}`
     }),
     // Lets authenticated users insert aerobic tracking rows only for themselves.
-    (0, import_pg_core25.pgPolicy)("Enable insert for auth users on aerobic_tracking", {
+    (0, import_pg_core26.pgPolicy)("Enable insert for auth users on aerobic_tracking", {
       for: "insert",
       to: authenticatedRole,
-      withCheck: import_drizzle_orm22.sql`${uid9} = ${t.userId}`
+      withCheck: import_drizzle_orm23.sql`${uid10} = ${t.userId}`
     }),
     // Lets authenticated users update only their own aerobic tracking rows.
-    (0, import_pg_core25.pgPolicy)("Enable update for auth users on aerobic_tracking", {
+    (0, import_pg_core26.pgPolicy)("Enable update for auth users on aerobic_tracking", {
       for: "update",
       to: authenticatedRole,
-      using: import_drizzle_orm22.sql`${uid9} = ${t.userId}`,
-      withCheck: import_drizzle_orm22.sql`${uid9} = ${t.userId}`
+      using: import_drizzle_orm23.sql`${uid10} = ${t.userId}`,
+      withCheck: import_drizzle_orm23.sql`${uid10} = ${t.userId}`
     }),
     // Lets authenticated users delete only their own aerobic tracking rows.
-    (0, import_pg_core25.pgPolicy)("Enable delete for auth users on aerobic_tracking", {
+    (0, import_pg_core26.pgPolicy)("Enable delete for auth users on aerobic_tracking", {
       for: "delete",
       to: authenticatedRole,
-      using: import_drizzle_orm22.sql`${uid9} = ${t.userId}`
+      using: import_drizzle_orm23.sql`${uid10} = ${t.userId}`
     })
   ];
 }
@@ -1277,27 +1325,27 @@ __name(aerobicTrackingPolicies, "aerobicTrackingPolicies");
 
 // ../../src/infrastructure/db/schema/drizzle/tracking/aerobic_tracking/table.ts
 var aerobicTracking = trackingSchema.table("aerobic_tracking", {
-  id: (0, import_pg_core26.bigint)("id", {
+  id: (0, import_pg_core27.bigint)("id", {
     mode: "number"
   }).generatedByDefaultAsIdentity({
     name: "aerobic_tracking_id_seq"
   }).notNull(),
-  userId: (0, import_pg_core26.uuid)("user_id").notNull(),
-  type: (0, import_pg_core26.text)("type").notNull(),
-  durationSec: (0, import_pg_core26.bigint)("duration_sec", {
+  userId: (0, import_pg_core27.uuid)("user_id").notNull(),
+  type: (0, import_pg_core27.text)("type").notNull(),
+  durationSec: (0, import_pg_core27.bigint)("duration_sec", {
     mode: "number"
   }).default(0).notNull(),
-  workoutTimeUtc: (0, import_pg_core26.timestamp)("workout_time_utc", {
+  workoutTimeUtc: (0, import_pg_core27.timestamp)("workout_time_utc", {
     withTimezone: true
   }).defaultNow().notNull()
 }, (t) => [
-  (0, import_pg_core26.primaryKey)({
+  (0, import_pg_core27.primaryKey)({
     name: "aerobic_tracking_pkey",
     columns: [
       t.id
     ]
   }),
-  (0, import_pg_core26.foreignKey)({
+  (0, import_pg_core27.foreignKey)({
     name: "aerobic_tracking_user_id_fkey",
     columns: [
       t.userId
@@ -1306,10 +1354,10 @@ var aerobicTracking = trackingSchema.table("aerobic_tracking", {
       user.id
     ]
   }).onUpdate("cascade").onDelete("cascade"),
-  (0, import_pg_core26.index)("aerobic_tracking_user_id_workout_time_utc_idx").on(t.userId, t.workoutTimeUtc.desc().nullsFirst()),
+  (0, import_pg_core27.index)("aerobic_tracking_user_id_workout_time_utc_idx").on(t.userId, t.workoutTimeUtc.desc().nullsFirst()),
   ...aerobicTrackingPolicies(t)
 ]);
-var aerobicTrackingRelations = (0, import_drizzle_orm23.relations)(aerobicTracking, ({ one }) => ({
+var aerobicTrackingRelations = (0, import_drizzle_orm24.relations)(aerobicTracking, ({ one }) => ({
   user: one(user, {
     fields: [
       aerobicTracking.userId
@@ -1321,39 +1369,39 @@ var aerobicTrackingRelations = (0, import_drizzle_orm23.relations)(aerobicTracki
 }));
 
 // ../../src/infrastructure/db/schema/drizzle/identity/oauth_account/table.ts
-var import_drizzle_orm25 = require("drizzle-orm");
-var import_pg_core28 = require("drizzle-orm/pg-core");
+var import_drizzle_orm26 = require("drizzle-orm");
+var import_pg_core29 = require("drizzle-orm/pg-core");
 
 // ../../src/infrastructure/db/schema/drizzle/identity/oauth_account/policies.ts
-var import_drizzle_orm24 = require("drizzle-orm");
-var import_pg_core27 = require("drizzle-orm/pg-core");
-var currentUserId3 = import_drizzle_orm24.sql`"identity"."current_user_id"()`;
+var import_drizzle_orm25 = require("drizzle-orm");
+var import_pg_core28 = require("drizzle-orm/pg-core");
+var currentUserId3 = import_drizzle_orm25.sql`"identity"."current_user_id"()`;
 function oauthAccountPolicies(table) {
   return [
     // Lets authenticated users read only OAuth accounts linked to themselves.
-    (0, import_pg_core27.pgPolicy)("Enable read access for auth users on oauth_account", {
+    (0, import_pg_core28.pgPolicy)("Enable read access for auth users on oauth_account", {
       for: "select",
       to: authenticatedRole,
-      using: import_drizzle_orm24.sql`${currentUserId3} = ${table.userId}`
+      using: import_drizzle_orm25.sql`${currentUserId3} = ${table.userId}`
     }),
     // Lets authenticated users link OAuth accounts only to themselves.
-    (0, import_pg_core27.pgPolicy)("Enable insert for auth users on oauth_account", {
+    (0, import_pg_core28.pgPolicy)("Enable insert for auth users on oauth_account", {
       for: "insert",
       to: authenticatedRole,
-      withCheck: import_drizzle_orm24.sql`${currentUserId3} = ${table.userId}`
+      withCheck: import_drizzle_orm25.sql`${currentUserId3} = ${table.userId}`
     }),
     // Lets authenticated users update only OAuth accounts linked to themselves.
-    (0, import_pg_core27.pgPolicy)("Enable update for auth users on oauth_account", {
+    (0, import_pg_core28.pgPolicy)("Enable update for auth users on oauth_account", {
       for: "update",
       to: authenticatedRole,
-      using: import_drizzle_orm24.sql`${currentUserId3} = ${table.userId}`,
-      withCheck: import_drizzle_orm24.sql`${currentUserId3} = ${table.userId}`
+      using: import_drizzle_orm25.sql`${currentUserId3} = ${table.userId}`,
+      withCheck: import_drizzle_orm25.sql`${currentUserId3} = ${table.userId}`
     }),
     // Lets authenticated users delete only OAuth accounts linked to themselves.
-    (0, import_pg_core27.pgPolicy)("Enable delete for auth users on oauth_account", {
+    (0, import_pg_core28.pgPolicy)("Enable delete for auth users on oauth_account", {
       for: "delete",
       to: authenticatedRole,
-      using: import_drizzle_orm24.sql`${currentUserId3} = ${table.userId}`
+      using: import_drizzle_orm25.sql`${currentUserId3} = ${table.userId}`
     })
   ];
 }
@@ -1361,23 +1409,23 @@ __name(oauthAccountPolicies, "oauthAccountPolicies");
 
 // ../../src/infrastructure/db/schema/drizzle/identity/oauth_account/table.ts
 var oauthAccount = identitySchema.table("oauth_account", {
-  id: (0, import_pg_core28.uuid)("id").defaultRandom().notNull(),
-  userId: (0, import_pg_core28.uuid)("user_id").notNull(),
-  provider: (0, import_pg_core28.text)("provider").notNull(),
-  providerUserId: (0, import_pg_core28.text)("provider_user_id").notNull(),
-  providerEmail: (0, import_pg_core28.text)("provider_email").notNull(),
-  linkedAt: (0, import_pg_core28.timestamp)("linked_at", {
+  id: (0, import_pg_core29.uuid)("id").defaultRandom().notNull(),
+  userId: (0, import_pg_core29.uuid)("user_id").notNull(),
+  provider: (0, import_pg_core29.text)("provider").notNull(),
+  providerUserId: (0, import_pg_core29.text)("provider_user_id").notNull(),
+  providerEmail: (0, import_pg_core29.text)("provider_email").notNull(),
+  linkedAt: (0, import_pg_core29.timestamp)("linked_at", {
     withTimezone: true
   }).defaultNow().notNull()
 }, (t) => [
-  (0, import_pg_core28.primaryKey)({
+  (0, import_pg_core29.primaryKey)({
     name: "oauth_account_pkey",
     columns: [
       t.id
     ]
   }),
-  (0, import_pg_core28.unique)("oauth_account_provider_user_unique").on(t.provider, t.providerUserId),
-  (0, import_pg_core28.foreignKey)({
+  (0, import_pg_core29.unique)("oauth_account_provider_user_unique").on(t.provider, t.providerUserId),
+  (0, import_pg_core29.foreignKey)({
     name: "oauth_account_user_id_fkey",
     columns: [
       t.userId
@@ -1388,7 +1436,7 @@ var oauthAccount = identitySchema.table("oauth_account", {
   }).onUpdate("cascade").onDelete("cascade"),
   ...oauthAccountPolicies(t)
 ]);
-var oauthAccountRelations = (0, import_drizzle_orm25.relations)(oauthAccount, ({ one }) => ({
+var oauthAccountRelations = (0, import_drizzle_orm26.relations)(oauthAccount, ({ one }) => ({
   user: one(user, {
     fields: [
       oauthAccount.userId
@@ -1400,47 +1448,47 @@ var oauthAccountRelations = (0, import_drizzle_orm25.relations)(oauthAccount, ({
 }));
 
 // ../../src/infrastructure/db/schema/drizzle/identity/user/policies.ts
-var import_drizzle_orm26 = require("drizzle-orm");
-var import_pg_core29 = require("drizzle-orm/pg-core");
-var currentUserId4 = import_drizzle_orm26.sql`"identity"."current_user_id"()`;
+var import_drizzle_orm27 = require("drizzle-orm");
+var import_pg_core30 = require("drizzle-orm/pg-core");
+var currentUserId4 = import_drizzle_orm27.sql`"identity"."current_user_id"()`;
 function userPolicies(table) {
   return [
     // Lets an authenticated user read their own profile.
-    (0, import_pg_core29.pgPolicy)("Enable read access for auth users on own profile", {
+    (0, import_pg_core30.pgPolicy)("Enable read access for auth users on own profile", {
       for: "select",
       to: authenticatedRole,
-      using: import_drizzle_orm26.sql`${currentUserId4} = ${table.id}`
+      using: import_drizzle_orm27.sql`${currentUserId4} = ${table.id}`
     }),
     // Lets a message receiver read the profile of a sender in their inbox.
-    (0, import_pg_core29.pgPolicy)("Allow user to view senders in their messages", {
+    (0, import_pg_core30.pgPolicy)("Allow user to view senders in their messages", {
       for: "select",
       to: authenticatedRole,
-      using: import_drizzle_orm26.sql`exists (select 1 from "messages"."message" m where m."sender_id" = ${table.id} and m."receiver_id" = ${currentUserId4})`
+      using: import_drizzle_orm27.sql`exists (select 1 from "messages"."message" m where m."sender_id" = ${table.id} and m."receiver_id" = ${currentUserId4})`
     }),
     // Lets an authenticated user create only their own profile row.
-    (0, import_pg_core29.pgPolicy)("Enable insert for auth users on own profile", {
+    (0, import_pg_core30.pgPolicy)("Enable insert for auth users on own profile", {
       for: "insert",
       to: authenticatedRole,
-      withCheck: import_drizzle_orm26.sql`${currentUserId4} = ${table.id}`
+      withCheck: import_drizzle_orm27.sql`${currentUserId4} = ${table.id}`
     }),
     // Preserves the legacy public self-registration policy for compatibility.
-    (0, import_pg_core29.pgPolicy)("Enable insert for public users on own profile", {
+    (0, import_pg_core30.pgPolicy)("Enable insert for public users on own profile", {
       for: "insert",
       to: "public",
-      withCheck: import_drizzle_orm26.sql`${currentUserId4} = ${table.id}`
+      withCheck: import_drizzle_orm27.sql`${currentUserId4} = ${table.id}`
     }),
     // Lets an authenticated user update only their own profile.
-    (0, import_pg_core29.pgPolicy)("Enable update for auth users on own profile", {
+    (0, import_pg_core30.pgPolicy)("Enable update for auth users on own profile", {
       for: "update",
       to: authenticatedRole,
-      using: import_drizzle_orm26.sql`${currentUserId4} = ${table.id}`,
-      withCheck: import_drizzle_orm26.sql`${currentUserId4} = ${table.id}`
+      using: import_drizzle_orm27.sql`${currentUserId4} = ${table.id}`,
+      withCheck: import_drizzle_orm27.sql`${currentUserId4} = ${table.id}`
     }),
     // Lets an authenticated user delete only their own profile.
-    (0, import_pg_core29.pgPolicy)("Enable delete for auth users on own profile", {
+    (0, import_pg_core30.pgPolicy)("Enable delete for auth users on own profile", {
       for: "delete",
       to: authenticatedRole,
-      using: import_drizzle_orm26.sql`${currentUserId4} = ${table.id}`
+      using: import_drizzle_orm27.sql`${currentUserId4} = ${table.id}`
     })
   ];
 }
@@ -1448,41 +1496,57 @@ __name(userPolicies, "userPolicies");
 
 // ../../src/infrastructure/db/schema/drizzle/identity/user/table.ts
 var user = identitySchema.table("user", {
-  username: (0, import_pg_core30.text)("username").notNull(),
-  email: (0, import_pg_core30.text)("email").notNull(),
-  name: (0, import_pg_core30.text)("name").notNull(),
-  gender: (0, import_pg_core30.text)("gender").default("Unknown").notNull(),
-  createdAt: (0, import_pg_core30.timestamp)("created_at", {
+  username: (0, import_pg_core31.text)("username").notNull(),
+  email: (0, import_pg_core31.text)("email").notNull(),
+  name: (0, import_pg_core31.text)("name").notNull(),
+  gender: (0, import_pg_core31.text)("gender").default("Unknown").notNull(),
+  createdAt: (0, import_pg_core31.timestamp)("created_at", {
     withTimezone: true
   }).defaultNow().notNull(),
-  updatedAt: (0, import_pg_core30.timestamp)("updated_at", {
+  updatedAt: (0, import_pg_core31.timestamp)("updated_at", {
     withTimezone: true
   }).defaultNow().notNull(),
-  profilePicPath: (0, import_pg_core30.text)("profile_pic_path"),
-  id: (0, import_pg_core30.uuid)("id").defaultRandom().notNull(),
-  pushToken: (0, import_pg_core30.text)("push_token"),
-  passwordHash: (0, import_pg_core30.text)("password_hash"),
-  role: (0, import_pg_core30.text)("role").default("User").notNull(),
-  tokenVersion: (0, import_pg_core30.bigint)("token_version", {
+  profilePicPath: (0, import_pg_core31.text)("profile_pic_path"),
+  id: (0, import_pg_core31.uuid)("id").defaultRandom().notNull(),
+  pushToken: (0, import_pg_core31.text)("push_token"),
+  passwordHash: (0, import_pg_core31.text)("password_hash"),
+  role: (0, import_pg_core31.text)("role").default("User").notNull(),
+  tokenVersion: (0, import_pg_core31.bigint)("token_version", {
     mode: "number"
   }).default(0).notNull(),
-  isVerified: (0, import_pg_core30.boolean)("is_verified").default(false).notNull(),
-  authProvider: (0, import_pg_core30.text)("auth_provider").default("app").notNull(),
-  lastLogin: (0, import_pg_core30.timestamp)("last_login", {
+  isVerified: (0, import_pg_core31.boolean)("is_verified").default(false).notNull(),
+  authProvider: (0, import_pg_core31.text)("auth_provider").default("app").notNull(),
+  lastLogin: (0, import_pg_core31.timestamp)("last_login", {
     withTimezone: true
   })
 }, (t) => [
-  (0, import_pg_core30.primaryKey)({
+  (0, import_pg_core31.primaryKey)({
     name: "user_pkey",
     columns: [
       t.id
     ]
   }),
-  (0, import_pg_core30.uniqueIndex)("user_email_ci_unique").on(import_drizzle_orm27.sql`lower(trim(both from ${t.email}))`),
-  (0, import_pg_core30.uniqueIndex)("user_username_ci_unique").on(import_drizzle_orm27.sql`lower(trim(both from ${t.username}))`),
+  (0, import_pg_core31.uniqueIndex)("user_email_ci_unique").on(import_drizzle_orm28.sql`
+      LOWER(
+        TRIM(
+          BOTH
+          FROM
+            ${t.email}
+        )
+      )
+    `),
+  (0, import_pg_core31.uniqueIndex)("user_username_ci_unique").on(import_drizzle_orm28.sql`
+      LOWER(
+        TRIM(
+          BOTH
+          FROM
+            ${t.username}
+        )
+      )
+    `),
   ...userPolicies(t)
 ]);
-var userRelations = (0, import_drizzle_orm27.relations)(user, ({ many, one }) => ({
+var userRelations = (0, import_drizzle_orm28.relations)(user, ({ many, one }) => ({
   oauthAccounts: many(oauthAccount),
   ownedWorkoutPlans: many(workoutPlan, {
     relationName: "workoutPlanOwner"
@@ -1493,7 +1557,7 @@ var userRelations = (0, import_drizzle_orm27.relations)(user, ({ many, one }) =>
   workoutSummaries: many(workoutSummary),
   aerobicTrackings: many(aerobicTracking),
   reminderSettings: one(userReminderSetting),
-  splitInformation: many(userSplitInformation),
+  workoutSchedules: many(workoutSchedule),
   sentMessages: many(message, {
     relationName: "messageSender"
   }),
@@ -1503,34 +1567,34 @@ var userRelations = (0, import_drizzle_orm27.relations)(user, ({ many, one }) =>
 }));
 
 // ../../src/infrastructure/db/schema/drizzle/tracking/views/prs.view.ts
-var import_drizzle_orm28 = require("drizzle-orm");
-var import_pg_core31 = require("drizzle-orm/pg-core");
+var import_drizzle_orm29 = require("drizzle-orm");
+var import_pg_core32 = require("drizzle-orm/pg-core");
 var prsView = trackingSchema.view("v_prs", {
-  id: (0, import_pg_core31.bigint)("id", {
+  id: (0, import_pg_core32.bigint)("id", {
     mode: "number"
   }),
-  exerciseToSplitId: (0, import_pg_core31.bigint)("exercise_to_split_id", {
+  exerciseToSplitId: (0, import_pg_core32.bigint)("exercise_to_split_id", {
     mode: "number"
   }),
-  exerciseId: (0, import_pg_core31.bigint)("exercise_id", {
+  exerciseId: (0, import_pg_core32.bigint)("exercise_id", {
     mode: "number"
   }),
-  exercise: (0, import_pg_core31.text)("exercise"),
-  setIndex: (0, import_pg_core31.integer)("set_index"),
-  weight: (0, import_pg_core31.real)("weight"),
-  reps: (0, import_pg_core31.bigint)("reps", {
+  exercise: (0, import_pg_core32.text)("exercise"),
+  setIndex: (0, import_pg_core32.integer)("set_index"),
+  weight: (0, import_pg_core32.real)("weight"),
+  reps: (0, import_pg_core32.bigint)("reps", {
     mode: "number"
   }),
-  workoutSummaryId: (0, import_pg_core31.uuid)("workout_summary_id"),
-  workoutStartUtc: (0, import_pg_core31.timestamp)("workout_start_utc", {
+  workoutSummaryId: (0, import_pg_core32.uuid)("workout_summary_id"),
+  workoutStartUtc: (0, import_pg_core32.timestamp)("workout_start_utc", {
     withTimezone: true
   }),
-  workoutEndUtc: (0, import_pg_core31.timestamp)("workout_end_utc", {
+  workoutEndUtc: (0, import_pg_core32.timestamp)("workout_end_utc", {
     withTimezone: true
   })
 }).with({
   securityInvoker: true
-}).as(import_drizzle_orm28.sql`
+}).as(import_drizzle_orm29.sql`
     SELECT DISTINCT
       ON (et.exercise_id) et.id,
       et.exercise_to_split_id,
@@ -1553,36 +1617,36 @@ var prsView = trackingSchema.view("v_prs", {
   `);
 
 // ../../src/infrastructure/db/schema/drizzle/workout/views/exercise-to-workoutsplit-expanded.view.ts
-var import_pg_core32 = require("drizzle-orm/pg-core");
-var import_drizzle_orm29 = require("drizzle-orm");
 var import_pg_core33 = require("drizzle-orm/pg-core");
+var import_drizzle_orm30 = require("drizzle-orm");
+var import_pg_core34 = require("drizzle-orm/pg-core");
 var exerciseToWorkoutSplitSetExpandedView = workoutSchema.view("v_exercise_to_workout_split_set_expanded", {
-  id: (0, import_pg_core32.bigint)("id", {
+  id: (0, import_pg_core33.bigint)("id", {
     mode: "number"
   }),
-  workoutSplitId: (0, import_pg_core32.bigint)("workout_split_id", {
+  workoutSplitId: (0, import_pg_core33.bigint)("workout_split_id", {
     mode: "number"
   }),
-  workoutId: (0, import_pg_core32.bigint)("workout_id", {
+  workoutId: (0, import_pg_core33.bigint)("workout_id", {
     mode: "number"
   }),
-  exerciseId: (0, import_pg_core32.bigint)("exercise_id", {
+  exerciseId: (0, import_pg_core33.bigint)("exercise_id", {
     mode: "number"
   }),
-  exercise: (0, import_pg_core32.text)("exercise"),
-  workoutSplit: (0, import_pg_core32.text)("workout_split"),
-  reps: (0, import_pg_core33.integer)("reps"),
-  orderIndex: (0, import_pg_core32.bigint)("order_index", {
+  exercise: (0, import_pg_core33.text)("exercise"),
+  workoutSplit: (0, import_pg_core33.text)("workout_split"),
+  reps: (0, import_pg_core34.integer)("reps"),
+  orderIndex: (0, import_pg_core33.bigint)("order_index", {
     mode: "number"
   }),
-  setIndex: (0, import_pg_core33.integer)("set_index"),
-  createdAt: (0, import_pg_core32.timestamp)("created_at", {
+  setIndex: (0, import_pg_core34.integer)("set_index"),
+  createdAt: (0, import_pg_core33.timestamp)("created_at", {
     withTimezone: true
   }),
-  isActive: (0, import_pg_core32.boolean)("is_active")
+  isActive: (0, import_pg_core33.boolean)("is_active")
 }).with({
   securityInvoker: true
-}).as(import_drizzle_orm29.sql`
+}).as(import_drizzle_orm30.sql`
     SELECT
       ews.id,
       ews.workout_split_id,
@@ -1615,44 +1679,44 @@ var exerciseToWorkoutSplitSetExpandedView = workoutSchema.view("v_exercise_to_wo
   `);
 
 // ../../src/infrastructure/db/schema/drizzle/analytics/views/exercise-tracking-expanded.view.ts
-var import_drizzle_orm30 = require("drizzle-orm");
-var import_pg_core34 = require("drizzle-orm/pg-core");
+var import_drizzle_orm31 = require("drizzle-orm");
 var import_pg_core35 = require("drizzle-orm/pg-core");
+var import_pg_core36 = require("drizzle-orm/pg-core");
 var exerciseTrackingSetExpandedView = analyticsSchema.view("v_exercise_tracking_set_expanded", {
-  id: (0, import_pg_core34.bigint)("id", {
+  id: (0, import_pg_core35.bigint)("id", {
     mode: "number"
   }),
-  exerciseToSplitId: (0, import_pg_core34.bigint)("exercise_to_split_id", {
+  exerciseToSplitId: (0, import_pg_core35.bigint)("exercise_to_split_id", {
     mode: "number"
   }),
-  weight: (0, import_pg_core34.real)("weight"),
-  reps: (0, import_pg_core34.bigint)("reps", {
+  weight: (0, import_pg_core35.real)("weight"),
+  reps: (0, import_pg_core35.bigint)("reps", {
     mode: "number"
   }),
-  orderIndex: (0, import_pg_core35.integer)("order_index"),
-  setIndex: (0, import_pg_core35.integer)("set_index"),
-  exerciseId: (0, import_pg_core34.bigint)("exercise_id", {
+  orderIndex: (0, import_pg_core36.integer)("order_index"),
+  setIndex: (0, import_pg_core36.integer)("set_index"),
+  exerciseId: (0, import_pg_core35.bigint)("exercise_id", {
     mode: "number"
   }),
-  workoutSplitId: (0, import_pg_core34.bigint)("workout_split_id", {
+  workoutSplitId: (0, import_pg_core35.bigint)("workout_split_id", {
     mode: "number"
   }),
-  splitName: (0, import_pg_core34.text)("split_name"),
-  exercise: (0, import_pg_core34.text)("exercise"),
-  targetMuscle: (0, import_pg_core34.text)("target_muscle"),
-  specificTargetMuscle: (0, import_pg_core34.text)("specific_target_muscle"),
-  notes: (0, import_pg_core34.text)("notes"),
-  workoutSummaryId: (0, import_pg_core34.uuid)("workout_summary_id"),
-  workoutStartUtc: (0, import_pg_core34.timestamp)("workout_start_utc", {
+  splitName: (0, import_pg_core35.text)("split_name"),
+  exercise: (0, import_pg_core35.text)("exercise"),
+  targetMuscle: (0, import_pg_core35.text)("target_muscle"),
+  specificTargetMuscle: (0, import_pg_core35.text)("specific_target_muscle"),
+  notes: (0, import_pg_core35.text)("notes"),
+  workoutSummaryId: (0, import_pg_core35.uuid)("workout_summary_id"),
+  workoutStartUtc: (0, import_pg_core35.timestamp)("workout_start_utc", {
     withTimezone: true
   }),
-  workoutEndUtc: (0, import_pg_core34.timestamp)("workout_end_utc", {
+  workoutEndUtc: (0, import_pg_core35.timestamp)("workout_end_utc", {
     withTimezone: true
   }),
-  isAssignedToSplit: (0, import_pg_core34.boolean)("is_assigned_to_split")
+  isAssignedToSplit: (0, import_pg_core35.boolean)("is_assigned_to_split")
 }).with({
   securityInvoker: true
-}).as(import_drizzle_orm30.sql`
+}).as(import_drizzle_orm31.sql`
     SELECT
       et.id,
       et.exercise_to_split_id,
@@ -1700,7 +1764,7 @@ var trackingSetDbSchema = (0, import_drizzle_zod.createSelectSchema)(trackingSet
 var aerobicTrackingDbSchema = (0, import_drizzle_zod.createSelectSchema)(aerobicTracking);
 var messageDbSchema = (0, import_drizzle_zod.createSelectSchema)(message);
 var userReminderSettingDbSchema = (0, import_drizzle_zod.createSelectSchema)(userReminderSetting);
-var userSplitInformationDbSchema = (0, import_drizzle_zod.createSelectSchema)(userSplitInformation);
+var workoutScheduleDbSchema = (0, import_drizzle_zod.createSelectSchema)(workoutSchedule);
 var exerciseTrackingSetExpandedViewDbSchema = (0, import_drizzle_zod.createSelectSchema)(exerciseTrackingSetExpandedView);
 var prsViewDbSchema = (0, import_drizzle_zod.createSelectSchema)(prsView);
 
@@ -2863,7 +2927,6 @@ var getPersonalRecordsContract = {
   userMessageIdentityQueryDtoSchema,
   userProfilePicQueryDtoSchema,
   userReminderSettingDbSchema,
-  userSplitInformationDbSchema,
   userToHourlyReminderQueryDtoSchema,
   userUpdateDbSchema,
   userWithNotificationsEnabledQueryDtoSchema,
@@ -2874,6 +2937,7 @@ var getPersonalRecordsContract = {
   workoutExerciseInputQueryDtoSchema,
   workoutPlanDbSchema,
   workoutPlanIdQueryDtoSchema,
+  workoutScheduleDbSchema,
   workoutSetDbSchema,
   workoutSplitDbSchema,
   workoutSplitIdQueryDtoSchema,

@@ -29,6 +29,7 @@ var identitySchema = pgSchema("identity");
 var workoutSchema = pgSchema("workout");
 var trackingSchema = pgSchema("tracking");
 var remindersSchema = pgSchema("reminders");
+var schedulesSchema = pgSchema("schedules");
 var analyticsSchema = pgSchema("analytics");
 var messagesSchema = pgSchema("messages");
 var authProviders = identitySchema.enum("Auth Providers", [
@@ -38,7 +39,7 @@ var authProviders = identitySchema.enum("Auth Providers", [
 ]);
 
 // ../../src/infrastructure/db/schema/drizzle/identity/user/table.ts
-import { relations as relations14, sql as drizzleSql21 } from "drizzle-orm";
+import { relations as relations14, sql as drizzleSql22 } from "drizzle-orm";
 import { bigint as bigint11, boolean as boolean6, primaryKey as primaryKey14, text as text8, timestamp as timestamp10, uniqueIndex as uniqueIndex4, uuid as uuid11 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/messages/messages/table.ts
@@ -144,7 +145,7 @@ var messageRelations = relations(message, ({ one }) => ({
 
 // ../../src/infrastructure/db/schema/drizzle/reminders/user_reminder_setting/table.ts
 import { relations as relations2 } from "drizzle-orm";
-import { boolean as boolean2, foreignKey as foreignKey2, integer, primaryKey as primaryKey2, text as text2, timestamp as timestamp2, uuid as uuid2 } from "drizzle-orm/pg-core";
+import { boolean as boolean2, foreignKey as foreignKey2, primaryKey as primaryKey2, text as text2, timestamp as timestamp2, unique, uuid as uuid2 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/reminders/user_reminder_setting/policies.ts
 import { sql as drizzleSql3 } from "drizzle-orm";
@@ -183,20 +184,24 @@ __name(userReminderSettingPolicies, "userReminderSettingPolicies");
 
 // ../../src/infrastructure/db/schema/drizzle/reminders/user_reminder_setting/table.ts
 var userReminderSetting = remindersSchema.table("user_reminder_setting", {
+  id: uuid2("id").defaultRandom().notNull(),
   userId: uuid2("user_id").notNull(),
-  workoutRemindersEnabled: boolean2("workout_reminders_enabled").default(true).notNull(),
-  reminderOffsetMinutes: integer("reminder_offset_minutes").default(60).notNull(),
+  reminderEnabled: boolean2("reminder_enabled").default(false).notNull(),
+  createdAt: timestamp2("created_at", {
+    withTimezone: true
+  }).defaultNow().notNull(),
   updatedAt: timestamp2("updated_at", {
     withTimezone: true
   }).defaultNow().notNull(),
-  timezone: text2("timezone").default("'UTC'::text")
+  timeZone: text2("time_zone").notNull()
 }, (t) => [
   primaryKey2({
     name: "user_reminder_setting_pkey",
     columns: [
-      t.userId
+      t.id
     ]
   }),
+  unique("user_reminder_setting_user_id_key").on(t.userId),
   foreignKey2({
     name: "user_reminder_setting_user_id_fkey",
     columns: [
@@ -219,13 +224,13 @@ var userReminderSettingRelations = relations2(userReminderSetting, ({ one }) => 
   })
 }));
 
-// ../../src/infrastructure/db/schema/drizzle/reminders/user_split_information/table.ts
-import { relations as relations11, sql as drizzleSql17 } from "drizzle-orm";
-import { bigint as bigint9, foreignKey as foreignKey10, index as index8, integer as integer5, numeric, primaryKey as primaryKey11, timestamp as timestamp7, unique as unique4, uuid as uuid8 } from "drizzle-orm/pg-core";
+// ../../src/infrastructure/db/schema/drizzle/schedules/workout_schedule/table.ts
+import { relations as relations11, sql as drizzleSql18 } from "drizzle-orm";
+import { bigint as bigint9, check as check2, foreignKey as foreignKey10, integer as integer4, primaryKey as primaryKey11, time, timestamp as timestamp7, unique as unique5, uuid as uuid8 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/workout/workout_split/table.ts
 import { sql as drizzleSql16, relations as relations10 } from "drizzle-orm";
-import { bigint as bigint8, boolean as boolean5, foreignKey as foreignKey9, index as index7, integer as integer4, primaryKey as primaryKey10, text as text5, timestamp as timestamp6, uniqueIndex as uniqueIndex3 } from "drizzle-orm/pg-core";
+import { bigint as bigint8, boolean as boolean5, foreignKey as foreignKey9, index as index7, integer as integer3, primaryKey as primaryKey10, text as text5, timestamp as timestamp6, uniqueIndex as uniqueIndex3 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/tracking/workout_summary/table.ts
 import { relations as relations8, sql as drizzleSql12 } from "drizzle-orm";
@@ -241,11 +246,11 @@ import { bigint as bigint3, primaryKey as primaryKey5, text as text3, uniqueInde
 
 // ../../src/infrastructure/db/schema/drizzle/workout/exercisetoworkoutsplit/table.ts
 import { relations as relations4, sql as drizzleSql6 } from "drizzle-orm";
-import { bigint as bigint2, boolean as boolean3, foreignKey as foreignKey4, index as index3, primaryKey as primaryKey4, timestamp as timestamp3, unique as unique2 } from "drizzle-orm/pg-core";
+import { bigint as bigint2, boolean as boolean3, foreignKey as foreignKey4, index as index3, primaryKey as primaryKey4, timestamp as timestamp3, unique as unique3 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/workout/workout_set/table.ts
 import { relations as relations3 } from "drizzle-orm";
-import { bigint, foreignKey as foreignKey3, index as index2, integer as integer2, primaryKey as primaryKey3, unique, uuid as uuid3 } from "drizzle-orm/pg-core";
+import { bigint, foreignKey as foreignKey3, index as index2, integer, primaryKey as primaryKey3, unique as unique2, uuid as uuid3 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/workout/workout_set/policies.ts
 import { sql as drizzleSql4 } from "drizzle-orm";
@@ -296,8 +301,8 @@ var workoutSet = workoutSchema.table("workout_set", {
   exerciseToSplitId: bigint("exercise_to_split_id", {
     mode: "number"
   }).notNull(),
-  orderIndex: integer2("order_index").notNull(),
-  reps: integer2("reps").notNull()
+  orderIndex: integer("order_index").notNull(),
+  reps: integer("reps").notNull()
 }, (t) => [
   primaryKey3({
     name: "workout_set_pkey",
@@ -305,7 +310,7 @@ var workoutSet = workoutSchema.table("workout_set", {
       t.id
     ]
   }),
-  unique("workout_set_exercise_order_unique").on(t.exerciseToSplitId, t.orderIndex),
+  unique2("workout_set_exercise_order_unique").on(t.exerciseToSplitId, t.orderIndex),
   foreignKey3({
     name: "workout_set_exercise_to_split_id_fkey",
     columns: [
@@ -393,7 +398,7 @@ var exerciseToWorkoutSplit = workoutSchema.table("exercise_to_workout_split", {
       t.id
     ]
   }),
-  unique2("uq_exercise_to_workout_split_workout_split_exercise").on(t.workoutSplitId, t.exerciseId),
+  unique3("uq_exercise_to_workout_split_workout_split_exercise").on(t.workoutSplitId, t.exerciseId),
   foreignKey4({
     name: "exercise_to_workout_split_exercise_id_fkey",
     columns: [
@@ -476,7 +481,7 @@ var exerciseRelations = relations5(exercise, ({ many }) => ({
 
 // ../../src/infrastructure/db/schema/drizzle/tracking/tracking_set/table.ts
 import { relations as relations6 } from "drizzle-orm";
-import { bigint as bigint4, foreignKey as foreignKey5, index as index4, integer as integer3, primaryKey as primaryKey6, real, unique as unique3, uuid as uuid4 } from "drizzle-orm/pg-core";
+import { bigint as bigint4, foreignKey as foreignKey5, index as index4, integer as integer2, primaryKey as primaryKey6, real, unique as unique4, uuid as uuid4 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/tracking/tracking_set/policies.ts
 import { sql as drizzleSql8 } from "drizzle-orm";
@@ -526,8 +531,8 @@ var trackingSet = trackingSchema.table("tracking_set", {
   exerciseTrackingId: bigint4("exercise_tracking_id", {
     mode: "number"
   }).notNull(),
-  setIndex: integer3("set_index").notNull(),
-  reps: integer3("reps").notNull(),
+  setIndex: integer2("set_index").notNull(),
+  reps: integer2("reps").notNull(),
   weight: real("weight").notNull()
 }, (t) => [
   primaryKey6({
@@ -536,7 +541,7 @@ var trackingSet = trackingSchema.table("tracking_set", {
       t.id
     ]
   }),
-  unique3("tracking_set_exercise_index_unique").on(t.exerciseTrackingId, t.setIndex),
+  unique4("tracking_set_exercise_index_unique").on(t.exerciseTrackingId, t.setIndex),
   foreignKey5({
     name: "tracking_set_exercise_tracking_id_fkey",
     columns: [
@@ -912,7 +917,7 @@ var workoutSplit = workoutSchema.table("workout_split", {
     mode: "number"
   }).notNull(),
   name: text5("name").notNull(),
-  orderIndex: integer4("order_index").notNull(),
+  orderIndex: integer3("order_index").notNull(),
   createdAt: timestamp6("created_at", {
     withTimezone: true
   }).defaultNow().notNull(),
@@ -948,64 +953,107 @@ var workoutSplitRelations = relations10(workoutSplit, ({ many, one }) => ({
   }),
   exerciseAssignments: many(exerciseToWorkoutSplit),
   workoutSummaries: many(workoutSummary),
-  splitInformation: many(userSplitInformation)
+  schedules: many(workoutSchedule)
 }));
 
-// ../../src/infrastructure/db/schema/drizzle/reminders/user_split_information/table.ts
-var userSplitInformation = remindersSchema.table("user_split_information", {
-  id: bigint9("id", {
-    mode: "number"
-  }).generatedByDefaultAsIdentity({
-    name: "user_split_information_id_seq"
-  }).notNull(),
+// ../../src/infrastructure/db/schema/drizzle/schedules/workout_schedule/policies.ts
+import { sql as drizzleSql17 } from "drizzle-orm";
+import { pgPolicy as pgPolicy11 } from "drizzle-orm/pg-core";
+var uid9 = drizzleSql17`"identity"."current_user_id" ()`;
+function workoutSchedulePolicies(t) {
+  const owns = drizzleSql17`${uid9} = ${t.userId}`;
+  const ownsSplit = drizzleSql17`
+    EXISTS (
+      SELECT
+        1
+      FROM
+        "workout"."workout_split" ws
+        JOIN "workout"."workout_plan" wp ON wp."id" = ws."workout_id"
+      WHERE
+        ws."id" = ${t.workoutSplitId}
+        AND wp."user_id" = ${uid9}
+    )
+  `;
+  const mayWrite = drizzleSql17`
+    ${owns}
+    AND ${ownsSplit}
+  `;
+  return [
+    pgPolicy11("auth can SELECT own workout schedules", {
+      for: "select",
+      to: authenticatedRole,
+      using: owns
+    }),
+    pgPolicy11("auth can INSERT own workout schedules", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: mayWrite
+    }),
+    pgPolicy11("auth can UPDATE own workout schedules", {
+      for: "update",
+      to: authenticatedRole,
+      using: owns,
+      withCheck: mayWrite
+    }),
+    pgPolicy11("auth can DELETE own workout schedules", {
+      for: "delete",
+      to: authenticatedRole,
+      using: owns
+    })
+  ];
+}
+__name(workoutSchedulePolicies, "workoutSchedulePolicies");
+
+// ../../src/infrastructure/db/schema/drizzle/schedules/workout_schedule/table.ts
+var workoutSchedule = schedulesSchema.table("workout_schedule", {
+  id: uuid8("id").defaultRandom().notNull(),
   userId: uuid8("user_id").notNull(),
   workoutSplitId: bigint9("workout_split_id", {
     mode: "number"
   }).notNull(),
-  estimatedTimeUtc: timestamp7("estimated_time_utc", {
-    withTimezone: true
+  dayOfWeek: integer4("day_of_week").notNull(),
+  startTime: time("start_time", {
+    precision: 0
   }).notNull(),
-  confidence: numeric("confidence", {
-    precision: 3,
-    scale: 2
-  }).default("1.00").notNull(),
-  lastComputedAt: timestamp7("last_computed_at", {
+  createdAt: timestamp7("created_at", {
     withTimezone: true
   }).defaultNow().notNull(),
-  preferredWeekday: integer5("preferred_weekday")
+  updatedAt: timestamp7("updated_at", {
+    withTimezone: true
+  }).defaultNow().notNull()
 }, (t) => [
   primaryKey11({
-    name: "user_split_information_pkey",
+    name: "workout_schedule_pkey",
     columns: [
       t.id
     ]
   }),
-  unique4("user_split_information_user_id_workout_split_id_key").on(t.userId, t.workoutSplitId),
+  unique5("workout_schedule_user_split_weekday_key").on(t.userId, t.workoutSplitId, t.dayOfWeek),
+  check2("workout_schedule_day_of_week_check", drizzleSql18`${t.dayOfWeek} BETWEEN 0 AND 6`),
   foreignKey10({
-    name: "user_split_information_user_id_fkey",
+    name: "workout_schedule_user_id_fkey",
     columns: [
       t.userId
     ],
     foreignColumns: [
       user.id
     ]
-  }).onDelete("cascade"),
+  }).onUpdate("cascade").onDelete("cascade"),
   foreignKey10({
-    name: "user_split_information_workout_split_id_fkey",
+    name: "workout_schedule_workout_split_id_fkey",
     columns: [
       t.workoutSplitId
     ],
     foreignColumns: [
       workoutSplit.id
     ]
-  }).onDelete("cascade"),
-  index8("user_split_information_confidence_idx").on(t.preferredWeekday, t.confidence).where(drizzleSql17`${t.confidence} >= 0.60`),
-  index8("user_split_information_user_weekday_idx").on(t.userId, t.preferredWeekday).where(drizzleSql17`${t.preferredWeekday} is not null`)
+  }).onUpdate("cascade").onDelete("cascade"),
+  ...workoutSchedulePolicies(t)
 ]).enableRLS();
-var userSplitInformationRelations = relations11(userSplitInformation, ({ one }) => ({
+var workoutScheduleRelations = relations11(workoutSchedule, ({ one }) => ({
   user: one(user, {
     fields: [
-      userSplitInformation.userId
+      workoutSchedule.userId
     ],
     references: [
       user.id
@@ -1013,7 +1061,7 @@ var userSplitInformationRelations = relations11(userSplitInformation, ({ one }) 
   }),
   workoutSplit: one(workoutSplit, {
     fields: [
-      userSplitInformation.workoutSplitId
+      workoutSchedule.workoutSplitId
     ],
     references: [
       workoutSplit.id
@@ -1023,38 +1071,38 @@ var userSplitInformationRelations = relations11(userSplitInformation, ({ one }) 
 
 // ../../src/infrastructure/db/schema/drizzle/tracking/aerobic_tracking/table.ts
 import { relations as relations12 } from "drizzle-orm";
-import { bigint as bigint10, foreignKey as foreignKey11, index as index9, primaryKey as primaryKey12, text as text6, timestamp as timestamp8, uuid as uuid9 } from "drizzle-orm/pg-core";
+import { bigint as bigint10, foreignKey as foreignKey11, index as index8, primaryKey as primaryKey12, text as text6, timestamp as timestamp8, uuid as uuid9 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/tracking/aerobic_tracking/policies.ts
-import { sql as drizzleSql18 } from "drizzle-orm";
-import { pgPolicy as pgPolicy11 } from "drizzle-orm/pg-core";
-var uid9 = drizzleSql18`"identity"."current_user_id"()`;
+import { sql as drizzleSql19 } from "drizzle-orm";
+import { pgPolicy as pgPolicy12 } from "drizzle-orm/pg-core";
+var uid10 = drizzleSql19`"identity"."current_user_id"()`;
 function aerobicTrackingPolicies(t) {
   return [
     // Lets authenticated users read only their own aerobic tracking rows.
-    pgPolicy11("Enable read access for auth users on aerobic_tracking", {
+    pgPolicy12("Enable read access for auth users on aerobic_tracking", {
       for: "select",
       to: authenticatedRole,
-      using: drizzleSql18`${uid9} = ${t.userId}`
+      using: drizzleSql19`${uid10} = ${t.userId}`
     }),
     // Lets authenticated users insert aerobic tracking rows only for themselves.
-    pgPolicy11("Enable insert for auth users on aerobic_tracking", {
+    pgPolicy12("Enable insert for auth users on aerobic_tracking", {
       for: "insert",
       to: authenticatedRole,
-      withCheck: drizzleSql18`${uid9} = ${t.userId}`
+      withCheck: drizzleSql19`${uid10} = ${t.userId}`
     }),
     // Lets authenticated users update only their own aerobic tracking rows.
-    pgPolicy11("Enable update for auth users on aerobic_tracking", {
+    pgPolicy12("Enable update for auth users on aerobic_tracking", {
       for: "update",
       to: authenticatedRole,
-      using: drizzleSql18`${uid9} = ${t.userId}`,
-      withCheck: drizzleSql18`${uid9} = ${t.userId}`
+      using: drizzleSql19`${uid10} = ${t.userId}`,
+      withCheck: drizzleSql19`${uid10} = ${t.userId}`
     }),
     // Lets authenticated users delete only their own aerobic tracking rows.
-    pgPolicy11("Enable delete for auth users on aerobic_tracking", {
+    pgPolicy12("Enable delete for auth users on aerobic_tracking", {
       for: "delete",
       to: authenticatedRole,
-      using: drizzleSql18`${uid9} = ${t.userId}`
+      using: drizzleSql19`${uid10} = ${t.userId}`
     })
   ];
 }
@@ -1091,7 +1139,7 @@ var aerobicTracking = trackingSchema.table("aerobic_tracking", {
       user.id
     ]
   }).onUpdate("cascade").onDelete("cascade"),
-  index9("aerobic_tracking_user_id_workout_time_utc_idx").on(t.userId, t.workoutTimeUtc.desc().nullsFirst()),
+  index8("aerobic_tracking_user_id_workout_time_utc_idx").on(t.userId, t.workoutTimeUtc.desc().nullsFirst()),
   ...aerobicTrackingPolicies(t)
 ]);
 var aerobicTrackingRelations = relations12(aerobicTracking, ({ one }) => ({
@@ -1107,38 +1155,38 @@ var aerobicTrackingRelations = relations12(aerobicTracking, ({ one }) => ({
 
 // ../../src/infrastructure/db/schema/drizzle/identity/oauth_account/table.ts
 import { relations as relations13 } from "drizzle-orm";
-import { foreignKey as foreignKey12, primaryKey as primaryKey13, text as text7, timestamp as timestamp9, unique as unique5, uuid as uuid10 } from "drizzle-orm/pg-core";
+import { foreignKey as foreignKey12, primaryKey as primaryKey13, text as text7, timestamp as timestamp9, unique as unique6, uuid as uuid10 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/identity/oauth_account/policies.ts
-import { sql as drizzleSql19 } from "drizzle-orm";
-import { pgPolicy as pgPolicy12 } from "drizzle-orm/pg-core";
-var currentUserId3 = drizzleSql19`"identity"."current_user_id"()`;
+import { sql as drizzleSql20 } from "drizzle-orm";
+import { pgPolicy as pgPolicy13 } from "drizzle-orm/pg-core";
+var currentUserId3 = drizzleSql20`"identity"."current_user_id"()`;
 function oauthAccountPolicies(table) {
   return [
     // Lets authenticated users read only OAuth accounts linked to themselves.
-    pgPolicy12("Enable read access for auth users on oauth_account", {
+    pgPolicy13("Enable read access for auth users on oauth_account", {
       for: "select",
       to: authenticatedRole,
-      using: drizzleSql19`${currentUserId3} = ${table.userId}`
+      using: drizzleSql20`${currentUserId3} = ${table.userId}`
     }),
     // Lets authenticated users link OAuth accounts only to themselves.
-    pgPolicy12("Enable insert for auth users on oauth_account", {
+    pgPolicy13("Enable insert for auth users on oauth_account", {
       for: "insert",
       to: authenticatedRole,
-      withCheck: drizzleSql19`${currentUserId3} = ${table.userId}`
+      withCheck: drizzleSql20`${currentUserId3} = ${table.userId}`
     }),
     // Lets authenticated users update only OAuth accounts linked to themselves.
-    pgPolicy12("Enable update for auth users on oauth_account", {
+    pgPolicy13("Enable update for auth users on oauth_account", {
       for: "update",
       to: authenticatedRole,
-      using: drizzleSql19`${currentUserId3} = ${table.userId}`,
-      withCheck: drizzleSql19`${currentUserId3} = ${table.userId}`
+      using: drizzleSql20`${currentUserId3} = ${table.userId}`,
+      withCheck: drizzleSql20`${currentUserId3} = ${table.userId}`
     }),
     // Lets authenticated users delete only OAuth accounts linked to themselves.
-    pgPolicy12("Enable delete for auth users on oauth_account", {
+    pgPolicy13("Enable delete for auth users on oauth_account", {
       for: "delete",
       to: authenticatedRole,
-      using: drizzleSql19`${currentUserId3} = ${table.userId}`
+      using: drizzleSql20`${currentUserId3} = ${table.userId}`
     })
   ];
 }
@@ -1161,7 +1209,7 @@ var oauthAccount = identitySchema.table("oauth_account", {
       t.id
     ]
   }),
-  unique5("oauth_account_provider_user_unique").on(t.provider, t.providerUserId),
+  unique6("oauth_account_provider_user_unique").on(t.provider, t.providerUserId),
   foreignKey12({
     name: "oauth_account_user_id_fkey",
     columns: [
@@ -1185,47 +1233,47 @@ var oauthAccountRelations = relations13(oauthAccount, ({ one }) => ({
 }));
 
 // ../../src/infrastructure/db/schema/drizzle/identity/user/policies.ts
-import { sql as drizzleSql20 } from "drizzle-orm";
-import { pgPolicy as pgPolicy13 } from "drizzle-orm/pg-core";
-var currentUserId4 = drizzleSql20`"identity"."current_user_id"()`;
+import { sql as drizzleSql21 } from "drizzle-orm";
+import { pgPolicy as pgPolicy14 } from "drizzle-orm/pg-core";
+var currentUserId4 = drizzleSql21`"identity"."current_user_id"()`;
 function userPolicies(table) {
   return [
     // Lets an authenticated user read their own profile.
-    pgPolicy13("Enable read access for auth users on own profile", {
+    pgPolicy14("Enable read access for auth users on own profile", {
       for: "select",
       to: authenticatedRole,
-      using: drizzleSql20`${currentUserId4} = ${table.id}`
+      using: drizzleSql21`${currentUserId4} = ${table.id}`
     }),
     // Lets a message receiver read the profile of a sender in their inbox.
-    pgPolicy13("Allow user to view senders in their messages", {
+    pgPolicy14("Allow user to view senders in their messages", {
       for: "select",
       to: authenticatedRole,
-      using: drizzleSql20`exists (select 1 from "messages"."message" m where m."sender_id" = ${table.id} and m."receiver_id" = ${currentUserId4})`
+      using: drizzleSql21`exists (select 1 from "messages"."message" m where m."sender_id" = ${table.id} and m."receiver_id" = ${currentUserId4})`
     }),
     // Lets an authenticated user create only their own profile row.
-    pgPolicy13("Enable insert for auth users on own profile", {
+    pgPolicy14("Enable insert for auth users on own profile", {
       for: "insert",
       to: authenticatedRole,
-      withCheck: drizzleSql20`${currentUserId4} = ${table.id}`
+      withCheck: drizzleSql21`${currentUserId4} = ${table.id}`
     }),
     // Preserves the legacy public self-registration policy for compatibility.
-    pgPolicy13("Enable insert for public users on own profile", {
+    pgPolicy14("Enable insert for public users on own profile", {
       for: "insert",
       to: "public",
-      withCheck: drizzleSql20`${currentUserId4} = ${table.id}`
+      withCheck: drizzleSql21`${currentUserId4} = ${table.id}`
     }),
     // Lets an authenticated user update only their own profile.
-    pgPolicy13("Enable update for auth users on own profile", {
+    pgPolicy14("Enable update for auth users on own profile", {
       for: "update",
       to: authenticatedRole,
-      using: drizzleSql20`${currentUserId4} = ${table.id}`,
-      withCheck: drizzleSql20`${currentUserId4} = ${table.id}`
+      using: drizzleSql21`${currentUserId4} = ${table.id}`,
+      withCheck: drizzleSql21`${currentUserId4} = ${table.id}`
     }),
     // Lets an authenticated user delete only their own profile.
-    pgPolicy13("Enable delete for auth users on own profile", {
+    pgPolicy14("Enable delete for auth users on own profile", {
       for: "delete",
       to: authenticatedRole,
-      using: drizzleSql20`${currentUserId4} = ${table.id}`
+      using: drizzleSql21`${currentUserId4} = ${table.id}`
     })
   ];
 }
@@ -1263,8 +1311,24 @@ var user = identitySchema.table("user", {
       t.id
     ]
   }),
-  uniqueIndex4("user_email_ci_unique").on(drizzleSql21`lower(trim(both from ${t.email}))`),
-  uniqueIndex4("user_username_ci_unique").on(drizzleSql21`lower(trim(both from ${t.username}))`),
+  uniqueIndex4("user_email_ci_unique").on(drizzleSql22`
+      LOWER(
+        TRIM(
+          BOTH
+          FROM
+            ${t.email}
+        )
+      )
+    `),
+  uniqueIndex4("user_username_ci_unique").on(drizzleSql22`
+      LOWER(
+        TRIM(
+          BOTH
+          FROM
+            ${t.username}
+        )
+      )
+    `),
   ...userPolicies(t)
 ]);
 var userRelations = relations14(user, ({ many, one }) => ({
@@ -1278,7 +1342,7 @@ var userRelations = relations14(user, ({ many, one }) => ({
   workoutSummaries: many(workoutSummary),
   aerobicTrackings: many(aerobicTracking),
   reminderSettings: one(userReminderSetting),
-  splitInformation: many(userSplitInformation),
+  workoutSchedules: many(workoutSchedule),
   sentMessages: many(message, {
     relationName: "messageSender"
   }),
@@ -1288,8 +1352,8 @@ var userRelations = relations14(user, ({ many, one }) => ({
 }));
 
 // ../../src/infrastructure/db/schema/drizzle/tracking/views/prs.view.ts
-import { sql as drizzleSql22 } from "drizzle-orm";
-import { bigint as bigint12, integer as integer6, real as real2, text as text9, timestamp as timestamp11, uuid as uuid12 } from "drizzle-orm/pg-core";
+import { sql as drizzleSql23 } from "drizzle-orm";
+import { bigint as bigint12, integer as integer5, real as real2, text as text9, timestamp as timestamp11, uuid as uuid12 } from "drizzle-orm/pg-core";
 var prsView = trackingSchema.view("v_prs", {
   id: bigint12("id", {
     mode: "number"
@@ -1301,7 +1365,7 @@ var prsView = trackingSchema.view("v_prs", {
     mode: "number"
   }),
   exercise: text9("exercise"),
-  setIndex: integer6("set_index"),
+  setIndex: integer5("set_index"),
   weight: real2("weight"),
   reps: bigint12("reps", {
     mode: "number"
@@ -1315,7 +1379,7 @@ var prsView = trackingSchema.view("v_prs", {
   })
 }).with({
   securityInvoker: true
-}).as(drizzleSql22`
+}).as(drizzleSql23`
     SELECT DISTINCT
       ON (et.exercise_id) et.id,
       et.exercise_to_split_id,
@@ -1339,8 +1403,8 @@ var prsView = trackingSchema.view("v_prs", {
 
 // ../../src/infrastructure/db/schema/drizzle/workout/views/exercise-to-workoutsplit-expanded.view.ts
 import { bigint as bigint13, boolean as boolean7, text as text10, timestamp as timestamp12 } from "drizzle-orm/pg-core";
-import { sql as drizzleSql23 } from "drizzle-orm";
-import { integer as integer7 } from "drizzle-orm/pg-core";
+import { sql as drizzleSql24 } from "drizzle-orm";
+import { integer as integer6 } from "drizzle-orm/pg-core";
 var exerciseToWorkoutSplitSetExpandedView = workoutSchema.view("v_exercise_to_workout_split_set_expanded", {
   id: bigint13("id", {
     mode: "number"
@@ -1356,18 +1420,18 @@ var exerciseToWorkoutSplitSetExpandedView = workoutSchema.view("v_exercise_to_wo
   }),
   exercise: text10("exercise"),
   workoutSplit: text10("workout_split"),
-  reps: integer7("reps"),
+  reps: integer6("reps"),
   orderIndex: bigint13("order_index", {
     mode: "number"
   }),
-  setIndex: integer7("set_index"),
+  setIndex: integer6("set_index"),
   createdAt: timestamp12("created_at", {
     withTimezone: true
   }),
   isActive: boolean7("is_active")
 }).with({
   securityInvoker: true
-}).as(drizzleSql23`
+}).as(drizzleSql24`
     SELECT
       ews.id,
       ews.workout_split_id,
@@ -1400,9 +1464,9 @@ var exerciseToWorkoutSplitSetExpandedView = workoutSchema.view("v_exercise_to_wo
   `);
 
 // ../../src/infrastructure/db/schema/drizzle/analytics/views/exercise-tracking-expanded.view.ts
-import { sql as drizzleSql24 } from "drizzle-orm";
+import { sql as drizzleSql25 } from "drizzle-orm";
 import { bigint as bigint14, boolean as boolean8, real as real3, text as text11, timestamp as timestamp13, uuid as uuid13 } from "drizzle-orm/pg-core";
-import { integer as integer8 } from "drizzle-orm/pg-core";
+import { integer as integer7 } from "drizzle-orm/pg-core";
 var exerciseTrackingSetExpandedView = analyticsSchema.view("v_exercise_tracking_set_expanded", {
   id: bigint14("id", {
     mode: "number"
@@ -1414,8 +1478,8 @@ var exerciseTrackingSetExpandedView = analyticsSchema.view("v_exercise_tracking_
   reps: bigint14("reps", {
     mode: "number"
   }),
-  orderIndex: integer8("order_index"),
-  setIndex: integer8("set_index"),
+  orderIndex: integer7("order_index"),
+  setIndex: integer7("set_index"),
   exerciseId: bigint14("exercise_id", {
     mode: "number"
   }),
@@ -1437,7 +1501,7 @@ var exerciseTrackingSetExpandedView = analyticsSchema.view("v_exercise_tracking_
   isAssignedToSplit: boolean8("is_assigned_to_split")
 }).with({
   securityInvoker: true
-}).as(drizzleSql24`
+}).as(drizzleSql25`
     SELECT
       et.id,
       et.exercise_to_split_id,
@@ -1485,7 +1549,7 @@ var trackingSetDbSchema = createSelectSchema(trackingSet);
 var aerobicTrackingDbSchema = createSelectSchema(aerobicTracking);
 var messageDbSchema = createSelectSchema(message);
 var userReminderSettingDbSchema = createSelectSchema(userReminderSetting);
-var userSplitInformationDbSchema = createSelectSchema(userSplitInformation);
+var workoutScheduleDbSchema = createSelectSchema(workoutSchedule);
 var exerciseTrackingSetExpandedViewDbSchema = createSelectSchema(exerciseTrackingSetExpandedView);
 var prsViewDbSchema = createSelectSchema(prsView);
 
@@ -2647,7 +2711,6 @@ export {
   userMessageIdentityQueryDtoSchema,
   userProfilePicQueryDtoSchema,
   userReminderSettingDbSchema,
-  userSplitInformationDbSchema,
   userToHourlyReminderQueryDtoSchema,
   userUpdateDbSchema,
   userWithNotificationsEnabledQueryDtoSchema,
@@ -2658,6 +2721,7 @@ export {
   workoutExerciseInputQueryDtoSchema,
   workoutPlanDbSchema,
   workoutPlanIdQueryDtoSchema,
+  workoutScheduleDbSchema,
   workoutSetDbSchema,
   workoutSplitDbSchema,
   workoutSplitIdQueryDtoSchema,

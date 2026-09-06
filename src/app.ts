@@ -10,10 +10,12 @@ import { ExercisesModule } from './modules/exercises/exercises.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { OAuthModule } from './modules/oauth/oauth.module';
 import { PushModule } from './modules/push/push.module';
+import { RemindersModule } from './modules/reminders/reminders.module';
 import { UserModule } from './modules/user/user.module';
 import { VideoAnalysisModule } from './modules/video-analysis/video-analysis.module';
 import { WebSocketsModule } from './modules/web-sockets/web-sockets.module';
 import { WorkoutModule } from './modules/workout/workout.module';
+import { WorkoutScheduleModule } from './modules/workout-schedule/workout-schedule.module';
 import { BotBlockerMiddleware } from './common/middlewares/bot-blocker.middleware';
 import { CheckAppVersionMiddleware } from './common/middlewares/check-app-version.middleware';
 import { GeneralRateLimitMiddleware } from './common/middlewares/general-rate-limit.middleware';
@@ -54,10 +56,12 @@ class AppController {
     MessagesModule,
     OAuthModule,
     PushModule,
+    RemindersModule,
     UserModule,
     VideoAnalysisModule,
     WebSocketsModule,
     WorkoutModule,
+    WorkoutScheduleModule,
   ],
   controllers: [AppController],
   providers: [
@@ -71,9 +75,7 @@ class AppController {
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer
-      .apply(GeneralRateLimitMiddleware, RequestLoggerMiddleware, BotBlockerMiddleware, CheckAppVersionMiddleware)
-      .forRoutes('*');
+    consumer.apply(GeneralRateLimitMiddleware, RequestLoggerMiddleware, BotBlockerMiddleware, CheckAppVersionMiddleware).forRoutes('*');
   }
 }
 
