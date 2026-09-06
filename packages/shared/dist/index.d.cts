@@ -5409,7 +5409,7 @@ declare const getExerciseHistoryContract: {
 declare const getWorkoutStatisticsResponseSchema: z.ZodObject<{
     workoutCount: z.ZodCoercedNumber<unknown>;
     hasExerciseTracking: z.ZodBoolean;
-    nextWorkoutSplit: z.ZodNullable<z.ZodObject<{
+    nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
         id: z.ZodInt;
         name: z.ZodString;
         orderIndex: z.ZodInt;
@@ -5445,7 +5445,7 @@ declare const getWorkoutStatisticsContract: {
     response: z.ZodObject<{
         workoutCount: z.ZodCoercedNumber<unknown>;
         hasExerciseTracking: z.ZodBoolean;
-        nextWorkoutSplit: z.ZodNullable<z.ZodObject<{
+        nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
             id: z.ZodInt;
             name: z.ZodString;
             orderIndex: z.ZodInt;
@@ -5681,7 +5681,7 @@ declare const personalRecordsQueryDtoSchema: z.ZodObject<{
 declare const exerciseTrackingStatsQueryDtoSchema: z.ZodObject<{
     workoutCount: z.ZodCoercedNumber<unknown>;
     hasExerciseTracking: z.ZodBoolean;
-    nextWorkoutSplit: z.ZodNullable<z.ZodObject<{
+    nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
         id: z.ZodInt;
         name: z.ZodString;
         orderIndex: z.ZodInt;
@@ -5761,7 +5761,7 @@ declare const exerciseTrackingAndStatsQueryDtoSchema: z.ZodObject<{
     trackingStats: z.ZodObject<{
         workoutCount: z.ZodCoercedNumber<unknown>;
         hasExerciseTracking: z.ZodBoolean;
-        nextWorkoutSplit: z.ZodNullable<z.ZodObject<{
+        nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
             id: z.ZodInt;
             name: z.ZodString;
             orderIndex: z.ZodInt;
@@ -5821,7 +5821,7 @@ declare const exerciseTrackingAndStatsRowQueryDtoSchema: z.ZodObject<{
         trackingStats: z.ZodObject<{
             workoutCount: z.ZodCoercedNumber<unknown>;
             hasExerciseTracking: z.ZodBoolean;
-            nextWorkoutSplit: z.ZodNullable<z.ZodObject<{
+            nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
                 id: z.ZodInt;
                 name: z.ZodString;
                 orderIndex: z.ZodInt;
@@ -5880,7 +5880,7 @@ declare const exerciseTrackingStatsRowQueryDtoSchema: z.ZodObject<{
     data: z.ZodObject<{
         workoutCount: z.ZodCoercedNumber<unknown>;
         hasExerciseTracking: z.ZodBoolean;
-        nextWorkoutSplit: z.ZodNullable<z.ZodObject<{
+        nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
             id: z.ZodInt;
             name: z.ZodString;
             orderIndex: z.ZodInt;

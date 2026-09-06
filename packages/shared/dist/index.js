@@ -2403,15 +2403,16 @@ var personalRecordsQueryDtoSchema = z31.object({
     exerciseId: true
   }))
 });
+var nextSplitQueryDtoSchema = z31.object({
+  id: workoutSplitDbSchema.shape.id,
+  name: workoutSplitDbSchema.shape.name,
+  orderIndex: workoutSplitDbSchema.shape.orderIndex,
+  muscleGroup: z31.string().nullable()
+});
 var exerciseTrackingStatsQueryDtoSchema = z31.object({
   workoutCount: z31.coerce.number(),
   hasExerciseTracking: z31.boolean(),
-  nextWorkoutSplit: z31.object({
-    id: workoutSplitDbSchema.shape.id,
-    name: workoutSplitDbSchema.shape.name,
-    orderIndex: workoutSplitDbSchema.shape.orderIndex,
-    muscleGroup: z31.string().nullable()
-  }).nullable(),
+  nextSplitByOrderIndex: nextSplitQueryDtoSchema.nullable(),
   workoutTargets: z31.object({
     workoutCountThisWeek: z31.coerce.number(),
     workoutCountScheduledPerWeek: z31.coerce.number()

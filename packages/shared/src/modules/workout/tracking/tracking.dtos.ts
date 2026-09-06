@@ -114,17 +114,17 @@ export const personalRecordsQueryDtoSchema = z.object({
   prs: z.record(z.string(), personalRecordQueryDtoSchema.omit({ exerciseId: true })),
 });
 
+const nextSplitQueryDtoSchema = z.object({
+  id: workoutSplitDbSchema.shape.id,
+  name: workoutSplitDbSchema.shape.name,
+  orderIndex: workoutSplitDbSchema.shape.orderIndex,
+  muscleGroup: z.string().nullable(),
+});
+
 export const exerciseTrackingStatsQueryDtoSchema = z.object({
   workoutCount: z.coerce.number(),
   hasExerciseTracking: z.boolean(),
-  nextWorkoutSplit: z
-    .object({
-      id: workoutSplitDbSchema.shape.id,
-      name: workoutSplitDbSchema.shape.name,
-      orderIndex: workoutSplitDbSchema.shape.orderIndex,
-      muscleGroup: z.string().nullable(),
-    })
-    .nullable(),
+  nextSplitByOrderIndex: nextSplitQueryDtoSchema.nullable(),
   workoutTargets: z.object({
     workoutCountThisWeek: z.coerce.number(),
     workoutCountScheduledPerWeek: z.coerce.number(),

@@ -705,7 +705,7 @@ This response omits workout duration and notes, flattens the `exerciseTracking` 
 {
   "workoutCount": 12,
   "hasExerciseTracking": true,
-  "nextWorkoutSplit": {
+  "nextSplitByOrderIndex": {
     "id": 31,
     "name": "Pull",
     "orderIndex": 1,
@@ -758,9 +758,9 @@ The statistics `latestPr` array contains at most one item: the current PR whose 
 
 Each record is stored under its exercise ID. Pass the optional `tz` query parameter to select the IANA timezone used for `workoutStartLocal`; it defaults to `Asia/Jerusalem`. The endpoint requires a user session and returns `X-Cache: HIT` or `X-Cache: MISS`.
 
-`nextWorkoutSplit` and `estimatedOneRepMax` can be `null`. The estimate uses the recorded weight for one rep, Epley for 2–5 reps, Brzycki for 6–10 reps, and O'Connor for 11–12 reps; it is `null` outside that range.
+`nextSplitByOrderIndex` and `estimatedOneRepMax` can be `null`. The estimate uses the recorded weight for one rep, Epley for 2–5 reps, Brzycki for 6–10 reps, and O'Connor for 11–12 reps; it is `null` outside that range.
 
-`nextWorkoutSplit` is independent of the 45-day statistics window. It advances from the user's latest workout summary to the next split in the active plan by `orderIndex`, wraps to the lowest active index after the final split, and returns the lowest active index when no summary exists.
+`nextSplitByOrderIndex` is independent of the 45-day statistics window. It advances from the user's latest workout summary to the next split in the active plan by `orderIndex`, wraps to the lowest active index after the final split, and returns the lowest active index when no summary exists.
 
 ### `GET /api/workout-plan`
 

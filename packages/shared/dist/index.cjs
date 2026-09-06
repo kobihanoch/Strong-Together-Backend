@@ -2623,15 +2623,16 @@ var personalRecordsQueryDtoSchema = import_v431.z.object({
     exerciseId: true
   }))
 });
+var nextSplitQueryDtoSchema = import_v431.z.object({
+  id: workoutSplitDbSchema.shape.id,
+  name: workoutSplitDbSchema.shape.name,
+  orderIndex: workoutSplitDbSchema.shape.orderIndex,
+  muscleGroup: import_v431.z.string().nullable()
+});
 var exerciseTrackingStatsQueryDtoSchema = import_v431.z.object({
   workoutCount: import_v431.z.coerce.number(),
   hasExerciseTracking: import_v431.z.boolean(),
-  nextWorkoutSplit: import_v431.z.object({
-    id: workoutSplitDbSchema.shape.id,
-    name: workoutSplitDbSchema.shape.name,
-    orderIndex: workoutSplitDbSchema.shape.orderIndex,
-    muscleGroup: import_v431.z.string().nullable()
-  }).nullable(),
+  nextSplitByOrderIndex: nextSplitQueryDtoSchema.nullable(),
   workoutTargets: import_v431.z.object({
     workoutCountThisWeek: import_v431.z.coerce.number(),
     workoutCountScheduledPerWeek: import_v431.z.coerce.number()

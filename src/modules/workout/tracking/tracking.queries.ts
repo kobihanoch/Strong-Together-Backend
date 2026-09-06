@@ -526,7 +526,7 @@ export class WorkoutTrackingQueries {
           LIMIT
             1
         ),
-        next_workout_split AS (
+        next_split_by_order_index AS (
           SELECT
             ws.id::INT,
             ws.name,
@@ -633,7 +633,7 @@ export class WorkoutTrackingQueries {
             FROM
               bounded_workout_summaries
           ),
-          'nextWorkoutSplit',
+          'nextSplitByOrderIndex',
           (
             SELECT
               JSONB_BUILD_OBJECT(
@@ -647,7 +647,7 @@ export class WorkoutTrackingQueries {
                 nws.muscle_group
               )
             FROM
-              next_workout_split nws
+              next_split_by_order_index nws
           ),
           'workoutTargets',
           JSONB_BUILD_OBJECT(

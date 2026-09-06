@@ -129,7 +129,7 @@ describe('WorkoutTrackingController', () => {
       .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(user.accessToken));
     expect(emptyStatsResponse.status).toBe(200);
-    expect(emptyStatsResponse.body.nextWorkoutSplit).toMatchObject({ name: 'A', orderIndex: 0 });
+    expect(emptyStatsResponse.body.nextSplitByOrderIndex).toMatchObject({ name: 'A', orderIndex: 0 });
 
     const splitAExerciseId = await getExerciseToWorkoutSplitId(user.userId, 'A', 20);
     expect(splitAExerciseId).not.toBeNull();
@@ -158,7 +158,7 @@ describe('WorkoutTrackingController', () => {
       .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(user.accessToken));
     expect(updatedStatsResponse.body.hasExerciseTracking).toBe(false);
-    expect(updatedStatsResponse.body.nextWorkoutSplit).toMatchObject({ name: 'B', orderIndex: 1 });
+    expect(updatedStatsResponse.body.nextSplitByOrderIndex).toMatchObject({ name: 'B', orderIndex: 1 });
   });
 
   it('POST /api/workout-sessions creates tracking, deletes related cache keys, and returns 204', async () => {
