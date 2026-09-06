@@ -427,7 +427,7 @@ export class WorkoutTrackingQueries {
           FROM
             all_workout_summaries aws
         ),
-        workouts_scheduled_per_week_count AS (
+        active_split_count AS (
           SELECT
             COUNT(ws.id)::INT AS count
           FROM
@@ -437,6 +437,29 @@ export class WorkoutTrackingQueries {
             wp.user_id = ${userId}::UUID
             AND wp.is_active = TRUE
             AND ws.is_active = TRUE
+        ),
+        active_schedule_count AS (
+          SELECT
+            COUNT(schedule.id)::INT AS count
+          FROM
+            schedules.workout_schedule schedule
+            JOIN workout.workout_split ws ON ws.id = schedule.workout_split_id
+            JOIN workout.workout_plan wp ON wp.id = ws.workout_id
+          WHERE
+            schedule.user_id = ${userId}::UUID
+            AND wp.user_id = schedule.user_id
+            AND wp.is_active = TRUE
+            AND ws.is_active = TRUE
+        ),
+        workouts_scheduled_per_week_count AS (
+          SELECT
+            CASE
+              WHEN schedules.count > 0 THEN schedules.count
+              ELSE splits.count
+            END AS count
+          FROM
+            active_schedule_count schedules
+            CROSS JOIN active_split_count splits
         ),
         qualifying_weeks AS (
           SELECT
