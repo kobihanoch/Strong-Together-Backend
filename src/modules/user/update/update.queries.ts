@@ -23,21 +23,36 @@ export class UpdateUserQueries {
     return this.sql<UserDataRowQueryDto[]>`
       SELECT
         JSONB_BUILD_OBJECT(
-          'id', users.id,
-          'username', users.username,
-          'email', users.email,
-          'name', users.name,
-          'gender', users.gender,
-          'createdAt', users.created_at,
-          'updatedAt', users.updated_at,
-          'profilePicPath', users.profile_pic_path,
-          'pushToken', users.push_token,
-          'role', users.role,
-          'isFirstLogin', users.last_login IS NULL,
-          'tokenVersion', users.token_version,
-          'isVerified', users.is_verified,
-          'authProvider', users.auth_provider,
-          'lastLogin', users.last_login
+          'id',
+          users.id,
+          'username',
+          users.username,
+          'email',
+          users.email,
+          'name',
+          users.name,
+          'gender',
+          users.gender,
+          'createdAt',
+          users.created_at,
+          'updatedAt',
+          users.updated_at,
+          'profilePicPath',
+          users.profile_pic_path,
+          'pushToken',
+          users.push_token,
+          'role',
+          users.role,
+          'isFirstLogin',
+          users.last_login IS NULL,
+          'tokenVersion',
+          users.token_version,
+          'isVerified',
+          users.is_verified,
+          'authProvider',
+          users.auth_provider,
+          'lastLogin',
+          users.last_login
         ) AS "userData"
       FROM
         identity.user AS users
@@ -128,21 +143,36 @@ export class UpdateUserQueries {
         id = ${userId}::UUID
       RETURNING
         JSONB_BUILD_OBJECT(
-          'id', users.id,
-          'username', users.username,
-          'email', users.email,
-          'name', users.name,
-          'gender', users.gender,
-          'createdAt', users.created_at,
-          'updatedAt', users.updated_at,
-          'profilePicPath', users.profile_pic_path,
-          'pushToken', users.push_token,
-          'role', users.role,
-          'isFirstLogin', users.last_login IS NULL,
-          'tokenVersion', users.token_version,
-          'isVerified', users.is_verified,
-          'authProvider', users.auth_provider,
-          'lastLogin', users.last_login
+          'id',
+          users.id,
+          'username',
+          users.username,
+          'email',
+          users.email,
+          'name',
+          users.name,
+          'gender',
+          users.gender,
+          'createdAt',
+          users.created_at,
+          'updatedAt',
+          users.updated_at,
+          'profilePicPath',
+          users.profile_pic_path,
+          'pushToken',
+          users.push_token,
+          'role',
+          users.role,
+          'isFirstLogin',
+          users.last_login IS NULL,
+          'tokenVersion',
+          users.token_version,
+          'isVerified',
+          users.is_verified,
+          'authProvider',
+          users.auth_provider,
+          'lastLogin',
+          users.last_login
         ) AS "userData"
     `;
 
@@ -166,9 +196,7 @@ export class UpdateUserQueries {
    * @param id - The record identifier.
    * @returns The user username pic and name result.
    */
-  async queryUserUsernamePicAndName(
-    id: string,
-  ): Promise<UserMessageIdentityQueryDto[]> {
+  async queryUserUsernamePicAndName(id: string): Promise<UserMessageIdentityQueryDto[]> {
     return this.sql<UserMessageIdentityQueryDto[]>`
       SELECT
         id,
@@ -206,10 +234,7 @@ export class UpdateUserQueries {
    * @param newURL - The new url.
    * @returns The update user profile pic url result.
    */
-  async queryUpdateUserProfilePicURL(
-    userId: string,
-    newURL: string | null,
-  ): Promise<UserProfilePicQueryDto[]> {
+  async queryUpdateUserProfilePicURL(userId: string, newURL: string | null): Promise<UserProfilePicQueryDto[]> {
     return this.sql<UserProfilePicQueryDto[]>`
       UPDATE identity.user
       SET
