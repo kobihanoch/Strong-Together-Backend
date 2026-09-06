@@ -6,6 +6,7 @@ export * from './modules/exercises';
 export * from './modules/messages';
 export * from './modules/oauth';
 export * from './modules/push';
+export * from './modules/reminders';
 export * from './modules/user';
 export * from './modules/video-analysis';
 export * from './modules/web-sockets';
