@@ -3216,6 +3216,23 @@ declare const userReminderSettingDbSchema: drizzle_zod.BuildSchema<"select", {
         identity: undefined;
         generated: undefined;
     }, {}, {}>;
+    reminderOffsetMinutes: drizzle_orm_pg_core.PgColumn<{
+        name: "reminder_offset_minutes";
+        tableName: "user_reminder_setting";
+        dataType: "number";
+        columnType: "PgInteger";
+        data: number;
+        driverParam: string | number;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     createdAt: drizzle_orm_pg_core.PgColumn<{
         name: "created_at";
         tableName: "user_reminder_setting";
@@ -4639,6 +4656,7 @@ type UserWithNotificationsEnabledQueryDto = z.infer<typeof userWithNotifications
 declare const upsertReminderSettingsRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         reminderEnabled: z.ZodBoolean;
+        reminderOffsetMinutes: z.ZodInt;
         timeZone: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
@@ -4646,6 +4664,7 @@ declare const upsertReminderSettingsContract: {
     request: z.ZodObject<{
         body: z.ZodObject<{
             reminderEnabled: z.ZodBoolean;
+            reminderOffsetMinutes: z.ZodInt;
             timeZone: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
