@@ -959,25 +959,9 @@ var workoutSplitRelations = relations10(workoutSplit, ({ many, one }) => ({
 // ../../src/infrastructure/db/schema/drizzle/schedules/workout_schedule/policies.ts
 import { sql as drizzleSql17 } from "drizzle-orm";
 import { pgPolicy as pgPolicy11 } from "drizzle-orm/pg-core";
-var uid9 = drizzleSql17`"identity"."current_user_id" ()`;
+var uid9 = drizzleSql17`"identity"."current_user_id"()`;
 function workoutSchedulePolicies(t) {
   const owns = drizzleSql17`${uid9} = ${t.userId}`;
-  const ownsSplit = drizzleSql17`
-    EXISTS (
-      SELECT
-        1
-      FROM
-        "workout"."workout_split" ws
-        JOIN "workout"."workout_plan" wp ON wp."id" = ws."workout_id"
-      WHERE
-        ws."id" = ${t.workoutSplitId}
-        AND wp."user_id" = ${uid9}
-    )
-  `;
-  const mayWrite = drizzleSql17`
-    ${owns}
-    AND ${ownsSplit}
-  `;
   return [
     pgPolicy11("auth can SELECT own workout schedules", {
       for: "select",
@@ -987,13 +971,13 @@ function workoutSchedulePolicies(t) {
     pgPolicy11("auth can INSERT own workout schedules", {
       for: "insert",
       to: authenticatedRole,
-      withCheck: mayWrite
+      withCheck: owns
     }),
     pgPolicy11("auth can UPDATE own workout schedules", {
       for: "update",
       to: authenticatedRole,
       using: owns,
-      withCheck: mayWrite
+      withCheck: owns
     }),
     pgPolicy11("auth can DELETE own workout schedules", {
       for: "delete",
@@ -2042,15 +2026,6 @@ var userWithNotificationsEnabledQueryDtoSchema = z21.object({
   pushToken: userDbSchema.shape.pushToken,
   name: userDbSchema.shape.name
 });
-var userToHourlyReminderQueryDtoSchema = z21.object({
-  userId: userDbSchema.shape.id,
-  name: userDbSchema.shape.name,
-  pushToken: userDbSchema.shape.pushToken,
-  reminderOffsetMinutes: z21.number(),
-  splitId: workoutSplitDbSchema.shape.id,
-  splitName: workoutSplitDbSchema.shape.name.nullable(),
-  estimatedTimeUtc: z21.string()
-});
 
 // src/modules/user/create/create.contracts.ts
 import { z as z23 } from "zod/v4";
@@ -2711,7 +2686,6 @@ export {
   userMessageIdentityQueryDtoSchema,
   userProfilePicQueryDtoSchema,
   userReminderSettingDbSchema,
-  userToHourlyReminderQueryDtoSchema,
   userUpdateDbSchema,
   userWithNotificationsEnabledQueryDtoSchema,
   verifyEmailContract,

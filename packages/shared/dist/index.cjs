@@ -195,7 +195,6 @@ __export(index_exports, {
   userMessageIdentityQueryDtoSchema: () => userMessageIdentityQueryDtoSchema,
   userProfilePicQueryDtoSchema: () => userProfilePicQueryDtoSchema,
   userReminderSettingDbSchema: () => userReminderSettingDbSchema,
-  userToHourlyReminderQueryDtoSchema: () => userToHourlyReminderQueryDtoSchema,
   userUpdateDbSchema: () => userUpdateDbSchema,
   userWithNotificationsEnabledQueryDtoSchema: () => userWithNotificationsEnabledQueryDtoSchema,
   verifyEmailContract: () => verifyEmailContract,
@@ -1174,25 +1173,9 @@ var workoutSplitRelations = (0, import_drizzle_orm20.relations)(workoutSplit, ({
 // ../../src/infrastructure/db/schema/drizzle/schedules/workout_schedule/policies.ts
 var import_drizzle_orm21 = require("drizzle-orm");
 var import_pg_core24 = require("drizzle-orm/pg-core");
-var uid9 = import_drizzle_orm21.sql`"identity"."current_user_id" ()`;
+var uid9 = import_drizzle_orm21.sql`"identity"."current_user_id"()`;
 function workoutSchedulePolicies(t) {
   const owns = import_drizzle_orm21.sql`${uid9} = ${t.userId}`;
-  const ownsSplit = import_drizzle_orm21.sql`
-    EXISTS (
-      SELECT
-        1
-      FROM
-        "workout"."workout_split" ws
-        JOIN "workout"."workout_plan" wp ON wp."id" = ws."workout_id"
-      WHERE
-        ws."id" = ${t.workoutSplitId}
-        AND wp."user_id" = ${uid9}
-    )
-  `;
-  const mayWrite = import_drizzle_orm21.sql`
-    ${owns}
-    AND ${ownsSplit}
-  `;
   return [
     (0, import_pg_core24.pgPolicy)("auth can SELECT own workout schedules", {
       for: "select",
@@ -1202,13 +1185,13 @@ function workoutSchedulePolicies(t) {
     (0, import_pg_core24.pgPolicy)("auth can INSERT own workout schedules", {
       for: "insert",
       to: authenticatedRole,
-      withCheck: mayWrite
+      withCheck: owns
     }),
     (0, import_pg_core24.pgPolicy)("auth can UPDATE own workout schedules", {
       for: "update",
       to: authenticatedRole,
       using: owns,
-      withCheck: mayWrite
+      withCheck: owns
     }),
     (0, import_pg_core24.pgPolicy)("auth can DELETE own workout schedules", {
       for: "delete",
@@ -2257,15 +2240,6 @@ var userWithNotificationsEnabledQueryDtoSchema = import_v421.z.object({
   pushToken: userDbSchema.shape.pushToken,
   name: userDbSchema.shape.name
 });
-var userToHourlyReminderQueryDtoSchema = import_v421.z.object({
-  userId: userDbSchema.shape.id,
-  name: userDbSchema.shape.name,
-  pushToken: userDbSchema.shape.pushToken,
-  reminderOffsetMinutes: import_v421.z.number(),
-  splitId: workoutSplitDbSchema.shape.id,
-  splitName: workoutSplitDbSchema.shape.name.nullable(),
-  estimatedTimeUtc: import_v421.z.string()
-});
 
 // src/modules/user/create/create.contracts.ts
 var import_v423 = require("zod/v4");
@@ -2927,7 +2901,6 @@ var getPersonalRecordsContract = {
   userMessageIdentityQueryDtoSchema,
   userProfilePicQueryDtoSchema,
   userReminderSettingDbSchema,
-  userToHourlyReminderQueryDtoSchema,
   userUpdateDbSchema,
   userWithNotificationsEnabledQueryDtoSchema,
   verifyEmailContract,

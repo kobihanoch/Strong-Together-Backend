@@ -122,7 +122,6 @@ This file focuses on success contracts. Route-specific non-JSON behavior is call
 | `POST` | `/api/oauth/apple` | Public | Apple OAuth login |
 | `POST` | `/api/oauth/google` | Public | Google OAuth login |
 | `GET` | `/api/push-jobs/daily` | Public (temporary) | Trigger daily push enqueue; scheduled-job authentication is still required |
-| `GET` | `/api/push-jobs/hourly-reminders` | Public (temporary) | Trigger hourly reminder enqueue; scheduled-job authentication is still required |
 | `POST` | `/api/video-analysis/upload-urls` | User | Generate direct-upload URL |
 | `POST` | `/api/websocket-tickets` | User | Generate websocket ticket |
 
@@ -1255,32 +1254,6 @@ Failure shape:
 }
 ```
 
-### `POST /api/push-jobs/hourly-reminders`
-
-Triggers the hourly reminder enqueue flow.
-
-Access:
-
-- Public
-
-Successful response:
-
-```json
-{
-  "success": true,
-  "message": "string"
-}
-```
-
-Failure shape:
-
-```json
-{
-  "success": false,
-  "error": "string"
-}
-```
-
 ## Video Analysis
 
 ### `POST /api/video-analysis/upload-urls`
@@ -1383,7 +1356,7 @@ These routes do not return JSON:
 These routes touch external infrastructure directly:
 
 - `/api/video-analysis/upload-urls` uses S3 presigning
-- `/api/push-jobs/daily` and `/api/push-jobs/hourly-reminders` enqueue background work
+- `/api/push-jobs/daily` enqueues background work
 - auth mail flows rely on mailer / queue infrastructure
 - profile image routes use object storage through `SupabaseStorageService`; prod uses Supabase Storage, dev/test use LocalStack S3
 
