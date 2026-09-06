@@ -20,6 +20,7 @@ Table workout.workout_split {
   name text [not null]
   order_index integer [not null]
   created_at timestamptz [not null]
+  updated_at timestamptz [not null]
   is_active boolean [not null]
 
   indexes { (workout_id, order_index) [unique, note: 'Applies to active splits only'] }

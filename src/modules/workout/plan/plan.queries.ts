@@ -34,11 +34,17 @@ export class WorkoutPlanQueries {
                 (summaries.workout_end_utc - summaries.workout_start_utc)
             ) / 60 AS duration_minutes,
             ROW_NUMBER() OVER (
-              PARTITION BY summaries.workout_split_id
-              ORDER BY summaries.workout_start_utc DESC
+              PARTITION BY
+                summaries.workout_split_id
+              ORDER BY
+                summaries.workout_start_utc DESC
             ) AS recency_rank
-          FROM tracking.workout_summary summaries
-          WHERE summaries.user_id = ${userId}::UUID
+          FROM
+            tracking.workout_summary summaries
+            JOIN workout.workout_split duration_split ON duration_split.id = summaries.workout_split_id
+          WHERE
+            summaries.user_id = ${userId}::UUID
+            AND summaries.workout_start_utc >= duration_split.updated_at
             AND summaries.workout_end_utc > summaries.workout_start_utc
             AND summaries.workout_end_utc - summaries.workout_start_utc <= INTERVAL '4 hours'
         ),
@@ -47,12 +53,16 @@ export class WorkoutPlanQueries {
             durations.workout_split_id,
             ROUND(
               PERCENTILE_CONT(0.5) WITHIN GROUP (
-                ORDER BY durations.duration_minutes
+                ORDER BY
+                  durations.duration_minutes
               )
             )::INT AS estimated_duration_minutes
-          FROM ranked_workout_durations durations
-          WHERE durations.recency_rank <= 10
-          GROUP BY durations.workout_split_id
+          FROM
+            ranked_workout_durations durations
+          WHERE
+            durations.recency_rank <= 10
+          GROUP BY
+            durations.workout_split_id
         )
       SELECT
         workoutplans.id::INT,
@@ -123,12 +133,7 @@ export class WorkoutPlanQueries {
                           expanded.is_active,
                           COALESCE(
                             JSONB_AGG(
-                              JSONB_BUILD_OBJECT(
-                                'orderIndex',
-                                expanded.set_index,
-                                'reps',
-                                expanded.reps
-                              )
+                              JSONB_BUILD_OBJECT('orderIndex', expanded.set_index, 'reps', expanded.reps)
                               ORDER BY
                                 expanded.set_index
                             ) FILTER (
@@ -198,19 +203,21 @@ export class WorkoutPlanQueries {
         id;
     `;
 
+    const submittedExistingIds = workoutData.flatMap((split) => (split.id === undefined ? [] : [split.id]));
     await this.sql`
       UPDATE workout.workout_split
       SET
-        is_active = FALSE
+        is_active = FALSE,
+        updated_at = NOW()
       WHERE
-        workout_id = ${plan.id};
+        workout_id = ${plan.id}
+        AND is_active = TRUE
+        AND NOT (id = ANY (${submittedExistingIds}::BIGINT[]));
     `;
 
     const savedSplits = [];
     for (const split of workoutData) {
-      const id = split.id !== undefined
-        ? await this.updateWorkoutSplit(plan.id, split)
-        : await this.insertWorkoutSplit(plan.id, split);
+      const id = split.id !== undefined ? await this.updateWorkoutSplit(plan.id, split) : await this.insertWorkoutSplit(plan.id, split);
       savedSplits.push({ id, exercises: split.exercises });
     }
 
@@ -230,7 +237,12 @@ export class WorkoutPlanQueries {
       INSERT INTO
         workout.workout_split (workout_id, name, order_index, is_active)
       VALUES
-        (${planId}, ${split.name}, ${split.orderIndex}, TRUE)
+        (
+          ${planId},
+          ${split.name},
+          ${split.orderIndex},
+          TRUE
+        )
       RETURNING
         id;
     `;
@@ -253,7 +265,13 @@ export class WorkoutPlanQueries {
       SET
         name = ${split.name},
         order_index = ${split.orderIndex},
-        is_active = TRUE
+        is_active = TRUE,
+        updated_at = CASE
+          WHEN name IS DISTINCT FROM ${split.name}
+          OR order_index IS DISTINCT FROM ${split.orderIndex}
+          OR is_active IS DISTINCT FROM TRUE THEN NOW()
+          ELSE updated_at
+        END
       WHERE
         id = ${split.id}::int8
         AND workout_id = ${planId}::int8
@@ -272,10 +290,65 @@ export class WorkoutPlanQueries {
    * @param planId - The workout plan identifier.
    * @param splits - The workout splits to process.
    */
-  private async replaceWorkoutExercises(
-    planId: number,
-    splits: Array<{ id: number; exercises: WorkoutExerciseInputQueryDto[] }>,
-  ): Promise<void> {
+  private async replaceWorkoutExercises(planId: number, splits: Array<{ id: number; exercises: WorkoutExerciseInputQueryDto[] }>): Promise<void> {
+    const changedSplitIds: number[] = [];
+    for (const split of splits) {
+      const [{ exercises }] = await this.sql<{ exercises: WorkoutExerciseInputQueryDto[] }[]>`
+        SELECT
+          COALESCE(
+            JSONB_AGG(
+              JSONB_BUILD_OBJECT(
+                'exerciseId',
+                assignment.exercise_id::INT,
+                'orderIndex',
+                assignment.order_index::INT,
+                'sets',
+                (
+                  SELECT
+                    COALESCE(
+                      JSONB_AGG(
+                        workout_set.reps
+                        ORDER BY
+                          workout_set.order_index
+                      ),
+                      '[]'::JSONB
+                    )
+                  FROM
+                    workout.workout_set
+                  WHERE
+                    workout_set.exercise_to_split_id = assignment.id
+                )
+              )
+              ORDER BY
+                assignment.order_index,
+                assignment.exercise_id
+            ) FILTER (
+              WHERE
+                assignment.id IS NOT NULL
+            ),
+            '[]'::JSONB
+          ) AS exercises
+        FROM
+          workout.exercise_to_workout_split assignment
+        WHERE
+          assignment.workout_split_id = ${split.id}
+          AND assignment.is_active = TRUE
+      `;
+
+      const normalizeExercises = (items: WorkoutExerciseInputQueryDto[]) =>
+        items
+          .map((exercise) => ({
+            exerciseId: Number(exercise.exerciseId),
+            orderIndex: Number(exercise.orderIndex),
+            sets: exercise.sets.map(Number),
+          }))
+          .sort((left, right) => left.orderIndex - right.orderIndex || left.exerciseId - right.exerciseId);
+
+      if (JSON.stringify(normalizeExercises(exercises)) !== JSON.stringify(normalizeExercises(split.exercises))) {
+        changedSplitIds.push(split.id);
+      }
+    }
+
     // Deactivate previous assignments; submitted exercises are reactivated below.
     await this.sql`
       UPDATE workout.exercise_to_workout_split
@@ -333,6 +406,16 @@ export class WorkoutPlanQueries {
           `;
         }
       }
+    }
+
+    if (changedSplitIds.length > 0) {
+      await this.sql`
+        UPDATE workout.workout_split
+        SET
+          updated_at = NOW()
+        WHERE
+          id = ANY (${changedSplitIds}::BIGINT[])
+      `;
     }
   }
 }

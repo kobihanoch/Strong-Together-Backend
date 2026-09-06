@@ -162,6 +162,13 @@
       "when": 1788686599619,
       "tag": "0022_add_workout_schedules_and_refactor_reminder_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1788695572594,
+      "tag": "0023_add_workout_split_updated_at",
+      "breakpoints": true
     }
   ]
 }

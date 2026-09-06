@@ -1141,6 +1141,9 @@ var workoutSplit = workoutSchema.table("workout_split", {
   createdAt: (0, import_pg_core23.timestamp)("created_at", {
     withTimezone: true
   }).defaultNow().notNull(),
+  updatedAt: (0, import_pg_core23.timestamp)("updated_at", {
+    withTimezone: true
+  }).defaultNow().notNull(),
   isActive: (0, import_pg_core23.boolean)("is_active").default(true).notNull()
 }, (t) => [
   (0, import_pg_core23.primaryKey)({

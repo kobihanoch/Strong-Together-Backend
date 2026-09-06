@@ -921,6 +921,9 @@ var workoutSplit = workoutSchema.table("workout_split", {
   createdAt: timestamp6("created_at", {
     withTimezone: true
   }).defaultNow().notNull(),
+  updatedAt: timestamp6("updated_at", {
+    withTimezone: true
+  }).defaultNow().notNull(),
   isActive: boolean5("is_active").default(true).notNull()
 }, (t) => [
   primaryKey10({

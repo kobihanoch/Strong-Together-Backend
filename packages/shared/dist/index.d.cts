@@ -574,6 +574,23 @@ declare const workoutSplit: drizzle_orm_pg_core.PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        updatedAt: drizzle_orm_pg_core.PgColumn<{
+            name: "updated_at";
+            tableName: "workout_split";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         isActive: drizzle_orm_pg_core.PgColumn<{
             name: "is_active";
             tableName: "workout_split";
@@ -2248,6 +2265,23 @@ declare const workoutSplitDbSchema: drizzle_zod.BuildSchema<"select", {
     }, {}, {}>;
     createdAt: drizzle_orm_pg_core.PgColumn<{
         name: "created_at";
+        tableName: "workout_split";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    updatedAt: drizzle_orm_pg_core.PgColumn<{
+        name: "updated_at";
         tableName: "workout_split";
         dataType: "date";
         columnType: "PgTimestamp";

@@ -15,6 +15,7 @@ export const workoutSplit = workoutSchema.table(
     name: text('name').notNull(),
     orderIndex: integer('order_index').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     isActive: boolean('is_active').default(true).notNull(),
   },
   (t) => [
