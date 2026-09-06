@@ -5384,7 +5384,6 @@ declare const getWorkoutStatisticsResponseSchema: z.ZodObject<{
     workoutTargets: z.ZodObject<{
         workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
         workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-        weekStreak: z.ZodCoercedNumber<unknown>;
     }, z.core.$strip>;
     lastWorkoutStats: z.ZodObject<{
         workoutDate: z.ZodNullable<z.ZodString>;
@@ -5421,7 +5420,6 @@ declare const getWorkoutStatisticsContract: {
         workoutTargets: z.ZodObject<{
             workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
             workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-            weekStreak: z.ZodCoercedNumber<unknown>;
         }, z.core.$strip>;
         lastWorkoutStats: z.ZodObject<{
             workoutDate: z.ZodNullable<z.ZodString>;
@@ -5658,7 +5656,6 @@ declare const exerciseTrackingStatsQueryDtoSchema: z.ZodObject<{
     workoutTargets: z.ZodObject<{
         workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
         workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-        weekStreak: z.ZodCoercedNumber<unknown>;
     }, z.core.$strip>;
     lastWorkoutStats: z.ZodObject<{
         workoutDate: z.ZodNullable<z.ZodString>;
@@ -5739,7 +5736,6 @@ declare const exerciseTrackingAndStatsQueryDtoSchema: z.ZodObject<{
         workoutTargets: z.ZodObject<{
             workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
             workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-            weekStreak: z.ZodCoercedNumber<unknown>;
         }, z.core.$strip>;
         lastWorkoutStats: z.ZodObject<{
             workoutDate: z.ZodNullable<z.ZodString>;
@@ -5800,7 +5796,6 @@ declare const exerciseTrackingAndStatsRowQueryDtoSchema: z.ZodObject<{
             workoutTargets: z.ZodObject<{
                 workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
                 workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-                weekStreak: z.ZodCoercedNumber<unknown>;
             }, z.core.$strip>;
             lastWorkoutStats: z.ZodObject<{
                 workoutDate: z.ZodNullable<z.ZodString>;
@@ -5860,7 +5855,6 @@ declare const exerciseTrackingStatsRowQueryDtoSchema: z.ZodObject<{
         workoutTargets: z.ZodObject<{
             workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
             workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-            weekStreak: z.ZodCoercedNumber<unknown>;
         }, z.core.$strip>;
         lastWorkoutStats: z.ZodObject<{
             workoutDate: z.ZodNullable<z.ZodString>;

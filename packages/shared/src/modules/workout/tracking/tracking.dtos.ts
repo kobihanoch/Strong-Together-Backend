@@ -74,11 +74,13 @@ export const trackingBySplitNameItemQueryDtoSchema = trackingMapItemQueryDtoSche
 const groupedTrackingItemQueryDtoSchema = z.object({
   exerciseTracking: z.object({
     exerciseTrackingId: exerciseTrackingDbSchema.shape.id,
-    sets: z.array(z.object({
-      setIndex: trackingSetDbSchema.shape.setIndex,
-      weight: trackingSetDbSchema.shape.weight,
-      reps: trackingSetDbSchema.shape.reps,
-    })),
+    sets: z.array(
+      z.object({
+        setIndex: trackingSetDbSchema.shape.setIndex,
+        weight: trackingSetDbSchema.shape.weight,
+        reps: trackingSetDbSchema.shape.reps,
+      }),
+    ),
     notes: exerciseTrackingDbSchema.shape.notes,
     exerciseAssignment: z.object({
       exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
@@ -126,7 +128,6 @@ export const exerciseTrackingStatsQueryDtoSchema = z.object({
   workoutTargets: z.object({
     workoutCountThisWeek: z.coerce.number(),
     workoutCountScheduledPerWeek: z.coerce.number(),
-    weekStreak: z.coerce.number(),
   }),
   lastWorkoutStats: z.object({
     workoutDate: z.string().nullable(),

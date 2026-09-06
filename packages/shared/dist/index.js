@@ -2411,8 +2411,7 @@ var exerciseTrackingStatsQueryDtoSchema = z31.object({
   }).nullable(),
   workoutTargets: z31.object({
     workoutCountThisWeek: z31.coerce.number(),
-    workoutCountScheduledPerWeek: z31.coerce.number(),
-    weekStreak: z31.coerce.number()
+    workoutCountScheduledPerWeek: z31.coerce.number()
   }),
   lastWorkoutStats: z31.object({
     workoutDate: z31.string().nullable(),

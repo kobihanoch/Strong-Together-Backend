@@ -2625,8 +2625,7 @@ var exerciseTrackingStatsQueryDtoSchema = import_v431.z.object({
   }).nullable(),
   workoutTargets: import_v431.z.object({
     workoutCountThisWeek: import_v431.z.coerce.number(),
-    workoutCountScheduledPerWeek: import_v431.z.coerce.number(),
-    weekStreak: import_v431.z.coerce.number()
+    workoutCountScheduledPerWeek: import_v431.z.coerce.number()
   }),
   lastWorkoutStats: import_v431.z.object({
     workoutDate: import_v431.z.string().nullable(),

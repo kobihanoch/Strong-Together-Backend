@@ -461,90 +461,6 @@ export class WorkoutTrackingQueries {
             active_schedule_count schedules
             CROSS JOIN active_split_count splits
         ),
-        qualifying_weeks AS (
-          SELECT
-            DATE_TRUNC(
-              'week',
-              (
-                aws.workout_start_utc AT TIME ZONE ${tz}
-              ) + INTERVAL '1 day'
-            ) - INTERVAL '1 day' AS week_start
-          FROM
-            all_workout_summaries aws
-          WHERE
-            aws.workout_start_utc < (
-              SELECT
-                upper_bound_utc
-              FROM
-                bounds
-            )
-          GROUP BY
-            1
-          HAVING
-            COUNT(aws.id) >= (
-              SELECT
-                count
-              FROM
-                workouts_scheduled_per_week_count
-            )
-            AND (
-              SELECT
-                count
-              FROM
-                workouts_scheduled_per_week_count
-            ) > 0
-        ),
-        streak_anchor AS (
-          SELECT
-            CASE
-              WHEN EXISTS (
-                SELECT
-                  1
-                FROM
-                  qualifying_weeks qw
-                WHERE
-                  qw.week_start = current_week.week_start
-              ) THEN current_week.week_start
-              ELSE current_week.week_start - INTERVAL '1 week'
-            END AS week_start
-          FROM
-            (
-              SELECT
-                DATE_TRUNC(
-                  'week',
-                  (NOW() AT TIME ZONE ${tz}) + INTERVAL '1 day'
-                ) - INTERVAL '1 day' AS week_start
-            ) current_week
-        ),
-        weeks_fits_minimum_scheduled_workouts AS (
-          SELECT
-            COUNT(*)::INT AS count
-          FROM
-            (
-              SELECT
-                qw.week_start,
-                ROW_NUMBER() OVER (
-                  ORDER BY
-                    qw.week_start DESC
-                ) AS streak_position
-              FROM
-                qualifying_weeks qw
-              WHERE
-                qw.week_start <= (
-                  SELECT
-                    week_start
-                  FROM
-                    streak_anchor
-                )
-            ) ranked_weeks
-          WHERE
-            week_start = (
-              SELECT
-                week_start
-              FROM
-                streak_anchor
-            ) - (streak_position - 1) * INTERVAL '1 week'
-        ),
         workouts_count_this_week AS (
           SELECT
             COUNT(bws.id)::INT AS count
@@ -752,16 +668,6 @@ export class WorkoutTrackingQueries {
                   count
                 FROM
                   workouts_scheduled_per_week_count
-              ),
-              0
-            ),
-            'weekStreak',
-            COALESCE(
-              (
-                SELECT
-                  count
-                FROM
-                  weeks_fits_minimum_scheduled_workouts
               ),
               0
             )
