@@ -427,7 +427,7 @@ export class WorkoutTrackingQueries {
           FROM
             all_workout_summaries aws
         ),
-        workouts_scheduled_per_week_count AS (
+        active_split_count AS (
           SELECT
             COUNT(ws.id)::INT AS count
           FROM
@@ -438,89 +438,28 @@ export class WorkoutTrackingQueries {
             AND wp.is_active = TRUE
             AND ws.is_active = TRUE
         ),
-        qualifying_weeks AS (
+        active_schedule_count AS (
           SELECT
-            DATE_TRUNC(
-              'week',
-              (
-                aws.workout_start_utc AT TIME ZONE ${tz}
-              ) + INTERVAL '1 day'
-            ) - INTERVAL '1 day' AS week_start
+            COUNT(schedule.id)::INT AS count
           FROM
-            all_workout_summaries aws
+            schedules.workout_schedule schedule
+            JOIN workout.workout_split ws ON ws.id = schedule.workout_split_id
+            JOIN workout.workout_plan wp ON wp.id = ws.workout_id
           WHERE
-            aws.workout_start_utc < (
-              SELECT
-                upper_bound_utc
-              FROM
-                bounds
-            )
-          GROUP BY
-            1
-          HAVING
-            COUNT(aws.id) >= (
-              SELECT
-                count
-              FROM
-                workouts_scheduled_per_week_count
-            )
-            AND (
-              SELECT
-                count
-              FROM
-                workouts_scheduled_per_week_count
-            ) > 0
+            schedule.user_id = ${userId}::UUID
+            AND wp.user_id = schedule.user_id
+            AND wp.is_active = TRUE
+            AND ws.is_active = TRUE
         ),
-        streak_anchor AS (
+        workouts_scheduled_per_week_count AS (
           SELECT
             CASE
-              WHEN EXISTS (
-                SELECT
-                  1
-                FROM
-                  qualifying_weeks qw
-                WHERE
-                  qw.week_start = current_week.week_start
-              ) THEN current_week.week_start
-              ELSE current_week.week_start - INTERVAL '1 week'
-            END AS week_start
+              WHEN schedules.count > 0 THEN schedules.count
+              ELSE splits.count
+            END AS count
           FROM
-            (
-              SELECT
-                DATE_TRUNC(
-                  'week',
-                  (NOW() AT TIME ZONE ${tz}) + INTERVAL '1 day'
-                ) - INTERVAL '1 day' AS week_start
-            ) current_week
-        ),
-        weeks_fits_minimum_scheduled_workouts AS (
-          SELECT
-            COUNT(*)::INT AS count
-          FROM
-            (
-              SELECT
-                qw.week_start,
-                ROW_NUMBER() OVER (
-                  ORDER BY
-                    qw.week_start DESC
-                ) AS streak_position
-              FROM
-                qualifying_weeks qw
-              WHERE
-                qw.week_start <= (
-                  SELECT
-                    week_start
-                  FROM
-                    streak_anchor
-                )
-            ) ranked_weeks
-          WHERE
-            week_start = (
-              SELECT
-                week_start
-              FROM
-                streak_anchor
-            ) - (streak_position - 1) * INTERVAL '1 week'
+            active_schedule_count schedules
+            CROSS JOIN active_split_count splits
         ),
         workouts_count_this_week AS (
           SELECT
@@ -587,7 +526,7 @@ export class WorkoutTrackingQueries {
           LIMIT
             1
         ),
-        next_workout_split AS (
+        next_split_by_order_index AS (
           SELECT
             ws.id::INT,
             ws.name,
@@ -694,7 +633,7 @@ export class WorkoutTrackingQueries {
             FROM
               bounded_workout_summaries
           ),
-          'nextWorkoutSplit',
+          'nextSplitByOrderIndex',
           (
             SELECT
               JSONB_BUILD_OBJECT(
@@ -708,7 +647,7 @@ export class WorkoutTrackingQueries {
                 nws.muscle_group
               )
             FROM
-              next_workout_split nws
+              next_split_by_order_index nws
           ),
           'workoutTargets',
           JSONB_BUILD_OBJECT(
@@ -729,16 +668,6 @@ export class WorkoutTrackingQueries {
                   count
                 FROM
                   workouts_scheduled_per_week_count
-              ),
-              0
-            ),
-            'weekStreak',
-            COALESCE(
-              (
-                SELECT
-                  count
-                FROM
-                  weeks_fits_minimum_scheduled_workouts
               ),
               0
             )

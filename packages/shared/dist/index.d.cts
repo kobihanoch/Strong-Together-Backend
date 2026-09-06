@@ -574,6 +574,23 @@ declare const workoutSplit: drizzle_orm_pg_core.PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        updatedAt: drizzle_orm_pg_core.PgColumn<{
+            name: "updated_at";
+            tableName: "workout_split";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         isActive: drizzle_orm_pg_core.PgColumn<{
             name: "is_active";
             tableName: "workout_split";
@@ -2263,6 +2280,23 @@ declare const workoutSplitDbSchema: drizzle_zod.BuildSchema<"select", {
         identity: undefined;
         generated: undefined;
     }, {}, {}>;
+    updatedAt: drizzle_orm_pg_core.PgColumn<{
+        name: "updated_at";
+        tableName: "workout_split";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     isActive: drizzle_orm_pg_core.PgColumn<{
         name: "is_active";
         tableName: "workout_split";
@@ -3131,6 +3165,23 @@ declare const messageDbSchema: drizzle_zod.BuildSchema<"select", {
     }, {}, {}>;
 }, undefined, undefined>;
 declare const userReminderSettingDbSchema: drizzle_zod.BuildSchema<"select", {
+    id: drizzle_orm_pg_core.PgColumn<{
+        name: "id";
+        tableName: "user_reminder_setting";
+        dataType: "string";
+        columnType: "PgUUID";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     userId: drizzle_orm_pg_core.PgColumn<{
         name: "user_id";
         tableName: "user_reminder_setting";
@@ -3148,8 +3199,8 @@ declare const userReminderSettingDbSchema: drizzle_zod.BuildSchema<"select", {
         identity: undefined;
         generated: undefined;
     }, {}, {}>;
-    workoutRemindersEnabled: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_reminders_enabled";
+    reminderEnabled: drizzle_orm_pg_core.PgColumn<{
+        name: "reminder_enabled";
         tableName: "user_reminder_setting";
         dataType: "boolean";
         columnType: "PgBoolean";
@@ -3172,6 +3223,23 @@ declare const userReminderSettingDbSchema: drizzle_zod.BuildSchema<"select", {
         columnType: "PgInteger";
         data: number;
         driverParam: string | number;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    createdAt: drizzle_orm_pg_core.PgColumn<{
+        name: "created_at";
+        tableName: "user_reminder_setting";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
         notNull: true;
         hasDefault: true;
         isPrimaryKey: false;
@@ -3199,15 +3267,15 @@ declare const userReminderSettingDbSchema: drizzle_zod.BuildSchema<"select", {
         identity: undefined;
         generated: undefined;
     }, {}, {}>;
-    timezone: drizzle_orm_pg_core.PgColumn<{
-        name: "timezone";
+    timeZone: drizzle_orm_pg_core.PgColumn<{
+        name: "time_zone";
         tableName: "user_reminder_setting";
         dataType: "string";
         columnType: "PgText";
         data: string;
         driverParam: string;
-        notNull: false;
-        hasDefault: true;
+        notNull: true;
+        hasDefault: false;
         isPrimaryKey: false;
         isAutoincrement: false;
         hasRuntimeDefault: false;
@@ -3217,14 +3285,14 @@ declare const userReminderSettingDbSchema: drizzle_zod.BuildSchema<"select", {
         generated: undefined;
     }, {}, {}>;
 }, undefined, undefined>;
-declare const userSplitInformationDbSchema: drizzle_zod.BuildSchema<"select", {
+declare const workoutScheduleDbSchema: drizzle_zod.BuildSchema<"select", {
     id: drizzle_orm_pg_core.PgColumn<{
         name: "id";
-        tableName: "user_split_information";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
+        tableName: "workout_schedule";
+        dataType: "string";
+        columnType: "PgUUID";
+        data: string;
+        driverParam: string;
         notNull: true;
         hasDefault: true;
         isPrimaryKey: false;
@@ -3232,12 +3300,12 @@ declare const userSplitInformationDbSchema: drizzle_zod.BuildSchema<"select", {
         hasRuntimeDefault: false;
         enumValues: undefined;
         baseColumn: never;
-        identity: "byDefault";
+        identity: undefined;
         generated: undefined;
     }, {}, {}>;
     userId: drizzle_orm_pg_core.PgColumn<{
         name: "user_id";
-        tableName: "user_split_information";
+        tableName: "workout_schedule";
         dataType: "string";
         columnType: "PgUUID";
         data: string;
@@ -3254,7 +3322,7 @@ declare const userSplitInformationDbSchema: drizzle_zod.BuildSchema<"select", {
     }, {}, {}>;
     workoutSplitId: drizzle_orm_pg_core.PgColumn<{
         name: "workout_split_id";
-        tableName: "user_split_information";
+        tableName: "workout_schedule";
         dataType: "number";
         columnType: "PgBigInt53";
         data: number;
@@ -3269,66 +3337,66 @@ declare const userSplitInformationDbSchema: drizzle_zod.BuildSchema<"select", {
         identity: undefined;
         generated: undefined;
     }, {}, {}>;
-    estimatedTimeUtc: drizzle_orm_pg_core.PgColumn<{
-        name: "estimated_time_utc";
-        tableName: "user_split_information";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    confidence: drizzle_orm_pg_core.PgColumn<{
-        name: "confidence";
-        tableName: "user_split_information";
-        dataType: "string";
-        columnType: "PgNumeric";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    lastComputedAt: drizzle_orm_pg_core.PgColumn<{
-        name: "last_computed_at";
-        tableName: "user_split_information";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    preferredWeekday: drizzle_orm_pg_core.PgColumn<{
-        name: "preferred_weekday";
-        tableName: "user_split_information";
+    dayOfWeek: drizzle_orm_pg_core.PgColumn<{
+        name: "day_of_week";
+        tableName: "workout_schedule";
         dataType: "number";
         columnType: "PgInteger";
         data: number;
         driverParam: string | number;
-        notNull: false;
+        notNull: true;
         hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    startTime: drizzle_orm_pg_core.PgColumn<{
+        name: "start_time";
+        tableName: "workout_schedule";
+        dataType: "string";
+        columnType: "PgTime";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    createdAt: drizzle_orm_pg_core.PgColumn<{
+        name: "created_at";
+        tableName: "workout_schedule";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    updatedAt: drizzle_orm_pg_core.PgColumn<{
+        name: "updated_at";
+        tableName: "workout_schedule";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
         isPrimaryKey: false;
         isAutoincrement: false;
         hasRuntimeDefault: false;
@@ -4583,18 +4651,27 @@ declare const userWithNotificationsEnabledQueryDtoSchema: z.ZodObject<{
     pushToken: z.ZodNullable<z.ZodString>;
     name: z.ZodString;
 }, z.core.$strip>;
-/** Reminder recipient row returned by the hourly reminder selection query. */
-declare const userToHourlyReminderQueryDtoSchema: z.ZodObject<{
-    userId: z.ZodUUID;
-    name: z.ZodString;
-    pushToken: z.ZodNullable<z.ZodString>;
-    reminderOffsetMinutes: z.ZodNumber;
-    splitId: z.ZodInt;
-    splitName: z.ZodNullable<z.ZodString>;
-    estimatedTimeUtc: z.ZodString;
-}, z.core.$strip>;
 type UserWithNotificationsEnabledQueryDto = z.infer<typeof userWithNotificationsEnabledQueryDtoSchema>;
-type UserToHourlyReminderQueryDto = z.infer<typeof userToHourlyReminderQueryDtoSchema>;
+
+declare const upsertReminderSettingsRequestSchema: z.ZodObject<{
+    body: z.ZodObject<{
+        reminderEnabled: z.ZodBoolean;
+        reminderOffsetMinutes: z.ZodInt;
+        timeZone: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+declare const upsertReminderSettingsContract: {
+    request: z.ZodObject<{
+        body: z.ZodObject<{
+            reminderEnabled: z.ZodBoolean;
+            reminderOffsetMinutes: z.ZodInt;
+            timeZone: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+type UpsertReminderSettingsBody = BodyOf<typeof upsertReminderSettingsContract>;
+type UpsertReminderSettingsResponse = ResponseOf<typeof upsertReminderSettingsContract>;
 
 declare const createUserRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
@@ -5369,7 +5446,7 @@ declare const getExerciseHistoryContract: {
 declare const getWorkoutStatisticsResponseSchema: z.ZodObject<{
     workoutCount: z.ZodCoercedNumber<unknown>;
     hasExerciseTracking: z.ZodBoolean;
-    nextWorkoutSplit: z.ZodNullable<z.ZodObject<{
+    nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
         id: z.ZodInt;
         name: z.ZodString;
         orderIndex: z.ZodInt;
@@ -5378,7 +5455,6 @@ declare const getWorkoutStatisticsResponseSchema: z.ZodObject<{
     workoutTargets: z.ZodObject<{
         workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
         workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-        weekStreak: z.ZodCoercedNumber<unknown>;
     }, z.core.$strip>;
     lastWorkoutStats: z.ZodObject<{
         workoutDate: z.ZodNullable<z.ZodString>;
@@ -5406,7 +5482,7 @@ declare const getWorkoutStatisticsContract: {
     response: z.ZodObject<{
         workoutCount: z.ZodCoercedNumber<unknown>;
         hasExerciseTracking: z.ZodBoolean;
-        nextWorkoutSplit: z.ZodNullable<z.ZodObject<{
+        nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
             id: z.ZodInt;
             name: z.ZodString;
             orderIndex: z.ZodInt;
@@ -5415,7 +5491,6 @@ declare const getWorkoutStatisticsContract: {
         workoutTargets: z.ZodObject<{
             workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
             workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-            weekStreak: z.ZodCoercedNumber<unknown>;
         }, z.core.$strip>;
         lastWorkoutStats: z.ZodObject<{
             workoutDate: z.ZodNullable<z.ZodString>;
@@ -5643,7 +5718,7 @@ declare const personalRecordsQueryDtoSchema: z.ZodObject<{
 declare const exerciseTrackingStatsQueryDtoSchema: z.ZodObject<{
     workoutCount: z.ZodCoercedNumber<unknown>;
     hasExerciseTracking: z.ZodBoolean;
-    nextWorkoutSplit: z.ZodNullable<z.ZodObject<{
+    nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
         id: z.ZodInt;
         name: z.ZodString;
         orderIndex: z.ZodInt;
@@ -5652,7 +5727,6 @@ declare const exerciseTrackingStatsQueryDtoSchema: z.ZodObject<{
     workoutTargets: z.ZodObject<{
         workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
         workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-        weekStreak: z.ZodCoercedNumber<unknown>;
     }, z.core.$strip>;
     lastWorkoutStats: z.ZodObject<{
         workoutDate: z.ZodNullable<z.ZodString>;
@@ -5724,7 +5798,7 @@ declare const exerciseTrackingAndStatsQueryDtoSchema: z.ZodObject<{
     trackingStats: z.ZodObject<{
         workoutCount: z.ZodCoercedNumber<unknown>;
         hasExerciseTracking: z.ZodBoolean;
-        nextWorkoutSplit: z.ZodNullable<z.ZodObject<{
+        nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
             id: z.ZodInt;
             name: z.ZodString;
             orderIndex: z.ZodInt;
@@ -5733,7 +5807,6 @@ declare const exerciseTrackingAndStatsQueryDtoSchema: z.ZodObject<{
         workoutTargets: z.ZodObject<{
             workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
             workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-            weekStreak: z.ZodCoercedNumber<unknown>;
         }, z.core.$strip>;
         lastWorkoutStats: z.ZodObject<{
             workoutDate: z.ZodNullable<z.ZodString>;
@@ -5785,7 +5858,7 @@ declare const exerciseTrackingAndStatsRowQueryDtoSchema: z.ZodObject<{
         trackingStats: z.ZodObject<{
             workoutCount: z.ZodCoercedNumber<unknown>;
             hasExerciseTracking: z.ZodBoolean;
-            nextWorkoutSplit: z.ZodNullable<z.ZodObject<{
+            nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
                 id: z.ZodInt;
                 name: z.ZodString;
                 orderIndex: z.ZodInt;
@@ -5794,7 +5867,6 @@ declare const exerciseTrackingAndStatsRowQueryDtoSchema: z.ZodObject<{
             workoutTargets: z.ZodObject<{
                 workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
                 workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-                weekStreak: z.ZodCoercedNumber<unknown>;
             }, z.core.$strip>;
             lastWorkoutStats: z.ZodObject<{
                 workoutDate: z.ZodNullable<z.ZodString>;
@@ -5845,7 +5917,7 @@ declare const exerciseTrackingStatsRowQueryDtoSchema: z.ZodObject<{
     data: z.ZodObject<{
         workoutCount: z.ZodCoercedNumber<unknown>;
         hasExerciseTracking: z.ZodBoolean;
-        nextWorkoutSplit: z.ZodNullable<z.ZodObject<{
+        nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
             id: z.ZodInt;
             name: z.ZodString;
             orderIndex: z.ZodInt;
@@ -5854,7 +5926,6 @@ declare const exerciseTrackingStatsRowQueryDtoSchema: z.ZodObject<{
         workoutTargets: z.ZodObject<{
             workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
             workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-            weekStreak: z.ZodCoercedNumber<unknown>;
         }, z.core.$strip>;
         lastWorkoutStats: z.ZodObject<{
             workoutDate: z.ZodNullable<z.ZodString>;
@@ -5973,4 +6044,406 @@ type WorkoutSummaryIdQueryDto = z.infer<typeof workoutSummaryIdQueryDtoSchema>;
 type ExerciseTrackingIdQueryDto = z.infer<typeof exerciseTrackingIdQueryDtoSchema>;
 type FinishedWorkoutEntryQueryDto = z.infer<typeof finishedWorkoutEntryQueryDtoSchema>;
 
-export { type AccessTokenPayloadDto, type AddAerobicInputQueryDto, type AerobicMutationRowQueryDto, type AerobicTrackingRow, type AerobicsDailyRecordQueryDto, type AerobicsWeeklyRecordQueryDto, type AllUserMessageQueryDto, type AnalyzeVideoPayloadDto, type AnalyzeVideoResultPayloadDto, type AppleOAuthBody, type AppleTokenVerificationResultDto, type AuthenticatedUserForUpdateQueryDto, type BodyOf, type ChangeEmailTokenPayloadDto, type Contract, type CreateAerobicEntryBody, type CreateAerobicEntryQuery, type CreatePasswordResetRequestBody, type CreateUserBody, type CreateUserResponse, type CreateVerificationEmailBody, type CreateVideoUploadUrlBody, type CreateVideoUploadUrlResponse, type CreateWebSocketTicketBody, type CreateWebSocketTicketResponse, type CreateWorkoutSessionBody, type CreateWorkoutSessionResponse, type CreatedUserQueryDto, type CreatedUserRawQueryDto, type CreatedUserRowQueryDto, type DeleteAerobicEntryParams, type DeleteAerobicEntryQuery, type DeleteAerobicEntryResponse, type DeleteMessageParams, type DeleteMessageResponse, type DeleteProfilePictureBody, type DeletedMessageQueryDto, type EmailVerifyPayloadDto, type EnqueueAnalyzeVideoParamsDto, type ExerciseAssignmentIdQueryDto, type ExerciseHistoryQueryDto, type ExerciseHistoryRowQueryDto, type ExerciseInPlanQueryDto, type ExerciseMapByMuscleRowQueryDto, type ExerciseMetadataQueryDto, type ExerciseRow, type ExerciseToWorkoutSplitRow, type ExerciseTrackingAnalysisQueryDto, type ExerciseTrackingAndStatsQueryDto, type ExerciseTrackingAndStatsRowQueryDto, type ExerciseTrackingIdQueryDto, type ExerciseTrackingMapsQueryDto, type ExerciseTrackingMapsRowQueryDto, type ExerciseTrackingPrMaxQueryDto, type ExerciseTrackingRow, type ExerciseTrackingStatsQueryDto, type ExerciseTrackingStatsRowQueryDto, type ExercisesMapByMuscleQueryDto, type FinishedWorkoutEntryQueryDto, type ForgotPasswordPayloadDto, type GetAerobicHistoryQuery, type GetAerobicHistoryResponse, type GetAllExercisesExerciseQueryDto, type GetCurrentUserResponse, type GetExerciseHistoryQuery, type GetExerciseHistoryResponse, type GetPersonalRecordsQuery, type GetPersonalRecordsResponse, type GetVerificationStatusQuery, type GetWorkoutHistoryQuery, type GetWorkoutHistoryResponse, type GetWorkoutPlanQuery, type GetWorkoutPlanResponse, type GetWorkoutStatisticsResponse, type GoogleOAuthBody, type GoogleTokenVerificationResultDto, type LastLoginQueryDto, type ListExercisesResponse, type ListMessagesQuery, type ListMessagesResponse, type LoginRequestBody, type LoginResponse, type LogoutResponse, type MarkMessageAsReadParams, type MarkMessageAsReadResponse, type MessageAfterSendQueryDto, type MessageAsReadQueryDto, type MessageRow, type OAuthCreatedUserRowQueryDto, type OAuthLinkQueryDto, type OAuthLinkRowQueryDto, type OAuthLoginResponse, type OAuthLookupQueryDto, type OAuthLookupRawQueryDto, type OAuthLookupRowQueryDto, type ParamsOf, type PersonalRecordsQueryDto, type PersonalRecordsRowQueryDto, type QueryOf, type RefreshTokenResponse, type ReplaceProfilePictureResponse, type ReplacePushTokenBody, type ReplaceWorkoutPlanBody, type ReplaceWorkoutPlanResponse, type RequestOf, type RequestSchema, type ResetPasswordBody, type ResetPasswordQuery, type ResetPasswordResponse, type ResponseOf, type SaveWorkoutSplitInputQueryDto, type SaveWorkoutSplitPayloadQueryDto, type SquatRepetitionDto, type TokenVersionQueryDto, type TrackingByDateItemQueryDto, type TrackingBySplitNameItemQueryDto, type TrackingMapItemQueryDto, type UpdateAerobicEntryBody, type UpdateAerobicEntryParams, type UpdateAerobicEntryQuery, type UpdateAerobicEntryResponse, type UpdateCurrentUserBody, type UpdateCurrentUserResponse, type UpdateUnverifiedAccountEmailBody, type UserAerobicsQueryDto, type UserAerobicsRowQueryDto, type UserAfterBumpQueryDto, type UserByIdentifierQueryDto, type UserByIdentifierRawQueryDto, type UserByIdentifierRowQueryDto, type UserByUsernameRawQueryDto, type UserByUsernameRowQueryDto, type UserConflictQueryDto, type UserDataQueryDto, type UserDataResponse, type UserDataRowQueryDto, type UserExistsQueryDto, type UserInsert, type UserMessageIdentityQueryDto, type UserProfilePicQueryDto, type UserRow, type UserToHourlyReminderQueryDto, type UserWithNotificationsEnabledQueryDto, type VerifyEmailQuery, type WeeklyDataQueryDto, type WholeUserWorkoutPlanQueryDto, type WorkoutExerciseInputQueryDto, type WorkoutPlanIdQueryDto, type WorkoutPlanRow, type WorkoutSplitIdQueryDto, type WorkoutSplitLookupQueryDto, type WorkoutSplitQueryDto, type WorkoutSplitRow, type WorkoutSummaryIdQueryDto, type WorkoutSummaryRow, accessTokenPayloadDtoSchema, addAerobicInputQueryDtoSchema, aerobicMutationRowQueryDtoSchema, aerobicTrackingDbSchema, aerobicsDailyRecordQueryDtoSchema, aerobicsWeeklyRecordQueryDtoSchema, allUserMessageQueryDtoSchema, analyzeVideoPayloadDtoSchema, analyzeVideoResultPayloadDtoSchema, appleOAuthContract, appleOAuthRequestSchema, appleTokenVerificationResultDtoSchema, authenticatedUserForUpdateQueryDtoSchema, changeEmailTokenPayloadDtoSchema, createAerobicEntryContract, createAerobicEntryRequestSchema, createAerobicEntryResponseSchema, createPasswordResetRequestContract, createPasswordResetRequestSchema, createUserContract, createUserRequestSchema, createUserResponseSchema, createUserUserSchema, createVerificationEmailContract, createVerificationEmailRequestSchema, createVideoUploadUrlContract, createVideoUploadUrlRequestSchema, createVideoUploadUrlResponseSchema, createWebSocketTicketContract, createWebSocketTicketRequestSchema, createWebSocketTicketResponseSchema, createWorkoutSessionContract, createWorkoutSessionRequestSchema, createWorkoutSessionResponseSchema, createdUserQueryDtoSchema, createdUserRawQueryDtoSchema, createdUserRowQueryDtoSchema, deleteAerobicEntryContract, deleteAerobicEntryRequestSchema, deleteMessageContract, deleteMessageRequestSchema, deleteMessageResponseSchema, deleteProfilePictureContract, deleteProfilePictureRequestSchema, deletedMessageQueryDtoSchema, emailVerifyPayloadDtoSchema, enqueueAnalyzeVideoParamsDtoSchema, exerciseAssignmentIdQueryDtoSchema, exerciseDbSchema, exerciseHistoryQueryDtoSchema, exerciseHistoryRowQueryDtoSchema, exerciseInPlanQueryDtoSchema, exerciseMapByMuscleRowQueryDtoSchema, exerciseMetadataQueryDtoSchema, exerciseToWorkoutSplitDbSchema, exerciseToWorkoutSplitSetExpandedViewDbSchema, exerciseTrackingAnalysisQueryDtoSchema, exerciseTrackingAndStatsQueryDtoSchema, exerciseTrackingAndStatsRowQueryDtoSchema, exerciseTrackingDbSchema, exerciseTrackingIdQueryDtoSchema, exerciseTrackingMapsQueryDtoSchema, exerciseTrackingMapsRowQueryDtoSchema, exerciseTrackingPrMaxQueryDtoSchema, exerciseTrackingSetExpandedViewDbSchema, exerciseTrackingStatsQueryDtoSchema, exerciseTrackingStatsRowQueryDtoSchema, exercisesMapByMuscleQueryDtoSchema, finishedWorkoutEntryQueryDtoSchema, forgotPasswordPayloadDtoSchema, getAerobicHistoryContract, getAerobicHistoryRequestSchema, getAerobicHistoryResponseSchema, getAllExercisesExerciseQueryDtoSchema, getCurrentUserContract, getCurrentUserResponseSchema, getExerciseHistoryContract, getExerciseHistoryRequestSchema, getExerciseHistoryResponseSchema, getPersonalRecordsContract, getPersonalRecordsRequestSchema, getPersonalRecordsResponseSchema, getVerificationStatusContract, getVerificationStatusRequestSchema, getWorkoutHistoryContract, getWorkoutHistoryRequestSchema, getWorkoutHistoryResponseSchema, getWorkoutPlanContract, getWorkoutPlanRequestSchema, getWorkoutPlanResponseSchema, getWorkoutStatisticsContract, getWorkoutStatisticsResponseSchema, googleOAuthContract, googleOAuthRequestSchema, googleTokenVerificationResultDtoSchema, lastLoginQueryDtoSchema, listExercisesContract, listExercisesResponseSchema, listMessagesContract, listMessagesRequestSchema, listMessagesResponseSchema, loginContract, loginRequestSchema, loginResponseSchema, logoutContract, logoutResponseSchema, markMessageAsReadContract, markMessageAsReadRequestSchema, markMessageAsReadResponseSchema, messageAfterSendQueryDtoSchema, messageAsReadQueryDtoSchema, messageDbSchema, oAuthCreatedUserRowQueryDtoSchema, oAuthLinkQueryDtoSchema, oAuthLinkRowQueryDtoSchema, oAuthLoginContract, oAuthLoginResponseSchema, oAuthLookupQueryDtoSchema, oAuthLookupRawQueryDtoSchema, oAuthLookupRowQueryDtoSchema, oauthAccountDbSchema, personalRecordQueryDtoSchema, personalRecordsQueryDtoSchema, personalRecordsRowQueryDtoSchema, proceedLoginResponseSchema, prsViewDbSchema, refreshTokenContract, refreshTokenResponseSchema, replaceProfilePictureContract, replaceProfilePictureResponseSchema, replacePushTokenContract, replacePushTokenRequestSchema, replaceWorkoutPlanContract, replaceWorkoutPlanRequestSchema, replaceWorkoutPlanResponseSchema, resetPasswordContract, resetPasswordRequestSchema, resetPasswordResponseSchema, saveWorkoutSplitInputQueryDtoSchema, saveWorkoutSplitPayloadQueryDtoSchema, serializedDateSchema, squatRepetitionDtoSchema, timezoneSchema, tokenVersionQueryDtoSchema, trackingByDateItemQueryDtoSchema, trackingBySplitNameItemQueryDtoSchema, trackingMapItemQueryDtoSchema, trackingSetDbSchema, updateAerobicEntryContract, updateAerobicEntryRequestSchema, updateCurrentUserContract, updateCurrentUserRequestSchema, updateCurrentUserResponseSchema, updateUnverifiedAccountEmailContract, updateUnverifiedAccountEmailRequestSchema, userAerobicsQueryDtoSchema, userAerobicsRowQueryDtoSchema, userAfterBumpQueryDtoSchema, userByIdentifierQueryDtoSchema, userByIdentifierRawQueryDtoSchema, userByIdentifierRowQueryDtoSchema, userByUsernameRawQueryDtoSchema, userByUsernameRowQueryDtoSchema, userConflictQueryDtoSchema, userDataContract, userDataQueryDtoSchema, userDataResponseSchema, userDataRowQueryDtoSchema, userDbSchema, userExistsQueryDtoSchema, userInsertDbSchema, userMessageIdentityQueryDtoSchema, userProfilePicQueryDtoSchema, userReminderSettingDbSchema, userSplitInformationDbSchema, userToHourlyReminderQueryDtoSchema, userUpdateDbSchema, userWithNotificationsEnabledQueryDtoSchema, verifyEmailContract, verifyEmailRequestSchema, weeklyDataQueryDtoSchema, wholeUserWorkoutPlanQueryDtoSchema, workoutExerciseInputQueryDtoSchema, workoutPlanDbSchema, workoutPlanIdQueryDtoSchema, workoutSetDbSchema, workoutSplitDbSchema, workoutSplitIdQueryDtoSchema, workoutSplitLookupQueryDtoSchema, workoutSplitQueryDtoSchema, workoutSummaryDbSchema, workoutSummaryIdQueryDtoSchema };
+declare const getWorkoutSchedulesResponseSchema: z.ZodObject<{
+    schedules: z.ZodArray<drizzle_zod.BuildSchema<"select", {
+        id: drizzle_orm_pg_core.PgColumn<{
+            name: "id";
+            tableName: "workout_schedule";
+            dataType: "string";
+            columnType: "PgUUID";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        userId: drizzle_orm_pg_core.PgColumn<{
+            name: "user_id";
+            tableName: "workout_schedule";
+            dataType: "string";
+            columnType: "PgUUID";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        workoutSplitId: drizzle_orm_pg_core.PgColumn<{
+            name: "workout_split_id";
+            tableName: "workout_schedule";
+            dataType: "number";
+            columnType: "PgBigInt53";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        dayOfWeek: drizzle_orm_pg_core.PgColumn<{
+            name: "day_of_week";
+            tableName: "workout_schedule";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        startTime: drizzle_orm_pg_core.PgColumn<{
+            name: "start_time";
+            tableName: "workout_schedule";
+            dataType: "string";
+            columnType: "PgTime";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        createdAt: drizzle_orm_pg_core.PgColumn<{
+            name: "created_at";
+            tableName: "workout_schedule";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        updatedAt: drizzle_orm_pg_core.PgColumn<{
+            name: "updated_at";
+            tableName: "workout_schedule";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+    }, undefined, undefined>>;
+}, z.core.$strip>;
+declare const getWorkoutSchedulesContract: {
+    response: z.ZodObject<{
+        schedules: z.ZodArray<drizzle_zod.BuildSchema<"select", {
+            id: drizzle_orm_pg_core.PgColumn<{
+                name: "id";
+                tableName: "workout_schedule";
+                dataType: "string";
+                columnType: "PgUUID";
+                data: string;
+                driverParam: string;
+                notNull: true;
+                hasDefault: true;
+                isPrimaryKey: false;
+                isAutoincrement: false;
+                hasRuntimeDefault: false;
+                enumValues: undefined;
+                baseColumn: never;
+                identity: undefined;
+                generated: undefined;
+            }, {}, {}>;
+            userId: drizzle_orm_pg_core.PgColumn<{
+                name: "user_id";
+                tableName: "workout_schedule";
+                dataType: "string";
+                columnType: "PgUUID";
+                data: string;
+                driverParam: string;
+                notNull: true;
+                hasDefault: false;
+                isPrimaryKey: false;
+                isAutoincrement: false;
+                hasRuntimeDefault: false;
+                enumValues: undefined;
+                baseColumn: never;
+                identity: undefined;
+                generated: undefined;
+            }, {}, {}>;
+            workoutSplitId: drizzle_orm_pg_core.PgColumn<{
+                name: "workout_split_id";
+                tableName: "workout_schedule";
+                dataType: "number";
+                columnType: "PgBigInt53";
+                data: number;
+                driverParam: string | number;
+                notNull: true;
+                hasDefault: false;
+                isPrimaryKey: false;
+                isAutoincrement: false;
+                hasRuntimeDefault: false;
+                enumValues: undefined;
+                baseColumn: never;
+                identity: undefined;
+                generated: undefined;
+            }, {}, {}>;
+            dayOfWeek: drizzle_orm_pg_core.PgColumn<{
+                name: "day_of_week";
+                tableName: "workout_schedule";
+                dataType: "number";
+                columnType: "PgInteger";
+                data: number;
+                driverParam: string | number;
+                notNull: true;
+                hasDefault: false;
+                isPrimaryKey: false;
+                isAutoincrement: false;
+                hasRuntimeDefault: false;
+                enumValues: undefined;
+                baseColumn: never;
+                identity: undefined;
+                generated: undefined;
+            }, {}, {}>;
+            startTime: drizzle_orm_pg_core.PgColumn<{
+                name: "start_time";
+                tableName: "workout_schedule";
+                dataType: "string";
+                columnType: "PgTime";
+                data: string;
+                driverParam: string;
+                notNull: true;
+                hasDefault: false;
+                isPrimaryKey: false;
+                isAutoincrement: false;
+                hasRuntimeDefault: false;
+                enumValues: undefined;
+                baseColumn: never;
+                identity: undefined;
+                generated: undefined;
+            }, {}, {}>;
+            createdAt: drizzle_orm_pg_core.PgColumn<{
+                name: "created_at";
+                tableName: "workout_schedule";
+                dataType: "date";
+                columnType: "PgTimestamp";
+                data: Date;
+                driverParam: string;
+                notNull: true;
+                hasDefault: true;
+                isPrimaryKey: false;
+                isAutoincrement: false;
+                hasRuntimeDefault: false;
+                enumValues: undefined;
+                baseColumn: never;
+                identity: undefined;
+                generated: undefined;
+            }, {}, {}>;
+            updatedAt: drizzle_orm_pg_core.PgColumn<{
+                name: "updated_at";
+                tableName: "workout_schedule";
+                dataType: "date";
+                columnType: "PgTimestamp";
+                data: Date;
+                driverParam: string;
+                notNull: true;
+                hasDefault: true;
+                isPrimaryKey: false;
+                isAutoincrement: false;
+                hasRuntimeDefault: false;
+                enumValues: undefined;
+                baseColumn: never;
+                identity: undefined;
+                generated: undefined;
+            }, {}, {}>;
+        }, undefined, undefined>>;
+    }, z.core.$strip>;
+};
+declare const replaceWorkoutSchedulesRequestSchema: z.ZodObject<{
+    body: z.ZodObject<{
+        schedules: z.ZodArray<z.ZodObject<{
+            workoutSplitId: z.ZodInt;
+            dayOfWeek: z.ZodInt;
+            startTime: z.ZodString;
+        }, z.core.$strip>>;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+declare const replaceWorkoutSchedulesContract: {
+    request: z.ZodObject<{
+        body: z.ZodObject<{
+            schedules: z.ZodArray<z.ZodObject<{
+                workoutSplitId: z.ZodInt;
+                dayOfWeek: z.ZodInt;
+                startTime: z.ZodString;
+            }, z.core.$strip>>;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+type GetWorkoutSchedulesResponse = ResponseOf<typeof getWorkoutSchedulesContract>;
+type ReplaceWorkoutSchedulesBody = BodyOf<typeof replaceWorkoutSchedulesContract>;
+type ReplaceWorkoutSchedulesResponse = ResponseOf<typeof replaceWorkoutSchedulesContract>;
+
+declare const workoutScheduleInputDtoSchema: z.ZodObject<{
+    workoutSplitId: z.ZodInt;
+    dayOfWeek: z.ZodInt;
+    startTime: z.ZodString;
+}, z.core.$strip>;
+declare const workoutScheduleQueryDtoSchema: drizzle_zod.BuildSchema<"select", {
+    id: drizzle_orm_pg_core.PgColumn<{
+        name: "id";
+        tableName: "workout_schedule";
+        dataType: "string";
+        columnType: "PgUUID";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    userId: drizzle_orm_pg_core.PgColumn<{
+        name: "user_id";
+        tableName: "workout_schedule";
+        dataType: "string";
+        columnType: "PgUUID";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    workoutSplitId: drizzle_orm_pg_core.PgColumn<{
+        name: "workout_split_id";
+        tableName: "workout_schedule";
+        dataType: "number";
+        columnType: "PgBigInt53";
+        data: number;
+        driverParam: string | number;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    dayOfWeek: drizzle_orm_pg_core.PgColumn<{
+        name: "day_of_week";
+        tableName: "workout_schedule";
+        dataType: "number";
+        columnType: "PgInteger";
+        data: number;
+        driverParam: string | number;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    startTime: drizzle_orm_pg_core.PgColumn<{
+        name: "start_time";
+        tableName: "workout_schedule";
+        dataType: "string";
+        columnType: "PgTime";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    createdAt: drizzle_orm_pg_core.PgColumn<{
+        name: "created_at";
+        tableName: "workout_schedule";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    updatedAt: drizzle_orm_pg_core.PgColumn<{
+        name: "updated_at";
+        tableName: "workout_schedule";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+}, undefined, undefined>;
+type WorkoutScheduleInputDto = z.infer<typeof workoutScheduleInputDtoSchema>;
+type WorkoutScheduleQueryDto = z.infer<typeof workoutScheduleQueryDtoSchema>;
+
+export { type AccessTokenPayloadDto, type AddAerobicInputQueryDto, type AerobicMutationRowQueryDto, type AerobicTrackingRow, type AerobicsDailyRecordQueryDto, type AerobicsWeeklyRecordQueryDto, type AllUserMessageQueryDto, type AnalyzeVideoPayloadDto, type AnalyzeVideoResultPayloadDto, type AppleOAuthBody, type AppleTokenVerificationResultDto, type AuthenticatedUserForUpdateQueryDto, type BodyOf, type ChangeEmailTokenPayloadDto, type Contract, type CreateAerobicEntryBody, type CreateAerobicEntryQuery, type CreatePasswordResetRequestBody, type CreateUserBody, type CreateUserResponse, type CreateVerificationEmailBody, type CreateVideoUploadUrlBody, type CreateVideoUploadUrlResponse, type CreateWebSocketTicketBody, type CreateWebSocketTicketResponse, type CreateWorkoutSessionBody, type CreateWorkoutSessionResponse, type CreatedUserQueryDto, type CreatedUserRawQueryDto, type CreatedUserRowQueryDto, type DeleteAerobicEntryParams, type DeleteAerobicEntryQuery, type DeleteAerobicEntryResponse, type DeleteMessageParams, type DeleteMessageResponse, type DeleteProfilePictureBody, type DeletedMessageQueryDto, type EmailVerifyPayloadDto, type EnqueueAnalyzeVideoParamsDto, type ExerciseAssignmentIdQueryDto, type ExerciseHistoryQueryDto, type ExerciseHistoryRowQueryDto, type ExerciseInPlanQueryDto, type ExerciseMapByMuscleRowQueryDto, type ExerciseMetadataQueryDto, type ExerciseRow, type ExerciseToWorkoutSplitRow, type ExerciseTrackingAnalysisQueryDto, type ExerciseTrackingAndStatsQueryDto, type ExerciseTrackingAndStatsRowQueryDto, type ExerciseTrackingIdQueryDto, type ExerciseTrackingMapsQueryDto, type ExerciseTrackingMapsRowQueryDto, type ExerciseTrackingPrMaxQueryDto, type ExerciseTrackingRow, type ExerciseTrackingStatsQueryDto, type ExerciseTrackingStatsRowQueryDto, type ExercisesMapByMuscleQueryDto, type FinishedWorkoutEntryQueryDto, type ForgotPasswordPayloadDto, type GetAerobicHistoryQuery, type GetAerobicHistoryResponse, type GetAllExercisesExerciseQueryDto, type GetCurrentUserResponse, type GetExerciseHistoryQuery, type GetExerciseHistoryResponse, type GetPersonalRecordsQuery, type GetPersonalRecordsResponse, type GetVerificationStatusQuery, type GetWorkoutHistoryQuery, type GetWorkoutHistoryResponse, type GetWorkoutPlanQuery, type GetWorkoutPlanResponse, type GetWorkoutSchedulesResponse, type GetWorkoutStatisticsResponse, type GoogleOAuthBody, type GoogleTokenVerificationResultDto, type LastLoginQueryDto, type ListExercisesResponse, type ListMessagesQuery, type ListMessagesResponse, type LoginRequestBody, type LoginResponse, type LogoutResponse, type MarkMessageAsReadParams, type MarkMessageAsReadResponse, type MessageAfterSendQueryDto, type MessageAsReadQueryDto, type MessageRow, type OAuthCreatedUserRowQueryDto, type OAuthLinkQueryDto, type OAuthLinkRowQueryDto, type OAuthLoginResponse, type OAuthLookupQueryDto, type OAuthLookupRawQueryDto, type OAuthLookupRowQueryDto, type ParamsOf, type PersonalRecordsQueryDto, type PersonalRecordsRowQueryDto, type QueryOf, type RefreshTokenResponse, type ReplaceProfilePictureResponse, type ReplacePushTokenBody, type ReplaceWorkoutPlanBody, type ReplaceWorkoutPlanResponse, type ReplaceWorkoutSchedulesBody, type ReplaceWorkoutSchedulesResponse, type RequestOf, type RequestSchema, type ResetPasswordBody, type ResetPasswordQuery, type ResetPasswordResponse, type ResponseOf, type SaveWorkoutSplitInputQueryDto, type SaveWorkoutSplitPayloadQueryDto, type SquatRepetitionDto, type TokenVersionQueryDto, type TrackingByDateItemQueryDto, type TrackingBySplitNameItemQueryDto, type TrackingMapItemQueryDto, type UpdateAerobicEntryBody, type UpdateAerobicEntryParams, type UpdateAerobicEntryQuery, type UpdateAerobicEntryResponse, type UpdateCurrentUserBody, type UpdateCurrentUserResponse, type UpdateUnverifiedAccountEmailBody, type UpsertReminderSettingsBody, type UpsertReminderSettingsResponse, type UserAerobicsQueryDto, type UserAerobicsRowQueryDto, type UserAfterBumpQueryDto, type UserByIdentifierQueryDto, type UserByIdentifierRawQueryDto, type UserByIdentifierRowQueryDto, type UserByUsernameRawQueryDto, type UserByUsernameRowQueryDto, type UserConflictQueryDto, type UserDataQueryDto, type UserDataResponse, type UserDataRowQueryDto, type UserExistsQueryDto, type UserInsert, type UserMessageIdentityQueryDto, type UserProfilePicQueryDto, type UserRow, type UserWithNotificationsEnabledQueryDto, type VerifyEmailQuery, type WeeklyDataQueryDto, type WholeUserWorkoutPlanQueryDto, type WorkoutExerciseInputQueryDto, type WorkoutPlanIdQueryDto, type WorkoutPlanRow, type WorkoutScheduleInputDto, type WorkoutScheduleQueryDto, type WorkoutSplitIdQueryDto, type WorkoutSplitLookupQueryDto, type WorkoutSplitQueryDto, type WorkoutSplitRow, type WorkoutSummaryIdQueryDto, type WorkoutSummaryRow, accessTokenPayloadDtoSchema, addAerobicInputQueryDtoSchema, aerobicMutationRowQueryDtoSchema, aerobicTrackingDbSchema, aerobicsDailyRecordQueryDtoSchema, aerobicsWeeklyRecordQueryDtoSchema, allUserMessageQueryDtoSchema, analyzeVideoPayloadDtoSchema, analyzeVideoResultPayloadDtoSchema, appleOAuthContract, appleOAuthRequestSchema, appleTokenVerificationResultDtoSchema, authenticatedUserForUpdateQueryDtoSchema, changeEmailTokenPayloadDtoSchema, createAerobicEntryContract, createAerobicEntryRequestSchema, createAerobicEntryResponseSchema, createPasswordResetRequestContract, createPasswordResetRequestSchema, createUserContract, createUserRequestSchema, createUserResponseSchema, createUserUserSchema, createVerificationEmailContract, createVerificationEmailRequestSchema, createVideoUploadUrlContract, createVideoUploadUrlRequestSchema, createVideoUploadUrlResponseSchema, createWebSocketTicketContract, createWebSocketTicketRequestSchema, createWebSocketTicketResponseSchema, createWorkoutSessionContract, createWorkoutSessionRequestSchema, createWorkoutSessionResponseSchema, createdUserQueryDtoSchema, createdUserRawQueryDtoSchema, createdUserRowQueryDtoSchema, deleteAerobicEntryContract, deleteAerobicEntryRequestSchema, deleteMessageContract, deleteMessageRequestSchema, deleteMessageResponseSchema, deleteProfilePictureContract, deleteProfilePictureRequestSchema, deletedMessageQueryDtoSchema, emailVerifyPayloadDtoSchema, enqueueAnalyzeVideoParamsDtoSchema, exerciseAssignmentIdQueryDtoSchema, exerciseDbSchema, exerciseHistoryQueryDtoSchema, exerciseHistoryRowQueryDtoSchema, exerciseInPlanQueryDtoSchema, exerciseMapByMuscleRowQueryDtoSchema, exerciseMetadataQueryDtoSchema, exerciseToWorkoutSplitDbSchema, exerciseToWorkoutSplitSetExpandedViewDbSchema, exerciseTrackingAnalysisQueryDtoSchema, exerciseTrackingAndStatsQueryDtoSchema, exerciseTrackingAndStatsRowQueryDtoSchema, exerciseTrackingDbSchema, exerciseTrackingIdQueryDtoSchema, exerciseTrackingMapsQueryDtoSchema, exerciseTrackingMapsRowQueryDtoSchema, exerciseTrackingPrMaxQueryDtoSchema, exerciseTrackingSetExpandedViewDbSchema, exerciseTrackingStatsQueryDtoSchema, exerciseTrackingStatsRowQueryDtoSchema, exercisesMapByMuscleQueryDtoSchema, finishedWorkoutEntryQueryDtoSchema, forgotPasswordPayloadDtoSchema, getAerobicHistoryContract, getAerobicHistoryRequestSchema, getAerobicHistoryResponseSchema, getAllExercisesExerciseQueryDtoSchema, getCurrentUserContract, getCurrentUserResponseSchema, getExerciseHistoryContract, getExerciseHistoryRequestSchema, getExerciseHistoryResponseSchema, getPersonalRecordsContract, getPersonalRecordsRequestSchema, getPersonalRecordsResponseSchema, getVerificationStatusContract, getVerificationStatusRequestSchema, getWorkoutHistoryContract, getWorkoutHistoryRequestSchema, getWorkoutHistoryResponseSchema, getWorkoutPlanContract, getWorkoutPlanRequestSchema, getWorkoutPlanResponseSchema, getWorkoutSchedulesContract, getWorkoutSchedulesResponseSchema, getWorkoutStatisticsContract, getWorkoutStatisticsResponseSchema, googleOAuthContract, googleOAuthRequestSchema, googleTokenVerificationResultDtoSchema, lastLoginQueryDtoSchema, listExercisesContract, listExercisesResponseSchema, listMessagesContract, listMessagesRequestSchema, listMessagesResponseSchema, loginContract, loginRequestSchema, loginResponseSchema, logoutContract, logoutResponseSchema, markMessageAsReadContract, markMessageAsReadRequestSchema, markMessageAsReadResponseSchema, messageAfterSendQueryDtoSchema, messageAsReadQueryDtoSchema, messageDbSchema, oAuthCreatedUserRowQueryDtoSchema, oAuthLinkQueryDtoSchema, oAuthLinkRowQueryDtoSchema, oAuthLoginContract, oAuthLoginResponseSchema, oAuthLookupQueryDtoSchema, oAuthLookupRawQueryDtoSchema, oAuthLookupRowQueryDtoSchema, oauthAccountDbSchema, personalRecordQueryDtoSchema, personalRecordsQueryDtoSchema, personalRecordsRowQueryDtoSchema, proceedLoginResponseSchema, prsViewDbSchema, refreshTokenContract, refreshTokenResponseSchema, replaceProfilePictureContract, replaceProfilePictureResponseSchema, replacePushTokenContract, replacePushTokenRequestSchema, replaceWorkoutPlanContract, replaceWorkoutPlanRequestSchema, replaceWorkoutPlanResponseSchema, replaceWorkoutSchedulesContract, replaceWorkoutSchedulesRequestSchema, resetPasswordContract, resetPasswordRequestSchema, resetPasswordResponseSchema, saveWorkoutSplitInputQueryDtoSchema, saveWorkoutSplitPayloadQueryDtoSchema, serializedDateSchema, squatRepetitionDtoSchema, timezoneSchema, tokenVersionQueryDtoSchema, trackingByDateItemQueryDtoSchema, trackingBySplitNameItemQueryDtoSchema, trackingMapItemQueryDtoSchema, trackingSetDbSchema, updateAerobicEntryContract, updateAerobicEntryRequestSchema, updateCurrentUserContract, updateCurrentUserRequestSchema, updateCurrentUserResponseSchema, updateUnverifiedAccountEmailContract, updateUnverifiedAccountEmailRequestSchema, upsertReminderSettingsContract, upsertReminderSettingsRequestSchema, userAerobicsQueryDtoSchema, userAerobicsRowQueryDtoSchema, userAfterBumpQueryDtoSchema, userByIdentifierQueryDtoSchema, userByIdentifierRawQueryDtoSchema, userByIdentifierRowQueryDtoSchema, userByUsernameRawQueryDtoSchema, userByUsernameRowQueryDtoSchema, userConflictQueryDtoSchema, userDataContract, userDataQueryDtoSchema, userDataResponseSchema, userDataRowQueryDtoSchema, userDbSchema, userExistsQueryDtoSchema, userInsertDbSchema, userMessageIdentityQueryDtoSchema, userProfilePicQueryDtoSchema, userReminderSettingDbSchema, userUpdateDbSchema, userWithNotificationsEnabledQueryDtoSchema, verifyEmailContract, verifyEmailRequestSchema, weeklyDataQueryDtoSchema, wholeUserWorkoutPlanQueryDtoSchema, workoutExerciseInputQueryDtoSchema, workoutPlanDbSchema, workoutPlanIdQueryDtoSchema, workoutScheduleDbSchema, workoutScheduleInputDtoSchema, workoutScheduleQueryDtoSchema, workoutSetDbSchema, workoutSplitDbSchema, workoutSplitIdQueryDtoSchema, workoutSplitLookupQueryDtoSchema, workoutSplitQueryDtoSchema, workoutSummaryDbSchema, workoutSummaryIdQueryDtoSchema };

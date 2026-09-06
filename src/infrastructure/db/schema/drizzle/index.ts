@@ -13,7 +13,7 @@ export * from './tracking/tracking_set/table';
 export * from './tracking/aerobic_tracking/table';
 export * from './tracking/views';
 export * from './reminders/user_reminder_setting/table';
-export * from './reminders/user_split_information/table';
+export * from './schedules/workout_schedule/table';
 export * from './messages/messages/table';
 export * from './workout/views';
 export * from './analytics/views';

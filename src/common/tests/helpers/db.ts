@@ -19,7 +19,6 @@ const testPasswordHash = '$2b$10$ZpjAscThaAj5E5T5bkhktudfz1BfRNW0yIvYaKcYWpMMqWR
 async function wait(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
-
 export async function getExerciseToWorkoutSplitId(userId: string, splitName: string, exerciseId: number) {
   const rows = await sql<{ id: number }[]>`
     SELECT
@@ -400,41 +399,4 @@ export async function hasReminderSettings(userId: string) {
   `;
 
   return Number(row?.count ?? '0') > 0;
-}
-
-export async function configureHourlyReminderForUser(userId: string, splitId: number, estimatedTimeUtc: string) {
-  const preferredWeekday = new Date().getUTCDay();
-
-  await sql`
-    UPDATE reminders.user_reminder_setting
-    SET
-      workout_reminders_enabled = TRUE,
-      reminder_offset_minutes = 0
-    WHERE
-      user_id = ${userId}::UUID
-  `;
-
-  await sql`
-    INSERT INTO
-      reminders.user_split_information (
-        user_id,
-        workout_split_id,
-        estimated_time_utc,
-        confidence,
-        preferred_weekday
-      )
-    VALUES
-      (
-        ${userId}::UUID,
-        ${splitId},
-        ${estimatedTimeUtc}::TIMESTAMPTZ,
-        1.00,
-        ${preferredWeekday}
-      )
-    ON CONFLICT (user_id, workout_split_id) DO UPDATE
-    SET
-      estimated_time_utc = EXCLUDED.estimated_time_utc,
-      confidence = EXCLUDED.confidence,
-      preferred_weekday = EXCLUDED.preferred_weekday
-  `;
 }

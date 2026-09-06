@@ -12,7 +12,7 @@ import {
   trackingSet,
   user,
   userReminderSetting,
-  userSplitInformation,
+  workoutSchedule,
   workoutPlan,
   workoutSet,
   workoutSplit,
@@ -36,7 +36,7 @@ export const trackingSetDbSchema = createSelectSchema(trackingSet);
 export const aerobicTrackingDbSchema = createSelectSchema(aerobicTracking);
 export const messageDbSchema = createSelectSchema(message);
 export const userReminderSettingDbSchema = createSelectSchema(userReminderSetting);
-export const userSplitInformationDbSchema = createSelectSchema(userSplitInformation);
+export const workoutScheduleDbSchema = createSelectSchema(workoutSchedule);
 export const exerciseTrackingSetExpandedViewDbSchema = createSelectSchema(exerciseTrackingSetExpandedView);
 export const prsViewDbSchema = createSelectSchema(prsView);
 

@@ -2,8 +2,6 @@ import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import axios from 'axios';
 import { PushNotificationsProducerService } from '../../infrastructure/queues/push-notifications/push-notifications-producer';
 import { PushQueries } from './push.queries';
-import type { NotificationPayload } from './push.dtos';
-import { computeDelayFromUTC } from './push.utils';
 
 export type PushBatchResponse = {
   success: true;
@@ -113,45 +111,5 @@ export class PushService {
     );
 
     return { success: true, message: 'Daily notifications enqueued', userCount: users.length };
-  }
-
-  /**
-   * Sends hourly reminder push.
-   * @param requestId - The request correlation identifier.
-   * @returns The send hourly reminder push result.
-   */
-  async sendHourlyReminderPushData(requestId?: string): Promise<PushBatchResponse> {
-    const users = await this.pushQueries.queryGetAllUsersToSendHourlyReminder();
-    const pushNotifications: NotificationPayload[] = [];
-    const now = new Date();
-
-    for (const user of users) {
-      const delayMs = computeDelayFromUTC(now, user.estimatedTimeUtc, user.reminderOffsetMinutes);
-
-      if (delayMs === null) {
-        continue;
-      }
-
-      pushNotifications.push({
-        token: user.pushToken!,
-        title: 'Workout Reminder',
-        body: `${user.name!.split(' ')[0]}, get ready! Your ${
-          user.splitName
-        } workout kicks off in ${user.reminderOffsetMinutes} minutes.`,
-        delay: delayMs,
-        expiresAt: 0,
-        ...(requestId ? { requestId } : {}),
-      });
-    }
-
-    if (pushNotifications.length > 0) {
-      await this.pushNotificationsProducerService.enqueuePushNotifications(pushNotifications);
-    }
-
-    return {
-      success: true,
-      message: `Enqueued ${pushNotifications.length} workout reminders`,
-      userCount: users.length,
-    };
   }
 }

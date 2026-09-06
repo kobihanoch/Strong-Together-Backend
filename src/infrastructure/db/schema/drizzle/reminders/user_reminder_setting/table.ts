@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { boolean, foreignKey, integer, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, foreignKey, integer, primaryKey, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 import { user } from '../../identity/user/table';
 import { remindersSchema } from '../../schemas';
 import { userReminderSettingPolicies } from './policies';
@@ -7,19 +7,18 @@ import { userReminderSettingPolicies } from './policies';
 export const userReminderSetting = remindersSchema.table(
   'user_reminder_setting',
   {
+    id: uuid('id').defaultRandom().notNull(),
     userId: uuid('user_id').notNull(),
-    workoutRemindersEnabled: boolean('workout_reminders_enabled').default(true).notNull(),
-    reminderOffsetMinutes: integer('reminder_offset_minutes').default(60).notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    timezone: text('timezone').default("'UTC'::text"),
+    reminderEnabled: boolean('reminder_enabled').default(false).notNull(),
+    reminderOffsetMinutes: integer('reminder_offset_minutes').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    timeZone: text('time_zone').notNull(),
   },
   (t) => [
-    primaryKey({ name: 'user_reminder_setting_pkey', columns: [t.userId] }),
-    foreignKey({ name: 'user_reminder_setting_user_id_fkey', columns: [t.userId], foreignColumns: [user.id] }).onDelete(
-      'cascade',
-    ),
+    primaryKey({ name: 'user_reminder_setting_pkey', columns: [t.id] }),
+    unique('user_reminder_setting_user_id_key').on(t.userId),
+    foreignKey({ name: 'user_reminder_setting_user_id_fkey', columns: [t.userId], foreignColumns: [user.id] }).onDelete('cascade'),
     ...userReminderSettingPolicies(t),
   ],
 );

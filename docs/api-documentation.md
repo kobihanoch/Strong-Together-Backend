@@ -25,14 +25,14 @@ All TypeScript-visible request and response fields use `camelCase`. PostgreSQL c
 
 Most routes are affected by the same global pipeline before controller logic runs.
 
-| Layer | Purpose |
-| --- | --- |
-| `GeneralRateLimitMiddleware` | Coarse request throttling at the app edge |
-| `RequestLoggerMiddleware` | Structured per-request logging and request ID context |
-| `BotBlockerMiddleware` | Scanner and suspicious-client filtering |
-| `CheckAppVersionMiddleware` | Enforces `x-app-version` unless the route is exempt |
-| `ValidateRequestPipe` | Validates declared request schemas from `@strong-together/shared` |
-| `RlsTxInterceptor` | Wraps most business routes in request-scoped DB execution |
+| Layer                        | Purpose                                                           |
+| ---------------------------- | ----------------------------------------------------------------- |
+| `GeneralRateLimitMiddleware` | Coarse request throttling at the app edge                         |
+| `RequestLoggerMiddleware`    | Structured per-request logging and request ID context             |
+| `BotBlockerMiddleware`       | Scanner and suspicious-client filtering                           |
+| `CheckAppVersionMiddleware`  | Enforces `x-app-version` unless the route is exempt               |
+| `ValidateRequestPipe`        | Validates declared request schemas from `@strong-together/shared` |
+| `RlsTxInterceptor`           | Wraps most business routes in request-scoped DB execution         |
 
 ## Authentication And Header Conventions
 
@@ -72,59 +72,58 @@ Some public login and refresh flows also use DPoP-related headers:
 
 The app uses a global exception filter, request validation, and guards. That means failures generally fall into these buckets:
 
-| Category | Typical status |
-| --- | --- |
-| Validation failure | `400` |
-| Authentication / DPoP failure | `401` |
-| Authorization failure | `403` |
-| Not found | `404` |
-| Rate limit | `429` |
-| Unhandled server error | `500` |
+| Category                      | Typical status |
+| ----------------------------- | -------------- |
+| Validation failure            | `400`          |
+| Authentication / DPoP failure | `401`          |
+| Authorization failure         | `403`          |
+| Not found                     | `404`          |
+| Rate limit                    | `429`          |
+| Unhandled server error        | `500`          |
 
 This file focuses on success contracts. Route-specific non-JSON behavior is called out where relevant.
 
 ## Endpoint Index
 
-| Method | Path | Access | Summary |
-| --- | --- | --- | --- |
-| `GET` | `/` | Public | Liveness text |
-| `GET` | `/health` | Public | Health check |
-| `POST` | `/api/auth/login` | Public | Credential login |
-| `POST` | `/api/auth/logout` | Refresh token + DPoP | Logout current session and unregister push delivery |
-| `POST` | `/api/auth/refresh` | Public | Rotate token pair |
-| `POST` | `/api/auth/password-reset-requests` | Public | Send reset email |
-| `POST` | `/api/auth/password-resets` | Public | Reset password from token; returns 204 |
-| `GET` | `/api/auth/email-verification` | Public | Complete verification callback |
-| `POST` | `/api/auth/verification-emails` | Public | Send verification email |
-| `PATCH` | `/api/auth/unverified-account/email` | Public | Change email for unverified account |
-| `GET` | `/api/auth/verification-status` | Public | Check verification state by username |
-| `POST` | `/api/users` | Public | Create user account |
-| `GET` | `/api/users/me` | User | Get current user profile |
-| `PATCH` | `/api/users/me` | User | Update current user profile; returns 204 |
-| `GET` | `/api/users/email-change` | Public | Complete email-change callback |
-| `DELETE` | `/api/users/me` | User | Delete current user |
-| `PUT` | `/api/users/me/profile-picture` | User | Upload profile image |
-| `DELETE` | `/api/users/me/profile-picture` | User | Delete profile image |
-| `PUT` | `/api/users/me/push-token` | User | Save push token |
-| `GET` | `/api/workout-plan` | User | Get active workout plan |
-| `PUT` | `/api/workout-plan` | User | Create or update workout plan; returns 204 |
-| `GET` | `/api/workout-history` | User | Get workout tracking snapshot |
-| `GET` | `/api/workout-statistics` | User | Get workout tracking statistics |
-| `POST` | `/api/workout-sessions` | User | Persist completed workout |
-| `GET` | `/api/aerobics` | User | Get aerobics history |
-| `POST` | `/api/aerobics` | User | Add aerobics record |
-| `PUT` | `/api/aerobics/:id` | User | Replace aerobics record; returns 204 |
-| `DELETE` | `/api/aerobics/:id` | User | Delete aerobics record; returns 204 |
-| `GET` | `/api/exercises` | User | Get exercise catalog |
-| `GET` | `/api/messages` | User | Get inbox |
-| `PATCH` | `/api/messages/:id/read` | User | Mark message as read; returns 204 |
-| `DELETE` | `/api/messages/:id` | User | Delete message |
-| `POST` | `/api/oauth/apple` | Public | Apple OAuth login |
-| `POST` | `/api/oauth/google` | Public | Google OAuth login |
-| `GET` | `/api/push-jobs/daily` | Public (temporary) | Trigger daily push enqueue; scheduled-job authentication is still required |
-| `GET` | `/api/push-jobs/hourly-reminders` | Public (temporary) | Trigger hourly reminder enqueue; scheduled-job authentication is still required |
-| `POST` | `/api/video-analysis/upload-urls` | User | Generate direct-upload URL |
-| `POST` | `/api/websocket-tickets` | User | Generate websocket ticket |
+| Method   | Path                                 | Access               | Summary                                                                    |
+| -------- | ------------------------------------ | -------------------- | -------------------------------------------------------------------------- |
+| `GET`    | `/`                                  | Public               | Liveness text                                                              |
+| `GET`    | `/health`                            | Public               | Health check                                                               |
+| `POST`   | `/api/auth/login`                    | Public               | Credential login                                                           |
+| `POST`   | `/api/auth/logout`                   | Refresh token + DPoP | Logout current session and unregister push delivery                        |
+| `POST`   | `/api/auth/refresh`                  | Public               | Rotate token pair                                                          |
+| `POST`   | `/api/auth/password-reset-requests`  | Public               | Send reset email                                                           |
+| `POST`   | `/api/auth/password-resets`          | Public               | Reset password from token; returns 204                                     |
+| `GET`    | `/api/auth/email-verification`       | Public               | Complete verification callback                                             |
+| `POST`   | `/api/auth/verification-emails`      | Public               | Send verification email                                                    |
+| `PATCH`  | `/api/auth/unverified-account/email` | Public               | Change email for unverified account                                        |
+| `GET`    | `/api/auth/verification-status`      | Public               | Check verification state by username                                       |
+| `POST`   | `/api/users`                         | Public               | Create user account                                                        |
+| `GET`    | `/api/users/me`                      | User                 | Get current user profile                                                   |
+| `PATCH`  | `/api/users/me`                      | User                 | Update current user profile; returns 204                                   |
+| `GET`    | `/api/users/email-change`            | Public               | Complete email-change callback                                             |
+| `DELETE` | `/api/users/me`                      | User                 | Delete current user                                                        |
+| `PUT`    | `/api/users/me/profile-picture`      | User                 | Upload profile image                                                       |
+| `DELETE` | `/api/users/me/profile-picture`      | User                 | Delete profile image                                                       |
+| `PUT`    | `/api/users/me/push-token`           | User                 | Save push token                                                            |
+| `GET`    | `/api/workout-plan`                  | User                 | Get active workout plan                                                    |
+| `PUT`    | `/api/workout-plan`                  | User                 | Create or update workout plan; returns 204                                 |
+| `GET`    | `/api/workout-history`               | User                 | Get workout tracking snapshot                                              |
+| `GET`    | `/api/workout-statistics`            | User                 | Get workout tracking statistics                                            |
+| `POST`   | `/api/workout-sessions`              | User                 | Persist completed workout                                                  |
+| `GET`    | `/api/aerobics`                      | User                 | Get aerobics history                                                       |
+| `POST`   | `/api/aerobics`                      | User                 | Add aerobics record                                                        |
+| `PUT`    | `/api/aerobics/:id`                  | User                 | Replace aerobics record; returns 204                                       |
+| `DELETE` | `/api/aerobics/:id`                  | User                 | Delete aerobics record; returns 204                                        |
+| `GET`    | `/api/exercises`                     | User                 | Get exercise catalog                                                       |
+| `GET`    | `/api/messages`                      | User                 | Get inbox                                                                  |
+| `PATCH`  | `/api/messages/:id/read`             | User                 | Mark message as read; returns 204                                          |
+| `DELETE` | `/api/messages/:id`                  | User                 | Delete message                                                             |
+| `POST`   | `/api/oauth/apple`                   | Public               | Apple OAuth login                                                          |
+| `POST`   | `/api/oauth/google`                  | Public               | Google OAuth login                                                         |
+| `GET`    | `/api/push-jobs/daily`               | Public (temporary)   | Trigger daily push enqueue; scheduled-job authentication is still required |
+| `POST`   | `/api/video-analysis/upload-urls`    | User                 | Generate direct-upload URL                                                 |
+| `POST`   | `/api/websocket-tickets`             | User                 | Generate websocket ticket                                                  |
 
 ## Core Routes
 
@@ -706,7 +705,7 @@ This response omits workout duration and notes, flattens the `exerciseTracking` 
 {
   "workoutCount": 12,
   "hasExerciseTracking": true,
-  "nextWorkoutSplit": {
+  "nextSplitByOrderIndex": {
     "id": 31,
     "name": "Pull",
     "orderIndex": 1,
@@ -714,8 +713,7 @@ This response omits workout duration and notes, flattens the `exerciseTracking` 
   },
   "workoutTargets": {
     "workoutCountThisWeek": 3,
-    "workoutCountScheduledPerWeek": 4,
-    "weekStreak": 2
+    "workoutCountScheduledPerWeek": 4
   },
   "lastWorkoutStats": {
     "workoutDate": "2026-04-20",
@@ -760,9 +758,9 @@ The statistics `latestPr` array contains at most one item: the current PR whose 
 
 Each record is stored under its exercise ID. Pass the optional `tz` query parameter to select the IANA timezone used for `workoutStartLocal`; it defaults to `Asia/Jerusalem`. The endpoint requires a user session and returns `X-Cache: HIT` or `X-Cache: MISS`.
 
-`nextWorkoutSplit` and `estimatedOneRepMax` can be `null`. The estimate uses the recorded weight for one rep, Epley for 2–5 reps, Brzycki for 6–10 reps, and O'Connor for 11–12 reps; it is `null` outside that range.
+`nextSplitByOrderIndex` and `estimatedOneRepMax` can be `null`. The estimate uses the recorded weight for one rep, Epley for 2–5 reps, Brzycki for 6–10 reps, and O'Connor for 11–12 reps; it is `null` outside that range.
 
-`nextWorkoutSplit` is independent of the 45-day statistics window. It advances from the user's latest workout summary to the next split in the active plan by `orderIndex`, wraps to the lowest active index after the final split, and returns the lowest active index when no summary exists.
+`nextSplitByOrderIndex` is independent of the 45-day statistics window. It advances from the user's latest workout summary to the next split in the active plan by `orderIndex`, wraps to the lowest active index after the final split, and returns the lowest active index when no summary exists.
 
 ### `GET /api/workout-plan`
 
@@ -1255,32 +1253,6 @@ Failure shape:
 }
 ```
 
-### `POST /api/push-jobs/hourly-reminders`
-
-Triggers the hourly reminder enqueue flow.
-
-Access:
-
-- Public
-
-Successful response:
-
-```json
-{
-  "success": true,
-  "message": "string"
-}
-```
-
-Failure shape:
-
-```json
-{
-  "success": false,
-  "error": "string"
-}
-```
-
 ## Video Analysis
 
 ### `POST /api/video-analysis/upload-urls`
@@ -1383,7 +1355,7 @@ These routes do not return JSON:
 These routes touch external infrastructure directly:
 
 - `/api/video-analysis/upload-urls` uses S3 presigning
-- `/api/push-jobs/daily` and `/api/push-jobs/hourly-reminders` enqueue background work
+- `/api/push-jobs/daily` enqueues background work
 - auth mail flows rely on mailer / queue infrastructure
 - profile image routes use object storage through `SupabaseStorageService`; prod uses Supabase Storage, dev/test use LocalStack S3
 

@@ -10,7 +10,6 @@ const EXEMPT_PREFIXES = [
   '/api/auth/password-resets',
   '/api/auth/password-reset-requests',
   '/api/push-jobs/daily',
-  '/api/push-jobs/hourly-reminders',
   '/api/users/email-change',
 ];
 
