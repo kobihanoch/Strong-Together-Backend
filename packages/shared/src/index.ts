@@ -10,3 +10,4 @@ export * from './modules/user';
 export * from './modules/video-analysis';
 export * from './modules/web-sockets';
 export * from './modules/workout';
+export * from './modules/workout-schedule';

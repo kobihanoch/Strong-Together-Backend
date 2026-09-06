@@ -2510,6 +2510,47 @@ var getPersonalRecordsContract = {
   request: getPersonalRecordsRequestSchema,
   response: getPersonalRecordsResponseSchema
 };
+
+// src/modules/workout-schedule/workout-schedule.contracts.ts
+import { z as z34 } from "zod/v4";
+
+// src/modules/workout-schedule/workout-schedule.dtos.ts
+import { z as z33 } from "zod/v4";
+var workoutScheduleInputDtoSchema = z33.object({
+  workoutSplitId: workoutScheduleDbSchema.shape.workoutSplitId,
+  dayOfWeek: workoutScheduleDbSchema.shape.dayOfWeek.int().min(0).max(6),
+  startTime: workoutScheduleDbSchema.shape.startTime.regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/)
+});
+var workoutScheduleQueryDtoSchema = workoutScheduleDbSchema;
+
+// src/modules/workout-schedule/workout-schedule.contracts.ts
+var getWorkoutSchedulesResponseSchema = z34.object({
+  schedules: z34.array(workoutScheduleQueryDtoSchema)
+});
+var getWorkoutSchedulesContract = {
+  response: getWorkoutSchedulesResponseSchema
+};
+var replaceWorkoutSchedulesRequestSchema = z34.object({
+  body: z34.object({
+    schedules: z34.array(workoutScheduleInputDtoSchema).superRefine((schedules, context) => {
+      const keys = /* @__PURE__ */ new Set();
+      for (const schedule of schedules) {
+        const key = `${schedule.workoutSplitId}:${schedule.dayOfWeek}`;
+        if (keys.has(key)) {
+          context.addIssue({
+            code: "custom",
+            message: "A workout split can only be scheduled once per weekday"
+          });
+        }
+        keys.add(key);
+      }
+    })
+  })
+});
+var replaceWorkoutSchedulesContract = {
+  request: replaceWorkoutSchedulesRequestSchema,
+  response: z34.void()
+};
 export {
   accessTokenPayloadDtoSchema,
   addAerobicInputQueryDtoSchema,
@@ -2601,6 +2642,8 @@ export {
   getWorkoutPlanContract,
   getWorkoutPlanRequestSchema,
   getWorkoutPlanResponseSchema,
+  getWorkoutSchedulesContract,
+  getWorkoutSchedulesResponseSchema,
   getWorkoutStatisticsContract,
   getWorkoutStatisticsResponseSchema,
   googleOAuthContract,
@@ -2646,6 +2689,8 @@ export {
   replaceWorkoutPlanContract,
   replaceWorkoutPlanRequestSchema,
   replaceWorkoutPlanResponseSchema,
+  replaceWorkoutSchedulesContract,
+  replaceWorkoutSchedulesRequestSchema,
   resetPasswordContract,
   resetPasswordRequestSchema,
   resetPasswordResponseSchema,
@@ -2695,6 +2740,8 @@ export {
   workoutPlanDbSchema,
   workoutPlanIdQueryDtoSchema,
   workoutScheduleDbSchema,
+  workoutScheduleInputDtoSchema,
+  workoutScheduleQueryDtoSchema,
   workoutSetDbSchema,
   workoutSplitDbSchema,
   workoutSplitIdQueryDtoSchema,

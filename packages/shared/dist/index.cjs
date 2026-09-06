@@ -111,6 +111,8 @@ __export(index_exports, {
   getWorkoutPlanContract: () => getWorkoutPlanContract,
   getWorkoutPlanRequestSchema: () => getWorkoutPlanRequestSchema,
   getWorkoutPlanResponseSchema: () => getWorkoutPlanResponseSchema,
+  getWorkoutSchedulesContract: () => getWorkoutSchedulesContract,
+  getWorkoutSchedulesResponseSchema: () => getWorkoutSchedulesResponseSchema,
   getWorkoutStatisticsContract: () => getWorkoutStatisticsContract,
   getWorkoutStatisticsResponseSchema: () => getWorkoutStatisticsResponseSchema,
   googleOAuthContract: () => googleOAuthContract,
@@ -156,6 +158,8 @@ __export(index_exports, {
   replaceWorkoutPlanContract: () => replaceWorkoutPlanContract,
   replaceWorkoutPlanRequestSchema: () => replaceWorkoutPlanRequestSchema,
   replaceWorkoutPlanResponseSchema: () => replaceWorkoutPlanResponseSchema,
+  replaceWorkoutSchedulesContract: () => replaceWorkoutSchedulesContract,
+  replaceWorkoutSchedulesRequestSchema: () => replaceWorkoutSchedulesRequestSchema,
   resetPasswordContract: () => resetPasswordContract,
   resetPasswordRequestSchema: () => resetPasswordRequestSchema,
   resetPasswordResponseSchema: () => resetPasswordResponseSchema,
@@ -205,6 +209,8 @@ __export(index_exports, {
   workoutPlanDbSchema: () => workoutPlanDbSchema,
   workoutPlanIdQueryDtoSchema: () => workoutPlanIdQueryDtoSchema,
   workoutScheduleDbSchema: () => workoutScheduleDbSchema,
+  workoutScheduleInputDtoSchema: () => workoutScheduleInputDtoSchema,
+  workoutScheduleQueryDtoSchema: () => workoutScheduleQueryDtoSchema,
   workoutSetDbSchema: () => workoutSetDbSchema,
   workoutSplitDbSchema: () => workoutSplitDbSchema,
   workoutSplitIdQueryDtoSchema: () => workoutSplitIdQueryDtoSchema,
@@ -2724,6 +2730,47 @@ var getPersonalRecordsContract = {
   request: getPersonalRecordsRequestSchema,
   response: getPersonalRecordsResponseSchema
 };
+
+// src/modules/workout-schedule/workout-schedule.contracts.ts
+var import_v434 = require("zod/v4");
+
+// src/modules/workout-schedule/workout-schedule.dtos.ts
+var import_v433 = require("zod/v4");
+var workoutScheduleInputDtoSchema = import_v433.z.object({
+  workoutSplitId: workoutScheduleDbSchema.shape.workoutSplitId,
+  dayOfWeek: workoutScheduleDbSchema.shape.dayOfWeek.int().min(0).max(6),
+  startTime: workoutScheduleDbSchema.shape.startTime.regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/)
+});
+var workoutScheduleQueryDtoSchema = workoutScheduleDbSchema;
+
+// src/modules/workout-schedule/workout-schedule.contracts.ts
+var getWorkoutSchedulesResponseSchema = import_v434.z.object({
+  schedules: import_v434.z.array(workoutScheduleQueryDtoSchema)
+});
+var getWorkoutSchedulesContract = {
+  response: getWorkoutSchedulesResponseSchema
+};
+var replaceWorkoutSchedulesRequestSchema = import_v434.z.object({
+  body: import_v434.z.object({
+    schedules: import_v434.z.array(workoutScheduleInputDtoSchema).superRefine((schedules, context) => {
+      const keys = /* @__PURE__ */ new Set();
+      for (const schedule of schedules) {
+        const key = `${schedule.workoutSplitId}:${schedule.dayOfWeek}`;
+        if (keys.has(key)) {
+          context.addIssue({
+            code: "custom",
+            message: "A workout split can only be scheduled once per weekday"
+          });
+        }
+        keys.add(key);
+      }
+    })
+  })
+});
+var replaceWorkoutSchedulesContract = {
+  request: replaceWorkoutSchedulesRequestSchema,
+  response: import_v434.z.void()
+};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   accessTokenPayloadDtoSchema,
@@ -2816,6 +2863,8 @@ var getPersonalRecordsContract = {
   getWorkoutPlanContract,
   getWorkoutPlanRequestSchema,
   getWorkoutPlanResponseSchema,
+  getWorkoutSchedulesContract,
+  getWorkoutSchedulesResponseSchema,
   getWorkoutStatisticsContract,
   getWorkoutStatisticsResponseSchema,
   googleOAuthContract,
@@ -2861,6 +2910,8 @@ var getPersonalRecordsContract = {
   replaceWorkoutPlanContract,
   replaceWorkoutPlanRequestSchema,
   replaceWorkoutPlanResponseSchema,
+  replaceWorkoutSchedulesContract,
+  replaceWorkoutSchedulesRequestSchema,
   resetPasswordContract,
   resetPasswordRequestSchema,
   resetPasswordResponseSchema,
@@ -2910,6 +2961,8 @@ var getPersonalRecordsContract = {
   workoutPlanDbSchema,
   workoutPlanIdQueryDtoSchema,
   workoutScheduleDbSchema,
+  workoutScheduleInputDtoSchema,
+  workoutScheduleQueryDtoSchema,
   workoutSetDbSchema,
   workoutSplitDbSchema,
   workoutSplitIdQueryDtoSchema,
