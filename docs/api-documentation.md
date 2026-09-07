@@ -123,6 +123,7 @@ This file focuses on success contracts. Route-specific non-JSON behavior is call
 | `POST`   | `/api/oauth/google`                  | Public               | Google OAuth login                                                         |
 | `GET`    | `/api/reminders`                     | User                 | Get reminder settings                                                      |
 | `PUT`    | `/api/reminders`                     | User                 | Create or replace reminder settings; returns 204                           |
+| `PATCH`  | `/api/reminders/time-zone`           | User                 | Update only the reminder time zone; returns 204                            |
 | `POST`   | `/api/push-jobs/workout-reminders`   | Cron JWT             | Enqueue due workout reminders                                               |
 | `POST`   | `/api/video-analysis/upload-urls`    | User                 | Generate direct-upload URL                                                 |
 | `POST`   | `/api/websocket-tickets`             | User                 | Generate websocket ticket                                                  |
@@ -1278,6 +1279,10 @@ Returns the authenticated user's reminder settings as `reminderSettings`, or `nu
 ### `PUT /api/reminders`
 
 Creates or replaces the authenticated user's reminder settings and returns `204 No Content`. Workout reminders are always sent 30 minutes before the scheduled workout.
+
+### `PATCH /api/reminders/time-zone`
+
+Updates only the authenticated user's reminder IANA time zone and returns `204 No Content`. The request body is `{ "timeZone": "America/New_York" }`; reminder enablement is unchanged.
 
 ## Push
 

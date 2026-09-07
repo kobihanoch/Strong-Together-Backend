@@ -1,6 +1,10 @@
-import { Controller, Get, HttpCode, HttpStatus, Put, UseGuards, UseInterceptors } from '@nestjs/common';
-import type { GetReminderSettingsResponse, UpsertReminderSettingsBody } from '@strong-together/shared';
-import { upsertReminderSettingsRequestSchema } from '@strong-together/shared';
+import { Controller, Get, HttpCode, HttpStatus, Patch, Put, UseGuards, UseInterceptors } from '@nestjs/common';
+import type {
+  GetReminderSettingsResponse,
+  UpdateReminderTimeZoneBody,
+  UpsertReminderSettingsBody,
+} from '@strong-together/shared';
+import { updateReminderTimeZoneRequestSchema, upsertReminderSettingsRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestData } from '../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
@@ -17,6 +21,7 @@ import { RemindersService } from './reminders.service';
  * Exposes reminder-settings read and create-or-replace operations:
  * - GET /api/reminders
  * - PUT /api/reminders
+ * - PATCH /api/reminders/time-zone
  *
  * Access: User
  */
@@ -59,5 +64,26 @@ export class RemindersController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
     await this.remindersService.upsertReminderSettingsData(user.id, data.body);
+  }
+
+  /**
+   * Updates only the authenticated user's reminder time zone.
+   *
+   * Leaves the reminder-enabled setting unchanged.
+   *
+   * @remarks Route: PATCH /api/reminders/time-zone
+   * Access: User
+   *
+   * @param data - The validated reminder time-zone request.
+   * @param user - The authenticated user.
+   */
+  @Patch('time-zone')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updateReminderTimeZone(
+    @RequestData(new ValidateRequestPipe(updateReminderTimeZoneRequestSchema))
+    data: { body: UpdateReminderTimeZoneBody },
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<void> {
+    await this.remindersService.updateReminderTimeZoneData(user.id, data.body);
   }
 }

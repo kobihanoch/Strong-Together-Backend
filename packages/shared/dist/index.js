@@ -2062,6 +2062,15 @@ var upsertReminderSettingsContract = {
   request: upsertReminderSettingsRequestSchema,
   response: z22.void()
 };
+var updateReminderTimeZoneRequestSchema = z22.object({
+  body: z22.object({
+    timeZone: timezoneSchema
+  })
+});
+var updateReminderTimeZoneContract = {
+  request: updateReminderTimeZoneRequestSchema,
+  response: z22.void()
+};
 
 // src/modules/user/create/create.contracts.ts
 import { z as z24 } from "zod/v4";
@@ -2759,6 +2768,8 @@ export {
   updateCurrentUserContract,
   updateCurrentUserRequestSchema,
   updateCurrentUserResponseSchema,
+  updateReminderTimeZoneContract,
+  updateReminderTimeZoneRequestSchema,
   updateUnverifiedAccountEmailContract,
   updateUnverifiedAccountEmailRequestSchema,
   upsertReminderSettingsContract,

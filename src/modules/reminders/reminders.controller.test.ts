@@ -72,14 +72,53 @@ describe('RemindersController', () => {
     expect(unchanged.body.reminderSettings).toMatchObject({ reminderEnabled: true, timeZone: 'Asia/Jerusalem' });
   });
 
-  it('GET and PUT /api/reminders reject unauthenticated requests', async () => {
+  it('PATCH /api/reminders/time-zone updates only the time zone', async () => {
+    const user = await createAndLoginTestUser(app, 'reminders_timezone');
+    users.add(user.username);
+    const headers = authHeaders(user.accessToken);
+    await request(app.getHttpServer())
+      .put('/api/reminders')
+      .set(headers)
+      .send({ reminderEnabled: false, timeZone: 'Asia/Jerusalem' })
+      .expect(204);
+
+    await request(app.getHttpServer())
+      .patch('/api/reminders/time-zone')
+      .set(headers)
+      .send({ timeZone: 'America/New_York' })
+      .expect(204);
+
+    const response = await request(app.getHttpServer()).get('/api/reminders').set(headers).expect(200);
+    expect(response.body.reminderSettings).toMatchObject({
+      reminderEnabled: false,
+      timeZone: 'America/New_York',
+    });
+  });
+
+  it('PATCH /api/reminders/time-zone rejects an invalid time zone', async () => {
+    const user = await createAndLoginTestUser(app, 'reminders_timezone_invalid');
+    users.add(user.username);
+
+    await request(app.getHttpServer())
+      .patch('/api/reminders/time-zone')
+      .set(authHeaders(user.accessToken))
+      .send({ timeZone: 'Not/A_Time_Zone' })
+      .expect(400);
+  });
+
+  it('GET, PUT, and PATCH /api/reminders reject unauthenticated requests', async () => {
     const getResponse = await request(app.getHttpServer()).get('/api/reminders').set('x-app-version', '4.5.0');
     const putResponse = await request(app.getHttpServer())
       .put('/api/reminders')
       .set('x-app-version', '4.5.0')
       .send({ reminderEnabled: true, timeZone: 'Asia/Jerusalem' });
+    const patchResponse = await request(app.getHttpServer())
+      .patch('/api/reminders/time-zone')
+      .set('x-app-version', '4.5.0')
+      .send({ timeZone: 'Asia/Jerusalem' });
 
     expect(getResponse.status).toBe(401);
     expect(putResponse.status).toBe(401);
+    expect(patchResponse.status).toBe(401);
   });
 });

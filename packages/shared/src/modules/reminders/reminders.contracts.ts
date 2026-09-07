@@ -24,6 +24,19 @@ export const upsertReminderSettingsContract = {
   response: z.void(),
 } satisfies Contract;
 
+export const updateReminderTimeZoneRequestSchema = z.object({
+  body: z.object({
+    timeZone: timezoneSchema,
+  }),
+});
+
+export const updateReminderTimeZoneContract = {
+  request: updateReminderTimeZoneRequestSchema,
+  response: z.void(),
+} satisfies Contract;
+
 export type UpsertReminderSettingsBody = BodyOf<typeof upsertReminderSettingsContract>;
 export type UpsertReminderSettingsResponse = ResponseOf<typeof upsertReminderSettingsContract>;
+export type UpdateReminderTimeZoneBody = BodyOf<typeof updateReminderTimeZoneContract>;
+export type UpdateReminderTimeZoneResponse = ResponseOf<typeof updateReminderTimeZoneContract>;
 export type GetReminderSettingsResponse = ResponseOf<typeof getReminderSettingsContract>;

@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import type { GetReminderSettingsResponse, UpsertReminderSettingsBody } from '@strong-together/shared';
+import type {
+  GetReminderSettingsResponse,
+  UpdateReminderTimeZoneBody,
+  UpsertReminderSettingsBody,
+} from '@strong-together/shared';
 import { RemindersQueries } from './reminders.queries';
 
 @Injectable()
@@ -23,5 +27,14 @@ export class RemindersService {
    */
   async upsertReminderSettingsData(userId: string, body: UpsertReminderSettingsBody): Promise<void> {
     await this.remindersQueries.queryUpsertReminderSettings(userId, body);
+  }
+
+  /**
+   * Updates only the time zone of the authenticated user's reminder settings.
+   * @param userId - The authenticated user's identifier.
+   * @param body - The validated reminder time-zone payload.
+   */
+  async updateReminderTimeZoneData(userId: string, body: UpdateReminderTimeZoneBody): Promise<void> {
+    await this.remindersQueries.queryUpdateReminderTimeZone(userId, body);
   }
 }

@@ -180,6 +180,8 @@ __export(index_exports, {
   updateCurrentUserContract: () => updateCurrentUserContract,
   updateCurrentUserRequestSchema: () => updateCurrentUserRequestSchema,
   updateCurrentUserResponseSchema: () => updateCurrentUserResponseSchema,
+  updateReminderTimeZoneContract: () => updateReminderTimeZoneContract,
+  updateReminderTimeZoneRequestSchema: () => updateReminderTimeZoneRequestSchema,
   updateUnverifiedAccountEmailContract: () => updateUnverifiedAccountEmailContract,
   updateUnverifiedAccountEmailRequestSchema: () => updateUnverifiedAccountEmailRequestSchema,
   upsertReminderSettingsContract: () => upsertReminderSettingsContract,
@@ -2286,6 +2288,15 @@ var upsertReminderSettingsContract = {
   request: upsertReminderSettingsRequestSchema,
   response: import_v422.z.void()
 };
+var updateReminderTimeZoneRequestSchema = import_v422.z.object({
+  body: import_v422.z.object({
+    timeZone: timezoneSchema
+  })
+});
+var updateReminderTimeZoneContract = {
+  request: updateReminderTimeZoneRequestSchema,
+  response: import_v422.z.void()
+};
 
 // src/modules/user/create/create.contracts.ts
 var import_v424 = require("zod/v4");
@@ -2984,6 +2995,8 @@ var replaceWorkoutSchedulesContract = {
   updateCurrentUserContract,
   updateCurrentUserRequestSchema,
   updateCurrentUserResponseSchema,
+  updateReminderTimeZoneContract,
+  updateReminderTimeZoneRequestSchema,
   updateUnverifiedAccountEmailContract,
   updateUnverifiedAccountEmailRequestSchema,
   upsertReminderSettingsContract,

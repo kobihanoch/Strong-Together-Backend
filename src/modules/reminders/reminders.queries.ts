@@ -1,5 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { GetReminderSettingsResponse, UpsertReminderSettingsBody } from '@strong-together/shared';
+import type {
+  GetReminderSettingsResponse,
+  UpdateReminderTimeZoneBody,
+  UpsertReminderSettingsBody,
+} from '@strong-together/shared';
 import type postgres from 'postgres';
 import { SQL } from '../../infrastructure/db/db.tokens';
 
@@ -51,6 +55,21 @@ export class RemindersQueries {
         reminder_enabled = EXCLUDED.reminder_enabled,
         time_zone = EXCLUDED.time_zone,
         updated_at = NOW()
+    `;
+  }
+
+  /**
+   * Updates only the time zone of reminder settings owned by a user.
+   * @param userId - The authenticated user's identifier.
+   * @param settings - The validated reminder time-zone settings.
+   */
+  async queryUpdateReminderTimeZone(userId: string, settings: UpdateReminderTimeZoneBody): Promise<void> {
+    await this.sql`
+      UPDATE reminders.user_reminder_setting
+      SET
+        time_zone = ${settings.timeZone},
+        updated_at = NOW()
+      WHERE user_id = ${userId}::UUID
     `;
   }
 }
