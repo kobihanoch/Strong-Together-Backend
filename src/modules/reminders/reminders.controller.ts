@@ -1,5 +1,5 @@
-import { Controller, HttpCode, HttpStatus, Put, UseGuards, UseInterceptors } from '@nestjs/common';
-import type { UpsertReminderSettingsBody } from '@strong-together/shared';
+import { Controller, Get, HttpCode, HttpStatus, Put, UseGuards, UseInterceptors } from '@nestjs/common';
+import type { GetReminderSettingsResponse, UpsertReminderSettingsBody } from '@strong-together/shared';
 import { upsertReminderSettingsRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestData } from '../../common/decorators/request-data.decorator';
@@ -14,7 +14,8 @@ import { RemindersService } from './reminders.service';
 /**
  * Reminder-settings routes for authenticated users.
  *
- * Exposes a single create-or-replace operation:
+ * Exposes reminder-settings read and create-or-replace operations:
+ * - GET /api/reminders
  * - PUT /api/reminders
  *
  * Access: User
@@ -25,6 +26,18 @@ import { RemindersService } from './reminders.service';
 @Roles('user')
 export class RemindersController {
   constructor(private readonly remindersService: RemindersService) {}
+
+  /**
+   * Gets the authenticated user's reminder settings.
+   * @remarks Route: GET /api/reminders
+   * Access: User
+   * @param user - The authenticated user.
+   * @returns The user's reminder settings, or null when none exist.
+   */
+  @Get()
+  async getReminderSettings(@CurrentUser() user: AuthenticatedUser): Promise<GetReminderSettingsResponse> {
+    return this.remindersService.getReminderSettingsData(user.id);
+  }
 
   /**
    * Create or replace the authenticated user's reminder settings.

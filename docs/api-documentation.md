@@ -121,7 +121,9 @@ This file focuses on success contracts. Route-specific non-JSON behavior is call
 | `DELETE` | `/api/messages/:id`                  | User                 | Delete message                                                             |
 | `POST`   | `/api/oauth/apple`                   | Public               | Apple OAuth login                                                          |
 | `POST`   | `/api/oauth/google`                  | Public               | Google OAuth login                                                         |
-| `GET`    | `/api/push-jobs/daily`               | Public (temporary)   | Trigger daily push enqueue; scheduled-job authentication is still required |
+| `GET`    | `/api/reminders`                     | User                 | Get reminder settings                                                      |
+| `PUT`    | `/api/reminders`                     | User                 | Create or replace reminder settings; returns 204                           |
+| `POST`   | `/api/push-jobs/workout-reminders`   | Cron JWT             | Enqueue due workout reminders                                               |
 | `POST`   | `/api/video-analysis/upload-urls`    | User                 | Generate direct-upload URL                                                 |
 | `POST`   | `/api/websocket-tickets`             | User                 | Generate websocket ticket                                                  |
 
@@ -1225,22 +1227,35 @@ Notes:
 
 - Returns `Cache-Control: no-store`
 
+## Reminders
+
+### `GET /api/reminders`
+
+Returns the authenticated user's reminder settings as `reminderSettings`, or `null` when none exist.
+
+### `PUT /api/reminders`
+
+Creates or replaces the authenticated user's reminder settings and returns `204 No Content`. Workout reminders are always sent 30 minutes before the scheduled workout.
+
 ## Push
 
-### `POST /api/push-jobs/daily`
+### `POST /api/push-jobs/workout-reminders`
 
-Triggers the daily push enqueue flow.
+Enqueues eligible workout reminders due during the hourly cron window.
 
 Access:
 
-- Public
+- Cron JWT (`Authorization: Bearer <token>`)
+
+Generate `CRON_JWT_SECRET` once with `require('crypto').randomBytes(20).toString('hex')`. The cron JWT must be signed with that secret using HS256.
 
 Successful response:
 
 ```json
 {
   "success": true,
-  "message": "string"
+  "message": "Workout reminders enqueued",
+  "reminderCount": 0
 }
 ```
 
@@ -1355,7 +1370,7 @@ These routes do not return JSON:
 These routes touch external infrastructure directly:
 
 - `/api/video-analysis/upload-urls` uses S3 presigning
-- `/api/push-jobs/daily` enqueues background work
+- `/api/push-jobs/workout-reminders` enqueues delayed background work
 - auth mail flows rely on mailer / queue infrastructure
 - profile image routes use object storage through `SupabaseStorageService`; prod uses Supabase Storage, dev/test use LocalStack S3
 

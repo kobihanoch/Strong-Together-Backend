@@ -1,49 +1,60 @@
-import { Controller, Post, Res, UseInterceptors } from '@nestjs/common';
+import { Controller, Headers, Post, Res, UnauthorizedException } from '@nestjs/common';
 import type { Response } from 'express';
+import jwt from 'jsonwebtoken';
+import { extractBearerToken } from '../../common/authentication/authentication.utils';
 import { CurrentLogger } from '../../common/decorators/current-logger.decorator';
 import { CurrentRequestId } from '../../common/decorators/current-request-id.decorator';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
+import { authConfig } from '../../config/auth.config';
 import type { AppLogger } from '../../infrastructure/logger';
 import { PushService } from './push.service';
 
 /**
  * Push-notification trigger routes.
  *
- * Preserves the existing route paths and behavior from the Express version:
- * - POST /api/push-jobs/daily
+ * - POST /api/push-jobs/workout-reminders
  *
- * Access: Public
+ * Access: Cron JWT
  */
 @Controller('api/push-jobs')
-@UseInterceptors(RlsTxInterceptor)
 export class PushController {
   constructor(private readonly pushService: PushService) {}
 
   /**
-   * Enqueue the daily push-notification batch.
+   * Enqueues workout reminders due during the cron look-ahead window.
    *
-   * Triggers the daily notification flow and returns a summary of the enqueue
-   * operation.
+   * @remarks Route: POST /api/push-jobs/workout-reminders
+   * Access: Cron JWT
    *
-   * @remarks Route: POST /api/push-jobs/daily
-   * Access: Public
-   *
+   * @param authorization - Bearer JWT supplied by the cron service.
    * @param requestId - The request id.
    * @param requestLogger - The request-scoped logger.
    * @param res - The HTTP response.
+   * @returns Resolves after due reminders are enqueued and the response is sent.
    */
-  @Post('daily')
-  async sendDailyPush(
+  @Post('workout-reminders')
+  async enqueueWorkoutReminders(
+    @Headers('authorization') authorization: string | undefined,
     @CurrentRequestId() requestId: string | undefined,
     @CurrentLogger() requestLogger: AppLogger,
     @Res() res: Response,
   ): Promise<void> {
+    const token = extractBearerToken(authorization);
     try {
-      const payload = await this.pushService.sendDailyPushData(requestId);
-      res.json({ success: payload.success, message: payload.message });
+      if (!token || !authConfig.cronJwtSecret) throw new Error('Missing cron JWT');
+      jwt.verify(token, authConfig.cronJwtSecret, { algorithms: ['HS256'] });
+    } catch {
+      throw new UnauthorizedException('Invalid cron JWT');
+    }
+
+    try {
+      const payload = await this.pushService.enqueueDueWorkoutReminders(requestId);
+      res.status(200).json(payload);
     } catch (error) {
       if (error instanceof Error) {
-        requestLogger.error({ err: error, event: 'push.daily_enqueue_failed' }, 'Failed to enqueue daily notifications');
+        requestLogger.error(
+          { err: error, event: 'push.workout_reminders_enqueue_failed' },
+          'Failed to enqueue workout reminders',
+        );
         res.status(500).json({ success: false, error: error.message });
       }
     }

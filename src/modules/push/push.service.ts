@@ -6,7 +6,7 @@ import { PushQueries } from './push.queries';
 export type PushBatchResponse = {
   success: true;
   message: string;
-  userCount: number;
+  reminderCount: number;
 };
 
 // Returns { ok: true, id? } OR { ok: false, permanent: true, reason }
@@ -92,24 +92,28 @@ export class PushService {
   }
 
   /**
-   * Sends daily push.
+   * Enqueues workout reminders due during the hourly cron window.
    * @param requestId - The request correlation identifier.
-   * @returns The send daily push result.
+   * @returns The enqueue result and number of reminders found.
    */
-  async sendDailyPushData(requestId?: string): Promise<PushBatchResponse> {
-    const users = await this.pushQueries.queryGetAllUsersWithNotificationsEnabled();
+  async enqueueDueWorkoutReminders(requestId?: string): Promise<PushBatchResponse> {
+    const reminders = await this.pushQueries.queryDueWorkoutReminders();
+    const now = Date.now();
 
     await this.pushNotificationsProducerService.enqueuePushNotifications(
-      users.map((user) => ({
-        token: user.pushToken!,
-        title: `Hello, ${user.name!.split(' ')[0]}!`,
-        body: 'Ready to go workout?',
-        delay: 0,
+      reminders.map((reminder) => ({
+        userId: reminder.userId,
+        workoutScheduleId: reminder.workoutScheduleId,
+        occurrenceDate: reminder.occurrenceDate,
+        reminderAt: reminder.reminderAt.toISOString(),
+        title: `Hello, ${reminder.firstName}!`,
+        body: `Your ${reminder.splitName} workout starts soon.`,
+        delay: Math.max(0, reminder.reminderAt.getTime() - now),
         expiresAt: 0,
         ...(requestId ? { requestId } : {}),
       })),
     );
 
-    return { success: true, message: 'Daily notifications enqueued', userCount: users.length };
+    return { success: true, message: 'Workout reminders enqueued', reminderCount: reminders.length };
   }
 }

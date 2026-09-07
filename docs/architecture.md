@@ -153,13 +153,9 @@ The current implementation delivers analysis results in realtime and does not pe
 
 ### Push
 
-`PushModule` exposes scheduler-style enqueue routes:
+`PushModule` exposes `POST /api/push-jobs/workout-reminders` for an external hourly scheduler. The route requires a Bearer JWT signed with `CRON_JWT_SECRET`. It finds scheduled workout reminders due within the next 70 minutes and adds delayed jobs to `{env}:pushNotificationsQueue`.
 
-- `POST /api/push-jobs/daily`
-
-The push trigger routes are currently public for compatibility. They are not allowed to gain broad guest database privileges; the target architecture is an authenticated scheduler/worker using a dedicated cron runtime role and allow-listed `cron_api` functions.
-
-`PushService` queries eligible users from PostgreSQL and enqueues jobs into the Redis-backed Bull queue `{env}:pushNotificationsQueue`. The push worker consumes those jobs and sends notifications to Expo Push.
+The push worker rechecks the user, Expo token, reminder settings, workout schedule, and active plan immediately before sending to Expo Push.
 
 ### Analytics
 

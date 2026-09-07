@@ -103,6 +103,8 @@ __export(index_exports, {
   getPersonalRecordsContract: () => getPersonalRecordsContract,
   getPersonalRecordsRequestSchema: () => getPersonalRecordsRequestSchema,
   getPersonalRecordsResponseSchema: () => getPersonalRecordsResponseSchema,
+  getReminderSettingsContract: () => getReminderSettingsContract,
+  getReminderSettingsResponseSchema: () => getReminderSettingsResponseSchema,
   getVerificationStatusContract: () => getVerificationStatusContract,
   getVerificationStatusRequestSchema: () => getVerificationStatusRequestSchema,
   getWorkoutHistoryContract: () => getWorkoutHistoryContract,
@@ -409,7 +411,6 @@ var userReminderSetting = remindersSchema.table("user_reminder_setting", {
   id: (0, import_pg_core6.uuid)("id").defaultRandom().notNull(),
   userId: (0, import_pg_core6.uuid)("user_id").notNull(),
   reminderEnabled: (0, import_pg_core6.boolean)("reminder_enabled").default(false).notNull(),
-  reminderOffsetMinutes: (0, import_pg_core6.integer)("reminder_offset_minutes").notNull(),
   createdAt: (0, import_pg_core6.timestamp)("created_at", {
     withTimezone: true
   }).defaultNow().notNull(),
@@ -2255,10 +2256,15 @@ var userWithNotificationsEnabledQueryDtoSchema = import_v421.z.object({
 
 // src/modules/reminders/reminders.contracts.ts
 var import_v422 = require("zod/v4");
+var getReminderSettingsResponseSchema = import_v422.z.object({
+  reminderSettings: userReminderSettingDbSchema.nullable()
+});
+var getReminderSettingsContract = {
+  response: getReminderSettingsResponseSchema
+};
 var upsertReminderSettingsRequestSchema = import_v422.z.object({
   body: import_v422.z.object({
     reminderEnabled: userReminderSettingDbSchema.shape.reminderEnabled,
-    reminderOffsetMinutes: userReminderSettingDbSchema.shape.reminderOffsetMinutes.int().nonnegative(),
     timeZone: userReminderSettingDbSchema.shape.timeZone.min(1, "Time zone is required")
   })
 });
@@ -2876,6 +2882,8 @@ var replaceWorkoutSchedulesContract = {
   getPersonalRecordsContract,
   getPersonalRecordsRequestSchema,
   getPersonalRecordsResponseSchema,
+  getReminderSettingsContract,
+  getReminderSettingsResponseSchema,
   getVerificationStatusContract,
   getVerificationStatusRequestSchema,
   getWorkoutHistoryContract,

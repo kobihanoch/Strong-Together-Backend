@@ -1,5 +1,8 @@
 export type NotificationPayload = {
-  token: string;
+  userId: string;
+  workoutScheduleId: string;
+  occurrenceDate: string;
+  reminderAt: string;
   title: string;
   body: string;
   delay?: number;
