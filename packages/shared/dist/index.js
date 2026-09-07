@@ -145,7 +145,7 @@ var messageRelations = relations(message, ({ one }) => ({
 
 // ../../src/infrastructure/db/schema/drizzle/reminders/user_reminder_setting/table.ts
 import { relations as relations2 } from "drizzle-orm";
-import { boolean as boolean2, foreignKey as foreignKey2, integer, primaryKey as primaryKey2, text as text2, timestamp as timestamp2, unique, uuid as uuid2 } from "drizzle-orm/pg-core";
+import { boolean as boolean2, foreignKey as foreignKey2, primaryKey as primaryKey2, text as text2, timestamp as timestamp2, unique, uuid as uuid2 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/reminders/user_reminder_setting/policies.ts
 import { sql as drizzleSql3 } from "drizzle-orm";
@@ -187,7 +187,6 @@ var userReminderSetting = remindersSchema.table("user_reminder_setting", {
   id: uuid2("id").defaultRandom().notNull(),
   userId: uuid2("user_id").notNull(),
   reminderEnabled: boolean2("reminder_enabled").default(false).notNull(),
-  reminderOffsetMinutes: integer("reminder_offset_minutes").notNull(),
   createdAt: timestamp2("created_at", {
     withTimezone: true
   }).defaultNow().notNull(),
@@ -227,11 +226,11 @@ var userReminderSettingRelations = relations2(userReminderSetting, ({ one }) => 
 
 // ../../src/infrastructure/db/schema/drizzle/schedules/workout_schedule/table.ts
 import { relations as relations11, sql as drizzleSql18 } from "drizzle-orm";
-import { bigint as bigint9, check as check2, foreignKey as foreignKey10, integer as integer5, primaryKey as primaryKey11, time, timestamp as timestamp7, unique as unique5, uuid as uuid8 } from "drizzle-orm/pg-core";
+import { bigint as bigint9, check as check2, foreignKey as foreignKey10, integer as integer4, primaryKey as primaryKey11, time, timestamp as timestamp7, unique as unique5, uuid as uuid8 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/workout/workout_split/table.ts
 import { sql as drizzleSql16, relations as relations10 } from "drizzle-orm";
-import { bigint as bigint8, boolean as boolean5, foreignKey as foreignKey9, index as index7, integer as integer4, primaryKey as primaryKey10, text as text5, timestamp as timestamp6, uniqueIndex as uniqueIndex3 } from "drizzle-orm/pg-core";
+import { bigint as bigint8, boolean as boolean5, foreignKey as foreignKey9, index as index7, integer as integer3, primaryKey as primaryKey10, text as text5, timestamp as timestamp6, uniqueIndex as uniqueIndex3 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/tracking/workout_summary/table.ts
 import { relations as relations8, sql as drizzleSql12 } from "drizzle-orm";
@@ -251,7 +250,7 @@ import { bigint as bigint2, boolean as boolean3, foreignKey as foreignKey4, inde
 
 // ../../src/infrastructure/db/schema/drizzle/workout/workout_set/table.ts
 import { relations as relations3 } from "drizzle-orm";
-import { bigint, foreignKey as foreignKey3, index as index2, integer as integer2, primaryKey as primaryKey3, unique as unique2, uuid as uuid3 } from "drizzle-orm/pg-core";
+import { bigint, foreignKey as foreignKey3, index as index2, integer, primaryKey as primaryKey3, unique as unique2, uuid as uuid3 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/workout/workout_set/policies.ts
 import { sql as drizzleSql4 } from "drizzle-orm";
@@ -302,8 +301,8 @@ var workoutSet = workoutSchema.table("workout_set", {
   exerciseToSplitId: bigint("exercise_to_split_id", {
     mode: "number"
   }).notNull(),
-  orderIndex: integer2("order_index").notNull(),
-  reps: integer2("reps").notNull()
+  orderIndex: integer("order_index").notNull(),
+  reps: integer("reps").notNull()
 }, (t) => [
   primaryKey3({
     name: "workout_set_pkey",
@@ -482,7 +481,7 @@ var exerciseRelations = relations5(exercise, ({ many }) => ({
 
 // ../../src/infrastructure/db/schema/drizzle/tracking/tracking_set/table.ts
 import { relations as relations6 } from "drizzle-orm";
-import { bigint as bigint4, foreignKey as foreignKey5, index as index4, integer as integer3, primaryKey as primaryKey6, real, unique as unique4, uuid as uuid4 } from "drizzle-orm/pg-core";
+import { bigint as bigint4, foreignKey as foreignKey5, index as index4, integer as integer2, primaryKey as primaryKey6, real, unique as unique4, uuid as uuid4 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/tracking/tracking_set/policies.ts
 import { sql as drizzleSql8 } from "drizzle-orm";
@@ -532,8 +531,8 @@ var trackingSet = trackingSchema.table("tracking_set", {
   exerciseTrackingId: bigint4("exercise_tracking_id", {
     mode: "number"
   }).notNull(),
-  setIndex: integer3("set_index").notNull(),
-  reps: integer3("reps").notNull(),
+  setIndex: integer2("set_index").notNull(),
+  reps: integer2("reps").notNull(),
   weight: real("weight").notNull()
 }, (t) => [
   primaryKey6({
@@ -918,7 +917,7 @@ var workoutSplit = workoutSchema.table("workout_split", {
     mode: "number"
   }).notNull(),
   name: text5("name").notNull(),
-  orderIndex: integer4("order_index").notNull(),
+  orderIndex: integer3("order_index").notNull(),
   createdAt: timestamp6("created_at", {
     withTimezone: true
   }).defaultNow().notNull(),
@@ -999,7 +998,7 @@ var workoutSchedule = schedulesSchema.table("workout_schedule", {
   workoutSplitId: bigint9("workout_split_id", {
     mode: "number"
   }).notNull(),
-  dayOfWeek: integer5("day_of_week").notNull(),
+  dayOfWeek: integer4("day_of_week").notNull(),
   startTime: time("start_time", {
     precision: 0
   }).notNull(),
@@ -1341,7 +1340,7 @@ var userRelations = relations14(user, ({ many, one }) => ({
 
 // ../../src/infrastructure/db/schema/drizzle/tracking/views/prs.view.ts
 import { sql as drizzleSql23 } from "drizzle-orm";
-import { bigint as bigint12, integer as integer6, real as real2, text as text9, timestamp as timestamp11, uuid as uuid12 } from "drizzle-orm/pg-core";
+import { bigint as bigint12, integer as integer5, real as real2, text as text9, timestamp as timestamp11, uuid as uuid12 } from "drizzle-orm/pg-core";
 var prsView = trackingSchema.view("v_prs", {
   id: bigint12("id", {
     mode: "number"
@@ -1353,7 +1352,7 @@ var prsView = trackingSchema.view("v_prs", {
     mode: "number"
   }),
   exercise: text9("exercise"),
-  setIndex: integer6("set_index"),
+  setIndex: integer5("set_index"),
   weight: real2("weight"),
   reps: bigint12("reps", {
     mode: "number"
@@ -1392,7 +1391,7 @@ var prsView = trackingSchema.view("v_prs", {
 // ../../src/infrastructure/db/schema/drizzle/workout/views/exercise-to-workoutsplit-expanded.view.ts
 import { bigint as bigint13, boolean as boolean7, text as text10, timestamp as timestamp12 } from "drizzle-orm/pg-core";
 import { sql as drizzleSql24 } from "drizzle-orm";
-import { integer as integer7 } from "drizzle-orm/pg-core";
+import { integer as integer6 } from "drizzle-orm/pg-core";
 var exerciseToWorkoutSplitSetExpandedView = workoutSchema.view("v_exercise_to_workout_split_set_expanded", {
   id: bigint13("id", {
     mode: "number"
@@ -1408,11 +1407,11 @@ var exerciseToWorkoutSplitSetExpandedView = workoutSchema.view("v_exercise_to_wo
   }),
   exercise: text10("exercise"),
   workoutSplit: text10("workout_split"),
-  reps: integer7("reps"),
+  reps: integer6("reps"),
   orderIndex: bigint13("order_index", {
     mode: "number"
   }),
-  setIndex: integer7("set_index"),
+  setIndex: integer6("set_index"),
   createdAt: timestamp12("created_at", {
     withTimezone: true
   }),
@@ -1454,7 +1453,7 @@ var exerciseToWorkoutSplitSetExpandedView = workoutSchema.view("v_exercise_to_wo
 // ../../src/infrastructure/db/schema/drizzle/analytics/views/exercise-tracking-expanded.view.ts
 import { sql as drizzleSql25 } from "drizzle-orm";
 import { bigint as bigint14, boolean as boolean8, real as real3, text as text11, timestamp as timestamp13, uuid as uuid13 } from "drizzle-orm/pg-core";
-import { integer as integer8 } from "drizzle-orm/pg-core";
+import { integer as integer7 } from "drizzle-orm/pg-core";
 var exerciseTrackingSetExpandedView = analyticsSchema.view("v_exercise_tracking_set_expanded", {
   id: bigint14("id", {
     mode: "number"
@@ -1466,8 +1465,8 @@ var exerciseTrackingSetExpandedView = analyticsSchema.view("v_exercise_tracking_
   reps: bigint14("reps", {
     mode: "number"
   }),
-  orderIndex: integer8("order_index"),
-  setIndex: integer8("set_index"),
+  orderIndex: integer7("order_index"),
+  setIndex: integer7("set_index"),
   exerciseId: bigint14("exercise_id", {
     mode: "number"
   }),
@@ -2033,10 +2032,15 @@ var userWithNotificationsEnabledQueryDtoSchema = z21.object({
 
 // src/modules/reminders/reminders.contracts.ts
 import { z as z22 } from "zod/v4";
+var getReminderSettingsResponseSchema = z22.object({
+  reminderSettings: userReminderSettingDbSchema.nullable()
+});
+var getReminderSettingsContract = {
+  response: getReminderSettingsResponseSchema
+};
 var upsertReminderSettingsRequestSchema = z22.object({
   body: z22.object({
     reminderEnabled: userReminderSettingDbSchema.shape.reminderEnabled,
-    reminderOffsetMinutes: userReminderSettingDbSchema.shape.reminderOffsetMinutes.int().nonnegative(),
     timeZone: userReminderSettingDbSchema.shape.timeZone.min(1, "Time zone is required")
   })
 });
@@ -2653,6 +2657,8 @@ export {
   getPersonalRecordsContract,
   getPersonalRecordsRequestSchema,
   getPersonalRecordsResponseSchema,
+  getReminderSettingsContract,
+  getReminderSettingsResponseSchema,
   getVerificationStatusContract,
   getVerificationStatusRequestSchema,
   getWorkoutHistoryContract,

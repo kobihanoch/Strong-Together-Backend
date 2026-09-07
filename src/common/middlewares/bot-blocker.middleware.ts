@@ -16,6 +16,7 @@ export class BotBlockerMiddleware implements NestMiddleware {
     const path = requestPath.split('?')[0];
 
     if (path.startsWith('/socket.io')) return next();
+    if (path === '/api/push-jobs/workout-reminders') return next();
     if (appVersion) return next();
     if (
       path.includes('verify') ||

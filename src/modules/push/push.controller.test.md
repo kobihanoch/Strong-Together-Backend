@@ -2,12 +2,12 @@
 
 ## Happy Paths
 
-### `POST /api/push-jobs/daily`
+### `POST /api/push-jobs/workout-reminders`
 
-- [x] Enqueues Redis-backed push notification jobs.
+- [x] Accepts a JWT signed with the configured cron secret and runs the enqueue flow.
 
 ## Bad Paths
 
-### None in this file
+### `POST /api/push-jobs/workout-reminders`
 
-- [x] Current coverage focuses on successful scheduler-style enqueue flows.
+- [x] Rejects requests without a cron JWT.

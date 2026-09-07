@@ -1,7 +1,6 @@
 Table reminders.user_reminder_setting {
   user_id uuid [pk, ref: > identity.user.id]
   workout_reminders_enabled boolean [not null]
-  reminder_offset_minutes integer [not null]
   updated_at timestamptz [not null]
   timezone text
 }

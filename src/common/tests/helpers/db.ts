@@ -302,9 +302,9 @@ export async function createVerifiedTestUser(overrides: {
 
   await sql`
     INSERT INTO
-      reminders.user_reminder_setting (user_id)
+      reminders.user_reminder_setting (user_id, reminder_enabled, time_zone)
     VALUES
-      (${row.id}::UUID)
+      (${row.id}::UUID, FALSE, 'UTC')
   `;
 
   return row.id;

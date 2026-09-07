@@ -120,7 +120,7 @@ The tracking API uses these views for maps, statistics, and personal records. `t
 
 Reminder data is split between explicit settings and inferred schedule intelligence:
 
-- `reminders.user_reminder_setting`: user-owned reminder preferences.
+- `reminders.user_reminder_setting`: user-owned reminder preferences. Workout reminders use a fixed 30-minute offset.
 - `reminders.user_split_information`: preferred weekday and confidence data for split scheduling.
 
 The confidence index on `preferred_weekday` and `confidence` exists because reminders are not just CRUD settings; they are time-sensitive operational queries.
