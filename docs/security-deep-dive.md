@@ -98,7 +98,7 @@ Unauthenticated requests start a transaction with `SET LOCAL ROLE guest`. The `g
 
 - no direct table, sequence, or application-function privileges
 - no RLS policies on application tables
-- no `USAGE` on the `identity`, `workout`, `tracking`, `reminders`, `analytics`, or `messages` schemas
+- no `USAGE` on the `identity`, `workout`, `tracking`, `reminders`, or `messages` schemas
 - `USAGE` only on the dedicated `guest_api` schema
 - `EXECUTE` only on the allow-listed public-auth functions
 

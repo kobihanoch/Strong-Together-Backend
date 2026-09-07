@@ -1,7 +1,7 @@
 Table reminders.user_reminder_setting {
   id uuid [pk]
   user_id uuid [not null, unique, ref: > identity.user.id]
-  reminder_enabled boolean [not null, default: false]
+  reminder_enabled boolean [not null, default: true]
   created_at timestamptz [not null]
   updated_at timestamptz [not null]
   time_zone text [not null]

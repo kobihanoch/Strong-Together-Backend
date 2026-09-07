@@ -149,7 +149,7 @@ export class WorkoutTrackingQueries {
               )
             ) AS exercise_tracking_flat_payload
           FROM
-            analytics.v_exercise_tracking_set_expanded et
+            tracking.v_exercise_tracking_set_expanded et
             JOIN bounded_workout_summaries bws ON bws.id = et.workout_summary_id
           GROUP BY
             bws.workout_date_local_string,
@@ -295,7 +295,7 @@ export class WorkoutTrackingQueries {
               )
             ) AS payload
           FROM
-            analytics.v_exercise_tracking_set_expanded et
+            tracking.v_exercise_tracking_set_expanded et
             JOIN tracking.workout_summary wsum ON wsum.id = et.workout_summary_id
           WHERE
             wsum.user_id = ${userId}::UUID
@@ -500,7 +500,7 @@ export class WorkoutTrackingQueries {
             COUNT(et.set_index)::INT AS set_tracked_count,
             bws.split_name
           FROM
-            analytics.v_exercise_tracking_set_expanded et
+            tracking.v_exercise_tracking_set_expanded et
             JOIN all_workout_summaries bws ON bws.id = et.workout_summary_id
           WHERE
             bws.id = (

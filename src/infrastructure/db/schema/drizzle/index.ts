@@ -16,4 +16,3 @@ export * from './reminders/user_reminder_setting/table';
 export * from './schedules/workout_schedule/table';
 export * from './messages/messages/table';
 export * from './workout/views';
-export * from './analytics/views';

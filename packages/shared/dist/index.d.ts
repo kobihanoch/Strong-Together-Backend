@@ -3446,7 +3446,7 @@ declare const exerciseTrackingSetExpandedViewDbSchema: drizzle_zod.BuildSchema<"
         name: "reps";
         tableName: "v_exercise_tracking_set_expanded";
         dataType: "number";
-        columnType: "PgBigInt53";
+        columnType: "PgInteger";
         data: number;
         driverParam: string | number;
         notNull: false;
@@ -3463,7 +3463,7 @@ declare const exerciseTrackingSetExpandedViewDbSchema: drizzle_zod.BuildSchema<"
         name: "order_index";
         tableName: "v_exercise_tracking_set_expanded";
         dataType: "number";
-        columnType: "PgInteger";
+        columnType: "PgBigInt53";
         data: number;
         driverParam: string | number;
         notNull: false;

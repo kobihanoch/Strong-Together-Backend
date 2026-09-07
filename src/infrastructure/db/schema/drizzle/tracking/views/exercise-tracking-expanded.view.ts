@@ -1,16 +1,15 @@
 import { sql as drizzleSql } from 'drizzle-orm';
-import { bigint, boolean, real, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { analyticsSchema } from '../../schemas';
-import { integer } from 'drizzle-orm/pg-core';
+import { bigint, boolean, integer, real, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { trackingSchema } from '../../schemas';
 
 // Security-invoker view that joins exercise tracking to workout metadata.
-export const exerciseTrackingSetExpandedView = analyticsSchema
+export const exerciseTrackingSetExpandedView = trackingSchema
   .view('v_exercise_tracking_set_expanded', {
     id: bigint('id', { mode: 'number' }),
     exerciseToSplitId: bigint('exercise_to_split_id', { mode: 'number' }),
     weight: real('weight'),
-    reps: bigint('reps', { mode: 'number' }),
-    orderIndex: integer('order_index'),
+    reps: integer('reps'),
+    orderIndex: bigint('order_index', { mode: 'number' }),
     setIndex: integer('set_index'),
     exerciseId: bigint('exercise_id', { mode: 'number' }),
     workoutSplitId: bigint('workout_split_id', { mode: 'number' }),

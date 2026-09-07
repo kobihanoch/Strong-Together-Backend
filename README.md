@@ -164,7 +164,7 @@ Drizzle schema change
   -> test rebuild from zero
 ```
 
-The **schema** is organized into domains such as **`identity`**, **`workout`**, **`tracking`**, **`schedules`**, **`reminders`**, **`analytics`**, and **`messages`**. **RLS policies** protect **user-owned data**, while **explicit SQL** keeps **analytics-heavy queries** visible and tunable.
+The **schema** is organized into domains such as **`identity`**, **`workout`**, **`tracking`**, **`schedules`**, **`reminders`**, and **`messages`**. **RLS policies** protect **user-owned data**, while **explicit SQL** keeps **analytics-heavy queries** visible and tunable.
 
 **Read more:** [Database Schemas And Flows](./docs/database-schemas-and-flows.md) | [Migrations And DB Pipeline](./docs/migrations-and-db-pipeline.md)
 

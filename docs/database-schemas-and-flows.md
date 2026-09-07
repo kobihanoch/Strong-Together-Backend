@@ -18,7 +18,6 @@ The ERDs are generated from the reviewed DBML sources under `docs/db-diagrams/so
 | `schedules` | `workout_schedule`                                                                      | Explicit weekday/time assignments for active workout splits                              |
 | `reminders` | `user_reminder_setting`                                                                 | Per-user reminder enablement and IANA timezone                                            |
 | `messages`  | `message`                                                                               | User/system messaging                                                                    |
-| `analytics` | `v_exercise_tracking_set_expanded`, `v_prs`                                             | Security-invoker, set-level tracking and personal-record views                           |
 | `guest_api` | allow-listed `SECURITY DEFINER` functions                                               | Narrow database API for unauthenticated authentication and registration flows            |
 
 ## Identity Schema
@@ -48,7 +47,7 @@ Guest never receives direct access to `identity` tables. Public auth code calls 
 
 ![Workout Schema](./db-diagrams/workoutschema.svg)
 
-### Tracking-to-analytics view dependencies
+### Workout view dependencies
 
 ![Workout views Schema](./db-diagrams/workoutviewsschema.svg)
 
@@ -98,15 +97,13 @@ Important indexes:
 
 The RLS model protects nested set rows by checking ownership through `workout_summary`.
 
-## Analytics and Tracking Views
+## Tracking Views
 
 ### Views
 
-![Analytics Schema](./db-diagrams/analyticsschema.svg)
-
 Exercise tracking exposes security-invoker views across the owning domains:
 
-- `analytics.v_exercise_tracking_set_expanded`, including assignment state and exercise muscle metadata
+- `tracking.v_exercise_tracking_set_expanded`, including assignment state and exercise muscle metadata
 - `tracking.v_prs`
 
 Security-invoker views preserve caller RLS behavior and avoid privileged read paths.

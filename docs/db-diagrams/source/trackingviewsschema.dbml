@@ -1,8 +1,9 @@
-Table analytics.v_exercise_tracking_set_expanded [note: 'Security-invoker view over performed tracking sets'] {
+Table tracking.v_exercise_tracking_set_expanded [note: 'Security-invoker view over performed tracking sets'] {
   id bigint
   exercise_to_split_id bigint
   weight real
-  reps bigint
+  reps integer
+  order_index bigint
   set_index integer
   exercise_id bigint
   workout_split_id bigint
@@ -17,9 +18,23 @@ Table analytics.v_exercise_tracking_set_expanded [note: 'Security-invoker view o
   is_assigned_to_split boolean
 }
 
+Table tracking.v_prs [note: 'Strongest recorded set per exercise; security-invoker view'] {
+  id bigint
+  exercise_to_split_id bigint
+  exercise_id bigint
+  exercise text
+  set_index integer
+  weight real
+  reps integer
+  workout_summary_id uuid
+  workout_start_utc timestamptz
+  workout_end_utc timestamptz
+}
+
 Table tracking.exercise_tracking { id bigint [pk] }
 Table tracking.tracking_set { id uuid [pk] }
 Table tracking.workout_summary { id uuid [pk] }
 
-Ref: analytics.v_exercise_tracking_set_expanded.id > tracking.exercise_tracking.id
-Ref: analytics.v_exercise_tracking_set_expanded.workout_summary_id > tracking.workout_summary.id
+Ref: tracking.v_exercise_tracking_set_expanded.id > tracking.exercise_tracking.id
+Ref: tracking.v_exercise_tracking_set_expanded.workout_summary_id > tracking.workout_summary.id
+Ref: tracking.v_prs.id > tracking.v_exercise_tracking_set_expanded.id

@@ -197,6 +197,13 @@
       "when": 1788761000000,
       "tag": "0027_recheck_workout_reminder_eligibility",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1788795192839,
+      "tag": "0028_move_exercise_tracking_view_to_tracking",
+      "breakpoints": true
     }
   ]
 }

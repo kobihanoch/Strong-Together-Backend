@@ -41,7 +41,6 @@ var workoutSchema = pgSchema("workout");
 var trackingSchema = pgSchema("tracking");
 var remindersSchema = pgSchema("reminders");
 var schedulesSchema = pgSchema("schedules");
-var analyticsSchema = pgSchema("analytics");
 var messagesSchema = pgSchema("messages");
 var authProviders = identitySchema.enum("Auth Providers", [
   "apple",
@@ -1390,7 +1389,7 @@ var prsView = trackingSchema.view("v_prs", {
       et.workout_start_utc,
       et.workout_end_utc
     FROM
-      analytics.v_exercise_tracking_set_expanded et
+      tracking.v_exercise_tracking_set_expanded et
     ORDER BY
       et.exercise_id,
       et.weight DESC,
@@ -1399,37 +1398,105 @@ var prsView = trackingSchema.view("v_prs", {
       et.id DESC
   `);
 
-// ../../src/infrastructure/db/schema/drizzle/workout/views/exercise-to-workoutsplit-expanded.view.ts
-import { bigint as bigint13, boolean as boolean7, text as text10, timestamp as timestamp12 } from "drizzle-orm/pg-core";
+// ../../src/infrastructure/db/schema/drizzle/tracking/views/exercise-tracking-expanded.view.ts
 import { sql as drizzleSql24 } from "drizzle-orm";
-import { integer as integer6 } from "drizzle-orm/pg-core";
-var exerciseToWorkoutSplitSetExpandedView = workoutSchema.view("v_exercise_to_workout_split_set_expanded", {
+import { bigint as bigint13, boolean as boolean7, integer as integer6, real as real3, text as text10, timestamp as timestamp12, uuid as uuid13 } from "drizzle-orm/pg-core";
+var exerciseTrackingSetExpandedView = trackingSchema.view("v_exercise_tracking_set_expanded", {
   id: bigint13("id", {
     mode: "number"
   }),
-  workoutSplitId: bigint13("workout_split_id", {
+  exerciseToSplitId: bigint13("exercise_to_split_id", {
     mode: "number"
   }),
-  workoutId: bigint13("workout_id", {
-    mode: "number"
-  }),
-  exerciseId: bigint13("exercise_id", {
-    mode: "number"
-  }),
-  exercise: text10("exercise"),
-  workoutSplit: text10("workout_split"),
+  weight: real3("weight"),
   reps: integer6("reps"),
   orderIndex: bigint13("order_index", {
     mode: "number"
   }),
   setIndex: integer6("set_index"),
-  createdAt: timestamp12("created_at", {
+  exerciseId: bigint13("exercise_id", {
+    mode: "number"
+  }),
+  workoutSplitId: bigint13("workout_split_id", {
+    mode: "number"
+  }),
+  splitName: text10("split_name"),
+  exercise: text10("exercise"),
+  targetMuscle: text10("target_muscle"),
+  specificTargetMuscle: text10("specific_target_muscle"),
+  notes: text10("notes"),
+  workoutSummaryId: uuid13("workout_summary_id"),
+  workoutStartUtc: timestamp12("workout_start_utc", {
     withTimezone: true
   }),
-  isActive: boolean7("is_active")
+  workoutEndUtc: timestamp12("workout_end_utc", {
+    withTimezone: true
+  }),
+  isAssignedToSplit: boolean7("is_assigned_to_split")
 }).with({
   securityInvoker: true
 }).as(drizzleSql24`
+    SELECT
+      et.id,
+      et.exercise_to_split_id,
+      tracking_set.weight AS weight,
+      tracking_set.reps AS reps,
+      ews.order_index AS order_index,
+      tracking_set.set_index AS set_index,
+      COALESCE(ews.exercise_id, et.exercise_id) AS exercise_id,
+      wsumm.workout_split_id,
+      ws.name AS split_name,
+      ex.name AS exercise,
+      ex.target_muscle AS target_muscle,
+      ex.specific_target_muscle AS specific_target_muscle,
+      et.notes,
+      et.workout_summary_id,
+      wsumm.workout_start_utc,
+      wsumm.workout_end_utc,
+      CASE
+        WHEN et.exercise_to_split_id IS NOT NULL THEN TRUE
+        WHEN et.exercise_id IS NOT NULL THEN FALSE
+      END AS is_assigned_to_split
+    FROM
+      tracking.exercise_tracking et
+      LEFT JOIN tracking.workout_summary wsumm ON wsumm.id = et.workout_summary_id
+      LEFT JOIN workout.exercise_to_workout_split ews ON ews.id = et.exercise_to_split_id
+      LEFT JOIN workout.workout_split ws ON ws.id = wsumm.workout_split_id
+      LEFT JOIN workout.exercise ex ON ex.id = COALESCE(ews.exercise_id, et.exercise_id)
+      LEFT JOIN tracking.tracking_set tracking_set ON tracking_set.exercise_tracking_id = et.id
+  `);
+
+// ../../src/infrastructure/db/schema/drizzle/workout/views/exercise-to-workoutsplit-expanded.view.ts
+import { bigint as bigint14, boolean as boolean8, text as text11, timestamp as timestamp13 } from "drizzle-orm/pg-core";
+import { sql as drizzleSql25 } from "drizzle-orm";
+import { integer as integer7 } from "drizzle-orm/pg-core";
+var exerciseToWorkoutSplitSetExpandedView = workoutSchema.view("v_exercise_to_workout_split_set_expanded", {
+  id: bigint14("id", {
+    mode: "number"
+  }),
+  workoutSplitId: bigint14("workout_split_id", {
+    mode: "number"
+  }),
+  workoutId: bigint14("workout_id", {
+    mode: "number"
+  }),
+  exerciseId: bigint14("exercise_id", {
+    mode: "number"
+  }),
+  exercise: text11("exercise"),
+  workoutSplit: text11("workout_split"),
+  reps: integer7("reps"),
+  orderIndex: bigint14("order_index", {
+    mode: "number"
+  }),
+  setIndex: integer7("set_index"),
+  createdAt: timestamp13("created_at", {
+    withTimezone: true
+  }),
+  isActive: boolean8("is_active")
+}).with({
+  securityInvoker: true
+}).as(drizzleSql25`
     SELECT
       ews.id,
       ews.workout_split_id,
@@ -1459,75 +1526,6 @@ var exerciseToWorkoutSplitSetExpandedView = workoutSchema.view("v_exercise_to_wo
       ews.order_index,
       ews.created_at,
       ews.is_active
-  `);
-
-// ../../src/infrastructure/db/schema/drizzle/analytics/views/exercise-tracking-expanded.view.ts
-import { sql as drizzleSql25 } from "drizzle-orm";
-import { bigint as bigint14, boolean as boolean8, real as real3, text as text11, timestamp as timestamp13, uuid as uuid13 } from "drizzle-orm/pg-core";
-import { integer as integer7 } from "drizzle-orm/pg-core";
-var exerciseTrackingSetExpandedView = analyticsSchema.view("v_exercise_tracking_set_expanded", {
-  id: bigint14("id", {
-    mode: "number"
-  }),
-  exerciseToSplitId: bigint14("exercise_to_split_id", {
-    mode: "number"
-  }),
-  weight: real3("weight"),
-  reps: bigint14("reps", {
-    mode: "number"
-  }),
-  orderIndex: integer7("order_index"),
-  setIndex: integer7("set_index"),
-  exerciseId: bigint14("exercise_id", {
-    mode: "number"
-  }),
-  workoutSplitId: bigint14("workout_split_id", {
-    mode: "number"
-  }),
-  splitName: text11("split_name"),
-  exercise: text11("exercise"),
-  targetMuscle: text11("target_muscle"),
-  specificTargetMuscle: text11("specific_target_muscle"),
-  notes: text11("notes"),
-  workoutSummaryId: uuid13("workout_summary_id"),
-  workoutStartUtc: timestamp13("workout_start_utc", {
-    withTimezone: true
-  }),
-  workoutEndUtc: timestamp13("workout_end_utc", {
-    withTimezone: true
-  }),
-  isAssignedToSplit: boolean8("is_assigned_to_split")
-}).with({
-  securityInvoker: true
-}).as(drizzleSql25`
-    SELECT
-      et.id,
-      et.exercise_to_split_id,
-      tracking_set.weight AS weight,
-      tracking_set.reps AS reps,
-      ews.order_index AS order_index,
-      tracking_set.set_index AS set_index,
-      COALESCE(ews.exercise_id, et.exercise_id) AS exercise_id,
-      wsumm.workout_split_id,
-      ws.name AS split_name,
-      ex.name AS exercise,
-      ex.target_muscle AS target_muscle,
-      ex.specific_target_muscle AS specific_target_muscle,
-      et.notes,
-      et.workout_summary_id,
-      wsumm.workout_start_utc,
-      wsumm.workout_end_utc,
-      CASE
-        WHEN et.exercise_to_split_id IS NOT NULL THEN TRUE
-        WHEN et.exercise_id IS NOT NULL THEN FALSE
-      END AS is_assigned_to_split
-    FROM
-      tracking.exercise_tracking et
-      LEFT JOIN tracking.workout_summary wsumm ON wsumm.id = et.workout_summary_id
-      LEFT JOIN workout.exercise_to_workout_split ews ON ews.id = et.exercise_to_split_id
-      LEFT JOIN workout.workout_split ws ON ws.id = wsumm.workout_split_id
-      LEFT JOIN workout.exercise ex ON ex.id = COALESCE(ews.exercise_id, et.exercise_id)
-      LEFT JOIN tracking.tracking_set tracking_set ON tracking_set.exercise_tracking_id = et.id
   `);
 
 // src/database/database.schemas.ts
