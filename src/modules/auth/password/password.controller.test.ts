@@ -79,13 +79,13 @@ describe('PasswordController', () => {
     expect(response.text).toBe('');
 
     const after = await getUserAuthStateByUsername(user.username);
-    expect(after?.password).toBeTypeOf('string');
-    expect(after?.password).not.toBe(before?.password);
+    expect(after?.passwordHash).toBeTypeOf('string');
+    expect(after?.passwordHash).not.toBe(before?.passwordHash);
 
     const oldLogin = await loginWithCredentials(app, user.email, user.password);
     const newLogin = await loginWithCredentials(app, user.email, 'Reset1234!');
     expect(oldLogin.status).toBe(401);
-    expect(newLogin.status).toBe(201);
+    expect(newLogin.status).toBe(200);
     expectSchema(loginResponseSchema, newLogin.body);
 
     const reused = await request(app.getHttpServer())

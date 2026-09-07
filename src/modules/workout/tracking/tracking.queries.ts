@@ -606,6 +606,8 @@ export class WorkoutTrackingQueries {
               FROM
                 tracking.v_prs p
                 JOIN all_workout_summaries aws ON p.workout_summary_id = aws.id
+              WHERE
+                p.exercise_id IS NOT NULL
               ORDER BY
                 p.workout_start_utc DESC,
                 p.weight DESC,
@@ -785,6 +787,7 @@ export class WorkoutTrackingQueries {
         JOIN tracking.workout_summary wsum ON wsum.id = p.workout_summary_id
       WHERE
         wsum.user_id = ${userId}::UUID
+        AND p.exercise_id IS NOT NULL
     `;
 
     return data;

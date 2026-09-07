@@ -9,12 +9,12 @@ export class PasswordQueries {
   /**
    * Updates user password.
    * @param userId - The user identifier.
-   * @param newPass - The replacement password hash.
+   * @param passwordHash - The replacement password hash.
    */
-  async queryUpdateUserPassword(userId: string, newPass: string): Promise<void> {
+  async queryUpdateUserPassword(userId: string, passwordHash: string): Promise<void> {
     await this.sql`
       UPDATE identity.user
-      SET password_hash=${newPass}
+      SET password_hash=${passwordHash}
       WHERE id=${userId}::uuid AND auth_provider='app'
     `;
   }

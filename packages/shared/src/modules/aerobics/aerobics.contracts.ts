@@ -1,11 +1,11 @@
 import { z } from 'zod/v4';
-import type { BodyOf, Contract, ParamsOf, QueryOf, ResponseOf } from '../../common';
+import { timezoneSchema, type BodyOf, type Contract, type ParamsOf, type QueryOf, type ResponseOf } from '../../common';
 import { addAerobicInputQueryDtoSchema, userAerobicsQueryDtoSchema } from './aerobics.dtos';
 
 // Create aerobic entry
 
 export const createAerobicEntryRequestSchema = z.object({
-  query: z.object({ tz: z.string().optional() }),
+  query: z.object({ tz: timezoneSchema.optional() }),
   body: z.object({ record: addAerobicInputQueryDtoSchema }),
 });
 
@@ -17,7 +17,7 @@ export const createAerobicEntryContract = {
 
 // Get aerobic history
 
-export const getAerobicHistoryRequestSchema = z.object({ query: z.object({ tz: z.string().optional() }) });
+export const getAerobicHistoryRequestSchema = z.object({ query: z.object({ tz: timezoneSchema.optional() }) });
 export const getAerobicHistoryResponseSchema = userAerobicsQueryDtoSchema;
 export const getAerobicHistoryContract = {
   request: getAerobicHistoryRequestSchema,
@@ -28,7 +28,7 @@ const aerobicEntryIdParamsSchema = z.object({ id: z.coerce.number().int().positi
 
 export const updateAerobicEntryRequestSchema = z.object({
   params: aerobicEntryIdParamsSchema,
-  query: z.object({ tz: z.string().optional() }),
+  query: z.object({ tz: timezoneSchema.optional() }),
   body: z.object({ record: addAerobicInputQueryDtoSchema }),
 });
 export const updateAerobicEntryContract = {
@@ -38,7 +38,7 @@ export const updateAerobicEntryContract = {
 
 export const deleteAerobicEntryRequestSchema = z.object({
   params: aerobicEntryIdParamsSchema,
-  query: z.object({ tz: z.string().optional() }),
+  query: z.object({ tz: timezoneSchema.optional() }),
 });
 export const deleteAerobicEntryContract = {
   request: deleteAerobicEntryRequestSchema,

@@ -37,8 +37,8 @@ describe('CreateUserController', () => {
 
     const created = await getUserAuthStateByUsername(username);
     expect(created?.is_verified).toBe(false);
-    expect(await bcrypt.compare('Test1234!', created?.password || '')).toBe(true);
-    expect(await hasReminderSettings(created!.id)).toBe(true);
+    expect(await bcrypt.compare('Test1234!', created?.passwordHash || '')).toBe(true);
+    expect(await hasReminderSettings(created!.id)).toBe(false);
   });
 
   it('POST /api/users rejects invalid or duplicate users with 400', async () => {

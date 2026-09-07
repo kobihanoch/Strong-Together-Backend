@@ -228,7 +228,18 @@ module.exports = __toCommonJS(index_exports);
 // src/common/transport.schemas.ts
 var import_v4 = require("zod/v4");
 var serializedDateSchema = import_v4.z.string();
-var timezoneSchema = import_v4.z.string();
+var timezoneSchema = import_v4.z.string().refine((timeZone) => {
+  try {
+    new Intl.DateTimeFormat("en-US", {
+      timeZone
+    }).format();
+    return true;
+  } catch {
+    return false;
+  }
+}, {
+  message: "Time zone must be a valid IANA time zone"
+});
 
 // src/database/database.schemas.ts
 var import_drizzle_zod = require("drizzle-zod");
@@ -1802,7 +1813,7 @@ var aerobicMutationRowQueryDtoSchema = import_v42.z.object({
 // src/modules/aerobics/aerobics.contracts.ts
 var createAerobicEntryRequestSchema = import_v43.z.object({
   query: import_v43.z.object({
-    tz: import_v43.z.string().optional()
+    tz: timezoneSchema.optional()
   }),
   body: import_v43.z.object({
     record: addAerobicInputQueryDtoSchema
@@ -1815,7 +1826,7 @@ var createAerobicEntryContract = {
 };
 var getAerobicHistoryRequestSchema = import_v43.z.object({
   query: import_v43.z.object({
-    tz: import_v43.z.string().optional()
+    tz: timezoneSchema.optional()
   })
 });
 var getAerobicHistoryResponseSchema = userAerobicsQueryDtoSchema;
@@ -1829,7 +1840,7 @@ var aerobicEntryIdParamsSchema = import_v43.z.object({
 var updateAerobicEntryRequestSchema = import_v43.z.object({
   params: aerobicEntryIdParamsSchema,
   query: import_v43.z.object({
-    tz: import_v43.z.string().optional()
+    tz: timezoneSchema.optional()
   }),
   body: import_v43.z.object({
     record: addAerobicInputQueryDtoSchema
@@ -1842,7 +1853,7 @@ var updateAerobicEntryContract = {
 var deleteAerobicEntryRequestSchema = import_v43.z.object({
   params: aerobicEntryIdParamsSchema,
   query: import_v43.z.object({
-    tz: import_v43.z.string().optional()
+    tz: timezoneSchema.optional()
   })
 });
 var deleteAerobicEntryContract = {
@@ -2133,7 +2144,7 @@ var messageAfterSendQueryDtoSchema = import_v413.z.object({
 // src/modules/messages/messages.contracts.ts
 var listMessagesRequestSchema = import_v414.z.object({
   query: import_v414.z.object({
-    tz: import_v414.z.string()
+    tz: timezoneSchema
   })
 });
 var listMessagesResponseSchema = import_v414.z.object({
@@ -2257,7 +2268,10 @@ var userWithNotificationsEnabledQueryDtoSchema = import_v421.z.object({
 // src/modules/reminders/reminders.contracts.ts
 var import_v422 = require("zod/v4");
 var getReminderSettingsResponseSchema = import_v422.z.object({
-  reminderSettings: userReminderSettingDbSchema.nullable()
+  reminderSettings: userReminderSettingDbSchema.extend({
+    createdAt: serializedDateSchema,
+    updatedAt: serializedDateSchema
+  }).nullable()
 });
 var getReminderSettingsContract = {
   response: getReminderSettingsResponseSchema
@@ -2265,7 +2279,7 @@ var getReminderSettingsContract = {
 var upsertReminderSettingsRequestSchema = import_v422.z.object({
   body: import_v422.z.object({
     reminderEnabled: userReminderSettingDbSchema.shape.reminderEnabled,
-    timeZone: userReminderSettingDbSchema.shape.timeZone.min(1, "Time zone is required")
+    timeZone: timezoneSchema
   })
 });
 var upsertReminderSettingsContract = {
@@ -2520,7 +2534,7 @@ var exerciseAssignmentIdQueryDtoSchema = import_v430.z.object({
 // src/modules/workout/plan/plan.contracts.ts
 var getWorkoutPlanRequestSchema = import_v431.z.object({
   query: import_v431.z.object({
-    tz: import_v431.z.string().optional()
+    tz: timezoneSchema.optional()
   })
 });
 var getWorkoutPlanResponseSchema = import_v431.z.object({
@@ -2534,7 +2548,7 @@ var replaceWorkoutPlanRequestSchema = import_v431.z.object({
   body: import_v431.z.object({
     workoutData: saveWorkoutSplitPayloadQueryDtoSchema,
     workoutName: import_v431.z.string().optional(),
-    tz: import_v431.z.string()
+    tz: timezoneSchema
   })
 });
 var replaceWorkoutPlanResponseSchema = import_v431.z.void();
@@ -2557,11 +2571,19 @@ var finishedWorkoutEntryBaseQueryDtoSchema = import_v432.z.object({
   trackedSets: import_v432.z.array(trackedSetQueryDtoSchema),
   notes: exerciseTrackingDbSchema.shape.notes.optional()
 });
-var finishedWorkoutEntryQueryDtoSchema = finishedWorkoutEntryBaseQueryDtoSchema.extend({
-  isExerciseAssignedToSplit: import_v432.z.boolean(),
-  exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
-  exerciseId: exerciseTrackingDbSchema.shape.exerciseId
-});
+var finishedWorkoutEntryQueryDtoSchema = import_v432.z.discriminatedUnion("isExerciseAssignedToSplit", [
+  finishedWorkoutEntryBaseQueryDtoSchema.extend({
+    isExerciseAssignedToSplit: import_v432.z.literal(true),
+    exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId.unwrap(),
+    // Accepted temporarily for clients using the previous redundant payload.
+    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.optional()
+  }),
+  finishedWorkoutEntryBaseQueryDtoSchema.extend({
+    isExerciseAssignedToSplit: import_v432.z.literal(false),
+    exerciseToSplitId: import_v432.z.null().optional(),
+    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap()
+  })
+]);
 var exerciseMetadataQueryDtoSchema = import_v432.z.object({
   targetMuscle: exerciseDbSchema.shape.targetMuscle,
   specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle
@@ -2711,7 +2733,7 @@ var exerciseTrackingIdQueryDtoSchema = import_v432.z.object({
 // src/modules/workout/tracking/tracking.contracts.ts
 var getWorkoutHistoryRequestSchema = import_v433.z.object({
   query: import_v433.z.object({
-    tz: import_v433.z.string().optional()
+    tz: timezoneSchema.optional()
   })
 });
 var getWorkoutHistoryResponseSchema = exerciseTrackingMapsQueryDtoSchema;
@@ -2721,7 +2743,7 @@ var getWorkoutHistoryContract = {
 };
 var getExerciseHistoryRequestSchema = import_v433.z.object({
   query: import_v433.z.object({
-    tz: import_v433.z.string().optional()
+    tz: timezoneSchema.optional()
   })
 });
 var getExerciseHistoryResponseSchema = exerciseHistoryQueryDtoSchema;
@@ -2737,7 +2759,7 @@ var getWorkoutStatisticsContract = {
 var createWorkoutSessionRequestSchema = import_v433.z.object({
   body: import_v433.z.object({
     workout: import_v433.z.array(finishedWorkoutEntryQueryDtoSchema),
-    tz: import_v433.z.string().optional(),
+    tz: timezoneSchema.optional(),
     workoutStartUtc: import_v433.z.string().datetime("workoutStartUtc must be a valid ISO datetime"),
     workoutEndUtc: import_v433.z.string().datetime("workoutEndUtc must be a valid ISO datetime").optional().nullable()
   })
@@ -2750,7 +2772,7 @@ var createWorkoutSessionContract = {
 var getPersonalRecordsResponseSchema = personalRecordsQueryDtoSchema;
 var getPersonalRecordsRequestSchema = import_v433.z.object({
   query: import_v433.z.object({
-    tz: import_v433.z.string().optional()
+    tz: timezoneSchema.optional()
   })
 });
 var getPersonalRecordsContract = {
@@ -2768,7 +2790,10 @@ var workoutScheduleInputDtoSchema = import_v434.z.object({
   dayOfWeek: workoutScheduleDbSchema.shape.dayOfWeek.int().min(0).max(6),
   startTime: workoutScheduleDbSchema.shape.startTime.regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/)
 });
-var workoutScheduleQueryDtoSchema = workoutScheduleDbSchema;
+var workoutScheduleQueryDtoSchema = workoutScheduleDbSchema.extend({
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema
+});
 
 // src/modules/workout-schedule/workout-schedule.contracts.ts
 var getWorkoutSchedulesResponseSchema = import_v435.z.object({

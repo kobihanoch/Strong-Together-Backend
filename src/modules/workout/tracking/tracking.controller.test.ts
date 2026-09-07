@@ -197,7 +197,7 @@ describe('WorkoutTrackingController', () => {
       .query({ tz: 'Asia/Jerusalem' })
       .set(authHeaders(user.accessToken));
     expect(personalRecordsResponse.status).toBe(200);
-    expect(personalRecordsResponse.headers['x-cache']).toBe('HIT');
+    expect(personalRecordsResponse.headers['x-cache']).toBe('MISS');
     expectSchema(getPersonalRecordsResponseSchema, personalRecordsResponse.body);
     expect(Object.keys(personalRecordsResponse.body.prs)).toHaveLength(1);
     const [personalRecord] = Object.values(personalRecordsResponse.body.prs) as { workoutStartLocal: unknown }[];
@@ -239,7 +239,7 @@ describe('WorkoutTrackingController', () => {
       .set(authHeaders(user.accessToken));
 
     expect(response.status).toBe(200);
-    expect(response.headers['x-cache']).toBe('HIT');
+    expect(response.headers['x-cache']).toBe('MISS');
     expectSchema(getExerciseHistoryResponseSchema, response.body);
     const grouped = response.body.byExerciseToSplitId[String(etsId)];
     expect(grouped.durationMins).toBeUndefined();

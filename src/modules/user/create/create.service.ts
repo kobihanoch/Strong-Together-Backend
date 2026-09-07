@@ -23,9 +23,9 @@ export class CreateUserService {
     if (user) throw new BadRequestException('User already exists');
 
     const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash(password, salt);
+    const passwordHash = await bcrypt.hash(password, salt);
 
-    const created = await this.createUserQueries.queryInsertUser(username!, fullName, email!, gender, hash);
+    const created = await this.createUserQueries.queryInsertUser(username!, fullName, email!, gender, passwordHash);
 
     await this.verificationEmailsService.sendVerificationEmail(email as string, created.id, fullName, {
       ...(requestId ? { requestId } : {}),

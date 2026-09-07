@@ -27,14 +27,14 @@ export class CreateUserQueries {
     return row?.id ? [{ id: row.id }] : [];
   }
 
-  // Creates a new user and reminder settings
+  // Creates a new user. Reminder settings are created only through the reminders endpoint.
   /**
    * Inserts user.
    * @param username - The username.
    * @param fullName - The user full name.
    * @param email - The email address.
    * @param gender - The gender.
-   * @param hash - The hash.
+   * @param passwordHash - The hashed credential stored in `password_hash`.
    * @returns The insert user result.
    */
   async queryInsertUser(
@@ -42,7 +42,7 @@ export class CreateUserQueries {
     fullName: string,
     email: string,
     gender: string | null,
-    hash: string,
+    passwordHash: string,
   ): Promise<CreatedUserQueryDto> {
     const [row] = await this.sql<CreatedUserRowQueryDto[]>`
       SELECT
@@ -51,7 +51,7 @@ export class CreateUserQueries {
           ${fullName},
           ${email},
           ${gender},
-          ${hash}
+          ${passwordHash}
         ) AS "userData"
     `;
     const { created_at: createdAt, ...userData } = row.userData;

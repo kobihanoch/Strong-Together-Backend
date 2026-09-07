@@ -16,13 +16,11 @@ import {
   TTL_TRACKING,
 } from './tracking.cache';
 import { WorkoutTrackingQueries } from './tracking.queries';
-import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
 
 @Injectable()
 export class WorkoutTrackingService {
   constructor(
     private readonly cacheService: CacheService,
-    private readonly systemMessagesService: SystemMessagesService,
     private readonly workoutTrackingQueries: WorkoutTrackingQueries,
   ) {}
 
@@ -188,6 +186,5 @@ export class WorkoutTrackingService {
       this.cacheService.cacheDeleteKey(buildExerciseHistoryKeyStable(userId, 45, tz)),
       this.cacheService.cacheDeleteKey(buildPersonalRecordsKeyStable(userId, tz)),
     ]);
-    this.systemMessagesService.sendSystemMessageToUserWorkoutDone(userId);
   }
 }

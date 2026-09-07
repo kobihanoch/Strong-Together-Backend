@@ -15,7 +15,8 @@ The ERDs are generated from the reviewed DBML sources under `docs/db-diagrams/so
 | `identity`  | `user`, `oauth_account`, `current_user_id()` support                                    | User profile, credentials metadata, roles, verification, OAuth linkage, token versioning |
 | `workout`   | `exercise`, `workout_plan`, `workout_split`, `exercise_to_workout_split`, `workout_set` | Exercise catalog and planned workout structure                                           |
 | `tracking`  | `workout_summary`, `exercise_tracking`, `tracking_set`, `aerobic_tracking`              | Completed workout sessions, set-level strength data, aerobic history                     |
-| `reminders` | `user_reminder_setting`, `user_split_information`                                       | Reminder preferences and inferred split scheduling data                                  |
+| `schedules` | `workout_schedule`                                                                      | Explicit weekday/time assignments for active workout splits                              |
+| `reminders` | `user_reminder_setting`                                                                 | Per-user reminder enablement and IANA timezone                                            |
 | `messages`  | `message`                                                                               | User/system messaging                                                                    |
 | `analytics` | `v_exercise_tracking_set_expanded`, `v_prs`                                             | Security-invoker, set-level tracking and personal-record views                           |
 | `guest_api` | allow-listed `SECURITY DEFINER` functions                                               | Narrow database API for unauthenticated authentication and registration flows            |
@@ -26,7 +27,7 @@ The ERDs are generated from the reviewed DBML sources under `docs/db-diagrams/so
 
 ![Identity Schema](./db-diagrams/identityschema.svg)
 
-`identity.user` is the security anchor for the application. It stores user identity, role, verification state, password data, profile fields, `token_version`, and `last_login`.
+`identity.user` is the security anchor for the application. It stores user identity, role, verification state, the password hash, profile fields, `token_version`, and `last_login`.
 
 Important flows:
 
@@ -118,12 +119,16 @@ The tracking API uses these views for maps, statistics, and personal records. `t
 
 ![Reminders Schema](./db-diagrams/reminderschema.svg)
 
-Reminder data is split between explicit settings and inferred schedule intelligence:
+![Schedules Schema](./db-diagrams/schedulesschema.svg)
 
-- `reminders.user_reminder_setting`: user-owned reminder preferences. Workout reminders use a fixed 30-minute offset.
-- `reminders.user_split_information`: preferred weekday and confidence data for split scheduling.
+Reminder delivery is split between explicit weekly schedules and notification preferences:
 
-The confidence index on `preferred_weekday` and `confidence` exists because reminders are not just CRUD settings; they are time-sensitive operational queries.
+- `schedules.workout_schedule`: user-owned assignments of an active workout split to a weekday (`0` through `6`) and local start time. A user/split/weekday tuple is unique, and foreign keys cascade when the user or split is deleted.
+- `reminders.user_reminder_setting`: one row per user containing reminder enablement and the IANA timezone used to interpret local schedule times. Workout reminders use a fixed 30-minute offset.
+- `cron_api.due_workout_reminders()`: a least-privilege `SECURITY DEFINER` function exposed only to `app_runtime_user`; it calculates occurrences for today and tomorrow and returns reminders in the next 70 minutes.
+- `cron_api.valid_workout_reminder_token(uuid, uuid, date)`: returns the user's current push token only when reminders are still enabled, the queued schedule still exists for that user and weekday, and its split and plan are still active.
+
+The `PUT /api/workout-schedules` operation is a complete replacement. Sending `{ "schedules": [] }` clears the schedule, while an empty body is invalid. The API verifies that every submitted split is active and belongs to the authenticated user's active plan before deleting existing rows; the request RLS transaction makes replacement atomic.
 
 ## Messages Schema
 

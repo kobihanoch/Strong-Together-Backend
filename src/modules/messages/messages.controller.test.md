@@ -11,10 +11,9 @@
 - [x] Returns an empty messages list.
 - [x] Validates the response schema.
 
-### `GET /api/messages` - workout flow
+### `GET /api/messages` - persisted message
 
-- [x] Creates a system message through the workout DB flow.
-- [x] Returns the generated system message.
+- [x] Returns a persisted system message without coupling the fixture to workout completion.
 
 ### `PATCH /api/messages/:id/read`
 

@@ -4,9 +4,8 @@ import { listMessagesResponseSchema, loginResponseSchema } from '@strong-togethe
 import { createApp } from '../../app';
 import { authHeaders } from '../../common/tests/helpers/auth';
 import { expectSchema } from '../../common/tests/helpers/assert-schema';
-import { getExerciseToWorkoutSplitId, getMessageReadState, messageExists } from '../../common/tests/helpers/db';
+import { getMessageReadState, insertSystemMessage, messageExists } from '../../common/tests/helpers/db';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../common/tests/helpers/users';
-import { replaceWorkoutPlan, finishWorkout } from '../../common/tests/helpers/workouts';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 const users = new Set<string>();
@@ -27,22 +26,6 @@ async function messageUser(prefix = 'messages') {
   return user;
 }
 
-async function createWorkoutMessage(user: Awaited<ReturnType<typeof messageUser>>) {
-  await replaceWorkoutPlan(app, user.accessToken, { A: [{ id: 20, sets: [8, 8, 10], orderIndex: 0 }] });
-  const etsId = await getExerciseToWorkoutSplitId(user.userId, 'A', 20);
-  expect(etsId).not.toBeNull();
-  await finishWorkout(app, user.accessToken, [
-    {
-      isExerciseAssignedToSplit: true,
-      exerciseToSplitId: etsId!,
-      trackedSets: [{ weight: 80, reps: 8, setIndex: 0 }],
-    },
-  ]);
-  const messages = await request(app.getHttpServer()).get('/api/messages').query({ tz: 'Asia/Jerusalem' }).set(authHeaders(user.accessToken));
-  expectSchema(listMessagesResponseSchema, messages.body);
-  return messages.body.messages[0].id as string;
-}
-
 describe('MessagesController', () => {
   it('GET /api/messages returns empty User A messages with schema', async () => {
     const user = await messageUser('messages_empty');
@@ -53,17 +36,23 @@ describe('MessagesController', () => {
     expect(response.body).toEqual({ messages: [] });
   });
 
-  it('GET /api/messages returns system message after workout DB flow', async () => {
+  it('GET /api/messages returns a persisted system message', async () => {
     const user = await messageUser('messages_flow');
-    const messageId = await createWorkoutMessage(user);
+    const messageId = await insertSystemMessage(user.userId);
+    const messages = await request(app.getHttpServer())
+      .get('/api/messages')
+      .query({ tz: 'Asia/Jerusalem' })
+      .set(authHeaders(user.accessToken));
 
+    expectSchema(listMessagesResponseSchema, messages.body);
+    expect(messages.body.messages[0].id).toBe(messageId);
     expect(messageId).toBeTypeOf('string');
     expect(await messageExists(messageId)).toBe(true);
   });
 
   it('PATCH /api/messages/:id/read updates message state in DB', async () => {
     const user = await messageUser('messages_read');
-    const messageId = await createWorkoutMessage(user);
+    const messageId = await insertSystemMessage(user.userId);
 
     const response = await request(app.getHttpServer()).patch(`/api/messages/${messageId}/read`).set(authHeaders(user.accessToken));
 
@@ -74,7 +63,7 @@ describe('MessagesController', () => {
 
   it('DELETE /api/messages/:id removes message row from DB', async () => {
     const user = await messageUser('messages_delete');
-    const messageId = await createWorkoutMessage(user);
+    const messageId = await insertSystemMessage(user.userId);
 
     const response = await request(app.getHttpServer()).delete(`/api/messages/${messageId}`).set(authHeaders(user.accessToken));
 

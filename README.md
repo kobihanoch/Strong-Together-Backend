@@ -28,6 +28,9 @@ Backend for **Strong Together**, a **fitness and health platform** with **authen
 
 ## Key Highlights
 
+- **Version 5 scheduling:** Users can replace or clear a weekly workout schedule, configure timezone-aware reminders, and receive deduplicated delayed push notifications from a JWT-protected cron trigger.
+- **Richer workout insights:** Separate 45-day history, exercise-history, statistics, and personal-record endpoints expose ordered workouts, next-split guidance, estimated durations, and estimated one-rep max values.
+- **Drizzle-first data model:** Normalized workout/tracking sets, domain schemas, reproducible migrations, generated shared Zod contracts, least-privilege runtime roles, and PostgreSQL RLS now form one versioned source of truth.
 - **Realtime communication:** **Socket.IO** with **authenticated tickets**, **Redis adapter** support, **per-user rooms**, and **targeted result delivery**.
 - **Async pipelines:** **Bull/Redis workers** for **email** and **push jobs**, plus **SQS-driven media processing** outside the request path.
 - **Video processing:** **Direct S3 uploads**, **S3 `ObjectCreated` events**, **SQS long polling**, **Python OpenCV/MediaPipe analysis**, **Redis Pub/Sub**, and **Socket.IO fanout**.
@@ -161,7 +164,7 @@ Drizzle schema change
   -> test rebuild from zero
 ```
 
-The **schema** is organized into domains such as **`identity`**, **`workout`**, **`tracking`**, **`reminders`**, **`analytics`**, and **`messages`**. **RLS policies** protect **user-owned data**, while **explicit SQL** keeps **analytics-heavy queries** visible and tunable.
+The **schema** is organized into domains such as **`identity`**, **`workout`**, **`tracking`**, **`schedules`**, **`reminders`**, **`analytics`**, and **`messages`**. **RLS policies** protect **user-owned data**, while **explicit SQL** keeps **analytics-heavy queries** visible and tunable.
 
 **Read more:** [Database Schemas And Flows](./docs/database-schemas-and-flows.md) | [Migrations And DB Pipeline](./docs/migrations-and-db-pipeline.md)
 

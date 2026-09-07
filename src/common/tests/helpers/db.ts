@@ -189,6 +189,15 @@ export async function messageExists(messageId: string) {
   return true;
 }
 
+export async function insertSystemMessage(receiverId: string, subject = 'Test message', message = 'Test body') {
+  const [row] = await sql<{ id: string }[]>`
+    INSERT INTO messages.message (sender_id, receiver_id, subject, msg)
+    VALUES (${appConfig.systemUserId}::UUID, ${receiverId}::UUID, ${subject}, ${message})
+    RETURNING id
+  `;
+  return row.id;
+}
+
 async function getAerobicsRowsForUser(userId: string) {
   type AerobicTestRow = Pick<AerobicTrackingRow, 'id' | 'type'> & {
     duration_mins: number;
@@ -237,7 +246,7 @@ export async function waitForAerobicsRowsForUser(userId: string, expectedCount: 
 
 export async function getUserAuthStateByUsername(username: string) {
   type UserAuthStateRow = Pick<UserRow, 'id' | 'username' | 'email' | 'name' | 'gender' | 'role'> & {
-    password: UserRow['passwordHash'];
+    passwordHash: UserRow['passwordHash'];
     is_verified: UserRow['isVerified'];
   };
   const [row] = await sql<UserAuthStateRow[]>`
@@ -248,7 +257,7 @@ export async function getUserAuthStateByUsername(username: string) {
       name,
       gender,
       role,
-      password_hash AS password,
+      password_hash AS "passwordHash",
       is_verified
     FROM
       identity.user

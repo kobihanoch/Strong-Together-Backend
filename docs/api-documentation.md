@@ -905,6 +905,48 @@ Successful response:
 
 - Empty `204 No Content` body. Fetch the relevant tracking GET endpoints when updated data is needed.
 
+## Workout Schedules
+
+### `GET /api/workout-schedules`
+
+Returns the authenticated user's weekly schedule for active splits in the active workout plan, ordered by weekday and start time.
+
+Successful response:
+
+```json
+{
+  "schedules": [
+    {
+      "id": "uuid",
+      "userId": "uuid",
+      "workoutSplitId": 10,
+      "dayOfWeek": 1,
+      "startTime": "18:30:00",
+      "createdAt": "2026-09-07T06:15:00.000Z",
+      "updatedAt": "2026-09-07T06:15:00.000Z"
+    }
+  ]
+}
+```
+
+`createdAt` and `updatedAt` are ISO 8601 UTC strings. Frontends may parse them into native date objects only when date operations or localized display are needed.
+
+### `PUT /api/workout-schedules`
+
+Atomically replaces the authenticated user's complete weekly schedule. `dayOfWeek` is `0` (Sunday) through `6` (Saturday), and `startTime` uses 24-hour `HH:mm` input.
+
+```json
+{
+  "schedules": [{ "workoutSplitId": 10, "dayOfWeek": 1, "startTime": "18:30" }]
+}
+```
+
+Successful response:
+
+- Empty `204 No Content` body.
+- Send `{ "schedules": [] }` to clear all scheduled workouts. Sending `{}` is invalid.
+- Every split must be active and belong to the authenticated user's active plan.
+
 ## Aerobics
 
 ### `GET /api/aerobics`
@@ -1231,7 +1273,7 @@ Notes:
 
 ### `GET /api/reminders`
 
-Returns the authenticated user's reminder settings as `reminderSettings`, or `null` when none exist.
+Returns the authenticated user's reminder settings as `reminderSettings`, or `null` when none exist. Settings contain `reminderEnabled` and the IANA `timeZone` used for scheduled local times.
 
 ### `PUT /api/reminders`
 

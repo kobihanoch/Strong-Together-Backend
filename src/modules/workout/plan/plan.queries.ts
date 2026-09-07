@@ -215,6 +215,18 @@ export class WorkoutPlanQueries {
         AND NOT (id = ANY (${submittedExistingIds}::BIGINT[]));
     `;
 
+    if (submittedExistingIds.length > 0) {
+      // Free the active order indexes first, so simple swaps such as 0 <-> 1
+      // cannot collide with the active-plan unique index during row updates.
+      await this.sql`
+        UPDATE workout.workout_split
+        SET order_index = -order_index - 1
+        WHERE workout_id = ${plan.id}
+          AND is_active = TRUE
+          AND id = ANY (${submittedExistingIds}::BIGINT[]);
+      `;
+    }
+
     const savedSplits = [];
     for (const split of workoutData) {
       const id = split.id !== undefined ? await this.updateWorkoutSplit(plan.id, split) : await this.insertWorkoutSplit(plan.id, split);

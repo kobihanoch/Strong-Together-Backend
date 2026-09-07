@@ -23,8 +23,8 @@ export class CreateUserController {
   /**
    * Register a new local user account.
    *
-   * Creates the user, initializes default reminder settings, sends the first
-   * verification email, and responds with 201 Created without a response body.
+   * Creates the user, sends the first verification email, and responds with
+   * 201 Created without a response body. Registration does not create reminder settings.
    *
    * @remarks Route: POST /api/users
    * Access: Public

@@ -12,7 +12,7 @@ The signup test creates a fresh user and then verifies the DB state for that sam
 - [x] Returns `201 Created` with an empty body.
 - [x] Confirms the DB row exists.
 - [x] Confirms the password is hashed.
-- [x] Creates reminder settings.
+- [x] Does not create reminder settings during registration.
 
 ## Bad Paths
 
@@ -29,4 +29,4 @@ The signup test creates a fresh user and then verifies the DB state for that sam
 
 ### New account defaults
 
-- [x] Reminder settings are created during signup.
+- [x] Reminder settings are absent until the user explicitly saves them.

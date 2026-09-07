@@ -26,6 +26,19 @@ describe('PushController', () => {
     expect(response.status).toBe(401);
   });
 
+  it('rejects malformed tokens and tokens signed with another secret', async () => {
+    const wrongSecretToken = jwt.sign({ job: 'workout-reminders' }, 'not-the-cron-secret', { expiresIn: '5m' });
+    const malformed = await request(app.getHttpServer())
+      .post('/api/push-jobs/workout-reminders')
+      .set('Authorization', 'Bearer not-a-jwt');
+    const wrongSecret = await request(app.getHttpServer())
+      .post('/api/push-jobs/workout-reminders')
+      .set('Authorization', `Bearer ${wrongSecretToken}`);
+
+    expect(malformed.status).toBe(401);
+    expect(wrongSecret.status).toBe(401);
+  });
+
   it('accepts a JWT signed with the configured cron secret', async () => {
     const cronToken = jwt.sign({ job: 'workout-reminders' }, authConfig.cronJwtSecret, { expiresIn: '5m' });
     const response = await request(app.getHttpServer())

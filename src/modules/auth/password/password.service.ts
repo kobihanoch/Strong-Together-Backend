@@ -71,8 +71,11 @@ export class PasswordService {
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash(newPassword, salt);
+    const passwordHash = await bcrypt.hash(newPassword, salt);
     await this.dbService.promoteCurrentRlsTxToAuthenticated(sub);
-    await Promise.all([this.passwordQueries.queryUpdateUserPassword(sub, hash), this.sessionQueries.queryBumpTokenVersionAndGetSelfData(sub)]);
+    await Promise.all([
+      this.passwordQueries.queryUpdateUserPassword(sub, passwordHash),
+      this.sessionQueries.queryBumpTokenVersionAndGetSelfData(sub),
+    ]);
   }
 }

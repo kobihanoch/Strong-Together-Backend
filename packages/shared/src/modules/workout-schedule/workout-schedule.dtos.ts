@@ -1,4 +1,5 @@
 import { z } from 'zod/v4';
+import { serializedDateSchema } from '../../common';
 import { workoutScheduleDbSchema } from '../../database';
 
 export const workoutScheduleInputDtoSchema = z.object({
@@ -7,7 +8,11 @@ export const workoutScheduleInputDtoSchema = z.object({
   startTime: workoutScheduleDbSchema.shape.startTime.regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
 });
 
-export const workoutScheduleQueryDtoSchema = workoutScheduleDbSchema;
+// Database timestamps are Date objects; JSON responses contain ISO strings.
+export const workoutScheduleQueryDtoSchema = workoutScheduleDbSchema.extend({
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema,
+});
 
 export type WorkoutScheduleInputDto = z.infer<typeof workoutScheduleInputDtoSchema>;
 export type WorkoutScheduleQueryDto = z.infer<typeof workoutScheduleQueryDtoSchema>;

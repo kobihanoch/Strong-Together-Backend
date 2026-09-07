@@ -34,6 +34,7 @@ type ResponseOf<TContract extends Contract> = TContract extends {
 
 /** ISO or PostgreSQL-rendered timestamp transported as JSON text. */
 declare const serializedDateSchema: z.ZodString;
+/** Valid IANA timezone identifier accepted at API boundaries. */
 declare const timezoneSchema: z.ZodString;
 
 declare const user: drizzle_orm_pg_core.PgTableWithColumns<{
@@ -4637,217 +4638,31 @@ declare const userWithNotificationsEnabledQueryDtoSchema: z.ZodObject<{
 type UserWithNotificationsEnabledQueryDto = z.infer<typeof userWithNotificationsEnabledQueryDtoSchema>;
 
 declare const getReminderSettingsResponseSchema: z.ZodObject<{
-    reminderSettings: z.ZodNullable<drizzle_zod.BuildSchema<"select", {
-        id: drizzle_orm_pg_core.PgColumn<{
-            name: "id";
-            tableName: "user_reminder_setting";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        userId: drizzle_orm_pg_core.PgColumn<{
-            name: "user_id";
-            tableName: "user_reminder_setting";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        reminderEnabled: drizzle_orm_pg_core.PgColumn<{
-            name: "reminder_enabled";
-            tableName: "user_reminder_setting";
-            dataType: "boolean";
-            columnType: "PgBoolean";
-            data: boolean;
-            driverParam: boolean;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        createdAt: drizzle_orm_pg_core.PgColumn<{
-            name: "created_at";
-            tableName: "user_reminder_setting";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        updatedAt: drizzle_orm_pg_core.PgColumn<{
-            name: "updated_at";
-            tableName: "user_reminder_setting";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        timeZone: drizzle_orm_pg_core.PgColumn<{
-            name: "time_zone";
-            tableName: "user_reminder_setting";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-    }, undefined, undefined>>;
+    reminderSettings: z.ZodNullable<z.ZodObject<{
+        id: z.ZodUUID;
+        userId: z.ZodUUID;
+        reminderEnabled: z.ZodBoolean;
+        timeZone: z.ZodString;
+        createdAt: z.ZodString;
+        updatedAt: z.ZodString;
+    }, {
+        out: {};
+        in: {};
+    }>>;
 }, z.core.$strip>;
 declare const getReminderSettingsContract: {
     response: z.ZodObject<{
-        reminderSettings: z.ZodNullable<drizzle_zod.BuildSchema<"select", {
-            id: drizzle_orm_pg_core.PgColumn<{
-                name: "id";
-                tableName: "user_reminder_setting";
-                dataType: "string";
-                columnType: "PgUUID";
-                data: string;
-                driverParam: string;
-                notNull: true;
-                hasDefault: true;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: undefined;
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
-            userId: drizzle_orm_pg_core.PgColumn<{
-                name: "user_id";
-                tableName: "user_reminder_setting";
-                dataType: "string";
-                columnType: "PgUUID";
-                data: string;
-                driverParam: string;
-                notNull: true;
-                hasDefault: false;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: undefined;
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
-            reminderEnabled: drizzle_orm_pg_core.PgColumn<{
-                name: "reminder_enabled";
-                tableName: "user_reminder_setting";
-                dataType: "boolean";
-                columnType: "PgBoolean";
-                data: boolean;
-                driverParam: boolean;
-                notNull: true;
-                hasDefault: true;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: undefined;
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
-            createdAt: drizzle_orm_pg_core.PgColumn<{
-                name: "created_at";
-                tableName: "user_reminder_setting";
-                dataType: "date";
-                columnType: "PgTimestamp";
-                data: Date;
-                driverParam: string;
-                notNull: true;
-                hasDefault: true;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: undefined;
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
-            updatedAt: drizzle_orm_pg_core.PgColumn<{
-                name: "updated_at";
-                tableName: "user_reminder_setting";
-                dataType: "date";
-                columnType: "PgTimestamp";
-                data: Date;
-                driverParam: string;
-                notNull: true;
-                hasDefault: true;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: undefined;
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
-            timeZone: drizzle_orm_pg_core.PgColumn<{
-                name: "time_zone";
-                tableName: "user_reminder_setting";
-                dataType: "string";
-                columnType: "PgText";
-                data: string;
-                driverParam: string;
-                notNull: true;
-                hasDefault: false;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: [string, ...string[]];
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
-        }, undefined, undefined>>;
+        reminderSettings: z.ZodNullable<z.ZodObject<{
+            id: z.ZodUUID;
+            userId: z.ZodUUID;
+            reminderEnabled: z.ZodBoolean;
+            timeZone: z.ZodString;
+            createdAt: z.ZodString;
+            updatedAt: z.ZodString;
+        }, {
+            out: {};
+            in: {};
+        }>>;
     }, z.core.$strip>;
 };
 declare const upsertReminderSettingsRequestSchema: z.ZodObject<{
@@ -5708,17 +5523,27 @@ declare const getWorkoutStatisticsContract: {
 };
 declare const createWorkoutSessionRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
-        workout: z.ZodArray<z.ZodObject<{
+        workout: z.ZodArray<z.ZodDiscriminatedUnion<[z.ZodObject<{
             trackedSets: z.ZodArray<z.ZodObject<{
                 reps: z.ZodInt;
                 weight: z.ZodNumber;
                 setIndex: z.ZodInt;
             }, z.core.$strip>>;
             notes: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-            isExerciseAssignedToSplit: z.ZodBoolean;
-            exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-            exerciseId: z.ZodNullable<z.ZodInt>;
-        }, z.core.$strip>>;
+            isExerciseAssignedToSplit: z.ZodLiteral<true>;
+            exerciseToSplitId: z.ZodInt;
+            exerciseId: z.ZodOptional<z.ZodNullable<z.ZodInt>>;
+        }, z.core.$strip>, z.ZodObject<{
+            trackedSets: z.ZodArray<z.ZodObject<{
+                reps: z.ZodInt;
+                weight: z.ZodNumber;
+                setIndex: z.ZodInt;
+            }, z.core.$strip>>;
+            notes: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+            isExerciseAssignedToSplit: z.ZodLiteral<false>;
+            exerciseToSplitId: z.ZodOptional<z.ZodNull>;
+            exerciseId: z.ZodInt;
+        }, z.core.$strip>]>>;
         tz: z.ZodOptional<z.ZodString>;
         workoutStartUtc: z.ZodString;
         workoutEndUtc: z.ZodNullable<z.ZodOptional<z.ZodString>>;
@@ -5728,17 +5553,27 @@ declare const createWorkoutSessionResponseSchema: z.ZodVoid;
 declare const createWorkoutSessionContract: {
     request: z.ZodObject<{
         body: z.ZodObject<{
-            workout: z.ZodArray<z.ZodObject<{
+            workout: z.ZodArray<z.ZodDiscriminatedUnion<[z.ZodObject<{
                 trackedSets: z.ZodArray<z.ZodObject<{
                     reps: z.ZodInt;
                     weight: z.ZodNumber;
                     setIndex: z.ZodInt;
                 }, z.core.$strip>>;
                 notes: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-                isExerciseAssignedToSplit: z.ZodBoolean;
-                exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-                exerciseId: z.ZodNullable<z.ZodInt>;
-            }, z.core.$strip>>;
+                isExerciseAssignedToSplit: z.ZodLiteral<true>;
+                exerciseToSplitId: z.ZodInt;
+                exerciseId: z.ZodOptional<z.ZodNullable<z.ZodInt>>;
+            }, z.core.$strip>, z.ZodObject<{
+                trackedSets: z.ZodArray<z.ZodObject<{
+                    reps: z.ZodInt;
+                    weight: z.ZodNumber;
+                    setIndex: z.ZodInt;
+                }, z.core.$strip>>;
+                notes: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+                isExerciseAssignedToSplit: z.ZodLiteral<false>;
+                exerciseToSplitId: z.ZodOptional<z.ZodNull>;
+                exerciseId: z.ZodInt;
+            }, z.core.$strip>]>>;
             tz: z.ZodOptional<z.ZodString>;
             workoutStartUtc: z.ZodString;
             workoutEndUtc: z.ZodNullable<z.ZodOptional<z.ZodString>>;
@@ -5790,17 +5625,27 @@ type GetPersonalRecordsResponse = ResponseOf<typeof getPersonalRecordsContract>;
 type CreateWorkoutSessionBody = BodyOf<typeof createWorkoutSessionContract>;
 type CreateWorkoutSessionResponse = ResponseOf<typeof createWorkoutSessionContract>;
 
-declare const finishedWorkoutEntryQueryDtoSchema: z.ZodObject<{
+declare const finishedWorkoutEntryQueryDtoSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
     trackedSets: z.ZodArray<z.ZodObject<{
         reps: z.ZodInt;
         weight: z.ZodNumber;
         setIndex: z.ZodInt;
     }, z.core.$strip>>;
     notes: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    isExerciseAssignedToSplit: z.ZodBoolean;
-    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-    exerciseId: z.ZodNullable<z.ZodInt>;
-}, z.core.$strip>;
+    isExerciseAssignedToSplit: z.ZodLiteral<true>;
+    exerciseToSplitId: z.ZodInt;
+    exerciseId: z.ZodOptional<z.ZodNullable<z.ZodInt>>;
+}, z.core.$strip>, z.ZodObject<{
+    trackedSets: z.ZodArray<z.ZodObject<{
+        reps: z.ZodInt;
+        weight: z.ZodNumber;
+        setIndex: z.ZodInt;
+    }, z.core.$strip>>;
+    notes: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    isExerciseAssignedToSplit: z.ZodLiteral<false>;
+    exerciseToSplitId: z.ZodOptional<z.ZodNull>;
+    exerciseId: z.ZodInt;
+}, z.core.$strip>]>;
 /** Target-muscle metadata nested in a tracking-map item. */
 declare const exerciseMetadataQueryDtoSchema: z.ZodObject<{
     targetMuscle: z.ZodString;
@@ -6241,251 +6086,33 @@ type ExerciseTrackingIdQueryDto = z.infer<typeof exerciseTrackingIdQueryDtoSchem
 type FinishedWorkoutEntryQueryDto = z.infer<typeof finishedWorkoutEntryQueryDtoSchema>;
 
 declare const getWorkoutSchedulesResponseSchema: z.ZodObject<{
-    schedules: z.ZodArray<drizzle_zod.BuildSchema<"select", {
-        id: drizzle_orm_pg_core.PgColumn<{
-            name: "id";
-            tableName: "workout_schedule";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        userId: drizzle_orm_pg_core.PgColumn<{
-            name: "user_id";
-            tableName: "workout_schedule";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        workoutSplitId: drizzle_orm_pg_core.PgColumn<{
-            name: "workout_split_id";
-            tableName: "workout_schedule";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        dayOfWeek: drizzle_orm_pg_core.PgColumn<{
-            name: "day_of_week";
-            tableName: "workout_schedule";
-            dataType: "number";
-            columnType: "PgInteger";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        startTime: drizzle_orm_pg_core.PgColumn<{
-            name: "start_time";
-            tableName: "workout_schedule";
-            dataType: "string";
-            columnType: "PgTime";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        createdAt: drizzle_orm_pg_core.PgColumn<{
-            name: "created_at";
-            tableName: "workout_schedule";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        updatedAt: drizzle_orm_pg_core.PgColumn<{
-            name: "updated_at";
-            tableName: "workout_schedule";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-    }, undefined, undefined>>;
+    schedules: z.ZodArray<z.ZodObject<{
+        id: z.ZodUUID;
+        userId: z.ZodUUID;
+        workoutSplitId: z.ZodInt;
+        dayOfWeek: z.ZodInt;
+        startTime: z.ZodString;
+        createdAt: z.ZodString;
+        updatedAt: z.ZodString;
+    }, {
+        out: {};
+        in: {};
+    }>>;
 }, z.core.$strip>;
 declare const getWorkoutSchedulesContract: {
     response: z.ZodObject<{
-        schedules: z.ZodArray<drizzle_zod.BuildSchema<"select", {
-            id: drizzle_orm_pg_core.PgColumn<{
-                name: "id";
-                tableName: "workout_schedule";
-                dataType: "string";
-                columnType: "PgUUID";
-                data: string;
-                driverParam: string;
-                notNull: true;
-                hasDefault: true;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: undefined;
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
-            userId: drizzle_orm_pg_core.PgColumn<{
-                name: "user_id";
-                tableName: "workout_schedule";
-                dataType: "string";
-                columnType: "PgUUID";
-                data: string;
-                driverParam: string;
-                notNull: true;
-                hasDefault: false;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: undefined;
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
-            workoutSplitId: drizzle_orm_pg_core.PgColumn<{
-                name: "workout_split_id";
-                tableName: "workout_schedule";
-                dataType: "number";
-                columnType: "PgBigInt53";
-                data: number;
-                driverParam: string | number;
-                notNull: true;
-                hasDefault: false;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: undefined;
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
-            dayOfWeek: drizzle_orm_pg_core.PgColumn<{
-                name: "day_of_week";
-                tableName: "workout_schedule";
-                dataType: "number";
-                columnType: "PgInteger";
-                data: number;
-                driverParam: string | number;
-                notNull: true;
-                hasDefault: false;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: undefined;
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
-            startTime: drizzle_orm_pg_core.PgColumn<{
-                name: "start_time";
-                tableName: "workout_schedule";
-                dataType: "string";
-                columnType: "PgTime";
-                data: string;
-                driverParam: string;
-                notNull: true;
-                hasDefault: false;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: undefined;
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
-            createdAt: drizzle_orm_pg_core.PgColumn<{
-                name: "created_at";
-                tableName: "workout_schedule";
-                dataType: "date";
-                columnType: "PgTimestamp";
-                data: Date;
-                driverParam: string;
-                notNull: true;
-                hasDefault: true;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: undefined;
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
-            updatedAt: drizzle_orm_pg_core.PgColumn<{
-                name: "updated_at";
-                tableName: "workout_schedule";
-                dataType: "date";
-                columnType: "PgTimestamp";
-                data: Date;
-                driverParam: string;
-                notNull: true;
-                hasDefault: true;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: undefined;
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
-        }, undefined, undefined>>;
+        schedules: z.ZodArray<z.ZodObject<{
+            id: z.ZodUUID;
+            userId: z.ZodUUID;
+            workoutSplitId: z.ZodInt;
+            dayOfWeek: z.ZodInt;
+            startTime: z.ZodString;
+            createdAt: z.ZodString;
+            updatedAt: z.ZodString;
+        }, {
+            out: {};
+            in: {};
+        }>>;
     }, z.core.$strip>;
 };
 declare const replaceWorkoutSchedulesRequestSchema: z.ZodObject<{
@@ -6518,127 +6145,18 @@ declare const workoutScheduleInputDtoSchema: z.ZodObject<{
     dayOfWeek: z.ZodInt;
     startTime: z.ZodString;
 }, z.core.$strip>;
-declare const workoutScheduleQueryDtoSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "workout_schedule";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    userId: drizzle_orm_pg_core.PgColumn<{
-        name: "user_id";
-        tableName: "workout_schedule";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutSplitId: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_split_id";
-        tableName: "workout_schedule";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    dayOfWeek: drizzle_orm_pg_core.PgColumn<{
-        name: "day_of_week";
-        tableName: "workout_schedule";
-        dataType: "number";
-        columnType: "PgInteger";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    startTime: drizzle_orm_pg_core.PgColumn<{
-        name: "start_time";
-        tableName: "workout_schedule";
-        dataType: "string";
-        columnType: "PgTime";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    createdAt: drizzle_orm_pg_core.PgColumn<{
-        name: "created_at";
-        tableName: "workout_schedule";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    updatedAt: drizzle_orm_pg_core.PgColumn<{
-        name: "updated_at";
-        tableName: "workout_schedule";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
+declare const workoutScheduleQueryDtoSchema: z.ZodObject<{
+    id: z.ZodUUID;
+    userId: z.ZodUUID;
+    workoutSplitId: z.ZodInt;
+    dayOfWeek: z.ZodInt;
+    startTime: z.ZodString;
+    createdAt: z.ZodString;
+    updatedAt: z.ZodString;
+}, {
+    out: {};
+    in: {};
+}>;
 type WorkoutScheduleInputDto = z.infer<typeof workoutScheduleInputDtoSchema>;
 type WorkoutScheduleQueryDto = z.infer<typeof workoutScheduleQueryDtoSchema>;
 

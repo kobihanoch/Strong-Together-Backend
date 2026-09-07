@@ -33,7 +33,7 @@ export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDes
     try {
       // Try to run the worker
       pushNotificationsQueue.process(5, async (job) => {
-        const { userId, title, body, requestId } = job.data;
+        const { userId, workoutScheduleId, occurrenceDate, title, body, requestId } = job.data;
         const jobLogger = logger.child({
           jobId: String(job.id),
           userId,
@@ -50,7 +50,8 @@ export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDes
             return;
           }
 
-          const token = await this.pushQueries.queryExpoPushToken(userId);
+          // Recheck the user's current settings and schedule after the job delay.
+          const token = await this.pushQueries.queryExpoPushToken(userId, workoutScheduleId, occurrenceDate);
           if (!token) {
             jobLogger.info({ event: 'job.skipped_ineligible' }, 'Skipping ineligible workout reminder');
             return;

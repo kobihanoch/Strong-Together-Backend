@@ -71,12 +71,13 @@ Feature modules live under `src/modules`.
 | ---------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
 | `auth`           | Session login/refresh/logout, password reset, account verification       | PostgreSQL, Redis JTI cache, Redis email queue, messages                    |
 | `user`           | Create user, update profile, push tokens, profile pictures, email change | PostgreSQL, Redis JTI cache, Redis email queue, Supabase/LocalStack storage |
-| `workout`        | Workout plan creation and workout tracking                               | PostgreSQL, Redis cache, messages                                           |
+| `workout`        | Workout plan creation and workout tracking                               | PostgreSQL, Redis cache                                                     |
+| `workout-schedule` | Weekly split scheduling and complete schedule replacement              | PostgreSQL, RLS                                                             |
+| `reminders`      | Timezone-aware reminder preferences                                      | PostgreSQL                                                                  |
 | `messages`       | User inbox and system messages                                           | PostgreSQL, Socket.IO                                                       |
 | `video-analysis` | Presigned video upload URL and realtime result bridge                    | S3, Redis Pub/Sub, Socket.IO                                                |
 | `web-sockets`    | Authenticated Socket.IO ticket generation                                | JWT socket ticket signing                                                   |
 | `push`           | Scheduler-style push notification enqueue endpoints                      | PostgreSQL, Redis push queue                                                |
-| `analytics`      | Goal adherence and strength analytics                                    | PostgreSQL analytics views, Redis cache                                     |
 | `aerobics`       | Cardio/aerobic tracking                                                  | PostgreSQL, Redis cache                                                     |
 | `oauth`          | Google and Apple sign-in                                                 | Provider token verification, PostgreSQL, messages                           |
 | `exercises`      | Exercise catalog                                                         | PostgreSQL                                                                  |
@@ -103,7 +104,7 @@ The shared package lives under `packages/shared` but keeps a one-way dependency 
 
 `UserModule` is split into create, push tokens, and update/profile flows.
 
-- `CreateUserService` creates the user and default reminder settings in PostgreSQL, then calls `VerificationEmailsService`.
+- `CreateUserService` creates the user in PostgreSQL, then calls `VerificationEmailsService`. Reminder settings are created only when the authenticated user explicitly saves them through `PUT /api/reminders`.
 - `PushTokensService` stores Expo push tokens in PostgreSQL.
 - `UpdateUserService` reads and updates profile data, stores one-time email-change JTI keys as `emailchange:jti:*`, and uses `SupabaseStorageService` for profile images.
 - `UpdateEmailsService` enqueues email-change confirmation emails.
@@ -113,12 +114,19 @@ The shared package lives under `packages/shared` but keeps a one-way dependency 
 `WorkoutModule` is split into plan and tracking flows.
 
 - `WorkoutPlanService` reads/writes plans through `WorkoutPlanQueries` and caches plan payloads with `xt:workoutplan:v1:{userId}:{tz}`.
-- Updating a plan invalidates the plan cache and the analytics cache `xt:analytics:v1:{userId}`.
-- `WorkoutTrackingService` reads/writes tracking data through `WorkoutTrackingQueries`; caches workout history, workout statistics, and exercise history independently under feature-named cache keys; and creates system messages when a workout is completed.
+- Updating a plan invalidates its plan, workout-history, and workout-statistics cache keys for the requested timezone.
+- `WorkoutTrackingService` reads/writes tracking data through `WorkoutTrackingQueries`; caches 45-day workout history, workout statistics, exercise history, and personal records independently; completing a workout invalidates those keys without generating a message.
+
+### Workout Schedules And Reminders
+
+- `WorkoutScheduleModule` exposes authenticated reads and atomic complete replacement through `GET` and `PUT /api/workout-schedules`. An empty `schedules` array clears all weekly assignments.
+- Schedule writes accept only active splits owned by the authenticated user's active plan.
+- `RemindersModule` stores whether reminders are enabled and the IANA timezone used to convert each local schedule time.
+- The JWT-protected push cron endpoint asks PostgreSQL for reminders due in the next 70 minutes and enqueues delayed Bull jobs with occurrence-based IDs to prevent duplicate sends during overlapping cron windows.
 
 ### Messages
 
-`MessagesModule` handles user inbox reads/updates and system-generated messages.
+`MessagesModule` handles user inbox reads/updates and lifecycle-generated messages such as the first-login welcome message.
 
 - `MessagesService` reads and mutates message rows through `MessagesQueries`.
 - `MessagesService.emitNewMessage` emits `new_message` through `SocketIOService`.
@@ -155,17 +163,7 @@ The current implementation delivers analysis results in realtime and does not pe
 
 `PushModule` exposes `POST /api/push-jobs/workout-reminders` for an external hourly scheduler. The route requires a Bearer JWT signed with `CRON_JWT_SECRET`. It finds scheduled workout reminders due within the next 70 minutes and adds delayed jobs to `{env}:pushNotificationsQueue`.
 
-The push worker rechecks the user, Expo token, reminder settings, workout schedule, and active plan immediately before sending to Expo Push.
-
-### Analytics
-
-`AnalyticsService` reads from PostgreSQL analytics views and caches payloads with:
-
-```text
-xt:analytics:v1:{userId}
-```
-
-The module is read-heavy and does not mutate domain data directly.
+Immediately before sending, the push worker rechecks the user's Expo token, reminder enablement, queued schedule and weekday, and active split/plan state. A delayed job is skipped when any of those conditions changed after enqueueing.
 
 ### Aerobics
 

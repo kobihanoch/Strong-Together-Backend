@@ -1,5 +1,5 @@
 import { z } from 'zod/v4';
-import type { BodyOf, Contract, QueryOf, ResponseOf } from '../../../common';
+import { timezoneSchema, type BodyOf, type Contract, type QueryOf, type ResponseOf } from '../../../common';
 import {
   exerciseTrackingMapsQueryDtoSchema,
   exerciseTrackingStatsQueryDtoSchema,
@@ -10,7 +10,7 @@ import {
 
 // Get exercise tracking
 
-export const getWorkoutHistoryRequestSchema = z.object({ query: z.object({ tz: z.string().optional() }) });
+export const getWorkoutHistoryRequestSchema = z.object({ query: z.object({ tz: timezoneSchema.optional() }) });
 export const getWorkoutHistoryResponseSchema = exerciseTrackingMapsQueryDtoSchema;
 
 export const getWorkoutHistoryContract = {
@@ -18,7 +18,7 @@ export const getWorkoutHistoryContract = {
   response: getWorkoutHistoryResponseSchema,
 } satisfies Contract;
 
-export const getExerciseHistoryRequestSchema = z.object({ query: z.object({ tz: z.string().optional() }) });
+export const getExerciseHistoryRequestSchema = z.object({ query: z.object({ tz: timezoneSchema.optional() }) });
 export const getExerciseHistoryResponseSchema = exerciseHistoryQueryDtoSchema;
 export const getExerciseHistoryContract = {
   request: getExerciseHistoryRequestSchema,
@@ -36,7 +36,7 @@ export const getWorkoutStatisticsContract = {
 export const createWorkoutSessionRequestSchema = z.object({
   body: z.object({
     workout: z.array(finishedWorkoutEntryQueryDtoSchema),
-    tz: z.string().optional(),
+    tz: timezoneSchema.optional(),
     workoutStartUtc: z.string().datetime('workoutStartUtc must be a valid ISO datetime'),
     workoutEndUtc: z.string().datetime('workoutEndUtc must be a valid ISO datetime').optional().nullable(),
   }),
@@ -48,7 +48,7 @@ export const createWorkoutSessionContract = {
 } satisfies Contract;
 
 export const getPersonalRecordsResponseSchema = personalRecordsQueryDtoSchema;
-export const getPersonalRecordsRequestSchema = z.object({ query: z.object({ tz: z.string().optional() }) });
+export const getPersonalRecordsRequestSchema = z.object({ query: z.object({ tz: timezoneSchema.optional() }) });
 export const getPersonalRecordsContract = {
   request: getPersonalRecordsRequestSchema,
   response: getPersonalRecordsResponseSchema,

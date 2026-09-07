@@ -1,11 +1,11 @@
 import { z } from 'zod/v4';
-import type { Contract, ParamsOf, QueryOf, ResponseOf } from '../../common';
+import { timezoneSchema, type Contract, type ParamsOf, type QueryOf, type ResponseOf } from '../../common';
 import { messageDbSchema } from '../../database';
 import { allUserMessageQueryDtoSchema } from './messages.dtos';
 
 // List messages
 
-export const listMessagesRequestSchema = z.object({ query: z.object({ tz: z.string() }) });
+export const listMessagesRequestSchema = z.object({ query: z.object({ tz: timezoneSchema }) });
 export const listMessagesResponseSchema = z.object({ messages: z.array(allUserMessageQueryDtoSchema) });
 export const listMessagesContract = {
   request: listMessagesRequestSchema,

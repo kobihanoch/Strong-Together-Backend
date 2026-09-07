@@ -19,10 +19,10 @@ export class BotBlockerMiddleware implements NestMiddleware {
     if (path === '/api/push-jobs/workout-reminders') return next();
     if (appVersion) return next();
     if (
-      path.includes('verify') ||
-      path.includes('resetpassword') ||
-      path.includes('daily') ||
-      path.includes('changeemail')
+      path === '/api/auth/email-verification' ||
+      path === '/api/auth/password-reset-requests' ||
+      path === '/api/auth/password-resets' ||
+      path === '/api/users/email-change'
     ) {
       return next();
     }

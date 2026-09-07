@@ -33,7 +33,7 @@
 
 - [x] Creates tracking data.
 - [x] Persists DB rows.
-- [x] Creates a system message.
+- [x] Does not create a system message as a workout-completion side effect.
 - [x] Deletes the directly affected cache keys.
 - [x] Returns `204 No Content`.
 

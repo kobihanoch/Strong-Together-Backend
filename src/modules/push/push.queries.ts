@@ -33,14 +33,18 @@ export class PushQueries {
   }
 
   /**
-   * Retrieves the user's current Expo push token.
+   * Retrieves the user's current Expo push token when the queued reminder is still eligible.
    * @param userId - The reminder owner's identifier.
-   * @returns The current Expo token, or null when the user or token does not exist.
+   * @param workoutScheduleId - The queued schedule identifier.
+   * @param occurrenceDate - The queued local workout date.
+   * @returns The current Expo token, or null when the delayed reminder is no longer eligible.
    */
-  async queryExpoPushToken(userId: string): Promise<string | null> {
+  async queryExpoPushToken(userId: string, workoutScheduleId: string, occurrenceDate: string): Promise<string | null> {
     const [row] = await this.sql<{ pushToken: string | null }[]>`
       SELECT cron_api.valid_workout_reminder_token(
-        ${userId}::UUID
+        ${userId}::UUID,
+        ${workoutScheduleId}::UUID,
+        ${occurrenceDate}::DATE
       ) AS "pushToken"
     `;
 

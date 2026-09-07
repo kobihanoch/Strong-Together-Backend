@@ -21,11 +21,19 @@ const finishedWorkoutEntryBaseQueryDtoSchema = z.object({
   notes: exerciseTrackingDbSchema.shape.notes.optional(),
 });
 
-export const finishedWorkoutEntryQueryDtoSchema = finishedWorkoutEntryBaseQueryDtoSchema.extend({
-  isExerciseAssignedToSplit: z.boolean(),
-  exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
-  exerciseId: exerciseTrackingDbSchema.shape.exerciseId,
-});
+export const finishedWorkoutEntryQueryDtoSchema = z.discriminatedUnion('isExerciseAssignedToSplit', [
+  finishedWorkoutEntryBaseQueryDtoSchema.extend({
+    isExerciseAssignedToSplit: z.literal(true),
+    exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId.unwrap(),
+    // Accepted temporarily for clients using the previous redundant payload.
+    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.optional(),
+  }),
+  finishedWorkoutEntryBaseQueryDtoSchema.extend({
+    isExerciseAssignedToSplit: z.literal(false),
+    exerciseToSplitId: z.null().optional(),
+    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap(),
+  }),
+]);
 
 /** Target-muscle metadata nested in a tracking-map item. */
 export const exerciseMetadataQueryDtoSchema = z.object({
