@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import type { GoogleOAuthBody, GoogleTokenVerificationResult, OAuthLoginResponse } from '@strong-together/shared';
+import type { GoogleOAuthBody, GoogleTokenVerificationResultDto, OAuthLoginResponse } from '@strong-together/shared';
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../../../config/auth.config';
 import type { AppLogger } from '../../../infrastructure/logger';
+import { DBService } from '../../../infrastructure/db/db.service';
 import { SessionQueries } from '../../auth/session/session.queries';
 import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
 import { buildCnfClaim } from '../oauth.utils';
@@ -11,11 +12,19 @@ import { verifyGoogleIdToken } from './google.utils';
 @Injectable()
 export class GoogleService {
   constructor(
+    private readonly dbService: DBService,
     private readonly systemMessagesService: SystemMessagesService,
     private readonly sessionQueries: SessionQueries,
     private readonly googleQueries: GoogleQueries,
   ) {}
 
+  /**
+   * Creates or sign in with google.
+   * @param body - The validated request body.
+   * @param jkt - The DPoP key thumbprint.
+   * @param requestLogger - The request-scoped logger.
+   * @returns The create or sign in with google result.
+   */
   async createOrSignInWithGoogleData(
     body: GoogleOAuthBody,
     jkt: string,
@@ -26,12 +35,10 @@ export class GoogleService {
     if (!idToken) throw new BadRequestException('Missing google id token');
     const { googleSub, email, emailVerified, fullName } = (await verifyGoogleIdToken(
       idToken,
-    )) as GoogleTokenVerificationResult;
+    )) as GoogleTokenVerificationResultDto;
 
-    let { userId, missing_fields } = await this.googleQueries.queryFindUserIdWithGoogleUserId(googleSub);
+    let { userId } = await this.googleQueries.queryFindUserIdWithGoogleUserId(googleSub);
     const userExistOnOAuthUsers = !!userId;
-    let missingFieldsPayload = null;
-    if (userExistOnOAuthUsers && missing_fields) missingFieldsPayload = missing_fields.split(',');
 
     if (!userExistOnOAuthUsers) {
       let isLinked = false;
@@ -55,25 +62,16 @@ export class GoogleService {
         );
         const username = email?.split('@')[0].toLowerCase() || null;
 
-        const isValidEmail = !!email;
-        const isValidFullname = true;
-        let missingFields = '';
-        if (!isValidEmail) missingFields += 'email,';
-        if (!isValidFullname) missingFields += 'name';
-
         const userIdFromRegister = await this.googleQueries.queryCreateUserWithGoogleInfo(
           username,
-          isValidEmail ? email : null,
+          email,
           fullName,
-          missingFields !== '' ? missingFields : null,
           googleSub,
           email,
         );
         userId = userIdFromRegister;
 
         requestLogger.info({ event: 'oauth.google_registration_completed', userId }, 'Google OAuth user created');
-
-        if (missingFields !== '') missingFieldsPayload = missingFields.split(',');
       }
     }
 
@@ -83,10 +81,11 @@ export class GoogleService {
       'Google OAuth user authenticated',
     );
 
+    const hasNeverLoggedIn = (await this.sessionQueries.queryLastLogin(finalUserId)) === null;
+    await this.dbService.promoteCurrentRlsTxToAuthenticated(finalUserId);
     const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(finalUserId);
-    const [{ token_version, user_data: userData }] = rowsUserData;
-    if (userData.is_first_login && !missingFieldsPayload) {
-      await this.sessionQueries.querySetUserFirstLoginFalse(finalUserId);
+    const [{ tokenVersion, userData }] = rowsUserData;
+    if (hasNeverLoggedIn) {
       try {
         await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
       } catch (e) {
@@ -102,7 +101,7 @@ export class GoogleService {
       {
         id: userData.id,
         role: userData.role,
-        tokenVer: token_version,
+        tokenVer: tokenVersion,
         ...cnfClaim,
       },
       authConfig.jwtAccessSecret,
@@ -113,7 +112,7 @@ export class GoogleService {
       {
         id: userData.id,
         role: userData.role,
-        tokenVer: token_version,
+        tokenVer: tokenVersion,
         ...cnfClaim,
       },
       authConfig.jwtRefreshSecret,
@@ -123,7 +122,6 @@ export class GoogleService {
     return {
       message: 'Login successful',
       user: userData.id,
-      missingFields: missingFieldsPayload,
       accessToken,
       refreshToken,
     };

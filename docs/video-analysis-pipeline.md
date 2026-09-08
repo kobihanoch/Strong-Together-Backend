@@ -6,7 +6,7 @@ The video-analysis system is designed around direct upload, asynchronous process
 
 ## End-To-End Flow
 
-1. The mobile client calls `POST /api/videoanalysis/getpresignedurl`.
+1. The mobile client calls `POST /api/video-analysis/upload-urls`.
 2. `VideoAnalysisController` validates the request with `getPresignedUrlS3Request` from `@strong-together/shared`.
 3. `DpopGuard`, `AuthenticationGuard`, `AuthorizationGuard`, and `RlsTxInterceptor` protect the route.
 4. `VideoAnalysisService` creates a file key using `exercise`, `userId`, and timestamp.
@@ -22,6 +22,8 @@ The video-analysis system is designed around direct upload, asynchronous process
 8. The Python worker long-polls SQS.
 9. The worker downloads the video, continues the Sentry trace when possible, analyzes the exercise, publishes a result to Redis, deletes the source video, and then deletes the SQS message.
 10. `VideoAnalysisSubscriber` receives the Redis message and emits `video_analysis_results` to the user over Socket.IO.
+
+The upload API currently accepts any string for `exercise` and `fileType`. The Python analyzer supports the case-sensitive identifiers `squat` and `bench`; any other exercise value produces an unsupported-exercise result. Clients must therefore send one of those lowercase identifiers even if the UI displays a title-cased exercise name.
 
 In shorthand, the as-built path is:
 

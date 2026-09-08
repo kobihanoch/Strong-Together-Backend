@@ -18,10 +18,16 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     this.setupErrorHandlers();
   }
 
+  /**
+   * Initializes the service when its module starts.
+   */
   async onModuleInit() {
     await this.connectAllCLients();
   }
 
+  /**
+   * Releases service resources when its module shuts down.
+   */
   async onModuleDestroy() {
     this.logger.info('Closing all Redis connections...');
     const clients = [this.redisClient, this.redisSubscriber];
@@ -34,11 +40,17 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     this.logger.info('All connections closed');
   }
 
+  /**
+   * Pings client.
+   */
   async pingClient(): Promise<void> {
     const result = await this.redisClient.ping();
     this.logger.info({ event: 'redis.connected', ping: result }, 'Redis connected');
   }
 
+  /**
+   * Registers error handlers for the Redis clients.
+   */
   private setupErrorHandlers() {
     this.redisClient.on('error', (err) => this.logger.error({ err }, 'Redis Client Error'));
     this.redisSubscriber.on('error', (err) => this.logger.error({ err }, 'Redis Subscriber Error'));
@@ -49,6 +61,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /**
+   * Connects all configured Redis clients.
+   */
   private async connectAllCLients() {
     try {
       this.logger.info('Attempting to connect redis client...');
@@ -78,6 +93,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /**
+   * Returns the Redis clients used by the service.
+   */
   private async getRedisConnections() {
     const info = await this.redisClient.info('clients');
     const match = info.match(/connected_clients:(\d+)/);

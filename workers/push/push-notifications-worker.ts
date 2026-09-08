@@ -3,6 +3,7 @@ import { createLogger } from '../../src/infrastructure/logger';
 import { PushNotificationsQueueService } from '../../src/infrastructure/queues/push-notifications/push-notifications-queue';
 import { captureWorkerException } from '../../src/infrastructure/sentry';
 import { sendPushNotification } from '../../src/modules/push/push.service';
+import { PushQueries } from '../../src/modules/push/push.queries';
 
 const logger = createLogger('worker:push-notifications', {
   queue: 'pushNotificationsQueue',
@@ -13,6 +14,8 @@ export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDes
   constructor(
     @Inject(PushNotificationsQueueService)
     private readonly pushNotificationsQueueService: PushNotificationsQueueService,
+    @Inject(PushQueries)
+    private readonly pushQueries: PushQueries,
   ) {}
 
   async onModuleInit() {
@@ -30,10 +33,10 @@ export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDes
     try {
       // Try to run the worker
       pushNotificationsQueue.process(5, async (job) => {
-        const { token, title, body, requestId } = job.data;
+        const { userId, workoutScheduleId, occurrenceDate, title, body, requestId } = job.data;
         const jobLogger = logger.child({
           jobId: String(job.id),
-          token,
+          userId,
           title,
           requestId,
           attempt: job.attemptsMade + 1,
@@ -44,6 +47,13 @@ export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDes
           // Preventing overflowing of emails
           if (job.data.expiresAt && Date.now() > job.data.expiresAt) {
             jobLogger.warn({ event: 'job.skipped_expired' }, 'Skipping expired push notification job');
+            return;
+          }
+
+          // Recheck the user's current settings and schedule after the job delay.
+          const token = await this.pushQueries.queryExpoPushToken(userId, workoutScheduleId, occurrenceDate);
+          if (!token) {
+            jobLogger.info({ event: 'job.skipped_ineligible' }, 'Skipping ineligible workout reminder');
             return;
           }
 

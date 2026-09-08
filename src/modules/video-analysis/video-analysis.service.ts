@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import type {
-  AnalyzeVideoResultPayload,
-  GetPresignedUrlFromS3Response,
-  SquatRepetition,
+  AnalyzeVideoResultPayloadDto,
+  CreateVideoUploadUrlResponse,
+  SquatRepetitionDto,
+  UserRow,
 } from '@strong-together/shared';
-import { UserEntity } from '@strong-together/shared';
 import { S3Service } from '../../infrastructure/aws/s3/s3.service';
 import { SocketIOService } from './../../infrastructure/socket.io/socket.io.service';
 
@@ -24,7 +24,12 @@ export class VideoAnalysisService {
     private readonly s3Service: S3Service,
   ) {}
 
-  async getPresignedUrlData({
+  /**
+   * Retrieves presigned url.
+   * @param options - The options.
+   * @returns The presigned url result.
+   */
+  async createVideoUploadUrlData({
     exercise,
     fileType,
     jobId,
@@ -40,7 +45,7 @@ export class VideoAnalysisService {
     requestId?: string;
     sentryTrace: string;
     baggage: string;
-  }): Promise<{ payload: GetPresignedUrlFromS3Response; fileKey: string }> {
+  }): Promise<{ payload: CreateVideoUploadUrlResponse; fileKey: string }> {
     const fileKey = `${exercise}_${userId}_${Date.now()}`;
     const resolvedRequestId = requestId || '';
 
@@ -74,7 +79,10 @@ export class VideoAnalysisService {
     };
   }
 
-  emitVideoAnalysisResults = (userId: UserEntity['id'], results: AnalyzeVideoResultPayload<SquatRepetition>) => {
+  /**
+   * Emit video analysis results.
+   */
+  emitVideoAnalysisResults = (userId: UserRow['id'], results: AnalyzeVideoResultPayloadDto<SquatRepetitionDto>) => {
     this.socketIOService.emitToUser(userId, `video_analysis_results`, results);
   };
 

@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { getPresignedUrlFromS3ResponseSchema, loginResponseSchema } from '@strong-together/shared';
+import { createVideoUploadUrlResponseSchema, loginResponseSchema } from '@strong-together/shared';
 import { createApp } from '../../app';
 import { authHeaders } from '../../common/tests/helpers/auth';
 import { expectSchema } from '../../common/tests/helpers/assert-schema';
@@ -37,18 +37,18 @@ afterEach(async () => {
 });
 
 describe('VideoAnalysisController', () => {
-  it('POST /api/videoanalysis/getpresignedurl returns schema, uploads to LocalStack S3, and emits SQS event', async () => {
+  it('POST /api/video-analysis/upload-urls returns schema, uploads to LocalStack S3, and emits SQS event', async () => {
     const user = await createAndLoginTestUser(app, 'video');
     users.add(user.username);
     expectSchema(loginResponseSchema, user.loginResponse.body);
 
     const response = await request(app.getHttpServer())
-      .post('/api/videoanalysis/getpresignedurl')
+      .post('/api/video-analysis/upload-urls')
       .set(authHeaders(user.accessToken))
       .send({ exercise: 'Squat', fileType: 'video/mp4', jobId: 'controller-job-id' });
 
     expect(response.status).toBe(201);
-    expectSchema(getPresignedUrlFromS3ResponseSchema, response.body);
+    expectSchema(createVideoUploadUrlResponseSchema, response.body);
     expect(response.body.fileKey).toContain(`Squat_${user.userId}_`);
     uploadedKeys.add(response.body.fileKey);
 
@@ -71,15 +71,15 @@ describe('VideoAnalysisController', () => {
     expect(sqsMessage?.Body).toContain(response.body.fileKey);
   });
 
-  it('POST /api/videoanalysis/getpresignedurl rejects bad payloads with 400 and no auth with 401', async () => {
+  it('POST /api/video-analysis/upload-urls rejects bad payloads with 400 and no auth with 401', async () => {
     const user = await createAndLoginTestUser(app, 'video_bad');
     users.add(user.username);
     const bad = await request(app.getHttpServer())
-      .post('/api/videoanalysis/getpresignedurl')
+      .post('/api/video-analysis/upload-urls')
       .set(authHeaders(user.accessToken))
       .send({ exercise: 'Squat', fileType: 'video/mp4' });
     const noAuth = await request(app.getHttpServer())
-      .post('/api/videoanalysis/getpresignedurl')
+      .post('/api/video-analysis/upload-urls')
       .set('x-app-version', '4.5.0')
       .send({ exercise: 'Squat', fileType: 'video/mp4', jobId: 'job' });
 

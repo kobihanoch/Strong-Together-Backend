@@ -1,155 +1,223 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type { AddAerobicInput, UserAerobicsResponse } from '@strong-together/shared';
+import { Inject } from '@nestjs/common';
+import type { AddAerobicInputQueryDto, AerobicMutationRowQueryDto, UserAerobicsQueryDto, UserAerobicsRowQueryDto } from '@strong-together/shared';
 import type postgres from 'postgres';
 import { SQL } from '../../infrastructure/db/db.tokens';
 
-// Gets all records from last 45 days mapped by dates
-/**
- *  "daily": {
-        "2025-09-02": [
-            {
-                "type": "Walk",
-                "duration_sec": 0,
-                "duration_mins": 30
-            }
-        ],
-        "2025-09-03": [
-            {
-                "type": "Walk",
-                "duration_sec": 0,
-                "duration_mins": 30
-            }
-        ],
-        "2025-09-04": [
-            {
-                "type": "Walk",
-                "duration_sec": 0,
-                "duration_mins": 30
-            }
-        ]
-    },
-    "weekly": {
-        "2025-08-31": {
-            "records": [
-                {
-                    "type": "Walk",
-                    "duration_sec": 0,
-                    "workout_date": "2025-09-02",
-                    "duration_mins": 30
-                },
-                {
-                    "type": "Walk",
-                    "duration_sec": 0,
-                    "workout_date": "2025-09-03",
-                    "duration_mins": 30
-                },
-                {
-                    "type": "Walk",
-                    "duration_sec": 0,
-                    "workout_date": "2025-09-04",
-                    "duration_mins": 30
-                }
-            ],
-            "total_duration_sec": 0,
-            "total_duration_mins": 90
-        }
-    }
- */
-// Exact same response contract, except:
-// 1) Grouping is by local date derived from workout_time_utc in the provided tz
-// 2) In the weekly records array, we attach 'workout_time_utc' as the local timestamp (string) in that tz
-@Injectable()
 export class AerobicsQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
-  async queryGetUserAerobicsForNDays(
-    userId: string,
-    days: number,
-    tz: string = 'Asia/Jerusalem',
-  ): Promise<UserAerobicsResponse> {
-    const [obj] = await this.sql<[{ data: UserAerobicsResponse }]>`
-  /* Normalize parameters (default tz to UTC if empty) */
-  WITH params AS (
-    SELECT
-      ${userId}::uuid                    AS user_id,
-      ${days}::int                       AS days,
-      COALESCE(NULLIF(${tz}, ''), 'UTC') AS tz
-  ),
-
-  /* Base is last N days filtered in UTC, but we also compute the local timestamp in the given tz */
-  base AS (
-    SELECT
-      at.id,
-      at.duration_mins        AS dm,
-      at.duration_sec         AS ds,
-      /* Convert timestamptz to local time in tz (timestamp without time zone) */
-      (at.workout_time_utc AT TIME ZONE (SELECT tz FROM params)) AS local_ts,
-      /* Local date derived from the local timestamp */
-      (at.workout_time_utc AT TIME ZONE (SELECT tz FROM params))::date AS local_date,
-      /* Keep row payload but drop keys we re-add or don't need */
-      (to_jsonb(at) - 'user_id' - 'workout_time_utc' - 'id') AS row
-    FROM tracking.aerobictracking at, params p
-    WHERE at.user_id = p.user_id
-      AND at.workout_time_utc >= (NOW() AT TIME ZONE 'UTC' - (p.days || ' days')::interval)
-  ),
-
-  /* Norm is gathering relevant information for later (week starts on Sunday, like your original DOW logic) */
-  norm AS (
-    SELECT
-      b.row,
-      b.dm,
-      b.ds,
-      b.id,
-      b.local_ts,
-      b.local_date,
-      /* Compute week_start from local_date */
-      (b.local_date::date - EXTRACT(dow FROM b.local_date::date)::int)::date AS week_start
-    FROM base b
-  ),
-
-  /* Daily map: key is local_date (text), value is array of rows */
-  daily AS (
-    SELECT
-      n.local_date::text AS d,
-      jsonb_agg(n.row ORDER BY n.id ASC) AS records
-    FROM norm n
-    GROUP BY n.local_date
-  ),
-
-  /* Weekly map:
-     - totals are per week (same as before)
-     - records array contains each row payload with an extra 'workout_time_utc'
-       that is actually the local timestamp string in the given tz (by your request) */
-  weekly AS (
-    SELECT
-      n.week_start::text AS ws,
-      jsonb_build_object(
-        'total_duration_mins', SUM(n.dm),
-        'total_duration_sec', SUM(n.ds),
-        'records',
-          jsonb_agg(
-            to_jsonb(n.row)
-            || jsonb_build_object('workout_time_utc', n.local_ts::text)
-            ORDER BY n.id ASC
+  /**
+   * Retrieves user aerobics for ndays.
+   * @param userId - The user identifier.
+   * @param days - The days.
+   * @param tz - The IANA time-zone name.
+   * @returns The user aerobics for ndays result.
+   */
+  async queryGetUserAerobicsForNDays(userId: string, days: number, tz: string = 'Asia/Jerusalem'): Promise<UserAerobicsQueryDto> {
+    const [obj] = await this.sql<UserAerobicsRowQueryDto[]>`
+      /* Normalize parameters (default tz to UTC if empty) */
+      WITH
+        params AS (
+          SELECT
+            ${userId}::UUID AS user_id,
+            ${days}::INT AS days,
+            COALESCE(NULLIF(${tz}, ''), 'UTC') AS tz
+        ),
+        /* Convert local calendar-day boundaries back to instants. This remains correct across DST offset changes. */
+        bounds AS (
+          SELECT
+            (
+              (NOW() AT TIME ZONE p.tz)::date - GREATEST(p.days - 1, 0) * INTERVAL '1 day'
+            ) AT TIME ZONE p.tz AS lower_bound_utc,
+            ((NOW() AT TIME ZONE p.tz)::date + INTERVAL '1 day') AT TIME ZONE p.tz AS upper_bound_utc
+          FROM
+            params p
+        ),
+        /* Base contains the requested local calendar days and their local wall-clock timestamps. */
+        base AS (
+          SELECT
+            at.id,
+            (at.duration_sec / 60) AS dm,
+            (at.duration_sec % 60) AS ds,
+            /* Convert timestamptz to local time in tz (timestamp without time zone) */
+            (
+              at.workout_time_utc AT TIME ZONE(
+                SELECT
+                  tz
+                FROM
+                  params
+              )
+            ) AS local_ts,
+            /* Local date derived from the local timestamp */
+            (
+              at.workout_time_utc AT TIME ZONE(
+                SELECT
+                  tz
+                FROM
+                  params
+              )
+            )::date AS local_date,
+            JSONB_BUILD_OBJECT(
+              'id',
+              at.id,
+              'type',
+              at.type,
+              'durationMins',
+              at.duration_sec / 60,
+              'durationSec',
+              at.duration_sec % 60
+            ) AS ROW
+          FROM
+            tracking.aerobic_tracking at
+            CROSS JOIN params p
+            CROSS JOIN bounds b
+          WHERE
+            at.user_id = p.user_id
+            AND at.workout_time_utc >= b.lower_bound_utc
+            AND at.workout_time_utc < b.upper_bound_utc
+        ),
+        /* Norm is gathering relevant information for later (week starts on Sunday, like your original DOW logic) */
+        norm AS (
+          SELECT
+            b.row,
+            b.dm,
+            b.ds,
+            b.id,
+            b.local_ts,
+            b.local_date,
+            /* PostgreSQL weeks start Monday; shifting one day preserves the API's Sunday week start. */
+            (
+              DATE_TRUNC('week', b.local_date::TIMESTAMP + INTERVAL '1 day') - INTERVAL '1 day'
+            )::date AS week_start
+          FROM
+            base b
+        ),
+        /* Daily map: key is local_date (text), value is array of rows */
+        daily AS (
+          SELECT
+            n.local_date::TEXT AS d,
+            JSONB_AGG(
+              n.row
+              ORDER BY
+                n.id ASC
+            ) AS records
+          FROM
+            norm n
+          GROUP BY
+            n.local_date
+        ),
+        /* Weekly map:
+        - totals are per week (same as before)
+        - records contain the local wall-clock timestamp in the requested timezone */
+        weekly AS (
+          SELECT
+            n.week_start::TEXT AS ws,
+            JSONB_BUILD_OBJECT(
+              'totalDurationMins',
+              SUM(n.dm),
+              'totalDurationSec',
+              SUM(n.ds),
+              'records',
+              JSONB_AGG(
+                TO_JSONB(n.row) || JSONB_BUILD_OBJECT('workoutTimeLocal', n.local_ts::TEXT)
+                ORDER BY
+                  n.id ASC
+              )
+            ) AS records
+          FROM
+            norm n
+          GROUP BY
+            n.week_start
+        )
+        /* Final result: identical structure to your current response */
+      SELECT
+        JSONB_BUILD_OBJECT(
+          'daily',
+          COALESCE(
+            (
+              SELECT
+                JSONB_OBJECT_AGG(d.d, d.records)
+              FROM
+                daily d
+            ),
+            '{}'::JSONB
+          ),
+          'weekly',
+          COALESCE(
+            (
+              SELECT
+                JSONB_OBJECT_AGG(w.ws, w.records)
+              FROM
+                weekly w
+            ),
+            '{}'::JSONB
           )
-      ) AS records
-    FROM norm n
-    GROUP BY n.week_start
-  )
-
-  /* Final result: identical structure to your current response */
-  SELECT jsonb_build_object(
-    'daily',  COALESCE((SELECT jsonb_object_agg(d.d, d.records) FROM daily d),  '{}'::jsonb),
-    'weekly', COALESCE((SELECT jsonb_object_agg(w.ws, w.records) FROM weekly w), '{}'::jsonb)
-  ) AS data
-  `;
+        ) AS data
+    `;
 
     return obj.data;
   }
 
   // Add a new aerobic record
-  async queryAddAerobicTracking(userId: string, record: AddAerobicInput): Promise<void> {
+  /**
+   * Adds aerobic tracking.
+   * @param userId - The user identifier.
+   * @param record - The aerobic tracking record.
+   */
+  async queryAddAerobicTracking(userId: string, record: AddAerobicInputQueryDto): Promise<void> {
     const { durationMins, durationSec, type } = record;
-    await this.sql`INSERT INTO tracking.aerobictracking (user_id, type, duration_mins, duration_sec) VALUES (${userId}::uuid, ${type}, ${durationMins}, ${durationSec})`;
+    await this.sql`
+      INSERT INTO
+        tracking.aerobic_tracking (user_id, type, duration_sec)
+      VALUES
+        (
+          ${userId}::UUID,
+          ${type},
+          ${durationMins * 60 + durationSec}
+        )
+    `;
+  }
+
+  /**
+   * Updates an aerobic entry owned by the authenticated user.
+   *
+   * @param userId - The authenticated user's identifier.
+   * @param id - The aerobic entry identifier.
+   * @param record - The replacement aerobic entry values.
+   * @returns The updated entry identifier, or `null` when it was not found.
+   */
+  async queryUpdateAerobicTracking(userId: string, id: number, record: AddAerobicInputQueryDto): Promise<number | null> {
+    const { durationMins, durationSec, type } = record;
+    const [row] = await this.sql<AerobicMutationRowQueryDto[]>`
+      UPDATE tracking.aerobic_tracking
+      SET
+        type = ${type},
+        duration_sec = ${durationMins * 60 + durationSec}
+      WHERE
+        id = ${id}::BIGINT
+        AND user_id = ${userId}::UUID
+      RETURNING
+        id
+    `;
+    return row?.id ?? null;
+  }
+
+  /**
+   * Deletes an aerobic entry owned by the authenticated user.
+   *
+   * @param userId - The authenticated user's identifier.
+   * @param id - The aerobic entry identifier.
+   * @returns The deleted entry identifier, or `null` when it was not found.
+   */
+  async queryDeleteAerobicTracking(userId: string, id: number): Promise<number | null> {
+    const [row] = await this.sql<AerobicMutationRowQueryDto[]>`
+      DELETE FROM tracking.aerobic_tracking
+      WHERE
+        id = ${id}::BIGINT
+        AND user_id = ${userId}::UUID
+      RETURNING
+        id
+    `;
+    return row?.id ?? null;
   }
 }

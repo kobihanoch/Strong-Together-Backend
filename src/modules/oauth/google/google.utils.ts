@@ -2,7 +2,8 @@ import { BadRequestException } from '@nestjs/common';
 import type { JWTPayload } from 'jose';
 import * as jose from 'jose';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
-import type { GoogleTokenVerificationResult } from '@strong-together/shared';
+import type { GoogleTokenVerificationResultDto } from '@strong-together/shared';
+import { buildOAuthDisplayName } from '../oauth.utils';
 
 interface GoogleJwtPayload extends JWTPayload {
   email?: string | null;
@@ -21,7 +22,7 @@ const GOOGLE_ALLOWED_AUDIENCES = new Set([
 
 export async function verifyGoogleIdToken(
   idToken: string,
-): Promise<GoogleTokenVerificationResult & { picture: string | null; raw: GoogleJwtPayload }> {
+): Promise<GoogleTokenVerificationResultDto & { picture: string | null; raw: GoogleJwtPayload }> {
   // Verify signature and standard claims
   const { payload } = await jwtVerify<GoogleJwtPayload>(idToken, GOOGLE_JWKS, {
     issuer: ['https://accounts.google.com', 'accounts.google.com'],
@@ -39,7 +40,7 @@ export async function verifyGoogleIdToken(
     googleSub: payload.sub as string,
     email: payload.email || null,
     emailVerified: payload.email_verified === true,
-    fullName: payload.name || 'New User',
+    fullName: buildOAuthDisplayName(payload.name),
     picture: payload.picture || null,
     raw: payload,
   };

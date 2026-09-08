@@ -28,6 +28,9 @@ export class SocketIOService implements OnApplicationBootstrap {
     @Inject(SOCKET_IO) private readonly io: Server,
   ) {}
 
+  /**
+   * Initializes the service after the application has bootstrapped.
+   */
   async onApplicationBootstrap() {
     const httpServer = this.adapterHost.httpAdapter.getHttpServer();
 
@@ -43,6 +46,9 @@ export class SocketIOService implements OnApplicationBootstrap {
     this.logger.info({ event: 'websocket.initialized', path: '/socket.io' }, 'SocketIOService initialized');
   }
 
+  /**
+   * Configures the Redis adapter used by Socket.IO.
+   */
   async setUpRedisAdapter() {
     if (this.socketAdapterClients) {
       const { pubClient, subClient } = this.socketAdapterClients;
@@ -51,6 +57,9 @@ export class SocketIOService implements OnApplicationBootstrap {
     }
   }
 
+  /**
+   * Registers Socket.IO authentication middleware.
+   */
   async setUpMiddleware() {
     // --- Authenticate before connection is accepted ---
     this.io.use(async (socket, next) => {
@@ -71,6 +80,9 @@ export class SocketIOService implements OnApplicationBootstrap {
     });
   }
 
+  /**
+   * Registers Socket.IO connection handling.
+   */
   async handleConnections() {
     // --- Connection is authenticated here ---
     this.io.on('connection', (socket) => {
@@ -103,6 +115,12 @@ export class SocketIOService implements OnApplicationBootstrap {
     });
   }
 
+  /**
+   * Emits an event to every active socket for a user.
+   * @param userId - The user identifier.
+   * @param event - The event name.
+   * @param data - The event payload.
+   */
   public emitToUser(userId: string, event: string, data: any) {
     this.io.to(userId).emit(event, data);
   }

@@ -1,0 +1,40 @@
+Table tracking.workout_summary {
+  id uuid [pk]
+  user_id uuid [not null, ref: > identity.user.id]
+  workout_split_id bigint [not null, ref: > workout.workout_split.id]
+  workout_start_utc timestamptz [not null]
+  workout_end_utc timestamptz [not null]
+  created_at timestamptz [not null]
+}
+
+Table tracking.exercise_tracking {
+  id bigint [pk, increment]
+  workout_summary_id uuid [not null, ref: > tracking.workout_summary.id]
+  exercise_to_split_id bigint [ref: > workout.exercise_to_workout_split.id]
+  exercise_id bigint [ref: > workout.exercise.id]
+  notes text
+  Note: 'Exactly one of exercise_to_split_id and exercise_id is non-null.'
+}
+
+Table tracking.tracking_set {
+  id uuid [pk]
+  exercise_tracking_id bigint [not null, ref: > tracking.exercise_tracking.id]
+  set_index integer [not null]
+  reps integer [not null]
+  weight real [not null]
+
+  indexes { (exercise_tracking_id, set_index) [unique] }
+}
+
+Table tracking.aerobic_tracking {
+  id bigint [pk, increment]
+  user_id uuid [not null, ref: > identity.user.id]
+  type text [not null]
+  duration_sec bigint [not null]
+  workout_time_utc timestamptz [not null]
+}
+
+Table identity.user { id uuid [pk] }
+Table workout.workout_split { id bigint [pk] }
+Table workout.exercise_to_workout_split { id bigint [pk] }
+Table workout.exercise { id bigint [pk] }

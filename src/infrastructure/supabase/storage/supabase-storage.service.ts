@@ -1,8 +1,9 @@
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 import axios from 'axios';
 import { appConfig } from '../../../config/app.config';
 import { awsConfig, supabaseConfig } from '../../../config/storage.config';
+import { S3_CLIENT } from '../../aws/aws.tokens';
 
 // Prod - Cloud Supabase storage
 const base = supabaseConfig.url;
@@ -10,18 +11,20 @@ const svc = supabaseConfig.serviceRole;
 
 // Dev - Localstack
 const localStorage = appConfig.isDevelopment || appConfig.isTest;
-const s3 = new S3Client({
-  region: awsConfig.region,
-  credentials: {
-    accessKeyId: awsConfig.accessKeyId,
-    secretAccessKey: awsConfig.secretAccessKey,
-  },
-  ...(awsConfig.s3Endpoint ? { endpoint: awsConfig.s3Endpoint, forcePathStyle: true } : {}),
-});
 
 @Injectable()
 export class SupabaseStorageService {
+  constructor(@Inject(S3_CLIENT) private readonly s3: S3Client) {}
+
   // In dev/test this writes to LocalStack S3. In prod it keeps using Supabase Storage.
+  /**
+   * Uploads buffer to supabase.
+   * @param bucket - The bucket.
+   * @param key - The cache key.
+   * @param buffer - The buffer.
+   * @param contentType - The content type.
+   * @returns The upload buffer to supabase result.
+   */
   async uploadBufferToSupabase(
     bucket: string,
     key: string,
@@ -30,7 +33,7 @@ export class SupabaseStorageService {
   ): Promise<{ path: string; publicUrl: string }> {
     // Dev
     if (localStorage) {
-      await s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: buffer, ContentType: contentType }));
+      await this.s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: buffer, ContentType: contentType }));
       return {
         path: `${bucket}/${key}`,
         publicUrl: `${awsConfig.s3PresignEndpoint || awsConfig.s3Endpoint}/${bucket}/${key}`,
@@ -60,10 +63,14 @@ export class SupabaseStorageService {
   }
 
   // Path format: "<bucket>/<key>".
+  /**
+   * Deletes from supabase.
+   * @param path - The stored object path.
+   */
   async deleteFromSupabase(path: string): Promise<void> {
     if (localStorage) {
       const [bucket, ...keyParts] = path.split('/');
-      await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: keyParts.join('/') }));
+      await this.s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: keyParts.join('/') }));
       return;
     }
 

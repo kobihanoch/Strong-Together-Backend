@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import { CreateUserQueries } from './create.queries';
-import type { CreateUserBody, CreateUserResponse } from '@strong-together/shared';
+import type { CreateUserBody } from '@strong-together/shared';
 import { VerificationEmailsService } from '../../auth/verification/verification-emails/verification-emails.service';
 
 @Injectable()
@@ -11,21 +11,24 @@ export class CreateUserService {
     private readonly verificationEmailsService: VerificationEmailsService,
   ) {}
 
-  async createUserData(body: CreateUserBody, requestId?: string): Promise<CreateUserResponse> {
+  /**
+   * Creates a local user and sends the initial verification email.
+   * @param body - The validated request body.
+   * @param requestId - The request correlation identifier.
+   */
+  async createUserData(body: CreateUserBody, requestId?: string): Promise<void> {
     const { username, fullName, email, password, gender } = body;
     const rowsExists = await this.createUserQueries.queryUserExistsByUsernameOrEmail(username, email);
     const [user] = rowsExists;
     if (user) throw new BadRequestException('User already exists');
 
     const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash(password, salt);
+    const passwordHash = await bcrypt.hash(password, salt);
 
-    const created = await this.createUserQueries.queryInsertUser(username!, fullName, email!, gender, hash);
+    const created = await this.createUserQueries.queryInsertUser(username!, fullName, email!, gender, passwordHash);
 
     await this.verificationEmailsService.sendVerificationEmail(email as string, created.id, fullName, {
       ...(requestId ? { requestId } : {}),
     });
-
-    return { message: 'User created successfully!', user: created };
   }
 }

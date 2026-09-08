@@ -1,13 +1,6 @@
-import { Controller, Delete, Get, Put, UseGuards, UseInterceptors } from '@nestjs/common';
-import type {
-  DeleteMessageParams,
-  DeleteMessageResponse,
-  GetAllUserMessagesQuery,
-  GetAllUserMessagesResponse,
-  MarkMessageAsReadParams,
-  MarkMessageAsReadResponse,
-} from '@strong-together/shared';
-import { deleteMessageRequest, getAllMessagesRequest, markMessageAsReadRequest } from '@strong-together/shared';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, UseGuards, UseInterceptors } from '@nestjs/common';
+import type { DeleteMessageParams, ListMessagesQuery, ListMessagesResponse, MarkMessageAsReadParams } from '@strong-together/shared';
+import { deleteMessageRequestSchema, listMessagesRequestSchema, markMessageAsReadRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestData } from '../../common/decorators/request-data.decorator';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
@@ -22,9 +15,9 @@ import { MessagesService } from './messages.service';
  * Message routes for authenticated users.
  *
  * Preserves the existing route paths and behavior from the Express version:
- * - GET /api/messages/getmessages
- * - PUT /api/messages/markasread/:id
- * - DELETE /api/messages/delete/:id
+ * - GET /api/messages
+ * - PATCH /api/messages/:id/read
+ * - DELETE /api/messages/:id
  *
  * Access: User
  */
@@ -41,58 +34,64 @@ export class MessagesController {
    * Returns all messages for the current user, localized to the requested
    * timezone.
    *
-   * Route: GET /api/messages/getmessages
+   * @remarks Route: GET /api/messages
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @returns The response payload.
    */
-  @Get('getmessages')
-  async getAllUserMessages(
-    @RequestData(new ValidateRequestPipe(getAllMessagesRequest))
-    data: { query: GetAllUserMessagesQuery },
+  @Get()
+  async listMessages(
+    @RequestData(new ValidateRequestPipe(listMessagesRequestSchema))
+    data: { query: ListMessagesQuery },
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<GetAllUserMessagesResponse> {
+  ): Promise<ListMessagesResponse> {
     const tz = data.query.tz;
-    // Get messages
-    const { payload } = await this.messagesService.getAllMessagesData(user.id, tz);
+    const { payload } = await this.messagesService.listMessagesData(user.id, tz);
     return payload;
   }
-
-  // -----------------------------------
-
   /**
    * Mark a message as read for the authenticated user.
    *
    * Updates the target message only when it belongs to the current user and
-   * returns the updated read state.
+   * responds with 204 No Content.
    *
-   * Route: PUT /api/messages/markasread/:id
+   * @remarks Route: PATCH /api/messages/:id/read
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
    */
-  @Put('markasread/:id')
+  @Patch(':id/read')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async markUserMessageAsRead(
-    @RequestData(new ValidateRequestPipe(markMessageAsReadRequest))
+    @RequestData(new ValidateRequestPipe(markMessageAsReadRequestSchema))
     data: { params: MarkMessageAsReadParams },
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<MarkMessageAsReadResponse> {
-    const payload = await this.messagesService.markUserMessageAsReadData(data.params.id, user.id);
-    return payload;
+  ): Promise<void> {
+    await this.messagesService.markUserMessageAsReadData(data.params.id, user.id);
   }
 
   /**
    * Delete a message visible to the authenticated user.
    *
    * Removes the target message when the current user is allowed to access it and
-   * returns the deleted message identifier.
+   * responds with 204 No Content.
    *
-   * Route: DELETE /api/messages/delete/:id
+   * @remarks Route: DELETE /api/messages/:id
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
    */
-  @Delete('delete/:id')
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async deleteMessage(
-    @RequestData(new ValidateRequestPipe(deleteMessageRequest))
+    @RequestData(new ValidateRequestPipe(deleteMessageRequestSchema))
     data: { params: DeleteMessageParams },
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<DeleteMessageResponse> {
-    const payload = await this.messagesService.deleteMessageData(data.params.id, user.id);
-    return payload;
+  ): Promise<void> {
+    await this.messagesService.deleteMessageData(data.params.id, user.id);
   }
 }

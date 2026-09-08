@@ -1,10 +1,9 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type {
-  ChangeEmailTokenPayload,
-  DeleteUserProfilePicBody,
-  SetProfilePicAndUpdateDBResponse,
-  UpdateAuthenticatedUserResponse,
-  UpdateUserBody,
+  ChangeEmailTokenPayloadDto,
+  DeleteProfilePictureBody,
+  ReplaceProfilePictureResponse,
+  UpdateCurrentUserBody,
   UserDataResponse,
 } from '@strong-together/shared';
 import mime from 'mime';
@@ -13,6 +12,7 @@ import type postgres from 'postgres';
 import { supabaseConfig } from '../../../config/storage.config';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
 import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 import type { AppLogger } from '../../../infrastructure/logger';
 import { SupabaseStorageService } from '../../../infrastructure/supabase/storage/supabase-storage.service';
 import { UpdateEmailsService } from './update-emails/update-emails.service';
@@ -24,29 +24,33 @@ import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from '.
 export class UpdateUserService {
   constructor(
     @Inject(SQL) private readonly sql: postgres.Sql,
+    private readonly dbService: DBService,
     private readonly updateUserQueries: UpdateUserQueries,
     private readonly updateEmailsService: UpdateEmailsService,
     private readonly supabaseStorageService: SupabaseStorageService,
     private readonly cacheService: CacheService,
   ) {}
 
-  async getUserData(userId: string): Promise<{ payload: UserDataResponse['user_data'] }> {
+  /**
+   * Retrieves user.
+   * @param userId - The user identifier.
+   * @returns The user result.
+   */
+  async getUserData(userId: string): Promise<{ payload: UserDataResponse['userData'] }> {
     const rows = await this.updateUserQueries.queryAuthenticatedUserById(userId);
     const [user] = rows;
     if (!user) throw new NotFoundException('User not found');
-    return { payload: user.user_data };
+    return { payload: user.userData };
   }
 
-  async updateUsersReminderSettingsTimezone(userId: string, tz: string): Promise<void> {
-    await this
-      .sql`update reminders.user_reminder_settings urs set timezone=${tz}::text where urs.user_id = ${userId}::uuid and urs.timezone is distinct from ${tz}::text;`;
-  }
-
-  async updateAuthenticatedUserData(
-    userId: string,
-    body: UpdateUserBody,
-    requestId?: string,
-  ): Promise<UpdateAuthenticatedUserResponse> {
+  /**
+   * Updates the authenticated user and starts email verification when the
+   * submitted email differs from the persisted address.
+   * @param userId - The user identifier.
+   * @param body - The validated request body.
+   * @param requestId - The request correlation identifier.
+   */
+  async updateCurrentUserData(userId: string, body: UpdateCurrentUserBody, requestId?: string): Promise<void> {
     const { username, fullName, email } = body;
     const { payload: currentUser } = await this.getUserData(userId);
 
@@ -61,34 +65,29 @@ export class UpdateUserService {
     }
 
     const [updated] = rowsUpdated;
-    if (!updated) return { message: 'User not found' } as any;
+    if (!updated) throw new NotFoundException('User not found');
 
-    const { user_data: userData } = updated;
+    const { userData } = updated;
     const currentEmail = (currentUser.email || '').trim().toLowerCase();
     const candidate = (email || '').trim().toLowerCase();
 
-    let emailChanged = false;
     if (candidate && candidate !== currentEmail) {
       await this.updateEmailsService.sendVerificationEmailForEmailUpdate(candidate, userId, userData.name || 'there', {
         ...(requestId ? { requestId } : {}),
       });
-      emailChanged = true;
     }
-
-    return {
-      message: 'User updated successfully',
-      emailChanged,
-      user: updated.user_data,
-    };
   }
 
-  async updateSelfEmailData(
-    token: string | undefined,
-    requestLogger: AppLogger,
-  ): Promise<{ statusCode: number; html: string }> {
+  /**
+   * Updates self email.
+   * @param token - The token to process.
+   * @param requestLogger - The request-scoped logger.
+   * @returns The update self email result.
+   */
+  async updateSelfEmailData(token: string | undefined, requestLogger: AppLogger): Promise<{ statusCode: number; html: string }> {
     if (!token) return { statusCode: 401, html: generateEmailChangeFailedHTML('Missing token') };
 
-    const decoded = decodeChangeEmailToken(token) as ChangeEmailTokenPayload | null;
+    const decoded = decodeChangeEmailToken(token) as ChangeEmailTokenPayloadDto | null;
     if (!decoded) {
       return { statusCode: 401, html: generateEmailChangeFailedHTML('Invalid or expired link') };
     }
@@ -108,9 +107,10 @@ export class UpdateUserService {
     const normalized = newEmail.trim().toLowerCase();
 
     try {
+      await this.dbService.promoteCurrentRlsTxToAuthenticated(sub);
       await this.sql.begin(async (trx) => {
         await trx`
-          UPDATE identity.users
+          UPDATE identity.user
           SET email = ${normalized}
           WHERE id = ${sub}::uuid
         `;
@@ -127,15 +127,26 @@ export class UpdateUserService {
     return { statusCode: 200, html: generateEmailChangeSuccessHTML() };
   }
 
+  /**
+   * Deletes self user.
+   * @param userId - The user identifier.
+   */
   async deleteSelfUserData(userId: string): Promise<void> {
     await this.updateUserQueries.queryDeleteUserById(userId);
   }
 
-  async setProfilePicAndUpdateDBData(
+  /**
+   * Sets profile pic and update db.
+   * @param userId - The user identifier.
+   * @param file - The uploaded image file.
+   * @param requestLogger - The request-scoped logger.
+   * @returns The set profile pic and update db result.
+   */
+  async replaceProfilePictureData(
     userId: string,
     file: Express.Multer.File | undefined,
     requestLogger: AppLogger,
-  ): Promise<SetProfilePicAndUpdateDBResponse> {
+  ): Promise<ReplaceProfilePictureResponse> {
     if (!file) throw new BadRequestException('No file provided');
 
     const ext = path.extname(file.originalname) || `.${mime.getExtension(file.mimetype) || 'jpg'}`;
@@ -149,7 +160,7 @@ export class UpdateUserService {
     );
 
     const [row] = await this.updateUserQueries.queryGetUserProfilePicURL(userId);
-    const oldPath = row?.profile_image_url;
+    const oldPath = row?.profilePicPath;
     await this.updateUserQueries.queryUpdateUserProfilePicURL(userId, newPath);
 
     if (oldPath && oldPath !== newPath) {
@@ -167,11 +178,16 @@ export class UpdateUserService {
       });
     }
 
-    return { path: newPath, url: publicUrl, message: 'Upload success' };
+    return { profilePicPath: newPath, url: publicUrl, message: 'Upload success' };
   }
 
-  async deleteUserProfilePicData(userId: string, body: DeleteUserProfilePicBody): Promise<void> {
-    await this.supabaseStorageService.deleteFromSupabase(body.path);
+  /**
+   * Deletes user profile pic.
+   * @param userId - The user identifier.
+   * @param body - The validated request body.
+   */
+  async deleteProfilePictureData(userId: string, body: DeleteProfilePictureBody): Promise<void> {
+    await this.supabaseStorageService.deleteFromSupabase(body.profilePicPath);
     await this.updateUserQueries.queryUpdateUserProfilePicURL(userId, null);
   }
 }

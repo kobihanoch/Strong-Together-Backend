@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v5.0.0-rc.0...v5.0.0) (2026-09-08)
+
+## [5.0.0-rc.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v4.0.3...v5.0.0-rc.0) (2026-09-08)
+
+
+### Features
+
+* **Cache:** Added redis cache versioning ([9f719c6](https://github.com/kobihanoch/Strong-Together-Backend/commit/9f719c6b672a3f9be8a57fd52e03d611531aeef5))
+* **PRs:** Added a prs endpoint ([3934b28](https://github.com/kobihanoch/Strong-Together-Backend/commit/3934b282390b4fcc5d46c42821ccdb8722646ec3))
+* **Reminders:** Added endpoint for updating timezone ([5337666](https://github.com/kobihanoch/Strong-Together-Backend/commit/5337666ba4e83fc5a18df1d673727287ea174963))
+* **Reminders:** Implement workout reminder cron API and related functionality. Secured cron job ([927eda2](https://github.com/kobihanoch/Strong-Together-Backend/commit/927eda20910eb657ce50967ee8f7457a73d98afd))
+* **Schedule Workouts:** User now can schedule workouts ([a32ce69](https://github.com/kobihanoch/Strong-Together-Backend/commit/a32ce6916c9cce19bea9fcb6152a298fb6b81beb))
+* **TRacking Stats:** Created a new endpoint for tracking stats and refactored views ([f4f1800](https://github.com/kobihanoch/Strong-Together-Backend/commit/f4f18007962446c4cb8e7839529b665574b43173))
+* **Tracking:** Added exercise history endpoint to fetch exercise tracking map by etsid ([d7e0f9a](https://github.com/kobihanoch/Strong-Together-Backend/commit/d7e0f9aa9e341ee45cfc8b6bea20b0b59544c495))
+* **Workout:** Added estimated duration in minutes to workout splits, and added duration per workout. Removed by etsid map ([d6fc513](https://github.com/kobihanoch/Strong-Together-Backend/commit/d6fc5138363c5fe421fd33add9140bd8a3346b69))
+
+
+### Code Refactoring
+
+* Exported new drizzle derived types package to NPM. Package lives under current repo ([719d633](https://github.com/kobihanoch/Strong-Together-Backend/commit/719d633763faaf3cc5c376173fc7ffa2d9065444))
+* **Logout:** Enhance logout functionality to support refresh token and DPoP, so expo push invalidation will always occur. ([e08d6a3](https://github.com/kobihanoch/Strong-Together-Backend/commit/e08d6a39536bce906b0154c3dc555d228551543f))
+* Moved DB to be drizzle based and normalized DB ([a34d4c0](https://github.com/kobihanoch/Strong-Together-Backend/commit/a34d4c02908d19cbb545584be6d19ff6bc056c2a))
+* **OAuth:** Removed OAuth missing fields column in DB ([02eb9ae](https://github.com/kobihanoch/Strong-Together-Backend/commit/02eb9ae10ded636edca3a2d4ad9ef8f0110e771b))
+* Refactored endpoints to stop doing side effects and only server their main purpose and invalidate cache ([22c2fae](https://github.com/kobihanoch/Strong-Together-Backend/commit/22c2faeac39d3149a86abaeded22f30a9d19cf4b))
+* Refactored entire DB. Normalized names and structure to 3NF. Refactored all contracts. BREAKING CHANGE. ([4edf337](https://github.com/kobihanoch/Strong-Together-Backend/commit/4edf33777ad3d3e1fece2fd61f6c1fa38d4f9114))
+* Refactored get aerobics query and removed insert now at utc. Default is now() only ([7e710bf](https://github.com/kobihanoch/Strong-Together-Backend/commit/7e710bfdcb0131cfb4dc45c736ca253d850f1820))
+* Refactored supabase dev bucket to import AWS S3 client ([6d27d29](https://github.com/kobihanoch/Strong-Together-Backend/commit/6d27d29d3e176adf00a640e1b5f2630fe5eb15c2))
+* Refactored tests and added staging DB migration checks ([83331c8](https://github.com/kobihanoch/Strong-Together-Backend/commit/83331c8a61b2d73186580712cd6e05f917215581))
+* Removed analytics ([c74a5f7](https://github.com/kobihanoch/Strong-Together-Backend/commit/c74a5f74547acf6f32278a7801e6b76349f0d19f))
+* Removed bootstrap ([689468a](https://github.com/kobihanoch/Strong-Together-Backend/commit/689468aaae0082c265f95f291aab51dd189c69a0))
+* Updated naming conventions for all endpoints ([348a143](https://github.com/kobihanoch/Strong-Together-Backend/commit/348a143164e65e405c070e55837aee2bdcc7a418))
+
 ### [4.0.3](https://github.com/kobihanoch/Strong-Together-Backend/compare/v4.0.3-rc.1...v4.0.3) (2026-06-18)
 
 ### [4.0.3-rc.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v4.0.3-rc.0...v4.0.3-rc.1) (2026-06-18)

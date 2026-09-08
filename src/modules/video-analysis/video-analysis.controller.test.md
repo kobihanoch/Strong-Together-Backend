@@ -2,7 +2,7 @@
 
 ## Happy Paths
 
-### `POST /api/videoanalysis/getpresignedurl`
+### `POST /api/video-analysis/upload-urls`
 
 - [x] Returns a schema-valid presigned upload response.
 - [x] Uploads the test file to LocalStack S3.
@@ -11,7 +11,7 @@
 
 ## Bad Paths
 
-### `POST /api/videoanalysis/getpresignedurl`
+### `POST /api/video-analysis/upload-urls`
 
 - [x] Rejects bad payloads with `400`.
 - [x] Rejects missing auth with `401`.

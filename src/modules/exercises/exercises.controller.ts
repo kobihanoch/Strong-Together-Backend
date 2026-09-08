@@ -1,5 +1,5 @@
 import { Controller, Get, UseGuards, UseInterceptors } from '@nestjs/common';
-import type { GetAllExercisesResponse } from '@strong-together/shared';
+import type { ListExercisesResponse } from '@strong-together/shared';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard';
@@ -10,7 +10,7 @@ import { ExercisesService } from './exercises.service';
  * Exercise routes for authenticated users.
  *
  * Preserves the existing route path and behavior from the Express version:
- * - GET /api/exercises/getall
+ * - GET /api/exercises
  *
  * Access: User
  */
@@ -21,17 +21,19 @@ import { ExercisesService } from './exercises.service';
 export class ExercisesController {
   constructor(private readonly exercisesService: ExercisesService) {}
 
-/**
- * Get the exercise catalog grouped for workout-building flows.
- *
- * Returns the full exercise map used by the client when composing or editing
- * workout plans.
- *
- * Route: GET /api/exercises/getall
- * Access: User
- */
-  @Get('getall')
-  async getAllExercises(): Promise<GetAllExercisesResponse> {
-    return this.exercisesService.getAllExercisesData();
+  /**
+   * Get the exercise catalog grouped for workout-building flows.
+   *
+   * Returns the full exercise map used by the client when composing or editing
+   * workout plans.
+   *
+   * @remarks Route: GET /api/exercises
+   * Access: User
+   *
+   * @returns The response payload.
+   */
+  @Get()
+  async listExercises(): Promise<ListExercisesResponse> {
+    return this.exercisesService.listExercisesData();
   }
 }

@@ -9,7 +9,9 @@ It is intended to answer four things for every route:
 3. the complete request structure
 4. the complete response structure
 
-The request and response shapes below are aligned with the currently installed shared contract package used by the controllers: `@strong-together/shared@1.0.5`.
+The request and response shapes below are aligned with the backend workspace package `@strong-together/shared@2.0.0`.
+
+All TypeScript-visible request and response fields use `camelCase`. PostgreSQL column names remain `snake_case` and are translated by query aliases/JSON builders. Stored profile-picture object keys use `profilePicPath` (or `senderProfilePicPath` on message sender projections); an actual public URL remains `url`.
 
 ## Base URL And Transport
 
@@ -23,14 +25,14 @@ The request and response shapes below are aligned with the currently installed s
 
 Most routes are affected by the same global pipeline before controller logic runs.
 
-| Layer | Purpose |
-| --- | --- |
-| `GeneralRateLimitMiddleware` | Coarse request throttling at the app edge |
-| `RequestLoggerMiddleware` | Structured per-request logging and request ID context |
-| `BotBlockerMiddleware` | Scanner and suspicious-client filtering |
-| `CheckAppVersionMiddleware` | Enforces `x-app-version` unless the route is exempt |
-| `ValidateRequestPipe` | Validates declared request schemas from `@strong-together/shared` |
-| `RlsTxInterceptor` | Wraps most business routes in request-scoped DB execution |
+| Layer                        | Purpose                                                           |
+| ---------------------------- | ----------------------------------------------------------------- |
+| `GeneralRateLimitMiddleware` | Coarse request throttling at the app edge                         |
+| `RequestLoggerMiddleware`    | Structured per-request logging and request ID context             |
+| `BotBlockerMiddleware`       | Scanner and suspicious-client filtering                           |
+| `CheckAppVersionMiddleware`  | Enforces `x-app-version` unless the route is exempt               |
+| `ValidateRequestPipe`        | Validates declared request schemas from `@strong-together/shared` |
+| `RlsTxInterceptor`           | Wraps most business routes in request-scoped DB execution         |
 
 ## Authentication And Header Conventions
 
@@ -70,58 +72,65 @@ Some public login and refresh flows also use DPoP-related headers:
 
 The app uses a global exception filter, request validation, and guards. That means failures generally fall into these buckets:
 
-| Category | Typical status |
-| --- | --- |
-| Validation failure | `400` |
-| Authentication / DPoP failure | `401` |
-| Authorization failure | `403` |
-| Not found | `404` |
-| Rate limit | `429` |
-| Unhandled server error | `500` |
+| Category                      | Typical status |
+| ----------------------------- | -------------- |
+| Validation failure            | `400`          |
+| Authentication / DPoP failure | `401`          |
+| Authorization failure         | `403`          |
+| Not found                     | `404`          |
+| Rate limit                    | `429`          |
+| Unhandled server error        | `500`          |
 
 This file focuses on success contracts. Route-specific non-JSON behavior is called out where relevant.
 
 ## Endpoint Index
 
-| Method | Path | Access | Summary |
-| --- | --- | --- | --- |
-| `GET` | `/` | Public | Liveness text |
-| `GET` | `/health` | Public | Health check |
-| `POST` | `/api/auth/login` | Public | Credential login |
-| `POST` | `/api/auth/logout` | User | Logout current session |
-| `POST` | `/api/auth/refresh` | Public | Rotate token pair |
-| `POST` | `/api/auth/forgotpassemail` | Public | Send reset email |
-| `PUT` | `/api/auth/resetpassword` | Public | Reset password from token |
-| `GET` | `/api/auth/verify` | Public | Complete verification callback |
-| `POST` | `/api/auth/sendverificationemail` | Public | Send verification email |
-| `PUT` | `/api/auth/changeemailverify` | Public | Change email for unverified account |
-| `GET` | `/api/auth/checkuserverify` | Public | Check verification state by username |
-| `POST` | `/api/users/create` | Public | Create user account |
-| `GET` | `/api/users/get` | User | Get current user profile |
-| `PUT` | `/api/users/updateself` | User | Update current user profile |
-| `GET` | `/api/users/changeemail` | Public | Complete email-change callback |
-| `DELETE` | `/api/users/deleteself` | User | Delete current user |
-| `PUT` | `/api/users/setprofilepic` | User | Upload profile image |
-| `DELETE` | `/api/users/deleteprofilepic` | User | Delete profile image |
-| `PUT` | `/api/users/pushtoken` | User | Save push token |
-| `GET` | `/api/workouts/getworkout` | User | Get active workout plan |
-| `POST` | `/api/workouts/add` | User | Create or replace workout plan |
-| `GET` | `/api/workouts/gettracking` | User | Get workout tracking snapshot |
-| `POST` | `/api/workouts/finishworkout` | User | Persist completed workout |
-| `GET` | `/api/aerobics/get` | User | Get aerobics history |
-| `POST` | `/api/aerobics/add` | User | Add aerobics record |
-| `GET` | `/api/analytics/get` | User | Get analytics snapshot |
-| `GET` | `/api/bootstrap/get` | User | Get client bootstrap payload |
-| `GET` | `/api/exercises/getall` | User | Get exercise catalog |
-| `GET` | `/api/messages/getmessages` | User | Get inbox |
-| `PUT` | `/api/messages/markasread/:id` | User | Mark message as read |
-| `DELETE` | `/api/messages/delete/:id` | User | Delete message |
-| `POST` | `/api/oauth/apple` | Public | Apple OAuth login |
-| `POST` | `/api/oauth/google` | Public | Google OAuth login |
-| `GET` | `/api/push/daily` | Public | Trigger daily push enqueue |
-| `GET` | `/api/push/hourlyreminder` | Public | Trigger hourly reminder enqueue |
-| `POST` | `/api/videoanalysis/getpresignedurl` | User | Generate direct-upload URL |
-| `POST` | `/api/ws/generateticket` | User | Generate websocket ticket |
+| Method   | Path                                 | Access               | Summary                                                                    |
+| -------- | ------------------------------------ | -------------------- | -------------------------------------------------------------------------- |
+| `GET`    | `/`                                  | Public               | Liveness text                                                              |
+| `GET`    | `/health`                            | Public               | Health check                                                               |
+| `POST`   | `/api/auth/login`                    | Public               | Credential login                                                           |
+| `POST`   | `/api/auth/logout`                   | Refresh token + DPoP | Logout current session and unregister push delivery                        |
+| `POST`   | `/api/auth/refresh`                  | Public               | Rotate token pair                                                          |
+| `POST`   | `/api/auth/password-reset-requests`  | Public               | Send reset email                                                           |
+| `POST`   | `/api/auth/password-resets`          | Public               | Reset password from token; returns 204                                     |
+| `GET`    | `/api/auth/email-verification`       | Public               | Complete verification callback                                             |
+| `POST`   | `/api/auth/verification-emails`      | Public               | Send verification email                                                    |
+| `PATCH`  | `/api/auth/unverified-account/email` | Public               | Change email for unverified account                                        |
+| `GET`    | `/api/auth/verification-status`      | Public               | Check verification state by username                                       |
+| `POST`   | `/api/users`                         | Public               | Create user account                                                        |
+| `GET`    | `/api/users/me`                      | User                 | Get current user profile                                                   |
+| `PATCH`  | `/api/users/me`                      | User                 | Update current user profile; returns 204                                   |
+| `GET`    | `/api/users/email-change`            | Public               | Complete email-change callback                                             |
+| `DELETE` | `/api/users/me`                      | User                 | Delete current user                                                        |
+| `PUT`    | `/api/users/me/profile-picture`      | User                 | Upload profile image                                                       |
+| `DELETE` | `/api/users/me/profile-picture`      | User                 | Delete profile image                                                       |
+| `PUT`    | `/api/users/me/push-token`           | User                 | Save push token                                                            |
+| `GET`    | `/api/workout-plan`                  | User                 | Get active workout plan                                                    |
+| `PUT`    | `/api/workout-plan`                  | User                 | Create or update workout plan; returns 204                                 |
+| `GET`    | `/api/workout-history`               | User                 | Get workout tracking snapshot                                              |
+| `GET`    | `/api/exercise-history`              | User                 | Get tracking grouped by exercise assignment                                |
+| `GET`    | `/api/workout-statistics`            | User                 | Get workout tracking statistics                                            |
+| `GET`    | `/api/personal-records`              | User                 | Get all current exercise personal records                                  |
+| `POST`   | `/api/workout-sessions`              | User                 | Persist completed workout                                                  |
+| `GET`    | `/api/workout-schedules`             | User                 | Get the weekly workout schedule                                            |
+| `PUT`    | `/api/workout-schedules`             | User                 | Atomically replace the weekly schedule; returns 204                         |
+| `GET`    | `/api/aerobics`                      | User                 | Get aerobics history                                                       |
+| `POST`   | `/api/aerobics`                      | User                 | Add aerobics record                                                        |
+| `PUT`    | `/api/aerobics/:id`                  | User                 | Replace aerobics record; returns 204                                       |
+| `DELETE` | `/api/aerobics/:id`                  | User                 | Delete aerobics record; returns 204                                        |
+| `GET`    | `/api/exercises`                     | User                 | Get exercise catalog                                                       |
+| `GET`    | `/api/messages`                      | User                 | Get inbox                                                                  |
+| `PATCH`  | `/api/messages/:id/read`             | User                 | Mark message as read; returns 204                                          |
+| `DELETE` | `/api/messages/:id`                  | User                 | Delete message                                                             |
+| `POST`   | `/api/oauth/apple`                   | Public               | Apple OAuth login                                                          |
+| `POST`   | `/api/oauth/google`                  | Public               | Google OAuth login                                                         |
+| `GET`    | `/api/reminders`                     | User                 | Get reminder settings                                                      |
+| `PUT`    | `/api/reminders`                     | User                 | Create or replace reminder settings; returns 204                           |
+| `PATCH`  | `/api/reminders/time-zone`           | User                 | Update only the reminder time zone; returns 204                            |
+| `POST`   | `/api/push-jobs/workout-reminders`   | Cron JWT             | Enqueue due workout reminders                                               |
+| `POST`   | `/api/video-analysis/upload-urls`    | User                 | Generate direct-upload URL                                                 |
+| `POST`   | `/api/websocket-tickets`             | User                 | Generate websocket ticket                                                  |
 
 ## Core Routes
 
@@ -155,7 +164,7 @@ Authenticates a user with local credentials.
 
 Access:
 
-- Public
+- Public temporarily. Do not grant this route broad `guest` database access. It must move to an authenticated cron/worker identity with a narrow database function before production hardening is considered complete.
 - Rate-limited by `RateLimitGuard`
 
 Headers:
@@ -174,6 +183,8 @@ Request body:
 
 Successful response:
 
+- Status: `200 OK`
+
 ```json
 {
   "message": "string",
@@ -190,18 +201,21 @@ Notes:
 
 ### `POST /api/auth/logout`
 
-Invalidates the authenticated user's current session.
+Invalidates the refresh-token session and clears its user's Expo push token.
 
 Access:
 
-- User
+- Refresh token in `x-refresh-token`; DPoP proof when DPoP is enabled
 
 Request:
 
 - no JSON body required
-- authenticated session required
+- access token is not required
+- expired refresh tokens are accepted for logout cleanup when their signature and DPoP binding remain valid
 
 Successful response:
+
+- Status: `200 OK`
 
 ```json
 {
@@ -225,6 +239,8 @@ Request:
 
 Successful response:
 
+- Status: `200 OK`
+
 ```json
 {
   "message": "string",
@@ -238,7 +254,7 @@ Notes:
 
 - The route returns `Cache-Control: no-store`.
 
-### `POST /api/auth/forgotpassemail`
+### `POST /api/auth/password-reset-requests`
 
 Sends a password reset email when the submitted identifier maps to a user.
 
@@ -259,7 +275,7 @@ Successful response:
 
 - Empty `200 OK` body
 
-### `PUT /api/auth/resetpassword`
+### `POST /api/auth/password-resets`
 
 Resets a password using a token from the password-reset email.
 
@@ -285,13 +301,9 @@ Request body:
 
 Successful response:
 
-```json
-{
-  "ok": true
-}
-```
+- Empty `204 No Content` body
 
-### `GET /api/auth/verify`
+### `GET /api/auth/email-verification`
 
 Completes account verification from an email callback.
 
@@ -316,7 +328,7 @@ Notes:
 - Returns `text/html`
 - Returns `Cache-Control: no-store`
 
-### `POST /api/auth/sendverificationemail`
+### `POST /api/auth/verification-emails`
 
 Sends a verification email for an existing email address when allowed.
 
@@ -337,7 +349,7 @@ Successful response:
 
 - Empty `200 OK` body
 
-### `PUT /api/auth/changeemailverify`
+### `PATCH /api/auth/unverified-account/email`
 
 Changes the email address on an unverified account and sends a fresh verification email.
 
@@ -360,7 +372,7 @@ Successful response:
 
 - Empty `200 OK` body
 
-### `GET /api/auth/checkuserverify`
+### `GET /api/auth/verification-status`
 
 Checks whether a username belongs to a verified account.
 
@@ -386,7 +398,7 @@ Successful response:
 
 ## Users
 
-### `POST /api/users/create`
+### `POST /api/users`
 
 Creates a new local user account.
 
@@ -415,26 +427,13 @@ Allowed `gender` values:
 
 Successful response:
 
-```json
-{
-  "message": "string",
-  "user": {
-    "id": "string",
-    "username": "string",
-    "name": "string",
-    "email": "string | null",
-    "gender": "string",
-    "role": "string",
-    "created_at": "string"
-  }
-}
-```
+- Empty `201 Created` body
 
 Notes:
 
 - Controller sets HTTP status `201 Created`.
 
-### `GET /api/users/get`
+### `GET /api/users/me`
 
 Returns the authenticated user's persisted profile.
 
@@ -451,18 +450,20 @@ Successful response:
   "email": "string | null",
   "name": "string",
   "gender": "string",
-  "created_at": "string",
-  "profile_image_url": "string | null",
-  "push_token": "string | null",
+  "createdAt": "string",
+  "updatedAt": "string",
+  "profilePicPath": "string | null",
+  "pushToken": "string | null",
   "role": "string",
-  "is_first_login": true,
-  "token_version": 1,
-  "is_verified": true,
-  "auth_provider": "string"
+  "isFirstLogin": false,
+  "tokenVersion": 1,
+  "isVerified": true,
+  "authProvider": "string",
+  "lastLogin": "string | null"
 }
 ```
 
-### `PUT /api/users/updateself`
+### `PATCH /api/users/me`
 
 Updates editable profile fields for the authenticated user.
 
@@ -488,29 +489,9 @@ Notes:
 
 Successful response:
 
-```json
-{
-  "message": "string",
-  "emailChanged": true,
-  "user": {
-    "id": "string",
-    "username": "string",
-    "email": "string | null",
-    "name": "string",
-    "gender": "string",
-    "created_at": "string",
-    "profile_image_url": "string | null",
-    "push_token": "string | null",
-    "role": "string",
-    "is_first_login": true,
-    "token_version": 1,
-    "is_verified": true,
-    "auth_provider": "string"
-  }
-}
-```
+- Empty `204 No Content` body
 
-### `GET /api/users/changeemail`
+### `GET /api/users/email-change`
 
 Completes an email-change flow via signed token callback.
 
@@ -531,7 +512,7 @@ Notes:
 - Returns `text/html`
 - Returns `Cache-Control: no-store`
 
-### `DELETE /api/users/deleteself`
+### `DELETE /api/users/me`
 
 Deletes the authenticated user's account.
 
@@ -541,13 +522,9 @@ Access:
 
 Successful response:
 
-```json
-{
-  "message": "User deleted successfully"
-}
-```
+- Empty `204 No Content` body
 
-### `PUT /api/users/setprofilepic`
+### `PUT /api/users/me/profile-picture`
 
 Uploads a new profile picture and updates the stored profile image path.
 
@@ -569,7 +546,7 @@ Successful response:
 
 ```json
 {
-  "path": "string",
+  "profilePicPath": "string",
   "url": "string",
   "message": "string"
 }
@@ -580,7 +557,7 @@ Notes:
 - Controller sets HTTP status `201 Created`.
 - The route uses `FileInterceptor('file', imageUploadOptions)`.
 
-### `DELETE /api/users/deleteprofilepic`
+### `DELETE /api/users/me/profile-picture`
 
 Deletes the authenticated user's profile image.
 
@@ -592,7 +569,7 @@ Request body:
 
 ```json
 {
-  "path": "string"
+  "profilePicPath": "string"
 }
 ```
 
@@ -600,7 +577,7 @@ Successful response:
 
 - Empty `200 OK` body
 
-### `PUT /api/users/pushtoken`
+### `PUT /api/users/me/push-token`
 
 Stores or updates the authenticated user's push token.
 
@@ -624,52 +601,43 @@ Successful response:
 
 ### Shared workout response building blocks
 
-The plan and bootstrap endpoints reuse this workout plan shape:
+The workout-plan endpoints use this shape:
 
 ```json
 {
   "workoutPlan": {
     "id": 1,
-    "name": "string",
-    "numberofsplits": 4,
-    "created_at": "string",
-    "is_deleted": false,
-    "level": "string",
-    "user_id": "string",
-    "trainer_id": "string",
-    "is_active": true,
-    "updated_at": "string",
-    "workoutsplits": [
+    "numberOfSplits": 4,
+    "createdAt": "string",
+    "userId": "string",
+    "isActive": true,
+    "updatedAt": "string",
+    "workoutSplits": [
       {
         "id": 1,
-        "workout_id": 1,
+        "workoutId": 1,
         "name": "string",
-        "created_at": "string",
-        "muscle_group": "string | null",
-        "is_active": true,
-        "exercisetoworkoutsplit": [
+        "orderIndex": 0,
+        "createdAt": "string",
+        "muscleGroup": "string | null",
+        "estimatedDurationMinutes": "number | null",
+        "isActive": true,
+        "exercises": [
           {
-            "id": 1,
-            "sets": [8, 8, 6],
-            "is_active": true,
-            "targetmuscle": "string",
-            "specifictargetmuscle": "string",
-            "exercise": "string",
-            "workoutsplit": "string"
+            "exerciseToSplitId": 1,
+            "exerciseId": 10,
+            "name": "Bench Press",
+            "sets": [
+              { "orderIndex": 0, "reps": 8 },
+              { "orderIndex": 1, "reps": 8 },
+              { "orderIndex": 2, "reps": 6 }
+            ],
+            "orderIndex": 0,
+            "isActive": true,
+            "targetMuscle": "string",
+            "specificTargetMuscle": "string"
           }
         ]
-      }
-    ]
-  },
-  "workoutPlanForEditWorkout": {
-    "Push": [
-      {
-        "id": 10,
-        "name": "Bench Press",
-        "sets": [8, 8, 6],
-        "order_index": 1,
-        "targetmuscle": "Chest",
-        "specifictargetmuscle": "Upper Chest"
       }
     ]
   }
@@ -678,93 +646,28 @@ The plan and bootstrap endpoints reuse this workout plan shape:
 
 ### Shared tracking response building blocks
 
-The tracking and bootstrap endpoints reuse this structure:
+`GET /api/workout-history` returns tracking grouped by workout date:
 
 ```json
 {
-  "exerciseTrackingAnalysis": {
-    "unique_days": 12,
-    "most_frequent_split": "Push",
-    "most_frequent_split_days": 5,
-    "lastWorkoutDate": "string | null",
-    "splitDaysByName": {
-      "Push": 5
-    },
-    "prs": {
-      "pr_max": {
-        "exercise": "Bench Press",
-        "weight": 100,
-        "reps": 5,
-        "workout_time_utc": "string"
-      }
-    }
-  },
-  "exerciseTrackingMaps": {
-    "byDate": {
-      "2026-04-20": [
+  "byDate": {
+    "2026-04-20": {
+      "durationMins": 45,
+      "exerciseTracked": [
         {
-          "id": 1,
-          "exercisetosplit_id": 10,
-          "weight": [100, 95, 90],
-          "reps": [5, 6, 8],
-          "notes": "string | null",
-          "exercise_id": 20,
-          "workoutsplit_id": 30,
-          "splitname": "Push",
-          "exercise": "Bench Press",
-          "order_index": 1,
-          "exercisetoworkoutsplit": {
-            "sets": [5, 6, 8],
-            "exercises": {
-              "targetmuscle": "Chest",
-              "specifictargetmuscle": "Upper Chest"
-            }
-          }
-        }
-      ]
-    },
-    "byETSId": {
-      "10": [
-        {
-          "id": 1,
-          "exercisetosplit_id": 10,
-          "weight": [100, 95, 90],
-          "reps": [5, 6, 8],
-          "notes": "string | null",
-          "exercise_id": 20,
-          "workoutsplit_id": 30,
-          "splitname": "Push",
-          "exercise": "Bench Press",
-          "workoutdate": "string",
-          "order_index": 1,
-          "exercisetoworkoutsplit": {
-            "sets": [5, 6, 8],
-            "exercises": {
-              "targetmuscle": "Chest",
-              "specifictargetmuscle": "Upper Chest"
-            }
-          }
-        }
-      ]
-    },
-    "bySplitName": {
-      "Push": [
-        {
-          "id": 1,
-          "exercisetosplit_id": 10,
-          "weight": [100, 95, 90],
-          "reps": [5, 6, 8],
-          "notes": "string | null",
-          "exercise_id": 20,
-          "workoutsplit_id": 30,
-          "exercise": "Bench Press",
-          "workoutdate": "string",
-          "order_index": 1,
-          "exercisetoworkoutsplit": {
-            "sets": [5, 6, 8],
-            "exercises": {
-              "targetmuscle": "Chest",
-              "specifictargetmuscle": "Upper Chest"
+          "exerciseTracking": {
+            "exerciseTrackingId": 1,
+            "sets": [{ "setIndex": 0, "weight": 100, "reps": 5 }],
+            "notes": "string | null",
+            "exerciseAssignment": {
+              "exerciseToSplitId": 10,
+              "orderIndex": 0,
+              "exerciseId": 20,
+              "workoutSplitId": 30,
+              "workoutSplitName": "Push",
+              "exerciseName": "Bench Press",
+              "targetMuscle": "Chest",
+              "specificTargetMuscle": "Upper Chest"
             }
           }
         }
@@ -774,7 +677,100 @@ The tracking and bootstrap endpoints reuse this structure:
 }
 ```
 
-### `GET /api/workouts/getworkout`
+`GET /api/exercise-history` returns tracking grouped by exercise assignment:
+
+```json
+{
+  "byExerciseToSplitId": {
+    "10": {
+      "exerciseTracked": [
+        {
+          "exerciseTrackingId": 1,
+          "workoutStartLocal": "2026-04-20T13:30:00.000",
+          "sets": [{ "setIndex": 0, "weight": 100, "reps": 5 }],
+          "exerciseAssignment": {
+            "exerciseToSplitId": 10,
+            "orderIndex": 0,
+            "exerciseId": 20,
+            "workoutSplitId": 30,
+            "workoutSplitName": "Push",
+            "exerciseName": "Bench Press",
+            "targetMuscle": "Chest",
+            "specificTargetMuscle": "Upper Chest"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+This response omits workout duration and notes, flattens the `exerciseTracking` wrapper, and includes `workoutStartLocal` converted using the requested timezone. Each assignment's entries are ordered by workout date descending, so the first entry is the newest.
+
+`GET /api/workout-statistics` returns the independent statistics payload:
+
+```json
+{
+  "workoutCount": 12,
+  "hasExerciseTracking": true,
+  "nextSplitByOrderIndex": {
+    "id": 31,
+    "name": "Pull",
+    "orderIndex": 1,
+    "muscleGroup": "Back"
+  },
+  "workoutTargets": {
+    "workoutCountThisWeek": 3,
+    "workoutCountScheduledPerWeek": 4
+  },
+  "lastWorkoutStats": {
+    "workoutDate": "2026-04-20",
+    "workoutSplitName": "Push",
+    "exerciseTrackedCount": 5,
+    "setTrackedCount": 15
+  },
+  "latestPr": [
+    {
+      "exerciseToSplitId": 10,
+      "exerciseId": 20,
+      "exerciseName": "Bench Press",
+      "prWeight": 100,
+      "prReps": 5,
+      "prSetIndex": 0,
+      "estimatedOneRepMax": 116.67,
+      "workoutStartLocal": "2026-04-20T13:30:00.000"
+    }
+  ]
+}
+```
+
+The statistics `latestPr` array contains at most one item: the current PR whose workout was logged most recently.
+
+`GET /api/personal-records` returns every current exercise PR using the same object shape:
+
+```json
+{
+  "prs": {
+    "20": {
+      "exerciseToSplitId": 10,
+      "exerciseName": "Bench Press",
+      "prWeight": 100,
+      "prReps": 5,
+      "prSetIndex": 0,
+      "estimatedOneRepMax": 116.67,
+      "workoutStartLocal": "2026-04-20T13:30:00.000"
+    }
+  }
+}
+```
+
+Each record is stored under its exercise ID. Pass the optional `tz` query parameter to select the IANA timezone used for `workoutStartLocal`; it defaults to `Asia/Jerusalem`. The endpoint requires a user session and returns `X-Cache: HIT` or `X-Cache: MISS`.
+
+`nextSplitByOrderIndex` and `estimatedOneRepMax` can be `null`. The estimate uses the recorded weight for one rep, Epley for 2–5 reps, Brzycki for 6–10 reps, and O'Connor for 11–12 reps; it is `null` outside that range.
+
+`nextSplitByOrderIndex` is independent of the 45-day statistics window. It advances from the user's latest workout summary to the next split in the active plan by `orderIndex`, wraps to the lowest active index after the final split, and returns the lowest active index when no summary exists.
+
+### `GET /api/workout-plan`
 
 Returns the current workout plan for the authenticated user.
 
@@ -798,9 +794,9 @@ Notes:
 
 - Returns `X-Cache: HIT` or `X-Cache: MISS`
 
-### `POST /api/workouts/add`
+### `PUT /api/workout-plan`
 
-Creates or replaces the authenticated user's workout plan.
+Creates or updates the authenticated user's workout plan. Existing splits include their IDs; new splits omit the ID.
 
 Access:
 
@@ -810,76 +806,32 @@ Request body:
 
 ```json
 {
-  "workoutData": {
-    "Push": [
-      {
-        "id": 10,
-        "sets": [8, 8, 6],
-        "order_index": 1
-      }
-    ]
-  },
-  "workoutName": "string",
+  "workoutData": [
+    {
+      "name": "Push",
+      "orderIndex": 0,
+      "exercises": [
+        {
+          "exerciseId": 10,
+          "sets": [8, 8, 6],
+          "orderIndex": 0
+        }
+      ]
+    }
+  ],
   "tz": "string"
 }
 ```
 
+`workoutName` is accepted as an optional legacy compatibility field by the current shared contract, but the backend does not persist or otherwise use it. New clients should omit it.
+
 Successful response:
 
-```json
-{
-  "message": "string",
-  "workoutPlan": {
-    "id": 1,
-    "name": "string",
-    "numberofsplits": 4,
-    "created_at": "string",
-    "is_deleted": false,
-    "level": "string",
-    "user_id": "string",
-    "trainer_id": "string",
-    "is_active": true,
-    "updated_at": "string",
-    "workoutsplits": [
-      {
-        "id": 1,
-        "workout_id": 1,
-        "name": "string",
-        "created_at": "string",
-        "muscle_group": "string | null",
-        "is_active": true,
-        "exercisetoworkoutsplit": [
-          {
-            "id": 1,
-            "sets": [8, 8, 6],
-            "is_active": true,
-            "targetmuscle": "string",
-            "specifictargetmuscle": "string",
-            "exercise": "string",
-            "workoutsplit": "string"
-          }
-        ]
-      }
-    ]
-  },
-  "workoutPlanForEditWorkout": {
-    "Push": [
-      {
-        "id": 10,
-        "name": "Bench Press",
-        "sets": [8, 8, 6],
-        "order_index": 1,
-        "targetmuscle": "Chest",
-        "specifictargetmuscle": "Upper Chest"
-      }
-    ]
-  }
-}
-```
+- Empty `204 No Content` body. Fetch `GET /api/workout-plan?tz=...` when the updated plan is needed.
 
-### `GET /api/workouts/gettracking`
+### `GET /api/workout-history`
 
-Returns the authenticated user's recent tracking snapshot.
+Returns the authenticated user's tracking maps for the last 45 days.
 
 Access:
 
@@ -895,15 +847,39 @@ Query:
 
 Successful response:
 
-- Returns the full shared tracking shape shown above
+- Returns the shared tracking-maps shape shown above
 
 Notes:
 
 - Returns `X-Cache: HIT` or `X-Cache: MISS`
 
-### `POST /api/workouts/finishworkout`
+### `GET /api/workout-statistics`
 
-Persists a completed workout and returns the updated tracking snapshot.
+Returns the authenticated user's tracking statistics for the last 45 days.
+
+Access:
+
+- User
+
+Query:
+
+```json
+{
+  "tz": "string"
+}
+```
+
+Successful response:
+
+- Returns the shared tracking-statistics shape shown above
+
+Notes:
+
+- Returns `X-Cache: HIT` or `X-Cache: MISS`
+
+### `POST /api/workout-sessions`
+
+Persists a completed workout and deletes its directly affected cache keys.
 
 Access:
 
@@ -915,25 +891,73 @@ Request body:
 {
   "workout": [
     {
-      "exercisetosplit_id": 10,
-      "weight": [100, 95, 90],
-      "reps": [5, 6, 8],
+      "isExerciseAssignedToSplit": true,
+      "exerciseToSplitId": 10,
+      "trackedSets": [
+        { "setIndex": 0, "weight": 100, "reps": 5 },
+        { "setIndex": 1, "weight": 95, "reps": 6 },
+        { "setIndex": 2, "weight": 90, "reps": 8 }
+      ],
       "notes": "string | null"
     }
   ],
   "tz": "string",
-  "workout_start_utc": "string",
-  "workout_end_utc": "string"
+  "workoutStartUtc": "string",
+  "workoutEndUtc": "string"
 }
 ```
 
 Successful response:
 
-- Returns the full shared tracking shape shown above
+- Empty `204 No Content` body. Fetch the relevant tracking GET endpoints when updated data is needed.
+
+## Workout Schedules
+
+### `GET /api/workout-schedules`
+
+Returns the authenticated user's weekly schedule for active splits in the active workout plan, ordered by weekday and start time.
+
+Successful response:
+
+```json
+{
+  "schedules": [
+    {
+      "id": "uuid",
+      "userId": "uuid",
+      "workoutSplitId": 10,
+      "dayOfWeek": 1,
+      "startTime": "18:30:00",
+      "createdAt": "2026-09-07T06:15:00.000Z",
+      "updatedAt": "2026-09-07T06:15:00.000Z"
+    }
+  ]
+}
+```
+
+`createdAt` and `updatedAt` are ISO 8601 UTC strings. Frontends may parse them into native date objects only when date operations or localized display are needed.
+
+### `PUT /api/workout-schedules`
+
+Atomically replaces the authenticated user's complete weekly schedule. `dayOfWeek` is `0` (Sunday) through `6` (Saturday), and `startTime` uses 24-hour `HH:mm` input.
+
+```json
+{
+  "schedules": [{ "workoutSplitId": 10, "dayOfWeek": 1, "startTime": "18:30" }]
+}
+```
+
+When `isExerciseAssignedToSplit` is `true`, `exerciseToSplitId` identifies the exercise. The contract still accepts an optional `exerciseId` in this branch for compatibility with older clients, but persistence ignores it. When `isExerciseAssignedToSplit` is `false`, omit or null `exerciseToSplitId` and provide `exerciseId`.
+
+Successful response:
+
+- Empty `204 No Content` body.
+- Send `{ "schedules": [] }` to clear all scheduled workouts. Sending `{}` is invalid.
+- Every split must be active and belong to the authenticated user's active plan.
 
 ## Aerobics
 
-### `GET /api/aerobics/get`
+### `GET /api/aerobics`
 
 Returns grouped aerobics history for the authenticated user.
 
@@ -956,24 +980,26 @@ Successful response:
   "daily": {
     "2026-04-20": [
       {
+        "id": 1,
         "type": "string",
-        "duration_sec": 1800,
-        "duration_mins": 30
+        "durationSec": 0,
+        "durationMins": 30
       }
     ]
   },
   "weekly": {
-    "2026-W17": {
+    "2026-04-19": {
       "records": [
         {
+          "id": 1,
           "type": "string",
-          "duration_sec": 1800,
-          "duration_mins": 30,
-          "workout_time_utc": "string"
+          "durationSec": 0,
+          "durationMins": 30,
+          "workoutTimeLocal": "string"
         }
       ],
-      "total_duration_sec": 1800,
-      "total_duration_mins": 30
+      "totalDurationSec": 0,
+      "totalDurationMins": 30
     }
   }
 }
@@ -983,22 +1009,29 @@ Notes:
 
 - Returns `X-Cache: HIT` or `X-Cache: MISS`
 
-### `POST /api/aerobics/add`
+### `POST /api/aerobics`
 
-Creates a new aerobics record and returns the refreshed aerobics snapshot.
+Creates a new aerobics record and deletes its exact 45-day cache key.
 
 Access:
 
 - User
 
+Query:
+
+```json
+{
+  "tz": "string"
+}
+```
+
 Request body:
 
 ```json
 {
-  "tz": "string",
   "record": {
     "durationMins": 30,
-    "durationSec": 1800,
+    "durationSec": 0,
     "type": "string"
   }
 }
@@ -1006,51 +1039,44 @@ Request body:
 
 Successful response:
 
-- Returns the same `UserAerobicsResponse` structure shown above
+- Empty `204 No Content` body
 
-## Analytics
+### `PUT /api/aerobics/:id`
 
-### `GET /api/analytics/get`
-
-Returns the current analytics snapshot for the authenticated user.
+Replaces an aerobics entry owned by the authenticated user and deletes its exact 45-day cache key.
 
 Access:
 
 - User
 
-Successful response:
+Query:
 
 ```json
 {
-  "_1RM": {
-    "Bench Press": {
-      "exercise": "Bench Press",
-      "pr_weight": 100,
-      "pr_reps": 5,
-      "max_1rm": 116.67
-    }
-  },
-  "goals": {
-    "Push": {
-      "Bench Press": {
-        "planned": 12,
-        "actual": 10,
-        "adherence_pct": 83.33
-      }
-    }
+  "tz": "string"
+}
+```
+
+Request body:
+
+```json
+{
+  "record": {
+    "durationMins": 32,
+    "durationSec": 15,
+    "type": "Run"
   }
 }
 ```
 
-Notes:
+Successful response:
 
-- Returns `X-Cache: HIT` or `X-Cache: MISS`
+- Empty `204 No Content` body
+- Returns `404` when the entry does not exist or belongs to another user
 
-## Bootstrap
+### `DELETE /api/aerobics/:id`
 
-### `GET /api/bootstrap/get`
-
-Returns the startup payload used by the client to hydrate the main app state.
+Deletes an aerobics entry owned by the authenticated user and deletes its exact 45-day cache key.
 
 Access:
 
@@ -1066,205 +1092,12 @@ Query:
 
 Successful response:
 
-```json
-{
-  "user": {
-    "id": "string",
-    "username": "string",
-    "email": "string | null",
-    "name": "string",
-    "gender": "string",
-    "created_at": "string",
-    "profile_image_url": "string | null",
-    "push_token": "string | null",
-    "role": "string",
-    "is_first_login": true,
-    "token_version": 1,
-    "is_verified": true,
-    "auth_provider": "string"
-  },
-  "workout": {
-    "workoutPlan": {
-      "id": 1,
-      "name": "string",
-      "numberofsplits": 4,
-      "created_at": "string",
-      "is_deleted": false,
-      "level": "string",
-      "user_id": "string",
-      "trainer_id": "string",
-      "is_active": true,
-      "updated_at": "string",
-      "workoutsplits": [
-        {
-          "id": 1,
-          "workout_id": 1,
-          "name": "string",
-          "created_at": "string",
-          "muscle_group": "string | null",
-          "is_active": true,
-          "exercisetoworkoutsplit": [
-            {
-              "id": 1,
-              "sets": [8, 8, 6],
-              "is_active": true,
-              "targetmuscle": "string",
-              "specifictargetmuscle": "string",
-              "exercise": "string",
-              "workoutsplit": "string"
-            }
-          ]
-        }
-      ]
-    },
-    "workoutPlanForEditWorkout": {
-      "Push": [
-        {
-          "id": 10,
-          "name": "Bench Press",
-          "sets": [8, 8, 6],
-          "order_index": 1,
-          "targetmuscle": "Chest",
-          "specifictargetmuscle": "Upper Chest"
-        }
-      ]
-    }
-  },
-  "tracking": {
-    "exerciseTrackingAnalysis": {
-      "unique_days": 12,
-      "most_frequent_split": "Push",
-      "most_frequent_split_days": 5,
-      "lastWorkoutDate": "string | null",
-      "splitDaysByName": {
-        "Push": 5
-      },
-      "prs": {
-        "pr_max": {
-          "exercise": "Bench Press",
-          "weight": 100,
-          "reps": 5,
-          "workout_time_utc": "string"
-        }
-      }
-    },
-    "exerciseTrackingMaps": {
-      "byDate": {
-        "2026-04-20": [
-          {
-            "id": 1,
-            "exercisetosplit_id": 10,
-            "weight": [100, 95, 90],
-            "reps": [5, 6, 8],
-            "notes": "string | null",
-            "exercise_id": 20,
-            "workoutsplit_id": 30,
-            "splitname": "Push",
-            "exercise": "Bench Press",
-            "order_index": 1,
-            "exercisetoworkoutsplit": {
-              "sets": [5, 6, 8],
-              "exercises": {
-                "targetmuscle": "Chest",
-                "specifictargetmuscle": "Upper Chest"
-              }
-            }
-          }
-        ]
-      },
-      "byETSId": {
-        "10": [
-          {
-            "id": 1,
-            "exercisetosplit_id": 10,
-            "weight": [100, 95, 90],
-            "reps": [5, 6, 8],
-            "notes": "string | null",
-            "exercise_id": 20,
-            "workoutsplit_id": 30,
-            "splitname": "Push",
-            "exercise": "Bench Press",
-            "workoutdate": "string",
-            "order_index": 1,
-            "exercisetoworkoutsplit": {
-              "sets": [5, 6, 8],
-              "exercises": {
-                "targetmuscle": "Chest",
-                "specifictargetmuscle": "Upper Chest"
-              }
-            }
-          }
-        ]
-      },
-      "bySplitName": {
-        "Push": [
-          {
-            "id": 1,
-            "exercisetosplit_id": 10,
-            "weight": [100, 95, 90],
-            "reps": [5, 6, 8],
-            "notes": "string | null",
-            "exercise_id": 20,
-            "workoutsplit_id": 30,
-            "exercise": "Bench Press",
-            "workoutdate": "string",
-            "order_index": 1,
-            "exercisetoworkoutsplit": {
-              "sets": [5, 6, 8],
-              "exercises": {
-                "targetmuscle": "Chest",
-                "specifictargetmuscle": "Upper Chest"
-              }
-            }
-          }
-        ]
-      }
-    }
-  },
-  "messages": {
-    "messages": [
-      {
-        "id": "string",
-        "subject": "string",
-        "msg": "string",
-        "sent_at": "string",
-        "is_read": true,
-        "sender_full_name": "string",
-        "sender_profile_image_url": "string | null"
-      }
-    ]
-  },
-  "aerobics": {
-    "daily": {
-      "2026-04-20": [
-        {
-          "type": "string",
-          "duration_sec": 1800,
-          "duration_mins": 30
-        }
-      ]
-    },
-    "weekly": {
-      "2026-W17": {
-        "records": [
-          {
-            "type": "string",
-            "duration_sec": 1800,
-            "duration_mins": 30,
-            "workout_time_utc": "string"
-          }
-        ],
-        "total_duration_sec": 1800,
-        "total_duration_mins": 30
-      }
-    }
-  }
-}
-```
+- Empty `204 No Content` body
+- Returns `404` when the entry does not exist or belongs to another user
 
 ## Exercises
 
-### `GET /api/exercises/getall`
+### `GET /api/exercises`
 
 Returns the exercise catalog grouped by key.
 
@@ -1288,7 +1121,7 @@ Successful response:
 
 ## Messages
 
-### `GET /api/messages/getmessages`
+### `GET /api/messages`
 
 Returns the authenticated user's inbox.
 
@@ -1313,16 +1146,16 @@ Successful response:
       "id": "string",
       "subject": "string",
       "msg": "string",
-      "sent_at": "string",
-      "is_read": true,
-      "sender_full_name": "string",
-      "sender_profile_image_url": "string | null"
+      "sentAt": "string",
+      "isRead": true,
+      "senderFullName": "string",
+      "senderProfilePicPath": "string | null"
     }
   ]
 }
 ```
 
-### `PUT /api/messages/markasread/:id`
+### `PATCH /api/messages/:id/read`
 
 Marks a message as read.
 
@@ -1340,14 +1173,9 @@ Path params:
 
 Successful response:
 
-```json
-{
-  "id": "string",
-  "is_read": true
-}
-```
+- Empty `204 No Content` body
 
-### `DELETE /api/messages/delete/:id`
+### `DELETE /api/messages/:id`
 
 Deletes a message from the user's inbox.
 
@@ -1365,11 +1193,7 @@ Path params:
 
 Successful response:
 
-```json
-{
-  "id": "string"
-}
-```
+- Empty `204 No Content` body
 
 ## OAuth
 
@@ -1408,15 +1232,13 @@ Successful response:
   "message": "string",
   "user": "string",
   "accessToken": "string",
-  "refreshToken": "string | null",
-  "missingFields": ["string"] 
+  "refreshToken": "string"
 }
 ```
 
 Notes:
 
 - Returns `Cache-Control: no-store`
-- `missingFields` is present in the shared response contract for profile completion flows
 
 ### `POST /api/oauth/google`
 
@@ -1447,8 +1269,7 @@ Successful response:
   "message": "string",
   "user": "string",
   "accessToken": "string",
-  "refreshToken": "string | null",
-  "missingFields": ["string"]
+  "refreshToken": "string"
 }
 ```
 
@@ -1456,48 +1277,39 @@ Notes:
 
 - Returns `Cache-Control: no-store`
 
+## Reminders
+
+### `GET /api/reminders`
+
+Returns the authenticated user's reminder settings as `reminderSettings`, or `null` when none exist. Settings contain `reminderEnabled` and the IANA `timeZone` used for scheduled local times.
+
+### `PUT /api/reminders`
+
+Creates or replaces the authenticated user's reminder settings and returns `204 No Content`. Workout reminders are always sent 30 minutes before the scheduled workout.
+
+### `PATCH /api/reminders/time-zone`
+
+Updates only the authenticated user's reminder IANA time zone and returns `204 No Content`. The request body is `{ "timeZone": "America/New_York" }`; reminder enablement is unchanged.
+
 ## Push
 
-### `GET /api/push/daily`
+### `POST /api/push-jobs/workout-reminders`
 
-Triggers the daily push enqueue flow.
+Enqueues eligible workout reminders due during the hourly cron window.
 
 Access:
 
-- Public
+- Cron JWT (`Authorization: Bearer <token>`)
+
+Generate `CRON_JWT_SECRET` once with `require('crypto').randomBytes(20).toString('hex')`. The cron JWT must be signed with that secret using HS256.
 
 Successful response:
 
 ```json
 {
   "success": true,
-  "message": "string"
-}
-```
-
-Failure shape:
-
-```json
-{
-  "success": false,
-  "error": "string"
-}
-```
-
-### `GET /api/push/hourlyreminder`
-
-Triggers the hourly reminder enqueue flow.
-
-Access:
-
-- Public
-
-Successful response:
-
-```json
-{
-  "success": true,
-  "message": "string"
+  "message": "Workout reminders enqueued",
+  "reminderCount": 0
 }
 ```
 
@@ -1512,7 +1324,7 @@ Failure shape:
 
 ## Video Analysis
 
-### `POST /api/videoanalysis/getpresignedurl`
+### `POST /api/video-analysis/upload-urls`
 
 Generates a presigned S3 upload URL for video-analysis ingestion.
 
@@ -1529,11 +1341,13 @@ Request body:
 
 ```json
 {
-  "exercise": "string",
-  "fileType": "string",
+  "exercise": "squat",
+  "fileType": "video/mp4",
   "jobId": "string"
 }
 ```
+
+The API contract currently validates these fields as strings and uses `fileType` as the presigned upload's content type. The downstream Python analyzer recognizes only the case-sensitive identifiers `squat` and `bench`; other values produce an unsupported-exercise analysis result.
 
 Successful response:
 
@@ -1547,7 +1361,7 @@ Successful response:
 
 ## WebSockets
 
-### `POST /api/ws/generateticket`
+### `POST /api/websocket-tickets`
 
 Generates a short-lived websocket ticket for the authenticated user.
 
@@ -1581,24 +1395,38 @@ Notes:
 
 These routes return `X-Cache: HIT` or `X-Cache: MISS`:
 
-- `/api/workouts/getworkout`
-- `/api/workouts/gettracking`
-- `/api/aerobics/get`
-- `/api/analytics/get`
+- `/api/workout-plan`
+- `/api/workout-history`
+- `/api/workout-statistics`
+- `/api/aerobics`
+
+### Mutation cache behavior
+
+Mutation endpoints do not rebuild response caches. They directly delete only the
+keys affected by the mutation, and the next related GET request repopulates them.
+
+- `POST /api/workout-sessions` deletes the requested timezone's 45-day workout
+  history, workout statistics, exercise history, and personal-records keys.
+- `PUT /api/workout-plan` deletes the requested timezone's plan, workout-history,
+  and workout-statistics keys.
+- Aerobics `POST`, `PUT`, and `DELETE` delete the requested timezone's 45-day
+  aerobics key.
+
+These mutations do not call broad cross-timezone cache deletion.
 
 ### HTML routes
 
 These routes do not return JSON:
 
-- `/api/auth/verify`
-- `/api/users/changeemail`
+- `/api/auth/email-verification`
+- `/api/users/email-change`
 
 ### Infra-coupled routes
 
 These routes touch external infrastructure directly:
 
-- `/api/videoanalysis/getpresignedurl` uses S3 presigning
-- `/api/push/daily` and `/api/push/hourlyreminder` enqueue background work
+- `/api/video-analysis/upload-urls` uses S3 presigning
+- `/api/push-jobs/workout-reminders` enqueues delayed background work
 - auth mail flows rely on mailer / queue infrastructure
 - profile image routes use object storage through `SupabaseStorageService`; prod uses Supabase Storage, dev/test use LocalStack S3
 
@@ -1608,4 +1436,4 @@ This document was aligned against:
 
 - route controllers in `src/modules/**`
 - root routes in `src/app.ts`
-- shared request / response contracts in `node_modules/@strong-together/shared/dist/index.d.ts`
+- shared request/response schemas and inferred contracts in `packages/shared/src`

@@ -2,24 +2,24 @@
 
 ## Happy Paths
 
-### `GET /api/auth/verify`
+### `GET /api/auth/email-verification`
 
 - [x] Verifies the token.
 - [x] Updates verification state in DB.
 - [x] Stores JTI in Redis to block reuse.
 
-### `POST /api/auth/sendverificationemail`
+### `POST /api/auth/verification-emails`
 
 - [x] Enqueues a Redis-backed verification email.
 - [x] Includes expected email assets.
 - [x] Keeps missing-user handling private.
 
-### `PUT /api/auth/changeemailverify`
+### `PATCH /api/auth/unverified-account/email`
 
 - [x] Updates pending email in DB.
 - [x] Sends a verification email for the pending address.
 
-### `GET /api/auth/checkuserverify`
+### `GET /api/auth/verification-status`
 
 - [x] Returns the user's verification state.
 

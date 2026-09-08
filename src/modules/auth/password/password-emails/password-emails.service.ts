@@ -13,6 +13,13 @@ type EmailContext = {
 export class PasswordEmailsService {
   constructor(private readonly EmailsProducerService: EmailsProducerService) {}
 
+  /**
+   * Sends forgot password email.
+   * @param email - The email address.
+   * @param userId - The user identifier.
+   * @param fullName - The user full name.
+   * @param context - Context propagated to the email job.
+   */
   async sendForgotPasswordEmail(email: string, userId: string, fullName: string, context: EmailContext = {}) {
     const jti = generateJti();
     const token = jwt.sign(

@@ -8,7 +8,7 @@ The client does not connect with the normal access token directly. It first requ
 
 ```text
 Client
-  -> POST /api/ws/generateticket
+  -> POST /api/websocket-tickets
   -> signed socket ticket
   -> Socket.IO connection with auth.ticket
   -> server verifies ticket
@@ -22,7 +22,7 @@ This keeps the WebSocket connection flow separate from the normal HTTP token lif
 `WebSocketsController` exposes:
 
 ```text
-POST /api/ws/generateticket
+POST /api/websocket-tickets
 ```
 
 The route is protected by:

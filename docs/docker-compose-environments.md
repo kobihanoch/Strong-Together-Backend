@@ -19,13 +19,12 @@ This stack is meant for daily local work and includes both infra and app service
 
 | Service | Purpose | Host port |
 | --- | --- | --- |
-| `postgres_dev` | Local development Postgres | `5434` |
+| `postgres_drizzle_dev` | Drizzle-managed development Postgres | `5435` |
 | `redis` | Redis cache / pubsub / Bull queues | `6379` |
 | `redis-insight` | Redis UI | `5540` |
 | `localstack` | Local S3 and SQS emulation | `4566` |
 | `s3-explorer` | Local S3 browser UI | `8081` |
 | `maildev` | Local email SMTP/UI | `1026`, `1081` |
-| `atlas` | Migration runner container | none |
 | `main-server` | Nest API in watch mode | `5000` |
 | `background-workers` | Node workers in watch mode | none |
 | `python-service` | Python video-analysis worker | none |
@@ -34,7 +33,7 @@ This stack is meant for daily local work and includes both infra and app service
 
 Development keeps state on disk:
 
-- Postgres uses `pg_dev_data`
+- Postgres uses `pg_drizzle_dev_data`
 - Redis uses `redis_dev_data`
 - RedisInsight uses `redisinsight_data`
 - LocalStack uses `localstack_persist_data`
@@ -56,7 +55,6 @@ This stack is intentionally smaller and only contains outer infrastructure.
 | `redis-insight_test` | Redis test UI | `5541` |
 | `localstack_test` | Isolated LocalStack S3/SQS | `4567` |
 | `maildev_test` | Isolated email SMTP/UI/API | `1025`, `1080` |
-| `atlas` | Migration runner container | none |
 
 ### Why server/workers/python are not in test compose
 
@@ -90,11 +88,17 @@ Both Compose files use the shared Docker network:
 
 That keeps the service naming stable for local orchestration.
 
+Development and test each have exactly one PostgreSQL service. Both schemas are
+built exclusively from `src/infrastructure/db/schema/drizzle-migrations`.
+
+In TEST, database setup uses the administrator `DRIZZLE_DATABASE_URL`, while the Nest application connects through `DATABASE_URL` as `app_runtime_user`. This preserves a clean rebuild path without allowing the application tests to bypass grants or RLS as a superuser.
+
 ## Related Scripts
 
 | Script | Purpose |
 | --- | --- |
 | `npm run orch:dev` | Starts the development stack |
+| `npm run db:dev:start` | Starts the Drizzle dev DB, applies migrations, and applies missing seeds |
 | `npm run test:env:up` | Starts the test infra stack |
 | `npm run test:env:down` | Stops the test infra stack |
 

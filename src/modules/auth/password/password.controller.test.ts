@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import request from 'supertest';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { loginResponseSchema, resetPasswordResponseSchema } from '@strong-together/shared';
+import { loginResponseSchema } from '@strong-together/shared';
 import { createApp } from '../../../app';
 import { createForgotPasswordToken } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
@@ -36,12 +36,12 @@ afterEach(async () => {
 });
 
 describe('PasswordController', () => {
-  it('POST /api/auth/forgotpassemail enqueues a Redis-backed email job for an existing user', async () => {
+  it('POST /api/auth/password-reset-requests enqueues a Redis-backed email job for an existing user', async () => {
     const user = await createAndLoginTestUser(app, 'password_email');
     users.add(user.username);
     expectSchema(loginResponseSchema, user.loginResponse.body);
 
-    const response = await request(app.getHttpServer()).post('/api/auth/forgotpassemail').set('x-app-version', '4.5.0').send({
+    const response = await request(app.getHttpServer()).post('/api/auth/password-reset-requests').set('x-app-version', '4.5.0').send({
       identifier: user.email,
     });
 
@@ -63,34 +63,33 @@ describe('PasswordController', () => {
     expect(JSON.stringify(message?.to)).toContain(user.email);
   });
 
-  it('PUT /api/auth/resetpassword updates DB password, stores Redis JTI, and allows only the new login', async () => {
+  it('POST /api/auth/password-resets updates DB password, stores Redis JTI, and allows only the new login', async () => {
     const user = await createAndLoginTestUser(app, 'password_reset');
     users.add(user.username);
     const before = await getUserAuthStateByUsername(user.username);
     const token = createForgotPasswordToken(user.userId);
 
     const response = await request(app.getHttpServer())
-      .put('/api/auth/resetpassword')
+      .post('/api/auth/password-resets')
       .query({ token })
       .set('x-app-version', '4.5.0')
       .send({ newPassword: 'Reset1234!' });
 
-    expect(response.status).toBe(200);
-    expectSchema(resetPasswordResponseSchema, response.body);
-    expect(response.body.ok).toBe(true);
+    expect(response.status).toBe(204);
+    expect(response.text).toBe('');
 
     const after = await getUserAuthStateByUsername(user.username);
-    expect(after?.password).toBeTypeOf('string');
-    expect(after?.password).not.toBe(before?.password);
+    expect(after?.passwordHash).toBeTypeOf('string');
+    expect(after?.passwordHash).not.toBe(before?.passwordHash);
 
     const oldLogin = await loginWithCredentials(app, user.email, user.password);
     const newLogin = await loginWithCredentials(app, user.email, 'Reset1234!');
     expect(oldLogin.status).toBe(401);
-    expect(newLogin.status).toBe(201);
+    expect(newLogin.status).toBe(200);
     expectSchema(loginResponseSchema, newLogin.body);
 
     const reused = await request(app.getHttpServer())
-      .put('/api/auth/resetpassword')
+      .post('/api/auth/password-resets')
       .query({ token })
       .set('x-app-version', '4.5.0')
       .send({ newPassword: 'Reset5678!' });
@@ -100,11 +99,11 @@ describe('PasswordController', () => {
 
   it('password endpoints return 400 for invalid payloads and enumeration-safe forgot response for missing users', async () => {
     const forgotMissing = await request(app.getHttpServer())
-      .post('/api/auth/forgotpassemail')
+      .post('/api/auth/password-reset-requests')
       .set('x-app-version', '4.5.0')
       .send({ identifier: `missing_${crypto.randomUUID().slice(0, 8)}` });
     const resetMissingToken = await request(app.getHttpServer())
-      .put('/api/auth/resetpassword')
+      .post('/api/auth/password-resets')
       .set('x-app-version', '4.5.0')
       .send({ newPassword: 'Reset1234!' });
 

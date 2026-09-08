@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { S3Service } from './s3/s3.service';
 import { awsConfig } from '../../config/storage.config';
 import { S3Client } from '@aws-sdk/client-s3';
+import { S3_CLIENT } from './aws.tokens';
 
 @Module({
   providers: [
     {
-      provide: S3Client,
+      provide: S3_CLIENT,
       useFactory: () => {
         const clientConfig = {
           region: awsConfig.region,
@@ -27,6 +28,6 @@ import { S3Client } from '@aws-sdk/client-s3';
     },
     S3Service,
   ],
-  exports: [S3Service],
+  exports: [S3Service, S3_CLIENT],
 })
 export class AWSModule {}

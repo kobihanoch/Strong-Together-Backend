@@ -1,14 +1,20 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { awsConfig } from '../../../config/storage.config';
+import { S3_CLIENT } from '../aws.tokens';
 
 @Injectable()
 export class S3Service implements OnModuleDestroy {
-  private s3Client: S3Client;
-  constructor(s3Client: S3Client) {
-    this.s3Client = s3Client;
-  }
+  constructor(@Inject(S3_CLIENT) private readonly s3Client: S3Client) {}
+
+  /**
+   * Retrieves upload url.
+   * @param fileKey - The storage object key.
+   * @param fileType - The file MIME type.
+   * @param metadata - Metadata to attach to the object.
+   * @returns The upload url result.
+   */
   async getUploadUrl(fileKey: string, fileType: string, metadata: Record<string, string>): Promise<string> {
     const command = new PutObjectCommand({
       Bucket: awsConfig.bucketName,
@@ -32,6 +38,9 @@ export class S3Service implements OnModuleDestroy {
     }
   }
 
+  /**
+   * Releases service resources when its module shuts down.
+   */
   async onModuleDestroy() {
     this.s3Client.destroy();
   }

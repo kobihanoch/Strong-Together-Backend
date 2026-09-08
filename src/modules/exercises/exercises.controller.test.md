@@ -2,14 +2,14 @@
 
 ## Happy Paths
 
-### `GET /api/exercises/getall`
+### `GET /api/exercises`
 
 - [x] Returns seeded exercises.
 - [x] Validates the shared response schema.
 
 ## Bad Paths
 
-### `GET /api/exercises/getall`
+### `GET /api/exercises`
 
 - [x] Rejects missing auth with `401`.
 

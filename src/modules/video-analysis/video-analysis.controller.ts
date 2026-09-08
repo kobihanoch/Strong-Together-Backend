@@ -1,7 +1,7 @@
 import { Controller, Post, Req, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Request } from 'express';
-import type { GetPresignedUrlFromS3Body, GetPresignedUrlFromS3Response } from '@strong-together/shared';
-import { getPresignedUrlS3Request } from '@strong-together/shared';
+import type { CreateVideoUploadUrlBody, CreateVideoUploadUrlResponse } from '@strong-together/shared';
+import { createVideoUploadUrlRequestSchema } from '@strong-together/shared';
 import { CurrentLogger } from '../../common/decorators/current-logger.decorator';
 import { CurrentRequestId } from '../../common/decorators/current-request-id.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -19,11 +19,11 @@ import { VideoAnalysisService, normalizeHeaderValue } from './video-analysis.ser
  * Video-analysis routes for authenticated users.
  *
  * Preserves the existing route path and behavior from the Express version:
- * - POST /api/videoanalysis/getpresignedurl
+ * - POST /api/video-analysis/upload-urls
  *
  * Access: User
  */
-@Controller('api/videoanalysis')
+@Controller('api/video-analysis/upload-urls')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @UseInterceptors(RlsTxInterceptor)
 @Roles('user')
@@ -37,23 +37,30 @@ export class VideoAnalysisController {
    * metadata, and returns the upload URL the client should use for direct video
    * upload.
    *
-   * Route: POST /api/videoanalysis/getpresignedurl
+   * @remarks Route: POST /api/video-analysis/upload-urls
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param requestId - The request id.
+   * @param requestLogger - The request-scoped logger.
+   * @param req - The HTTP request.
+   * @returns The response payload.
    */
-  @Post('getpresignedurl')
-  async getPresignedUrlFromS3(
-    @RequestData(new ValidateRequestPipe(getPresignedUrlS3Request))
-    data: { body: GetPresignedUrlFromS3Body },
+  @Post()
+  async createVideoUploadUrl(
+    @RequestData(new ValidateRequestPipe(createVideoUploadUrlRequestSchema))
+    data: { body: CreateVideoUploadUrlBody },
     @CurrentUser() user: AuthenticatedUser,
     @CurrentRequestId() requestId: string | undefined,
     @CurrentLogger() requestLogger: AppLogger,
     @Req() req: Request,
-  ): Promise<GetPresignedUrlFromS3Response> {
+  ): Promise<CreateVideoUploadUrlResponse> {
     const { exercise, fileType, jobId } = data.body;
     const userId = user.id;
     const sentryTrace = normalizeHeaderValue(req.headers['sentry-trace']);
     const baggage = normalizeHeaderValue(req.headers['baggage']);
-    const { payload, fileKey } = await this.videoAnalysisService.getPresignedUrlData({
+    const { payload, fileKey } = await this.videoAnalysisService.createVideoUploadUrlData({
       exercise,
       fileType,
       jobId,

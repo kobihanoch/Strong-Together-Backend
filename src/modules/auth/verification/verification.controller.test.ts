@@ -52,23 +52,23 @@ async function createUnverified(prefix = 'verify') {
 }
 
 describe('VerificationController', () => {
-  it('GET /api/auth/verify verifies DB state and rejects token reuse through Redis JTI', async () => {
+  it('GET /api/auth/email-verification verifies DB state and rejects token reuse through Redis JTI', async () => {
     const user = await createUnverified();
     const token = createVerifyToken(user.userId);
 
-    const response = await request(app.getHttpServer()).get('/api/auth/verify').query({ token }).set('x-app-version', '4.5.0');
+    const response = await request(app.getHttpServer()).get('/api/auth/email-verification').query({ token }).set('x-app-version', '4.5.0');
     expect(response.status).toBe(200);
     expect(response.headers['content-type']).toContain('text/html');
     expect((await getUserAuthStateByUsername(user.username))?.is_verified).toBe(true);
 
-    const reused = await request(app.getHttpServer()).get('/api/auth/verify').query({ token }).set('x-app-version', '4.5.0');
+    const reused = await request(app.getHttpServer()).get('/api/auth/email-verification').query({ token }).set('x-app-version', '4.5.0');
     expect(reused.status).toBe(401);
     expect(reused.text).toContain('Verification Failed');
   });
 
-  it('POST /api/auth/sendverificationemail enqueues Redis-backed verification email without leaking missing users', async () => {
+  it('POST /api/auth/verification-emails enqueues Redis-backed verification email without leaking missing users', async () => {
     const user = await createUnverified('verify_mail');
-    const response = await request(app.getHttpServer()).post('/api/auth/sendverificationemail').set('x-app-version', '4.5.0').send({
+    const response = await request(app.getHttpServer()).post('/api/auth/verification-emails').set('x-app-version', '4.5.0').send({
       email: user.email,
     });
 
@@ -80,7 +80,7 @@ describe('VerificationController', () => {
       to: user.email,
       subject: 'Confirm your Strong Together account',
     });
-    expect(latestJob?.data.html).toContain(`${appConfig.emailApiBaseUrl}/api/auth/verify`);
+    expect(latestJob?.data.html).toContain(`${appConfig.emailApiBaseUrl}/api/auth/email-verification`);
     expect(latestJob?.data.html).toContain('https://strongtogether.kobihanoch.com/appicon.png');
     await deliverLatestEmailJobToMaildev();
     const message = await waitForMaildevMessage('Confirm your Strong Together account');
@@ -89,18 +89,18 @@ describe('VerificationController', () => {
 
     await clearEmailQueue();
     const missing = await request(app.getHttpServer())
-      .post('/api/auth/sendverificationemail')
+      .post('/api/auth/verification-emails')
       .set('x-app-version', '4.5.0')
       .send({ email: `missing_${crypto.randomUUID().slice(0, 8)}@example.com` });
     expect(missing.status).toBe(201);
     expect(await getEmailQueueJobCount()).toBe(0);
   });
 
-  it('PUT /api/auth/changeemailverify updates pending email in DB and sends verification email', async () => {
+  it('PATCH /api/auth/unverified-account/email updates pending email in DB and sends verification email', async () => {
     const user = await createUnverified('verify_change');
     const newEmail = `updated_${crypto.randomUUID().slice(0, 8)}@example.com`;
 
-    const response = await request(app.getHttpServer()).put('/api/auth/changeemailverify').set('x-app-version', '4.5.0').send({
+    const response = await request(app.getHttpServer()).patch('/api/auth/unverified-account/email').set('x-app-version', '4.5.0').send({
       username: user.username,
       password: 'Test1234!',
       newEmail,
@@ -112,24 +112,24 @@ describe('VerificationController', () => {
     expect(await getEmailQueueJobCount()).toBe(1);
     const latestJob = await getLatestEmailJob();
     expect(latestJob?.data.to).toBe(newEmail);
-    expect(latestJob?.data.html).toContain(`${appConfig.emailApiBaseUrl}/api/auth/verify`);
+    expect(latestJob?.data.html).toContain(`${appConfig.emailApiBaseUrl}/api/auth/email-verification`);
     expect(latestJob?.data.html).toContain('https://strongtogether.kobihanoch.com/appicon.png');
     await deliverLatestEmailJobToMaildev();
     expect(JSON.stringify(await waitForMaildevMessage('Confirm your Strong Together account'))).toContain(newEmail);
   });
 
-  it('GET /api/auth/checkuserverify returns verification state and bad paths return 400/401', async () => {
+  it('GET /api/auth/verification-status returns verification state and bad paths return 400/401', async () => {
     const user = await createUnverified('verify_check');
     const check = await request(app.getHttpServer())
-      .get('/api/auth/checkuserverify')
+      .get('/api/auth/verification-status')
       .query({ username: user.username })
       .set('x-app-version', '4.5.0');
     const invalidVerify = await request(app.getHttpServer())
-      .get('/api/auth/verify')
+      .get('/api/auth/email-verification')
       .query({ token: 'not-a-token' })
       .set('x-app-version', '4.5.0');
     const badEmail = await request(app.getHttpServer())
-      .post('/api/auth/sendverificationemail')
+      .post('/api/auth/verification-emails')
       .set('x-app-version', '4.5.0')
       .send({ email: 'not-an-email' });
 
