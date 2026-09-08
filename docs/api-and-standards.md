@@ -10,12 +10,12 @@ The API is organized under `/api` with domain-oriented route groups:
 | --- | --- | --- |
 | Auth | `/api/auth` | Login, logout, refresh, verification, password reset |
 | Users | `/api/users` | Account creation, profile, profile picture, push token |
-| Workouts | `/api/workouts` | Plan reads/writes and completed workout tracking |
+| Workouts | `/api/workout-plan`, `/api/workout-*` | Plan reads/writes, schedules, and completed workout tracking |
 | Aerobics | `/api/aerobics` | Cardio history |
 | Exercises | `/api/exercises` | Exercise catalog |
 | Messages | `/api/messages` | Inbox, read state, deletion |
 | OAuth | `/api/oauth` | Google and Apple sign-in |
-| Push | `/api/push` | Scheduled push notification entrypoints |
+| Push | `/api/push-jobs` | Scheduled push notification entrypoints |
 | Video analysis | `/api/video-analysis` | Presigned upload URL generation |
 | WebSockets | `/api/websocket-tickets` | Authenticated socket ticket generation |
 

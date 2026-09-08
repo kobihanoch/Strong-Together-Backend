@@ -23,6 +23,8 @@ The video-analysis system is designed around direct upload, asynchronous process
 9. The worker downloads the video, continues the Sentry trace when possible, analyzes the exercise, publishes a result to Redis, deletes the source video, and then deletes the SQS message.
 10. `VideoAnalysisSubscriber` receives the Redis message and emits `video_analysis_results` to the user over Socket.IO.
 
+The upload API currently accepts any string for `exercise` and `fileType`. The Python analyzer supports the case-sensitive identifiers `squat` and `bench`; any other exercise value produces an unsupported-exercise result. Clients must therefore send one of those lowercase identifiers even if the UI displays a title-cased exercise name.
+
 In shorthand, the as-built path is:
 
 ```text

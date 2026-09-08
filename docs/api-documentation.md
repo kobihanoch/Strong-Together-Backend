@@ -109,8 +109,12 @@ This file focuses on success contracts. Route-specific non-JSON behavior is call
 | `GET`    | `/api/workout-plan`                  | User                 | Get active workout plan                                                    |
 | `PUT`    | `/api/workout-plan`                  | User                 | Create or update workout plan; returns 204                                 |
 | `GET`    | `/api/workout-history`               | User                 | Get workout tracking snapshot                                              |
+| `GET`    | `/api/exercise-history`              | User                 | Get tracking grouped by exercise assignment                                |
 | `GET`    | `/api/workout-statistics`            | User                 | Get workout tracking statistics                                            |
+| `GET`    | `/api/personal-records`              | User                 | Get all current exercise personal records                                  |
 | `POST`   | `/api/workout-sessions`              | User                 | Persist completed workout                                                  |
+| `GET`    | `/api/workout-schedules`             | User                 | Get the weekly workout schedule                                            |
+| `PUT`    | `/api/workout-schedules`             | User                 | Atomically replace the weekly schedule; returns 204                         |
 | `GET`    | `/api/aerobics`                      | User                 | Get aerobics history                                                       |
 | `POST`   | `/api/aerobics`                      | User                 | Add aerobics record                                                        |
 | `PUT`    | `/api/aerobics/:id`                  | User                 | Replace aerobics record; returns 204                                       |
@@ -616,6 +620,7 @@ The workout-plan endpoints use this shape:
         "orderIndex": 0,
         "createdAt": "string",
         "muscleGroup": "string | null",
+        "estimatedDurationMinutes": "number | null",
         "isActive": true,
         "exercises": [
           {
@@ -814,10 +819,11 @@ Request body:
       ]
     }
   ],
-  "workoutName": "string",
   "tz": "string"
 }
 ```
+
+`workoutName` is accepted as an optional legacy compatibility field by the current shared contract, but the backend does not persist or otherwise use it. New clients should omit it.
 
 Successful response:
 
@@ -887,7 +893,6 @@ Request body:
     {
       "isExerciseAssignedToSplit": true,
       "exerciseToSplitId": 10,
-      "exerciseId": 20,
       "trackedSets": [
         { "setIndex": 0, "weight": 100, "reps": 5 },
         { "setIndex": 1, "weight": 95, "reps": 6 },
@@ -941,6 +946,8 @@ Atomically replaces the authenticated user's complete weekly schedule. `dayOfWee
   "schedules": [{ "workoutSplitId": 10, "dayOfWeek": 1, "startTime": "18:30" }]
 }
 ```
+
+When `isExerciseAssignedToSplit` is `true`, `exerciseToSplitId` identifies the exercise. The contract still accepts an optional `exerciseId` in this branch for compatibility with older clients, but persistence ignores it. When `isExerciseAssignedToSplit` is `false`, omit or null `exerciseToSplitId` and provide `exerciseId`.
 
 Successful response:
 
@@ -1225,7 +1232,7 @@ Successful response:
   "message": "string",
   "user": "string",
   "accessToken": "string",
-  "refreshToken": "string | null"
+  "refreshToken": "string"
 }
 ```
 
@@ -1262,7 +1269,7 @@ Successful response:
   "message": "string",
   "user": "string",
   "accessToken": "string",
-  "refreshToken": "string | null"
+  "refreshToken": "string"
 }
 ```
 
@@ -1334,11 +1341,13 @@ Request body:
 
 ```json
 {
-  "exercise": "string",
-  "fileType": "string",
+  "exercise": "squat",
+  "fileType": "video/mp4",
   "jobId": "string"
 }
 ```
+
+The API contract currently validates these fields as strings and uses `fileType` as the presigned upload's content type. The downstream Python analyzer recognizes only the case-sensitive identifiers `squat` and `bench`; other values produce an unsupported-exercise analysis result.
 
 Successful response:
 
