@@ -118,7 +118,7 @@ export async function deliverLatestEmailJobToMaildev() {
   return job;
 }
 
-export async function getMaildevMessages() {
+async function getMaildevMessages() {
   const response = await fetch(`${emailConfig.maildevApiUrl}/email`);
   if (!response.ok) return [];
 
@@ -246,8 +246,3 @@ export async function receiveAnalysisQueueMessage() {
   return message;
 }
 
-export async function closeInfraClients() {
-  await Promise.all([emailQueue.close(), pushQueue.close(), redisClient.isOpen ? redisClient.quit() : undefined]);
-  sqsClient.destroy();
-  s3Client.destroy();
-}

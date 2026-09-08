@@ -11,6 +11,11 @@ export class MailerService {
   private readonly logger = createLogger('config:mailer');
   constructor(@Inject(RESEND_CLIENT) private readonly resend: Resend | null) {}
 
+  /**
+   * Sends mail.
+   * @param options - The options.
+   * @returns The send mail result.
+   */
   async sendMail({ to, subject, html }: { to: string; subject: string; html: string }): Promise<{
     ok: boolean;
     id?: any;
@@ -79,6 +84,11 @@ export class MailerService {
   }
 
   // ---- Helpers ----
+  /**
+   * Maps a Resend error name to an HTTP status code.
+   * @param err - The error to inspect.
+   * @returns The resend status result.
+   */
   private getResendStatus(err: { name: string } | null | undefined): number | null {
     if (!err?.name) return null;
 
@@ -103,6 +113,11 @@ export class MailerService {
     }
   }
 
+  /**
+   * Extracts an HTTP status code from an unknown error.
+   * @param err - The error to inspect.
+   * @returns The thrown status result.
+   */
   private getThrownStatus(err: unknown): number | null {
     if (!err || typeof err !== 'object') return null;
 
@@ -116,6 +131,11 @@ export class MailerService {
     return null;
   }
 
+  /**
+   * Determines whether an HTTP status represents a transient failure.
+   * @param status - The HTTP status code.
+   * @returns The is transient status result.
+   */
   private isTransientStatus(status: number | null): boolean {
     if (status == null) return true; // no status (network/timeout) → transient
     if (status >= 500) return true; // server errors → transient
@@ -123,6 +143,11 @@ export class MailerService {
     return false; // 4xx (except 429) → permanent
   }
 
+  /**
+   * Determines whether an error message indicates a transient failure.
+   * @param msg - The message to deliver.
+   * @returns The looks transient message result.
+   */
   private looksTransientMessage(msg: string = ''): boolean {
     const m = msg.toLowerCase();
     return (
@@ -133,6 +158,10 @@ export class MailerService {
     );
   }
 
+  /**
+   * Sends an email through the local Maildev SMTP server.
+   * @param options - The options.
+   */
   private async sendMaildevMail({ to, subject, html }: { to: string; subject: string; html: string }): Promise<void> {
     const from = 'support@auth.kobihanoch.com';
     const data = [

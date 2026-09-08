@@ -1,6 +1,6 @@
 import request from 'supertest';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { getAllExercisesResponseSchema, loginResponseSchema } from '@strong-together/shared';
+import { listExercisesResponseSchema, loginResponseSchema } from '@strong-together/shared';
 import { createApp } from '../../app';
 import { authHeaders } from '../../common/tests/helpers/auth';
 import { expectSchema } from '../../common/tests/helpers/assert-schema';
@@ -19,15 +19,15 @@ afterEach(async () => {
 });
 
 describe('ExercisesController', () => {
-  it('GET /api/exercises/getall returns seeded exercises with the shared schema', async () => {
+  it('GET /api/exercises returns seeded exercises with the shared schema', async () => {
     const user = await createAndLoginTestUser(app, 'exercises');
     users.add(user.username);
     expectSchema(loginResponseSchema, user.loginResponse.body);
 
-    const response = await request(app.getHttpServer()).get('/api/exercises/getall').set(authHeaders(user.accessToken));
+    const response = await request(app.getHttpServer()).get('/api/exercises').set(authHeaders(user.accessToken));
 
     expect(response.status).toBe(200);
-    expectSchema(getAllExercisesResponseSchema, response.body);
+    expectSchema(listExercisesResponseSchema, response.body);
     expect(response.body.Chest).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -39,8 +39,8 @@ describe('ExercisesController', () => {
     );
   });
 
-  it('GET /api/exercises/getall rejects unauthenticated requests with 401', async () => {
-    const response = await request(app.getHttpServer()).get('/api/exercises/getall').set('x-app-version', '4.5.0');
+  it('GET /api/exercises rejects unauthenticated requests with 401', async () => {
+    const response = await request(app.getHttpServer()).get('/api/exercises').set('x-app-version', '4.5.0');
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('No access token provided');

@@ -2,18 +2,19 @@
 
 ## Happy Paths
 
-### `POST /api/auth/forgotpassemail`
+### `POST /api/auth/password-reset-requests`
 
 - [x] Finds an existing user.
 - [x] Enqueues a Redis-backed password email job.
 - [x] Email content includes reset-password URL assets.
 
-### `PUT /api/auth/resetpassword`
+### `POST /api/auth/password-resets`
 
 - [x] Updates the password hash in DB.
 - [x] Stores reset JTI in Redis.
 - [x] Allows login with the new password.
 - [x] Blocks login with the old password.
+- [x] Returns `204 No Content`.
 
 ## Bad Paths
 

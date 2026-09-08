@@ -1,7 +1,7 @@
 import { Controller, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import type { GoogleOAuthBody, OAuthLoginResponse } from '@strong-together/shared';
-import { googleOAuthRequest } from '@strong-together/shared';
+import { googleOAuthRequestSchema } from '@strong-together/shared';
 import { CurrentLogger } from '../../../common/decorators/current-logger.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { RateLimit, RateLimitGuard, loginRateLimit } from '../../../common/guards/rate-limit.guard';
@@ -30,14 +30,20 @@ export class GoogleController {
    * Verifies the Google identity token, links or creates the local user record as
    * needed, and returns the session payload.
    *
-   * Route: POST /api/oauth/google
+   * @remarks Route: POST /api/oauth/google
    * Access: Public
+   *
+   * @param data - The validated request data.
+   * @param req - The HTTP request.
+   * @param requestLogger - The request-scoped logger.
+   * @param res - The HTTP response.
+   * @returns The response payload.
    */
   @Post('google')
   @UseGuards(RateLimitGuard)
   @RateLimit(loginRateLimit)
   async createOrSignInWithGoogle(
-    @RequestData(new ValidateRequestPipe(googleOAuthRequest))
+    @RequestData(new ValidateRequestPipe(googleOAuthRequestSchema))
     data: { body: GoogleOAuthBody },
     @Req() req: Request,
     @CurrentLogger() requestLogger: AppLogger,

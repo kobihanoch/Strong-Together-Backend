@@ -1,43 +1,53 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { UserToHourlyReminder, UserWithNotificationsEnabled } from './push.dtos';
 import type postgres from 'postgres';
 import { SQL } from '../../infrastructure/db/db.tokens';
+
+export type DueWorkoutReminder = {
+  userId: string;
+  workoutScheduleId: string;
+  occurrenceDate: string;
+  reminderAt: Date;
+  firstName: string;
+  splitName: string;
+};
 
 @Injectable()
 export class PushQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
-  async queryGetAllUsersWithNotificationsEnabled(): Promise<UserWithNotificationsEnabled[]> {
-    const rows = await this.sql<UserWithNotificationsEnabled[]>`
-      SELECT push_token, name FROM identity.users WHERE push_token IS NOT NULL`;
-
-    return rows as UserWithNotificationsEnabled[];
+  /**
+   * Retrieves eligible workout reminders due in the cron look-ahead window.
+   * @returns The reminders that should be added to the push queue.
+   */
+  async queryDueWorkoutReminders(): Promise<DueWorkoutReminder[]> {
+    return this.sql<DueWorkoutReminder[]>`
+      SELECT
+        user_id AS "userId",
+        workout_schedule_id AS "workoutScheduleId",
+        occurrence_date::TEXT AS "occurrenceDate",
+        reminder_at AS "reminderAt",
+        first_name AS "firstName",
+        split_name AS "splitName"
+      FROM cron_api.due_workout_reminders()
+    `;
   }
 
-  async queryGetAllUsersToSendHourlyReminder(): Promise<UserToHourlyReminder[]> {
-    const users = await this.sql<UserToHourlyReminder[]>`
-      SELECT
-        u.id AS user_id,
-        u.name AS name,
-        u.push_token,
-        rs.reminder_offset_minutes,
-        usi.split_id,
-        ws.name AS split_name,
-        usi.estimated_time_utc
-      FROM identity.users AS u
-      JOIN reminders.user_reminder_settings AS rs
-        ON rs.user_id = u.id
-      JOIN reminders.user_split_information AS usi
-        ON usi.user_id = u.id
-      JOIN workout.workoutsplits AS ws
-        ON usi.split_id = ws.id
-      WHERE rs.workout_reminders_enabled = TRUE
-        AND u.push_token IS NOT NULL
-        AND u.push_token <> ''
-        AND usi.confidence >= 0.60
-        AND usi.preferred_weekday = EXTRACT(DOW FROM TIMEZONE('UTC', NOW()))
+  /**
+   * Retrieves the user's current Expo push token when the queued reminder is still eligible.
+   * @param userId - The reminder owner's identifier.
+   * @param workoutScheduleId - The queued schedule identifier.
+   * @param occurrenceDate - The queued local workout date.
+   * @returns The current Expo token, or null when the delayed reminder is no longer eligible.
+   */
+  async queryExpoPushToken(userId: string, workoutScheduleId: string, occurrenceDate: string): Promise<string | null> {
+    const [row] = await this.sql<{ pushToken: string | null }[]>`
+      SELECT cron_api.valid_workout_reminder_token(
+        ${userId}::UUID,
+        ${workoutScheduleId}::UUID,
+        ${occurrenceDate}::DATE
+      ) AS "pushToken"
     `;
 
-    return users as UserToHourlyReminder[];
+    return row?.pushToken ?? null;
   }
 }

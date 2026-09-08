@@ -13,6 +13,7 @@ import {
   setUserPushTokenByUsername,
 } from '../../../common/tests/helpers/db';
 import { authHeaders, logoutHeaders, refreshHeaders } from '../../../common/tests/helpers/auth';
+import { authConfig } from '../../../config/auth.config';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 const createdUsernames = new Set<string>();
@@ -26,14 +27,14 @@ afterEach(async () => {
   createdUsernames.clear();
 });
 
-async function createSessionUser(overrides: { isFirstLogin?: boolean } = {}) {
+async function createSessionUser(overrides: { hasLoggedIn?: boolean } = {}) {
   const username = `session_${crypto.randomUUID().slice(0, 8)}`;
   createdUsernames.add(username);
   const userId = await createVerifiedTestUser({
     username,
     email: `${username}@example.com`,
     fullName: 'Session Controller',
-    ...(overrides.isFirstLogin === undefined ? {} : { isFirstLogin: overrides.isFirstLogin }),
+    ...(overrides.hasLoggedIn === undefined ? {} : { hasLoggedIn: overrides.hasLoggedIn }),
   });
 
   return {
@@ -61,7 +62,7 @@ describe('SessionController', () => {
         password: user.password,
       });
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       expectSchema(loginResponseSchema, response.body);
       expect(response.body).toMatchObject({
         message: 'Login successful',
@@ -76,6 +77,28 @@ describe('SessionController', () => {
 
       const { lastLogin, databaseNow } = await getUserLastLoginByUsername(user.username);
       expect(lastLogin!.getTime()).toBeLessThanOrEqual(databaseNow!.getTime());
+    });
+
+    it('sends the initial system message when last_login is null and exposes the bot image', async () => {
+      const user = await createSessionUser({ hasLoggedIn: false });
+
+      const loginResponse = await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .set('x-app-version', '4.5.0')
+        .send({ identifier: user.email, password: user.password });
+
+      expect(loginResponse.status).toBe(200);
+
+      const messagesResponse = await request(app.getHttpServer())
+        .get('/api/messages')
+        .query({ tz: 'Asia/Jerusalem' })
+        .set(authHeaders(loginResponse.body.accessToken));
+
+      expect(messagesResponse.status).toBe(200);
+      expect(messagesResponse.body.messages[0]).toMatchObject({
+        senderFullName: 'System Bot',
+        senderProfilePicPath: 'profile_pics/system-bot/avatar.jpg',
+      });
     });
 
     it('rejects invalid request bodies with 400', async () => {
@@ -97,10 +120,13 @@ describe('SessionController', () => {
       expect(wrongPassword.status).toBe(401);
       expect(wrongPassword.body.message).toBe('Invalid credentials');
 
-      const missingUser = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
-        identifier: `missing_${crypto.randomUUID().slice(0, 8)}@example.com`,
-        password: user.password,
-      });
+      const missingUser = await request(app.getHttpServer())
+        .post('/api/auth/login')
+        .set('x-app-version', '4.5.0')
+        .send({
+          identifier: `missing_${crypto.randomUUID().slice(0, 8)}@example.com`,
+          password: user.password,
+        });
 
       expect(missingUser.status).toBe(401);
       expect(missingUser.body.message).toBe('Invalid credentials');
@@ -117,11 +143,9 @@ describe('SessionController', () => {
       expectSchema(loginResponseSchema, loginResponse.body);
 
       const beforeRefresh = await getUserSessionStateByUsername(user.username);
-      const refreshResponse = await request(app.getHttpServer())
-        .post('/api/auth/refresh')
-        .set(refreshHeaders(loginResponse.body.refreshToken));
+      const refreshResponse = await request(app.getHttpServer()).post('/api/auth/refresh').set(refreshHeaders(loginResponse.body.refreshToken));
 
-      expect(refreshResponse.status).toBe(201);
+      expect(refreshResponse.status).toBe(200);
       expectSchema(refreshTokenResponseSchema, refreshResponse.body);
       expect(refreshResponse.body).toMatchObject({
         message: 'Access token refreshed',
@@ -133,9 +157,7 @@ describe('SessionController', () => {
       expect(tokenVersion(refreshResponse.body.accessToken)).toBe(afterRefresh?.tokenVersion);
       expect(tokenVersion(refreshResponse.body.refreshToken)).toBe(afterRefresh?.tokenVersion);
 
-      const staleRefreshResponse = await request(app.getHttpServer())
-        .post('/api/auth/refresh')
-        .set(refreshHeaders(loginResponse.body.refreshToken));
+      const staleRefreshResponse = await request(app.getHttpServer()).post('/api/auth/refresh').set(refreshHeaders(loginResponse.body.refreshToken));
       expect(staleRefreshResponse.status).toBe(401);
       expect(staleRefreshResponse.body.message).toBe('New login required');
     });
@@ -145,9 +167,7 @@ describe('SessionController', () => {
       expect(missing.status).toBe(401);
       expect(missing.body.message).toBe('No refresh token provided');
 
-      const invalid = await request(app.getHttpServer())
-        .post('/api/auth/refresh')
-        .set(refreshHeaders('not-a-real-token'));
+      const invalid = await request(app.getHttpServer()).post('/api/auth/refresh').set(refreshHeaders('not-a-real-token'));
       expect(invalid.status).toBe(401);
       expect(invalid.body.message).toBe('Invalid or expired refresh token');
     });
@@ -169,7 +189,7 @@ describe('SessionController', () => {
         .post('/api/auth/logout')
         .set(logoutHeaders(loginResponse.body.accessToken, loginResponse.body.refreshToken));
 
-      expect(logoutResponse.status).toBe(201);
+      expect(logoutResponse.status).toBe(200);
       expectSchema(logoutResponseSchema, logoutResponse.body);
       expect(logoutResponse.body.message).toBe('Logged out successfully');
 
@@ -177,18 +197,41 @@ describe('SessionController', () => {
       expect(afterLogout?.pushToken).toBeNull();
       expect(afterLogout?.tokenVersion).toBe((beforeLogout?.tokenVersion ?? 0) + 1);
 
-      const protectedResponse = await request(app.getHttpServer())
-        .get('/api/users/get')
-        .set(authHeaders(loginResponse.body.accessToken));
+      const protectedResponse = await request(app.getHttpServer()).get('/api/users/me').set(authHeaders(loginResponse.body.accessToken));
       expect(protectedResponse.status).toBe(401);
       expect(protectedResponse.body.message).toBe('New login required');
     });
 
-    it('rejects logout without an access token with 401', async () => {
+    it('logs out without an access token when the refresh token is valid', async () => {
+      const user = await createSessionUser();
+      await setUserPushTokenByUsername(user.username, 'ExponentPushToken[refresh-only-logout]');
+      const loginResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+        identifier: user.username,
+        password: user.password,
+      });
+
+      const response = await request(app.getHttpServer()).post('/api/auth/logout').set(refreshHeaders(loginResponse.body.refreshToken));
+
+      expect(response.status).toBe(200);
+      expect((await getUserSessionStateByUsername(user.username))?.pushToken).toBeNull();
+    });
+
+    it('rejects logout without a refresh token with 401', async () => {
       const response = await request(app.getHttpServer()).post('/api/auth/logout').set('x-app-version', '4.5.0');
 
       expect(response.status).toBe(401);
-      expect(response.body.message).toBe('No access token provided');
+      expect(response.body.message).toBe('No refresh token provided');
+    });
+
+    it('accepts a recently expired refresh token for notification cleanup', async () => {
+      const user = await createSessionUser();
+      await setUserPushTokenByUsername(user.username, 'ExponentPushToken[expired-refresh-logout]');
+      const expiredRefreshToken = jwt.sign({ id: user.userId, role: 'user', tokenVer: 1 }, authConfig.jwtRefreshSecret, { expiresIn: -1 });
+
+      const response = await request(app.getHttpServer()).post('/api/auth/logout').set(refreshHeaders(expiredRefreshToken));
+
+      expect(response.status).toBe(200);
+      expect((await getUserSessionStateByUsername(user.username))?.pushToken).toBeNull();
     });
   });
 });

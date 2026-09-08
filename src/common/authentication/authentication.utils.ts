@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { Request } from 'express';
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../../config/auth.config';
-import type { AccessTokenPayload } from '@strong-together/shared';
+import type { AccessTokenPayloadDto } from '@strong-together/shared';
 
 /*
  * Extracts a Bearer token from a header string safely.
@@ -26,10 +26,10 @@ export const getAccessToken = (req: Request): string | null => {
   return extractDpopToken(authHeader) || extractBearerToken(authHeader);
 };
 
-export const decodeAccessToken = (accessToken: string | null): AccessTokenPayload | null => {
+export const decodeAccessToken = (accessToken: string | null): AccessTokenPayloadDto | null => {
   if (!accessToken) return null;
   try {
-    return jwt.verify(accessToken, authConfig.jwtAccessSecret) as AccessTokenPayload;
+    return jwt.verify(accessToken, authConfig.jwtAccessSecret) as AccessTokenPayloadDto;
   } catch (e) {
     return null;
   }

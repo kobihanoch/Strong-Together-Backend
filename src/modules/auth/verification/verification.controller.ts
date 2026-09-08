@@ -1,16 +1,11 @@
-import { Controller, Get, Post, Put, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { Response } from 'express';
-import type {
-  ChangeEmailAndVerifyBody,
-  CheckUserVerifyQuery,
-  SendVerifcationMailBody,
-  VerifyUserAccountQuery,
-} from '@strong-together/shared';
+import type { UpdateUnverifiedAccountEmailBody, GetVerificationStatusQuery, CreateVerificationEmailBody, VerifyEmailQuery } from '@strong-together/shared';
 import {
-  changeEmailAndVerifyRequest,
-  checkUserVerifyRequest,
-  sendVerificationMailRequest,
-  verifyAccountRequest,
+  updateUnverifiedAccountEmailRequestSchema,
+  getVerificationStatusRequestSchema,
+  createVerificationEmailRequestSchema,
+  verifyEmailRequestSchema,
 } from '@strong-together/shared';
 import { VerificationService } from './verification.service';
 import {
@@ -24,6 +19,9 @@ import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe
 import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import type { AppRequest } from '../../../common/types/express';
 
+/**
+ * Handles verification HTTP requests.
+ */
 @Controller('api/auth')
 @UseInterceptors(RlsTxInterceptor)
 export class VerificationController {
@@ -36,16 +34,19 @@ export class VerificationController {
    * JTI cache, updates the user's verification state, and returns an HTML result
    * page.
    *
-   * Route: GET /api/auth/verify
+   * @remarks Route: GET /api/auth/email-verification
    * Access: Public
+   *
+   * @param data - The validated request data.
+   * @param res - The HTTP response.
    */
-  @Get('verify')
-  async verifyUserAccount(
-    @RequestData(new ValidateRequestPipe(verifyAccountRequest))
-    data: { query: VerifyUserAccountQuery },
+  @Get('email-verification')
+  async verifyEmail(
+    @RequestData(new ValidateRequestPipe(verifyEmailRequestSchema))
+    data: { query: VerifyEmailQuery },
     @Res() res: Response,
   ): Promise<void> {
-    const { statusCode, html } = await this.verificationService.verifyUserAccountData(data.query.token);
+    const { statusCode, html } = await this.verificationService.verifyEmailData(data.query.token);
     res.status(statusCode).type('html').set('Cache-Control', 'no-store').send(html);
   }
 
@@ -55,18 +56,21 @@ export class VerificationController {
    * Resolves the user by email and, when found, dispatches a fresh verification
    * email without exposing whether the address exists.
    *
-   * Route: POST /api/auth/sendverificationemail
+   * @remarks Route: POST /api/auth/verification-emails
    * Access: Public
+   *
+   * @param data - The validated request data.
+   * @param req - The HTTP request.
    */
-  @Post('sendverificationemail')
+  @Post('verification-emails')
   @UseGuards(RateLimitGuard)
   @RateLimit(changeVerificationEmailRateLimitDaily, changeVerificationEmailRateLimit)
-  async sendVerificationMail(
-    @RequestData(new ValidateRequestPipe(sendVerificationMailRequest))
-    data: { body: SendVerifcationMailBody },
+  async createVerificationEmail(
+    @RequestData(new ValidateRequestPipe(createVerificationEmailRequestSchema))
+    data: { body: CreateVerificationEmailBody },
     @Req() req: AppRequest,
   ): Promise<void> {
-    await this.verificationService.sendVerificationMailData(data.body, req.requestId);
+    await this.verificationService.createVerificationEmailData(data.body, req.requestId);
   }
 
   /**
@@ -76,18 +80,21 @@ export class VerificationController {
    * email address when allowed, and dispatches a fresh verification email to the
    * new address.
    *
-   * Route: PUT /api/auth/changeemailverify
+   * @remarks Route: PATCH /api/auth/unverified-account/email
    * Access: Public
+   *
+   * @param data - The validated request data.
+   * @param req - The HTTP request.
    */
-  @Put('changeemailverify')
+  @Patch('unverified-account/email')
   @UseGuards(RateLimitGuard)
   @RateLimit(changeVerificationEmailRateLimitDaily, changeVerificationEmailRateLimit)
-  async changeEmailAndVerify(
-    @RequestData(new ValidateRequestPipe(changeEmailAndVerifyRequest))
-    data: { body: ChangeEmailAndVerifyBody },
+  async updateUnverifiedAccountEmail(
+    @RequestData(new ValidateRequestPipe(updateUnverifiedAccountEmailRequestSchema))
+    data: { body: UpdateUnverifiedAccountEmailBody },
     @Req() req: AppRequest,
   ): Promise<void> {
-    await this.verificationService.changeEmailAndVerifyData(data.body, req.requestId);
+    await this.verificationService.updateUnverifiedAccountEmailData(data.body, req.requestId);
   }
 
   /**
@@ -95,16 +102,19 @@ export class VerificationController {
    *
    * Returns a minimal verification-state payload for the supplied username.
    *
-   * Route: GET /api/auth/checkuserverify
+   * @remarks Route: GET /api/auth/verification-status
    * Access: Public
+   *
+   * @param data - The validated request data.
+   * @returns The response payload.
    */
-  @Get('checkuserverify')
-  async checkUserVerify(
-    @RequestData(new ValidateRequestPipe(checkUserVerifyRequest))
+  @Get('verification-status')
+  async getVerificationStatus(
+    @RequestData(new ValidateRequestPipe(getVerificationStatusRequestSchema))
     data: {
-      query: CheckUserVerifyQuery;
+      query: GetVerificationStatusQuery;
     },
   ): Promise<{ isVerified: boolean }> {
-    return this.verificationService.checkUserVerifyData(data.query.username);
+    return this.verificationService.getVerificationStatusData(data.query.username);
   }
 }

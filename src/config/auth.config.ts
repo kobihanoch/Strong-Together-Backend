@@ -7,6 +7,7 @@ export const authConfig = {
   jwtForgotPasswordSecret: process.env.JWT_FORGOT_PASSWORD_SECRET as string,
   changeEmailSecret: process.env.CHANGE_EMAIL_SECRET as string,
   jwtSocketSecret: process.env.JWT_SOCKET_SECRET as string,
+  cronJwtSecret: process.env.CRON_JWT_SECRET as string,
   appleAllowedAuds: (process.env.APPLE_ALLOWED_AUDS ?? '')
     .split(',')
     .map((value) => value.trim())

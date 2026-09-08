@@ -1,24 +1,7 @@
-import {
-  Controller,
-  Delete,
-  Get,
-  NotFoundException,
-  Put,
-  Query,
-  Res,
-  UploadedFile,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Put, Query, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type {
-  DeleteUserProfilePicBody,
-  GetAuthenticatedUserByIdResponse,
-  SetProfilePicAndUpdateDBResponse,
-  UpdateAuthenticatedUserResponse,
-  UpdateUserBody,
-} from '@strong-together/shared';
-import { deleteProfilePicRequest, updateUserRequest } from '@strong-together/shared';
+import type { DeleteProfilePictureBody, GetCurrentUserResponse, ReplaceProfilePictureResponse, UpdateCurrentUserBody } from '@strong-together/shared';
+import { deleteProfilePictureRequestSchema, updateCurrentUserRequestSchema } from '@strong-together/shared';
 import type { Response } from 'express';
 import { CurrentLogger } from '../../../common/decorators/current-logger.decorator';
 import { CurrentRequestId } from '../../../common/decorators/current-request-id.decorator';
@@ -27,12 +10,7 @@ import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../common/guards/auth/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
-import {
-  RateLimit,
-  RateLimitGuard,
-  updateUserRateLimit,
-  updateUserRateLimitDaily,
-} from '../../../common/guards/rate-limit.guard';
+import { RateLimit, RateLimitGuard, updateUserRateLimit, updateUserRateLimitDaily } from '../../../common/guards/rate-limit.guard';
 import { imageUploadOptions } from '../../../common/interceptors/image-upload.config';
 import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
@@ -44,12 +22,12 @@ import { UpdateUserService } from './update.service';
  * User profile-management routes.
  *
  * Preserves the existing route paths and behavior from the Express version:
- * - GET /api/users/get
- * - PUT /api/users/updateself
- * - GET /api/users/changeemail
- * - DELETE /api/users/deleteself
- * - PUT /api/users/setprofilepic
- * - DELETE /api/users/deleteprofilepic
+ * - GET /api/users/me
+ * - PATCH /api/users/me
+ * - GET /api/users/email-change
+ * - DELETE /api/users/me
+ * - PUT /api/users/me/profile-picture
+ * - DELETE /api/users/me/profile-picture
  *
  * Access: Mixed by route
  */
@@ -63,13 +41,16 @@ export class UpdateUserController {
    *
    * Returns the current user's persisted profile payload.
    *
-   * Route: GET /api/users/get
+   * @remarks Route: GET /api/users/me
    * Access: User
+   *
+   * @param user - The authenticated user.
+   * @returns The response payload.
    */
-  @Get('get')
+  @Get('me')
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
   @Roles('user')
-  async getAuthenticatedUserById(@CurrentUser() user: AuthenticatedUser): Promise<GetAuthenticatedUserByIdResponse> {
+  async getCurrentUser(@CurrentUser() user: AuthenticatedUser): Promise<GetCurrentUserResponse> {
     const { payload } = await this.updateUserService.getUserData(user.id);
     return payload;
   }
@@ -77,29 +58,27 @@ export class UpdateUserController {
   /**
    * Update the authenticated user's profile details.
    *
-   * Persists allowed profile fields and sends an email-verification flow when
-   * the submitted email differs from the current one.
+   * Persists allowed profile fields, sends an email-verification flow when the
+   * submitted email differs, and responds with 204 No Content.
    *
-   * Route: PUT /api/users/updateself
+   * @remarks Route: PATCH /api/users/me
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param requestId - The request id.
    */
-  @Put('updateself')
+  @Patch('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(RateLimitGuard, DpopGuard, AuthenticationGuard, AuthorizationGuard)
   @RateLimit(updateUserRateLimitDaily, updateUserRateLimit)
   @Roles('user')
-  async updateAuthenticatedUser(
-    @RequestData(new ValidateRequestPipe(updateUserRequest)) data: { body: UpdateUserBody },
+  async updateCurrentUser(
+    @RequestData(new ValidateRequestPipe(updateCurrentUserRequestSchema)) data: { body: UpdateCurrentUserBody },
     @CurrentUser() user: AuthenticatedUser,
     @CurrentRequestId() requestId: string | undefined,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<UpdateAuthenticatedUserResponse> {
-    const payload = await this.updateUserService.updateAuthenticatedUserData(user.id, data.body, requestId);
-
-    if (payload.message === 'User not found') {
-      throw new NotFoundException('User not found');
-    }
-
-    return payload;
+  ): Promise<void> {
+    await this.updateUserService.updateCurrentUserData(user.id, data.body, requestId);
   }
 
   /**
@@ -108,15 +87,15 @@ export class UpdateUserController {
    * Validates the signed change-email token, enforces one-time use, updates the
    * email address, and returns an HTML result page.
    *
-   * Route: GET /api/users/changeemail
+   * @remarks Route: GET /api/users/email-change
    * Access: Public
+   *
+   * @param token - The token.
+   * @param requestLogger - The request-scoped logger.
+   * @param res - The HTTP response.
    */
-  @Get('changeemail')
-  async updateSelfEmail(
-    @Query('token') token: string | undefined,
-    @CurrentLogger() requestLogger: AppLogger,
-    @Res() res: Response,
-  ): Promise<void> {
+  @Get('email-change')
+  async updateSelfEmail(@Query('token') token: string | undefined, @CurrentLogger() requestLogger: AppLogger, @Res() res: Response): Promise<void> {
     const { statusCode, html } = await this.updateUserService.updateSelfEmailData(token, requestLogger);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -126,17 +105,19 @@ export class UpdateUserController {
   /**
    * Delete the authenticated user's account.
    *
-   * Removes the current user's account and returns a success message.
+   * Removes the current user's account and responds with 204 No Content.
    *
-   * Route: DELETE /api/users/deleteself
+   * @remarks Route: DELETE /api/users/me
    * Access: User
+   *
+   * @param user - The authenticated user.
    */
-  @Delete('deleteself')
+  @Delete('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
   @Roles('user')
-  async deleteSelfUser(@CurrentUser() user: AuthenticatedUser): Promise<{ message: string }> {
+  async deleteSelfUser(@CurrentUser() user: AuthenticatedUser): Promise<void> {
     await this.updateUserService.deleteSelfUserData(user.id);
-    return { message: 'User deleted successfully' };
   }
 
   /**
@@ -145,20 +126,26 @@ export class UpdateUserController {
    * Stores the uploaded image in Supabase Storage, updates the user's profile
    * image path, and schedules cleanup of the previous image when applicable.
    *
-   * Route: PUT /api/users/setprofilepic
+   * @remarks Route: PUT /api/users/me/profile-picture
    * Access: User
+   *
+   * @param user - The authenticated user.
+   * @param file - The uploaded file.
+   * @param requestLogger - The request-scoped logger.
+   * @param res - The HTTP response.
+   * @returns The response payload.
    */
-  @Put('setprofilepic')
+  @Put('me/profile-picture')
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
   @UseInterceptors(FileInterceptor('file', imageUploadOptions))
   @Roles('user')
-  async setProfilePicAndUpdateDB(
+  async replaceProfilePicture(
     @CurrentUser() user: AuthenticatedUser,
     @UploadedFile() file: Express.Multer.File | undefined,
     @CurrentLogger() requestLogger: AppLogger,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<SetProfilePicAndUpdateDBResponse> {
-    const payload = await this.updateUserService.setProfilePicAndUpdateDBData(user.id, file, requestLogger);
+  ): Promise<ReplaceProfilePictureResponse> {
+    const payload = await this.updateUserService.replaceProfilePictureData(user.id, file, requestLogger);
     res.status(201);
     return payload;
   }
@@ -169,18 +156,22 @@ export class UpdateUserController {
    * Removes the stored image from object storage and clears the profile image
    * reference from the user's record.
    *
-   * Route: DELETE /api/users/deleteprofilepic
+   * @remarks Route: DELETE /api/users/me/profile-picture
    * Access: User
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param res - The HTTP response.
    */
-  @Delete('deleteprofilepic')
+  @Delete('me/profile-picture')
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
   @Roles('user')
-  async deleteUserProfilePic(
-    @RequestData(new ValidateRequestPipe(deleteProfilePicRequest))
-    data: { body: DeleteUserProfilePicBody },
+  async deleteProfilePicture(
+    @RequestData(new ValidateRequestPipe(deleteProfilePictureRequestSchema))
+    data: { body: DeleteProfilePictureBody },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
-    return this.updateUserService.deleteUserProfilePicData(user.id, data.body);
+    return this.updateUserService.deleteProfilePictureData(user.id, data.body);
   }
 }

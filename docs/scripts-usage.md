@@ -12,14 +12,14 @@ Run this when you cloned the repo or rebuilt your Docker environment:
 
 ```bash
 npm install
-npm run orch:dev
 npm run db:dev:start
+npm run orch:dev
 ```
 
 What this gives you:
 
+- one Drizzle-managed Postgres development database with migrations and seeds
 - full Docker development stack
-- Postgres dev database with migrations and seeds
 - Redis, Redis queues, persisted LocalStack S3/SQS in dev, Maildev
 - Nest API, Node workers, and Python video-analysis service
 
@@ -47,18 +47,24 @@ Use this when you want migrations plus seed data:
 npm run db:dev:start
 ```
 
+`db:dev:start` is repeatable: it records applied seed filenames in
+`drizzle.__seed_history` and skips them on later runs. `db:dev:seed` is an
+explicit alias for the same migrate-and-seed setup flow.
+
 ## What To Run When
 
 | Situation | Run |
 | --- | --- |
 | Start normal local development | `npm run orch:dev` |
 | First setup or rebuild dev DB with seeds | `npm run db:dev:start` |
+| Apply any newly added dev seed files | `npm run db:dev:seed` |
 | Apply new migrations without reseeding | `npm run db:dev:migrate` |
 | Run all tests once | `npm test` |
 | Run one domain test suite from scratch | `npm run test:auth`, `npm run test:workouts`, etc. |
 | Keep test infra up and rerun exact files | `npm run test:prepare`, then `npm run test:run:*` |
 | Create a new DB migration | `npm run db:migrate:diff -- <migration_name>` |
 | Apply migrations to production pipeline | `npm run db:prod:migrate` |
+| Regenerate database ERD SVGs | `npm run docs:db-diagrams` |
 
 ## Local Services
 
@@ -69,11 +75,10 @@ Development stack:
 | `main-server` | Nest API |
 | `background-workers` | email and push workers |
 | `python-service` | video-analysis worker |
-| `postgres_dev` | dev database |
+| `postgres_drizzle_dev` | Drizzle-managed dev database (`localhost:5435`) |
 | `redis` | cache, Redis Pub/Sub, Bull queues |
 | `localstack` | persisted local S3/SQS in development |
 | `maildev` | local email inbox |
-| `atlas` | migration runner |
 
 Useful local URLs:
 
@@ -122,15 +127,17 @@ npm run test:env:down
 
 ### Create a migration
 
-1. Start the dev stack.
-2. Make the schema change in the dev database.
-3. Generate the Atlas diff:
+1. Start the Drizzle dev database.
+2. Change the TypeScript schema under `src/infrastructure/db/schema/drizzle`.
+3. Generate the Drizzle diff:
 
 ```bash
 npm run db:migrate:diff -- add_feature_name
 ```
 
-4. Review the generated SQL in `src/infrastructure/db/schema/migrations`.
+4. Review the generated SQL in `src/infrastructure/db/schema/drizzle-migrations`.
+
+Drizzle Kit generates table and policy diffs, but it does not fully model PostgreSQL routines and detailed privilege boundaries. When a change includes `SECURITY DEFINER` functions or role grants, add and review those statements in the generated migration. Grant function execution explicitly and keep runtime roles without direct table access unless the documented RLS model requires it.
 5. Apply locally:
 
 ```bash
@@ -167,6 +174,8 @@ npm run start:workers:watch
 Use them only when Postgres, Redis, LocalStack, and required environment variables are already available. For most local work, prefer `npm run orch:dev`.
 
 ## Notes
+
+Database diagram sources live in `docs/db-diagrams/source`. After changing a Drizzle table or view, update the matching DBML source and run `npm run docs:db-diagrams`; the command intentionally overwrites the existing SVG filenames referenced by the documentation.
 
 - Dev and test use separate Compose files and ports.
 - Test infra is isolated so it does not overwrite dev data.

@@ -6,26 +6,40 @@
 
 ## Happy Paths
 
-### `GET /api/workouts/gettracking` - User A
+### `GET /api/workout-history` - User A
 
 - [x] Returns empty tracking.
 - [x] Warms Redis.
 
-### `GET /api/workouts/gettracking` - User B
+### `GET /api/workout-history` - User B
 
 - [x] Handles an existing plan with no tracking.
 - [x] Returns a schema-valid empty tracking payload.
 
-### `POST /api/workouts/finishworkout` - User C
+### `GET /api/exercise-history` - grouped exercise history
+
+- [x] Groups tracking by `exerciseToSplitId`.
+- [x] Omits duration and the `exerciseTracking` wrapper.
+- [x] Orders exercise history newest first.
+- [x] Returns and refreshes its dedicated cache entry.
+
+### `GET /api/personal-records` - all personal records
+
+- [x] Returns the same PR object shape used by workout statistics.
+- [x] Returns all current exercise PRs keyed by exercise ID.
+- [x] Reads and warms the dedicated personal-records cache on demand.
+
+### `POST /api/workout-sessions` - User C
 
 - [x] Creates tracking data.
 - [x] Persists DB rows.
-- [x] Creates a system message.
-- [x] Updates Redis cache.
+- [x] Does not create a system message as a workout-completion side effect.
+- [x] Deletes the directly affected cache keys.
+- [x] Returns `204 No Content`.
 
 ## Bad Paths
 
-### `POST /api/workouts/finishworkout`
+### `POST /api/workout-sessions`
 
 - [x] Rejects empty workouts with `400`.
 - [x] Avoids DB inserts on failure.

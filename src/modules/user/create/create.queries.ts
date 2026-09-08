@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { UserEntity } from '@strong-together/shared';
+import type { CreatedUserQueryDto, CreatedUserRowQueryDto, UserExistsQueryDto } from '@strong-together/shared';
 import type postgres from 'postgres';
 import { SQL } from '../../../infrastructure/db/db.tokens';
 
@@ -7,40 +7,54 @@ import { SQL } from '../../../infrastructure/db/db.tokens';
 export class CreateUserQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
+  /**
+   * User exists by username or email.
+   * @param username - The username.
+   * @param email - The email address.
+   * @returns The user exists by username or email result.
+   */
   async queryUserExistsByUsernameOrEmail(
     username: string | null,
     email: string | null,
-  ): Promise<[Pick<UserEntity, 'id'>]> {
-    return this.sql<[Pick<UserEntity, 'id'>]>`
-      SELECT id FROM identity.users WHERE username=${username} OR email=${email} LIMIT 1`;
+  ): Promise<Array<Pick<UserExistsQueryDto, 'id'>>> {
+    const [row] = await this.sql<UserExistsQueryDto[]>`
+      SELECT
+        guest_api.user_exists (
+          ${username},
+          ${email}
+        ) AS id
+    `;
+    return row?.id ? [{ id: row.id }] : [];
   }
 
-  // Creates a new user and reminder settings
+  // Creates a new user. Reminder settings are created only through the reminders endpoint.
+  /**
+   * Inserts user.
+   * @param username - The username.
+   * @param fullName - The user full name.
+   * @param email - The email address.
+   * @param gender - The gender.
+   * @param passwordHash - The hashed credential stored in `password_hash`.
+   * @returns The insert user result.
+   */
   async queryInsertUser(
     username: string,
     fullName: string,
     email: string,
     gender: string | null,
-    hash: string,
-  ): Promise<Pick<UserEntity, 'id' | 'username' | 'name' | 'email' | 'gender' | 'role' | 'created_at'>> {
-    return this.sql.begin(async (trx) => {
-      // 1) create the user
-      const [user] = await trx<
-        [Pick<UserEntity, 'id' | 'username' | 'name' | 'email' | 'gender' | 'role' | 'created_at'>]
-      >`
-        INSERT INTO identity.users (username, name, email, gender, password)
-        VALUES (${username}, ${fullName}, ${email}, ${gender}, ${hash})
-        RETURNING id, username, name, email, gender, role, created_at
-      `;
-
-      // 2) create default reminder settings for this user
-      await trx`
-        INSERT INTO reminders.user_reminder_settings (user_id)
-        VALUES (${user.id}::uuid)
-      `;
-
-      // 3) return the created user
-      return user;
-    });
+    passwordHash: string,
+  ): Promise<CreatedUserQueryDto> {
+    const [row] = await this.sql<CreatedUserRowQueryDto[]>`
+      SELECT
+        guest_api.create_app_user (
+          ${username},
+          ${fullName},
+          ${email},
+          ${gender},
+          ${passwordHash}
+        ) AS "userData"
+    `;
+    const { created_at: createdAt, ...userData } = row.userData;
+    return { ...userData, createdAt };
   }
 }

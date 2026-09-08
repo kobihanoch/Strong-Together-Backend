@@ -27,10 +27,12 @@ SYSTEM_USER_ID=00000000-0000-0000-0000-000000000000
 # Feature flags
 DPOP_ENABLED=false
 CACHE_ENABLED=true
+CACHE_VERSION=2
 ENABLE_SOCKET_REDIS_ADAPTER=true
 
 # Database
-DATABASE_URL=postgres://postgres:postgres@postgres_dev:5432/strongtogether_dev
+DATABASE_URL=postgres://app_runtime_user:<local-runtime-password>@localhost:5435/strongtogether_drizzle_dev
+DRIZZLE_DATABASE_URL=postgres://postgres:postgres@localhost:5435/strongtogether_drizzle_dev
 
 # JWT and auth secrets
 JWT_ACCESS_SECRET=replace-with-local-access-secret
@@ -50,7 +52,6 @@ REDIS_PASSWORD=
 
 # Cache TTLs, in seconds
 CACHE_TTL_TRACKING_SEC=172800
-CACHE_TTL_TIMEZONE_SEC=172800
 CACHE_TTL_PLAN_SEC=172800
 CACHE_TTL_ANALYTICS_SEC=3600
 CACHE_TTL_AEROBICS_SEC=172800
@@ -89,6 +90,8 @@ LOG_LEVEL=debug
 ENABLE_DEBUG_WINDOW=0
 ```
 
+`CACHE_VERSION` must be a positive integer such as `1`, `2`, or `3`. It is embedded as `vN` in every application cache key. Cache reads treat keys with a missing or different version as misses, so incrementing this value invalidates earlier application-cache formats without requiring immediate deletion.
+
 ## Test Template
 
 The test environment uses isolated infrastructure and different ports. Values below are placeholders for local tests only.
@@ -102,9 +105,11 @@ SYSTEM_USER_ID=00000000-0000-0000-0000-000000000000
 
 DPOP_ENABLED=false
 CACHE_ENABLED=true
+CACHE_VERSION=2
 ENABLE_SOCKET_REDIS_ADAPTER=true
 
-DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5433/strongtogether_test
+DATABASE_URL=postgres://app_runtime_user:app_runtime_test@127.0.0.1:5433/strongtogether_test
+DRIZZLE_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5433/strongtogether_test
 
 JWT_ACCESS_SECRET=replace-with-test-access-secret
 JWT_REFRESH_SECRET=replace-with-test-refresh-secret
@@ -151,6 +156,7 @@ Production values should be configured in the deployment provider, not copied in
 For production, use real provider values for:
 
 - **`DATABASE_URL`**
+- **`PROD_DATABASE_URL`** for the controlled migration job only
 - **JWT secrets**
 - **`RESEND_API_KEY`**
 - **AWS credentials and endpoints**
@@ -166,10 +172,10 @@ Production secrets should be generated uniquely per environment. Do not reuse lo
 | --- | --- |
 | Runtime | `NODE_ENV`, `PORT`, `PUBLIC_BASE_URL`, `PUBLIC_BASE_URL_RENDER_DEFAULT`, `PRIVATE_BASE_URL_DEV`, `MIN_APP_VERSION`, `SYSTEM_USER_ID` |
 | Feature flags | `DPOP_ENABLED`, `CACHE_ENABLED`, `ENABLE_SOCKET_REDIS_ADAPTER` |
-| Database | `DATABASE_URL`, `PROD_DATABASE_URL` |
+| Database | `DATABASE_URL` (non-superuser application runtime), `DRIZZLE_DATABASE_URL` (local/test admin tooling), `PROD_DATABASE_URL` (production migration tooling) |
 | Auth | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_VERIFY_SECRET`, `JWT_FORGOT_PASSWORD_SECRET`, `CHANGE_EMAIL_SECRET`, `JWT_SOCKET_SECRET`, `APPLE_ALLOWED_AUDS` |
 | Redis | `REDIS_HOST`, `REDIS_PORT`, `REDIS_URL`, `REDIS_USERNAME`, `REDIS_PASSWORD` |
-| Cache TTLs | `CACHE_TTL_TRACKING_SEC`, `CACHE_TTL_TIMEZONE_SEC`, `CACHE_TTL_PLAN_SEC`, `CACHE_TTL_ANALYTICS_SEC`, `CACHE_TTL_AEROBICS_SEC` |
+| Cache configuration | `CACHE_VERSION`, `CACHE_TTL_TRACKING_SEC`, `CACHE_TTL_PLAN_SEC`, `CACHE_TTL_ANALYTICS_SEC`, `CACHE_TTL_AEROBICS_SEC` |
 | AWS / LocalStack | `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_BUCKET_NAME`, `AWS_S3_ENDPOINT_URL`, `AWS_S3_PRESIGN_ENDPOINT_URL`, `AWS_SQS_ENDPOINT_URL`, `AWS_ANALYSIS_SQS_QUEUE_URL` |
 | Supabase-compatible storage | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE`, `BUCKET_NAME` |
 | Email | `RESEND_API_KEY`, `MAILDEV_API_URL`, `MAILDEV_SMTP_HOST`, `MAILDEV_SMTP_PORT` |

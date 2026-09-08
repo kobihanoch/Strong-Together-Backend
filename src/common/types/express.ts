@@ -1,11 +1,11 @@
 import type { Request } from 'express';
 import type { Logger } from 'pino';
-import type { UserEntity } from '@strong-together/shared';
+import type { UserRow } from '@strong-together/shared';
 
 export type AuthenticatedUser = {
-  id: UserEntity['id'];
-  role: UserEntity['role'];
-  is_verified: UserEntity['is_verified'];
+  id: UserRow['id'];
+  role: UserRow['role'];
+  isVerified: UserRow['isVerified'];
 };
 
 export type AppRequest = Request & {

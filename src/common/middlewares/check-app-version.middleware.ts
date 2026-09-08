@@ -6,12 +6,11 @@ import { appConfig } from '../../config/app.config';
 const EXEMPT_PREFIXES = [
   '/health',
   '/socket.io',
-  '/api/auth/verify',
-  '/api/auth/resetpassword',
-  '/api/auth/forgotpassemail',
-  '/api/push/daily',
-  '/api/push/hourlyreminder',
-  '/api/users/changeemail',
+  '/api/auth/email-verification',
+  '/api/auth/password-resets',
+  '/api/auth/password-reset-requests',
+  '/api/push-jobs/workout-reminders',
+  '/api/users/email-change',
 ];
 
 // Parse "v4.2.1", "4.2", or "4" into [major, minor, patch] (numbers)

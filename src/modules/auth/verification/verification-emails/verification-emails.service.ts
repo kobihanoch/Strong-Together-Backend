@@ -14,6 +14,13 @@ type EmailContext = {
 export class VerificationEmailsService {
   constructor(private readonly emailsProducerService: EmailsProducerService) {}
 
+  /**
+   * Sends verification email.
+   * @param email - The email address.
+   * @param userId - The user identifier.
+   * @param fullName - The user full name.
+   * @param context - Context propagated to the email job.
+   */
   async sendVerificationEmail(
     email: string,
     userId: string,
@@ -26,7 +33,7 @@ export class VerificationEmailsService {
       authConfig.jwtVerifySecret, // strong secret in env
       { expiresIn: '1h' }, // claims
     );
-    const verifyUrl = `${appConfig.emailApiBaseUrl}/api/auth/verify?token=${encodeURIComponent(token)}`;
+    const verifyUrl = `${appConfig.emailApiBaseUrl}/api/auth/email-verification?token=${encodeURIComponent(token)}`;
     const html = generateValidateUserEmail({
       fullName,
       verifyUrl,

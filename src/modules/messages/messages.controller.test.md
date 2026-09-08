@@ -6,23 +6,24 @@
 
 ## Happy Paths
 
-### `GET /api/messages/getmessages` - User A
+### `GET /api/messages` - User A
 
 - [x] Returns an empty messages list.
 - [x] Validates the response schema.
 
-### `GET /api/messages/getmessages` - workout flow
+### `GET /api/messages` - persisted message
 
-- [x] Creates a system message through the workout DB flow.
-- [x] Returns the generated system message.
+- [x] Returns a persisted system message without coupling the fixture to workout completion.
 
-### `PUT /api/messages/markasread/:id`
+### `PATCH /api/messages/:id/read`
 
 - [x] Updates message read state in DB.
+- [x] Returns `204 No Content`.
 
-### `DELETE /api/messages/delete/:id`
+### `DELETE /api/messages/:id`
 
 - [x] Deletes the message row from DB.
+- [x] Returns `204 No Content`.
 
 ## Bad Paths
 

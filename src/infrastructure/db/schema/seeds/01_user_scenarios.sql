@@ -4,32 +4,45 @@ DECLARE
   plan_only_user_id uuid := '9b31d67c-0a5a-4f56-a0fd-7db2a50d8a01';
   plan_tracking_user_id uuid := '83d44360-8d7d-4a26-8457-7f3e4f8414b1';
   full_seed_user_id uuid := 'ec554122-8ed7-4655-b646-7eadb76fa9e4';
+  scheduled_tracking_user_id uuid := '4d4489b6-7057-4a47-b506-06cdf4e23a44';
+  scheduled_only_user_id uuid := '55a1d718-482b-4c17-8f45-246af142e505';
   plan_only_plan_id bigint;
   plan_tracking_plan_id bigint;
   full_seed_plan_id bigint;
+  scheduled_tracking_plan_id bigint;
+  scheduled_only_plan_id bigint;
   plan_only_split_id bigint;
   plan_tracking_split_id bigint;
   full_seed_split_id bigint;
+  scheduled_tracking_split_a_id bigint;
+  scheduled_tracking_split_b_id bigint;
+  scheduled_only_split_a_id bigint;
+  scheduled_only_split_b_id bigint;
   plan_tracking_ets_id bigint;
   full_seed_ets_id bigint;
+  scheduled_tracking_ets_id bigint;
   plan_tracking_summary_id uuid;
   full_seed_summary_id uuid;
+  scheduled_tracking_summary_id uuid;
+  plan_tracking_tracking_id bigint;
+  full_seed_tracking_id bigint;
+  scheduled_tracking_tracking_id bigint;
   yesterday_start timestamptz := (date_trunc('day', now() AT TIME ZONE 'UTC') - interval '1 day' + interval '10 hours') AT TIME ZONE 'UTC';
   password_hash text := '$2b$10$10eqahqgpjjezkzEwrVmp..o/JP9BcOfivPrTHCASX9v/rkXUz4Qu';
 BEGIN
-  INSERT INTO identity.users (
+  INSERT INTO identity.user (
     id,
     username,
     email,
     name,
     gender,
-    password,
+    password_hash,
     role,
-    is_first_login,
+    last_login,
     token_version,
     is_verified,
     auth_provider,
-    profile_image_url,
+    profile_pic_path,
     push_token,
     created_at
   ) VALUES
@@ -41,7 +54,7 @@ BEGIN
       'Other',
       password_hash,
       'User',
-      false,
+      now(),
       0,
       true,
       'app',
@@ -57,7 +70,7 @@ BEGIN
       'Other',
       password_hash,
       'User',
-      false,
+      now(),
       0,
       true,
       'app',
@@ -73,7 +86,7 @@ BEGIN
       'Other',
       password_hash,
       'User',
-      false,
+      now(),
       0,
       true,
       'app',
@@ -89,7 +102,39 @@ BEGIN
       'Other',
       password_hash,
       'User',
-      false,
+      now(),
+      0,
+      true,
+      'app',
+      NULL,
+      NULL,
+      now()
+    ),
+    (
+      scheduled_tracking_user_id,
+      'u4',
+      'u4@example.com',
+      'Seed Plan Tracking Schedules',
+      'Other',
+      password_hash,
+      'User',
+      now(),
+      0,
+      true,
+      'app',
+      NULL,
+      NULL,
+      now()
+    ),
+    (
+      scheduled_only_user_id,
+      'u5',
+      'u5@example.com',
+      'Seed Plan Schedules No Tracking',
+      'Other',
+      password_hash,
+      'User',
+      now(),
       0,
       true,
       'app',
@@ -98,63 +143,183 @@ BEGIN
       now()
     );
 
-  INSERT INTO workout.workoutplans (user_id, trainer_id, numberofsplits, is_active, updated_at)
-  VALUES (plan_only_user_id, plan_only_user_id, 1, TRUE, now())
+  INSERT INTO workout.workout_plan (user_id, is_active, updated_at)
+  VALUES (plan_only_user_id, TRUE, now())
   RETURNING id INTO plan_only_plan_id;
 
-  INSERT INTO workout.workoutsplits (workout_id, name, is_active)
-  VALUES (plan_only_plan_id, 'A', TRUE)
+  INSERT INTO workout.workout_split (workout_id, name, order_index, is_active)
+  VALUES (plan_only_plan_id, 'A', 0, TRUE)
   RETURNING id INTO plan_only_split_id;
 
-  INSERT INTO workout.exercisetoworkoutsplit (workoutsplit_id, exercise_id, sets, order_index, is_active)
+  INSERT INTO workout.exercise_to_workout_split (workout_split_id, exercise_id, order_index, is_active)
   VALUES
-    (plan_only_split_id, 20, ARRAY[8, 8, 8]::bigint[], 0, TRUE),
-    (plan_only_split_id, 12, ARRAY[10, 10, 10]::bigint[], 1, TRUE);
+    (plan_only_split_id, 20, 0, TRUE),
+    (plan_only_split_id, 12, 1, TRUE);
 
-  INSERT INTO workout.workoutplans (user_id, trainer_id, numberofsplits, is_active, updated_at)
-  VALUES (plan_tracking_user_id, plan_tracking_user_id, 1, TRUE, now())
+  INSERT INTO workout.workout_set (exercise_to_split_id, order_index, reps)
+  SELECT ets.id, planned_set.order_index, planned_set.reps
+  FROM workout.exercise_to_workout_split ets
+  CROSS JOIN (VALUES (0, 8), (1, 8), (2, 8)) AS planned_set(order_index, reps)
+  WHERE ets.workout_split_id = plan_only_split_id AND ets.exercise_id = 20
+  UNION ALL
+  SELECT ets.id, planned_set.order_index, planned_set.reps
+  FROM workout.exercise_to_workout_split ets
+  CROSS JOIN (VALUES (0, 10), (1, 10), (2, 10)) AS planned_set(order_index, reps)
+  WHERE ets.workout_split_id = plan_only_split_id AND ets.exercise_id = 12;
+
+  INSERT INTO workout.workout_plan (user_id, is_active, updated_at)
+  VALUES (plan_tracking_user_id, TRUE, now())
   RETURNING id INTO plan_tracking_plan_id;
 
-  INSERT INTO workout.workoutsplits (workout_id, name, is_active)
-  VALUES (plan_tracking_plan_id, 'A', TRUE)
+  INSERT INTO workout.workout_split (workout_id, name, order_index, is_active)
+  VALUES (plan_tracking_plan_id, 'A', 0, TRUE)
   RETURNING id INTO plan_tracking_split_id;
 
-  INSERT INTO workout.exercisetoworkoutsplit (workoutsplit_id, exercise_id, sets, order_index, is_active)
-  VALUES (plan_tracking_split_id, 20, ARRAY[8, 8, 8]::bigint[], 0, TRUE)
+  INSERT INTO workout.exercise_to_workout_split (workout_split_id, exercise_id, order_index, is_active)
+  VALUES (plan_tracking_split_id, 20, 0, TRUE)
   RETURNING id INTO plan_tracking_ets_id;
 
-  INSERT INTO workout.exercisetoworkoutsplit (workoutsplit_id, exercise_id, sets, order_index, is_active)
-  VALUES (plan_tracking_split_id, 12, ARRAY[10, 10, 10]::bigint[], 1, TRUE);
+  INSERT INTO workout.exercise_to_workout_split (workout_split_id, exercise_id, order_index, is_active)
+  VALUES (plan_tracking_split_id, 12, 1, TRUE);
 
-  INSERT INTO tracking.workout_summary (user_id, workout_start_utc, workout_end_utc, workoutsplit_id)
+  INSERT INTO workout.workout_set (exercise_to_split_id, order_index, reps)
+  SELECT ets.id, planned_set.order_index, planned_set.reps
+  FROM workout.exercise_to_workout_split ets
+  CROSS JOIN (VALUES (0, 8), (1, 8), (2, 8)) AS planned_set(order_index, reps)
+  WHERE ets.workout_split_id = plan_tracking_split_id AND ets.exercise_id = 20
+  UNION ALL
+  SELECT ets.id, planned_set.order_index, planned_set.reps
+  FROM workout.exercise_to_workout_split ets
+  CROSS JOIN (VALUES (0, 10), (1, 10), (2, 10)) AS planned_set(order_index, reps)
+  WHERE ets.workout_split_id = plan_tracking_split_id AND ets.exercise_id = 12;
+
+  INSERT INTO tracking.workout_summary (user_id, workout_start_utc, workout_end_utc, workout_split_id)
   VALUES (plan_tracking_user_id, yesterday_start, yesterday_start + interval '45 minutes', plan_tracking_split_id)
   RETURNING id INTO plan_tracking_summary_id;
 
-  INSERT INTO tracking.exercisetracking (exercisetosplit_id, weight, reps, notes, workout_summary_id)
-  VALUES (plan_tracking_ets_id, ARRAY[60, 65, 70]::real[], ARRAY[8, 8, 6]::bigint[], 'Seed workout from yesterday', plan_tracking_summary_id);
+  INSERT INTO tracking.exercise_tracking (exercise_to_split_id, notes, workout_summary_id)
+  VALUES (plan_tracking_ets_id, 'Seed workout from yesterday', plan_tracking_summary_id)
+  RETURNING id INTO plan_tracking_tracking_id;
 
-  INSERT INTO workout.workoutplans (user_id, trainer_id, numberofsplits, is_active, updated_at)
-  VALUES (full_seed_user_id, full_seed_user_id, 1, TRUE, now())
+  INSERT INTO tracking.tracking_set (exercise_tracking_id, set_index, weight, reps)
+  VALUES (plan_tracking_tracking_id, 0, 60, 8), (plan_tracking_tracking_id, 1, 65, 8),
+    (plan_tracking_tracking_id, 2, 70, 6);
+
+  INSERT INTO workout.workout_plan (user_id, is_active, updated_at)
+  VALUES (full_seed_user_id, TRUE, now())
   RETURNING id INTO full_seed_plan_id;
 
-  INSERT INTO workout.workoutsplits (workout_id, name, is_active)
-  VALUES (full_seed_plan_id, 'A', TRUE)
+  INSERT INTO workout.workout_split (workout_id, name, order_index, is_active)
+  VALUES (full_seed_plan_id, 'A', 0, TRUE)
   RETURNING id INTO full_seed_split_id;
 
-  INSERT INTO workout.exercisetoworkoutsplit (workoutsplit_id, exercise_id, sets, order_index, is_active)
-  VALUES (full_seed_split_id, 20, ARRAY[8, 8, 8]::bigint[], 0, TRUE)
+  INSERT INTO workout.exercise_to_workout_split (workout_split_id, exercise_id, order_index, is_active)
+  VALUES (full_seed_split_id, 20, 0, TRUE)
   RETURNING id INTO full_seed_ets_id;
 
-  INSERT INTO workout.exercisetoworkoutsplit (workoutsplit_id, exercise_id, sets, order_index, is_active)
-  VALUES (full_seed_split_id, 12, ARRAY[10, 10, 10]::bigint[], 1, TRUE);
+  INSERT INTO workout.exercise_to_workout_split (workout_split_id, exercise_id, order_index, is_active)
+  VALUES (full_seed_split_id, 12, 1, TRUE);
 
-  INSERT INTO tracking.workout_summary (user_id, workout_start_utc, workout_end_utc, workoutsplit_id)
+  INSERT INTO workout.workout_set (exercise_to_split_id, order_index, reps)
+  SELECT ets.id, planned_set.order_index, planned_set.reps
+  FROM workout.exercise_to_workout_split ets
+  CROSS JOIN (VALUES (0, 8), (1, 8), (2, 8)) AS planned_set(order_index, reps)
+  WHERE ets.workout_split_id = full_seed_split_id AND ets.exercise_id = 20
+  UNION ALL
+  SELECT ets.id, planned_set.order_index, planned_set.reps
+  FROM workout.exercise_to_workout_split ets
+  CROSS JOIN (VALUES (0, 10), (1, 10), (2, 10)) AS planned_set(order_index, reps)
+  WHERE ets.workout_split_id = full_seed_split_id AND ets.exercise_id = 12;
+
+  INSERT INTO tracking.workout_summary (user_id, workout_start_utc, workout_end_utc, workout_split_id)
   VALUES (full_seed_user_id, yesterday_start, yesterday_start + interval '50 minutes', full_seed_split_id)
   RETURNING id INTO full_seed_summary_id;
 
-  INSERT INTO tracking.exercisetracking (exercisetosplit_id, weight, reps, notes, workout_summary_id)
-  VALUES (full_seed_ets_id, ARRAY[62.5, 67.5, 72.5]::real[], ARRAY[8, 8, 5]::bigint[], 'Seed workout from yesterday', full_seed_summary_id);
+  INSERT INTO tracking.exercise_tracking (exercise_to_split_id, notes, workout_summary_id)
+  VALUES (full_seed_ets_id, 'Seed workout from yesterday', full_seed_summary_id)
+  RETURNING id INTO full_seed_tracking_id;
 
-  INSERT INTO tracking.aerobictracking (user_id, type, duration_mins, duration_sec, workout_time_utc)
-  VALUES (full_seed_user_id, 'Walk', 30, 0, yesterday_start + interval '2 hours');
+  INSERT INTO tracking.tracking_set (exercise_tracking_id, set_index, weight, reps)
+  VALUES (full_seed_tracking_id, 0, 62.5, 8), (full_seed_tracking_id, 1, 67.5, 8),
+    (full_seed_tracking_id, 2, 72.5, 5);
+
+  INSERT INTO tracking.aerobic_tracking (user_id, type, duration_sec, workout_time_utc)
+  VALUES (full_seed_user_id, 'Walk', 1800, yesterday_start + interval '2 hours');
+
+  INSERT INTO workout.workout_plan (user_id, is_active, updated_at)
+  VALUES (scheduled_tracking_user_id, TRUE, now())
+  RETURNING id INTO scheduled_tracking_plan_id;
+
+  INSERT INTO workout.workout_split (workout_id, name, order_index, updated_at, is_active)
+  VALUES (scheduled_tracking_plan_id, 'Push', 0, now() - interval '2 hours', TRUE)
+  RETURNING id INTO scheduled_tracking_split_a_id;
+
+  INSERT INTO workout.workout_split (workout_id, name, order_index, updated_at, is_active)
+  VALUES (scheduled_tracking_plan_id, 'Pull', 1, now() - interval '2 hours', TRUE)
+  RETURNING id INTO scheduled_tracking_split_b_id;
+
+  INSERT INTO workout.exercise_to_workout_split (workout_split_id, exercise_id, order_index, is_active)
+  VALUES (scheduled_tracking_split_a_id, 20, 0, TRUE)
+  RETURNING id INTO scheduled_tracking_ets_id;
+
+  INSERT INTO workout.exercise_to_workout_split (workout_split_id, exercise_id, order_index, is_active)
+  VALUES (scheduled_tracking_split_b_id, 12, 0, TRUE);
+
+  INSERT INTO workout.workout_set (exercise_to_split_id, order_index, reps)
+  SELECT ets.id, planned_set.order_index, planned_set.reps
+  FROM workout.exercise_to_workout_split ets
+  CROSS JOIN (VALUES (0, 8), (1, 8), (2, 8)) AS planned_set(order_index, reps)
+  WHERE ets.workout_split_id IN (scheduled_tracking_split_a_id, scheduled_tracking_split_b_id);
+
+  INSERT INTO schedules.workout_schedule (user_id, workout_split_id, day_of_week, start_time)
+  VALUES
+    (scheduled_tracking_user_id, scheduled_tracking_split_a_id, 1, '18:30'),
+    (scheduled_tracking_user_id, scheduled_tracking_split_b_id, 4, '19:00');
+
+  INSERT INTO tracking.workout_summary (user_id, workout_start_utc, workout_end_utc, workout_split_id)
+  VALUES (
+    scheduled_tracking_user_id,
+    now() - interval '1 hour',
+    now() - interval '15 minutes',
+    scheduled_tracking_split_a_id
+  )
+  RETURNING id INTO scheduled_tracking_summary_id;
+
+  INSERT INTO tracking.exercise_tracking (exercise_to_split_id, notes, workout_summary_id)
+  VALUES (scheduled_tracking_ets_id, 'Seed scheduled workout', scheduled_tracking_summary_id)
+  RETURNING id INTO scheduled_tracking_tracking_id;
+
+  INSERT INTO tracking.tracking_set (exercise_tracking_id, set_index, weight, reps)
+  VALUES
+    (scheduled_tracking_tracking_id, 0, 70, 8),
+    (scheduled_tracking_tracking_id, 1, 75, 8),
+    (scheduled_tracking_tracking_id, 2, 80, 6);
+
+  INSERT INTO workout.workout_plan (user_id, is_active, updated_at)
+  VALUES (scheduled_only_user_id, TRUE, now())
+  RETURNING id INTO scheduled_only_plan_id;
+
+  INSERT INTO workout.workout_split (workout_id, name, order_index, is_active)
+  VALUES (scheduled_only_plan_id, 'Upper', 0, TRUE)
+  RETURNING id INTO scheduled_only_split_a_id;
+
+  INSERT INTO workout.workout_split (workout_id, name, order_index, is_active)
+  VALUES (scheduled_only_plan_id, 'Lower', 1, TRUE)
+  RETURNING id INTO scheduled_only_split_b_id;
+
+  INSERT INTO workout.exercise_to_workout_split (workout_split_id, exercise_id, order_index, is_active)
+  VALUES
+    (scheduled_only_split_a_id, 20, 0, TRUE),
+    (scheduled_only_split_b_id, 1, 0, TRUE);
+
+  INSERT INTO workout.workout_set (exercise_to_split_id, order_index, reps)
+  SELECT ets.id, planned_set.order_index, planned_set.reps
+  FROM workout.exercise_to_workout_split ets
+  CROSS JOIN (VALUES (0, 10), (1, 10), (2, 10)) AS planned_set(order_index, reps)
+  WHERE ets.workout_split_id IN (scheduled_only_split_a_id, scheduled_only_split_b_id);
+
+  INSERT INTO schedules.workout_schedule (user_id, workout_split_id, day_of_week, start_time)
+  VALUES
+    (scheduled_only_user_id, scheduled_only_split_a_id, 2, '07:30'),
+    (scheduled_only_user_id, scheduled_only_split_b_id, 5, '08:00');
 END $$;
