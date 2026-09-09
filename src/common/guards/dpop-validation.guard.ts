@@ -7,11 +7,9 @@ import type { AppRequest } from '../types/express';
 
 const DPOP_EXPIRATION_SECONDS = 60;
 
-const ALLOWED_BASES = [
-  appConfig.publicBaseUrl,
-  appConfig.publicBaseUrlRenderDefault,
-  appConfig.privateBaseUrlDev,
-].filter((value): value is string => Boolean(value));
+const ALLOWED_BASES = [appConfig.publicBaseUrl, appConfig.publicBaseUrlV2, appConfig.publicBaseUrlRenderDefault, appConfig.privateBaseUrlDev].filter(
+  (value): value is string => Boolean(value),
+);
 
 @Injectable()
 export class DpopGuard implements CanActivate {
@@ -109,10 +107,7 @@ export class DpopGuard implements CanActivate {
 
       return true;
     } catch (error) {
-      (req.logger || this.logger).error(
-        { err: error, event: 'dpop.validation_failed', path: req.originalUrl },
-        'DPoP proof validation failed',
-      );
+      (req.logger || this.logger).error({ err: error, event: 'dpop.validation_failed', path: req.originalUrl }, 'DPoP proof validation failed');
 
       if (error instanceof BadRequestException || error instanceof UnauthorizedException) {
         throw error;

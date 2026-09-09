@@ -1,4 +1,4 @@
-# Strong Together Backend (v5.0.0)
+# Strong Together Backend (v5.0.1)
 
 [![CI](https://github.com/kobihanoch/Strong-Together-Backend/actions/workflows/ci.yml/badge.svg)](https://github.com/kobihanoch/Strong-Together-Backend/actions)
 
