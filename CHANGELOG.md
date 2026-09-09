@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.0.2](https://github.com/kobihanoch/Strong-Together-Backend/compare/v5.0.1...v5.0.2) (2026-09-09)
+
+
+### Bug Fixes
+
+* **ENV:** Fixed env ([f2ae9ec](https://github.com/kobihanoch/Strong-Together-Backend/commit/f2ae9eca36f1f63b1416f85821e709fbbca7a68d))
+
 ### [5.0.1](https://github.com/kobihanoch/Strong-Together-Backend/compare/v5.0.1-rc.0...v5.0.1) (2026-09-09)
 
 ### [5.0.1-rc.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v5.0.0...v5.0.1-rc.0) (2026-09-09)

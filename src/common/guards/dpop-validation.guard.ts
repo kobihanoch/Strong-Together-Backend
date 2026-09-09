@@ -7,9 +7,9 @@ import type { AppRequest } from '../types/express';
 
 const DPOP_EXPIRATION_SECONDS = 60;
 
-const ALLOWED_BASES = [appConfig.publicBaseUrl, appConfig.publicBaseUrlV2, appConfig.publicBaseUrlRenderDefault, appConfig.privateBaseUrlDev].filter(
-  (value): value is string => Boolean(value),
-);
+const ALLOWED_ORIGINS = [appConfig.publicBaseUrl, appConfig.publicBaseUrlV2, appConfig.publicBaseUrlRenderDefault, appConfig.privateBaseUrlDev]
+  .filter((value): value is string => Boolean(value))
+  .map((value) => new URL(value).origin.toLowerCase());
 
 @Injectable()
 export class DpopGuard implements CanActivate {
@@ -68,7 +68,7 @@ export class DpopGuard implements CanActivate {
       const serverURL = new URL(`${proto}://${host}${req.originalUrl}`);
       const htuURL = new URL(claims.htu);
 
-      const isAllowed = ALLOWED_BASES.some((base) => base.toLowerCase() === htuURL.origin.toLowerCase());
+      const isAllowed = ALLOWED_ORIGINS.includes(htuURL.origin.toLowerCase());
 
       if (!isAllowed) {
         throw new UnauthorizedException('DPoP request host not allowed.');
