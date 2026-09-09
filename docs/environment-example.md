@@ -19,6 +19,7 @@ Use this as a safe reference for local development. Replace the placeholder valu
 NODE_ENV=development
 PORT=5000
 PUBLIC_BASE_URL=http://localhost:5000
+PUBLIC_BASE_URL_V2=https://your-v2-service.example.com
 PUBLIC_BASE_URL_RENDER_DEFAULT=https://your-render-service.example.com
 PRIVATE_BASE_URL_DEV=http://localhost:5000
 MIN_APP_VERSION=0.0.0
@@ -170,7 +171,7 @@ Production secrets should be generated uniquely per environment. Do not reuse lo
 
 | Group | Variables |
 | --- | --- |
-| Runtime | `NODE_ENV`, `PORT`, `PUBLIC_BASE_URL`, `PUBLIC_BASE_URL_RENDER_DEFAULT`, `PRIVATE_BASE_URL_DEV`, `MIN_APP_VERSION`, `SYSTEM_USER_ID` |
+| Runtime | `NODE_ENV`, `PORT`, `PUBLIC_BASE_URL`, `PUBLIC_BASE_URL_V2`, `PUBLIC_BASE_URL_RENDER_DEFAULT`, `PRIVATE_BASE_URL_DEV`, `MIN_APP_VERSION`, `SYSTEM_USER_ID` |
 | Feature flags | `DPOP_ENABLED`, `CACHE_ENABLED`, `ENABLE_SOCKET_REDIS_ADAPTER` |
 | Database | `DATABASE_URL` (non-superuser application runtime), `DRIZZLE_DATABASE_URL` (local/test admin tooling), `PROD_DATABASE_URL` (production migration tooling) |
 | Auth | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_VERIFY_SECRET`, `JWT_FORGOT_PASSWORD_SECRET`, `CHANGE_EMAIL_SECRET`, `JWT_SOCKET_SECRET`, `APPLE_ALLOWED_AUDS` |
