@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [5.0.1-rc.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v5.0.0...v5.0.1-rc.0) (2026-09-09)
+
+
+### Bug Fixes
+
+* **DPoP:** DPoP guard allowed bases includes v2 URL too ([26f903e](https://github.com/kobihanoch/Strong-Together-Backend/commit/26f903e3e3e899a4a3a951c5bb1593f51791b7db))
+
 ## [5.0.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v5.0.0-rc.0...v5.0.0) (2026-09-08)
 
 ## [5.0.0-rc.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v4.0.3...v5.0.0-rc.0) (2026-09-08)
