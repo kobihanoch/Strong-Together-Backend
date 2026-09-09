@@ -4,6 +4,7 @@ const nodeEnv = process.env.NODE_ENV ?? 'development';
 dotenv.config({ path: `.env.${nodeEnv}` });
 const port = Number(process.env.PORT ?? 5000);
 const publicBaseUrl = process.env.PUBLIC_BASE_URL ?? 'http://localhost:5000';
+const publicBaseUrlV2 = process.env.PUBLIC_BASE_URL_v2 ?? 'http://localhost:5000';
 const localEmailBaseUrl = `http://localhost:${port}`;
 
 export const appConfig = {
@@ -16,6 +17,7 @@ export const appConfig = {
   dpopEnabled: process.env.DPOP_ENABLED === 'true',
   cacheEnabled: process.env.CACHE_ENABLED === 'true',
   publicBaseUrl,
+  publicBaseUrlV2,
   emailApiBaseUrl: nodeEnv === 'production' ? publicBaseUrl : localEmailBaseUrl,
   publicBaseUrlRenderDefault: process.env.PUBLIC_BASE_URL_RENDER_DEFAULT,
   privateBaseUrlDev: process.env.PRIVATE_BASE_URL_DEV,
