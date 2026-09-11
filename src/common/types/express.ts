@@ -5,7 +5,6 @@ import type { UserRow } from '@strong-together/shared';
 export type AuthenticatedUser = {
   id: UserRow['id'];
   role: UserRow['role'];
-  isVerified: UserRow['isVerified'];
 };
 
 export type AppRequest = Request & {

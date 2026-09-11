@@ -1,12 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { GoogleOAuthBody, GoogleTokenVerificationResultDto, OAuthLoginResponse } from '@strong-together/shared';
-import jwt from 'jsonwebtoken';
-import { authConfig } from '../../../config/auth.config';
-import type { AppLogger } from '../../../infrastructure/logger';
+import { signTokens } from '../../../common/authentication/authentication.utils';
 import { DBService } from '../../../infrastructure/db/db.service';
+import type { AppLogger } from '../../../infrastructure/logger';
 import { SessionQueries } from '../../auth/session/session.queries';
 import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
-import { buildCnfClaim } from '../oauth.utils';
 import { GoogleQueries } from './google.queries';
 import { verifyGoogleIdToken } from './google.utils';
 @Injectable()
@@ -25,27 +23,18 @@ export class GoogleService {
    * @param requestLogger - The request-scoped logger.
    * @returns The create or sign in with google result.
    */
-  async createOrSignInWithGoogleData(
-    body: GoogleOAuthBody,
-    jkt: string,
-    requestLogger: AppLogger,
-  ): Promise<OAuthLoginResponse> {
+  async createOrSignInWithGoogleData(body: GoogleOAuthBody, jkt: string, requestLogger: AppLogger): Promise<OAuthLoginResponse> {
     const idToken = body.idToken;
 
     if (!idToken) throw new BadRequestException('Missing google id token');
-    const { googleSub, email, emailVerified, fullName } = (await verifyGoogleIdToken(
-      idToken,
-    )) as GoogleTokenVerificationResultDto;
+    const { googleSub, email, emailVerified, fullName } = (await verifyGoogleIdToken(idToken)) as GoogleTokenVerificationResultDto;
 
     let { userId } = await this.googleQueries.queryFindUserIdWithGoogleUserId(googleSub);
     const userExistOnOAuthUsers = !!userId;
 
     if (!userExistOnOAuthUsers) {
       let isLinked = false;
-      requestLogger.info(
-        { event: 'oauth.google_link_attempt_started', emailVerified },
-        'Google OAuth user not found, trying to link',
-      );
+      requestLogger.info({ event: 'oauth.google_link_attempt_started', emailVerified }, 'Google OAuth user not found, trying to link');
       if (emailVerified) {
         const { userId: userIdFromLink } = await this.googleQueries.queryTryToLinkUserWithEmailGoogle(email, googleSub);
         if (userIdFromLink) {
@@ -56,19 +45,10 @@ export class GoogleService {
       }
 
       if (!isLinked) {
-        requestLogger.info(
-          { event: 'oauth.google_registration_started' },
-          'Google OAuth link failed, creating a new user',
-        );
+        requestLogger.info({ event: 'oauth.google_registration_started' }, 'Google OAuth link failed, creating a new user');
         const username = email?.split('@')[0].toLowerCase() || null;
 
-        const userIdFromRegister = await this.googleQueries.queryCreateUserWithGoogleInfo(
-          username,
-          email,
-          fullName,
-          googleSub,
-          email,
-        );
+        const userIdFromRegister = await this.googleQueries.queryCreateUserWithGoogleInfo(username, email, fullName, googleSub, email);
         userId = userIdFromRegister;
 
         requestLogger.info({ event: 'oauth.google_registration_completed', userId }, 'Google OAuth user created');
@@ -76,15 +56,13 @@ export class GoogleService {
     }
 
     const finalUserId = userId as string;
-    requestLogger.info(
-      { event: 'oauth.google_login_completed', userId: finalUserId },
-      'Google OAuth user authenticated',
-    );
+    requestLogger.info({ event: 'oauth.google_login_completed', userId: finalUserId }, 'Google OAuth user authenticated');
 
     const hasNeverLoggedIn = (await this.sessionQueries.queryLastLogin(finalUserId)) === null;
     await this.dbService.promoteCurrentRlsTxToAuthenticated(finalUserId);
     const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(finalUserId);
     const [{ tokenVersion, userData }] = rowsUserData;
+    if (!userData.isVerified) throw new UnauthorizedException('A verification email is pending');
     if (hasNeverLoggedIn) {
       try {
         await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
@@ -96,28 +74,7 @@ export class GoogleService {
       }
     }
 
-    const cnfClaim = buildCnfClaim(jkt);
-    const accessToken = jwt.sign(
-      {
-        id: userData.id,
-        role: userData.role,
-        tokenVer: tokenVersion,
-        ...cnfClaim,
-      },
-      authConfig.jwtAccessSecret,
-      { expiresIn: '5m' },
-    );
-
-    const refreshToken = jwt.sign(
-      {
-        id: userData.id,
-        role: userData.role,
-        tokenVer: tokenVersion,
-        ...cnfClaim,
-      },
-      authConfig.jwtRefreshSecret,
-      { expiresIn: '14d' },
-    );
+    const { accessToken, refreshToken } = signTokens(userData.id, userData.role, tokenVersion, '5m', '14d', jkt);
 
     return {
       message: 'Login successful',

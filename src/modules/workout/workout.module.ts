@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
-import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module';
+import { AuthenticationGuard } from '../../common/guards/authentication.guard';
+import { AuthorizationGuard } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { WorkoutPlanController } from './plan/plan.controller';
@@ -10,9 +11,17 @@ import { WorkoutTrackingQueries } from './tracking/tracking.queries';
 import { WorkoutTrackingService } from './tracking/tracking.service';
 
 @Module({
-  imports: [AuthGuardsModule],
   controllers: [WorkoutPlanController, WorkoutTrackingController],
-  providers: [WorkoutPlanQueries, WorkoutPlanService, WorkoutTrackingQueries, WorkoutTrackingService, DpopGuard, RlsTxInterceptor],
+  providers: [
+    WorkoutPlanQueries,
+    WorkoutPlanService,
+    WorkoutTrackingQueries,
+    WorkoutTrackingService,
+    DpopGuard,
+    AuthenticationGuard,
+    AuthorizationGuard,
+    RlsTxInterceptor,
+  ],
   exports: [WorkoutPlanService, WorkoutTrackingService],
 })
 export class WorkoutModule {}

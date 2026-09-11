@@ -4,8 +4,8 @@ import type { CreateWebSocketTicketBody, CreateWebSocketTicketResponse } from '@
 import { createWebSocketTicketRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestData } from '../../common/decorators/request-data.decorator';
-import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
-import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard';
+import { AuthenticationGuard } from '../../common/guards/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../common/types/express';

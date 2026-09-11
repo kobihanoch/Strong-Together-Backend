@@ -1,8 +1,8 @@
 import crypto from 'crypto';
 import { Request } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { authConfig } from '../../config/auth.config';
-import type { AccessTokenPayloadDto } from '@strong-together/shared';
+import type { AccessTokenPayloadDto, UserRow } from '@strong-together/shared';
 
 /*
  * Extracts a Bearer token from a header string safely.
@@ -37,4 +37,32 @@ export const decodeAccessToken = (accessToken: string | null): AccessTokenPayloa
 
 export const generateJti = (): string => {
   return crypto.randomBytes(16).toString('hex');
+};
+
+export const signTokens = (
+  id: UserRow['id'],
+  role: UserRow['role'],
+  tokenVer: UserRow['tokenVersion'],
+  accessExp: NonNullable<SignOptions['expiresIn']>,
+  refreshExp: NonNullable<SignOptions['expiresIn']>,
+  jkt?: string,
+) => {
+  const cnfClaim = jkt
+    ? {
+        cnf: {
+          jkt: jkt.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, ''),
+        },
+      }
+    : {};
+
+  const userClaims = {
+    id,
+    role,
+    ...cnfClaim,
+  };
+
+  return {
+    accessToken: jwt.sign(userClaims, authConfig.jwtAccessSecret, { expiresIn: accessExp }),
+    refreshToken: jwt.sign({ ...userClaims, tokenVer }, authConfig.jwtRefreshSecret, { expiresIn: refreshExp }),
+  };
 };

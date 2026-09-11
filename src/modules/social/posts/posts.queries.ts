@@ -103,7 +103,7 @@ export class PostsQueries {
       const placements = await this.sql`
         INSERT INTO
           social.crew_shared_post (crew_id, post_id)
-        SELECT
+        SELECT DISTINCT
           requested_crew.id,
           ${post.id}::UUID
         FROM
@@ -115,7 +115,7 @@ export class PostsQueries {
       `;
 
       // The surrounding request transaction rolls back when any requested crew is unauthorized.
-      if (placements.length !== crewIds.length) return [];
+      if (placements.length !== new Set(crewIds).size) return [];
     }
 
     return [post];

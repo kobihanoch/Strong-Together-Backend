@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
-import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module';
+import { AuthenticationGuard } from '../../common/guards/authentication.guard';
+import { AuthorizationGuard } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { RateLimitGuard } from '../../common/guards/rate-limit.guard';
 import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
@@ -19,7 +20,6 @@ import { SupabaseModule } from '../../infrastructure/supabase/supabase.module';
 
 @Module({
   imports: [
-    AuthGuardsModule,
     EmailsModule,
     AuthModule /* For verification mails */,
     SupabaseModule /* For profile pics updating */,
@@ -33,6 +33,8 @@ import { SupabaseModule } from '../../infrastructure/supabase/supabase.module';
     UpdateUserQueries,
     UpdateUserService,
     DpopGuard,
+    AuthenticationGuard,
+    AuthorizationGuard,
     RateLimitGuard,
     RlsTxInterceptor,
     UpdateEmailsService,

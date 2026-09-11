@@ -7,8 +7,8 @@ import { CurrentLogger } from '../../../common/decorators/current-logger.decorat
 import { CurrentRequestId } from '../../../common/decorators/current-request-id.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
-import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
-import { AuthorizationGuard, Roles } from '../../../common/guards/auth/authorization.guard';
+import { AuthenticationGuard } from '../../../common/guards/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { RateLimit, RateLimitGuard, updateUserRateLimit, updateUserRateLimitDaily } from '../../../common/guards/rate-limit.guard';
 import { imageUploadOptions } from '../../../common/interceptors/image-upload.config';

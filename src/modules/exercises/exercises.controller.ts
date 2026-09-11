@@ -1,8 +1,8 @@
 import { Controller, Get, UseGuards, UseInterceptors } from '@nestjs/common';
 import type { ListExercisesResponse } from '@strong-together/shared';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
-import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
-import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard';
+import { AuthenticationGuard } from '../../common/guards/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../common/guards/authorization.guard';
 import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { ExercisesService } from './exercises.service';
 

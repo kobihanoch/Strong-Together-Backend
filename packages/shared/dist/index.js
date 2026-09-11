@@ -2590,12 +2590,14 @@ var changeEmailTokenPayloadDtoSchema = z7.object({
 var accessTokenPayloadDtoSchema = z8.object({
   id: userDbSchema.shape.id,
   role: userDbSchema.shape.role,
-  tokenVer: userDbSchema.shape.tokenVersion,
   cnf: z8.object({
     jkt: z8.string()
   }).optional(),
   iat: z8.number().optional(),
   exp: z8.number().optional()
+});
+var refreshTokenPayloadDtoSchema = accessTokenPayloadDtoSchema.extend({
+  tokenVer: userDbSchema.shape.tokenVersion
 });
 var userAfterBumpQueryDtoSchema = z8.object({
   tokenVersion: userDbSchema.shape.tokenVersion,
@@ -3827,6 +3829,7 @@ export {
   proceedLoginResponseSchema,
   prsViewDbSchema,
   refreshTokenContract,
+  refreshTokenPayloadDtoSchema,
   refreshTokenResponseSchema,
   replaceProfilePictureContract,
   replaceProfilePictureResponseSchema,

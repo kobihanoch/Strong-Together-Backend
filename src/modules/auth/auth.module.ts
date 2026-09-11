@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module';
 import { SessionController } from './session/session.controller';
 import { VerificationController } from './verification/verification.controller';
 import { PasswordController } from './password/password.controller';
@@ -19,7 +18,7 @@ import { PasswordEmailsService } from './password/password-emails/password-email
 import { EmailsModule } from '../../infrastructure/queues/emails/emails.module';
 
 @Module({
-  imports: [AuthGuardsModule, MessagesModule, EmailsModule],
+  imports: [MessagesModule, EmailsModule],
   controllers: [SessionController, VerificationController, PasswordController],
   providers: [
     SessionQueries,

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
-import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module';
+import { AuthenticationGuard } from '../../common/guards/authentication.guard';
+import { AuthorizationGuard } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { RemindersController } from './reminders.controller';
@@ -7,8 +8,7 @@ import { RemindersQueries } from './reminders.queries';
 import { RemindersService } from './reminders.service';
 
 @Module({
-  imports: [AuthGuardsModule],
   controllers: [RemindersController],
-  providers: [RemindersService, RemindersQueries, DpopGuard, RlsTxInterceptor],
+  providers: [RemindersService, RemindersQueries, DpopGuard, AuthenticationGuard, AuthorizationGuard, RlsTxInterceptor],
 })
 export class RemindersModule {}

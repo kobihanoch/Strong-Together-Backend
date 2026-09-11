@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
-import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module';
+import { AuthenticationGuard } from '../../common/guards/authentication.guard';
+import { AuthorizationGuard } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { VideoAnalysisController } from './video-analysis.controller';
@@ -8,12 +9,14 @@ import { VideoAnalysisService } from './video-analysis.service';
 import { AWSModule } from '../../infrastructure/aws/aws.module';
 
 @Module({
-  imports: [AuthGuardsModule, AWSModule],
+  imports: [AWSModule],
   controllers: [VideoAnalysisController],
   providers: [
     VideoAnalysisService,
     VideoAnalysisSubscriber,
     DpopGuard,
+    AuthenticationGuard,
+    AuthorizationGuard,
     RlsTxInterceptor,
   ],
 })
