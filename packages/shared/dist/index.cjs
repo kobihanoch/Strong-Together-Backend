@@ -150,6 +150,9 @@ __export(index_exports, {
   listCrewParticipantsContract: () => listCrewParticipantsContract,
   listCrewParticipantsRequestSchema: () => listCrewParticipantsRequestSchema,
   listCrewParticipantsResponseSchema: () => listCrewParticipantsResponseSchema,
+  listCrewPostsContract: () => listCrewPostsContract,
+  listCrewPostsRequestSchema: () => listCrewPostsRequestSchema,
+  listCrewPostsResponseSchema: () => listCrewPostsResponseSchema,
   listCrewsContract: () => listCrewsContract,
   listCrewsRequestSchema: () => listCrewsRequestSchema,
   listCrewsResponseSchema: () => listCrewsResponseSchema,
@@ -158,9 +161,9 @@ __export(index_exports, {
   listMessagesContract: () => listMessagesContract,
   listMessagesRequestSchema: () => listMessagesRequestSchema,
   listMessagesResponseSchema: () => listMessagesResponseSchema,
-  listPostsContract: () => listPostsContract,
-  listPostsRequestSchema: () => listPostsRequestSchema,
-  listPostsResponseSchema: () => listPostsResponseSchema,
+  listVisiblePostsContract: () => listVisiblePostsContract,
+  listVisiblePostsRequestSchema: () => listVisiblePostsRequestSchema,
+  listVisiblePostsResponseSchema: () => listVisiblePostsResponseSchema,
   loginContract: () => loginContract,
   loginRequestSchema: () => loginRequestSchema,
   loginResponseSchema: () => loginResponseSchema,
@@ -3846,13 +3849,32 @@ var deletedPostQueryDtoSchema = import_v438.z.object({
 var postIdParamsSchema = import_v439.z.object({
   id: postDbSchema.shape.id
 });
-var listPostsRequestSchema = import_v439.z.object({});
-var listPostsResponseSchema = import_v439.z.object({
+var postPaginationSchema = import_v439.z.object({
+  limit: import_v439.z.coerce.number().int().min(1).max(100).default(20),
+  offset: import_v439.z.coerce.number().int().min(0).default(0)
+});
+var listVisiblePostsRequestSchema = import_v439.z.object({
+  query: postPaginationSchema
+});
+var listVisiblePostsResponseSchema = import_v439.z.object({
   posts: import_v439.z.array(postQueryDtoSchema)
 });
-var listPostsContract = {
-  request: listPostsRequestSchema,
-  response: listPostsResponseSchema
+var listVisiblePostsContract = {
+  request: listVisiblePostsRequestSchema,
+  response: listVisiblePostsResponseSchema
+};
+var listCrewPostsRequestSchema = import_v439.z.object({
+  params: import_v439.z.object({
+    crewId: import_v439.z.uuid()
+  }),
+  query: postPaginationSchema
+});
+var listCrewPostsResponseSchema = import_v439.z.object({
+  posts: import_v439.z.array(postQueryDtoSchema)
+});
+var listCrewPostsContract = {
+  request: listCrewPostsRequestSchema,
+  response: listCrewPostsResponseSchema
 };
 var getPostRequestSchema = import_v439.z.object({
   params: postIdParamsSchema
@@ -4023,6 +4045,9 @@ var deletePostContract = {
   listCrewParticipantsContract,
   listCrewParticipantsRequestSchema,
   listCrewParticipantsResponseSchema,
+  listCrewPostsContract,
+  listCrewPostsRequestSchema,
+  listCrewPostsResponseSchema,
   listCrewsContract,
   listCrewsRequestSchema,
   listCrewsResponseSchema,
@@ -4031,9 +4056,9 @@ var deletePostContract = {
   listMessagesContract,
   listMessagesRequestSchema,
   listMessagesResponseSchema,
-  listPostsContract,
-  listPostsRequestSchema,
-  listPostsResponseSchema,
+  listVisiblePostsContract,
+  listVisiblePostsRequestSchema,
+  listVisiblePostsResponseSchema,
   loginContract,
   loginRequestSchema,
   loginResponseSchema,

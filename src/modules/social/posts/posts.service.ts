@@ -1,18 +1,37 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import type { CreatePostBody, ListPostsResponse, PostQueryDto, UpdatePostBody } from '@strong-together/shared';
+import type { CreatePostBody, ListCrewPostsResponse, ListVisiblePostsResponse, PostQueryDto, UpdatePostBody } from '@strong-together/shared';
 import { PostsQueries } from './posts.queries';
-/** Coordinates post CRUD operations and maps empty query results to HTTP errors. */
+
+/** Coordinates social post CRUD operations and maps empty query results to HTTP errors. */
 @Injectable()
 export class PostsService {
   constructor(private readonly queries: PostsQueries) {}
+
   /**
-   * Lists posts visible in the caller's RLS transaction.
+   * Lists the paginated global and crew posts visible to the caller.
    *
+   * @param userId - The authenticated user's UUID used for authorization.
+   * @param limit - The maximum number of posts to return.
+   * @param offset - The number of visible posts to skip.
    * @returns A response object containing visible posts.
    */
-  async listPostsData(userId: string): Promise<ListPostsResponse> {
-    return { posts: await this.queries.queryPosts(userId) };
+  async getVisiblePostsData(userId: string, limit: number, offset: number): Promise<ListVisiblePostsResponse> {
+    return { posts: await this.queries.queryVisiblePosts(userId, limit, offset) };
   }
+
+  /**
+   * Lists a page of posts shared in a crew the caller can access.
+   *
+   * @param crewId - The crew whose feed is requested.
+   * @param userId - The authenticated user's UUID used for authorization.
+   * @param limit - The maximum number of posts to return.
+   * @param offset - The number of matching crew posts to skip.
+   * @returns A response object containing the crew's visible posts.
+   */
+  async getCrewPostsData(crewId: string, userId: string, limit: number, offset: number): Promise<ListCrewPostsResponse> {
+    return { posts: await this.queries.queryCrewPosts(crewId, userId, limit, offset) };
+  }
+
   /**
    * Gets one visible post.
    *
@@ -25,6 +44,7 @@ export class PostsService {
     if (!r) throw new NotFoundException('Post not found');
     return r;
   }
+
   /**
    * Creates a global or crew-placed post for the authenticated author.
    *
@@ -36,6 +56,7 @@ export class PostsService {
     const [r] = await this.queries.queryCreatePost(userId, body.content, body.crewId);
     if (!r) throw new ForbiddenException('You cannot post to this crew');
   }
+
   /**
    * Updates the content of a post through RLS.
    *
@@ -48,6 +69,7 @@ export class PostsService {
     const [r] = await this.queries.queryUpdatePost(id, userId, body.content);
     if (!r) throw new NotFoundException('Post not found');
   }
+
   /**
    * Deletes a post through the caller's RLS transaction.
    *

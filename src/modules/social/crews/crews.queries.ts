@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { CrewParticipantQueryDto, CrewQueryDto, DeletedCrewQueryDto, DiscoverableCrewQueryDto } from '@strong-together/shared';
 import type postgres from 'postgres';
-import { SQL } from '../../infrastructure/db/db.tokens';
+import { SQL } from '../../../infrastructure/db/db.tokens';
 
 /**
  * Executes crew persistence operations inside the request's RLS transaction.

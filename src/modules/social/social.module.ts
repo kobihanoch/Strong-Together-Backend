@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { AuthGuardsModule } from '../common/guards/auth/auth-guards.module';
-import { DpopGuard } from '../common/guards/dpop-validation.guard';
-import { RlsTxInterceptor } from '../common/interceptors/rls-tx.interceptor';
+import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module';
+import { DpopGuard } from '../../common/guards/dpop-validation.guard';
+import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { CrewsController } from './crews/crews.controller';
 import { CrewsQueries } from './crews/crews.queries';
 import { CrewsService } from './crews/crews.service';

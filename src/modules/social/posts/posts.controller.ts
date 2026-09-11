@@ -5,20 +5,31 @@ import type {
   DeletePostParams,
   GetPostParams,
   GetPostResponse,
-  ListPostsResponse,
+  ListCrewPostsParams,
+  ListCrewPostsQuery,
+  ListCrewPostsResponse,
+  ListVisiblePostsQuery,
+  ListVisiblePostsResponse,
   UpdatePostBody,
   UpdatePostParams,
   UpdatePostResponse,
 } from '@strong-together/shared';
-import { createPostRequestSchema, deletePostRequestSchema, getPostRequestSchema, updatePostRequestSchema } from '@strong-together/shared';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { RequestData } from '../../common/decorators/request-data.decorator';
-import { AuthenticationGuard } from '../../common/guards/auth/authentication.guard';
-import { AuthorizationGuard, Roles } from '../../common/guards/auth/authorization.guard';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
-import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe';
-import type { AuthenticatedUser } from '../../common/types/express';
+import {
+  createPostRequestSchema,
+  deletePostRequestSchema,
+  getPostRequestSchema,
+  listCrewPostsRequestSchema,
+  listVisiblePostsRequestSchema,
+  updatePostRequestSchema,
+} from '@strong-together/shared';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { RequestData } from '../../../common/decorators/request-data.decorator';
+import { AuthenticationGuard } from '../../../common/guards/auth/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../../common/guards/auth/authorization.guard';
+import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
+import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
+import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
+import type { AuthenticatedUser } from '../../../common/types/express';
 import { PostsService } from './posts.service';
 
 /**
@@ -26,6 +37,7 @@ import { PostsService } from './posts.service';
  *
  * Routes:
  * - GET /api/social/posts
+ * - GET /api/social/posts/crew/:crewId
  * - GET /api/social/posts/:id
  * - POST /api/social/posts
  * - PATCH /api/social/posts/:id
@@ -48,11 +60,39 @@ export class PostsController {
    * @remarks Route: GET /api/social/posts
    * Access: User
    *
-   * @returns Global posts and crew posts made visible by RLS.
+   * @param data - The validated pagination query.
+   * @param user - The authenticated user supplied by the authentication guard.
+   * @returns Global posts and crew posts the caller is authorized to view.
    */
   @Get()
-  async list(@CurrentUser() user: AuthenticatedUser): Promise<ListPostsResponse> {
-    return this.service.listPostsData(user.id);
+  async getVisiblePosts(
+    @RequestData(new ValidateRequestPipe(listVisiblePostsRequestSchema))
+    data: { query: ListVisiblePostsQuery },
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ListVisiblePostsResponse> {
+    return this.service.getVisiblePostsData(user.id, data.query.limit, data.query.offset);
+  }
+
+  /**
+   * Lists posts shared in one crew when the caller belongs to that crew.
+   *
+   * @remarks Route: GET /api/social/posts/crew/:crewId
+   * Access: User
+   *
+   * @param data - The validated crew identifier and pagination query.
+   * @param user - The authenticated user supplied by the authentication guard.
+   * @returns Posts shared in the requested crew, ordered newest first.
+   */
+  @Get('crew/:crewId')
+  async getCrewPosts(
+    @RequestData(new ValidateRequestPipe(listCrewPostsRequestSchema))
+    data: {
+      params: ListCrewPostsParams;
+      query: ListCrewPostsQuery;
+    },
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ListCrewPostsResponse> {
+    return this.service.getCrewPostsData(data.params.crewId, user.id, data.query.limit, data.query.offset);
   }
 
   /**

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { CreateCrewBody, CrewQueryDto, ListCrewParticipantsResponse, ListCrewsResponse, UpdateCrewBody } from '@strong-together/shared';
 import { CrewsQueries } from './crews.queries';
-/** Coordinates crew CRUD operations and maps empty query results to HTTP errors. */
+/** Coordinates social crew CRUD operations and maps empty query results to HTTP errors. */
 @Injectable()
 export class CrewsService {
   constructor(private readonly queries: CrewsQueries) {}
