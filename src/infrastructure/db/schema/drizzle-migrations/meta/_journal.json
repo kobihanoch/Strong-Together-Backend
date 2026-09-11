@@ -204,6 +204,13 @@
       "when": 1788795192839,
       "tag": "0028_move_exercise_tracking_view_to_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1789065863013,
+      "tag": "0029_add_social_entities",
+      "breakpoints": true
     }
   ]
 }
