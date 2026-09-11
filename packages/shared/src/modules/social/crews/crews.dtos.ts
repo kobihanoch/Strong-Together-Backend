@@ -30,6 +30,22 @@ export const crewParticipantQueryDtoSchema = crewMembershipDbSchema.extend({
 /** Runtime schema for a crew deletion result. */
 export const deletedCrewQueryDtoSchema = z.object({ id: crewDbSchema.shape.id });
 
+/** Runtime schema for the outcome returned by the leave-crew query. */
+export const leaveCrewResultQueryDtoSchema = z.object({
+  result: z.enum(['left', 'not_member']),
+});
+
+/** Runtime schema for the locked active membership being left. */
+export const leaveCrewContextQueryDtoSchema = z.object({
+  membershipId: crewMembershipDbSchema.shape.id,
+});
+
+/** Runtime schema for the participant selected to succeed a leaving leader. */
+export const crewSuccessorQueryDtoSchema = z.object({
+  membershipId: crewMembershipDbSchema.shape.id,
+  userId: crewMembershipDbSchema.shape.userId,
+});
+
 /** Typed crew row returned by crew SELECT, INSERT, and UPDATE queries. */
 export type CrewQueryDto = typeof crewQueryDtoSchema._output;
 
@@ -44,3 +60,12 @@ export type CrewParticipantQueryDto = typeof crewParticipantQueryDtoSchema._outp
 
 /** Typed result used to verify that a crew was deleted. */
 export type DeletedCrewQueryDto = typeof deletedCrewQueryDtoSchema._output;
+
+/** Typed outcome returned after attempting to leave a crew. */
+export type LeaveCrewResultQueryDto = typeof leaveCrewResultQueryDtoSchema._output;
+
+/** Typed locked membership used by the leave workflow. */
+export type LeaveCrewContextQueryDto = typeof leaveCrewContextQueryDtoSchema._output;
+
+/** Typed active participant selected as the next crew leader. */
+export type CrewSuccessorQueryDto = typeof crewSuccessorQueryDtoSchema._output;

@@ -1542,6 +1542,7 @@ import { sql as drizzleSql26 } from "drizzle-orm";
 var isCrewPublic = /* @__PURE__ */ __name((crewId) => drizzleSql26`"social"."is_crew_public" (${crewId})`, "isCrewPublic");
 var isCrewLeader = /* @__PURE__ */ __name((crewId) => drizzleSql26`"social"."is_crew_leader" (${crewId})`, "isCrewLeader");
 var isPostAuthor = /* @__PURE__ */ __name((postId) => drizzleSql26`"social"."is_post_author" (${postId})`, "isPostAuthor");
+var canAccessCrew = /* @__PURE__ */ __name((crewId) => drizzleSql26`"social"."can_access_crew" (${crewId})`, "canAccessCrew");
 var canManageCrew = /* @__PURE__ */ __name((crewId) => drizzleSql26`"social"."can_manage_crew" (${crewId})`, "canManageCrew");
 var canViewCrewParticipants = /* @__PURE__ */ __name((crewId) => drizzleSql26`"social"."can_view_crew_participants" (${crewId})`, "canViewCrewParticipants");
 var canPublishToCrew = /* @__PURE__ */ __name((crewId) => drizzleSql26`"social"."can_publish_to_crew" (${crewId})`, "canPublishToCrew");
@@ -1565,12 +1566,12 @@ function crewPolicies(t) {
       to: authenticatedRole,
       withCheck: leads
     }),
-    // Only the current leader may update the crew, and the updated row must remain led by that user.
+    // Only the active leader may start an update; remaining an active member permits an atomic leadership transfer.
     pgPolicy15("Allow active crew leaders to update their crews", {
       for: "update",
       to: authenticatedRole,
       using: canManage,
-      withCheck: canManage
+      withCheck: canAccessCrew(t.id)
     }),
     // Only the current leader may delete the crew.
     pgPolicy15("Allow active crew leaders to delete their crews", {
@@ -1651,6 +1652,14 @@ function crewMembershipPolicies(t) {
     ${canManage}
     OR (${createsOwnLeaderMembership})
   `;
+  const activeSelf = drizzleSql28`
+    ${self}
+    AND ${t.status} = 'active'
+  `;
+  const leftSelf = drizzleSql28`
+    ${self}
+    AND ${t.status} = 'left'
+  `;
   return [
     // Participants are visible for public crews and to active members or leaders of private crews.
     pgPolicy16("Allow authorized users to read crew participants", {
@@ -1670,6 +1679,13 @@ function crewMembershipPolicies(t) {
       to: authenticatedRole,
       using: canManage,
       withCheck: canManage
+    }),
+    // An active member may transition only their own membership to the left state.
+    pgPolicy16("Allow active members to leave crews", {
+      for: "update",
+      to: authenticatedRole,
+      using: activeSelf,
+      withCheck: leftSelf
     }),
     // A membership may be deleted by its user or the crew leader.
     pgPolicy16("Allow members and active crew leaders to delete memberships", {
@@ -3446,6 +3462,19 @@ var crewParticipantQueryDtoSchema = crewMembershipDbSchema.extend({
 var deletedCrewQueryDtoSchema = z36.object({
   id: crewDbSchema.shape.id
 });
+var leaveCrewResultQueryDtoSchema = z36.object({
+  result: z36.enum([
+    "left",
+    "not_member"
+  ])
+});
+var leaveCrewContextQueryDtoSchema = z36.object({
+  membershipId: crewMembershipDbSchema.shape.id
+});
+var crewSuccessorQueryDtoSchema = z36.object({
+  membershipId: crewMembershipDbSchema.shape.id,
+  userId: crewMembershipDbSchema.shape.userId
+});
 
 // src/modules/social/crews/crews.contracts.ts
 var crewIdParamsSchema = z37.object({
@@ -3508,6 +3537,14 @@ var updateCrewResponseSchema = z37.void();
 var updateCrewContract = {
   request: updateCrewRequestSchema,
   response: updateCrewResponseSchema
+};
+var leaveCrewRequestSchema = z37.object({
+  params: crewIdParamsSchema
+});
+var leaveCrewResponseSchema = z37.void();
+var leaveCrewContract = {
+  request: leaveCrewRequestSchema,
+  response: leaveCrewResponseSchema
 };
 var deleteCrewRequestSchema = z37.object({
   params: crewIdParamsSchema
@@ -3664,6 +3701,7 @@ export {
   crewParticipantPreviewQueryDtoSchema,
   crewParticipantQueryDtoSchema,
   crewQueryDtoSchema,
+  crewSuccessorQueryDtoSchema,
   deleteAerobicEntryContract,
   deleteAerobicEntryRequestSchema,
   deleteCrewContract,
@@ -3739,6 +3777,11 @@ export {
   googleOAuthRequestSchema,
   googleTokenVerificationResultDtoSchema,
   lastLoginQueryDtoSchema,
+  leaveCrewContextQueryDtoSchema,
+  leaveCrewContract,
+  leaveCrewRequestSchema,
+  leaveCrewResponseSchema,
+  leaveCrewResultQueryDtoSchema,
   listCrewParticipantsContract,
   listCrewParticipantsRequestSchema,
   listCrewParticipantsResponseSchema,

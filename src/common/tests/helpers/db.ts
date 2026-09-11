@@ -453,6 +453,38 @@ export async function crewExists(crewId: string) {
   return row?.exists ?? false;
 }
 
+/** Returns a crew by ID for leadership-transfer assertions. */
+export async function getCrewById(crewId: string) {
+  const [row] = await sql<{ id: string; leader_id: string; privacy: 'public' | 'private' }[]>`
+    SELECT
+      id,
+      leader_id,
+      privacy
+    FROM
+      social.crew
+    WHERE
+      id = ${crewId}::UUID
+  `;
+
+  return row ?? null;
+}
+
+/** Returns one user's membership state and role in a crew. */
+export async function getCrewMembership(crewId: string, userId: string) {
+  const [row] = await sql<{ status: 'active' | 'left' | 'removed' | 'banned'; role: 'leader' | 'admin' | 'member' }[]>`
+    SELECT
+      status,
+      role
+    FROM
+      social.crew_membership
+    WHERE
+      crew_id = ${crewId}::UUID
+      AND user_id = ${userId}::UUID
+  `;
+
+  return row ?? null;
+}
+
 export async function insertCrewMembership(crewId: string, userId: string, role: 'leader' | 'admin' | 'member' = 'member') {
   await sql`
     INSERT INTO
@@ -480,6 +512,24 @@ export async function getPostByAuthorId(authorUserId: string) {
       author_user_id = ${authorUserId}::UUID
     ORDER BY
       published_at DESC
+    LIMIT
+      1
+  `;
+
+  return row ?? null;
+}
+
+/** Returns a post by its unique test content for direct persistence assertions. */
+export async function getPostByContent(content: string) {
+  const [row] = await sql<{ id: string; visibility: 'crews_only' | 'public'; content: string }[]>`
+    SELECT
+      id,
+      visibility,
+      content
+    FROM
+      social.post
+    WHERE
+      content = ${content}
     LIMIT
       1
   `;

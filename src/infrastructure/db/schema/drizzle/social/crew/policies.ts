@@ -1,7 +1,7 @@
 import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
-import { canManageCrew } from '../policy-helpers';
+import { canAccessCrew, canManageCrew } from '../policy-helpers';
 
 const uid = drizzleSql`"identity"."current_user_id" ()`;
 
@@ -13,12 +13,12 @@ export function crewPolicies(t: { id: AnyPgColumn; leaderId: AnyPgColumn }) {
     pgPolicy('Allow authenticated users to read crews', { for: 'select', to: authenticatedRole, using: drizzleSql`TRUE` }),
     // A user may create a crew only when they assign themselves as its leader.
     pgPolicy('Allow users to create crews they lead', { for: 'insert', to: authenticatedRole, withCheck: leads }),
-    // Only the current leader may update the crew, and the updated row must remain led by that user.
+    // Only the active leader may start an update; remaining an active member permits an atomic leadership transfer.
     pgPolicy('Allow active crew leaders to update their crews', {
       for: 'update',
       to: authenticatedRole,
       using: canManage,
-      withCheck: canManage,
+      withCheck: canAccessCrew(t.id),
     }),
     // Only the current leader may delete the crew.
     pgPolicy('Allow active crew leaders to delete their crews', { for: 'delete', to: authenticatedRole, using: canManage }),

@@ -10,6 +10,8 @@ import type {
   ListCrewParticipantsParams,
   ListCrewParticipantsQuery,
   ListCrewParticipantsResponse,
+  LeaveCrewParams,
+  LeaveCrewResponse,
   UpdateCrewBody,
   UpdateCrewParams,
   UpdateCrewResponse,
@@ -20,6 +22,7 @@ import {
   getCrewRequestSchema,
   listCrewsRequestSchema,
   listCrewParticipantsRequestSchema,
+  leaveCrewRequestSchema,
   updateCrewRequestSchema,
 } from '@strong-together/shared';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -41,6 +44,7 @@ import { CrewsService } from './crews.service';
  * - GET /api/social/crews/:crewId/participants
  * - POST /api/social/crews
  * - PATCH /api/social/crews/:id
+ * - POST /api/social/crews/:id/leave
  * - DELETE /api/social/crews/:id
  *
  * @remarks Every request passes DPoP, authentication, authorization, and the
@@ -155,6 +159,32 @@ export class CrewsController {
     },
   ): Promise<UpdateCrewResponse> {
     await this.service.updateCrewData(data.params.id, data.body);
+  }
+
+  /**
+   * Leaves an active crew membership.
+   *
+   * @remarks Route: POST /api/social/crews/:id/leave
+   * Access: User
+   *
+   * A regular member is marked as left. When the caller is the leader,
+   * leadership first transfers to participant number two using the established
+   * participant ordering.
+   *
+   * @param data - The validated crew identifier.
+   * @returns No response body with a 204 No Content status.
+   * @throws NotFoundException when the caller is not an active member.
+   * When the leader is the crew's final active member, leaving deletes the crew.
+   */
+  @Post(':id/leave')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async leave(
+    @RequestData(new ValidateRequestPipe(leaveCrewRequestSchema))
+    data: {
+      params: LeaveCrewParams;
+    },
+  ): Promise<LeaveCrewResponse> {
+    await this.service.leaveCrewData(data.params.id);
   }
 
   /**

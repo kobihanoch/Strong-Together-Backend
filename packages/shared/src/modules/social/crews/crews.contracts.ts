@@ -112,6 +112,23 @@ export type UpdateCrewBody = BodyOf<typeof updateCrewContract>;
 /** Empty response returned after updating a crew. */
 export type UpdateCrewResponse = ResponseOf<typeof updateCrewContract>;
 
+// Leave crew
+
+/** Validates the crew identifier used by the authenticated user leaving a crew. */
+export const leaveCrewRequestSchema = z.object({ params: crewIdParamsSchema });
+
+/** Validates the empty response returned after leaving a crew. */
+export const leaveCrewResponseSchema = z.void();
+
+/** Defines the request and response contract for leaving a crew. */
+export const leaveCrewContract = { request: leaveCrewRequestSchema, response: leaveCrewResponseSchema } satisfies Contract;
+
+/** Route parameters accepted by the leave-crew endpoint. */
+export type LeaveCrewParams = ParamsOf<typeof leaveCrewContract>;
+
+/** Empty response returned after leaving a crew. */
+export type LeaveCrewResponse = ResponseOf<typeof leaveCrewContract>;
+
 // Delete crew
 
 /** Validates the route parameters used to delete a crew. */
