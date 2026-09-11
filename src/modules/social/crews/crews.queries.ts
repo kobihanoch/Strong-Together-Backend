@@ -1,5 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { CrewParticipantQueryDto, CrewQueryDto, DeletedCrewQueryDto, DiscoverableCrewQueryDto } from '@strong-together/shared';
+import type {
+  CrewParticipantQueryDto,
+  CrewQueryDto,
+  DeletedCrewQueryDto,
+  DiscoverableCrewQueryDto,
+  CrewSuccessorQueryDto,
+  LeaveCrewContextQueryDto,
+  LeaveCrewResultQueryDto,
+} from '@strong-together/shared';
 import type postgres from 'postgres';
 import { SQL } from '../../../infrastructure/db/db.tokens';
 
@@ -156,6 +164,117 @@ export class CrewsQueries {
         created_at AS "createdAt",
         updated_at AS "updatedAt"
     `;
+  }
+
+  /**
+   * Leaves a crew inside the request's RLS transaction.
+   * A leader promotes participant number two before their own membership is
+   * marked as left, so every intermediate write remains authorized.
+   *
+   * @param crewId - The UUID of the crew the current user wants to leave.
+   * @returns The leave result used by the service to select the HTTP outcome.
+   */
+  async queryLeaveCrew(crewId: string): Promise<LeaveCrewResultQueryDto[]> {
+    // Get crew ID and lock row
+    const [context] = await this.sql<LeaveCrewContextQueryDto[]>`
+      SELECT
+        cm.id AS "membershipId"
+      FROM
+        social.crew_membership cm
+      WHERE
+        cm.crew_id = ${crewId}::UUID
+        AND cm.user_id = identity.current_user_id ()
+        AND cm.status = 'active'
+        AND social.can_access_crew (cm.crew_id)
+      FOR UPDATE OF
+        cm
+    `;
+
+    if (!context) return [{ result: 'not_member' }];
+
+    // Resolve if leader
+    const [isLeader] = await this.sql<{ value: boolean }[]>`
+      SELECT
+        social.can_manage_crew (${crewId}::UUID) AS value
+    `;
+
+    if (isLeader?.value) {
+      // Only a current active leader can lock this row through the crew UPDATE policy.
+      await this.sql`
+        SELECT
+          id
+        FROM
+          social.crew
+        WHERE
+          id = ${crewId}::UUID
+          AND social.can_manage_crew (id)
+        FOR UPDATE
+      `;
+
+      const [successor] = await this.sql<CrewSuccessorQueryDto[]>`
+        SELECT
+          cm.id AS "membershipId",
+          cm.user_id AS "userId"
+        FROM
+          social.crew_membership cm
+        WHERE
+          cm.crew_id = ${crewId}::UUID
+          AND cm.user_id <> identity.current_user_id ()
+          AND cm.status = 'active'
+        ORDER BY
+          CASE cm.role
+            WHEN 'admin' THEN 1
+            WHEN 'member' THEN 2
+            ELSE 3
+          END,
+          cm.joined_at,
+          cm.id
+        LIMIT
+          1
+        FOR UPDATE
+      `;
+
+      if (!successor) {
+        await this.sql`
+          DELETE FROM social.crew c
+          WHERE
+            c.leader_id = identity.current_user_id ()
+            AND c.id = ${crewId}::UUID
+        `;
+        return [{ result: 'left' }];
+      }
+
+      await this.sql`
+        UPDATE social.crew_membership
+        SET ROLE = 'leader',
+        updated_at = NOW()
+        WHERE
+          id = ${successor.membershipId}::UUID
+          AND social.can_manage_crew (crew_id)
+      `;
+
+      await this.sql`
+        UPDATE social.crew
+        SET
+          leader_id = ${successor.userId}::UUID,
+          updated_at = NOW()
+        WHERE
+          id = ${crewId}::UUID
+          AND social.can_manage_crew (id)
+      `;
+    }
+
+    await this.sql`
+      UPDATE social.crew_membership
+      SET
+        status = 'left',
+        role = 'member',
+        updated_at = NOW()
+      WHERE
+        id = ${context.membershipId}::UUID
+    `;
+
+    return [{ result: 'left' }];
   }
 
   /**

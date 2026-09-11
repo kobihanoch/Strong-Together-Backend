@@ -62,6 +62,23 @@ export class CrewsService {
     const [row] = await this.queries.queryUpdateCrew(id, body.privacy);
     if (!row) throw new NotFoundException('Crew not found');
   }
+
+  /**
+   * Leaves a crew and transfers leadership when the caller is its leader.
+   * If no succsor found - means no other users in crew. SO leave crew and delete it.
+   *
+   * @param crewId - The UUID of the crew the current user wants to leave.
+   * @returns A promise that resolves after the membership is marked as left.
+   * @throws NotFoundException when the caller has no active crew membership.
+   */
+  async leaveCrewData(crewId: string): Promise<void> {
+    const [outcome] = await this.queries.queryLeaveCrew(crewId);
+
+    if (!outcome || outcome.result === 'not_member') {
+      throw new NotFoundException('Active crew membership not found');
+    }
+  }
+
   /**
    * Deletes a crew through the caller's RLS transaction.
    *

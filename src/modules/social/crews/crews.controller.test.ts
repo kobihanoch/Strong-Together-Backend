@@ -4,7 +4,16 @@ import { getCrewResponseSchema, listCrewParticipantsResponseSchema, listCrewsRes
 import { createApp } from '../../../app';
 import { authHeaders } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
-import { crewExists, getCrewByLeaderId, insertCrewMembership, setCrewMembershipStatus } from '../../../common/tests/helpers/db';
+import {
+  crewExists,
+  getCrewById,
+  getCrewByLeaderId,
+  getCrewMembership,
+  getPostByAuthorId,
+  getPostByContent,
+  insertCrewMembership,
+  setCrewMembershipStatus,
+} from '../../../common/tests/helpers/db';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../../common/tests/helpers/users';
 
 let app: Awaited<ReturnType<typeof createApp>>;
@@ -160,10 +169,75 @@ describe('CrewsController', () => {
     expect(await getCrewByLeaderId(leader.userId)).toMatchObject({ privacy: 'public' });
   });
 
+  it('POST /api/social/crews/:id/leave marks a regular member as left', async () => {
+    const leader = await crewUser('crew_leave_leader');
+    const member = await crewUser('crew_leave_member');
+    const crew = await createCrew(leader.accessToken, leader.userId);
+    await insertCrewMembership(crew.id, member.userId);
+
+    const response = await request(app.getHttpServer()).post(`/api/social/crews/${crew.id}/leave`).set(authHeaders(member.accessToken));
+
+    expect(response.status, JSON.stringify(response.body)).toBe(204);
+    expect(response.text).toBe('');
+    expect(await getCrewMembership(crew.id, member.userId)).toMatchObject({ status: 'left', role: 'member' });
+    expect(await getCrewById(crew.id)).toMatchObject({ leader_id: leader.userId });
+  });
+
+  it('POST leave transfers leadership to participant number two before the leader leaves', async () => {
+    const leader = await crewUser('crew_transfer_leader');
+    const successor = await crewUser('crew_transfer_successor');
+    const member = await crewUser('crew_transfer_member');
+    const crew = await createCrew(leader.accessToken, leader.userId);
+    await insertCrewMembership(crew.id, successor.userId, 'admin');
+    await insertCrewMembership(crew.id, member.userId);
+
+    const response = await request(app.getHttpServer()).post(`/api/social/crews/${crew.id}/leave`).set(authHeaders(leader.accessToken));
+
+    expect(response.status).toBe(204);
+    expect(await getCrewById(crew.id)).toMatchObject({ leader_id: successor.userId });
+    expect(await getCrewMembership(crew.id, successor.userId)).toMatchObject({ status: 'active', role: 'leader' });
+    expect(await getCrewMembership(crew.id, leader.userId)).toMatchObject({ status: 'left', role: 'member' });
+  });
+
+  it('POST leave deletes the crew for its last member and rejects a non-member', async () => {
+    const leader = await crewUser('crew_leave_solo');
+    const outsider = await crewUser('crew_leave_outsider');
+    const crew = await createCrew(leader.accessToken, leader.userId);
+
+    const noSuccessor = await request(app.getHttpServer()).post(`/api/social/crews/${crew.id}/leave`).set(authHeaders(leader.accessToken));
+    expect(noSuccessor.status).toBe(204);
+    expect(await getCrewById(crew.id)).toBeNull();
+
+    const notMember = await request(app.getHttpServer()).post(`/api/social/crews/${crew.id}/leave`).set(authHeaders(outsider.accessToken));
+    expect(notMember.status).toBe(404);
+  });
+
   it('DELETE /api/social/crews/:id deletes only a crew led by the caller and returns 204', async () => {
     const leader = await crewUser('crew_delete_leader');
+    const member = await crewUser('crew_delete_member');
     const outsider = await crewUser('crew_delete_outsider');
     const crew = await createCrew(leader.accessToken, leader.userId);
+    const otherCrew = await createCrew(leader.accessToken, leader.userId);
+    await insertCrewMembership(crew.id, member.userId);
+    await insertCrewMembership(otherCrew.id, member.userId);
+
+    const exclusivePostResponse = await request(app.getHttpServer())
+      .post('/api/social/posts')
+      .set(authHeaders(member.accessToken))
+      .send({ content: 'Exclusive crew post', visibility: 'crews_only', crewIds: [crew.id] });
+    const publicPostResponse = await request(app.getHttpServer())
+      .post('/api/social/posts')
+      .set(authHeaders(member.accessToken))
+      .send({ content: 'Public crew post', visibility: 'public', crewIds: [crew.id] });
+    const sharedPostResponse = await request(app.getHttpServer())
+      .post('/api/social/posts')
+      .set(authHeaders(member.accessToken))
+      .send({ content: 'Multi-crew post', visibility: 'crews_only', crewIds: [crew.id, otherCrew.id] });
+
+    expect(exclusivePostResponse.status).toBe(201);
+    expect(publicPostResponse.status).toBe(201);
+    expect(sharedPostResponse.status).toBe(201);
+    expect(await getPostByAuthorId(member.userId)).not.toBeNull();
 
     const forbidden = await request(app.getHttpServer()).delete(`/api/social/crews/${crew.id}`).set(authHeaders(outsider.accessToken));
     const deleted = await request(app.getHttpServer()).delete(`/api/social/crews/${crew.id}`).set(authHeaders(leader.accessToken));
@@ -172,6 +246,9 @@ describe('CrewsController', () => {
     expect(deleted.status).toBe(204);
     expect(deleted.text).toBe('');
     expect(await crewExists(crew.id)).toBe(false);
+    expect(await getPostByContent('Exclusive crew post')).toBeNull();
+    expect(await getPostByContent('Public crew post')).not.toBeNull();
+    expect(await getPostByContent('Multi-crew post')).not.toBeNull();
   });
 
   it('crew endpoints reject invalid and unauthenticated requests', async () => {
