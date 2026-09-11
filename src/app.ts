@@ -27,6 +27,7 @@ import { DBModule } from './infrastructure/db/db.module';
 import { SocketIOModule } from './infrastructure/socket.io/socket.io.module';
 import { AWSModule } from './infrastructure/aws/aws.module';
 import { CacheModule } from './infrastructure/cache/cache.module';
+import { SocialModule } from './social/social.module';
 
 let testAppPromise: Promise<NestExpressApplication> | null = null;
 
@@ -62,6 +63,7 @@ class AppController {
     WebSocketsModule,
     WorkoutModule,
     WorkoutScheduleModule,
+    SocialModule,
   ],
   controllers: [AppController],
   providers: [

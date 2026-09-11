@@ -1,24 +1,12 @@
 import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
+import { isActiveCrewMember, isCrewLeader } from '../policy-helpers';
 const uid = drizzleSql`"identity"."current_user_id" ()`;
 export function crewSharedPostPolicies(t: { crewId: AnyPgColumn; postId: AnyPgColumn }) {
   const member = drizzleSql`
-    EXISTS (
-      SELECT
-        1
-      FROM
-        "social"."crew" c
-        LEFT JOIN "social"."crew_membership" cm ON cm."crew_id" = c."id"
-        AND cm."user_id" = ${uid}
-        AND cm."status" = 'active'
-      WHERE
-        c."id" = ${t.crewId}
-        AND (
-          c."leader_id" = ${uid}
-          OR cm."id" IS NOT NULL
-        )
-    )
+    ${isCrewLeader(t.crewId)}
+    OR ${isActiveCrewMember(t.crewId)}
   `;
   const author = drizzleSql`
     EXISTS (
@@ -32,8 +20,8 @@ export function crewSharedPostPolicies(t: { crewId: AnyPgColumn; postId: AnyPgCo
     )
   `;
   const allowed = drizzleSql`
-    ${member}
-    AND ${author}
+    (${member})
+    AND (${author})
   `;
   return [
     // Placement rows are visible so post RLS can reliably distinguish global posts from crew posts.

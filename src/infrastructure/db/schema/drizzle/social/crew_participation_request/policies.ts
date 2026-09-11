@@ -1,6 +1,7 @@
 import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
+import { isCrewLeader, isCrewPublic } from '../policy-helpers';
 
 const uid = drizzleSql`"identity"."current_user_id" ()`;
 
@@ -14,17 +15,7 @@ export function crewParticipationRequestPolicies(t: {
     ${t.initiatorUserId} = ${uid}
     OR ${t.participantUserId} = ${uid}
   `;
-  const leader = drizzleSql /* SQL */ `
-    EXISTS (
-      SELECT
-        1
-      FROM
-        "social"."crew" c
-      WHERE
-        c."id" = ${t.crewId}
-        AND c."leader_id" = ${uid}
-    )
-  `;
+  const leader = isCrewLeader(t.crewId);
   const validParticipants = drizzleSql /* SQL */ `
     ${t.initiatorUserId} = ${t.participantUserId}
     OR EXISTS (
@@ -41,33 +32,21 @@ export function crewParticipationRequestPolicies(t: {
     ${involved}
     OR ${leader}
   `;
-  const publicCrew = drizzleSql /* SQL */ `
-    EXISTS (
-      SELECT
-        1
-      FROM
-        "social"."crew" c
-      WHERE
-        c."id" = ${t.crewId}
-        AND c."privacy" = 'public'
-    )
-  `;
+  const publicCrew = isCrewPublic(t.crewId);
   const insertable = drizzleSql /* SQL */ `
     ${t.initiatorUserId} = ${uid}
-    AND ${t.status} = 'pending'
     AND (
       (
         ${t.initiatorUserId} = ${t.participantUserId}
-        AND ${publicCrew}
+        AND (
+          ((${publicCrew}) AND ${t.status} = 'accepted')
+          OR ((NOT (${publicCrew})) AND ${t.status} = 'pending')
+        )
       )
-      OR EXISTS (
-        SELECT
-          1
-        FROM
-          "social"."crew" c
-        WHERE
-          c."id" = ${t.crewId}
-          AND c."leader_id" = ${t.initiatorUserId}
+      OR (
+        ${t.initiatorUserId} <> ${t.participantUserId}
+        AND ${leader}
+        AND ${t.status} = 'pending'
       )
     )
   `;
@@ -93,8 +72,12 @@ export function crewParticipationRequestPolicies(t: {
       to: authenticatedRole,
       using: canAccess,
     }),
-    // The current user may initiate a public join request or, as leader, invite another user.
-    pgPolicy('Allow users to request public crews and leaders to invite users', { for: 'insert', to: authenticatedRole, withCheck: insertable }),
+    // Public self-joins start accepted, private self-requests start pending, and leader invitations start pending.
+    pgPolicy('Allow users to request crews and leaders to invite users', {
+      for: 'insert',
+      to: authenticatedRole,
+      withCheck: insertable,
+    }),
     // Leaders answer join requests, invitees answer invitations, and initiators may cancel pending requests.
     pgPolicy('Allow authorized users to resolve pending crew requests', {
       for: 'update',
