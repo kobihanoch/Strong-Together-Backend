@@ -1,6 +1,7 @@
 import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
+import { isActiveCrewMember, isCrewLeader } from '../policy-helpers';
 
 const uid = drizzleSql`"identity"."current_user_id" ()`;
 
@@ -21,18 +22,14 @@ export function postPolicies(t: { id: AnyPgColumn; authorUserId: AnyPgColumn }) 
     OR ${isGlobal}
     OR EXISTS (
       SELECT
-          1
+        1
       FROM
         "social"."crew_shared_post" csp
-        JOIN "social"."crew" c ON c."id" = csp."crew_id"
-        LEFT JOIN "social"."crew_membership" cm ON cm."crew_id" = c."id"
-        AND cm."user_id" = ${uid}
-        AND cm."status" = 'active'
       WHERE
         csp."post_id" = ${t.id}
         AND (
-          c."leader_id" = ${uid}
-          OR cm."id" IS NOT NULL
+          ${isCrewLeader(drizzleSql`csp."crew_id"`)}
+          OR ${isActiveCrewMember(drizzleSql`csp."crew_id"`)}
         )
     )
   `;

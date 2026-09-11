@@ -1,28 +1,28 @@
 import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
+import { isActiveCrewMember, isCrewLeader, isCrewPublic } from '../policy-helpers';
 
 const uid = drizzleSql`"identity"."current_user_id" ()`;
 export function crewMembershipPolicies(t: { crewId: AnyPgColumn; userId: AnyPgColumn }) {
   const self = drizzleSql`${t.userId} = ${uid}`;
-  const leader = drizzleSql`
-    EXISTS (
-      SELECT
-        1
-      FROM
-        "social"."crew" c
-      WHERE
-        c."id" = ${t.crewId}
-        AND c."leader_id" = ${uid}
-    )
-  `;
+  const leader = isCrewLeader(t.crewId);
   const allowed = drizzleSql`
     ${self}
     OR ${leader}
   `;
+  const canReadParticipants = drizzleSql`
+    ${isCrewPublic(t.crewId)}
+    OR ${leader}
+    OR ${isActiveCrewMember(t.crewId)}
+  `;
   return [
-    // A membership is visible to its user and to the leader of its crew.
-    pgPolicy('Allow members and crew leaders to read memberships', { for: 'select', to: authenticatedRole, using: allowed }),
+    // Participants are visible for public crews and to active members or leaders of private crews.
+    pgPolicy('Allow authorized users to read crew participants', {
+      for: 'select',
+      to: authenticatedRole,
+      using: canReadParticipants,
+    }),
     // Only the crew leader may create a membership record.
     pgPolicy('Allow crew leaders to create memberships', { for: 'insert', to: authenticatedRole, withCheck: leader }),
     // Only the crew leader may change membership state or role.

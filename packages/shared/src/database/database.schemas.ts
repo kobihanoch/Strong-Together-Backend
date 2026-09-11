@@ -17,6 +17,9 @@ import {
   workoutSet,
   workoutSplit,
   workoutSummary,
+  crew,
+  crewMembership,
+  post,
 } from '../../../../src/infrastructure/db/schema/drizzle/index';
 
 export const userDbSchema = createSelectSchema(user);
@@ -39,6 +42,9 @@ export const userReminderSettingDbSchema = createSelectSchema(userReminderSettin
 export const workoutScheduleDbSchema = createSelectSchema(workoutSchedule);
 export const exerciseTrackingSetExpandedViewDbSchema = createSelectSchema(exerciseTrackingSetExpandedView);
 export const prsViewDbSchema = createSelectSchema(prsView);
+export const crewDbSchema = createSelectSchema(crew);
+export const crewMembershipDbSchema = createSelectSchema(crewMembership);
+export const postDbSchema = createSelectSchema(post);
 
 export type UserRow = typeof user.$inferSelect;
 export type UserInsert = typeof user.$inferInsert;

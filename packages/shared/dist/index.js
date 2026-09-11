@@ -42,6 +42,7 @@ var trackingSchema = pgSchema("tracking");
 var remindersSchema = pgSchema("reminders");
 var schedulesSchema = pgSchema("schedules");
 var messagesSchema = pgSchema("messages");
+var socialSchema = pgSchema("social");
 var authProviders = identitySchema.enum("Auth Providers", [
   "apple",
   "google",
@@ -1528,6 +1529,855 @@ var exerciseToWorkoutSplitSetExpandedView = workoutSchema.view("v_exercise_to_wo
       ews.is_active
   `);
 
+// ../../src/infrastructure/db/schema/drizzle/social/crew/table.ts
+import { relations as relations15 } from "drizzle-orm";
+import { foreignKey as foreignKey13, primaryKey as primaryKey15, timestamp as timestamp14, uuid as uuid14 } from "drizzle-orm/pg-core";
+
+// ../../src/infrastructure/db/schema/drizzle/social/crew/policies.ts
+import { sql as drizzleSql26 } from "drizzle-orm";
+import { pgPolicy as pgPolicy15 } from "drizzle-orm/pg-core";
+var uid11 = drizzleSql26`"identity"."current_user_id" ()`;
+function crewPolicies(t) {
+  const leads = drizzleSql26`${t.leaderId} = ${uid11}`;
+  return [
+    // Authenticated users may discover crews; privacy controls participation rather than visibility of the crew record.
+    pgPolicy15("Allow authenticated users to read crews", {
+      for: "select",
+      to: authenticatedRole,
+      using: drizzleSql26`TRUE`
+    }),
+    // A user may create a crew only when they assign themselves as its leader.
+    pgPolicy15("Allow users to create crews they lead", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: leads
+    }),
+    // Only the current leader may update the crew, and the updated row must remain led by that user.
+    pgPolicy15("Allow crew leaders to update their crews", {
+      for: "update",
+      to: authenticatedRole,
+      using: leads,
+      withCheck: leads
+    }),
+    // Only the current leader may delete the crew.
+    pgPolicy15("Allow crew leaders to delete their crews", {
+      for: "delete",
+      to: authenticatedRole,
+      using: leads
+    })
+  ];
+}
+__name(crewPolicies, "crewPolicies");
+
+// ../../src/infrastructure/db/schema/drizzle/social/crew/table.ts
+var crewPrivacy = socialSchema.enum("Crew Privacy", [
+  "public",
+  "private"
+]);
+var crew = socialSchema.table("crew", {
+  id: uuid14("id").defaultRandom().notNull(),
+  leaderId: uuid14("leader_id").notNull(),
+  privacy: crewPrivacy("privacy").notNull(),
+  createdAt: timestamp14("created_at", {
+    withTimezone: true
+  }).defaultNow().notNull(),
+  updatedAt: timestamp14("updated_at", {
+    withTimezone: true
+  }).defaultNow().notNull()
+}, (t) => [
+  primaryKey15({
+    name: "crew_pkey",
+    columns: [
+      t.id
+    ]
+  }),
+  foreignKey13({
+    name: "crew_leader_id_fkey",
+    columns: [
+      t.leaderId
+    ],
+    foreignColumns: [
+      user.id
+    ]
+  }).onUpdate("cascade").onDelete("cascade"),
+  ...crewPolicies(t)
+]).enableRLS();
+var crewRelations = relations15(crew, ({ one }) => ({
+  leader: one(user, {
+    fields: [
+      crew.leaderId
+    ],
+    references: [
+      user.id
+    ]
+  })
+}));
+
+// ../../src/infrastructure/db/schema/drizzle/social/crew_membership/table.ts
+import { relations as relations16 } from "drizzle-orm";
+import { foreignKey as foreignKey14, index as index9, primaryKey as primaryKey16, timestamp as timestamp15, unique as unique7, uuid as uuid15 } from "drizzle-orm/pg-core";
+
+// ../../src/infrastructure/db/schema/drizzle/social/crew_membership/policies.ts
+import { sql as drizzleSql28 } from "drizzle-orm";
+import { pgPolicy as pgPolicy16 } from "drizzle-orm/pg-core";
+
+// ../../src/infrastructure/db/schema/drizzle/social/policy-helpers.ts
+import { sql as drizzleSql27 } from "drizzle-orm";
+var isCrewPublic = /* @__PURE__ */ __name((crewId) => drizzleSql27`"social"."is_crew_public" (${crewId})`, "isCrewPublic");
+var isCrewLeader = /* @__PURE__ */ __name((crewId) => drizzleSql27`"social"."is_crew_leader" (${crewId})`, "isCrewLeader");
+var isActiveCrewMember = /* @__PURE__ */ __name((crewId) => drizzleSql27`"social"."is_active_crew_member" (${crewId})`, "isActiveCrewMember");
+
+// ../../src/infrastructure/db/schema/drizzle/social/crew_membership/policies.ts
+var uid12 = drizzleSql28`"identity"."current_user_id" ()`;
+function crewMembershipPolicies(t) {
+  const self = drizzleSql28`${t.userId} = ${uid12}`;
+  const leader = isCrewLeader(t.crewId);
+  const allowed = drizzleSql28`
+    ${self}
+    OR ${leader}
+  `;
+  const canReadParticipants = drizzleSql28`
+    ${isCrewPublic(t.crewId)}
+    OR ${leader}
+    OR ${isActiveCrewMember(t.crewId)}
+  `;
+  return [
+    // Participants are visible for public crews and to active members or leaders of private crews.
+    pgPolicy16("Allow authorized users to read crew participants", {
+      for: "select",
+      to: authenticatedRole,
+      using: canReadParticipants
+    }),
+    // Only the crew leader may create a membership record.
+    pgPolicy16("Allow crew leaders to create memberships", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: leader
+    }),
+    // Only the crew leader may change membership state or role.
+    pgPolicy16("Allow crew leaders to update memberships", {
+      for: "update",
+      to: authenticatedRole,
+      using: leader,
+      withCheck: leader
+    }),
+    // A membership may be deleted by its user or the crew leader.
+    pgPolicy16("Allow members and crew leaders to delete memberships", {
+      for: "delete",
+      to: authenticatedRole,
+      using: allowed
+    })
+  ];
+}
+__name(crewMembershipPolicies, "crewMembershipPolicies");
+
+// ../../src/infrastructure/db/schema/drizzle/social/crew_membership/table.ts
+var crewMembershipStatus = socialSchema.enum("Crew Membership Status", [
+  "active",
+  "left",
+  "removed",
+  "banned"
+]);
+var crewMembershipRole = socialSchema.enum("Crew Membership Role", [
+  "leader",
+  "admin",
+  "member"
+]);
+var crewMembership = socialSchema.table("crew_membership", {
+  id: uuid15("id").defaultRandom().notNull(),
+  crewId: uuid15("crew_id").notNull(),
+  userId: uuid15("user_id").notNull(),
+  status: crewMembershipStatus("status").notNull().default("active"),
+  role: crewMembershipRole("role").notNull().default("member"),
+  joinedAt: timestamp15("joined_at", {
+    withTimezone: true
+  }).notNull(),
+  createdAt: timestamp15("created_at", {
+    withTimezone: true
+  }).defaultNow().notNull(),
+  updatedAt: timestamp15("updated_at", {
+    withTimezone: true
+  }).defaultNow().notNull()
+}, (t) => [
+  primaryKey16({
+    name: "crew_membership_pkey",
+    columns: [
+      t.id
+    ]
+  }),
+  foreignKey14({
+    name: "crew_membership_crew_id_fkey",
+    columns: [
+      t.crewId
+    ],
+    foreignColumns: [
+      crew.id
+    ]
+  }).onUpdate("cascade").onDelete("cascade"),
+  foreignKey14({
+    name: "crew_membership_user_id_fkey",
+    columns: [
+      t.userId
+    ],
+    foreignColumns: [
+      user.id
+    ]
+  }).onUpdate("cascade").onDelete("cascade"),
+  unique7("crew_membership_crew_user_unique").on(t.crewId, t.userId),
+  index9("crew_membership_user_id_idx").on(t.userId),
+  index9("crew_membership_crew_status_idx").on(t.crewId, t.status),
+  ...crewMembershipPolicies(t)
+]).enableRLS();
+var crewMembershipRelations = relations16(crewMembership, ({ one }) => ({
+  crew: one(crew, {
+    fields: [
+      crewMembership.crewId
+    ],
+    references: [
+      crew.id
+    ]
+  }),
+  user: one(user, {
+    fields: [
+      crewMembership.userId
+    ],
+    references: [
+      user.id
+    ]
+  })
+}));
+
+// ../../src/infrastructure/db/schema/drizzle/social/crew_participation_request/table.ts
+import { sql as drizzleSql30, relations as relations17 } from "drizzle-orm";
+import { foreignKey as foreignKey15, index as index10, primaryKey as primaryKey17, timestamp as timestamp16, uniqueIndex as uniqueIndex5, uuid as uuid16 } from "drizzle-orm/pg-core";
+
+// ../../src/infrastructure/db/schema/drizzle/social/crew_participation_request/policies.ts
+import { sql as drizzleSql29 } from "drizzle-orm";
+import { pgPolicy as pgPolicy17 } from "drizzle-orm/pg-core";
+var uid13 = drizzleSql29`"identity"."current_user_id" ()`;
+function crewParticipationRequestPolicies(t) {
+  const involved = drizzleSql29`
+    ${t.initiatorUserId} = ${uid13}
+    OR ${t.participantUserId} = ${uid13}
+  `;
+  const leader = isCrewLeader(t.crewId);
+  const validParticipants = drizzleSql29`
+    ${t.initiatorUserId} = ${t.participantUserId}
+    OR EXISTS (
+      SELECT
+        1
+      FROM
+        "social"."crew" c
+      WHERE
+        c."id" = ${t.crewId}
+        AND c."leader_id" = ${t.initiatorUserId}
+    )
+  `;
+  const canAccess = drizzleSql29`
+    ${involved}
+    OR ${leader}
+  `;
+  const publicCrew = isCrewPublic(t.crewId);
+  const insertable = drizzleSql29`
+    ${t.initiatorUserId} = ${uid13}
+    AND (
+      (
+        ${t.initiatorUserId} = ${t.participantUserId}
+        AND (
+          ((${publicCrew}) AND ${t.status} = 'accepted')
+          OR ((NOT (${publicCrew})) AND ${t.status} = 'pending')
+        )
+      )
+      OR (
+        ${t.initiatorUserId} <> ${t.participantUserId}
+        AND ${leader}
+        AND ${t.status} = 'pending'
+      )
+    )
+  `;
+  const isJoinRequest = drizzleSql29`(${t.initiatorUserId} = ${t.participantUserId})`;
+  const isInvitation = drizzleSql29`(${t.initiatorUserId} <> ${t.participantUserId})`;
+  const canRespond = drizzleSql29`(
+    ((${isJoinRequest}) AND (${leader}))
+    OR ((${isInvitation}) AND (${t.participantUserId} = ${uid13}))
+  )`;
+  const canCancel = drizzleSql29`(${t.initiatorUserId} = ${uid13})`;
+  const canUpdatePendingRequest = drizzleSql29`(
+    (${t.status} = 'pending')
+    AND ((${canRespond}) OR (${canCancel}))
+  )`;
+  const validUpdatedState = drizzleSql29`(
+    ((${t.status} = 'cancelled') AND (${canCancel}))
+    OR ((${t.status} IN ('accepted', 'declined')) AND (${canRespond}))
+  )`;
+  return [
+    // A request is visible to its initiator, participant, and the relevant crew leader.
+    pgPolicy17("Allow involved users and leaders to read crew requests", {
+      for: "select",
+      to: authenticatedRole,
+      using: canAccess
+    }),
+    // Public self-joins start accepted, private self-requests start pending, and leader invitations start pending.
+    pgPolicy17("Allow users to request crews and leaders to invite users", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: insertable
+    }),
+    // Leaders answer join requests, invitees answer invitations, and initiators may cancel pending requests.
+    pgPolicy17("Allow authorized users to resolve pending crew requests", {
+      for: "update",
+      to: authenticatedRole,
+      using: canUpdatePendingRequest,
+      withCheck: drizzleSql29`
+        (
+          (${validUpdatedState})
+          AND (${validParticipants})
+        )
+      `
+    }),
+    // Only the request initiator may delete the request.
+    pgPolicy17("Allow initiators to delete participation requests", {
+      for: "delete",
+      to: authenticatedRole,
+      using: drizzleSql29`${t.initiatorUserId} = ${uid13}`
+    })
+  ];
+}
+__name(crewParticipationRequestPolicies, "crewParticipationRequestPolicies");
+
+// ../../src/infrastructure/db/schema/drizzle/social/crew_participation_request/table.ts
+var crewParticipationRequestStatus = socialSchema.enum("Crew Participation Request Status", [
+  "pending",
+  "accepted",
+  "declined",
+  "cancelled",
+  "expired"
+]);
+var crewParticipationRequest = socialSchema.table("crew_participation_request", {
+  id: uuid16("id").defaultRandom().notNull(),
+  crewId: uuid16("crew_id").notNull(),
+  initiatorUserId: uuid16("initiator_user_id").notNull(),
+  participantUserId: uuid16("participant_user_id").notNull(),
+  status: crewParticipationRequestStatus("status").notNull().default("pending"),
+  createdAt: timestamp16("created_at", {
+    withTimezone: true
+  }).defaultNow().notNull(),
+  updatedAt: timestamp16("updated_at", {
+    withTimezone: true
+  }).defaultNow().notNull(),
+  respondedAt: timestamp16("responded_at", {
+    withTimezone: true
+  })
+}, (t) => [
+  primaryKey17({
+    name: "crew_participation_request_pkey",
+    columns: [
+      t.id
+    ]
+  }),
+  foreignKey15({
+    name: "crew_participation_request_crew_id_fkey",
+    columns: [
+      t.crewId
+    ],
+    foreignColumns: [
+      crew.id
+    ]
+  }).onUpdate("cascade").onDelete("cascade"),
+  foreignKey15({
+    name: "crew_participation_request_initiator_fkey",
+    columns: [
+      t.initiatorUserId
+    ],
+    foreignColumns: [
+      user.id
+    ]
+  }).onUpdate("cascade").onDelete("cascade"),
+  foreignKey15({
+    name: "crew_participation_request_participant_fkey",
+    columns: [
+      t.participantUserId
+    ],
+    foreignColumns: [
+      user.id
+    ]
+  }).onUpdate("cascade").onDelete("cascade"),
+  uniqueIndex5("crew_participation_request_pending_participant_unique").on(t.crewId, t.participantUserId).where(drizzleSql30`${t.status} = 'pending'`),
+  index10("crew_participation_request_crew_id_idx").on(t.crewId),
+  index10("crew_participation_request_participant_idx").on(t.participantUserId),
+  ...crewParticipationRequestPolicies(t)
+]).enableRLS();
+var crewParticipationRequestRelations = relations17(crewParticipationRequest, ({ one }) => ({
+  crew: one(crew, {
+    fields: [
+      crewParticipationRequest.crewId
+    ],
+    references: [
+      crew.id
+    ]
+  }),
+  initiator: one(user, {
+    fields: [
+      crewParticipationRequest.initiatorUserId
+    ],
+    references: [
+      user.id
+    ],
+    relationName: "crewRequestInitiator"
+  }),
+  participant: one(user, {
+    fields: [
+      crewParticipationRequest.participantUserId
+    ],
+    references: [
+      user.id
+    ],
+    relationName: "crewRequestParticipant"
+  })
+}));
+
+// ../../src/infrastructure/db/schema/drizzle/social/post/table.ts
+import { relations as relations18 } from "drizzle-orm";
+import { foreignKey as foreignKey16, index as index11, primaryKey as primaryKey18, text as text12, timestamp as timestamp17, uuid as uuid17 } from "drizzle-orm/pg-core";
+
+// ../../src/infrastructure/db/schema/drizzle/social/post/policies.ts
+import { sql as drizzleSql31 } from "drizzle-orm";
+import { pgPolicy as pgPolicy18 } from "drizzle-orm/pg-core";
+var uid14 = drizzleSql31`"identity"."current_user_id" ()`;
+function postPolicies(t) {
+  const owns = drizzleSql31`${t.authorUserId} = ${uid14}`;
+  const isGlobal = drizzleSql31`
+    NOT EXISTS (
+      SELECT
+        1
+      FROM
+        "social"."crew_shared_post" csp
+      WHERE
+        csp."post_id" = ${t.id}
+    )
+  `;
+  const visible = drizzleSql31`
+    ${owns}
+    OR ${isGlobal}
+    OR EXISTS (
+      SELECT
+        1
+      FROM
+        "social"."crew_shared_post" csp
+      WHERE
+        csp."post_id" = ${t.id}
+        AND (
+          ${isCrewLeader(drizzleSql31`csp."crew_id"`)}
+          OR ${isActiveCrewMember(drizzleSql31`csp."crew_id"`)}
+        )
+    )
+  `;
+  return [
+    // A post is visible to its author, globally when unplaced, or to active members and the leader of its crew.
+    pgPolicy18("Allow users to read global or accessible crew posts", {
+      for: "select",
+      to: authenticatedRole,
+      using: visible
+    }),
+    // A user may create only posts authored by themselves.
+    pgPolicy18("Allow users to create their own posts", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: owns
+    }),
+    // Only the author may update a post, and authorship must remain unchanged.
+    pgPolicy18("Allow authors to update their posts", {
+      for: "update",
+      to: authenticatedRole,
+      using: owns,
+      withCheck: owns
+    }),
+    // Only the author may delete a post.
+    pgPolicy18("Allow authors to delete their posts", {
+      for: "delete",
+      to: authenticatedRole,
+      using: owns
+    })
+  ];
+}
+__name(postPolicies, "postPolicies");
+
+// ../../src/infrastructure/db/schema/drizzle/social/post/table.ts
+var post = socialSchema.table("post", {
+  id: uuid17("id").defaultRandom().notNull(),
+  authorUserId: uuid17("author_user_id").notNull(),
+  content: text12("content").notNull(),
+  publishedAt: timestamp17("published_at", {
+    withTimezone: true
+  }).defaultNow().notNull(),
+  updateddAt: timestamp17("updated_at", {
+    withTimezone: true
+  }).defaultNow().notNull()
+}, (t) => [
+  primaryKey18({
+    name: "post_pkey",
+    columns: [
+      t.id
+    ]
+  }),
+  foreignKey16({
+    name: "post_author_user_id_fkey",
+    columns: [
+      t.authorUserId
+    ],
+    foreignColumns: [
+      user.id
+    ]
+  }).onUpdate("cascade").onDelete("cascade"),
+  index11("post_author_user_id_idx").on(t.authorUserId),
+  index11("post_published_at_idx").on(t.publishedAt),
+  ...postPolicies(t)
+]).enableRLS();
+var postRelations = relations18(post, ({ one }) => ({
+  author: one(user, {
+    fields: [
+      post.authorUserId
+    ],
+    references: [
+      user.id
+    ]
+  })
+}));
+
+// ../../src/infrastructure/db/schema/drizzle/social/crew_shared_post/table.ts
+import { relations as relations19 } from "drizzle-orm";
+import { foreignKey as foreignKey17, index as index12, primaryKey as primaryKey19, unique as unique8, uuid as uuid18 } from "drizzle-orm/pg-core";
+
+// ../../src/infrastructure/db/schema/drizzle/social/crew_shared_post/policies.ts
+import { sql as drizzleSql32 } from "drizzle-orm";
+import { pgPolicy as pgPolicy19 } from "drizzle-orm/pg-core";
+var uid15 = drizzleSql32`"identity"."current_user_id" ()`;
+function crewSharedPostPolicies(t) {
+  const member = drizzleSql32`
+    ${isCrewLeader(t.crewId)}
+    OR ${isActiveCrewMember(t.crewId)}
+  `;
+  const author = drizzleSql32`
+    EXISTS (
+      SELECT
+        1
+      FROM
+        "social"."post" p
+      WHERE
+        p."id" = ${t.postId}
+        AND p."author_user_id" = ${uid15}
+    )
+  `;
+  const allowed = drizzleSql32`
+    (${member})
+    AND (${author})
+  `;
+  return [
+    // Placement rows are visible so post RLS can reliably distinguish global posts from crew posts.
+    pgPolicy19("Allow authenticated users to read crew post placements", {
+      for: "select",
+      to: authenticatedRole,
+      using: drizzleSql32`TRUE`
+    }),
+    // The post author may share their post only into a crew in which they actively participate or lead.
+    pgPolicy19("Allow member authors to share posts with crews", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: allowed
+    }),
+    // The author may remove their post placement while they still have access to the crew.
+    pgPolicy19("Allow member authors to remove posts from crews", {
+      for: "delete",
+      to: authenticatedRole,
+      using: allowed
+    })
+  ];
+}
+__name(crewSharedPostPolicies, "crewSharedPostPolicies");
+
+// ../../src/infrastructure/db/schema/drizzle/social/crew_shared_post/table.ts
+var crewSharedPost = socialSchema.table("crew_shared_post", {
+  id: uuid18("id").defaultRandom().notNull(),
+  crewId: uuid18("crew_id").notNull(),
+  postId: uuid18("post_id").notNull()
+}, (t) => [
+  primaryKey19({
+    name: "crew_shared_post_pkey",
+    columns: [
+      t.id
+    ]
+  }),
+  foreignKey17({
+    name: "crew_shared_post_crew_id_fkey",
+    columns: [
+      t.crewId
+    ],
+    foreignColumns: [
+      crew.id
+    ]
+  }).onUpdate("cascade").onDelete("cascade"),
+  foreignKey17({
+    name: "crew_shared_post_post_id_fkey",
+    columns: [
+      t.postId
+    ],
+    foreignColumns: [
+      post.id
+    ]
+  }).onUpdate("cascade").onDelete("cascade"),
+  unique8("crew_shared_post_post_id_unique").on(t.postId),
+  index12("crew_shared_post_crew_id_idx").on(t.crewId),
+  ...crewSharedPostPolicies(t)
+]).enableRLS();
+var crewSharedPostRelations = relations19(crewSharedPost, ({ one }) => ({
+  crew: one(crew, {
+    fields: [
+      crewSharedPost.crewId
+    ],
+    references: [
+      crew.id
+    ]
+  }),
+  post: one(post, {
+    fields: [
+      crewSharedPost.postId
+    ],
+    references: [
+      post.id
+    ]
+  })
+}));
+
+// ../../src/infrastructure/db/schema/drizzle/social/comment/table.ts
+import { relations as relations20 } from "drizzle-orm";
+import { foreignKey as foreignKey18, index as index13, primaryKey as primaryKey20, text as text13, timestamp as timestamp18, uuid as uuid19 } from "drizzle-orm/pg-core";
+
+// ../../src/infrastructure/db/schema/drizzle/social/comment/policies.ts
+import { sql as drizzleSql33 } from "drizzle-orm";
+import { pgPolicy as pgPolicy20 } from "drizzle-orm/pg-core";
+var uid16 = drizzleSql33`"identity"."current_user_id" ()`;
+function commentPolicies(t) {
+  const owns = drizzleSql33`${t.userId} = ${uid16}`;
+  const visible = drizzleSql33`
+    EXISTS (
+      SELECT
+        1
+      FROM
+        "social"."post" p
+      WHERE
+        p."id" = ${t.postId}
+    )
+  `;
+  const allowed = drizzleSql33`
+    ${owns}
+    AND ${visible}
+  `;
+  return [
+    // A comment is visible whenever its parent post is visible to the current user.
+    pgPolicy20("Allow users to read comments on visible posts", {
+      for: "select",
+      to: authenticatedRole,
+      using: visible
+    }),
+    // A user may comment as themselves only on a post they can see.
+    pgPolicy20("Allow users to create their own comments on visible posts", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: allowed
+    }),
+    // Only the comment author may update it, and the resulting comment must remain attached to a visible post.
+    pgPolicy20("Allow authors to update their comments on visible posts", {
+      for: "update",
+      to: authenticatedRole,
+      using: owns,
+      withCheck: allowed
+    }),
+    // Only the comment author may delete it.
+    pgPolicy20("Allow authors to delete their comments", {
+      for: "delete",
+      to: authenticatedRole,
+      using: owns
+    })
+  ];
+}
+__name(commentPolicies, "commentPolicies");
+
+// ../../src/infrastructure/db/schema/drizzle/social/comment/table.ts
+var comment = socialSchema.table("comment", {
+  id: uuid19("id").defaultRandom().notNull(),
+  postId: uuid19("post_id").notNull(),
+  userId: uuid19("user_id").notNull(),
+  content: text13("content").notNull(),
+  createdAt: timestamp18("created_at", {
+    withTimezone: true
+  }).defaultNow().notNull(),
+  updatedAt: timestamp18("updated_at", {
+    withTimezone: true
+  }).defaultNow().notNull()
+}, (t) => [
+  primaryKey20({
+    name: "comment_pkey",
+    columns: [
+      t.id
+    ]
+  }),
+  foreignKey18({
+    name: "comment_post_id_fkey",
+    columns: [
+      t.postId
+    ],
+    foreignColumns: [
+      post.id
+    ]
+  }).onUpdate("cascade").onDelete("cascade"),
+  foreignKey18({
+    name: "comment_user_id_fkey",
+    columns: [
+      t.userId
+    ],
+    foreignColumns: [
+      user.id
+    ]
+  }).onUpdate("cascade").onDelete("cascade"),
+  index13("comment_post_created_at_idx").on(t.postId, t.createdAt),
+  index13("comment_user_id_idx").on(t.userId),
+  ...commentPolicies(t)
+]).enableRLS();
+var commentRelations = relations20(comment, ({ one }) => ({
+  post: one(post, {
+    fields: [
+      comment.postId
+    ],
+    references: [
+      post.id
+    ]
+  }),
+  user: one(user, {
+    fields: [
+      comment.userId
+    ],
+    references: [
+      user.id
+    ]
+  })
+}));
+
+// ../../src/infrastructure/db/schema/drizzle/social/reaction/table.ts
+import { relations as relations21 } from "drizzle-orm";
+import { foreignKey as foreignKey19, index as index14, primaryKey as primaryKey21, timestamp as timestamp19, unique as unique9, uuid as uuid20 } from "drizzle-orm/pg-core";
+
+// ../../src/infrastructure/db/schema/drizzle/social/reaction/policies.ts
+import { sql as drizzleSql34 } from "drizzle-orm";
+import { pgPolicy as pgPolicy21 } from "drizzle-orm/pg-core";
+var uid17 = drizzleSql34`"identity"."current_user_id" ()`;
+function reactionPolicies(t) {
+  const owns = drizzleSql34`${t.userId} = ${uid17}`;
+  const visible = drizzleSql34`
+    EXISTS (
+      SELECT
+        1
+      FROM
+        "social"."post" p
+      WHERE
+        p."id" = ${t.postId}
+    )
+  `;
+  const allowed = drizzleSql34`
+    ${owns}
+    AND ${visible}
+  `;
+  return [
+    // A reaction is visible whenever its parent post is visible to the current user.
+    pgPolicy21("Allow users to read reactions on visible posts", {
+      for: "select",
+      to: authenticatedRole,
+      using: visible
+    }),
+    // A user may react as themselves only to a post they can see.
+    pgPolicy21("Allow users to create their own reactions on visible posts", {
+      for: "insert",
+      to: authenticatedRole,
+      withCheck: allowed
+    }),
+    // Only the reacting user may update it, and the resulting reaction must remain attached to a visible post.
+    pgPolicy21("Allow users to update their reactions on visible posts", {
+      for: "update",
+      to: authenticatedRole,
+      using: owns,
+      withCheck: allowed
+    }),
+    // Only the reacting user may delete it.
+    pgPolicy21("Allow users to delete their own reactions", {
+      for: "delete",
+      to: authenticatedRole,
+      using: owns
+    })
+  ];
+}
+__name(reactionPolicies, "reactionPolicies");
+
+// ../../src/infrastructure/db/schema/drizzle/social/reaction/table.ts
+var reactionType = socialSchema.enum("Reaction Type", [
+  "like",
+  "fire up",
+  "muscle"
+]);
+var reaction = socialSchema.table("reaction", {
+  id: uuid20("id").defaultRandom().notNull(),
+  postId: uuid20("post_id").notNull(),
+  userId: uuid20("user_id").notNull(),
+  type: reactionType("type").notNull(),
+  reactedAt: timestamp19("reacted_at", {
+    withTimezone: true
+  }).defaultNow().notNull()
+}, (t) => [
+  primaryKey21({
+    name: "reaction_pkey",
+    columns: [
+      t.id
+    ]
+  }),
+  foreignKey19({
+    name: "reaction_post_id_fkey",
+    columns: [
+      t.postId
+    ],
+    foreignColumns: [
+      post.id
+    ]
+  }).onUpdate("cascade").onDelete("cascade"),
+  foreignKey19({
+    name: "reaction_user_id_fkey",
+    columns: [
+      t.userId
+    ],
+    foreignColumns: [
+      user.id
+    ]
+  }).onUpdate("cascade").onDelete("cascade"),
+  unique9("reaction_post_user_unique").on(t.postId, t.userId),
+  index14("reaction_user_id_idx").on(t.userId),
+  ...reactionPolicies(t)
+]).enableRLS();
+var reactionRelations = relations21(reaction, ({ one }) => ({
+  post: one(post, {
+    fields: [
+      reaction.postId
+    ],
+    references: [
+      post.id
+    ]
+  }),
+  user: one(user, {
+    fields: [
+      reaction.userId
+    ],
+    references: [
+      user.id
+    ]
+  })
+}));
+
 // src/database/database.schemas.ts
 var userDbSchema = createSelectSchema(user);
 var userInsertDbSchema = createInsertSchema(user);
@@ -1548,6 +2398,9 @@ var userReminderSettingDbSchema = createSelectSchema(userReminderSetting);
 var workoutScheduleDbSchema = createSelectSchema(workoutSchedule);
 var exerciseTrackingSetExpandedViewDbSchema = createSelectSchema(exerciseTrackingSetExpandedView);
 var prsViewDbSchema = createSelectSchema(prsView);
+var crewDbSchema = createSelectSchema(crew);
+var crewMembershipDbSchema = createSelectSchema(crewMembership);
+var postDbSchema = createSelectSchema(post);
 
 // src/modules/aerobics/aerobics.contracts.ts
 import { z as z3 } from "zod/v4";
@@ -2606,6 +3459,170 @@ var replaceWorkoutSchedulesContract = {
   request: replaceWorkoutSchedulesRequestSchema,
   response: z35.void()
 };
+
+// src/modules/social/crews/crews.contracts.ts
+import { z as z37 } from "zod/v4";
+
+// src/modules/social/crews/crews.dtos.ts
+import { z as z36 } from "zod/v4";
+var crewQueryDtoSchema = crewDbSchema.extend({
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema
+});
+var crewParticipantPreviewQueryDtoSchema = z36.object({
+  username: userDbSchema.shape.username,
+  fullName: userDbSchema.shape.name,
+  profilePicPath: userDbSchema.shape.profilePicPath
+});
+var discoverableCrewQueryDtoSchema = crewQueryDtoSchema.extend({
+  top5Participants: crewParticipantPreviewQueryDtoSchema.array()
+});
+var crewParticipantQueryDtoSchema = crewMembershipDbSchema.extend({
+  joinedAt: serializedDateSchema,
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema
+});
+var deletedCrewQueryDtoSchema = z36.object({
+  id: crewDbSchema.shape.id
+});
+
+// src/modules/social/crews/crews.contracts.ts
+var crewIdParamsSchema = z37.object({
+  id: crewDbSchema.shape.id
+});
+var listCrewsRequestSchema = z37.object({
+  query: z37.object({
+    limit: z37.coerce.number().int().min(1).max(100).default(20),
+    offset: z37.coerce.number().int().min(0).default(0)
+  })
+});
+var listCrewsResponseSchema = z37.object({
+  crews: z37.array(discoverableCrewQueryDtoSchema)
+});
+var listCrewsContract = {
+  request: listCrewsRequestSchema,
+  response: listCrewsResponseSchema
+};
+var listCrewParticipantsRequestSchema = z37.object({
+  params: z37.object({
+    crewId: crewDbSchema.shape.id
+  }),
+  query: z37.object({
+    limit: z37.coerce.number().int().min(1).max(100).default(20),
+    offset: z37.coerce.number().int().min(0).default(0)
+  })
+});
+var listCrewParticipantsResponseSchema = z37.object({
+  participants: z37.array(crewParticipantQueryDtoSchema)
+});
+var listCrewParticipantsContract = {
+  request: listCrewParticipantsRequestSchema,
+  response: listCrewParticipantsResponseSchema
+};
+var getCrewRequestSchema = z37.object({
+  params: crewIdParamsSchema
+});
+var getCrewResponseSchema = crewQueryDtoSchema;
+var getCrewContract = {
+  request: getCrewRequestSchema,
+  response: getCrewResponseSchema
+};
+var createCrewRequestSchema = z37.object({
+  body: z37.object({
+    privacy: crewDbSchema.shape.privacy
+  })
+});
+var createCrewResponseSchema = z37.void();
+var createCrewContract = {
+  request: createCrewRequestSchema,
+  response: createCrewResponseSchema
+};
+var updateCrewRequestSchema = z37.object({
+  params: crewIdParamsSchema,
+  body: z37.object({
+    privacy: crewDbSchema.shape.privacy
+  })
+});
+var updateCrewResponseSchema = z37.void();
+var updateCrewContract = {
+  request: updateCrewRequestSchema,
+  response: updateCrewResponseSchema
+};
+var deleteCrewRequestSchema = z37.object({
+  params: crewIdParamsSchema
+});
+var deleteCrewResponseSchema = z37.void();
+var deleteCrewContract = {
+  request: deleteCrewRequestSchema,
+  response: deleteCrewResponseSchema
+};
+
+// src/modules/social/posts/posts.contracts.ts
+import { z as z39 } from "zod/v4";
+
+// src/modules/social/posts/posts.dtos.ts
+import { z as z38 } from "zod/v4";
+var postQueryDtoSchema = postDbSchema.omit({
+  updateddAt: true
+}).extend({
+  publishedAt: serializedDateSchema,
+  updatedAt: serializedDateSchema,
+  crewId: z38.uuid().nullable()
+});
+var deletedPostQueryDtoSchema = z38.object({
+  id: postDbSchema.shape.id
+});
+
+// src/modules/social/posts/posts.contracts.ts
+var postIdParamsSchema = z39.object({
+  id: postDbSchema.shape.id
+});
+var listPostsRequestSchema = z39.object({});
+var listPostsResponseSchema = z39.object({
+  posts: z39.array(postQueryDtoSchema)
+});
+var listPostsContract = {
+  request: listPostsRequestSchema,
+  response: listPostsResponseSchema
+};
+var getPostRequestSchema = z39.object({
+  params: postIdParamsSchema
+});
+var getPostResponseSchema = postQueryDtoSchema;
+var getPostContract = {
+  request: getPostRequestSchema,
+  response: getPostResponseSchema
+};
+var createPostRequestSchema = z39.object({
+  body: z39.object({
+    content: postDbSchema.shape.content,
+    crewId: z39.uuid().optional()
+  })
+});
+var createPostResponseSchema = z39.void();
+var createPostContract = {
+  request: createPostRequestSchema,
+  response: createPostResponseSchema
+};
+var updatePostRequestSchema = z39.object({
+  params: postIdParamsSchema,
+  body: z39.object({
+    content: postDbSchema.shape.content
+  })
+});
+var updatePostResponseSchema = z39.void();
+var updatePostContract = {
+  request: updatePostRequestSchema,
+  response: updatePostResponseSchema
+};
+var deletePostRequestSchema = z39.object({
+  params: postIdParamsSchema
+});
+var deletePostResponseSchema = z39.void();
+var deletePostContract = {
+  request: deletePostRequestSchema,
+  response: deletePostResponseSchema
+};
 export {
   accessTokenPayloadDtoSchema,
   addAerobicInputQueryDtoSchema,
@@ -2624,8 +3641,14 @@ export {
   createAerobicEntryContract,
   createAerobicEntryRequestSchema,
   createAerobicEntryResponseSchema,
+  createCrewContract,
+  createCrewRequestSchema,
+  createCrewResponseSchema,
   createPasswordResetRequestContract,
   createPasswordResetRequestSchema,
+  createPostContract,
+  createPostRequestSchema,
+  createPostResponseSchema,
   createUserContract,
   createUserRequestSchema,
   createUserResponseSchema,
@@ -2644,14 +3667,28 @@ export {
   createdUserQueryDtoSchema,
   createdUserRawQueryDtoSchema,
   createdUserRowQueryDtoSchema,
+  crewDbSchema,
+  crewMembershipDbSchema,
+  crewParticipantPreviewQueryDtoSchema,
+  crewParticipantQueryDtoSchema,
+  crewQueryDtoSchema,
   deleteAerobicEntryContract,
   deleteAerobicEntryRequestSchema,
+  deleteCrewContract,
+  deleteCrewRequestSchema,
+  deleteCrewResponseSchema,
   deleteMessageContract,
   deleteMessageRequestSchema,
   deleteMessageResponseSchema,
+  deletePostContract,
+  deletePostRequestSchema,
+  deletePostResponseSchema,
   deleteProfilePictureContract,
   deleteProfilePictureRequestSchema,
+  deletedCrewQueryDtoSchema,
   deletedMessageQueryDtoSchema,
+  deletedPostQueryDtoSchema,
+  discoverableCrewQueryDtoSchema,
   emailVerifyPayloadDtoSchema,
   enqueueAnalyzeVideoParamsDtoSchema,
   exerciseAssignmentIdQueryDtoSchema,
@@ -2681,6 +3718,9 @@ export {
   getAerobicHistoryRequestSchema,
   getAerobicHistoryResponseSchema,
   getAllExercisesExerciseQueryDtoSchema,
+  getCrewContract,
+  getCrewRequestSchema,
+  getCrewResponseSchema,
   getCurrentUserContract,
   getCurrentUserResponseSchema,
   getExerciseHistoryContract,
@@ -2689,6 +3729,9 @@ export {
   getPersonalRecordsContract,
   getPersonalRecordsRequestSchema,
   getPersonalRecordsResponseSchema,
+  getPostContract,
+  getPostRequestSchema,
+  getPostResponseSchema,
   getReminderSettingsContract,
   getReminderSettingsResponseSchema,
   getVerificationStatusContract,
@@ -2707,11 +3750,20 @@ export {
   googleOAuthRequestSchema,
   googleTokenVerificationResultDtoSchema,
   lastLoginQueryDtoSchema,
+  listCrewParticipantsContract,
+  listCrewParticipantsRequestSchema,
+  listCrewParticipantsResponseSchema,
+  listCrewsContract,
+  listCrewsRequestSchema,
+  listCrewsResponseSchema,
   listExercisesContract,
   listExercisesResponseSchema,
   listMessagesContract,
   listMessagesRequestSchema,
   listMessagesResponseSchema,
+  listPostsContract,
+  listPostsRequestSchema,
+  listPostsResponseSchema,
   loginContract,
   loginRequestSchema,
   loginResponseSchema,
@@ -2735,6 +3787,8 @@ export {
   personalRecordQueryDtoSchema,
   personalRecordsQueryDtoSchema,
   personalRecordsRowQueryDtoSchema,
+  postDbSchema,
+  postQueryDtoSchema,
   proceedLoginResponseSchema,
   prsViewDbSchema,
   refreshTokenContract,
@@ -2763,9 +3817,15 @@ export {
   trackingSetDbSchema,
   updateAerobicEntryContract,
   updateAerobicEntryRequestSchema,
+  updateCrewContract,
+  updateCrewRequestSchema,
+  updateCrewResponseSchema,
   updateCurrentUserContract,
   updateCurrentUserRequestSchema,
   updateCurrentUserResponseSchema,
+  updatePostContract,
+  updatePostRequestSchema,
+  updatePostResponseSchema,
   updateReminderTimeZoneContract,
   updateReminderTimeZoneRequestSchema,
   updateUnverifiedAccountEmailContract,

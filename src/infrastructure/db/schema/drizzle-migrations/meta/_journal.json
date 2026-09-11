@@ -211,6 +211,34 @@
       "when": 1789065863013,
       "tag": "0029_add_social_entities",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1789112349201,
+      "tag": "0030_list_discoverable_crews",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1789114047129,
+      "tag": "0031_add_crew_authorization_functions",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1789115439970,
+      "tag": "0032_use_crew_authorization_functions_in_social_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1789115937550,
+      "tag": "0033_allow_private_join_requests_and_public_auto_acceptance",
+      "breakpoints": true
     }
   ]
 }
