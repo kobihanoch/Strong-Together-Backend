@@ -11,6 +11,7 @@ import {
   getUserLastLoginByUsername,
   getUserSessionStateByUsername,
   setUserPushTokenByUsername,
+  setUserVerificationByUsername,
 } from '../../../common/tests/helpers/db';
 import { authHeaders, logoutHeaders, refreshHeaders } from '../../../common/tests/helpers/auth';
 import { authConfig } from '../../../config/auth.config';
@@ -72,7 +73,7 @@ describe('SessionController', () => {
       const afterLogin = await getUserSessionStateByUsername(user.username);
       expect(afterLogin?.tokenVersion).toBe((beforeLogin?.tokenVersion ?? 0) + 1);
       expect(afterLogin?.lastLogin).toBeInstanceOf(Date);
-      expect(tokenVersion(response.body.accessToken)).toBe(afterLogin?.tokenVersion);
+      expect(jwt.decode(response.body.accessToken)).not.toHaveProperty('tokenVer');
       expect(tokenVersion(response.body.refreshToken)).toBe(afterLogin?.tokenVersion);
 
       const { lastLogin, databaseNow } = await getUserLastLoginByUsername(user.username);
@@ -154,12 +155,29 @@ describe('SessionController', () => {
 
       const afterRefresh = await getUserSessionStateByUsername(user.username);
       expect(afterRefresh?.tokenVersion).toBe((beforeRefresh?.tokenVersion ?? 0) + 1);
-      expect(tokenVersion(refreshResponse.body.accessToken)).toBe(afterRefresh?.tokenVersion);
+      expect(jwt.decode(refreshResponse.body.accessToken)).not.toHaveProperty('tokenVer');
       expect(tokenVersion(refreshResponse.body.refreshToken)).toBe(afterRefresh?.tokenVersion);
 
       const staleRefreshResponse = await request(app.getHttpServer()).post('/api/auth/refresh').set(refreshHeaders(loginResponse.body.refreshToken));
       expect(staleRefreshResponse.status).toBe(401);
       expect(staleRefreshResponse.body.message).toBe('New login required');
+    });
+
+    it('rejects refresh when the account is no longer verified', async () => {
+      const user = await createSessionUser();
+      const loginResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+        identifier: user.username,
+        password: user.password,
+      });
+
+      await setUserVerificationByUsername(user.username, false);
+
+      const refreshResponse = await request(app.getHttpServer())
+        .post('/api/auth/refresh')
+        .set(refreshHeaders(loginResponse.body.refreshToken));
+
+      expect(refreshResponse.status).toBe(401);
+      expect(refreshResponse.body.message).toBe('A verification email is pending');
     });
 
     it('rejects missing or invalid refresh tokens with 401', async () => {
@@ -174,7 +192,7 @@ describe('SessionController', () => {
   });
 
   describe('POST /api/auth/logout', () => {
-    it('logs out, clears push token, and invalidates the old access token', async () => {
+    it('logs out, clears push token, and leaves the short-lived access token valid', async () => {
       const user = await createSessionUser();
       await setUserPushTokenByUsername(user.username, 'ExponentPushToken[session-test]');
 
@@ -198,8 +216,7 @@ describe('SessionController', () => {
       expect(afterLogout?.tokenVersion).toBe((beforeLogout?.tokenVersion ?? 0) + 1);
 
       const protectedResponse = await request(app.getHttpServer()).get('/api/users/me').set(authHeaders(loginResponse.body.accessToken));
-      expect(protectedResponse.status).toBe(401);
-      expect(protectedResponse.body.message).toBe('New login required');
+      expect(protectedResponse.status).toBe(200);
     });
 
     it('logs out without an access token when the refresh token is valid', async () => {

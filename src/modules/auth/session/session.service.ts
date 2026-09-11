@@ -1,11 +1,10 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
-import type { AccessTokenPayloadDto, LoginResponse, RefreshTokenResponse } from '@strong-together/shared';
+import type { LoginResponse, RefreshTokenPayloadDto, RefreshTokenResponse } from '@strong-together/shared';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { signTokens } from '../../../common/authentication/authentication.utils';
 import { appConfig } from '../../../config/app.config';
-import { authConfig } from '../../../config/auth.config';
-import type { AppLogger } from '../../../infrastructure/logger';
 import { DBService } from '../../../infrastructure/db/db.service';
+import type { AppLogger } from '../../../infrastructure/logger';
 import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
 import { SessionQueries } from './session.queries';
 import { decodeRefreshToken, decodeRefreshTokenForLogout } from './session.utils';
@@ -39,9 +38,7 @@ export class SessionService {
     const isMatch = await bcrypt.compare(password, user.passwordHash!);
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
 
-    if (!user.isVerified) {
-      throw new UnauthorizedException('You need to verify you account');
-    }
+    if (!user.isVerified) throw new UnauthorizedException('A verification email is pending');
 
     // Credentials are now verified. Continue the same request transaction as
     // this authenticated user before changing session state or sending messages.
@@ -58,35 +55,7 @@ export class SessionService {
     const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(user.id);
     const [{ tokenVersion, userData }] = rowsUserData;
 
-    const cnfClaim = jkt
-      ? {
-          cnf: {
-            jkt: jkt.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, ''),
-          },
-        }
-      : {};
-
-    const accessToken = jwt.sign(
-      {
-        id: userData.id,
-        role: userData.role,
-        tokenVer: tokenVersion,
-        ...cnfClaim,
-      },
-      authConfig.jwtAccessSecret,
-      { expiresIn: '5m' },
-    );
-
-    const refreshToken = jwt.sign(
-      {
-        id: userData.id,
-        role: userData.role,
-        tokenVer: tokenVersion,
-        ...cnfClaim,
-      },
-      authConfig.jwtRefreshSecret,
-      { expiresIn: '14d' },
-    );
+    const { accessToken, refreshToken } = signTokens(userData.id, userData.role, tokenVersion, '5m', '14d', jkt);
 
     return {
       message: 'Login successful',
@@ -104,7 +73,7 @@ export class SessionService {
   async logoutUserData(refreshToken: string | null | undefined, dpopJkt?: string): Promise<void> {
     if (!refreshToken) throw new UnauthorizedException('No refresh token provided');
 
-    const decodedRefresh = decodeRefreshTokenForLogout(refreshToken) as AccessTokenPayloadDto | null;
+    const decodedRefresh = decodeRefreshTokenForLogout(refreshToken) as RefreshTokenPayloadDto | null;
     if (!decodedRefresh) throw new UnauthorizedException('Invalid refresh token');
 
     if (appConfig.dpopEnabled) {
@@ -132,7 +101,7 @@ export class SessionService {
 
     if (!refreshToken) throw new UnauthorizedException('No refresh token provided');
 
-    const decoded = decodeRefreshToken(refreshToken ?? null) as AccessTokenPayloadDto | null;
+    const decoded = decodeRefreshToken(refreshToken ?? null) as RefreshTokenPayloadDto | null;
     if (!decoded) throw new UnauthorizedException('Invalid or expired refresh token');
 
     if (appConfig.dpopEnabled) {
@@ -145,37 +114,17 @@ export class SessionService {
     await this.dbService.promoteCurrentRlsTxToAuthenticated(decoded.id);
     const [user = null] = await this.sessionQueries.queryBumpTokenVersionAndGetSelfDataCAS(decoded.id, decoded.tokenVer);
     if (!user) throw new UnauthorizedException('New login required');
+    if (!user.userData.isVerified) throw new UnauthorizedException('A verification email is pending');
 
     const { tokenVersion, userData } = user;
 
-    const cnfClaim = dpopJkt
-      ? {
-          cnf: {
-            jkt: dpopJkt.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, ''),
-          },
-        }
-      : {};
-
-    const newAccess = jwt.sign(
-      {
-        id: userData.id,
-        role: userData.role,
-        tokenVer: tokenVersion,
-        ...cnfClaim,
-      },
-      authConfig.jwtAccessSecret,
-      { expiresIn: '5m' },
-    );
-
-    const newRefresh = jwt.sign(
-      {
-        id: userData.id,
-        role: userData.role,
-        tokenVer: tokenVersion,
-        ...cnfClaim,
-      },
-      authConfig.jwtRefreshSecret,
-      { expiresIn: '14d' },
+    const { accessToken: newAccess, refreshToken: newRefresh } = signTokens(
+      userData.id,
+      userData.role,
+      tokenVersion,
+      '5m',
+      '14d',
+      dpopJkt ?? undefined,
     );
 
     return {

@@ -6,10 +6,14 @@ import { userDataQueryDtoSchema } from '../../user/update/update.dtos';
 export const accessTokenPayloadDtoSchema = z.object({
   id: userDbSchema.shape.id,
   role: userDbSchema.shape.role,
-  tokenVer: userDbSchema.shape.tokenVersion,
   cnf: z.object({ jkt: z.string() }).optional(),
   iat: z.number().optional(),
   exp: z.number().optional(),
+});
+
+/** Claims carried by an issued refresh token. */
+export const refreshTokenPayloadDtoSchema = accessTokenPayloadDtoSchema.extend({
+  tokenVer: userDbSchema.shape.tokenVersion,
 });
 
 /** User data returned after atomically incrementing the token version. */
@@ -27,6 +31,7 @@ export const tokenVersionQueryDtoSchema = z.object({
 export const lastLoginQueryDtoSchema = z.object({ lastLogin: z.date().nullable() });
 
 export type AccessTokenPayloadDto = z.infer<typeof accessTokenPayloadDtoSchema>;
+export type RefreshTokenPayloadDto = z.infer<typeof refreshTokenPayloadDtoSchema>;
 export type UserAfterBumpQueryDto = z.infer<typeof userAfterBumpQueryDtoSchema>;
 export type TokenVersionQueryDto = z.infer<typeof tokenVersionQueryDtoSchema>;
 export type LastLoginQueryDto = z.infer<typeof lastLoginQueryDtoSchema>;

@@ -195,6 +195,7 @@ __export(index_exports, {
   proceedLoginResponseSchema: () => proceedLoginResponseSchema,
   prsViewDbSchema: () => prsViewDbSchema,
   refreshTokenContract: () => refreshTokenContract,
+  refreshTokenPayloadDtoSchema: () => refreshTokenPayloadDtoSchema,
   refreshTokenResponseSchema: () => refreshTokenResponseSchema,
   replaceProfilePictureContract: () => replaceProfilePictureContract,
   replaceProfilePictureResponseSchema: () => replaceProfilePictureResponseSchema,
@@ -2865,12 +2866,14 @@ var changeEmailTokenPayloadDtoSchema = import_v47.z.object({
 var accessTokenPayloadDtoSchema = import_v48.z.object({
   id: userDbSchema.shape.id,
   role: userDbSchema.shape.role,
-  tokenVer: userDbSchema.shape.tokenVersion,
   cnf: import_v48.z.object({
     jkt: import_v48.z.string()
   }).optional(),
   iat: import_v48.z.number().optional(),
   exp: import_v48.z.number().optional()
+});
+var refreshTokenPayloadDtoSchema = accessTokenPayloadDtoSchema.extend({
+  tokenVer: userDbSchema.shape.tokenVersion
 });
 var userAfterBumpQueryDtoSchema = import_v48.z.object({
   tokenVersion: userDbSchema.shape.tokenVersion,
@@ -4103,6 +4106,7 @@ var deletePostContract = {
   proceedLoginResponseSchema,
   prsViewDbSchema,
   refreshTokenContract,
+  refreshTokenPayloadDtoSchema,
   refreshTokenResponseSchema,
   replaceProfilePictureContract,
   replaceProfilePictureResponseSchema,

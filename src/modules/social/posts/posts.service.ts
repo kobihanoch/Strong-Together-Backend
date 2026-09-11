@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { CreatePostBody, ListCrewPostsResponse, ListVisiblePostsResponse, UpdatePostBody } from '@strong-together/shared';
 import { PostsQueries } from './posts.queries';
 
@@ -38,6 +38,9 @@ export class PostsService {
    * @returns A promise that resolves after creation.
    */
   async createPostData(userId: string, body: CreatePostBody): Promise<void> {
+    if (body.visibility === 'crews_only' && body.crewIds.length === 0) {
+      throw new BadRequestException('Crew-only post must target at least one crew');
+    }
     const [created] = await this.queries.queryCreatePost(userId, body.content, body.visibility, body.crewIds);
     if (!created) throw new ForbiddenException('You cannot publish to every requested crew');
   }

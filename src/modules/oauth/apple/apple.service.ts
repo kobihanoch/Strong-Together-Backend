@@ -1,14 +1,12 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { AppleOAuthBody, OAuthLoginResponse } from '@strong-together/shared';
-import jwt from 'jsonwebtoken';
-import { authConfig } from '../../../config/auth.config';
-import type { AppLogger } from '../../../infrastructure/logger';
+import { signTokens } from '../../../common/authentication/authentication.utils';
 import { DBService } from '../../../infrastructure/db/db.service';
+import type { AppLogger } from '../../../infrastructure/logger';
 import { SessionQueries } from '../../auth/session/session.queries';
-import { buildCnfClaim } from '../oauth.utils';
+import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
 import { AppleQueries } from './apple.queries';
 import { verifyAppleIdToken } from './apple.utils';
-import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
 
 @Injectable()
 export class AppleService {
@@ -26,11 +24,7 @@ export class AppleService {
    * @param requestLogger - The request-scoped logger.
    * @returns The create or sign in with apple result.
    */
-  async createOrSignInWithAppleData(
-    body: AppleOAuthBody,
-    jkt: string,
-    requestLogger: AppLogger,
-  ): Promise<OAuthLoginResponse> {
+  async createOrSignInWithAppleData(body: AppleOAuthBody, jkt: string, requestLogger: AppLogger): Promise<OAuthLoginResponse> {
     const { idToken, rawNonce, name, email } = body || {};
 
     if (!idToken || typeof idToken !== 'string') {
@@ -71,13 +65,7 @@ export class AppleService {
         const username = resolvedEmail?.split('@')[0].toLowerCase() || null;
         const candidateFullName = normalizedName;
 
-        const newUserId = await this.appleQueries.queryCreateUserWithAppleInfo(
-          username,
-          resolvedEmail,
-          candidateFullName,
-          appleSub,
-          resolvedEmail,
-        );
+        const newUserId = await this.appleQueries.queryCreateUserWithAppleInfo(username, resolvedEmail, candidateFullName, appleSub, resolvedEmail);
         userId = newUserId;
       }
     }
@@ -87,6 +75,7 @@ export class AppleService {
     await this.dbService.promoteCurrentRlsTxToAuthenticated(finalUserId);
     const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(finalUserId);
     const [{ tokenVersion, userData }] = rowsUserData;
+    if (!userData.isVerified) throw new UnauthorizedException('A verification email is pending');
 
     if (hasNeverLoggedIn) {
       try {
@@ -99,28 +88,7 @@ export class AppleService {
       }
     }
 
-    const cnfClaim = buildCnfClaim(jkt);
-    const accessToken = jwt.sign(
-      {
-        id: userData.id,
-        role: userData.role,
-        tokenVer: tokenVersion,
-        ...cnfClaim,
-      },
-      authConfig.jwtAccessSecret,
-      { expiresIn: '5m' },
-    );
-
-    const refreshToken = jwt.sign(
-      {
-        id: userData.id,
-        role: userData.role,
-        tokenVer: tokenVersion,
-        ...cnfClaim,
-      },
-      authConfig.jwtRefreshSecret,
-      { expiresIn: '14d' },
-    );
+    const { accessToken, refreshToken } = signTokens(userData.id, userData.role, tokenVersion, '5m', '14d', jkt);
 
     return {
       message: 'Login successful',

@@ -57,11 +57,3 @@ export const validateJkt = (req: Request): string => {
 
   return jkt as string;
 };
-
-export const buildCnfClaim = (jkt: string) => {
-  return {
-    cnf: {
-      jkt: jkt.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, ''),
-    },
-  };
-};

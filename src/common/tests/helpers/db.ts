@@ -362,6 +362,16 @@ export async function setUserPushTokenByUsername(username: string, pushToken: st
   `;
 }
 
+export async function setUserVerificationByUsername(username: string, isVerified: boolean) {
+  await sql`
+    UPDATE identity.user
+    SET
+      is_verified = ${isVerified}
+    WHERE
+      username = ${username}
+  `;
+}
+
 export async function deleteUserByUsername(username: string) {
   await sql`
     DELETE FROM identity.user

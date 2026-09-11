@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
-import { AuthGuardsModule } from '../../common/guards/auth/auth-guards.module';
+import { AuthenticationGuard } from '../../common/guards/authentication.guard';
+import { AuthorizationGuard } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { CrewsController } from './crews/crews.controller';
@@ -10,9 +11,17 @@ import { PostsQueries } from './posts/posts.queries';
 import { PostsService } from './posts/posts.service';
 
 @Module({
-  imports: [AuthGuardsModule],
   controllers: [CrewsController, PostsController],
-  providers: [CrewsQueries, CrewsService, PostsQueries, PostsService, DpopGuard, RlsTxInterceptor],
+  providers: [
+    CrewsQueries,
+    CrewsService,
+    PostsQueries,
+    PostsService,
+    DpopGuard,
+    AuthenticationGuard,
+    AuthorizationGuard,
+    RlsTxInterceptor,
+  ],
   exports: [CrewsService, PostsService],
 })
 export class SocialModule {}
