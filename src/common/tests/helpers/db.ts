@@ -466,3 +466,50 @@ export async function insertCrewMembership(crewId: string, userId: string, role:
       )
   `;
 }
+
+/** Returns the newest post authored by a test user for direct persistence assertions. */
+export async function getPostByAuthorId(authorUserId: string) {
+  const [row] = await sql<{ id: string; visibility: 'crews_only' | 'public'; content: string }[]>`
+    SELECT
+      id,
+      visibility,
+      content
+    FROM
+      social.post
+    WHERE
+      author_user_id = ${authorUserId}::UUID
+    ORDER BY
+      published_at DESC
+    LIMIT
+      1
+  `;
+
+  return row ?? null;
+}
+
+/** Counts the crews in which a post is shared. */
+export async function getPostPlacementCount(postId: string) {
+  const [row] = await sql<{ count: string }[]>`
+    SELECT
+      COUNT(*)::TEXT AS count
+    FROM
+      social.crew_shared_post
+    WHERE
+      post_id = ${postId}::UUID
+  `;
+
+  return Number(row?.count ?? '0');
+}
+
+/** Changes a membership state directly for authorization boundary tests. */
+export async function setCrewMembershipStatus(crewId: string, userId: string, status: 'active' | 'left' | 'removed' | 'banned') {
+  await sql`
+    UPDATE social.crew_membership
+    SET
+      status = ${status},
+      updated_at = NOW()
+    WHERE
+      crew_id = ${crewId}::UUID
+      AND user_id = ${userId}::UUID
+  `;
+}

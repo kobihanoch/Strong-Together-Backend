@@ -3,52 +3,31 @@ import type { DeletedPostQueryDto, PostQueryDto } from '@strong-together/shared'
 import type postgres from 'postgres';
 import { SQL } from '../../../infrastructure/db/db.tokens';
 
-/**
- * Executes post persistence operations inside the request's RLS transaction.
- * Post visibility is derived from the post row and its optional crew placement.
- */
+/** Executes post persistence operations inside the request's RLS transaction. */
 @Injectable()
 export class PostsQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
   /**
-   * Retrieves a page of global and crew posts visible to the authenticated user.
+   * Retrieves each post visible to the authenticated user exactly once.
    *
-   * @param userId - The UUID used to authorize crew-post visibility.
    * @param limit - The maximum number of posts to return.
    * @param offset - The number of visible posts to skip.
    * @returns Visible post rows ordered from newest to oldest.
    */
-  queryVisiblePosts(userId: string, limit: number, offset: number): Promise<PostQueryDto[]> {
+  queryVisiblePosts(limit: number, offset: number): Promise<PostQueryDto[]> {
     return this.sql<PostQueryDto[]>`
       SELECT
         p.id,
         p.author_user_id AS "authorUserId",
         p.content,
+        p.visibility,
         p.published_at AS "publishedAt",
-        p.updated_at AS "updatedAt",
-        csp.crew_id AS "crewId"
+        p.updated_at AS "updatedAt"
       FROM
         social.post p
-        LEFT JOIN social.crew_shared_post csp ON csp.post_id = p.id
       WHERE
-        p.author_user_id = ${userId}::UUID
-        OR csp.id IS NULL
-        OR EXISTS (
-          SELECT
-            1
-          FROM
-            social.crew c
-            LEFT JOIN social.crew_membership cm ON cm.crew_id = c.id
-            AND cm.user_id = ${userId}::UUID
-            AND cm.status = 'active'
-          WHERE
-            c.id = csp.crew_id
-            AND (
-              c.leader_id = ${userId}::UUID
-              OR cm.id IS NOT NULL
-            )
-        )
+        social.can_view_post (p.id)
       ORDER BY
         p.published_at DESC,
         p.id DESC
@@ -60,42 +39,28 @@ export class PostsQueries {
   }
 
   /**
-   * Retrieves a page of posts from a crew led by or joined by the caller.
+   * Retrieves a page of posts from a crew the caller can access.
    *
    * @param crewId - The UUID of the crew whose posts are requested.
-   * @param userId - The UUID used to authorize access to the crew feed.
    * @param limit - The maximum number of posts to return.
    * @param offset - The number of matching crew posts to skip.
    * @returns Crew post rows ordered from newest to oldest.
    */
-  queryCrewPosts(crewId: string, userId: string, limit: number, offset: number): Promise<PostQueryDto[]> {
+  queryCrewPosts(crewId: string, limit: number, offset: number): Promise<PostQueryDto[]> {
     return this.sql<PostQueryDto[]>`
       SELECT
         p.id,
         p.author_user_id AS "authorUserId",
         p.content,
+        p.visibility,
         p.published_at AS "publishedAt",
-        p.updated_at AS "updatedAt",
-        csp.crew_id AS "crewId"
+        p.updated_at AS "updatedAt"
       FROM
         social.post p
         INNER JOIN social.crew_shared_post csp ON csp.post_id = p.id
-        INNER JOIN social.crew c ON c.id = csp.crew_id
       WHERE
         csp.crew_id = ${crewId}::UUID
-        AND (
-          c.leader_id = ${userId}::UUID
-          OR EXISTS (
-            SELECT
-              1
-            FROM
-              social.crew_membership cm
-            WHERE
-              cm.crew_id = c.id
-              AND cm.user_id = ${userId}::UUID
-              AND cm.status = 'active'
-          )
-        )
+        AND social.can_access_crew (${crewId}::UUID)
       ORDER BY
         p.published_at DESC,
         p.id DESC
@@ -107,152 +72,88 @@ export class PostsQueries {
   }
 
   /**
-   * Retrieves one post and its optional crew placement when visible through RLS.
-   *
-   * @param id - The UUID of the post to retrieve.
-   * @param userId - The UUID used to authorize post visibility.
-   * @returns An array containing the matching post, or an empty array.
-   */
-  queryPost(id: string, userId: string): Promise<PostQueryDto[]> {
-    return this.sql<PostQueryDto[]>`
-      SELECT
-        p.id,
-        p.author_user_id AS "authorUserId",
-        p.content,
-        p.published_at AS "publishedAt",
-        p.updated_at AS "updatedAt",
-        csp.crew_id AS "crewId"
-      FROM
-        social.post p
-        LEFT JOIN social.crew_shared_post csp ON csp.post_id = p.id
-      WHERE
-        p.id = ${id}::UUID
-        AND (
-          p.author_user_id = ${userId}::UUID
-          OR csp.id IS NULL
-          OR EXISTS (
-            SELECT
-              1
-            FROM
-              social.crew c
-              LEFT JOIN social.crew_membership cm ON cm.crew_id = c.id
-              AND cm.user_id = ${userId}::UUID
-              AND cm.status = 'active'
-            WHERE
-              c.id = csp.crew_id
-              AND (
-                c.leader_id = ${userId}::UUID
-                OR cm.id IS NOT NULL
-              )
-          )
-        )
-    `;
-  }
-
-  /**
-   * Creates a post and optionally places it in a crew.
-   * Omitting the crew UUID leaves the post without a placement, which represents
-   * a global post in the social model.
+   * Creates a post and places it in every requested crew.
    *
    * @param userId - The UUID of the authenticated post author.
    * @param content - The textual content of the post.
-   * @param crewId - The optional UUID of the crew receiving the post.
-   * @returns An array containing the newly created post and its placement.
+   * @param visibility - Whether everyone or only eligible crew participants can see the post.
+   * @param crewIds - The UUIDs of the crews receiving the post.
+   * @returns The new post, or an empty array when any placement is unauthorized.
    */
-  async queryCreatePost(userId: string, content: string, crewId?: string): Promise<PostQueryDto[]> {
-    const [p] = await this.sql<PostQueryDto[]>`
+  async queryCreatePost(userId: string, content: string, visibility: 'crews_only' | 'public', crewIds: string[]): Promise<PostQueryDto[]> {
+    const [post] = await this.sql<PostQueryDto[]>`
       INSERT INTO
-        social.post (author_user_id, content)
+        social.post (author_user_id, content, visibility)
       VALUES
         (
           ${userId}::UUID,
-          ${content}
+          ${content},
+          ${visibility}::social."Post Visibility"
         )
       RETURNING
         id,
         author_user_id AS "authorUserId",
         content,
+        visibility,
         published_at AS "publishedAt",
-        updated_at AS "updatedAt",
-        NULL::UUID AS "crewId"
+        updated_at AS "updatedAt"
     `;
-    if (crewId) {
-      const placement = await this.sql`
+
+    if (crewIds.length > 0) {
+      const placements = await this.sql`
         INSERT INTO
           social.crew_shared_post (crew_id, post_id)
         SELECT
-          ${crewId}::UUID,
-          ${p.id}::UUID
+          requested_crew.id,
+          ${post.id}::UUID
+        FROM
+          UNNEST(${crewIds}::UUID[]) AS requested_crew (id)
         WHERE
-          EXISTS (
-            SELECT
-              1
-            FROM
-              social.crew c
-              LEFT JOIN social.crew_membership cm ON cm.crew_id = c.id
-              AND cm.user_id = ${userId}::UUID
-              AND cm.status = 'active'
-            WHERE
-              c.id = ${crewId}::UUID
-              AND (
-                c.leader_id = ${userId}::UUID
-                OR cm.id IS NOT NULL
-              )
-          )
+          social.can_publish_to_crew (requested_crew.id)
         RETURNING
           id
       `;
 
-      if (!placement.length) return [];
+      // The surrounding request transaction rolls back when any requested crew is unauthorized.
+      if (placements.length !== crewIds.length) return [];
     }
 
-    return [{ ...p, crewId: crewId ?? null }];
+    return [post];
   }
 
   /**
-   * Updates the content of a post permitted by RLS.
-   * The post is queried again after the update so its crew placement is included
-   * in the returned DTO.
+   * Updates content only when the current user authored the post.
    *
    * @param id - The UUID of the post to update.
-   * @param userId - The UUID that must match the post author.
    * @param content - The replacement textual content.
-   * @returns An array containing the updated post, or an empty array.
+   * @returns The updated UUID, or an empty array when no post was authorized.
    */
-  async queryUpdatePost(id: string, userId: string, content: string): Promise<PostQueryDto[]> {
-    const rows = await this.sql<PostQueryDto[]>`
+  queryUpdatePost(id: string, content: string): Promise<DeletedPostQueryDto[]> {
+    return this.sql<DeletedPostQueryDto[]>`
       UPDATE social.post
       SET
         content = ${content},
         updated_at = NOW()
       WHERE
         id = ${id}::UUID
-        AND author_user_id = ${userId}::UUID
+        AND social.is_post_author (id)
       RETURNING
-        id,
-        author_user_id AS "authorUserId",
-        content,
-        published_at AS "publishedAt",
-        updated_at AS "updatedAt",
-        NULL::UUID AS "crewId"
+        id
     `;
-    if (!rows.length) return rows;
-    return this.queryPost(rows[0].id, userId);
   }
 
   /**
-   * Deletes a post permitted by the current RLS context.
+   * Deletes a post only when the current user authored it.
    *
    * @param id - The UUID of the post to delete.
-   * @param userId - The UUID that must match the post author.
-   * @returns The deleted UUID when a row was removed, or an empty array.
+   * @returns The deleted UUID, or an empty array when no post was authorized.
    */
-  queryDeletePost(id: string, userId: string): Promise<DeletedPostQueryDto[]> {
+  queryDeletePost(id: string): Promise<DeletedPostQueryDto[]> {
     return this.sql<DeletedPostQueryDto[]>`
       DELETE FROM social.post
       WHERE
         id = ${id}::UUID
-        AND author_user_id = ${userId}::UUID
+        AND social.is_post_author (id)
       RETURNING
         id
     `;

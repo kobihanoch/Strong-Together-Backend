@@ -1,7 +1,7 @@
 import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
-import { isCrewLeader, isCrewPublic } from '../policy-helpers';
+import { canManageCrew, isCrewPublic } from '../policy-helpers';
 
 const uid = drizzleSql`"identity"."current_user_id" ()`;
 
@@ -15,7 +15,7 @@ export function crewParticipationRequestPolicies(t: {
     ${t.initiatorUserId} = ${uid}
     OR ${t.participantUserId} = ${uid}
   `;
-  const leader = isCrewLeader(t.crewId);
+  const canManage = canManageCrew(t.crewId);
   const validParticipants = drizzleSql /* SQL */ `
     ${t.initiatorUserId} = ${t.participantUserId}
     OR EXISTS (
@@ -30,7 +30,7 @@ export function crewParticipationRequestPolicies(t: {
   `;
   const canAccess = drizzleSql /* SQL */ `
     ${involved}
-    OR ${leader}
+    OR ${canManage}
   `;
   const publicCrew = isCrewPublic(t.crewId);
   const insertable = drizzleSql /* SQL */ `
@@ -45,7 +45,7 @@ export function crewParticipationRequestPolicies(t: {
       )
       OR (
         ${t.initiatorUserId} <> ${t.participantUserId}
-        AND ${leader}
+        AND ${canManage}
         AND ${t.status} = 'pending'
       )
     )
@@ -53,7 +53,7 @@ export function crewParticipationRequestPolicies(t: {
   const isJoinRequest = drizzleSql /* SQL */ `(${t.initiatorUserId} = ${t.participantUserId})`;
   const isInvitation = drizzleSql /* SQL */ `(${t.initiatorUserId} <> ${t.participantUserId})`;
   const canRespond = drizzleSql /* SQL */ `(
-    ((${isJoinRequest}) AND (${leader}))
+    ((${isJoinRequest}) AND (${canManage}))
     OR ((${isInvitation}) AND (${t.participantUserId} = ${uid}))
   )`;
   const canCancel = drizzleSql /* SQL */ `(${t.initiatorUserId} = ${uid})`;

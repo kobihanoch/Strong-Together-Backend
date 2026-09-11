@@ -20,13 +20,12 @@ export class CrewsService {
    * Lists active participants when the crew is public or the caller belongs to it.
    *
    * @param crewId - The UUID of the crew whose participants are requested.
-   * @param userId - The authenticated caller's UUID.
    * @param limit - The maximum number of participants to return.
    * @param offset - The number of participants to skip.
    * @returns A contract object containing the authorized participant rows.
    */
-  async listCrewParticipantsData(crewId: string, userId: string, limit: number, offset: number): Promise<ListCrewParticipantsResponse> {
-    const participants = await this.queries.queryCrewParticipants(crewId, userId, limit, offset);
+  async listCrewParticipantsData(crewId: string, limit: number, offset: number): Promise<ListCrewParticipantsResponse> {
+    const participants = await this.queries.queryCrewParticipants(crewId, limit, offset);
     return { participants };
   }
   /**
@@ -59,8 +58,8 @@ export class CrewsService {
    * @returns A promise that resolves after the update.
    * @throws NotFoundException when no permitted crew is updated.
    */
-  async updateCrewData(id: string, userId: string, body: UpdateCrewBody): Promise<void> {
-    const [row] = await this.queries.queryUpdateCrew(id, userId, body.privacy);
+  async updateCrewData(id: string, body: UpdateCrewBody): Promise<void> {
+    const [row] = await this.queries.queryUpdateCrew(id, body.privacy);
     if (!row) throw new NotFoundException('Crew not found');
   }
   /**
@@ -70,7 +69,7 @@ export class CrewsService {
    * @returns A promise that resolves after deletion.
    * @throws NotFoundException when no permitted crew is deleted.
    */
-  async deleteCrewData(id: string, userId: string): Promise<void> {
-    if (!(await this.queries.queryDeleteCrew(id, userId)).length) throw new NotFoundException('Crew not found');
+  async deleteCrewData(id: string): Promise<void> {
+    if (!(await this.queries.queryDeleteCrew(id)).length) throw new NotFoundException('Crew not found');
   }
 }

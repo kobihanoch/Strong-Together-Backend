@@ -3,6 +3,9 @@ import { foreignKey, index, primaryKey, text, timestamp, uuid } from 'drizzle-or
 import { user } from '../../identity/user/table';
 import { socialSchema } from '../../schemas';
 import { postPolicies } from './policies';
+
+export const postVisibility = socialSchema.enum('Post Visibility', ['crews_only', 'public']);
+
 export const post = socialSchema
   .table(
     'post',
@@ -10,6 +13,7 @@ export const post = socialSchema
       id: uuid('id').defaultRandom().notNull(),
       authorUserId: uuid('author_user_id').notNull(),
       content: text('content').notNull(),
+      visibility: postVisibility('visibility').notNull(),
       publishedAt: timestamp('published_at', { withTimezone: true }).defaultNow().notNull(),
       updateddAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     },

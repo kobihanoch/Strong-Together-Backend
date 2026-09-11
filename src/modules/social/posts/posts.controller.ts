@@ -3,8 +3,6 @@ import type {
   CreatePostBody,
   CreatePostResponse,
   DeletePostParams,
-  GetPostParams,
-  GetPostResponse,
   ListCrewPostsParams,
   ListCrewPostsQuery,
   ListCrewPostsResponse,
@@ -17,7 +15,6 @@ import type {
 import {
   createPostRequestSchema,
   deletePostRequestSchema,
-  getPostRequestSchema,
   listCrewPostsRequestSchema,
   listVisiblePostsRequestSchema,
   updatePostRequestSchema,
@@ -38,13 +35,13 @@ import { PostsService } from './posts.service';
  * Routes:
  * - GET /api/social/posts
  * - GET /api/social/posts/crew/:crewId
- * - GET /api/social/posts/:id
  * - POST /api/social/posts
  * - PATCH /api/social/posts/:id
  * - DELETE /api/social/posts/:id
  *
  * @remarks Every request passes DPoP, authentication, authorization, and the
- * RLS transaction interceptor. Posts without a crew placement are global.
+ * RLS transaction interceptor. Visibility determines public access independently
+ * from the optional crew placement.
  * Access: User
  */
 @Controller('api/social/posts')
@@ -61,16 +58,16 @@ export class PostsController {
    * Access: User
    *
    * @param data - The validated pagination query.
-   * @param user - The authenticated user supplied by the authentication guard.
    * @returns Global posts and crew posts the caller is authorized to view.
    */
   @Get()
   async getVisiblePosts(
     @RequestData(new ValidateRequestPipe(listVisiblePostsRequestSchema))
-    data: { query: ListVisiblePostsQuery },
-    @CurrentUser() user: AuthenticatedUser,
+    data: {
+      query: ListVisiblePostsQuery;
+    },
   ): Promise<ListVisiblePostsResponse> {
-    return this.service.getVisiblePostsData(user.id, data.query.limit, data.query.offset);
+    return this.service.getVisiblePostsData(data.query.limit, data.query.offset);
   }
 
   /**
@@ -80,7 +77,6 @@ export class PostsController {
    * Access: User
    *
    * @param data - The validated crew identifier and pagination query.
-   * @param user - The authenticated user supplied by the authentication guard.
    * @returns Posts shared in the requested crew, ordered newest first.
    */
   @Get('crew/:crewId')
@@ -90,34 +86,12 @@ export class PostsController {
       params: ListCrewPostsParams;
       query: ListCrewPostsQuery;
     },
-    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListCrewPostsResponse> {
-    return this.service.getCrewPostsData(data.params.crewId, user.id, data.query.limit, data.query.offset);
+    return this.service.getCrewPostsData(data.params.crewId, data.query.limit, data.query.offset);
   }
 
   /**
-   * Gets a visible post by its UUID.
-   *
-   * @remarks Route: GET /api/social/posts/:id
-   * Access: User
-   *
-   * @param data - The validated route parameters.
-   * @returns The requested post and its optional crew placement.
-   * @throws NotFoundException when no visible post has the supplied UUID.
-   */
-  @Get(':id')
-  async get(
-    @RequestData(new ValidateRequestPipe(getPostRequestSchema))
-    data: {
-      params: GetPostParams;
-    },
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<GetPostResponse> {
-    return this.service.getPostData(data.params.id, user.id);
-  }
-
-  /**
-   * Creates either a global post or a post placed in a crew.
+   * Creates a public or crew-only post and optionally shares it with multiple crews.
    *
    * @remarks Route: POST /api/social/posts
    * Access: User
@@ -154,9 +128,8 @@ export class PostsController {
       params: UpdatePostParams;
       body: UpdatePostBody;
     },
-    @CurrentUser() user: AuthenticatedUser,
   ): Promise<UpdatePostResponse> {
-    await this.service.updatePostData(data.params.id, user.id, data.body);
+    await this.service.updatePostData(data.params.id, data.body);
   }
 
   /**
@@ -176,8 +149,7 @@ export class PostsController {
     data: {
       params: DeletePostParams;
     },
-    @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.service.deletePostData(data.params.id, user.id);
+    await this.service.deletePostData(data.params.id);
   }
 }

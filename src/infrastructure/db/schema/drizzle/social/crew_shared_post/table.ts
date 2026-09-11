@@ -7,7 +7,11 @@ import { crewSharedPostPolicies } from './policies';
 export const crewSharedPost = socialSchema
   .table(
     'crew_shared_post',
-    { id: uuid('id').defaultRandom().notNull(), crewId: uuid('crew_id').notNull(), postId: uuid('post_id').notNull() },
+    {
+      id: uuid('id').defaultRandom().notNull(),
+      crewId: uuid('crew_id').notNull(),
+      postId: uuid('post_id').notNull(),
+    },
     (t) => [
       primaryKey({ name: 'crew_shared_post_pkey', columns: [t.id] }),
       foreignKey({ name: 'crew_shared_post_crew_id_fkey', columns: [t.crewId], foreignColumns: [crew.id] })
@@ -16,7 +20,7 @@ export const crewSharedPost = socialSchema
       foreignKey({ name: 'crew_shared_post_post_id_fkey', columns: [t.postId], foreignColumns: [post.id] })
         .onUpdate('cascade')
         .onDelete('cascade'),
-      unique('crew_shared_post_post_id_unique').on(t.postId),
+      unique('crew_shared_post_post_id_crew_id_unique').on(t.postId, t.crewId),
       index('crew_shared_post_crew_id_idx').on(t.crewId),
       ...crewSharedPostPolicies(t),
     ],
