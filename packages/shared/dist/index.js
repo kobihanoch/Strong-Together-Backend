@@ -3577,13 +3577,32 @@ var deletedPostQueryDtoSchema = z38.object({
 var postIdParamsSchema = z39.object({
   id: postDbSchema.shape.id
 });
-var listPostsRequestSchema = z39.object({});
-var listPostsResponseSchema = z39.object({
+var postPaginationSchema = z39.object({
+  limit: z39.coerce.number().int().min(1).max(100).default(20),
+  offset: z39.coerce.number().int().min(0).default(0)
+});
+var listVisiblePostsRequestSchema = z39.object({
+  query: postPaginationSchema
+});
+var listVisiblePostsResponseSchema = z39.object({
   posts: z39.array(postQueryDtoSchema)
 });
-var listPostsContract = {
-  request: listPostsRequestSchema,
-  response: listPostsResponseSchema
+var listVisiblePostsContract = {
+  request: listVisiblePostsRequestSchema,
+  response: listVisiblePostsResponseSchema
+};
+var listCrewPostsRequestSchema = z39.object({
+  params: z39.object({
+    crewId: z39.uuid()
+  }),
+  query: postPaginationSchema
+});
+var listCrewPostsResponseSchema = z39.object({
+  posts: z39.array(postQueryDtoSchema)
+});
+var listCrewPostsContract = {
+  request: listCrewPostsRequestSchema,
+  response: listCrewPostsResponseSchema
 };
 var getPostRequestSchema = z39.object({
   params: postIdParamsSchema
@@ -3753,6 +3772,9 @@ export {
   listCrewParticipantsContract,
   listCrewParticipantsRequestSchema,
   listCrewParticipantsResponseSchema,
+  listCrewPostsContract,
+  listCrewPostsRequestSchema,
+  listCrewPostsResponseSchema,
   listCrewsContract,
   listCrewsRequestSchema,
   listCrewsResponseSchema,
@@ -3761,9 +3783,9 @@ export {
   listMessagesContract,
   listMessagesRequestSchema,
   listMessagesResponseSchema,
-  listPostsContract,
-  listPostsRequestSchema,
-  listPostsResponseSchema,
+  listVisiblePostsContract,
+  listVisiblePostsRequestSchema,
+  listVisiblePostsResponseSchema,
   loginContract,
   loginRequestSchema,
   loginResponseSchema,

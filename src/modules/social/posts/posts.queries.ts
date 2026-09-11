@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { DeletedPostQueryDto, PostQueryDto } from '@strong-together/shared';
 import type postgres from 'postgres';
-import { SQL } from '../../infrastructure/db/db.tokens';
+import { SQL } from '../../../infrastructure/db/db.tokens';
 
 /**
  * Executes post persistence operations inside the request's RLS transaction.
@@ -12,12 +12,14 @@ export class PostsQueries {
   constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
 
   /**
-   * Retrieves all global and crew posts visible to the authenticated user.
+   * Retrieves a page of global and crew posts visible to the authenticated user.
    *
    * @param userId - The UUID used to authorize crew-post visibility.
+   * @param limit - The maximum number of posts to return.
+   * @param offset - The number of visible posts to skip.
    * @returns Visible post rows ordered from newest to oldest.
    */
-  queryPosts(userId: string): Promise<PostQueryDto[]> {
+  queryVisiblePosts(userId: string, limit: number, offset: number): Promise<PostQueryDto[]> {
     return this.sql<PostQueryDto[]>`
       SELECT
         p.id,
@@ -48,7 +50,59 @@ export class PostsQueries {
             )
         )
       ORDER BY
-        p.published_at DESC
+        p.published_at DESC,
+        p.id DESC
+      LIMIT
+        ${limit}
+      OFFSET
+        ${offset}
+    `;
+  }
+
+  /**
+   * Retrieves a page of posts from a crew led by or joined by the caller.
+   *
+   * @param crewId - The UUID of the crew whose posts are requested.
+   * @param userId - The UUID used to authorize access to the crew feed.
+   * @param limit - The maximum number of posts to return.
+   * @param offset - The number of matching crew posts to skip.
+   * @returns Crew post rows ordered from newest to oldest.
+   */
+  queryCrewPosts(crewId: string, userId: string, limit: number, offset: number): Promise<PostQueryDto[]> {
+    return this.sql<PostQueryDto[]>`
+      SELECT
+        p.id,
+        p.author_user_id AS "authorUserId",
+        p.content,
+        p.published_at AS "publishedAt",
+        p.updated_at AS "updatedAt",
+        csp.crew_id AS "crewId"
+      FROM
+        social.post p
+        INNER JOIN social.crew_shared_post csp ON csp.post_id = p.id
+        INNER JOIN social.crew c ON c.id = csp.crew_id
+      WHERE
+        csp.crew_id = ${crewId}::UUID
+        AND (
+          c.leader_id = ${userId}::UUID
+          OR EXISTS (
+            SELECT
+              1
+            FROM
+              social.crew_membership cm
+            WHERE
+              cm.crew_id = c.id
+              AND cm.user_id = ${userId}::UUID
+              AND cm.status = 'active'
+          )
+        )
+      ORDER BY
+        p.published_at DESC,
+        p.id DESC
+      LIMIT
+        ${limit}
+      OFFSET
+        ${offset}
     `;
   }
 

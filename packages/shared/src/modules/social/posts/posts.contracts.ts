@@ -1,23 +1,60 @@
 import { z } from 'zod/v4';
-import type { BodyOf, Contract, ParamsOf, ResponseOf } from '../../../common';
+import type { BodyOf, Contract, ParamsOf, QueryOf, ResponseOf } from '../../../common';
 import { postDbSchema } from '../../../database';
 import { postQueryDtoSchema } from './posts.dtos';
 
 const postIdParamsSchema = z.object({ id: postDbSchema.shape.id });
 
-// List posts
+const postPaginationSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+// List visible posts
 
 /** Validates a request to list posts visible to the authenticated user. */
-export const listPostsRequestSchema = z.object({});
+export const listVisiblePostsRequestSchema = z.object({ query: postPaginationSchema });
 
 /** Validates the collection returned by the list-posts endpoint. */
-export const listPostsResponseSchema = z.object({ posts: z.array(postQueryDtoSchema) });
+export const listVisiblePostsResponseSchema = z.object({ posts: z.array(postQueryDtoSchema) });
 
 /** Defines the request and response contract for listing visible posts. */
-export const listPostsContract = { request: listPostsRequestSchema, response: listPostsResponseSchema } satisfies Contract;
+export const listVisiblePostsContract = {
+  request: listVisiblePostsRequestSchema,
+  response: listVisiblePostsResponseSchema,
+} satisfies Contract;
+
+/** Pagination query accepted by the list-visible-posts endpoint. */
+export type ListVisiblePostsQuery = QueryOf<typeof listVisiblePostsContract>;
 
 /** Response containing global posts and visible crew posts. */
-export type ListPostsResponse = ResponseOf<typeof listPostsContract>;
+export type ListVisiblePostsResponse = ResponseOf<typeof listVisiblePostsContract>;
+
+// List crew posts
+
+/** Validates the crew identifier and pagination used to list a crew's posts. */
+export const listCrewPostsRequestSchema = z.object({
+  params: z.object({ crewId: z.uuid() }),
+  query: postPaginationSchema,
+});
+
+/** Validates the collection returned by the list-crew-posts endpoint. */
+export const listCrewPostsResponseSchema = z.object({ posts: z.array(postQueryDtoSchema) });
+
+/** Defines the request and response contract for listing posts from one crew. */
+export const listCrewPostsContract = {
+  request: listCrewPostsRequestSchema,
+  response: listCrewPostsResponseSchema,
+} satisfies Contract;
+
+/** Route parameters accepted by the list-crew-posts endpoint. */
+export type ListCrewPostsParams = ParamsOf<typeof listCrewPostsContract>;
+
+/** Pagination query accepted by the list-crew-posts endpoint. */
+export type ListCrewPostsQuery = QueryOf<typeof listCrewPostsContract>;
+
+/** Response containing posts from the requested accessible crew. */
+export type ListCrewPostsResponse = ResponseOf<typeof listCrewPostsContract>;
 
 // Get post
 

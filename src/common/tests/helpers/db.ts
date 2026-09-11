@@ -191,9 +191,17 @@ export async function messageExists(messageId: string) {
 
 export async function insertSystemMessage(receiverId: string, subject = 'Test message', message = 'Test body') {
   const [row] = await sql<{ id: string }[]>`
-    INSERT INTO messages.message (sender_id, receiver_id, subject, msg)
-    VALUES (${appConfig.systemUserId}::UUID, ${receiverId}::UUID, ${subject}, ${message})
-    RETURNING id
+    INSERT INTO
+      messages.message (sender_id, receiver_id, subject, msg)
+    VALUES
+      (
+        ${appConfig.systemUserId}::UUID,
+        ${receiverId}::UUID,
+        ${subject},
+        ${message}
+      )
+    RETURNING
+      id
   `;
   return row.id;
 }
@@ -408,4 +416,53 @@ export async function hasReminderSettings(userId: string) {
   `;
 
   return Number(row?.count ?? '0') > 0;
+}
+
+export async function getCrewByLeaderId(leaderId: string) {
+  const [row] = await sql<{ id: string; leader_id: string; privacy: 'public' | 'private' }[]>`
+    SELECT
+      id,
+      leader_id,
+      privacy
+    FROM
+      social.crew
+    WHERE
+      leader_id = ${leaderId}::UUID
+    ORDER BY
+      created_at DESC
+    LIMIT
+      1
+  `;
+
+  return row ?? null;
+}
+
+export async function crewExists(crewId: string) {
+  const [row] = await sql<{ exists: boolean }[]>`
+    SELECT
+      EXISTS (
+        SELECT
+          1
+        FROM
+          social.crew
+        WHERE
+          id = ${crewId}::UUID
+      ) AS EXISTS
+  `;
+
+  return row?.exists ?? false;
+}
+
+export async function insertCrewMembership(crewId: string, userId: string, role: 'leader' | 'admin' | 'member' = 'member') {
+  await sql`
+    INSERT INTO
+      social.crew_membership (crew_id, user_id, role, joined_at)
+    VALUES
+      (
+        ${crewId}::UUID,
+        ${userId}::UUID,
+        ${role},
+        NOW()
+      )
+  `;
 }
