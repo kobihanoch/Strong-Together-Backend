@@ -1,21 +1,13 @@
 import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
+import { canViewPost } from '../policy-helpers';
 
 const uid = drizzleSql`"identity"."current_user_id" ()`;
 
 export function reactionPolicies(t: { postId: AnyPgColumn; userId: AnyPgColumn }) {
   const owns = drizzleSql`${t.userId} = ${uid}`;
-  const visible = drizzleSql`
-    EXISTS (
-      SELECT
-        1
-      FROM
-        "social"."post" p
-      WHERE
-        p."id" = ${t.postId}
-    )
-  `;
+  const visible = canViewPost(t.postId);
   const allowed = drizzleSql`
     ${owns}
     AND ${visible}

@@ -27,7 +27,7 @@ export const listVisiblePostsContract = {
 /** Pagination query accepted by the list-visible-posts endpoint. */
 export type ListVisiblePostsQuery = QueryOf<typeof listVisiblePostsContract>;
 
-/** Response containing global posts and visible crew posts. */
+/** Response containing each visible post once, regardless of its crew placements. */
 export type ListVisiblePostsResponse = ResponseOf<typeof listVisiblePostsContract>;
 
 // List crew posts
@@ -56,27 +56,30 @@ export type ListCrewPostsQuery = QueryOf<typeof listCrewPostsContract>;
 /** Response containing posts from the requested accessible crew. */
 export type ListCrewPostsResponse = ResponseOf<typeof listCrewPostsContract>;
 
-// Get post
-
-/** Validates the route parameters used to retrieve one post. */
-export const getPostRequestSchema = z.object({ params: postIdParamsSchema });
-
-/** Validates the post returned by the get-post endpoint. */
-export const getPostResponseSchema = postQueryDtoSchema;
-
-/** Defines the request and response contract for retrieving one post. */
-export const getPostContract = { request: getPostRequestSchema, response: getPostResponseSchema } satisfies Contract;
-
-/** Route parameters accepted by the get-post endpoint. */
-export type GetPostParams = ParamsOf<typeof getPostContract>;
-
-/** Response returned after retrieving one post. */
-export type GetPostResponse = ResponseOf<typeof getPostContract>;
-
 // Create post
 
-/** Validates the body used to create a global or crew-shared post. */
-export const createPostRequestSchema = z.object({ body: z.object({ content: postDbSchema.shape.content, crewId: z.uuid().optional() }) });
+const createPostBodySchema = z
+  .object({
+    content: postDbSchema.shape.content,
+    visibility: postDbSchema.shape.visibility,
+    crewIds: z.array(z.uuid()).default([]),
+  })
+  .superRefine((body, context) => {
+    // Crew-only posts require at least one audience crew.
+    if (body.visibility === 'crews_only' && body.crewIds.length === 0) {
+      context.addIssue({ code: 'custom', path: ['crewIds'], message: 'Crew-only posts require at least one crew' });
+    }
+
+    // Duplicate placements are rejected before reaching the database constraint.
+    if (new Set(body.crewIds).size !== body.crewIds.length) {
+      context.addIssue({ code: 'custom', path: ['crewIds'], message: 'Crew IDs must be unique' });
+    }
+  });
+
+/** Validates a public or crew-only post and all requested crew placements. */
+export const createPostRequestSchema = z.object({
+  body: createPostBodySchema,
+});
 
 /** Validates the empty response returned after post creation. */
 export const createPostResponseSchema = z.void();

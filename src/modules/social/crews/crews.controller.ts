@@ -75,14 +75,13 @@ export class CrewsController {
 
   /**
    * Lists active participants of an accessible crew.
-   * Public crews are accessible to every authenticated user. Private crews are
-   * accessible only to their leader or an active member.
+   * Public crews expose participants to every authenticated user. Private crews
+   * expose participants only to active members.
    *
    * @remarks Route: GET /api/social/crews/:crewId/participants
    * Access: User
    *
    * @param data - The validated crew identifier and pagination query.
-   * @param user - The authenticated user used for explicit authorization.
    * @returns The paginated active participant collection.
    */
   @Get(':crewId/participants')
@@ -92,9 +91,8 @@ export class CrewsController {
       params: ListCrewParticipantsParams;
       query: ListCrewParticipantsQuery;
     },
-    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListCrewParticipantsResponse> {
-    return this.service.listCrewParticipantsData(data.params.crewId, user.id, data.query.limit, data.query.offset);
+    return this.service.listCrewParticipantsData(data.params.crewId, data.query.limit, data.query.offset);
   }
 
   /**
@@ -155,9 +153,8 @@ export class CrewsController {
       params: UpdateCrewParams;
       body: UpdateCrewBody;
     },
-    @CurrentUser() user: AuthenticatedUser,
   ): Promise<UpdateCrewResponse> {
-    await this.service.updateCrewData(data.params.id, user.id, data.body);
+    await this.service.updateCrewData(data.params.id, data.body);
   }
 
   /**
@@ -177,8 +174,7 @@ export class CrewsController {
     data: {
       params: DeleteCrewParams;
     },
-    @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.service.deleteCrewData(data.params.id, user.id);
+    await this.service.deleteCrewData(data.params.id);
   }
 }

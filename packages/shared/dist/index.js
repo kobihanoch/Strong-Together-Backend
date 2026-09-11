@@ -1534,17 +1534,30 @@ import { relations as relations15 } from "drizzle-orm";
 import { foreignKey as foreignKey13, primaryKey as primaryKey15, timestamp as timestamp14, uuid as uuid14 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/social/crew/policies.ts
-import { sql as drizzleSql26 } from "drizzle-orm";
+import { sql as drizzleSql27 } from "drizzle-orm";
 import { pgPolicy as pgPolicy15 } from "drizzle-orm/pg-core";
-var uid11 = drizzleSql26`"identity"."current_user_id" ()`;
+
+// ../../src/infrastructure/db/schema/drizzle/social/policy-helpers.ts
+import { sql as drizzleSql26 } from "drizzle-orm";
+var isCrewPublic = /* @__PURE__ */ __name((crewId) => drizzleSql26`"social"."is_crew_public" (${crewId})`, "isCrewPublic");
+var isCrewLeader = /* @__PURE__ */ __name((crewId) => drizzleSql26`"social"."is_crew_leader" (${crewId})`, "isCrewLeader");
+var isPostAuthor = /* @__PURE__ */ __name((postId) => drizzleSql26`"social"."is_post_author" (${postId})`, "isPostAuthor");
+var canManageCrew = /* @__PURE__ */ __name((crewId) => drizzleSql26`"social"."can_manage_crew" (${crewId})`, "canManageCrew");
+var canViewCrewParticipants = /* @__PURE__ */ __name((crewId) => drizzleSql26`"social"."can_view_crew_participants" (${crewId})`, "canViewCrewParticipants");
+var canPublishToCrew = /* @__PURE__ */ __name((crewId) => drizzleSql26`"social"."can_publish_to_crew" (${crewId})`, "canPublishToCrew");
+var canViewPost = /* @__PURE__ */ __name((postId) => drizzleSql26`"social"."can_view_post" (${postId})`, "canViewPost");
+
+// ../../src/infrastructure/db/schema/drizzle/social/crew/policies.ts
+var uid11 = drizzleSql27`"identity"."current_user_id" ()`;
 function crewPolicies(t) {
-  const leads = drizzleSql26`${t.leaderId} = ${uid11}`;
+  const leads = drizzleSql27`${t.leaderId} = ${uid11}`;
+  const canManage = canManageCrew(t.id);
   return [
     // Authenticated users may discover crews; privacy controls participation rather than visibility of the crew record.
     pgPolicy15("Allow authenticated users to read crews", {
       for: "select",
       to: authenticatedRole,
-      using: drizzleSql26`TRUE`
+      using: drizzleSql27`TRUE`
     }),
     // A user may create a crew only when they assign themselves as its leader.
     pgPolicy15("Allow users to create crews they lead", {
@@ -1553,17 +1566,17 @@ function crewPolicies(t) {
       withCheck: leads
     }),
     // Only the current leader may update the crew, and the updated row must remain led by that user.
-    pgPolicy15("Allow crew leaders to update their crews", {
+    pgPolicy15("Allow active crew leaders to update their crews", {
       for: "update",
       to: authenticatedRole,
-      using: leads,
-      withCheck: leads
+      using: canManage,
+      withCheck: canManage
     }),
     // Only the current leader may delete the crew.
-    pgPolicy15("Allow crew leaders to delete their crews", {
+    pgPolicy15("Allow active crew leaders to delete their crews", {
       for: "delete",
       to: authenticatedRole,
-      using: leads
+      using: canManage
     })
   ];
 }
@@ -1620,49 +1633,46 @@ import { foreignKey as foreignKey14, index as index9, primaryKey as primaryKey16
 // ../../src/infrastructure/db/schema/drizzle/social/crew_membership/policies.ts
 import { sql as drizzleSql28 } from "drizzle-orm";
 import { pgPolicy as pgPolicy16 } from "drizzle-orm/pg-core";
-
-// ../../src/infrastructure/db/schema/drizzle/social/policy-helpers.ts
-import { sql as drizzleSql27 } from "drizzle-orm";
-var isCrewPublic = /* @__PURE__ */ __name((crewId) => drizzleSql27`"social"."is_crew_public" (${crewId})`, "isCrewPublic");
-var isCrewLeader = /* @__PURE__ */ __name((crewId) => drizzleSql27`"social"."is_crew_leader" (${crewId})`, "isCrewLeader");
-var isActiveCrewMember = /* @__PURE__ */ __name((crewId) => drizzleSql27`"social"."is_active_crew_member" (${crewId})`, "isActiveCrewMember");
-
-// ../../src/infrastructure/db/schema/drizzle/social/crew_membership/policies.ts
 var uid12 = drizzleSql28`"identity"."current_user_id" ()`;
 function crewMembershipPolicies(t) {
   const self = drizzleSql28`${t.userId} = ${uid12}`;
-  const leader = isCrewLeader(t.crewId);
+  const canManage = canManageCrew(t.crewId);
   const allowed = drizzleSql28`
     ${self}
-    OR ${leader}
+    OR ${canManage}
   `;
-  const canReadParticipants = drizzleSql28`
-    ${isCrewPublic(t.crewId)}
-    OR ${leader}
-    OR ${isActiveCrewMember(t.crewId)}
+  const createsOwnLeaderMembership = drizzleSql28`
+    ${self}
+    AND ${isCrewLeader(t.crewId)}
+    AND ${t.role} = 'leader'
+    AND ${t.status} = 'active'
+  `;
+  const canCreate = drizzleSql28`
+    ${canManage}
+    OR (${createsOwnLeaderMembership})
   `;
   return [
     // Participants are visible for public crews and to active members or leaders of private crews.
     pgPolicy16("Allow authorized users to read crew participants", {
       for: "select",
       to: authenticatedRole,
-      using: canReadParticipants
+      using: canViewCrewParticipants(t.crewId)
     }),
     // Only the crew leader may create a membership record.
-    pgPolicy16("Allow crew leaders to create memberships", {
+    pgPolicy16("Allow managers and new crew leaders to create memberships", {
       for: "insert",
       to: authenticatedRole,
-      withCheck: leader
+      withCheck: canCreate
     }),
     // Only the crew leader may change membership state or role.
-    pgPolicy16("Allow crew leaders to update memberships", {
+    pgPolicy16("Allow active crew leaders to update memberships", {
       for: "update",
       to: authenticatedRole,
-      using: leader,
-      withCheck: leader
+      using: canManage,
+      withCheck: canManage
     }),
     // A membership may be deleted by its user or the crew leader.
-    pgPolicy16("Allow members and crew leaders to delete memberships", {
+    pgPolicy16("Allow members and active crew leaders to delete memberships", {
       for: "delete",
       to: authenticatedRole,
       using: allowed
@@ -1760,7 +1770,7 @@ function crewParticipationRequestPolicies(t) {
     ${t.initiatorUserId} = ${uid13}
     OR ${t.participantUserId} = ${uid13}
   `;
-  const leader = isCrewLeader(t.crewId);
+  const canManage = canManageCrew(t.crewId);
   const validParticipants = drizzleSql29`
     ${t.initiatorUserId} = ${t.participantUserId}
     OR EXISTS (
@@ -1775,7 +1785,7 @@ function crewParticipationRequestPolicies(t) {
   `;
   const canAccess = drizzleSql29`
     ${involved}
-    OR ${leader}
+    OR ${canManage}
   `;
   const publicCrew = isCrewPublic(t.crewId);
   const insertable = drizzleSql29`
@@ -1790,7 +1800,7 @@ function crewParticipationRequestPolicies(t) {
       )
       OR (
         ${t.initiatorUserId} <> ${t.participantUserId}
-        AND ${leader}
+        AND ${canManage}
         AND ${t.status} = 'pending'
       )
     )
@@ -1798,7 +1808,7 @@ function crewParticipationRequestPolicies(t) {
   const isJoinRequest = drizzleSql29`(${t.initiatorUserId} = ${t.participantUserId})`;
   const isInvitation = drizzleSql29`(${t.initiatorUserId} <> ${t.participantUserId})`;
   const canRespond = drizzleSql29`(
-    ((${isJoinRequest}) AND (${leader}))
+    ((${isJoinRequest}) AND (${canManage}))
     OR ((${isInvitation}) AND (${t.participantUserId} = ${uid13}))
   )`;
   const canCancel = drizzleSql29`(${t.initiatorUserId} = ${uid13})`;
@@ -1946,35 +1956,13 @@ import { pgPolicy as pgPolicy18 } from "drizzle-orm/pg-core";
 var uid14 = drizzleSql31`"identity"."current_user_id" ()`;
 function postPolicies(t) {
   const owns = drizzleSql31`${t.authorUserId} = ${uid14}`;
-  const isGlobal = drizzleSql31`
-    NOT EXISTS (
-      SELECT
-        1
-      FROM
-        "social"."crew_shared_post" csp
-      WHERE
-        csp."post_id" = ${t.id}
-    )
-  `;
   const visible = drizzleSql31`
     ${owns}
-    OR ${isGlobal}
-    OR EXISTS (
-      SELECT
-        1
-      FROM
-        "social"."crew_shared_post" csp
-      WHERE
-        csp."post_id" = ${t.id}
-        AND (
-          ${isCrewLeader(drizzleSql31`csp."crew_id"`)}
-          OR ${isActiveCrewMember(drizzleSql31`csp."crew_id"`)}
-        )
-    )
+    OR ${canViewPost(t.id)}
   `;
   return [
-    // A post is visible to its author, globally when unplaced, or to active members and the leader of its crew.
-    pgPolicy18("Allow users to read global or accessible crew posts", {
+    // Public posts are visible to everyone, while crew-only posts require authorship or access to a crew where the post is shared.
+    pgPolicy18("Allow users to read public or accessible crew posts", {
       for: "select",
       to: authenticatedRole,
       using: visible
@@ -2003,10 +1991,15 @@ function postPolicies(t) {
 __name(postPolicies, "postPolicies");
 
 // ../../src/infrastructure/db/schema/drizzle/social/post/table.ts
+var postVisibility = socialSchema.enum("Post Visibility", [
+  "crews_only",
+  "public"
+]);
 var post = socialSchema.table("post", {
   id: uuid17("id").defaultRandom().notNull(),
   authorUserId: uuid17("author_user_id").notNull(),
   content: text12("content").notNull(),
+  visibility: postVisibility("visibility").notNull(),
   publishedAt: timestamp17("published_at", {
     withTimezone: true
   }).defaultNow().notNull(),
@@ -2051,33 +2044,19 @@ import { foreignKey as foreignKey17, index as index12, primaryKey as primaryKey1
 // ../../src/infrastructure/db/schema/drizzle/social/crew_shared_post/policies.ts
 import { sql as drizzleSql32 } from "drizzle-orm";
 import { pgPolicy as pgPolicy19 } from "drizzle-orm/pg-core";
-var uid15 = drizzleSql32`"identity"."current_user_id" ()`;
 function crewSharedPostPolicies(t) {
-  const member = drizzleSql32`
-    ${isCrewLeader(t.crewId)}
-    OR ${isActiveCrewMember(t.crewId)}
-  `;
-  const author = drizzleSql32`
-    EXISTS (
-      SELECT
-        1
-      FROM
-        "social"."post" p
-      WHERE
-        p."id" = ${t.postId}
-        AND p."author_user_id" = ${uid15}
-    )
-  `;
+  const canPublish = canPublishToCrew(t.crewId);
+  const author = isPostAuthor(t.postId);
   const allowed = drizzleSql32`
-    (${member})
+    (${canPublish})
     AND (${author})
   `;
   return [
-    // Placement rows are visible so post RLS can reliably distinguish global posts from crew posts.
-    pgPolicy19("Allow authenticated users to read crew post placements", {
+    // A placement is visible through post authorship, crew participation, or the post's public visibility.
+    pgPolicy19("Allow users to read visible crew post placements", {
       for: "select",
       to: authenticatedRole,
-      using: drizzleSql32`TRUE`
+      using: canViewPost(t.postId)
     }),
     // The post author may share their post only into a crew in which they actively participate or lead.
     pgPolicy19("Allow member authors to share posts with crews", {
@@ -2125,7 +2104,7 @@ var crewSharedPost = socialSchema.table("crew_shared_post", {
       post.id
     ]
   }).onUpdate("cascade").onDelete("cascade"),
-  unique8("crew_shared_post_post_id_unique").on(t.postId),
+  unique8("crew_shared_post_post_id_crew_id_unique").on(t.postId, t.crewId),
   index12("crew_shared_post_crew_id_idx").on(t.crewId),
   ...crewSharedPostPolicies(t)
 ]).enableRLS();
@@ -2155,19 +2134,10 @@ import { foreignKey as foreignKey18, index as index13, primaryKey as primaryKey2
 // ../../src/infrastructure/db/schema/drizzle/social/comment/policies.ts
 import { sql as drizzleSql33 } from "drizzle-orm";
 import { pgPolicy as pgPolicy20 } from "drizzle-orm/pg-core";
-var uid16 = drizzleSql33`"identity"."current_user_id" ()`;
+var uid15 = drizzleSql33`"identity"."current_user_id" ()`;
 function commentPolicies(t) {
-  const owns = drizzleSql33`${t.userId} = ${uid16}`;
-  const visible = drizzleSql33`
-    EXISTS (
-      SELECT
-        1
-      FROM
-        "social"."post" p
-      WHERE
-        p."id" = ${t.postId}
-    )
-  `;
+  const owns = drizzleSql33`${t.userId} = ${uid15}`;
+  const visible = canViewPost(t.postId);
   const allowed = drizzleSql33`
     ${owns}
     AND ${visible}
@@ -2269,19 +2239,10 @@ import { foreignKey as foreignKey19, index as index14, primaryKey as primaryKey2
 // ../../src/infrastructure/db/schema/drizzle/social/reaction/policies.ts
 import { sql as drizzleSql34 } from "drizzle-orm";
 import { pgPolicy as pgPolicy21 } from "drizzle-orm/pg-core";
-var uid17 = drizzleSql34`"identity"."current_user_id" ()`;
+var uid16 = drizzleSql34`"identity"."current_user_id" ()`;
 function reactionPolicies(t) {
-  const owns = drizzleSql34`${t.userId} = ${uid17}`;
-  const visible = drizzleSql34`
-    EXISTS (
-      SELECT
-        1
-      FROM
-        "social"."post" p
-      WHERE
-        p."id" = ${t.postId}
-    )
-  `;
+  const owns = drizzleSql34`${t.userId} = ${uid16}`;
+  const visible = canViewPost(t.postId);
   const allowed = drizzleSql34`
     ${owns}
     AND ${visible}
@@ -3566,8 +3527,7 @@ var postQueryDtoSchema = postDbSchema.omit({
   updateddAt: true
 }).extend({
   publishedAt: serializedDateSchema,
-  updatedAt: serializedDateSchema,
-  crewId: z38.uuid().nullable()
+  updatedAt: serializedDateSchema
 });
 var deletedPostQueryDtoSchema = z38.object({
   id: postDbSchema.shape.id
@@ -3604,19 +3564,32 @@ var listCrewPostsContract = {
   request: listCrewPostsRequestSchema,
   response: listCrewPostsResponseSchema
 };
-var getPostRequestSchema = z39.object({
-  params: postIdParamsSchema
+var createPostBodySchema = z39.object({
+  content: postDbSchema.shape.content,
+  visibility: postDbSchema.shape.visibility,
+  crewIds: z39.array(z39.uuid()).default([])
+}).superRefine((body, context) => {
+  if (body.visibility === "crews_only" && body.crewIds.length === 0) {
+    context.addIssue({
+      code: "custom",
+      path: [
+        "crewIds"
+      ],
+      message: "Crew-only posts require at least one crew"
+    });
+  }
+  if (new Set(body.crewIds).size !== body.crewIds.length) {
+    context.addIssue({
+      code: "custom",
+      path: [
+        "crewIds"
+      ],
+      message: "Crew IDs must be unique"
+    });
+  }
 });
-var getPostResponseSchema = postQueryDtoSchema;
-var getPostContract = {
-  request: getPostRequestSchema,
-  response: getPostResponseSchema
-};
 var createPostRequestSchema = z39.object({
-  body: z39.object({
-    content: postDbSchema.shape.content,
-    crewId: z39.uuid().optional()
-  })
+  body: createPostBodySchema
 });
 var createPostResponseSchema = z39.void();
 var createPostContract = {
@@ -3748,9 +3721,6 @@ export {
   getPersonalRecordsContract,
   getPersonalRecordsRequestSchema,
   getPersonalRecordsResponseSchema,
-  getPostContract,
-  getPostRequestSchema,
-  getPostResponseSchema,
   getReminderSettingsContract,
   getReminderSettingsResponseSchema,
   getVerificationStatusContract,

@@ -239,6 +239,41 @@
       "when": 1789115937550,
       "tag": "0033_allow_private_join_requests_and_public_auto_acceptance",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1789131496605,
+      "tag": "0034_add_post_visibility",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1789131749945,
+      "tag": "0035_restrict_crew_post_placement_visibility",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1789133734941,
+      "tag": "0036_centralize_social_authorization_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1789134032017,
+      "tag": "0037_allow_initial_leader_membership",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1789134219182,
+      "tag": "0038_allow_post_author_returning",
+      "breakpoints": true
     }
   ]
 }

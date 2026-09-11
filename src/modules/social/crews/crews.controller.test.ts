@@ -4,7 +4,7 @@ import { getCrewResponseSchema, listCrewParticipantsResponseSchema, listCrewsRes
 import { createApp } from '../../../app';
 import { authHeaders } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
-import { crewExists, getCrewByLeaderId, insertCrewMembership } from '../../../common/tests/helpers/db';
+import { crewExists, getCrewByLeaderId, insertCrewMembership, setCrewMembershipStatus } from '../../../common/tests/helpers/db';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../../common/tests/helpers/users';
 
 let app: Awaited<ReturnType<typeof createApp>>;
@@ -144,6 +144,20 @@ describe('CrewsController', () => {
     expect(updated.status).toBe(204);
     expect(updated.text).toBe('');
     expect(await getCrewByLeaderId(leader.userId)).toMatchObject({ privacy: 'private' });
+  });
+
+  it('a crew leader without an active membership cannot manage the crew', async () => {
+    const leader = await crewUser('crew_inactive_leader');
+    const crew = await createCrew(leader.accessToken, leader.userId);
+    await setCrewMembershipStatus(crew.id, leader.userId, 'left');
+
+    const response = await request(app.getHttpServer())
+      .patch(`/api/social/crews/${crew.id}`)
+      .set(authHeaders(leader.accessToken))
+      .send({ privacy: 'private' });
+
+    expect(response.status).toBe(404);
+    expect(await getCrewByLeaderId(leader.userId)).toMatchObject({ privacy: 'public' });
   });
 
   it('DELETE /api/social/crews/:id deletes only a crew led by the caller and returns 204', async () => {
