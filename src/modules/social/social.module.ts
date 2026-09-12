@@ -6,6 +6,9 @@ import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { CrewsController } from './crews/crews.controller';
 import { CrewsQueries } from './crews/crews.queries';
 import { CrewsService } from './crews/crews.service';
+import { CrewRequestsController } from './crews/requests/crew-requests.controller';
+import { CrewRequestsQueries } from './crews/requests/crew-requests.queries';
+import { CrewRequestsService } from './crews/requests/crew-requests.service';
 import { PostsController } from './posts/posts.controller';
 import { PostsQueries } from './posts/posts.queries';
 import { PostsService } from './posts/posts.service';
@@ -17,10 +20,12 @@ import { ReactionsQueries } from './posts/reactions/reactions.queries';
 import { ReactionsService } from './posts/reactions/reactions.service';
 
 @Module({
-  controllers: [CrewsController, PostsController, ReactionsController, CommentsController],
+  controllers: [CrewRequestsController, CrewsController, PostsController, ReactionsController, CommentsController],
   providers: [
     CrewsQueries,
     CrewsService,
+    CrewRequestsQueries,
+    CrewRequestsService,
     PostsQueries,
     PostsService,
     CommentsQueries,

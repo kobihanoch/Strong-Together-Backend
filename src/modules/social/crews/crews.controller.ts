@@ -15,15 +15,6 @@ import type {
   UpdateCrewBody,
   UpdateCrewParams,
   UpdateCrewResponse,
-  InviteCrewUserBody,
-  InviteCrewUserParams,
-  InviteCrewUserResponse,
-  RequestToJoinCrewParams,
-  RequestToJoinCrewResponse,
-  AcceptCrewJoinRequestParams,
-  AcceptCrewJoinRequestResponse,
-  AcceptCrewInvitationParams,
-  AcceptCrewInvitationResponse,
 } from '@strong-together/shared';
 import {
   createCrewRequestSchema,
@@ -33,10 +24,6 @@ import {
   listCrewParticipantsRequestSchema,
   leaveCrewRequestSchema,
   updateCrewRequestSchema,
-  inviteCrewUserRequestSchema,
-  requestToJoinCrewRequestSchema,
-  acceptCrewJoinRequestRequestSchema,
-  acceptCrewInvitationRequestSchema,
 } from '@strong-together/shared';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
@@ -219,70 +206,5 @@ export class CrewsController {
     },
   ): Promise<void> {
     await this.service.deleteCrewData(data.params.id);
-  }
-
-  /**
-   * Invites a user to a crew.
-   *
-   * @remarks Route: POST /api/social/crews/:crewId/invitations. RLS requires crew management access.
-   * @param data - The crew UUID and invited user UUID.
-   * @param user - The authenticated invitation initiator.
-   * @returns No response body.
-   */
-  @Post(':crewId/invitations')
-  @HttpCode(HttpStatus.CREATED)
-  async inviteUser(
-    @RequestData(new ValidateRequestPipe(inviteCrewUserRequestSchema))
-    data: { params: InviteCrewUserParams; body: InviteCrewUserBody },
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<InviteCrewUserResponse> {
-    await this.service.inviteUserData(data.params.crewId, user.id, data.body.userId);
-  }
-
-  /**
-   * Requests membership in a crew.
-   *
-   * @remarks Route: POST /api/social/crews/:crewId/join-requests. Public crews join immediately.
-   * @param data - The crew UUID.
-   * @param user - The authenticated requester.
-   * @returns No response body.
-   */
-  @Post(':crewId/join-requests')
-  @HttpCode(HttpStatus.CREATED)
-  async requestToJoin(
-    @RequestData(new ValidateRequestPipe(requestToJoinCrewRequestSchema)) data: { params: RequestToJoinCrewParams },
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<RequestToJoinCrewResponse> {
-    await this.service.requestToJoinData(data.params.crewId, user.id);
-  }
-
-  /**
-   * Accepts a pending crew join request.
-   *
-   * @remarks Route: POST /api/social/crews/:crewId/join-requests/:requestId/accept. RLS requires crew management access.
-   * @param data - The crew and request UUIDs.
-   * @returns No response body.
-   */
-  @Post(':crewId/join-requests/:requestId/accept')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async acceptJoinRequest(
-    @RequestData(new ValidateRequestPipe(acceptCrewJoinRequestRequestSchema)) data: { params: AcceptCrewJoinRequestParams },
-  ): Promise<AcceptCrewJoinRequestResponse> {
-    await this.service.acceptJoinRequestData(data.params.crewId, data.params.requestId);
-  }
-
-  /**
-   * Accepts a pending crew invitation.
-   *
-   * @remarks Route: POST /api/social/crews/:crewId/invitations/:requestId/accept. RLS requires the invited user.
-   * @param data - The crew and invitation UUIDs.
-   * @returns No response body.
-   */
-  @Post(':crewId/invitations/:requestId/accept')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async acceptInvitation(
-    @RequestData(new ValidateRequestPipe(acceptCrewInvitationRequestSchema)) data: { params: AcceptCrewInvitationParams },
-  ): Promise<AcceptCrewInvitationResponse> {
-    await this.service.acceptInvitationData(data.params.crewId, data.params.requestId);
   }
 }
