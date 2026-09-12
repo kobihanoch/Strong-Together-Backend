@@ -1,6 +1,6 @@
 {
-  "id": "3d6d0bbf-d99d-4cf8-afa1-85e863ccd07f",
-  "prevId": "7111bad6-598b-472a-9cb2-f41f6176f847",
+  "id": "23949660-4fa2-4d00-abdc-48063f52135a",
+  "prevId": "76991f82-4bfa-413c-8b4e-aa68e300d347",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -54,12 +54,8 @@
           "tableFrom": "oauth_account",
           "tableTo": "user",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -67,19 +63,14 @@
       "compositePrimaryKeys": {
         "oauth_account_pkey": {
           "name": "oauth_account_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "oauth_account_provider_user_unique": {
           "name": "oauth_account_provider_user_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "provider",
-            "provider_user_id"
-          ]
+          "columns": ["provider", "provider_user_id"]
         }
       },
       "policies": {
@@ -87,27 +78,21 @@
           "name": "Enable read access for auth users on oauth_account",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"identity\".\"oauth_account\".\"user_id\""
         },
         "Enable insert for auth users on oauth_account": {
           "name": "Enable insert for auth users on oauth_account",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"identity\".\"current_user_id\"() = \"identity\".\"oauth_account\".\"user_id\""
         },
         "Enable update for auth users on oauth_account": {
           "name": "Enable update for auth users on oauth_account",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"identity\".\"oauth_account\".\"user_id\"",
           "withCheck": "\"identity\".\"current_user_id\"() = \"identity\".\"oauth_account\".\"user_id\""
         },
@@ -115,9 +100,7 @@
           "name": "Enable delete for auth users on oauth_account",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"identity\".\"oauth_account\".\"user_id\""
         }
       },
@@ -263,9 +246,7 @@
       "compositePrimaryKeys": {
         "user_pkey": {
           "name": "user_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -274,45 +255,35 @@
           "name": "Enable read access for auth users on own profile",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"identity\".\"user\".\"id\""
         },
         "Allow user to view senders in their messages": {
           "name": "Allow user to view senders in their messages",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "exists (select 1 from \"messages\".\"message\" m where m.\"sender_id\" = \"identity\".\"user\".\"id\" and m.\"receiver_id\" = \"identity\".\"current_user_id\"())"
         },
         "Enable insert for auth users on own profile": {
           "name": "Enable insert for auth users on own profile",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"identity\".\"current_user_id\"() = \"identity\".\"user\".\"id\""
         },
         "Enable insert for public users on own profile": {
           "name": "Enable insert for public users on own profile",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "withCheck": "\"identity\".\"current_user_id\"() = \"identity\".\"user\".\"id\""
         },
         "Enable update for auth users on own profile": {
           "name": "Enable update for auth users on own profile",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"identity\".\"user\".\"id\"",
           "withCheck": "\"identity\".\"current_user_id\"() = \"identity\".\"user\".\"id\""
         },
@@ -320,9 +291,7 @@
           "name": "Enable delete for auth users on own profile",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"identity\".\"user\".\"id\""
         }
       },
@@ -406,12 +375,8 @@
           "tableFrom": "message",
           "tableTo": "user",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "sender_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sender_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -420,12 +385,8 @@
           "tableFrom": "message",
           "tableTo": "user",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "receiver_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["receiver_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -433,9 +394,7 @@
       "compositePrimaryKeys": {
         "message_pkey": {
           "name": "message_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -444,27 +403,21 @@
           "name": "Enable read access for auth users on message",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"messages\".\"message\".\"sender_id\" or \"identity\".\"current_user_id\"() = \"messages\".\"message\".\"receiver_id\""
         },
         "Enable insert for auth users on message": {
           "name": "Enable insert for auth users on message",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"identity\".\"current_user_id\"() = \"messages\".\"message\".\"sender_id\" or \"messages\".\"message\".\"sender_id\" = '8dedd0e0-8c25-4c84-a05b-4ae5f5c48f3a'::uuid"
         },
         "Enable update for auth users on message": {
           "name": "Enable update for auth users on message",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"messages\".\"message\".\"sender_id\" or \"identity\".\"current_user_id\"() = \"messages\".\"message\".\"receiver_id\"",
           "withCheck": "\"identity\".\"current_user_id\"() = \"messages\".\"message\".\"sender_id\" or \"identity\".\"current_user_id\"() = \"messages\".\"message\".\"receiver_id\""
         },
@@ -472,9 +425,7 @@
           "name": "Enable delete for auth users on message",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"messages\".\"message\".\"sender_id\" or \"identity\".\"current_user_id\"() = \"messages\".\"message\".\"receiver_id\""
         }
       },
@@ -533,12 +484,8 @@
           "tableFrom": "user_reminder_setting",
           "tableTo": "user",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -546,18 +493,14 @@
       "compositePrimaryKeys": {
         "user_reminder_setting_pkey": {
           "name": "user_reminder_setting_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "user_reminder_setting_user_id_key": {
           "name": "user_reminder_setting_user_id_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         }
       },
       "policies": {
@@ -565,27 +508,21 @@
           "name": "auth can SELECT own reminder settings",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"reminders\".\"user_reminder_setting\".\"user_id\""
         },
         "auth can INSERT own reminder settings": {
           "name": "auth can INSERT own reminder settings",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"identity\".\"current_user_id\"() = \"reminders\".\"user_reminder_setting\".\"user_id\""
         },
         "auth can UPDATE own reminder settings": {
           "name": "auth can UPDATE own reminder settings",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"reminders\".\"user_reminder_setting\".\"user_id\"",
           "withCheck": "\"identity\".\"current_user_id\"() = \"reminders\".\"user_reminder_setting\".\"user_id\""
         },
@@ -593,9 +530,7 @@
           "name": "Allow authenticated users to update their own reminder settings",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"reminders\".\"user_reminder_setting\".\"user_id\""
         }
       },
@@ -659,12 +594,8 @@
           "tableFrom": "workout_schedule",
           "tableTo": "user",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -673,12 +604,8 @@
           "tableFrom": "workout_schedule",
           "tableTo": "workout_split",
           "schemaTo": "workout",
-          "columnsFrom": [
-            "workout_split_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workout_split_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -686,20 +613,14 @@
       "compositePrimaryKeys": {
         "workout_schedule_pkey": {
           "name": "workout_schedule_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "workout_schedule_user_split_weekday_key": {
           "name": "workout_schedule_user_split_weekday_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "workout_split_id",
-            "day_of_week"
-          ]
+          "columns": ["user_id", "workout_split_id", "day_of_week"]
         }
       },
       "policies": {
@@ -707,27 +628,21 @@
           "name": "auth can SELECT own workout schedules",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"schedules\".\"workout_schedule\".\"user_id\""
         },
         "auth can INSERT own workout schedules": {
           "name": "auth can INSERT own workout schedules",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"identity\".\"current_user_id\"() = \"schedules\".\"workout_schedule\".\"user_id\""
         },
         "auth can UPDATE own workout schedules": {
           "name": "auth can UPDATE own workout schedules",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"schedules\".\"workout_schedule\".\"user_id\"",
           "withCheck": "\"identity\".\"current_user_id\"() = \"schedules\".\"workout_schedule\".\"user_id\""
         },
@@ -735,9 +650,7 @@
           "name": "auth can DELETE own workout schedules",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"schedules\".\"workout_schedule\".\"user_id\""
         }
       },
@@ -837,12 +750,8 @@
           "tableFrom": "comment",
           "tableTo": "post",
           "schemaTo": "social",
-          "columnsFrom": [
-            "post_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["post_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -851,12 +760,8 @@
           "tableFrom": "comment",
           "tableTo": "user",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -864,9 +769,7 @@
       "compositePrimaryKeys": {
         "comment_pkey": {
           "name": "comment_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -875,37 +778,29 @@
           "name": "Allow users to read comments on visible posts",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
-          "using": "\n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"post\" p\n      WHERE\n        p.\"id\" = \"social\".\"comment\".\"post_id\"\n    )\n  "
+          "to": ["authenticated"],
+          "using": "\"social\".\"can_view_post\" (\"social\".\"comment\".\"post_id\")"
         },
         "Allow users to create their own comments on visible posts": {
           "name": "Allow users to create their own comments on visible posts",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
-          "withCheck": "\n    \"social\".\"comment\".\"user_id\" = \"identity\".\"current_user_id\" ()\n    AND \n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"post\" p\n      WHERE\n        p.\"id\" = \"social\".\"comment\".\"post_id\"\n    )\n  \n  "
+          "to": ["authenticated"],
+          "withCheck": "\n    \"social\".\"comment\".\"user_id\" = \"identity\".\"current_user_id\" ()\n    AND \"social\".\"can_view_post\" (\"social\".\"comment\".\"post_id\")\n  "
         },
         "Allow authors to update their comments on visible posts": {
           "name": "Allow authors to update their comments on visible posts",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"social\".\"comment\".\"user_id\" = \"identity\".\"current_user_id\" ()",
-          "withCheck": "\n    \"social\".\"comment\".\"user_id\" = \"identity\".\"current_user_id\" ()\n    AND \n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"post\" p\n      WHERE\n        p.\"id\" = \"social\".\"comment\".\"post_id\"\n    )\n  \n  "
+          "withCheck": "\n    \"social\".\"comment\".\"user_id\" = \"identity\".\"current_user_id\" ()\n    AND \"social\".\"can_view_post\" (\"social\".\"comment\".\"post_id\")\n  "
         },
         "Allow authors to delete their comments": {
           "name": "Allow authors to delete their comments",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"social\".\"comment\".\"user_id\" = \"identity\".\"current_user_id\" ()"
         }
       },
@@ -1016,12 +911,8 @@
           "tableFrom": "crew_membership",
           "tableTo": "crew",
           "schemaTo": "social",
-          "columnsFrom": [
-            "crew_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["crew_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -1030,12 +921,8 @@
           "tableFrom": "crew_membership",
           "tableTo": "user",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -1043,19 +930,14 @@
       "compositePrimaryKeys": {
         "crew_membership_pkey": {
           "name": "crew_membership_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "crew_membership_crew_user_unique": {
           "name": "crew_membership_crew_user_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "crew_id",
-            "user_id"
-          ]
+          "columns": ["crew_id", "user_id"]
         }
       },
       "policies": {
@@ -1063,38 +945,38 @@
           "name": "Allow authorized users to read crew participants",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
-          "using": "\"social\".\"can_read_crew_participants\"(\"social\".\"crew_membership\".\"crew_id\")"
+          "to": ["authenticated"],
+          "using": "\"social\".\"can_view_crew_participants\" (\"social\".\"crew_membership\".\"crew_id\")"
         },
-        "Allow crew leaders to create memberships": {
-          "name": "Allow crew leaders to create memberships",
+        "Allow managers and new crew leaders to create memberships": {
+          "name": "Allow managers and new crew leaders to create memberships",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
-          "withCheck": "\n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"crew\" c\n      WHERE\n        c.\"id\" = \"social\".\"crew_membership\".\"crew_id\"\n        AND c.\"leader_id\" = \"identity\".\"current_user_id\" ()\n    )\n  "
+          "to": ["authenticated"],
+          "withCheck": "\n    \"social\".\"can_manage_crew\" (\"social\".\"crew_membership\".\"crew_id\")\n    OR (\n    \"social\".\"crew_membership\".\"user_id\" = \"identity\".\"current_user_id\" ()\n    AND \"social\".\"is_crew_leader\" (\"social\".\"crew_membership\".\"crew_id\")\n    AND \"social\".\"crew_membership\".\"role\" = 'leader'\n    AND \"social\".\"crew_membership\".\"status\" = 'active'\n  )\n  "
         },
-        "Allow crew leaders to update memberships": {
-          "name": "Allow crew leaders to update memberships",
+        "Allow active crew leaders to update memberships": {
+          "name": "Allow active crew leaders to update memberships",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
-          "using": "\n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"crew\" c\n      WHERE\n        c.\"id\" = \"social\".\"crew_membership\".\"crew_id\"\n        AND c.\"leader_id\" = \"identity\".\"current_user_id\" ()\n    )\n  ",
-          "withCheck": "\n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"crew\" c\n      WHERE\n        c.\"id\" = \"social\".\"crew_membership\".\"crew_id\"\n        AND c.\"leader_id\" = \"identity\".\"current_user_id\" ()\n    )\n  "
+          "to": ["authenticated"],
+          "using": "\"social\".\"can_manage_crew\" (\"social\".\"crew_membership\".\"crew_id\")",
+          "withCheck": "\"social\".\"can_manage_crew\" (\"social\".\"crew_membership\".\"crew_id\")"
         },
-        "Allow members and crew leaders to delete memberships": {
-          "name": "Allow members and crew leaders to delete memberships",
+        "Allow active members to leave crews": {
+          "name": "Allow active members to leave crews",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": ["authenticated"],
+          "using": "\n    \"social\".\"crew_membership\".\"user_id\" = \"identity\".\"current_user_id\" ()\n    AND \"social\".\"crew_membership\".\"status\" = 'active'\n  ",
+          "withCheck": "\n    \"social\".\"crew_membership\".\"user_id\" = \"identity\".\"current_user_id\" ()\n    AND \"social\".\"crew_membership\".\"status\" = 'left'\n  "
+        },
+        "Allow members and active crew leaders to delete memberships": {
+          "name": "Allow members and active crew leaders to delete memberships",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
-          "using": "\n    \"social\".\"crew_membership\".\"user_id\" = \"identity\".\"current_user_id\" ()\n    OR \n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"crew\" c\n      WHERE\n        c.\"id\" = \"social\".\"crew_membership\".\"crew_id\"\n        AND c.\"leader_id\" = \"identity\".\"current_user_id\" ()\n    )\n  \n  "
+          "to": ["authenticated"],
+          "using": "\n    \"social\".\"crew_membership\".\"user_id\" = \"identity\".\"current_user_id\" ()\n    OR \"social\".\"can_manage_crew\" (\"social\".\"crew_membership\".\"crew_id\")\n  "
         }
       },
       "checkConstraints": {},
@@ -1218,12 +1100,8 @@
           "tableFrom": "crew_participation_request",
           "tableTo": "crew",
           "schemaTo": "social",
-          "columnsFrom": [
-            "crew_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["crew_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -1232,12 +1110,8 @@
           "tableFrom": "crew_participation_request",
           "tableTo": "user",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "initiator_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["initiator_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -1246,12 +1120,8 @@
           "tableFrom": "crew_participation_request",
           "tableTo": "user",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "participant_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["participant_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -1259,9 +1129,7 @@
       "compositePrimaryKeys": {
         "crew_participation_request_pkey": {
           "name": "crew_participation_request_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1270,37 +1138,29 @@
           "name": "Allow involved users and leaders to read crew requests",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
-          "using": "\n    \n    \"social\".\"crew_participation_request\".\"initiator_user_id\" = \"identity\".\"current_user_id\" ()\n    OR \"social\".\"crew_participation_request\".\"participant_user_id\" = \"identity\".\"current_user_id\" ()\n  \n    OR \n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"crew\" c\n      WHERE\n        c.\"id\" = \"social\".\"crew_participation_request\".\"crew_id\"\n        AND c.\"leader_id\" = \"identity\".\"current_user_id\" ()\n    )\n  \n  "
+          "to": ["authenticated"],
+          "using": "\n    \n    \"social\".\"crew_participation_request\".\"initiator_user_id\" = \"identity\".\"current_user_id\" ()\n    OR \"social\".\"crew_participation_request\".\"participant_user_id\" = \"identity\".\"current_user_id\" ()\n  \n    OR \"social\".\"can_manage_crew\" (\"social\".\"crew_participation_request\".\"crew_id\")\n  "
         },
-        "Allow users to request public crews and leaders to invite users": {
-          "name": "Allow users to request public crews and leaders to invite users",
+        "Allow users to request crews and leaders to invite users": {
+          "name": "Allow users to request crews and leaders to invite users",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
-          "withCheck": "\n    \"social\".\"crew_participation_request\".\"initiator_user_id\" = \"identity\".\"current_user_id\" ()\n    AND \"social\".\"crew_participation_request\".\"status\" = 'pending'\n    AND (\n      (\n        \"social\".\"crew_participation_request\".\"initiator_user_id\" = \"social\".\"crew_participation_request\".\"participant_user_id\"\n        AND \n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"crew\" c\n      WHERE\n        c.\"id\" = \"social\".\"crew_participation_request\".\"crew_id\"\n        AND c.\"privacy\" = 'public'\n    )\n  \n      )\n      OR EXISTS (\n        SELECT\n          1\n        FROM\n          \"social\".\"crew\" c\n        WHERE\n          c.\"id\" = \"social\".\"crew_participation_request\".\"crew_id\"\n          AND c.\"leader_id\" = \"social\".\"crew_participation_request\".\"initiator_user_id\"\n      )\n    )\n  "
+          "to": ["authenticated"],
+          "withCheck": "\n    \"social\".\"crew_participation_request\".\"initiator_user_id\" = \"identity\".\"current_user_id\" ()\n    AND (\n      (\n        \"social\".\"crew_participation_request\".\"initiator_user_id\" = \"social\".\"crew_participation_request\".\"participant_user_id\"\n        AND (\n          ((\"social\".\"is_crew_public\" (\"social\".\"crew_participation_request\".\"crew_id\")) AND \"social\".\"crew_participation_request\".\"status\" = 'accepted')\n          OR ((NOT (\"social\".\"is_crew_public\" (\"social\".\"crew_participation_request\".\"crew_id\"))) AND \"social\".\"crew_participation_request\".\"status\" = 'pending')\n        )\n      )\n      OR (\n        \"social\".\"crew_participation_request\".\"initiator_user_id\" <> \"social\".\"crew_participation_request\".\"participant_user_id\"\n        AND \"social\".\"can_manage_crew\" (\"social\".\"crew_participation_request\".\"crew_id\")\n        AND \"social\".\"crew_participation_request\".\"status\" = 'pending'\n      )\n    )\n  "
         },
         "Allow authorized users to resolve pending crew requests": {
           "name": "Allow authorized users to resolve pending crew requests",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
-          "using": "(\n    (\"social\".\"crew_participation_request\".\"status\" = 'pending')\n    AND (((\n    (((\"social\".\"crew_participation_request\".\"initiator_user_id\" = \"social\".\"crew_participation_request\".\"participant_user_id\")) AND (\n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"crew\" c\n      WHERE\n        c.\"id\" = \"social\".\"crew_participation_request\".\"crew_id\"\n        AND c.\"leader_id\" = \"identity\".\"current_user_id\" ()\n    )\n  ))\n    OR (((\"social\".\"crew_participation_request\".\"initiator_user_id\" <> \"social\".\"crew_participation_request\".\"participant_user_id\")) AND (\"social\".\"crew_participation_request\".\"participant_user_id\" = \"identity\".\"current_user_id\" ()))\n  )) OR ((\"social\".\"crew_participation_request\".\"initiator_user_id\" = \"identity\".\"current_user_id\" ())))\n  )",
-          "withCheck": "\n        (\n          ((\n    ((\"social\".\"crew_participation_request\".\"status\" = 'cancelled') AND ((\"social\".\"crew_participation_request\".\"initiator_user_id\" = \"identity\".\"current_user_id\" ())))\n    OR ((\"social\".\"crew_participation_request\".\"status\" IN ('accepted', 'declined')) AND ((\n    (((\"social\".\"crew_participation_request\".\"initiator_user_id\" = \"social\".\"crew_participation_request\".\"participant_user_id\")) AND (\n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"crew\" c\n      WHERE\n        c.\"id\" = \"social\".\"crew_participation_request\".\"crew_id\"\n        AND c.\"leader_id\" = \"identity\".\"current_user_id\" ()\n    )\n  ))\n    OR (((\"social\".\"crew_participation_request\".\"initiator_user_id\" <> \"social\".\"crew_participation_request\".\"participant_user_id\")) AND (\"social\".\"crew_participation_request\".\"participant_user_id\" = \"identity\".\"current_user_id\" ()))\n  )))\n  ))\n          AND (\n    \"social\".\"crew_participation_request\".\"initiator_user_id\" = \"social\".\"crew_participation_request\".\"participant_user_id\"\n    OR EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"crew\" c\n      WHERE\n        c.\"id\" = \"social\".\"crew_participation_request\".\"crew_id\"\n        AND c.\"leader_id\" = \"social\".\"crew_participation_request\".\"initiator_user_id\"\n    )\n  )\n        )\n      "
+          "to": ["authenticated"],
+          "using": "(\n    (\"social\".\"crew_participation_request\".\"status\" = 'pending')\n    AND (((\n    (((\"social\".\"crew_participation_request\".\"initiator_user_id\" = \"social\".\"crew_participation_request\".\"participant_user_id\")) AND (\"social\".\"can_manage_crew\" (\"social\".\"crew_participation_request\".\"crew_id\")))\n    OR (((\"social\".\"crew_participation_request\".\"initiator_user_id\" <> \"social\".\"crew_participation_request\".\"participant_user_id\")) AND (\"social\".\"crew_participation_request\".\"participant_user_id\" = \"identity\".\"current_user_id\" ()))\n  )) OR ((\"social\".\"crew_participation_request\".\"initiator_user_id\" = \"identity\".\"current_user_id\" ())))\n  )",
+          "withCheck": "\n        (\n          ((\n    ((\"social\".\"crew_participation_request\".\"status\" = 'cancelled') AND ((\"social\".\"crew_participation_request\".\"initiator_user_id\" = \"identity\".\"current_user_id\" ())))\n    OR ((\"social\".\"crew_participation_request\".\"status\" IN ('accepted', 'declined')) AND ((\n    (((\"social\".\"crew_participation_request\".\"initiator_user_id\" = \"social\".\"crew_participation_request\".\"participant_user_id\")) AND (\"social\".\"can_manage_crew\" (\"social\".\"crew_participation_request\".\"crew_id\")))\n    OR (((\"social\".\"crew_participation_request\".\"initiator_user_id\" <> \"social\".\"crew_participation_request\".\"participant_user_id\")) AND (\"social\".\"crew_participation_request\".\"participant_user_id\" = \"identity\".\"current_user_id\" ()))\n  )))\n  ))\n          AND (\n    \"social\".\"crew_participation_request\".\"initiator_user_id\" = \"social\".\"crew_participation_request\".\"participant_user_id\"\n    OR EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"crew\" c\n      WHERE\n        c.\"id\" = \"social\".\"crew_participation_request\".\"crew_id\"\n        AND c.\"leader_id\" = \"social\".\"crew_participation_request\".\"initiator_user_id\"\n    )\n  )\n        )\n      "
         },
         "Allow initiators to delete participation requests": {
           "name": "Allow initiators to delete participation requests",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"social\".\"crew_participation_request\".\"initiator_user_id\" = \"identity\".\"current_user_id\" ()"
         }
       },
@@ -1354,12 +1214,8 @@
           "tableFrom": "crew_shared_post",
           "tableTo": "crew",
           "schemaTo": "social",
-          "columnsFrom": [
-            "crew_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["crew_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -1368,12 +1224,8 @@
           "tableFrom": "crew_shared_post",
           "tableTo": "post",
           "schemaTo": "social",
-          "columnsFrom": [
-            "post_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["post_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -1381,47 +1233,37 @@
       "compositePrimaryKeys": {
         "crew_shared_post_pkey": {
           "name": "crew_shared_post_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
-        "crew_shared_post_post_id_unique": {
-          "name": "crew_shared_post_post_id_unique",
+        "crew_shared_post_post_id_crew_id_unique": {
+          "name": "crew_shared_post_post_id_crew_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "post_id"
-          ]
+          "columns": ["post_id", "crew_id"]
         }
       },
       "policies": {
-        "Allow authenticated users to read crew post placements": {
-          "name": "Allow authenticated users to read crew post placements",
+        "Allow users to read visible crew post placements": {
+          "name": "Allow users to read visible crew post placements",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
-          "using": "TRUE"
+          "to": ["authenticated"],
+          "using": "\"social\".\"can_access_crew\" (\"social\".\"crew_shared_post\".\"crew_id\")"
         },
         "Allow member authors to share posts with crews": {
           "name": "Allow member authors to share posts with crews",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
-          "withCheck": "\n    \n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"crew\" c\n        LEFT JOIN \"social\".\"crew_membership\" cm ON cm.\"crew_id\" = c.\"id\"\n        AND cm.\"user_id\" = \"identity\".\"current_user_id\" ()\n        AND cm.\"status\" = 'active'\n      WHERE\n        c.\"id\" = \"social\".\"crew_shared_post\".\"crew_id\"\n        AND (\n          c.\"leader_id\" = \"identity\".\"current_user_id\" ()\n          OR cm.\"id\" IS NOT NULL\n        )\n    )\n  \n    AND \n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"post\" p\n      WHERE\n        p.\"id\" = \"social\".\"crew_shared_post\".\"post_id\"\n        AND p.\"author_user_id\" = \"identity\".\"current_user_id\" ()\n    )\n  \n  "
+          "to": ["authenticated"],
+          "withCheck": "\n    (\"social\".\"can_publish_to_crew\" (\"social\".\"crew_shared_post\".\"crew_id\"))\n    AND (\"social\".\"is_post_author\" (\"social\".\"crew_shared_post\".\"post_id\"))\n  "
         },
         "Allow member authors to remove posts from crews": {
           "name": "Allow member authors to remove posts from crews",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
-          "using": "\n    \n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"crew\" c\n        LEFT JOIN \"social\".\"crew_membership\" cm ON cm.\"crew_id\" = c.\"id\"\n        AND cm.\"user_id\" = \"identity\".\"current_user_id\" ()\n        AND cm.\"status\" = 'active'\n      WHERE\n        c.\"id\" = \"social\".\"crew_shared_post\".\"crew_id\"\n        AND (\n          c.\"leader_id\" = \"identity\".\"current_user_id\" ()\n          OR cm.\"id\" IS NOT NULL\n        )\n    )\n  \n    AND \n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"post\" p\n      WHERE\n        p.\"id\" = \"social\".\"crew_shared_post\".\"post_id\"\n        AND p.\"author_user_id\" = \"identity\".\"current_user_id\" ()\n    )\n  \n  "
+          "to": ["authenticated"],
+          "using": "\n    (\"social\".\"can_publish_to_crew\" (\"social\".\"crew_shared_post\".\"crew_id\"))\n    AND (\"social\".\"is_post_author\" (\"social\".\"crew_shared_post\".\"post_id\"))\n  "
         }
       },
       "checkConstraints": {},
@@ -1473,12 +1315,8 @@
           "tableFrom": "crew",
           "tableTo": "user",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "leader_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["leader_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -1486,9 +1324,7 @@
       "compositePrimaryKeys": {
         "crew_pkey": {
           "name": "crew_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1497,38 +1333,30 @@
           "name": "Allow authenticated users to read crews",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "TRUE"
         },
         "Allow users to create crews they lead": {
           "name": "Allow users to create crews they lead",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"social\".\"crew\".\"leader_id\" = \"identity\".\"current_user_id\" ()"
         },
-        "Allow crew leaders to update their crews": {
-          "name": "Allow crew leaders to update their crews",
+        "Allow active crew leaders to update their crews": {
+          "name": "Allow active crew leaders to update their crews",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
-          "using": "\"social\".\"crew\".\"leader_id\" = \"identity\".\"current_user_id\" ()",
-          "withCheck": "\"social\".\"crew\".\"leader_id\" = \"identity\".\"current_user_id\" ()"
+          "to": ["authenticated"],
+          "using": "\"social\".\"can_manage_crew\" (\"social\".\"crew\".\"id\")",
+          "withCheck": "\"social\".\"can_access_crew\" (\"social\".\"crew\".\"id\")"
         },
-        "Allow crew leaders to delete their crews": {
-          "name": "Allow crew leaders to delete their crews",
+        "Allow active crew leaders to delete their crews": {
+          "name": "Allow active crew leaders to delete their crews",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
-          "using": "\"social\".\"crew\".\"leader_id\" = \"identity\".\"current_user_id\" ()"
+          "to": ["authenticated"],
+          "using": "\"social\".\"can_manage_crew\" (\"social\".\"crew\".\"id\")"
         }
       },
       "checkConstraints": {},
@@ -1554,6 +1382,13 @@
         "content": {
           "name": "content",
           "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "Post Visibility",
+          "typeSchema": "social",
           "primaryKey": false,
           "notNull": true
         },
@@ -1610,12 +1445,8 @@
           "tableFrom": "post",
           "tableTo": "user",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "author_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -1623,38 +1454,30 @@
       "compositePrimaryKeys": {
         "post_pkey": {
           "name": "post_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
       "policies": {
-        "Allow users to read global or accessible crew posts": {
-          "name": "Allow users to read global or accessible crew posts",
+        "Allow users to read public or accessible crew posts": {
+          "name": "Allow users to read public or accessible crew posts",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
-          "using": "\n    \"social\".\"post\".\"author_user_id\" = \"identity\".\"current_user_id\" ()\n    OR \n    NOT EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"crew_shared_post\" csp\n      WHERE\n        csp.\"post_id\" = \"social\".\"post\".\"id\"\n    )\n  \n    OR EXISTS (\n      SELECT\n          1\n      FROM\n        \"social\".\"crew_shared_post\" csp\n        JOIN \"social\".\"crew\" c ON c.\"id\" = csp.\"crew_id\"\n        LEFT JOIN \"social\".\"crew_membership\" cm ON cm.\"crew_id\" = c.\"id\"\n        AND cm.\"user_id\" = \"identity\".\"current_user_id\" ()\n        AND cm.\"status\" = 'active'\n      WHERE\n        csp.\"post_id\" = \"social\".\"post\".\"id\"\n        AND (\n          c.\"leader_id\" = \"identity\".\"current_user_id\" ()\n          OR cm.\"id\" IS NOT NULL\n        )\n    )\n  "
+          "to": ["authenticated"],
+          "using": "\n    \"social\".\"post\".\"author_user_id\" = \"identity\".\"current_user_id\" ()\n    OR \"social\".\"can_view_post\" (\"social\".\"post\".\"id\")\n  "
         },
         "Allow users to create their own posts": {
           "name": "Allow users to create their own posts",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"social\".\"post\".\"author_user_id\" = \"identity\".\"current_user_id\" ()"
         },
         "Allow authors to update their posts": {
           "name": "Allow authors to update their posts",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"social\".\"post\".\"author_user_id\" = \"identity\".\"current_user_id\" ()",
           "withCheck": "\"social\".\"post\".\"author_user_id\" = \"identity\".\"current_user_id\" ()"
         },
@@ -1662,9 +1485,7 @@
           "name": "Allow authors to delete their posts",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"social\".\"post\".\"author_user_id\" = \"identity\".\"current_user_id\" ()"
         }
       },
@@ -1732,12 +1553,8 @@
           "tableFrom": "reaction",
           "tableTo": "post",
           "schemaTo": "social",
-          "columnsFrom": [
-            "post_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["post_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -1746,12 +1563,8 @@
           "tableFrom": "reaction",
           "tableTo": "user",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -1759,19 +1572,14 @@
       "compositePrimaryKeys": {
         "reaction_pkey": {
           "name": "reaction_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "reaction_post_user_unique": {
           "name": "reaction_post_user_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "post_id",
-            "user_id"
-          ]
+          "columns": ["post_id", "user_id"]
         }
       },
       "policies": {
@@ -1779,37 +1587,29 @@
           "name": "Allow users to read reactions on visible posts",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
-          "using": "\n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"post\" p\n      WHERE\n        p.\"id\" = \"social\".\"reaction\".\"post_id\"\n    )\n  "
+          "to": ["authenticated"],
+          "using": "\"social\".\"can_view_post\" (\"social\".\"reaction\".\"post_id\")"
         },
         "Allow users to create their own reactions on visible posts": {
           "name": "Allow users to create their own reactions on visible posts",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
-          "withCheck": "\n    \"social\".\"reaction\".\"user_id\" = \"identity\".\"current_user_id\" ()\n    AND \n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"post\" p\n      WHERE\n        p.\"id\" = \"social\".\"reaction\".\"post_id\"\n    )\n  \n  "
+          "to": ["authenticated"],
+          "withCheck": "\n    \"social\".\"reaction\".\"user_id\" = \"identity\".\"current_user_id\" ()\n    AND \"social\".\"can_view_post\" (\"social\".\"reaction\".\"post_id\")\n  "
         },
         "Allow users to update their reactions on visible posts": {
           "name": "Allow users to update their reactions on visible posts",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"social\".\"reaction\".\"user_id\" = \"identity\".\"current_user_id\" ()",
-          "withCheck": "\n    \"social\".\"reaction\".\"user_id\" = \"identity\".\"current_user_id\" ()\n    AND \n    EXISTS (\n      SELECT\n        1\n      FROM\n        \"social\".\"post\" p\n      WHERE\n        p.\"id\" = \"social\".\"reaction\".\"post_id\"\n    )\n  \n  "
+          "withCheck": "\n    \"social\".\"reaction\".\"user_id\" = \"identity\".\"current_user_id\" ()\n    AND \"social\".\"can_view_post\" (\"social\".\"reaction\".\"post_id\")\n  "
         },
         "Allow users to delete their own reactions": {
           "name": "Allow users to delete their own reactions",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"social\".\"reaction\".\"user_id\" = \"identity\".\"current_user_id\" ()"
         }
       },
@@ -1893,12 +1693,8 @@
           "tableFrom": "aerobic_tracking",
           "tableTo": "user",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -1906,9 +1702,7 @@
       "compositePrimaryKeys": {
         "aerobic_tracking_pkey": {
           "name": "aerobic_tracking_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1917,27 +1711,21 @@
           "name": "Enable read access for auth users on aerobic_tracking",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"tracking\".\"aerobic_tracking\".\"user_id\""
         },
         "Enable insert for auth users on aerobic_tracking": {
           "name": "Enable insert for auth users on aerobic_tracking",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"identity\".\"current_user_id\"() = \"tracking\".\"aerobic_tracking\".\"user_id\""
         },
         "Enable update for auth users on aerobic_tracking": {
           "name": "Enable update for auth users on aerobic_tracking",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"tracking\".\"aerobic_tracking\".\"user_id\"",
           "withCheck": "\"identity\".\"current_user_id\"() = \"tracking\".\"aerobic_tracking\".\"user_id\""
         },
@@ -1945,9 +1733,7 @@
           "name": "Enable delete for auth users on aerobic_tracking",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"tracking\".\"aerobic_tracking\".\"user_id\""
         }
       },
@@ -2023,12 +1809,8 @@
           "tableFrom": "exercise_tracking",
           "tableTo": "exercise_to_workout_split",
           "schemaTo": "workout",
-          "columnsFrom": [
-            "exercise_to_split_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["exercise_to_split_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -2037,12 +1819,8 @@
           "tableFrom": "exercise_tracking",
           "tableTo": "exercise",
           "schemaTo": "workout",
-          "columnsFrom": [
-            "exercise_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["exercise_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -2051,12 +1829,8 @@
           "tableFrom": "exercise_tracking",
           "tableTo": "workout_summary",
           "schemaTo": "tracking",
-          "columnsFrom": [
-            "workout_summary_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workout_summary_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -2064,9 +1838,7 @@
       "compositePrimaryKeys": {
         "exercise_tracking_pkey": {
           "name": "exercise_tracking_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -2075,27 +1847,21 @@
           "name": "exercise_tracking_select_by_summary_owner",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "exists (select 1 from \"tracking\".\"workout_summary\" ws where ws.\"id\" = \"tracking\".\"exercise_tracking\".\"workout_summary_id\" and ws.\"user_id\" = \"identity\".\"current_user_id\"())"
         },
         "exercise_tracking_insert_by_summary_owner": {
           "name": "exercise_tracking_insert_by_summary_owner",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "exists (select 1 from \"tracking\".\"workout_summary\" ws where ws.\"id\" = \"tracking\".\"exercise_tracking\".\"workout_summary_id\" and ws.\"user_id\" = \"identity\".\"current_user_id\"())"
         },
         "exercise_tracking_update_by_summary_owner": {
           "name": "exercise_tracking_update_by_summary_owner",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "exists (select 1 from \"tracking\".\"workout_summary\" ws where ws.\"id\" = \"tracking\".\"exercise_tracking\".\"workout_summary_id\" and ws.\"user_id\" = \"identity\".\"current_user_id\"())",
           "withCheck": "exists (select 1 from \"tracking\".\"workout_summary\" ws where ws.\"id\" = \"tracking\".\"exercise_tracking\".\"workout_summary_id\" and ws.\"user_id\" = \"identity\".\"current_user_id\"())"
         },
@@ -2103,9 +1869,7 @@
           "name": "exercise_tracking_delete_by_summary_owner",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "exists (select 1 from \"tracking\".\"workout_summary\" ws where ws.\"id\" = \"tracking\".\"exercise_tracking\".\"workout_summary_id\" and ws.\"user_id\" = \"identity\".\"current_user_id\"())"
         }
       },
@@ -2176,12 +1940,8 @@
           "tableFrom": "tracking_set",
           "tableTo": "exercise_tracking",
           "schemaTo": "tracking",
-          "columnsFrom": [
-            "exercise_tracking_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["exercise_tracking_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -2189,19 +1949,14 @@
       "compositePrimaryKeys": {
         "tracking_set_pkey": {
           "name": "tracking_set_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "tracking_set_exercise_index_unique": {
           "name": "tracking_set_exercise_index_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "exercise_tracking_id",
-            "set_index"
-          ]
+          "columns": ["exercise_tracking_id", "set_index"]
         }
       },
       "policies": {
@@ -2209,27 +1964,21 @@
           "name": "Enable read access for auth users on tracking_set",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "exists (\n    select 1\n    from \"tracking\".\"exercise_tracking\" et\n    join \"tracking\".\"workout_summary\" ws on ws.\"id\" = et.\"workout_summary_id\"\n    where et.\"id\" = \"tracking\".\"tracking_set\".\"exercise_tracking_id\"\n      and ws.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
         },
         "Enable insert for auth users on tracking_set": {
           "name": "Enable insert for auth users on tracking_set",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "exists (\n    select 1\n    from \"tracking\".\"exercise_tracking\" et\n    join \"tracking\".\"workout_summary\" ws on ws.\"id\" = et.\"workout_summary_id\"\n    where et.\"id\" = \"tracking\".\"tracking_set\".\"exercise_tracking_id\"\n      and ws.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
         },
         "Enable update for auth users on tracking_set": {
           "name": "Enable update for auth users on tracking_set",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "exists (\n    select 1\n    from \"tracking\".\"exercise_tracking\" et\n    join \"tracking\".\"workout_summary\" ws on ws.\"id\" = et.\"workout_summary_id\"\n    where et.\"id\" = \"tracking\".\"tracking_set\".\"exercise_tracking_id\"\n      and ws.\"user_id\" = \"identity\".\"current_user_id\"()\n  )",
           "withCheck": "exists (\n    select 1\n    from \"tracking\".\"exercise_tracking\" et\n    join \"tracking\".\"workout_summary\" ws on ws.\"id\" = et.\"workout_summary_id\"\n    where et.\"id\" = \"tracking\".\"tracking_set\".\"exercise_tracking_id\"\n      and ws.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
         },
@@ -2237,9 +1986,7 @@
           "name": "Enable delete for auth users on tracking_set",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "exists (\n    select 1\n    from \"tracking\".\"exercise_tracking\" et\n    join \"tracking\".\"workout_summary\" ws on ws.\"id\" = et.\"workout_summary_id\"\n    where et.\"id\" = \"tracking\".\"tracking_set\".\"exercise_tracking_id\"\n      and ws.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
         }
       },
@@ -2333,12 +2080,8 @@
           "tableFrom": "workout_summary",
           "tableTo": "user",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2347,12 +2090,8 @@
           "tableFrom": "workout_summary",
           "tableTo": "workout_split",
           "schemaTo": "workout",
-          "columnsFrom": [
-            "workout_split_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workout_split_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -2360,9 +2099,7 @@
       "compositePrimaryKeys": {
         "workout_summary_pkey": {
           "name": "workout_summary_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -2371,27 +2108,21 @@
           "name": "users can read their workout summaries",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"tracking\".\"workout_summary\".\"user_id\" = \"identity\".\"current_user_id\"()"
         },
         "users can insert their workout summaries": {
           "name": "users can insert their workout summaries",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"tracking\".\"workout_summary\".\"user_id\" = \"identity\".\"current_user_id\"()"
         },
         "users can update their workout summaries": {
           "name": "users can update their workout summaries",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"tracking\".\"workout_summary\".\"user_id\" = \"identity\".\"current_user_id\"()",
           "withCheck": "\"tracking\".\"workout_summary\".\"user_id\" = \"identity\".\"current_user_id\"()"
         },
@@ -2399,9 +2130,7 @@
           "name": "users can delete their workout summaries",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"tracking\".\"workout_summary\".\"user_id\" = \"identity\".\"current_user_id\"()"
         }
       },
@@ -2475,9 +2204,7 @@
       "compositePrimaryKeys": {
         "exercise_pkey": {
           "name": "exercise_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -2486,9 +2213,7 @@
           "name": "Allow all authenticated users to read exercise",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "true"
         }
       },
@@ -2600,12 +2325,8 @@
           "tableFrom": "exercise_to_workout_split",
           "tableTo": "exercise",
           "schemaTo": "workout",
-          "columnsFrom": [
-            "exercise_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["exercise_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -2614,12 +2335,8 @@
           "tableFrom": "exercise_to_workout_split",
           "tableTo": "workout_split",
           "schemaTo": "workout",
-          "columnsFrom": [
-            "workout_split_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workout_split_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -2627,19 +2344,14 @@
       "compositePrimaryKeys": {
         "exercise_to_workout_split_pkey": {
           "name": "exercise_to_workout_split_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "uq_exercise_to_workout_split_workout_split_exercise": {
           "name": "uq_exercise_to_workout_split_workout_split_exercise",
           "nullsNotDistinct": false,
-          "columns": [
-            "workout_split_id",
-            "exercise_id"
-          ]
+          "columns": ["workout_split_id", "exercise_id"]
         }
       },
       "policies": {
@@ -2647,27 +2359,21 @@
           "name": "Enable read access for auth users on exercise_to_workout_split",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp join \"workout\".\"workout_split\" ws on ws.\"workout_id\" = wp.\"id\" where ws.\"id\" = \"workout\".\"exercise_to_workout_split\".\"workout_split_id\")"
         },
         "Enable insert for auth users on exercise_to_workout_split": {
           "name": "Enable insert for auth users on exercise_to_workout_split",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp join \"workout\".\"workout_split\" ws on ws.\"workout_id\" = wp.\"id\" where ws.\"id\" = \"workout\".\"exercise_to_workout_split\".\"workout_split_id\")"
         },
         "Enable update for auth users on exercise_to_workout_split": {
           "name": "Enable update for auth users on exercise_to_workout_split",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp join \"workout\".\"workout_split\" ws on ws.\"workout_id\" = wp.\"id\" where ws.\"id\" = \"workout\".\"exercise_to_workout_split\".\"workout_split_id\")",
           "withCheck": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp join \"workout\".\"workout_split\" ws on ws.\"workout_id\" = wp.\"id\" where ws.\"id\" = \"workout\".\"exercise_to_workout_split\".\"workout_split_id\")"
         },
@@ -2675,9 +2381,7 @@
           "name": "Enable delete for auth users on exercise_to_workout_split",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "exists (select 1 from \"workout\".\"workout_split\" ws join \"workout\".\"workout_plan\" wp on wp.\"id\" = ws.\"workout_id\" where ws.\"id\" = \"workout\".\"exercise_to_workout_split\".\"workout_split_id\" and wp.\"user_id\" = \"identity\".\"current_user_id\"())"
         }
       },
@@ -2757,12 +2461,8 @@
           "tableFrom": "workout_plan",
           "tableTo": "user",
           "schemaTo": "identity",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -2770,9 +2470,7 @@
       "compositePrimaryKeys": {
         "workout_plan_pkey": {
           "name": "workout_plan_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -2781,27 +2479,21 @@
           "name": "Enable read access for auth users on workout_plan",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"workout\".\"workout_plan\".\"user_id\""
         },
         "Enable insert for auth users on workout_plan": {
           "name": "Enable insert for auth users on workout_plan",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"identity\".\"current_user_id\"() = \"workout\".\"workout_plan\".\"user_id\""
         },
         "Enable update for auth users on workout_plan": {
           "name": "Enable update for auth users on workout_plan",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"workout\".\"workout_plan\".\"user_id\"",
           "withCheck": "\"identity\".\"current_user_id\"() = \"workout\".\"workout_plan\".\"user_id\""
         },
@@ -2809,9 +2501,7 @@
           "name": "Enable delete for auth users on workout_plan",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = \"workout\".\"workout_plan\".\"user_id\""
         }
       },
@@ -2871,12 +2561,8 @@
           "tableFrom": "workout_set",
           "tableTo": "exercise_to_workout_split",
           "schemaTo": "workout",
-          "columnsFrom": [
-            "exercise_to_split_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["exercise_to_split_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -2884,19 +2570,14 @@
       "compositePrimaryKeys": {
         "workout_set_pkey": {
           "name": "workout_set_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "workout_set_exercise_order_unique": {
           "name": "workout_set_exercise_order_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "exercise_to_split_id",
-            "order_index"
-          ]
+          "columns": ["exercise_to_split_id", "order_index"]
         }
       },
       "policies": {
@@ -2904,27 +2585,21 @@
           "name": "Enable read access for auth users on workout_set",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "exists (\n    select 1\n    from \"workout\".\"exercise_to_workout_split\" ets\n    join \"workout\".\"workout_split\" ws on ws.\"id\" = ets.\"workout_split_id\"\n    join \"workout\".\"workout_plan\" wp on wp.\"id\" = ws.\"workout_id\"\n    where ets.\"id\" = \"workout\".\"workout_set\".\"exercise_to_split_id\"\n      and wp.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
         },
         "Enable insert for auth users on workout_set": {
           "name": "Enable insert for auth users on workout_set",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "exists (\n    select 1\n    from \"workout\".\"exercise_to_workout_split\" ets\n    join \"workout\".\"workout_split\" ws on ws.\"id\" = ets.\"workout_split_id\"\n    join \"workout\".\"workout_plan\" wp on wp.\"id\" = ws.\"workout_id\"\n    where ets.\"id\" = \"workout\".\"workout_set\".\"exercise_to_split_id\"\n      and wp.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
         },
         "Enable update for auth users on workout_set": {
           "name": "Enable update for auth users on workout_set",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "exists (\n    select 1\n    from \"workout\".\"exercise_to_workout_split\" ets\n    join \"workout\".\"workout_split\" ws on ws.\"id\" = ets.\"workout_split_id\"\n    join \"workout\".\"workout_plan\" wp on wp.\"id\" = ws.\"workout_id\"\n    where ets.\"id\" = \"workout\".\"workout_set\".\"exercise_to_split_id\"\n      and wp.\"user_id\" = \"identity\".\"current_user_id\"()\n  )",
           "withCheck": "exists (\n    select 1\n    from \"workout\".\"exercise_to_workout_split\" ets\n    join \"workout\".\"workout_split\" ws on ws.\"id\" = ets.\"workout_split_id\"\n    join \"workout\".\"workout_plan\" wp on wp.\"id\" = ws.\"workout_id\"\n    where ets.\"id\" = \"workout\".\"workout_set\".\"exercise_to_split_id\"\n      and wp.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
         },
@@ -2932,9 +2607,7 @@
           "name": "Enable delete for auth users on workout_set",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "exists (\n    select 1\n    from \"workout\".\"exercise_to_workout_split\" ets\n    join \"workout\".\"workout_split\" ws on ws.\"id\" = ets.\"workout_split_id\"\n    join \"workout\".\"workout_plan\" wp on wp.\"id\" = ws.\"workout_id\"\n    where ets.\"id\" = \"workout\".\"workout_set\".\"exercise_to_split_id\"\n      and wp.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
         }
       },
@@ -3047,12 +2720,8 @@
           "tableFrom": "workout_split",
           "tableTo": "workout_plan",
           "schemaTo": "workout",
-          "columnsFrom": [
-            "workout_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workout_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -3060,9 +2729,7 @@
       "compositePrimaryKeys": {
         "workout_split_pkey": {
           "name": "workout_split_pkey",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -3071,27 +2738,21 @@
           "name": "Enable read access for auth users on workout_split",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp where wp.\"id\" = \"workout\".\"workout_split\".\"workout_id\")"
         },
         "Enable insert for auth users on workout_split": {
           "name": "Enable insert for auth users on workout_split",
           "as": "PERMISSIVE",
           "for": "INSERT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "withCheck": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp where wp.\"id\" = \"workout\".\"workout_split\".\"workout_id\")"
         },
         "Enable update for auth users on workout_split": {
           "name": "Enable update for auth users on workout_split",
           "as": "PERMISSIVE",
           "for": "UPDATE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp where wp.\"id\" = \"workout\".\"workout_split\".\"workout_id\")",
           "withCheck": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp where wp.\"id\" = \"workout\".\"workout_split\".\"workout_id\")"
         },
@@ -3099,9 +2760,7 @@
           "name": "Enable delete for auth users on workout_split",
           "as": "PERMISSIVE",
           "for": "DELETE",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "exists (select 1 from \"workout\".\"workout_plan\" wp where wp.\"id\" = \"workout\".\"workout_split\".\"workout_id\" and wp.\"user_id\" = \"identity\".\"current_user_id\"())"
         }
       },
@@ -3113,58 +2772,37 @@
     "identity.Auth Providers": {
       "name": "Auth Providers",
       "schema": "identity",
-      "values": [
-        "apple",
-        "google",
-        "app"
-      ]
+      "values": ["apple", "google", "app"]
     },
     "social.Crew Membership Role": {
       "name": "Crew Membership Role",
       "schema": "social",
-      "values": [
-        "leader",
-        "admin",
-        "member"
-      ]
+      "values": ["leader", "admin", "member"]
     },
     "social.Crew Membership Status": {
       "name": "Crew Membership Status",
       "schema": "social",
-      "values": [
-        "active",
-        "left",
-        "removed",
-        "banned"
-      ]
+      "values": ["active", "left", "removed", "banned"]
     },
     "social.Crew Participation Request Status": {
       "name": "Crew Participation Request Status",
       "schema": "social",
-      "values": [
-        "pending",
-        "accepted",
-        "declined",
-        "cancelled",
-        "expired"
-      ]
+      "values": ["pending", "accepted", "declined", "cancelled", "expired"]
     },
     "social.Crew Privacy": {
       "name": "Crew Privacy",
       "schema": "social",
-      "values": [
-        "public",
-        "private"
-      ]
+      "values": ["public", "private"]
+    },
+    "social.Post Visibility": {
+      "name": "Post Visibility",
+      "schema": "social",
+      "values": ["crews_only", "public"]
     },
     "social.Reaction Type": {
       "name": "Reaction Type",
       "schema": "social",
-      "values": [
-        "like",
-        "fire up",
-        "muscle"
-      ]
+      "values": ["like", "fire up", "muscle"]
     }
   },
   "schemas": {

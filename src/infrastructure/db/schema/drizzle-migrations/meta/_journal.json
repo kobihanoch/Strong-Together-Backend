@@ -209,105 +209,21 @@
       "idx": 29,
       "version": "7",
       "when": 1789065863013,
-      "tag": "0029_add_social_entities",
+      "tag": "0029_social_schema",
       "breakpoints": true
     },
     {
       "idx": 30,
       "version": "7",
       "when": 1789112349201,
-      "tag": "0030_list_discoverable_crews",
+      "tag": "0030_social_functions",
       "breakpoints": true
     },
     {
       "idx": 31,
       "version": "7",
-      "when": 1789114047129,
-      "tag": "0031_add_crew_authorization_functions",
-      "breakpoints": true
-    },
-    {
-      "idx": 32,
-      "version": "7",
-      "when": 1789115439970,
-      "tag": "0032_use_crew_authorization_functions_in_social_policies",
-      "breakpoints": true
-    },
-    {
-      "idx": 33,
-      "version": "7",
-      "when": 1789115937550,
-      "tag": "0033_allow_private_join_requests_and_public_auto_acceptance",
-      "breakpoints": true
-    },
-    {
-      "idx": 34,
-      "version": "7",
-      "when": 1789131496605,
-      "tag": "0034_add_post_visibility",
-      "breakpoints": true
-    },
-    {
-      "idx": 35,
-      "version": "7",
-      "when": 1789131749945,
-      "tag": "0035_restrict_crew_post_placement_visibility",
-      "breakpoints": true
-    },
-    {
-      "idx": 36,
-      "version": "7",
-      "when": 1789133734941,
-      "tag": "0036_centralize_social_authorization_policies",
-      "breakpoints": true
-    },
-    {
-      "idx": 37,
-      "version": "7",
-      "when": 1789134032017,
-      "tag": "0037_allow_initial_leader_membership",
-      "breakpoints": true
-    },
-    {
-      "idx": 38,
-      "version": "7",
-      "when": 1789134219182,
-      "tag": "0038_allow_post_author_returning",
-      "breakpoints": true
-    },
-    {
-      "idx": 39,
-      "version": "7",
-      "when": 1789137250866,
-      "tag": "0039_allow_rls_crew_leave",
-      "breakpoints": true
-    },
-    {
-      "idx": 40,
-      "version": "7",
       "when": 1789138381542,
-      "tag": "0040_delete_posts_with_deleted_crew",
-      "breakpoints": true
-    },
-    {
-      "idx": 41,
-      "version": "7",
-      "when": 1789195076434,
-      "tag": "0041_cursor_paginate_discoverable_crews",
-      "breakpoints": true
-    },
-    {
-      "idx": 42,
-      "version": "7",
-      "when": 1789197017112,
-      "tag": "0042_grant_reaction_timestamp_update",
-      "breakpoints": true
-    },
-    {
-      "idx": 43,
-      "version": "7",
-      "when": 1789204415029,
-      "tag": "0043_policies_update",
+      "tag": "0031_social_policies",
       "breakpoints": true
     }
   ]
