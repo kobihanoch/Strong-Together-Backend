@@ -25,6 +25,9 @@ export const crewParticipantQueryDtoSchema = crewMembershipDbSchema.extend({
   joinedAt: serializedDateSchema,
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
+  fullName: userDbSchema.shape.name,
+  profilePicPath: userDbSchema.shape.profilePicPath,
+  username: userDbSchema.shape.username,
 });
 
 /** Runtime schema for a crew deletion result. */

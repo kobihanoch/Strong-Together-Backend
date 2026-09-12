@@ -3764,7 +3764,10 @@ var discoverableCrewQueryDtoSchema = crewQueryDtoSchema.extend({
 var crewParticipantQueryDtoSchema = crewMembershipDbSchema.extend({
   joinedAt: serializedDateSchema,
   createdAt: serializedDateSchema,
-  updatedAt: serializedDateSchema
+  updatedAt: serializedDateSchema,
+  fullName: userDbSchema.shape.name,
+  profilePicPath: userDbSchema.shape.profilePicPath,
+  username: userDbSchema.shape.username
 });
 var deletedCrewQueryDtoSchema = import_v436.z.object({
   id: crewDbSchema.shape.id

@@ -6799,6 +6799,9 @@ declare const listCrewParticipantsResponseSchema: z.ZodObject<{
         joinedAt: z.ZodString;
         createdAt: z.ZodString;
         updatedAt: z.ZodString;
+        fullName: z.ZodString;
+        profilePicPath: z.ZodNullable<z.ZodString>;
+        username: z.ZodString;
     }, {
         out: {};
         in: {};
@@ -6835,6 +6838,9 @@ declare const listCrewParticipantsContract: {
             joinedAt: z.ZodString;
             createdAt: z.ZodString;
             updatedAt: z.ZodString;
+            fullName: z.ZodString;
+            profilePicPath: z.ZodNullable<z.ZodString>;
+            username: z.ZodString;
         }, {
             out: {};
             in: {};
@@ -7056,6 +7062,9 @@ declare const crewParticipantQueryDtoSchema: z.ZodObject<{
     joinedAt: z.ZodString;
     createdAt: z.ZodString;
     updatedAt: z.ZodString;
+    fullName: z.ZodString;
+    profilePicPath: z.ZodNullable<z.ZodString>;
+    username: z.ZodString;
 }, {
     out: {};
     in: {};
