@@ -5,8 +5,8 @@ import type {
   DeletedCrewQueryDto,
   DiscoverableCrewQueryDto,
   CrewSuccessorQueryDto,
-  LeaveCrewContextQueryDto,
   LeaveCrewResultQueryDto,
+  LeaveCrewContextQueryDto,
 } from '@strong-together/shared';
 import type postgres from 'postgres';
 import { SQL } from '../../../infrastructure/db/db.tokens';
@@ -70,7 +70,6 @@ export class CrewsQueries {
       WHERE
         cm.crew_id = ${crewId}::UUID
         AND cm.status = 'active'
-        AND social.can_view_crew_participants (${crewId}::UUID)
         AND (
           ${cursor?.timestamp ?? null}::TIMESTAMPTZ IS NULL
           OR (
@@ -175,7 +174,6 @@ export class CrewsQueries {
         updated_at = NOW()
       WHERE
         id = ${id}::UUID
-        AND social.can_manage_crew (id)
       RETURNING
         id,
         leader_id AS "leaderId",
@@ -197,27 +195,22 @@ export class CrewsQueries {
     // Get crew ID and lock row
     const [context] = await this.sql<LeaveCrewContextQueryDto[]>`
       SELECT
-        cm.id AS "membershipId"
+        cm.id AS "membershipId",
+        c.leader_id = cm.user_id AS "isLeader"
       FROM
         social.crew_membership cm
+        JOIN social.crew c ON c.id = cm.crew_id
       WHERE
         cm.crew_id = ${crewId}::UUID
         AND cm.user_id = identity.current_user_id ()
         AND cm.status = 'active'
-        AND social.can_access_crew (cm.crew_id)
       FOR UPDATE OF
         cm
     `;
 
     if (!context) return [{ result: 'not_member' }];
 
-    // Resolve if leader
-    const [isLeader] = await this.sql<{ value: boolean }[]>`
-      SELECT
-        social.can_manage_crew (${crewId}::UUID) AS value
-    `;
-
-    if (isLeader?.value) {
+    if (context.isLeader) {
       // Only a current active leader can lock this row through the crew UPDATE policy.
       await this.sql`
         SELECT
@@ -226,7 +219,6 @@ export class CrewsQueries {
           social.crew
         WHERE
           id = ${crewId}::UUID
-          AND social.can_manage_crew (id)
         FOR UPDATE
       `;
 
@@ -269,7 +261,6 @@ export class CrewsQueries {
         updated_at = NOW()
         WHERE
           id = ${successor.membershipId}::UUID
-          AND social.can_manage_crew (crew_id)
       `;
 
       await this.sql`
@@ -279,7 +270,6 @@ export class CrewsQueries {
           updated_at = NOW()
         WHERE
           id = ${crewId}::UUID
-          AND social.can_manage_crew (id)
       `;
     }
 
@@ -307,7 +297,6 @@ export class CrewsQueries {
       DELETE FROM social.crew
       WHERE
         id = ${id}::UUID
-        AND social.can_manage_crew (id)
       RETURNING
         id
     `;

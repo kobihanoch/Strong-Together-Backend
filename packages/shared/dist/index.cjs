@@ -2375,7 +2375,7 @@ function crewSharedPostPolicies(t) {
     (0, import_pg_core44.pgPolicy)("Allow users to read visible crew post placements", {
       for: "select",
       to: authenticatedRole,
-      using: canViewPost(t.postId)
+      using: canAccessCrew(t.crewId)
     }),
     // The post author may share their post only into a crew in which they actively participate or lead.
     (0, import_pg_core44.pgPolicy)("Allow member authors to share posts with crews", {
@@ -3776,7 +3776,8 @@ var leaveCrewResultQueryDtoSchema = import_v436.z.object({
   ])
 });
 var leaveCrewContextQueryDtoSchema = import_v436.z.object({
-  membershipId: crewMembershipDbSchema.shape.id
+  membershipId: crewMembershipDbSchema.shape.id,
+  isLeader: import_v436.z.boolean()
 });
 var crewSuccessorQueryDtoSchema = import_v436.z.object({
   membershipId: crewMembershipDbSchema.shape.id,

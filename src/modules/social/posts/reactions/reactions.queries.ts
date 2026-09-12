@@ -60,12 +60,12 @@ export class ReactionsQueries {
     return this.sql<ReactionWriteResultQueryDto[]>`
       INSERT INTO
         social.reaction (post_id, user_id, type)
-      SELECT
-        ${postId}::UUID,
-        ${userId}::UUID,
-        ${type}::social."Reaction Type"
-      WHERE
-        social.can_view_post (${postId}::UUID)
+      VALUES
+        (
+          ${postId}::UUID,
+          ${userId}::UUID,
+          ${type}::social."Reaction Type"
+        )
       ON CONFLICT (post_id, user_id) DO UPDATE
       SET
         type = EXCLUDED.type,

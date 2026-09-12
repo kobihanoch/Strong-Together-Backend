@@ -27,13 +27,10 @@ export class PostsQueries {
       FROM
         social.post p
       WHERE
-        social.can_view_post (p.id)
-        AND (
-          ${cursor?.timestamp ?? null}::TIMESTAMPTZ IS NULL
-          OR (DATE_TRUNC('milliseconds', p.published_at), p.id) < (
-            ${cursor?.timestamp ?? null}::TIMESTAMPTZ,
-            ${cursor?.id ?? null}::UUID
-          )
+        ${cursor?.timestamp ?? null}::TIMESTAMPTZ IS NULL
+        OR (DATE_TRUNC('milliseconds', p.published_at), p.id) < (
+          ${cursor?.timestamp ?? null}::TIMESTAMPTZ,
+          ${cursor?.id ?? null}::UUID
         )
       ORDER BY
         DATE_TRUNC('milliseconds', p.published_at) DESC,
@@ -65,7 +62,6 @@ export class PostsQueries {
         INNER JOIN social.crew_shared_post csp ON csp.post_id = p.id
       WHERE
         csp.crew_id = ${crewId}::UUID
-        AND social.can_access_crew (${crewId}::UUID)
         AND (
           ${cursor?.timestamp ?? null}::TIMESTAMPTZ IS NULL
           OR (DATE_TRUNC('milliseconds', p.published_at), p.id) < (
@@ -110,7 +106,7 @@ export class PostsQueries {
     `;
 
     if (crewIds.length > 0) {
-      const placements = await this.sql`
+      await this.sql`
         INSERT INTO
           social.crew_shared_post (crew_id, post_id)
         SELECT DISTINCT
@@ -118,14 +114,9 @@ export class PostsQueries {
           ${post.id}::UUID
         FROM
           UNNEST(${crewIds}::UUID[]) AS requested_crew (id)
-        WHERE
-          social.can_publish_to_crew (requested_crew.id)
         RETURNING
           id
       `;
-
-      // The surrounding request transaction rolls back when any requested crew is unauthorized.
-      if (placements.length !== new Set(crewIds).size) return [];
     }
 
     return [post];
@@ -146,7 +137,6 @@ export class PostsQueries {
         updated_at = NOW()
       WHERE
         id = ${id}::UUID
-        AND social.is_post_author (id)
       RETURNING
         id
     `;
@@ -163,7 +153,6 @@ export class PostsQueries {
       DELETE FROM social.post
       WHERE
         id = ${id}::UUID
-        AND social.is_post_author (id)
       RETURNING
         id
     `;
