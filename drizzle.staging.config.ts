@@ -13,7 +13,7 @@ export default defineConfig({
     './src/infrastructure/db/schema/drizzle/**/table.ts',
     './src/infrastructure/db/schema/drizzle/**/*.view.ts',
   ],
-  out: './src/infrastructure/db/schema/drizzle-migrations',
+  out: './src/infrastructure/db/schema/migrations',
   dbCredentials: { url: process.env.STAGING_DATABASE_URL },
   migrations: { schema: 'drizzle', table: '__drizzle_migrations' },
   strict: true,
