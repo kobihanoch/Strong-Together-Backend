@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { CreatePostBody, ListCrewPostsResponse, ListVisiblePostsResponse, UpdatePostBody } from '@strong-together/shared';
 import { PostsQueries } from './posts.queries';
+import { decodeSocialCursor, encodeSocialCursor } from '../cursor-pagination';
 
 /** Coordinates social post CRUD operations and maps empty query results to HTTP errors. */
 @Injectable()
@@ -11,11 +12,14 @@ export class PostsService {
    * Lists the paginated global and crew posts visible to the caller.
    *
    * @param limit - The maximum number of posts to return.
-   * @param offset - The number of visible posts to skip.
+   * @param cursor - The opaque cursor returned by the preceding page.
    * @returns A response object containing visible posts.
    */
-  async getVisiblePostsData(limit: number, offset: number): Promise<ListVisiblePostsResponse> {
-    return { posts: await this.queries.queryVisiblePosts(limit, offset) };
+  async getVisiblePostsData(limit: number, cursor?: string): Promise<ListVisiblePostsResponse> {
+    const rows = await this.queries.queryVisiblePosts(limit, decodeSocialCursor(cursor));
+    const posts = rows.slice(0, limit);
+    const last = posts.at(-1);
+    return { posts, nextCursor: rows.length > limit && last ? encodeSocialCursor({ timestamp: last.publishedAt, id: last.id }) : null };
   }
 
   /**
@@ -23,11 +27,14 @@ export class PostsService {
    *
    * @param crewId - The crew whose feed is requested.
    * @param limit - The maximum number of posts to return.
-   * @param offset - The number of matching crew posts to skip.
+   * @param cursor - The opaque cursor returned by the preceding page.
    * @returns A response object containing the crew's visible posts.
    */
-  async getCrewPostsData(crewId: string, limit: number, offset: number): Promise<ListCrewPostsResponse> {
-    return { posts: await this.queries.queryCrewPosts(crewId, limit, offset) };
+  async getCrewPostsData(crewId: string, limit: number, cursor?: string): Promise<ListCrewPostsResponse> {
+    const rows = await this.queries.queryCrewPosts(crewId, limit, decodeSocialCursor(cursor));
+    const posts = rows.slice(0, limit);
+    const last = posts.at(-1);
+    return { posts, nextCursor: rows.length > limit && last ? encodeSocialCursor({ timestamp: last.publishedAt, id: last.id }) : null };
   }
 
   /**

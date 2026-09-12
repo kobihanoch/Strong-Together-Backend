@@ -11,12 +11,12 @@ const crewIdParamsSchema = z.object({ id: crewDbSchema.shape.id });
 export const listCrewsRequestSchema = z.object({
   query: z.object({
     limit: z.coerce.number().int().min(1).max(100).default(20),
-    offset: z.coerce.number().int().min(0).default(0),
+    cursor: z.string().min(1).optional(),
   }),
 });
 
 /** Validates the collection returned by the list-crews endpoint. */
-export const listCrewsResponseSchema = z.object({ crews: z.array(discoverableCrewQueryDtoSchema) });
+export const listCrewsResponseSchema = z.object({ crews: z.array(discoverableCrewQueryDtoSchema), nextCursor: z.string().nullable() });
 
 /** Defines the request and response contract for listing visible crews. */
 export const listCrewsContract = { request: listCrewsRequestSchema, response: listCrewsResponseSchema } satisfies Contract;
@@ -34,13 +34,14 @@ export const listCrewParticipantsRequestSchema = z.object({
   params: z.object({ crewId: crewDbSchema.shape.id }),
   query: z.object({
     limit: z.coerce.number().int().min(1).max(100).default(20),
-    offset: z.coerce.number().int().min(0).default(0),
+    cursor: z.string().min(1).optional(),
   }),
 });
 
 /** Validates the participant collection returned by the endpoint. */
 export const listCrewParticipantsResponseSchema = z.object({
   participants: z.array(crewParticipantQueryDtoSchema),
+  nextCursor: z.string().nullable(),
 });
 
 /** Defines the request and response contract for listing crew participants. */

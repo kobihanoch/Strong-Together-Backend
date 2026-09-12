@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { CreateCrewBody, CrewQueryDto, ListCrewParticipantsResponse, ListCrewsResponse, UpdateCrewBody } from '@strong-together/shared';
 import { CrewsQueries } from './crews.queries';
+import { decodeSocialCursor, encodeSocialCursor } from '../cursor-pagination';
 /** Coordinates social crew CRUD operations and maps empty query results to HTTP errors. */
 @Injectable()
 export class CrewsService {
@@ -9,11 +10,14 @@ export class CrewsService {
    * Lists discoverable crews with a limited participant preview.
    *
    * @param limit - The maximum number of crews to return.
-   * @param offset - The number of crews to skip.
+   * @param cursor - The opaque cursor returned by the preceding page.
    * @returns A contract object containing the visible crews.
    */
-  async listCrewsData(limit: number, offset: number): Promise<ListCrewsResponse> {
-    return { crews: await this.queries.queryCrews(limit, offset) };
+  async listCrewsData(limit: number, cursor?: string): Promise<ListCrewsResponse> {
+    const rows = await this.queries.queryCrews(limit, decodeSocialCursor(cursor));
+    const crews = rows.slice(0, limit);
+    const last = crews.at(-1);
+    return { crews, nextCursor: rows.length > limit && last ? encodeSocialCursor({ timestamp: last.createdAt, id: last.id }) : null };
   }
 
   /**
@@ -21,12 +25,23 @@ export class CrewsService {
    *
    * @param crewId - The UUID of the crew whose participants are requested.
    * @param limit - The maximum number of participants to return.
-   * @param offset - The number of participants to skip.
+   * @param cursor - The opaque cursor returned by the preceding page.
    * @returns A contract object containing the authorized participant rows.
    */
-  async listCrewParticipantsData(crewId: string, limit: number, offset: number): Promise<ListCrewParticipantsResponse> {
-    const participants = await this.queries.queryCrewParticipants(crewId, limit, offset);
-    return { participants };
+  async listCrewParticipantsData(crewId: string, limit: number, cursor?: string): Promise<ListCrewParticipantsResponse> {
+    const decodedCursor = decodeSocialCursor(cursor);
+    const rows = await this.queries.queryCrewParticipants(
+      crewId,
+      limit,
+      decodedCursor ? { timestamp: decodedCursor.timestamp, id: decodedCursor.id, rank: decodedCursor.rank } : undefined,
+    );
+    const participants = rows.slice(0, limit);
+    const last = participants.at(-1);
+    const rank = last?.role === 'leader' ? 1 : last?.role === 'admin' ? 2 : 3;
+    return {
+      participants,
+      nextCursor: rows.length > limit && last ? encodeSocialCursor({ timestamp: last.joinedAt, id: last.id, rank }) : null,
+    };
   }
   /**
    * Gets one visible crew.

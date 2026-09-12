@@ -74,7 +74,7 @@ export class CrewsController {
       query: ListCrewsQuery;
     },
   ): Promise<ListCrewsResponse> {
-    return this.service.listCrewsData(data.query.limit, data.query.offset);
+    return this.service.listCrewsData(data.query.limit, data.query.cursor);
   }
 
   /**
@@ -96,7 +96,7 @@ export class CrewsController {
       query: ListCrewParticipantsQuery;
     },
   ): Promise<ListCrewParticipantsResponse> {
-    return this.service.listCrewParticipantsData(data.params.crewId, data.query.limit, data.query.offset);
+    return this.service.listCrewParticipantsData(data.params.crewId, data.query.limit, data.query.cursor);
   }
 
   /**
