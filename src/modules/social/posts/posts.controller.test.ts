@@ -1,6 +1,11 @@
 import request from 'supertest';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { listCrewPostsResponseSchema, listVisiblePostsResponseSchema } from '@strong-together/shared';
+import {
+  listCrewPostsResponseSchema,
+  listPostCommentsResponseSchema,
+  listPostReactionsResponseSchema,
+  listVisiblePostsResponseSchema,
+} from '@strong-together/shared';
 import { createApp } from '../../../app';
 import { authHeaders } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
@@ -66,13 +71,84 @@ describe('PostsController', () => {
 
     const response = await request(app.getHttpServer())
       .get('/api/social/posts')
-      .query({ limit: 20, offset: 0 })
+      .query({ limit: 20 })
       .set(authHeaders(outsider.accessToken));
 
     expect(response.status).toBe(200);
     expectSchema(listVisiblePostsResponseSchema, response.body);
     expect(response.body.posts).toEqual(expect.arrayContaining([expect.objectContaining({ content: 'Public crew update', visibility: 'public' })]));
     expect(response.body.posts.find((post: { content: string }) => post.content === 'Public crew update')).not.toHaveProperty('crewId');
+  });
+
+  it('GET /api/social/posts continues from the returned cursor without repeating posts', async () => {
+    const author = await postUser('post_cursor_author');
+    await createPost(author.accessToken, { content: 'Cursor first', visibility: 'public' });
+    await createPost(author.accessToken, { content: 'Cursor second', visibility: 'public' });
+
+    const firstPage = await request(app.getHttpServer()).get('/api/social/posts').query({ limit: 1 }).set(authHeaders(author.accessToken));
+    const secondPage = await request(app.getHttpServer())
+      .get('/api/social/posts')
+      .query({ limit: 1, cursor: firstPage.body.nextCursor })
+      .set(authHeaders(author.accessToken));
+
+    expect(firstPage.body.nextCursor).toEqual(expect.any(String));
+    expect(secondPage.body.posts).toHaveLength(1);
+    expect(secondPage.body.posts[0].id).not.toBe(firstPage.body.posts[0].id);
+  });
+
+  it('GET post comments returns cursor-paginated comments on a visible post', async () => {
+    const author = await postUser('comment_list_author');
+    await createPost(author.accessToken, { content: 'Commented post', visibility: 'public' });
+    const post = await getPostByAuthorId(author.userId);
+
+    await request(app.getHttpServer()).post(`/api/social/posts/${post!.id}/comments`).set(authHeaders(author.accessToken)).send({ content: 'First' });
+    await request(app.getHttpServer()).post(`/api/social/posts/${post!.id}/comments`).set(authHeaders(author.accessToken)).send({ content: 'Second' });
+
+    const firstPage = await request(app.getHttpServer())
+      .get(`/api/social/posts/${post!.id}/comments`)
+      .query({ limit: 1 })
+      .set(authHeaders(author.accessToken));
+    const secondPage = await request(app.getHttpServer())
+      .get(`/api/social/posts/${post!.id}/comments`)
+      .query({ limit: 1, cursor: firstPage.body.nextCursor })
+      .set(authHeaders(author.accessToken));
+
+    expectSchema(listPostCommentsResponseSchema, firstPage.body);
+    expect(firstPage.body.comments[0].content).toBe('First');
+    expect(secondPage.body.comments[0].content).toBe('Second');
+  });
+
+  it('GET post reactions returns cursor-paginated reactions on a visible post', async () => {
+    const author = await postUser('reaction_list_author');
+    const reactor = await postUser('reaction_list_user');
+    await createPost(author.accessToken, { content: 'Reacted post', visibility: 'public' });
+    const post = await getPostByAuthorId(author.userId);
+
+    const authorReaction = await request(app.getHttpServer())
+      .post(`/api/social/posts/${post!.id}/reactions`)
+      .set(authHeaders(author.accessToken))
+      .send({ type: 'like' });
+    const userReaction = await request(app.getHttpServer())
+      .post(`/api/social/posts/${post!.id}/reactions`)
+      .set(authHeaders(reactor.accessToken))
+      .send({ type: 'muscle' });
+
+    expect(authorReaction.status, JSON.stringify(authorReaction.body)).toBe(201);
+    expect(userReaction.status, JSON.stringify(userReaction.body)).toBe(201);
+
+    const firstPage = await request(app.getHttpServer())
+      .get(`/api/social/posts/${post!.id}/reactions`)
+      .query({ limit: 1 })
+      .set(authHeaders(author.accessToken));
+    const secondPage = await request(app.getHttpServer())
+      .get(`/api/social/posts/${post!.id}/reactions`)
+      .query({ limit: 1, cursor: firstPage.body.nextCursor })
+      .set(authHeaders(author.accessToken));
+
+    expectSchema(listPostReactionsResponseSchema, firstPage.body);
+    expect(firstPage.body.reactions).toHaveLength(1);
+    expect(secondPage.body.reactions).toHaveLength(1);
+    expect(secondPage.body.reactions[0].id).not.toBe(firstPage.body.reactions[0].id);
   });
 
   it('GET /api/social/posts hides crew-only posts from outsiders and exposes them to active members', async () => {
@@ -85,11 +161,11 @@ describe('PostsController', () => {
 
     const outsiderResponse = await request(app.getHttpServer())
       .get('/api/social/posts')
-      .query({ limit: 20, offset: 0 })
+      .query({ limit: 20 })
       .set(authHeaders(outsider.accessToken));
     const memberResponse = await request(app.getHttpServer())
       .get('/api/social/posts')
-      .query({ limit: 20, offset: 0 })
+      .query({ limit: 20 })
       .set(authHeaders(member.accessToken));
 
     expect(outsiderResponse.body.posts).not.toEqual(expect.arrayContaining([expect.objectContaining({ content: 'Members only' })]));
@@ -105,7 +181,7 @@ describe('PostsController', () => {
 
     const response = await request(app.getHttpServer())
       .get(`/api/social/posts/crew/${crew.id}`)
-      .query({ limit: 1, offset: 0 })
+      .query({ limit: 1 })
       .set(authHeaders(member.accessToken));
 
     expect(response.status).toBe(200);
@@ -126,7 +202,7 @@ describe('PostsController', () => {
     });
 
     const post = await getPostByAuthorId(leader.userId);
-    const response = await request(app.getHttpServer()).get('/api/social/posts').query({ limit: 20, offset: 0 }).set(authHeaders(leader.accessToken));
+    const response = await request(app.getHttpServer()).get('/api/social/posts').query({ limit: 20 }).set(authHeaders(leader.accessToken));
 
     expect(post).not.toBeNull();
     expect(await getPostPlacementCount(post!.id)).toBe(2);
@@ -160,11 +236,11 @@ describe('PostsController', () => {
 
     const response = await request(app.getHttpServer())
       .get(`/api/social/posts/crew/${crew.id}`)
-      .query({ limit: 20, offset: 0 })
+      .query({ limit: 20 })
       .set(authHeaders(leader.accessToken));
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ posts: [] });
+    expect(response.body).toEqual({ posts: [], nextCursor: null });
   });
 
   it('post endpoints reject missing visibility, invalid pagination, and unauthenticated requests', async () => {
@@ -187,7 +263,7 @@ describe('PostsController', () => {
       });
     const invalidPagination = await request(app.getHttpServer())
       .get('/api/social/posts')
-      .query({ limit: 101, offset: -1 })
+      .query({ limit: 101 })
       .set(authHeaders(user.accessToken));
     const unauthenticated = await request(app.getHttpServer()).get('/api/social/posts').query({ limit: 20, offset: 0 }).set('x-app-version', '4.5.0');
 

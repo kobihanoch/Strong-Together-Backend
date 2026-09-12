@@ -23,6 +23,9 @@ var index_exports = {};
 __export(index_exports, {
   accessTokenPayloadDtoSchema: () => accessTokenPayloadDtoSchema,
   addAerobicInputQueryDtoSchema: () => addAerobicInputQueryDtoSchema,
+  addCommentContract: () => addCommentContract,
+  addCommentRequestSchema: () => addCommentRequestSchema,
+  addCommentResponseSchema: () => addCommentResponseSchema,
   aerobicMutationRowQueryDtoSchema: () => aerobicMutationRowQueryDtoSchema,
   aerobicTrackingDbSchema: () => aerobicTrackingDbSchema,
   aerobicsDailyRecordQueryDtoSchema: () => aerobicsDailyRecordQueryDtoSchema,
@@ -35,6 +38,9 @@ __export(index_exports, {
   appleTokenVerificationResultDtoSchema: () => appleTokenVerificationResultDtoSchema,
   authenticatedUserForUpdateQueryDtoSchema: () => authenticatedUserForUpdateQueryDtoSchema,
   changeEmailTokenPayloadDtoSchema: () => changeEmailTokenPayloadDtoSchema,
+  commentDbSchema: () => commentDbSchema,
+  commentQueryDtoSchema: () => commentQueryDtoSchema,
+  commentWriteResultQueryDtoSchema: () => commentWriteResultQueryDtoSchema,
   createAerobicEntryContract: () => createAerobicEntryContract,
   createAerobicEntryRequestSchema: () => createAerobicEntryRequestSchema,
   createAerobicEntryResponseSchema: () => createAerobicEntryResponseSchema,
@@ -72,6 +78,9 @@ __export(index_exports, {
   crewSuccessorQueryDtoSchema: () => crewSuccessorQueryDtoSchema,
   deleteAerobicEntryContract: () => deleteAerobicEntryContract,
   deleteAerobicEntryRequestSchema: () => deleteAerobicEntryRequestSchema,
+  deleteCommentContract: () => deleteCommentContract,
+  deleteCommentRequestSchema: () => deleteCommentRequestSchema,
+  deleteCommentResponseSchema: () => deleteCommentResponseSchema,
   deleteCrewContract: () => deleteCrewContract,
   deleteCrewRequestSchema: () => deleteCrewRequestSchema,
   deleteCrewResponseSchema: () => deleteCrewResponseSchema,
@@ -83,10 +92,16 @@ __export(index_exports, {
   deletePostResponseSchema: () => deletePostResponseSchema,
   deleteProfilePictureContract: () => deleteProfilePictureContract,
   deleteProfilePictureRequestSchema: () => deleteProfilePictureRequestSchema,
+  deleteReactionContract: () => deleteReactionContract,
+  deleteReactionRequestSchema: () => deleteReactionRequestSchema,
+  deleteReactionResponseSchema: () => deleteReactionResponseSchema,
   deletedCrewQueryDtoSchema: () => deletedCrewQueryDtoSchema,
   deletedMessageQueryDtoSchema: () => deletedMessageQueryDtoSchema,
   deletedPostQueryDtoSchema: () => deletedPostQueryDtoSchema,
   discoverableCrewQueryDtoSchema: () => discoverableCrewQueryDtoSchema,
+  editCommentContract: () => editCommentContract,
+  editCommentRequestSchema: () => editCommentRequestSchema,
+  editCommentResponseSchema: () => editCommentResponseSchema,
   emailVerifyPayloadDtoSchema: () => emailVerifyPayloadDtoSchema,
   enqueueAnalyzeVideoParamsDtoSchema: () => enqueueAnalyzeVideoParamsDtoSchema,
   exerciseAssignmentIdQueryDtoSchema: () => exerciseAssignmentIdQueryDtoSchema,
@@ -164,6 +179,12 @@ __export(index_exports, {
   listMessagesContract: () => listMessagesContract,
   listMessagesRequestSchema: () => listMessagesRequestSchema,
   listMessagesResponseSchema: () => listMessagesResponseSchema,
+  listPostCommentsContract: () => listPostCommentsContract,
+  listPostCommentsRequestSchema: () => listPostCommentsRequestSchema,
+  listPostCommentsResponseSchema: () => listPostCommentsResponseSchema,
+  listPostReactionsContract: () => listPostReactionsContract,
+  listPostReactionsRequestSchema: () => listPostReactionsRequestSchema,
+  listPostReactionsResponseSchema: () => listPostReactionsResponseSchema,
   listVisiblePostsContract: () => listVisiblePostsContract,
   listVisiblePostsRequestSchema: () => listVisiblePostsRequestSchema,
   listVisiblePostsResponseSchema: () => listVisiblePostsResponseSchema,
@@ -194,6 +215,12 @@ __export(index_exports, {
   postQueryDtoSchema: () => postQueryDtoSchema,
   proceedLoginResponseSchema: () => proceedLoginResponseSchema,
   prsViewDbSchema: () => prsViewDbSchema,
+  reactToPostContract: () => reactToPostContract,
+  reactToPostRequestSchema: () => reactToPostRequestSchema,
+  reactToPostResponseSchema: () => reactToPostResponseSchema,
+  reactionDbSchema: () => reactionDbSchema,
+  reactionQueryDtoSchema: () => reactionQueryDtoSchema,
+  reactionWriteResultQueryDtoSchema: () => reactionWriteResultQueryDtoSchema,
   refreshTokenContract: () => refreshTokenContract,
   refreshTokenPayloadDtoSchema: () => refreshTokenPayloadDtoSchema,
   refreshTokenResponseSchema: () => refreshTokenResponseSchema,
@@ -2654,6 +2681,8 @@ var prsViewDbSchema = (0, import_drizzle_zod.createSelectSchema)(prsView);
 var crewDbSchema = (0, import_drizzle_zod.createSelectSchema)(crew);
 var crewMembershipDbSchema = (0, import_drizzle_zod.createSelectSchema)(crewMembership);
 var postDbSchema = (0, import_drizzle_zod.createSelectSchema)(post);
+var commentDbSchema = (0, import_drizzle_zod.createSelectSchema)(comment);
+var reactionDbSchema = (0, import_drizzle_zod.createSelectSchema)(reaction);
 
 // src/modules/aerobics/aerobics.contracts.ts
 var import_v43 = require("zod/v4");
@@ -3761,11 +3790,12 @@ var crewIdParamsSchema = import_v437.z.object({
 var listCrewsRequestSchema = import_v437.z.object({
   query: import_v437.z.object({
     limit: import_v437.z.coerce.number().int().min(1).max(100).default(20),
-    offset: import_v437.z.coerce.number().int().min(0).default(0)
+    cursor: import_v437.z.string().min(1).optional()
   })
 });
 var listCrewsResponseSchema = import_v437.z.object({
-  crews: import_v437.z.array(discoverableCrewQueryDtoSchema)
+  crews: import_v437.z.array(discoverableCrewQueryDtoSchema),
+  nextCursor: import_v437.z.string().nullable()
 });
 var listCrewsContract = {
   request: listCrewsRequestSchema,
@@ -3777,11 +3807,12 @@ var listCrewParticipantsRequestSchema = import_v437.z.object({
   }),
   query: import_v437.z.object({
     limit: import_v437.z.coerce.number().int().min(1).max(100).default(20),
-    offset: import_v437.z.coerce.number().int().min(0).default(0)
+    cursor: import_v437.z.string().min(1).optional()
   })
 });
 var listCrewParticipantsResponseSchema = import_v437.z.object({
-  participants: import_v437.z.array(crewParticipantQueryDtoSchema)
+  participants: import_v437.z.array(crewParticipantQueryDtoSchema),
+  nextCursor: import_v437.z.string().nullable()
 });
 var listCrewParticipantsContract = {
   request: listCrewParticipantsRequestSchema,
@@ -3854,13 +3885,14 @@ var postIdParamsSchema = import_v439.z.object({
 });
 var postPaginationSchema = import_v439.z.object({
   limit: import_v439.z.coerce.number().int().min(1).max(100).default(20),
-  offset: import_v439.z.coerce.number().int().min(0).default(0)
+  cursor: import_v439.z.string().min(1).optional()
 });
 var listVisiblePostsRequestSchema = import_v439.z.object({
   query: postPaginationSchema
 });
 var listVisiblePostsResponseSchema = import_v439.z.object({
-  posts: import_v439.z.array(postQueryDtoSchema)
+  posts: import_v439.z.array(postQueryDtoSchema),
+  nextCursor: import_v439.z.string().nullable()
 });
 var listVisiblePostsContract = {
   request: listVisiblePostsRequestSchema,
@@ -3873,7 +3905,8 @@ var listCrewPostsRequestSchema = import_v439.z.object({
   query: postPaginationSchema
 });
 var listCrewPostsResponseSchema = import_v439.z.object({
-  posts: import_v439.z.array(postQueryDtoSchema)
+  posts: import_v439.z.array(postQueryDtoSchema),
+  nextCursor: import_v439.z.string().nullable()
 });
 var listCrewPostsContract = {
   request: listCrewPostsRequestSchema,
@@ -3930,10 +3963,131 @@ var deletePostContract = {
   request: deletePostRequestSchema,
   response: deletePostResponseSchema
 };
+
+// src/modules/social/posts/comments/comments.contracts.ts
+var import_v441 = require("zod/v4");
+
+// src/modules/social/posts/comments/comments.dtos.ts
+var import_v440 = require("zod/v4");
+var commentQueryDtoSchema = commentDbSchema.extend({
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema
+});
+var commentWriteResultQueryDtoSchema = import_v440.z.object({
+  id: commentDbSchema.shape.id
+});
+
+// src/modules/social/posts/comments/comments.contracts.ts
+var postParamsSchema = import_v441.z.object({
+  postId: postDbSchema.shape.id
+});
+var commentParamsSchema = import_v441.z.object({
+  id: commentDbSchema.shape.id
+});
+var commentContentSchema = commentDbSchema.shape.content.trim().min(1).max(2e3);
+var listPostCommentsRequestSchema = import_v441.z.object({
+  params: postParamsSchema,
+  query: import_v441.z.object({
+    limit: import_v441.z.coerce.number().int().min(1).max(100).default(20),
+    cursor: import_v441.z.string().min(1).optional()
+  })
+});
+var listPostCommentsResponseSchema = import_v441.z.object({
+  comments: import_v441.z.array(commentQueryDtoSchema),
+  nextCursor: import_v441.z.string().nullable()
+});
+var listPostCommentsContract = {
+  request: listPostCommentsRequestSchema,
+  response: listPostCommentsResponseSchema
+};
+var addCommentRequestSchema = import_v441.z.object({
+  params: postParamsSchema,
+  body: import_v441.z.object({
+    content: commentContentSchema
+  })
+});
+var addCommentResponseSchema = import_v441.z.void();
+var addCommentContract = {
+  request: addCommentRequestSchema,
+  response: addCommentResponseSchema
+};
+var editCommentRequestSchema = import_v441.z.object({
+  params: commentParamsSchema,
+  body: import_v441.z.object({
+    content: commentContentSchema
+  })
+});
+var editCommentResponseSchema = import_v441.z.void();
+var editCommentContract = {
+  request: editCommentRequestSchema,
+  response: editCommentResponseSchema
+};
+var deleteCommentRequestSchema = import_v441.z.object({
+  params: commentParamsSchema
+});
+var deleteCommentResponseSchema = import_v441.z.void();
+var deleteCommentContract = {
+  request: deleteCommentRequestSchema,
+  response: deleteCommentResponseSchema
+};
+
+// src/modules/social/posts/reactions/reactions.contracts.ts
+var import_v443 = require("zod/v4");
+
+// src/modules/social/posts/reactions/reactions.dtos.ts
+var import_v442 = require("zod/v4");
+var reactionQueryDtoSchema = reactionDbSchema.extend({
+  reactedAt: serializedDateSchema
+});
+var reactionWriteResultQueryDtoSchema = import_v442.z.object({
+  id: reactionDbSchema.shape.id
+});
+
+// src/modules/social/posts/reactions/reactions.contracts.ts
+var postParamsSchema2 = import_v443.z.object({
+  postId: postDbSchema.shape.id
+});
+var listPostReactionsRequestSchema = import_v443.z.object({
+  params: postParamsSchema2,
+  query: import_v443.z.object({
+    limit: import_v443.z.coerce.number().int().min(1).max(100).default(20),
+    cursor: import_v443.z.string().min(1).optional()
+  })
+});
+var listPostReactionsResponseSchema = import_v443.z.object({
+  reactions: import_v443.z.array(reactionQueryDtoSchema),
+  nextCursor: import_v443.z.string().nullable()
+});
+var listPostReactionsContract = {
+  request: listPostReactionsRequestSchema,
+  response: listPostReactionsResponseSchema
+};
+var reactToPostRequestSchema = import_v443.z.object({
+  params: postParamsSchema2,
+  body: import_v443.z.object({
+    type: reactionDbSchema.shape.type
+  })
+});
+var reactToPostResponseSchema = import_v443.z.void();
+var reactToPostContract = {
+  request: reactToPostRequestSchema,
+  response: reactToPostResponseSchema
+};
+var deleteReactionRequestSchema = import_v443.z.object({
+  params: postParamsSchema2
+});
+var deleteReactionResponseSchema = import_v443.z.void();
+var deleteReactionContract = {
+  request: deleteReactionRequestSchema,
+  response: deleteReactionResponseSchema
+};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   accessTokenPayloadDtoSchema,
   addAerobicInputQueryDtoSchema,
+  addCommentContract,
+  addCommentRequestSchema,
+  addCommentResponseSchema,
   aerobicMutationRowQueryDtoSchema,
   aerobicTrackingDbSchema,
   aerobicsDailyRecordQueryDtoSchema,
@@ -3946,6 +4100,9 @@ var deletePostContract = {
   appleTokenVerificationResultDtoSchema,
   authenticatedUserForUpdateQueryDtoSchema,
   changeEmailTokenPayloadDtoSchema,
+  commentDbSchema,
+  commentQueryDtoSchema,
+  commentWriteResultQueryDtoSchema,
   createAerobicEntryContract,
   createAerobicEntryRequestSchema,
   createAerobicEntryResponseSchema,
@@ -3983,6 +4140,9 @@ var deletePostContract = {
   crewSuccessorQueryDtoSchema,
   deleteAerobicEntryContract,
   deleteAerobicEntryRequestSchema,
+  deleteCommentContract,
+  deleteCommentRequestSchema,
+  deleteCommentResponseSchema,
   deleteCrewContract,
   deleteCrewRequestSchema,
   deleteCrewResponseSchema,
@@ -3994,10 +4154,16 @@ var deletePostContract = {
   deletePostResponseSchema,
   deleteProfilePictureContract,
   deleteProfilePictureRequestSchema,
+  deleteReactionContract,
+  deleteReactionRequestSchema,
+  deleteReactionResponseSchema,
   deletedCrewQueryDtoSchema,
   deletedMessageQueryDtoSchema,
   deletedPostQueryDtoSchema,
   discoverableCrewQueryDtoSchema,
+  editCommentContract,
+  editCommentRequestSchema,
+  editCommentResponseSchema,
   emailVerifyPayloadDtoSchema,
   enqueueAnalyzeVideoParamsDtoSchema,
   exerciseAssignmentIdQueryDtoSchema,
@@ -4075,6 +4241,12 @@ var deletePostContract = {
   listMessagesContract,
   listMessagesRequestSchema,
   listMessagesResponseSchema,
+  listPostCommentsContract,
+  listPostCommentsRequestSchema,
+  listPostCommentsResponseSchema,
+  listPostReactionsContract,
+  listPostReactionsRequestSchema,
+  listPostReactionsResponseSchema,
   listVisiblePostsContract,
   listVisiblePostsRequestSchema,
   listVisiblePostsResponseSchema,
@@ -4105,6 +4277,12 @@ var deletePostContract = {
   postQueryDtoSchema,
   proceedLoginResponseSchema,
   prsViewDbSchema,
+  reactToPostContract,
+  reactToPostRequestSchema,
+  reactToPostResponseSchema,
+  reactionDbSchema,
+  reactionQueryDtoSchema,
+  reactionWriteResultQueryDtoSchema,
   refreshTokenContract,
   refreshTokenPayloadDtoSchema,
   refreshTokenResponseSchema,

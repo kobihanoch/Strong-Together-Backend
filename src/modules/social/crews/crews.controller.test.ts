@@ -61,7 +61,7 @@ describe('CrewsController', () => {
     const crew = await createCrew(leader.accessToken, leader.userId);
     await insertCrewMembership(crew.id, participant.userId);
 
-    const response = await request(app.getHttpServer()).get('/api/social/crews').query({ limit: 1, offset: 0 }).set(authHeaders(viewer.accessToken));
+    const response = await request(app.getHttpServer()).get('/api/social/crews').query({ limit: 1 }).set(authHeaders(viewer.accessToken));
 
     expect(response.status).toBe(200);
     expectSchema(listCrewsResponseSchema, response.body);
@@ -95,11 +95,11 @@ describe('CrewsController', () => {
 
     const firstPage = await request(app.getHttpServer())
       .get(`/api/social/crews/${crew.id}/participants`)
-      .query({ limit: 1, offset: 0 })
+      .query({ limit: 1 })
       .set(authHeaders(viewer.accessToken));
     const secondPage = await request(app.getHttpServer())
       .get(`/api/social/crews/${crew.id}/participants`)
-      .query({ limit: 1, offset: 1 })
+      .query({ limit: 1, cursor: firstPage.body.nextCursor })
       .set(authHeaders(viewer.accessToken));
 
     expect(firstPage.status).toBe(200);
@@ -108,6 +108,7 @@ describe('CrewsController', () => {
     expectSchema(listCrewParticipantsResponseSchema, secondPage.body);
     expect(firstPage.body.participants).toHaveLength(1);
     expect(secondPage.body.participants).toHaveLength(1);
+    expect(firstPage.body.nextCursor).toEqual(expect.any(String));
     expect(firstPage.body.participants[0].role).toBe('leader');
     expect(secondPage.body.participants[0].role).toBe('member');
   });
@@ -121,15 +122,15 @@ describe('CrewsController', () => {
 
     const hidden = await request(app.getHttpServer())
       .get(`/api/social/crews/${crew.id}/participants`)
-      .query({ limit: 20, offset: 0 })
+      .query({ limit: 20 })
       .set(authHeaders(outsider.accessToken));
     const visible = await request(app.getHttpServer())
       .get(`/api/social/crews/${crew.id}/participants`)
-      .query({ limit: 20, offset: 0 })
+      .query({ limit: 20 })
       .set(authHeaders(participant.accessToken));
 
     expect(hidden.status).toBe(200);
-    expect(hidden.body).toEqual({ participants: [] });
+    expect(hidden.body).toEqual({ participants: [], nextCursor: null });
     expect(visible.status).toBe(200);
     expectSchema(listCrewParticipantsResponseSchema, visible.body);
     expect(visible.body.participants).toHaveLength(2);
@@ -260,7 +261,7 @@ describe('CrewsController', () => {
     const malformedId = await request(app.getHttpServer()).get('/api/social/crews/not-a-uuid').set(authHeaders(user.accessToken));
     const malformedPagination = await request(app.getHttpServer())
       .get('/api/social/crews')
-      .query({ limit: 101, offset: -1 })
+      .query({ limit: 101 })
       .set(authHeaders(user.accessToken));
     const unauthenticated = await request(app.getHttpServer()).get('/api/social/crews').query({ limit: 20, offset: 0 }).set('x-app-version', '4.5.0');
 

@@ -24,17 +24,18 @@ export class CrewsQueries {
    * Retrieves a page of discoverable crews and their participant previews.
    *
    * @param limit - The maximum number of crews to return.
-   * @param offset - The number of crews to skip.
+   * @param cursor - The preceding page's final creation timestamp and UUID.
    * @returns Crew rows ordered from newest to oldest.
    */
-  async queryCrews(limit: number, offset: number): Promise<DiscoverableCrewQueryDto[]> {
+  async queryCrews(limit: number, cursor?: { timestamp: string; id: string }): Promise<DiscoverableCrewQueryDto[]> {
     return this.sql<DiscoverableCrewQueryDto[]>`
       SELECT
         *
       FROM
         social.list_discoverable_crews (
-          ${limit},
-          ${offset}
+          ${limit + 1},
+          ${cursor?.timestamp ?? null}::TIMESTAMPTZ,
+          ${cursor?.id ?? null}::UUID
         )
     `;
   }
@@ -46,10 +47,14 @@ export class CrewsQueries {
    *
    * @param crewId - The UUID of the crew whose participants are requested.
    * @param limit - The maximum number of participants to return.
-   * @param offset - The number of participants to skip.
+   * @param cursor - The preceding page's final role rank, join timestamp, and UUID.
    * @returns Authorized participant rows ordered by role and join date.
    */
-  async queryCrewParticipants(crewId: string, limit: number, offset: number): Promise<CrewParticipantQueryDto[]> {
+  async queryCrewParticipants(
+    crewId: string,
+    limit: number,
+    cursor?: { timestamp: string; id: string; rank: number | undefined },
+  ): Promise<CrewParticipantQueryDto[]> {
     return this.sql<CrewParticipantQueryDto[]>`
       SELECT
         cm.id,
@@ -66,18 +71,32 @@ export class CrewsQueries {
         cm.crew_id = ${crewId}::UUID
         AND cm.status = 'active'
         AND social.can_view_crew_participants (${crewId}::UUID)
+        AND (
+          ${cursor?.timestamp ?? null}::TIMESTAMPTZ IS NULL
+          OR (
+            CASE cm.role
+              WHEN 'leader' THEN 1
+              WHEN 'admin' THEN 2
+              ELSE 3
+            END,
+            DATE_TRUNC('milliseconds', cm.joined_at),
+            cm.id
+          ) > (
+            ${cursor?.rank ?? null}::INTEGER,
+            ${cursor?.timestamp ?? null}::TIMESTAMPTZ,
+            ${cursor?.id ?? null}::UUID
+          )
+        )
       ORDER BY
         CASE cm.role
           WHEN 'leader' THEN 1
           WHEN 'admin' THEN 2
           ELSE 3
         END,
-        cm.joined_at,
+        DATE_TRUNC('milliseconds', cm.joined_at),
         cm.id
       LIMIT
-        ${limit}
-      OFFSET
-        ${offset}
+        ${limit + 1}
     `;
   }
 

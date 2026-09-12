@@ -12,10 +12,10 @@ export class PostsQueries {
    * Retrieves each post visible to the authenticated user exactly once.
    *
    * @param limit - The maximum number of posts to return.
-   * @param offset - The number of visible posts to skip.
+   * @param cursor - The preceding page's final publication timestamp and UUID.
    * @returns Visible post rows ordered from newest to oldest.
    */
-  queryVisiblePosts(limit: number, offset: number): Promise<PostQueryDto[]> {
+  queryVisiblePosts(limit: number, cursor?: { timestamp: string; id: string }): Promise<PostQueryDto[]> {
     return this.sql<PostQueryDto[]>`
       SELECT
         p.id,
@@ -28,13 +28,18 @@ export class PostsQueries {
         social.post p
       WHERE
         social.can_view_post (p.id)
+        AND (
+          ${cursor?.timestamp ?? null}::TIMESTAMPTZ IS NULL
+          OR (DATE_TRUNC('milliseconds', p.published_at), p.id) < (
+            ${cursor?.timestamp ?? null}::TIMESTAMPTZ,
+            ${cursor?.id ?? null}::UUID
+          )
+        )
       ORDER BY
-        p.published_at DESC,
+        DATE_TRUNC('milliseconds', p.published_at) DESC,
         p.id DESC
       LIMIT
-        ${limit}
-      OFFSET
-        ${offset}
+        ${limit + 1}
     `;
   }
 
@@ -43,10 +48,10 @@ export class PostsQueries {
    *
    * @param crewId - The UUID of the crew whose posts are requested.
    * @param limit - The maximum number of posts to return.
-   * @param offset - The number of matching crew posts to skip.
+   * @param cursor - The preceding page's final publication timestamp and UUID.
    * @returns Crew post rows ordered from newest to oldest.
    */
-  queryCrewPosts(crewId: string, limit: number, offset: number): Promise<PostQueryDto[]> {
+  queryCrewPosts(crewId: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<PostQueryDto[]> {
     return this.sql<PostQueryDto[]>`
       SELECT
         p.id,
@@ -61,13 +66,18 @@ export class PostsQueries {
       WHERE
         csp.crew_id = ${crewId}::UUID
         AND social.can_access_crew (${crewId}::UUID)
+        AND (
+          ${cursor?.timestamp ?? null}::TIMESTAMPTZ IS NULL
+          OR (DATE_TRUNC('milliseconds', p.published_at), p.id) < (
+            ${cursor?.timestamp ?? null}::TIMESTAMPTZ,
+            ${cursor?.id ?? null}::UUID
+          )
+        )
       ORDER BY
-        p.published_at DESC,
+        DATE_TRUNC('milliseconds', p.published_at) DESC,
         p.id DESC
       LIMIT
-        ${limit}
-      OFFSET
-        ${offset}
+        ${limit + 1}
     `;
   }
 

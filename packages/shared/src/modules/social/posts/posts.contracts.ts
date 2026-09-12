@@ -7,7 +7,7 @@ const postIdParamsSchema = z.object({ id: postDbSchema.shape.id });
 
 const postPaginationSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  offset: z.coerce.number().int().min(0).default(0),
+  cursor: z.string().min(1).optional(),
 });
 
 // List visible posts
@@ -16,7 +16,7 @@ const postPaginationSchema = z.object({
 export const listVisiblePostsRequestSchema = z.object({ query: postPaginationSchema });
 
 /** Validates the collection returned by the list-posts endpoint. */
-export const listVisiblePostsResponseSchema = z.object({ posts: z.array(postQueryDtoSchema) });
+export const listVisiblePostsResponseSchema = z.object({ posts: z.array(postQueryDtoSchema), nextCursor: z.string().nullable() });
 
 /** Defines the request and response contract for listing visible posts. */
 export const listVisiblePostsContract = {
@@ -39,7 +39,7 @@ export const listCrewPostsRequestSchema = z.object({
 });
 
 /** Validates the collection returned by the list-crew-posts endpoint. */
-export const listCrewPostsResponseSchema = z.object({ posts: z.array(postQueryDtoSchema) });
+export const listCrewPostsResponseSchema = z.object({ posts: z.array(postQueryDtoSchema), nextCursor: z.string().nullable() });
 
 /** Defines the request and response contract for listing posts from one crew. */
 export const listCrewPostsContract = {

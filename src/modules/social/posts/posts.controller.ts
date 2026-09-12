@@ -67,7 +67,7 @@ export class PostsController {
       query: ListVisiblePostsQuery;
     },
   ): Promise<ListVisiblePostsResponse> {
-    return this.service.getVisiblePostsData(data.query.limit, data.query.offset);
+    return this.service.getVisiblePostsData(data.query.limit, data.query.cursor);
   }
 
   /**
@@ -87,7 +87,7 @@ export class PostsController {
       query: ListCrewPostsQuery;
     },
   ): Promise<ListCrewPostsResponse> {
-    return this.service.getCrewPostsData(data.params.crewId, data.query.limit, data.query.offset);
+    return this.service.getCrewPostsData(data.params.crewId, data.query.limit, data.query.cursor);
   }
 
   /**
