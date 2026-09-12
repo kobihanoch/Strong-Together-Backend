@@ -1,7 +1,7 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { CreatePostBody, ListCrewPostsResponse, ListVisiblePostsResponse, UpdatePostBody } from '@strong-together/shared';
-import { PostsQueries } from './posts.queries';
 import { decodeSocialCursor, encodeSocialCursor } from '../cursor-pagination';
+import { PostsQueries } from './posts.queries';
 
 /** Coordinates social post CRUD operations and maps empty query results to HTTP errors. */
 @Injectable()
@@ -48,8 +48,7 @@ export class PostsService {
     if (body.visibility === 'crews_only' && body.crewIds.length === 0) {
       throw new BadRequestException('Crew-only post must target at least one crew');
     }
-    const [created] = await this.queries.queryCreatePost(userId, body.content, body.visibility, body.crewIds);
-    if (!created) throw new ForbiddenException('You cannot publish to every requested crew');
+    await this.queries.queryCreatePost(userId, body.content, body.visibility, body.crewIds);
   }
 
   /**

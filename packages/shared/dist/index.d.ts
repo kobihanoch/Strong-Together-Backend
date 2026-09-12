@@ -7074,6 +7074,7 @@ declare const leaveCrewResultQueryDtoSchema: z.ZodObject<{
 /** Runtime schema for the locked active membership being left. */
 declare const leaveCrewContextQueryDtoSchema: z.ZodObject<{
     membershipId: z.ZodUUID;
+    isLeader: z.ZodBoolean;
 }, z.core.$strip>;
 /** Runtime schema for the participant selected to succeed a leaving leader. */
 declare const crewSuccessorQueryDtoSchema: z.ZodObject<{

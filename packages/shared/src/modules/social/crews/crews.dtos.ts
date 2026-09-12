@@ -38,6 +38,7 @@ export const leaveCrewResultQueryDtoSchema = z.object({
 /** Runtime schema for the locked active membership being left. */
 export const leaveCrewContextQueryDtoSchema = z.object({
   membershipId: crewMembershipDbSchema.shape.id,
+  isLeader: z.boolean(),
 });
 
 /** Runtime schema for the participant selected to succeed a leaving leader. */

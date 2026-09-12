@@ -36,7 +36,10 @@ export class CommentsQueries {
         c.post_id = ${postId}::UUID
         AND (
           ${cursor?.timestamp ?? null}::TIMESTAMPTZ IS NULL
-          OR (DATE_TRUNC('milliseconds', c.created_at), c.id) > (${cursor?.timestamp ?? null}::TIMESTAMPTZ, ${cursor?.id ?? null}::UUID)
+          OR (DATE_TRUNC('milliseconds', c.created_at), c.id) > (
+            ${cursor?.timestamp ?? null}::TIMESTAMPTZ,
+            ${cursor?.id ?? null}::UUID
+          )
         )
       ORDER BY
         DATE_TRUNC('milliseconds', c.created_at),
@@ -58,12 +61,12 @@ export class CommentsQueries {
     return this.sql<CommentWriteResultQueryDto[]>`
       INSERT INTO
         social.comment (post_id, user_id, content)
-      SELECT
-        ${postId}::UUID,
-        ${userId}::UUID,
-        ${content}
-      WHERE
-        social.can_view_post (${postId}::UUID)
+      VALUES
+        (
+          ${postId}::UUID,
+          ${userId}::UUID,
+          ${content}
+        )
       RETURNING
         id
     `;

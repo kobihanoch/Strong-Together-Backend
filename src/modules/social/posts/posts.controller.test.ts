@@ -209,7 +209,7 @@ describe('PostsController', () => {
     expect(response.body.posts.filter((item: { id: string }) => item.id === post!.id)).toHaveLength(1);
   });
 
-  it('POST /api/social/posts rolls back when any requested crew is unauthorized', async () => {
+  it('POST /api/social/posts returns an RLS error and rolls back when any requested crew is unauthorized', async () => {
     const author = await postUser('post_partial_author');
     const otherLeader = await postUser('post_partial_other');
     const ownCrew = await createCrew(author.accessToken, author.userId);
@@ -224,7 +224,8 @@ describe('PostsController', () => {
         crewIds: [ownCrew.id, inaccessibleCrew.id],
       });
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(500);
+    expect(response.body.success).toBe(false);
     expect(await getPostByAuthorId(author.userId)).toBeNull();
   });
 
