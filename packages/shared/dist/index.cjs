@@ -21,10 +21,6 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/index.ts
 var index_exports = {};
 __export(index_exports, {
-  acceptCrewInvitationContract: () => acceptCrewInvitationContract,
-  acceptCrewInvitationRequestSchema: () => acceptCrewInvitationRequestSchema,
-  acceptCrewJoinRequestContract: () => acceptCrewJoinRequestContract,
-  acceptCrewJoinRequestRequestSchema: () => acceptCrewJoinRequestRequestSchema,
   accessTokenPayloadDtoSchema: () => accessTokenPayloadDtoSchema,
   addAerobicInputQueryDtoSchema: () => addAerobicInputQueryDtoSchema,
   addCommentContract: () => addCommentContract,
@@ -173,6 +169,9 @@ __export(index_exports, {
   leaveCrewRequestSchema: () => leaveCrewRequestSchema,
   leaveCrewResponseSchema: () => leaveCrewResponseSchema,
   leaveCrewResultQueryDtoSchema: () => leaveCrewResultQueryDtoSchema,
+  listCrewInvitationsContract: () => listCrewInvitationsContract,
+  listCrewInvitationsRequestSchema: () => listCrewInvitationsRequestSchema,
+  listCrewInvitationsResponseSchema: () => listCrewInvitationsResponseSchema,
   listCrewParticipantsContract: () => listCrewParticipantsContract,
   listCrewParticipantsRequestSchema: () => listCrewParticipantsRequestSchema,
   listCrewParticipantsResponseSchema: () => listCrewParticipantsResponseSchema,
@@ -187,6 +186,9 @@ __export(index_exports, {
   listMessagesContract: () => listMessagesContract,
   listMessagesRequestSchema: () => listMessagesRequestSchema,
   listMessagesResponseSchema: () => listMessagesResponseSchema,
+  listPendingCrewJoinRequestsContract: () => listPendingCrewJoinRequestsContract,
+  listPendingCrewJoinRequestsRequestSchema: () => listPendingCrewJoinRequestsRequestSchema,
+  listPendingCrewJoinRequestsResponseSchema: () => listPendingCrewJoinRequestsResponseSchema,
   listPostCommentsContract: () => listPostCommentsContract,
   listPostCommentsRequestSchema: () => listPostCommentsRequestSchema,
   listPostCommentsResponseSchema: () => listPostCommentsResponseSchema,
@@ -259,6 +261,8 @@ __export(index_exports, {
   updateAerobicEntryContract: () => updateAerobicEntryContract,
   updateAerobicEntryRequestSchema: () => updateAerobicEntryRequestSchema,
   updateCrewContract: () => updateCrewContract,
+  updateCrewParticipationRequestStatusContract: () => updateCrewParticipationRequestStatusContract,
+  updateCrewParticipationRequestStatusRequestSchema: () => updateCrewParticipationRequestStatusRequestSchema,
   updateCrewRequestSchema: () => updateCrewRequestSchema,
   updateCrewResponseSchema: () => updateCrewResponseSchema,
   updateCurrentUserContract: () => updateCurrentUserContract,
@@ -3826,11 +3830,6 @@ var crewSuccessorQueryDtoSchema = import_v436.z.object({
   membershipId: crewMembershipDbSchema.shape.id,
   userId: crewMembershipDbSchema.shape.userId
 });
-var crewParticipationRequestQueryDtoSchema = crewParticipationRequestDbSchema.extend({
-  createdAt: serializedDateSchema,
-  updatedAt: serializedDateSchema,
-  respondedAt: serializedDateSchema.nullable()
-});
 
 // src/modules/social/crews/crews.contracts.ts
 var crewIdParamsSchema = import_v437.z.object({
@@ -3914,96 +3913,125 @@ var deleteCrewContract = {
   request: deleteCrewRequestSchema,
   response: deleteCrewResponseSchema
 };
-var crewParticipationParamsSchema = import_v437.z.object({
+
+// src/modules/social/crews/requests/crew-requests.contracts.ts
+var import_v438 = require("zod/v4");
+
+// src/modules/social/crews/requests/crew-requests.dtos.ts
+var crewParticipationRequestQueryDtoSchema = crewParticipationRequestDbSchema.extend({
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema,
+  respondedAt: serializedDateSchema.nullable()
+});
+
+// src/modules/social/crews/requests/crew-requests.contracts.ts
+var crewParamsSchema = import_v438.z.object({
   crewId: crewDbSchema.shape.id
 });
-var crewParticipationRequestParamsSchema = crewParticipationParamsSchema.extend({
-  requestId: import_v437.z.uuid()
+var requestParamsSchema = import_v438.z.object({
+  requestId: import_v438.z.uuid()
 });
-var inviteCrewUserRequestSchema = import_v437.z.object({
-  params: crewParticipationParamsSchema,
-  body: import_v437.z.object({
-    userId: import_v437.z.uuid()
+var inviteCrewUserRequestSchema = import_v438.z.object({
+  params: crewParamsSchema,
+  body: import_v438.z.object({
+    userId: import_v438.z.uuid()
   })
 });
 var inviteCrewUserContract = {
   request: inviteCrewUserRequestSchema,
-  response: import_v437.z.void()
+  response: import_v438.z.void()
 };
-var requestToJoinCrewRequestSchema = import_v437.z.object({
-  params: crewParticipationParamsSchema
+var requestToJoinCrewRequestSchema = import_v438.z.object({
+  params: crewParamsSchema
 });
 var requestToJoinCrewContract = {
   request: requestToJoinCrewRequestSchema,
-  response: import_v437.z.void()
+  response: import_v438.z.void()
 };
-var acceptCrewJoinRequestRequestSchema = import_v437.z.object({
-  params: crewParticipationRequestParamsSchema
+var updateCrewParticipationRequestStatusRequestSchema = import_v438.z.object({
+  params: requestParamsSchema,
+  body: import_v438.z.object({
+    status: import_v438.z.enum([
+      "accepted",
+      "declined"
+    ])
+  })
 });
-var acceptCrewJoinRequestContract = {
-  request: acceptCrewJoinRequestRequestSchema,
-  response: import_v437.z.void()
+var updateCrewParticipationRequestStatusContract = {
+  request: updateCrewParticipationRequestStatusRequestSchema,
+  response: import_v438.z.void()
 };
-var acceptCrewInvitationRequestSchema = import_v437.z.object({
-  params: crewParticipationRequestParamsSchema
+var listCrewInvitationsRequestSchema = import_v438.z.object({});
+var listCrewInvitationsResponseSchema = import_v438.z.object({
+  invitations: import_v438.z.array(crewParticipationRequestQueryDtoSchema)
 });
-var acceptCrewInvitationContract = {
-  request: acceptCrewInvitationRequestSchema,
-  response: import_v437.z.void()
+var listCrewInvitationsContract = {
+  request: listCrewInvitationsRequestSchema,
+  response: listCrewInvitationsResponseSchema
+};
+var listPendingCrewJoinRequestsRequestSchema = import_v438.z.object({
+  params: crewParamsSchema
+});
+var listPendingCrewJoinRequestsResponseSchema = import_v438.z.object({
+  requests: import_v438.z.array(crewParticipationRequestQueryDtoSchema)
+});
+var listPendingCrewJoinRequestsContract = {
+  request: listPendingCrewJoinRequestsRequestSchema,
+  response: listPendingCrewJoinRequestsResponseSchema
 };
 
 // src/modules/social/posts/posts.contracts.ts
-var import_v439 = require("zod/v4");
+var import_v440 = require("zod/v4");
 
 // src/modules/social/posts/posts.dtos.ts
-var import_v438 = require("zod/v4");
+var import_v439 = require("zod/v4");
 var postQueryDtoSchema = postDbSchema.omit({
   updateddAt: true
 }).extend({
   publishedAt: serializedDateSchema,
   updatedAt: serializedDateSchema
 });
-var deletedPostQueryDtoSchema = import_v438.z.object({
+var deletedPostQueryDtoSchema = import_v439.z.object({
   id: postDbSchema.shape.id
 });
 
 // src/modules/social/posts/posts.contracts.ts
-var postIdParamsSchema = import_v439.z.object({
+var postIdParamsSchema = import_v440.z.object({
   id: postDbSchema.shape.id
 });
-var postPaginationSchema = import_v439.z.object({
-  limit: import_v439.z.coerce.number().int().min(1).max(100).default(20),
-  cursor: import_v439.z.string().min(1).optional()
+var postPaginationSchema = import_v440.z.object({
+  limit: import_v440.z.coerce.number().int().min(1).max(100).default(20),
+  cursor: import_v440.z.string().min(1).optional()
 });
-var listVisiblePostsRequestSchema = import_v439.z.object({
+var listVisiblePostsRequestSchema = import_v440.z.object({
   query: postPaginationSchema
 });
-var listVisiblePostsResponseSchema = import_v439.z.object({
-  posts: import_v439.z.array(postQueryDtoSchema),
-  nextCursor: import_v439.z.string().nullable()
+var listVisiblePostsResponseSchema = import_v440.z.object({
+  posts: import_v440.z.array(postQueryDtoSchema),
+  nextCursor: import_v440.z.string().nullable()
 });
 var listVisiblePostsContract = {
   request: listVisiblePostsRequestSchema,
   response: listVisiblePostsResponseSchema
 };
-var listCrewPostsRequestSchema = import_v439.z.object({
-  params: import_v439.z.object({
-    crewId: import_v439.z.uuid()
+var listCrewPostsRequestSchema = import_v440.z.object({
+  params: import_v440.z.object({
+    crewId: import_v440.z.uuid()
   }),
   query: postPaginationSchema
 });
-var listCrewPostsResponseSchema = import_v439.z.object({
-  posts: import_v439.z.array(postQueryDtoSchema),
-  nextCursor: import_v439.z.string().nullable()
+var listCrewPostsResponseSchema = import_v440.z.object({
+  posts: import_v440.z.array(postQueryDtoSchema),
+  nextCursor: import_v440.z.string().nullable()
 });
 var listCrewPostsContract = {
   request: listCrewPostsRequestSchema,
   response: listCrewPostsResponseSchema
 };
-var createPostBodySchema = import_v439.z.object({
+var createPostBodySchema = import_v440.z.object({
   content: postDbSchema.shape.content,
   visibility: postDbSchema.shape.visibility,
-  crewIds: import_v439.z.array(import_v439.z.uuid()).default([])
+  crewIds: import_v440.z.array(import_v440.z.uuid()).default([])
 }).superRefine((body, context) => {
   if (body.visibility === "crews_only" && body.crewIds.length === 0) {
     context.addIssue({
@@ -4024,157 +4052,153 @@ var createPostBodySchema = import_v439.z.object({
     });
   }
 });
-var createPostRequestSchema = import_v439.z.object({
+var createPostRequestSchema = import_v440.z.object({
   body: createPostBodySchema
 });
-var createPostResponseSchema = import_v439.z.void();
+var createPostResponseSchema = import_v440.z.void();
 var createPostContract = {
   request: createPostRequestSchema,
   response: createPostResponseSchema
 };
-var updatePostRequestSchema = import_v439.z.object({
+var updatePostRequestSchema = import_v440.z.object({
   params: postIdParamsSchema,
-  body: import_v439.z.object({
+  body: import_v440.z.object({
     content: postDbSchema.shape.content
   })
 });
-var updatePostResponseSchema = import_v439.z.void();
+var updatePostResponseSchema = import_v440.z.void();
 var updatePostContract = {
   request: updatePostRequestSchema,
   response: updatePostResponseSchema
 };
-var deletePostRequestSchema = import_v439.z.object({
+var deletePostRequestSchema = import_v440.z.object({
   params: postIdParamsSchema
 });
-var deletePostResponseSchema = import_v439.z.void();
+var deletePostResponseSchema = import_v440.z.void();
 var deletePostContract = {
   request: deletePostRequestSchema,
   response: deletePostResponseSchema
 };
 
 // src/modules/social/posts/comments/comments.contracts.ts
-var import_v441 = require("zod/v4");
+var import_v442 = require("zod/v4");
 
 // src/modules/social/posts/comments/comments.dtos.ts
-var import_v440 = require("zod/v4");
+var import_v441 = require("zod/v4");
 var commentQueryDtoSchema = commentDbSchema.extend({
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema
 });
-var commentWriteResultQueryDtoSchema = import_v440.z.object({
+var commentWriteResultQueryDtoSchema = import_v441.z.object({
   id: commentDbSchema.shape.id
 });
 
 // src/modules/social/posts/comments/comments.contracts.ts
-var postParamsSchema = import_v441.z.object({
+var postParamsSchema = import_v442.z.object({
   postId: postDbSchema.shape.id
 });
-var commentParamsSchema = import_v441.z.object({
+var commentParamsSchema = import_v442.z.object({
   id: commentDbSchema.shape.id
 });
 var commentContentSchema = commentDbSchema.shape.content.trim().min(1).max(2e3);
-var listPostCommentsRequestSchema = import_v441.z.object({
+var listPostCommentsRequestSchema = import_v442.z.object({
   params: postParamsSchema,
-  query: import_v441.z.object({
-    limit: import_v441.z.coerce.number().int().min(1).max(100).default(20),
-    cursor: import_v441.z.string().min(1).optional()
+  query: import_v442.z.object({
+    limit: import_v442.z.coerce.number().int().min(1).max(100).default(20),
+    cursor: import_v442.z.string().min(1).optional()
   })
 });
-var listPostCommentsResponseSchema = import_v441.z.object({
-  comments: import_v441.z.array(commentQueryDtoSchema),
-  nextCursor: import_v441.z.string().nullable()
+var listPostCommentsResponseSchema = import_v442.z.object({
+  comments: import_v442.z.array(commentQueryDtoSchema),
+  nextCursor: import_v442.z.string().nullable()
 });
 var listPostCommentsContract = {
   request: listPostCommentsRequestSchema,
   response: listPostCommentsResponseSchema
 };
-var addCommentRequestSchema = import_v441.z.object({
+var addCommentRequestSchema = import_v442.z.object({
   params: postParamsSchema,
-  body: import_v441.z.object({
+  body: import_v442.z.object({
     content: commentContentSchema
   })
 });
-var addCommentResponseSchema = import_v441.z.void();
+var addCommentResponseSchema = import_v442.z.void();
 var addCommentContract = {
   request: addCommentRequestSchema,
   response: addCommentResponseSchema
 };
-var editCommentRequestSchema = import_v441.z.object({
+var editCommentRequestSchema = import_v442.z.object({
   params: commentParamsSchema,
-  body: import_v441.z.object({
+  body: import_v442.z.object({
     content: commentContentSchema
   })
 });
-var editCommentResponseSchema = import_v441.z.void();
+var editCommentResponseSchema = import_v442.z.void();
 var editCommentContract = {
   request: editCommentRequestSchema,
   response: editCommentResponseSchema
 };
-var deleteCommentRequestSchema = import_v441.z.object({
+var deleteCommentRequestSchema = import_v442.z.object({
   params: commentParamsSchema
 });
-var deleteCommentResponseSchema = import_v441.z.void();
+var deleteCommentResponseSchema = import_v442.z.void();
 var deleteCommentContract = {
   request: deleteCommentRequestSchema,
   response: deleteCommentResponseSchema
 };
 
 // src/modules/social/posts/reactions/reactions.contracts.ts
-var import_v443 = require("zod/v4");
+var import_v444 = require("zod/v4");
 
 // src/modules/social/posts/reactions/reactions.dtos.ts
-var import_v442 = require("zod/v4");
+var import_v443 = require("zod/v4");
 var reactionQueryDtoSchema = reactionDbSchema.extend({
   reactedAt: serializedDateSchema
 });
-var reactionWriteResultQueryDtoSchema = import_v442.z.object({
+var reactionWriteResultQueryDtoSchema = import_v443.z.object({
   id: reactionDbSchema.shape.id
 });
 
 // src/modules/social/posts/reactions/reactions.contracts.ts
-var postParamsSchema2 = import_v443.z.object({
+var postParamsSchema2 = import_v444.z.object({
   postId: postDbSchema.shape.id
 });
-var listPostReactionsRequestSchema = import_v443.z.object({
+var listPostReactionsRequestSchema = import_v444.z.object({
   params: postParamsSchema2,
-  query: import_v443.z.object({
-    limit: import_v443.z.coerce.number().int().min(1).max(100).default(20),
-    cursor: import_v443.z.string().min(1).optional()
+  query: import_v444.z.object({
+    limit: import_v444.z.coerce.number().int().min(1).max(100).default(20),
+    cursor: import_v444.z.string().min(1).optional()
   })
 });
-var listPostReactionsResponseSchema = import_v443.z.object({
-  reactions: import_v443.z.array(reactionQueryDtoSchema),
-  nextCursor: import_v443.z.string().nullable()
+var listPostReactionsResponseSchema = import_v444.z.object({
+  reactions: import_v444.z.array(reactionQueryDtoSchema),
+  nextCursor: import_v444.z.string().nullable()
 });
 var listPostReactionsContract = {
   request: listPostReactionsRequestSchema,
   response: listPostReactionsResponseSchema
 };
-var reactToPostRequestSchema = import_v443.z.object({
+var reactToPostRequestSchema = import_v444.z.object({
   params: postParamsSchema2,
-  body: import_v443.z.object({
+  body: import_v444.z.object({
     type: reactionDbSchema.shape.type
   })
 });
-var reactToPostResponseSchema = import_v443.z.void();
+var reactToPostResponseSchema = import_v444.z.void();
 var reactToPostContract = {
   request: reactToPostRequestSchema,
   response: reactToPostResponseSchema
 };
-var deleteReactionRequestSchema = import_v443.z.object({
+var deleteReactionRequestSchema = import_v444.z.object({
   params: postParamsSchema2
 });
-var deleteReactionResponseSchema = import_v443.z.void();
+var deleteReactionResponseSchema = import_v444.z.void();
 var deleteReactionContract = {
   request: deleteReactionRequestSchema,
   response: deleteReactionResponseSchema
 };
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  acceptCrewInvitationContract,
-  acceptCrewInvitationRequestSchema,
-  acceptCrewJoinRequestContract,
-  acceptCrewJoinRequestRequestSchema,
   accessTokenPayloadDtoSchema,
   addAerobicInputQueryDtoSchema,
   addCommentContract,
@@ -4323,6 +4347,9 @@ var deleteReactionContract = {
   leaveCrewRequestSchema,
   leaveCrewResponseSchema,
   leaveCrewResultQueryDtoSchema,
+  listCrewInvitationsContract,
+  listCrewInvitationsRequestSchema,
+  listCrewInvitationsResponseSchema,
   listCrewParticipantsContract,
   listCrewParticipantsRequestSchema,
   listCrewParticipantsResponseSchema,
@@ -4337,6 +4364,9 @@ var deleteReactionContract = {
   listMessagesContract,
   listMessagesRequestSchema,
   listMessagesResponseSchema,
+  listPendingCrewJoinRequestsContract,
+  listPendingCrewJoinRequestsRequestSchema,
+  listPendingCrewJoinRequestsResponseSchema,
   listPostCommentsContract,
   listPostCommentsRequestSchema,
   listPostCommentsResponseSchema,
@@ -4409,6 +4439,8 @@ var deleteReactionContract = {
   updateAerobicEntryContract,
   updateAerobicEntryRequestSchema,
   updateCrewContract,
+  updateCrewParticipationRequestStatusContract,
+  updateCrewParticipationRequestStatusRequestSchema,
   updateCrewRequestSchema,
   updateCrewResponseSchema,
   updateCurrentUserContract,

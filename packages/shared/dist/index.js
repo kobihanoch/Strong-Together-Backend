@@ -3513,11 +3513,6 @@ var crewSuccessorQueryDtoSchema = z36.object({
   membershipId: crewMembershipDbSchema.shape.id,
   userId: crewMembershipDbSchema.shape.userId
 });
-var crewParticipationRequestQueryDtoSchema = crewParticipationRequestDbSchema.extend({
-  createdAt: serializedDateSchema,
-  updatedAt: serializedDateSchema,
-  respondedAt: serializedDateSchema.nullable()
-});
 
 // src/modules/social/crews/crews.contracts.ts
 var crewIdParamsSchema = z37.object({
@@ -3601,96 +3596,125 @@ var deleteCrewContract = {
   request: deleteCrewRequestSchema,
   response: deleteCrewResponseSchema
 };
-var crewParticipationParamsSchema = z37.object({
+
+// src/modules/social/crews/requests/crew-requests.contracts.ts
+import { z as z38 } from "zod/v4";
+
+// src/modules/social/crews/requests/crew-requests.dtos.ts
+var crewParticipationRequestQueryDtoSchema = crewParticipationRequestDbSchema.extend({
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema,
+  respondedAt: serializedDateSchema.nullable()
+});
+
+// src/modules/social/crews/requests/crew-requests.contracts.ts
+var crewParamsSchema = z38.object({
   crewId: crewDbSchema.shape.id
 });
-var crewParticipationRequestParamsSchema = crewParticipationParamsSchema.extend({
-  requestId: z37.uuid()
+var requestParamsSchema = z38.object({
+  requestId: z38.uuid()
 });
-var inviteCrewUserRequestSchema = z37.object({
-  params: crewParticipationParamsSchema,
-  body: z37.object({
-    userId: z37.uuid()
+var inviteCrewUserRequestSchema = z38.object({
+  params: crewParamsSchema,
+  body: z38.object({
+    userId: z38.uuid()
   })
 });
 var inviteCrewUserContract = {
   request: inviteCrewUserRequestSchema,
-  response: z37.void()
+  response: z38.void()
 };
-var requestToJoinCrewRequestSchema = z37.object({
-  params: crewParticipationParamsSchema
+var requestToJoinCrewRequestSchema = z38.object({
+  params: crewParamsSchema
 });
 var requestToJoinCrewContract = {
   request: requestToJoinCrewRequestSchema,
-  response: z37.void()
+  response: z38.void()
 };
-var acceptCrewJoinRequestRequestSchema = z37.object({
-  params: crewParticipationRequestParamsSchema
+var updateCrewParticipationRequestStatusRequestSchema = z38.object({
+  params: requestParamsSchema,
+  body: z38.object({
+    status: z38.enum([
+      "accepted",
+      "declined"
+    ])
+  })
 });
-var acceptCrewJoinRequestContract = {
-  request: acceptCrewJoinRequestRequestSchema,
-  response: z37.void()
+var updateCrewParticipationRequestStatusContract = {
+  request: updateCrewParticipationRequestStatusRequestSchema,
+  response: z38.void()
 };
-var acceptCrewInvitationRequestSchema = z37.object({
-  params: crewParticipationRequestParamsSchema
+var listCrewInvitationsRequestSchema = z38.object({});
+var listCrewInvitationsResponseSchema = z38.object({
+  invitations: z38.array(crewParticipationRequestQueryDtoSchema)
 });
-var acceptCrewInvitationContract = {
-  request: acceptCrewInvitationRequestSchema,
-  response: z37.void()
+var listCrewInvitationsContract = {
+  request: listCrewInvitationsRequestSchema,
+  response: listCrewInvitationsResponseSchema
+};
+var listPendingCrewJoinRequestsRequestSchema = z38.object({
+  params: crewParamsSchema
+});
+var listPendingCrewJoinRequestsResponseSchema = z38.object({
+  requests: z38.array(crewParticipationRequestQueryDtoSchema)
+});
+var listPendingCrewJoinRequestsContract = {
+  request: listPendingCrewJoinRequestsRequestSchema,
+  response: listPendingCrewJoinRequestsResponseSchema
 };
 
 // src/modules/social/posts/posts.contracts.ts
-import { z as z39 } from "zod/v4";
+import { z as z40 } from "zod/v4";
 
 // src/modules/social/posts/posts.dtos.ts
-import { z as z38 } from "zod/v4";
+import { z as z39 } from "zod/v4";
 var postQueryDtoSchema = postDbSchema.omit({
   updateddAt: true
 }).extend({
   publishedAt: serializedDateSchema,
   updatedAt: serializedDateSchema
 });
-var deletedPostQueryDtoSchema = z38.object({
+var deletedPostQueryDtoSchema = z39.object({
   id: postDbSchema.shape.id
 });
 
 // src/modules/social/posts/posts.contracts.ts
-var postIdParamsSchema = z39.object({
+var postIdParamsSchema = z40.object({
   id: postDbSchema.shape.id
 });
-var postPaginationSchema = z39.object({
-  limit: z39.coerce.number().int().min(1).max(100).default(20),
-  cursor: z39.string().min(1).optional()
+var postPaginationSchema = z40.object({
+  limit: z40.coerce.number().int().min(1).max(100).default(20),
+  cursor: z40.string().min(1).optional()
 });
-var listVisiblePostsRequestSchema = z39.object({
+var listVisiblePostsRequestSchema = z40.object({
   query: postPaginationSchema
 });
-var listVisiblePostsResponseSchema = z39.object({
-  posts: z39.array(postQueryDtoSchema),
-  nextCursor: z39.string().nullable()
+var listVisiblePostsResponseSchema = z40.object({
+  posts: z40.array(postQueryDtoSchema),
+  nextCursor: z40.string().nullable()
 });
 var listVisiblePostsContract = {
   request: listVisiblePostsRequestSchema,
   response: listVisiblePostsResponseSchema
 };
-var listCrewPostsRequestSchema = z39.object({
-  params: z39.object({
-    crewId: z39.uuid()
+var listCrewPostsRequestSchema = z40.object({
+  params: z40.object({
+    crewId: z40.uuid()
   }),
   query: postPaginationSchema
 });
-var listCrewPostsResponseSchema = z39.object({
-  posts: z39.array(postQueryDtoSchema),
-  nextCursor: z39.string().nullable()
+var listCrewPostsResponseSchema = z40.object({
+  posts: z40.array(postQueryDtoSchema),
+  nextCursor: z40.string().nullable()
 });
 var listCrewPostsContract = {
   request: listCrewPostsRequestSchema,
   response: listCrewPostsResponseSchema
 };
-var createPostBodySchema = z39.object({
+var createPostBodySchema = z40.object({
   content: postDbSchema.shape.content,
   visibility: postDbSchema.shape.visibility,
-  crewIds: z39.array(z39.uuid()).default([])
+  crewIds: z40.array(z40.uuid()).default([])
 }).superRefine((body, context) => {
   if (body.visibility === "crews_only" && body.crewIds.length === 0) {
     context.addIssue({
@@ -3711,156 +3735,152 @@ var createPostBodySchema = z39.object({
     });
   }
 });
-var createPostRequestSchema = z39.object({
+var createPostRequestSchema = z40.object({
   body: createPostBodySchema
 });
-var createPostResponseSchema = z39.void();
+var createPostResponseSchema = z40.void();
 var createPostContract = {
   request: createPostRequestSchema,
   response: createPostResponseSchema
 };
-var updatePostRequestSchema = z39.object({
+var updatePostRequestSchema = z40.object({
   params: postIdParamsSchema,
-  body: z39.object({
+  body: z40.object({
     content: postDbSchema.shape.content
   })
 });
-var updatePostResponseSchema = z39.void();
+var updatePostResponseSchema = z40.void();
 var updatePostContract = {
   request: updatePostRequestSchema,
   response: updatePostResponseSchema
 };
-var deletePostRequestSchema = z39.object({
+var deletePostRequestSchema = z40.object({
   params: postIdParamsSchema
 });
-var deletePostResponseSchema = z39.void();
+var deletePostResponseSchema = z40.void();
 var deletePostContract = {
   request: deletePostRequestSchema,
   response: deletePostResponseSchema
 };
 
 // src/modules/social/posts/comments/comments.contracts.ts
-import { z as z41 } from "zod/v4";
+import { z as z42 } from "zod/v4";
 
 // src/modules/social/posts/comments/comments.dtos.ts
-import { z as z40 } from "zod/v4";
+import { z as z41 } from "zod/v4";
 var commentQueryDtoSchema = commentDbSchema.extend({
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema
 });
-var commentWriteResultQueryDtoSchema = z40.object({
+var commentWriteResultQueryDtoSchema = z41.object({
   id: commentDbSchema.shape.id
 });
 
 // src/modules/social/posts/comments/comments.contracts.ts
-var postParamsSchema = z41.object({
+var postParamsSchema = z42.object({
   postId: postDbSchema.shape.id
 });
-var commentParamsSchema = z41.object({
+var commentParamsSchema = z42.object({
   id: commentDbSchema.shape.id
 });
 var commentContentSchema = commentDbSchema.shape.content.trim().min(1).max(2e3);
-var listPostCommentsRequestSchema = z41.object({
+var listPostCommentsRequestSchema = z42.object({
   params: postParamsSchema,
-  query: z41.object({
-    limit: z41.coerce.number().int().min(1).max(100).default(20),
-    cursor: z41.string().min(1).optional()
+  query: z42.object({
+    limit: z42.coerce.number().int().min(1).max(100).default(20),
+    cursor: z42.string().min(1).optional()
   })
 });
-var listPostCommentsResponseSchema = z41.object({
-  comments: z41.array(commentQueryDtoSchema),
-  nextCursor: z41.string().nullable()
+var listPostCommentsResponseSchema = z42.object({
+  comments: z42.array(commentQueryDtoSchema),
+  nextCursor: z42.string().nullable()
 });
 var listPostCommentsContract = {
   request: listPostCommentsRequestSchema,
   response: listPostCommentsResponseSchema
 };
-var addCommentRequestSchema = z41.object({
+var addCommentRequestSchema = z42.object({
   params: postParamsSchema,
-  body: z41.object({
+  body: z42.object({
     content: commentContentSchema
   })
 });
-var addCommentResponseSchema = z41.void();
+var addCommentResponseSchema = z42.void();
 var addCommentContract = {
   request: addCommentRequestSchema,
   response: addCommentResponseSchema
 };
-var editCommentRequestSchema = z41.object({
+var editCommentRequestSchema = z42.object({
   params: commentParamsSchema,
-  body: z41.object({
+  body: z42.object({
     content: commentContentSchema
   })
 });
-var editCommentResponseSchema = z41.void();
+var editCommentResponseSchema = z42.void();
 var editCommentContract = {
   request: editCommentRequestSchema,
   response: editCommentResponseSchema
 };
-var deleteCommentRequestSchema = z41.object({
+var deleteCommentRequestSchema = z42.object({
   params: commentParamsSchema
 });
-var deleteCommentResponseSchema = z41.void();
+var deleteCommentResponseSchema = z42.void();
 var deleteCommentContract = {
   request: deleteCommentRequestSchema,
   response: deleteCommentResponseSchema
 };
 
 // src/modules/social/posts/reactions/reactions.contracts.ts
-import { z as z43 } from "zod/v4";
+import { z as z44 } from "zod/v4";
 
 // src/modules/social/posts/reactions/reactions.dtos.ts
-import { z as z42 } from "zod/v4";
+import { z as z43 } from "zod/v4";
 var reactionQueryDtoSchema = reactionDbSchema.extend({
   reactedAt: serializedDateSchema
 });
-var reactionWriteResultQueryDtoSchema = z42.object({
+var reactionWriteResultQueryDtoSchema = z43.object({
   id: reactionDbSchema.shape.id
 });
 
 // src/modules/social/posts/reactions/reactions.contracts.ts
-var postParamsSchema2 = z43.object({
+var postParamsSchema2 = z44.object({
   postId: postDbSchema.shape.id
 });
-var listPostReactionsRequestSchema = z43.object({
+var listPostReactionsRequestSchema = z44.object({
   params: postParamsSchema2,
-  query: z43.object({
-    limit: z43.coerce.number().int().min(1).max(100).default(20),
-    cursor: z43.string().min(1).optional()
+  query: z44.object({
+    limit: z44.coerce.number().int().min(1).max(100).default(20),
+    cursor: z44.string().min(1).optional()
   })
 });
-var listPostReactionsResponseSchema = z43.object({
-  reactions: z43.array(reactionQueryDtoSchema),
-  nextCursor: z43.string().nullable()
+var listPostReactionsResponseSchema = z44.object({
+  reactions: z44.array(reactionQueryDtoSchema),
+  nextCursor: z44.string().nullable()
 });
 var listPostReactionsContract = {
   request: listPostReactionsRequestSchema,
   response: listPostReactionsResponseSchema
 };
-var reactToPostRequestSchema = z43.object({
+var reactToPostRequestSchema = z44.object({
   params: postParamsSchema2,
-  body: z43.object({
+  body: z44.object({
     type: reactionDbSchema.shape.type
   })
 });
-var reactToPostResponseSchema = z43.void();
+var reactToPostResponseSchema = z44.void();
 var reactToPostContract = {
   request: reactToPostRequestSchema,
   response: reactToPostResponseSchema
 };
-var deleteReactionRequestSchema = z43.object({
+var deleteReactionRequestSchema = z44.object({
   params: postParamsSchema2
 });
-var deleteReactionResponseSchema = z43.void();
+var deleteReactionResponseSchema = z44.void();
 var deleteReactionContract = {
   request: deleteReactionRequestSchema,
   response: deleteReactionResponseSchema
 };
 export {
-  acceptCrewInvitationContract,
-  acceptCrewInvitationRequestSchema,
-  acceptCrewJoinRequestContract,
-  acceptCrewJoinRequestRequestSchema,
   accessTokenPayloadDtoSchema,
   addAerobicInputQueryDtoSchema,
   addCommentContract,
@@ -4009,6 +4029,9 @@ export {
   leaveCrewRequestSchema,
   leaveCrewResponseSchema,
   leaveCrewResultQueryDtoSchema,
+  listCrewInvitationsContract,
+  listCrewInvitationsRequestSchema,
+  listCrewInvitationsResponseSchema,
   listCrewParticipantsContract,
   listCrewParticipantsRequestSchema,
   listCrewParticipantsResponseSchema,
@@ -4023,6 +4046,9 @@ export {
   listMessagesContract,
   listMessagesRequestSchema,
   listMessagesResponseSchema,
+  listPendingCrewJoinRequestsContract,
+  listPendingCrewJoinRequestsRequestSchema,
+  listPendingCrewJoinRequestsResponseSchema,
   listPostCommentsContract,
   listPostCommentsRequestSchema,
   listPostCommentsResponseSchema,
@@ -4095,6 +4121,8 @@ export {
   updateAerobicEntryContract,
   updateAerobicEntryRequestSchema,
   updateCrewContract,
+  updateCrewParticipationRequestStatusContract,
+  updateCrewParticipationRequestStatusRequestSchema,
   updateCrewRequestSchema,
   updateCrewResponseSchema,
   updateCurrentUserContract,

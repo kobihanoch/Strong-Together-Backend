@@ -1,6 +1,6 @@
 import { z } from 'zod/v4';
 import { serializedDateSchema } from '../../../common';
-import { crewDbSchema, crewMembershipDbSchema, crewParticipationRequestDbSchema, userDbSchema } from '../../../database';
+import { crewDbSchema, crewMembershipDbSchema, userDbSchema } from '../../../database';
 
 /** Runtime schema for a crew row returned by the social crew queries. */
 export const crewQueryDtoSchema = crewDbSchema.extend({
@@ -50,13 +50,6 @@ export const crewSuccessorQueryDtoSchema = z.object({
   userId: crewMembershipDbSchema.shape.userId,
 });
 
-/** Participation request row used by invitation and join workflows. */
-export const crewParticipationRequestQueryDtoSchema = crewParticipationRequestDbSchema.extend({
-  createdAt: serializedDateSchema,
-  updatedAt: serializedDateSchema,
-  respondedAt: serializedDateSchema.nullable(),
-});
-
 /** Typed crew row returned by crew SELECT, INSERT, and UPDATE queries. */
 export type CrewQueryDto = typeof crewQueryDtoSchema._output;
 
@@ -80,4 +73,3 @@ export type LeaveCrewContextQueryDto = typeof leaveCrewContextQueryDtoSchema._ou
 
 /** Typed active participant selected as the next crew leader. */
 export type CrewSuccessorQueryDto = typeof crewSuccessorQueryDtoSchema._output;
-export type CrewParticipationRequestQueryDto = typeof crewParticipationRequestQueryDtoSchema._output;
