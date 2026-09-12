@@ -19,6 +19,7 @@ import {
   workoutSummary,
   crew,
   crewMembership,
+  crewParticipationRequest,
   post,
   comment,
   reaction,
@@ -46,6 +47,7 @@ export const exerciseTrackingSetExpandedViewDbSchema = createSelectSchema(exerci
 export const prsViewDbSchema = createSelectSchema(prsView);
 export const crewDbSchema = createSelectSchema(crew);
 export const crewMembershipDbSchema = createSelectSchema(crewMembership);
+export const crewParticipationRequestDbSchema = createSelectSchema(crewParticipationRequest);
 export const postDbSchema = createSelectSchema(post);
 export const commentDbSchema = createSelectSchema(comment);
 export const reactionDbSchema = createSelectSchema(reaction);

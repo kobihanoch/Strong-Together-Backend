@@ -573,3 +573,24 @@ export async function setCrewMembershipStatus(crewId: string, userId: string, st
       AND user_id = ${userId}::UUID
   `;
 }
+
+/** Returns the newest participation request for a crew participant. */
+export async function getCrewParticipationRequest(crewId: string, participantUserId: string) {
+  const [row] = await sql<{ id: string; initiator_user_id: string; participant_user_id: string; status: string }[]>`
+    SELECT
+      id,
+      initiator_user_id,
+      participant_user_id,
+      status
+    FROM
+      social.crew_participation_request
+    WHERE
+      crew_id = ${crewId}::UUID
+      AND participant_user_id = ${participantUserId}::UUID
+    ORDER BY
+      created_at DESC
+    LIMIT
+      1
+  `;
+  return row ?? null;
+}

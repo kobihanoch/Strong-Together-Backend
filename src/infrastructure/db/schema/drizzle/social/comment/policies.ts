@@ -1,14 +1,19 @@
 import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
-import { canViewPost } from '../policy-helpers';
 const uid = drizzleSql`"identity"."current_user_id" ()`;
 export function commentPolicies(t: { postId: AnyPgColumn; userId: AnyPgColumn }) {
   const owns = drizzleSql`${t.userId} = ${uid}`;
-  const visible = canViewPost(t.postId);
+  const visible = drizzleSql`
+    EXISTS (
+      SELECT 1
+      FROM "social"."post" p
+      WHERE p."id" = ${t.postId}
+    )
+  `;
   const allowed = drizzleSql`
     ${owns}
-    AND ${visible}
+    AND (${visible})
   `;
   return [
     // A comment is visible whenever its parent post is visible to the current user.

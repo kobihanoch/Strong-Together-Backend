@@ -6,6 +6,7 @@ import { decodeSocialCursor, encodeSocialCursor } from '../cursor-pagination';
 @Injectable()
 export class CrewsService {
   constructor(private readonly queries: CrewsQueries) {}
+
   /**
    * Lists discoverable crews with a limited participant preview.
    *
@@ -63,7 +64,7 @@ export class CrewsService {
    * @returns A promise that resolves after creation.
    */
   async createCrewData(userId: string, body: CreateCrewBody): Promise<void> {
-    await this.queries.queryCreateCrew(userId, body.privacy);
+    await this.queries.queryCreateCrew(userId, body.name, body.privacy);
   }
   /**
    * Updates a crew through the caller's RLS transaction.
@@ -74,7 +75,7 @@ export class CrewsService {
    * @throws NotFoundException when no permitted crew is updated.
    */
   async updateCrewData(id: string, body: UpdateCrewBody): Promise<void> {
-    const [row] = await this.queries.queryUpdateCrew(id, body.privacy);
+    const [row] = await this.queries.queryUpdateCrew(id, body.name, body.privacy);
     if (!row) throw new NotFoundException('Crew not found');
   }
 
@@ -103,5 +104,60 @@ export class CrewsService {
    */
   async deleteCrewData(id: string): Promise<void> {
     if (!(await this.queries.queryDeleteCrew(id)).length) throw new NotFoundException('Crew not found');
+  }
+
+  /**
+   * Creates a pending crew invitation.
+   * @param crewId - The crew UUID.
+   * @param initiatorUserId - The authenticated initiator UUID.
+   * @param participantUserId - The invited user UUID.
+   * @returns A promise that resolves after creation.
+   * @throws NotFoundException when RLS exposes no crew.
+   */
+  async inviteUserData(crewId: string, initiatorUserId: string, participantUserId: string): Promise<void> {
+    const [request] = await this.queries.queryInviteUser(crewId, initiatorUserId, participantUserId);
+    if (!request) throw new NotFoundException('Crew not found');
+  }
+
+  /**
+   * Requests crew membership and completes public joins immediately.
+   * @param crewId - The crew UUID.
+   * @param userId - The requesting user UUID.
+   * @returns A promise that resolves after the request is handled.
+   * @throws NotFoundException when RLS exposes no crew.
+   */
+  async requestToJoinData(crewId: string, userId: string): Promise<void> {
+    const [request] = await this.queries.queryRequestToJoin(crewId, userId);
+    if (!request) throw new NotFoundException('Crew not found');
+    if (request.status === 'accepted') {
+      await this.queries.queryCreateMembershipFromAcceptedRequest(request.id);
+    }
+  }
+
+  async updateCrewMemberRequestStatus(crewId: string, requestId: string): Promise<void> {}
+  /**
+   * Accepts a join request and creates its membership.
+   * @param crewId - The crew UUID.
+   * @param requestId - The join request UUID.
+   * @returns A promise that resolves after acceptance.
+   * @throws NotFoundException when RLS exposes no matching request.
+   */
+  async acceptJoinRequestData(crewId: string, requestId: string): Promise<void> {
+    const [accepted] = await this.queries.queryAcceptJoinRequest(crewId, requestId);
+    if (!accepted) throw new NotFoundException('Join request not found');
+    await this.queries.queryCreateMembershipFromAcceptedRequest(accepted.id);
+  }
+
+  /**
+   * Accepts an invitation and creates its membership.
+   * @param crewId - The crew UUID.
+   * @param requestId - The invitation UUID.
+   * @returns A promise that resolves after acceptance.
+   * @throws NotFoundException when RLS exposes no matching invitation.
+   */
+  async acceptInvitationData(crewId: string, requestId: string): Promise<void> {
+    const [accepted] = await this.queries.queryAcceptInvitation(crewId, requestId);
+    if (!accepted) throw new NotFoundException('Invitation not found');
+    await this.queries.queryCreateMembership(accepted.crewId, accepted.participantUserId);
   }
 }

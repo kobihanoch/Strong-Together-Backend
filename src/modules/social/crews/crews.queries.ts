@@ -7,6 +7,7 @@ import type {
   CrewSuccessorQueryDto,
   LeaveCrewResultQueryDto,
   LeaveCrewContextQueryDto,
+  CrewParticipationRequestQueryDto,
 } from '@strong-together/shared';
 import type postgres from 'postgres';
 import { SQL } from '../../../infrastructure/db/db.tokens';
@@ -113,6 +114,7 @@ export class CrewsQueries {
     return this.sql<CrewQueryDto[]>`
       SELECT
         id,
+        name,
         leader_id AS "leaderId",
         privacy,
         created_at AS "createdAt",
@@ -130,20 +132,23 @@ export class CrewsQueries {
    * operations succeed or the complete creation flow is rolled back.
    *
    * @param userId - The UUID of the user creating and leading the crew.
+   * @param name - The crew name.
    * @param privacy - Whether the crew is public or private.
    * @returns An array containing the newly created crew.
    */
-  async queryCreateCrew(userId: string, privacy: 'public' | 'private'): Promise<CrewQueryDto[]> {
+  async queryCreateCrew(userId: string, name: string, privacy: 'public' | 'private'): Promise<CrewQueryDto[]> {
     const [created] = await this.sql<CrewQueryDto[]>`
       INSERT INTO
-        social.crew (leader_id, privacy)
+        social.crew (name, leader_id, privacy)
       VALUES
         (
+          ${name},
           ${userId}::UUID,
           ${privacy}::social."Crew Privacy"
         )
       RETURNING
         id,
+        name,
         leader_id AS "leaderId",
         privacy,
         created_at AS "createdAt",
@@ -164,22 +169,25 @@ export class CrewsQueries {
   }
 
   /**
-   * Updates the privacy setting of a crew permitted by RLS.
+   * Updates the name and privacy setting of a crew permitted by RLS.
    *
    * @param id - The UUID of the crew to update.
+   * @param name - The new crew name.
    * @param privacy - The new crew privacy setting.
    * @returns An array containing the updated crew, or an empty array.
    */
-  async queryUpdateCrew(id: string, privacy: 'public' | 'private'): Promise<CrewQueryDto[]> {
+  async queryUpdateCrew(id: string, name: string, privacy: 'public' | 'private'): Promise<CrewQueryDto[]> {
     return this.sql<CrewQueryDto[]>`
       UPDATE social.crew
       SET
+        name = ${name},
         privacy = ${privacy}::social."Crew Privacy",
         updated_at = NOW()
       WHERE
         id = ${id}::UUID
       RETURNING
         id,
+        name,
         leader_id AS "leaderId",
         privacy,
         created_at AS "createdAt",
@@ -303,6 +311,171 @@ export class CrewsQueries {
         id = ${id}::UUID
       RETURNING
         id
+    `;
+  }
+
+  /**
+   * Creates a pending invitation.
+   * @param crewId - The crew UUID.
+   * @param initiatorUserId - The inviter UUID.
+   * @param participantUserId - The invited user UUID.
+   * @returns The created request, or an empty array when blocked by RLS.
+   */
+  async queryInviteUser(crewId: string, initiatorUserId: string, participantUserId: string): Promise<CrewParticipationRequestQueryDto[]> {
+    return await this.sql<CrewParticipationRequestQueryDto[]>`
+      INSERT INTO
+        social.crew_participation_request (crew_id, initiator_user_id, participant_user_id, status)
+      VALUES
+        (
+          ${crewId}::UUID,
+          ${initiatorUserId}::UUID,
+          ${participantUserId}::UUID,
+          'pending'
+        )
+      RETURNING
+        id,
+        crew_id AS "crewId",
+        initiator_user_id AS "initiatorUserId",
+        participant_user_id AS "participantUserId",
+        status,
+        created_at AS "createdAt",
+        updated_at AS "updatedAt",
+        responded_at AS "respondedAt"
+    `;
+  }
+
+  /**
+   * Creates a crew join request.
+   * @param crewId - The crew UUID.
+   * @param userId - The requesting user UUID.
+   * @returns The created pending or accepted request.
+   */
+  async queryRequestToJoin(crewId: string, userId: string): Promise<CrewParticipationRequestQueryDto[]> {
+    return await this.sql<CrewParticipationRequestQueryDto[]>`
+      INSERT INTO
+        social.crew_participation_request (crew_id, initiator_user_id, participant_user_id, status)
+      SELECT
+        c.id,
+        ${userId}::UUID,
+        ${userId}::UUID,
+        CASE
+          WHEN c.privacy = 'public' THEN 'accepted'::social."Crew Participation Request Status"
+          ELSE 'pending'::social."Crew Participation Request Status"
+        END
+      FROM
+        social.crew c
+      WHERE
+        c.id = ${crewId}::UUID
+      RETURNING
+        id,
+        crew_id AS "crewId",
+        initiator_user_id AS "initiatorUserId",
+        participant_user_id AS "participantUserId",
+        status,
+        created_at AS "createdAt",
+        updated_at AS "updatedAt",
+        responded_at AS "respondedAt"
+    `;
+  }
+
+  /**
+   * Accepts a pending join request.
+   * @param crewId - The crew UUID.
+   * @param requestId - The request UUID.
+   * @returns The accepted request, or an empty array when unavailable.
+   */
+  async queryAcceptJoinRequest(crewId: string, requestId: string): Promise<CrewParticipationRequestQueryDto[]> {
+    return await this.queryAcceptParticipationRequest(crewId, requestId, true);
+  }
+
+  /**
+   * Accepts a pending invitation.
+   * @param crewId - The crew UUID.
+   * @param requestId - The invitation UUID.
+   * @returns The accepted invitation, or an empty array when unavailable.
+   */
+  async queryAcceptInvitation(crewId: string, requestId: string): Promise<CrewParticipationRequestQueryDto[]> {
+    return await this.queryAcceptParticipationRequest(crewId, requestId, false);
+  }
+
+  /**
+   * Marks a matching participation request as accepted.
+   * @param crewId - The crew UUID.
+   * @param requestId - The request UUID.
+   * @param isJoinRequest - Whether the request is a join rather than an invitation.
+   * @returns The updated request, or an empty array.
+   */
+  private async queryAcceptParticipationRequest(
+    crewId: string,
+    requestId: string,
+    isJoinRequest: boolean,
+  ): Promise<CrewParticipationRequestQueryDto[]> {
+    return await this.sql<CrewParticipationRequestQueryDto[]>`
+      UPDATE social.crew_participation_request
+      SET
+        status = 'accepted',
+        responded_at = NOW(),
+        updated_at = NOW()
+      WHERE
+        id = ${requestId}::UUID
+        AND crew_id = ${crewId}::UUID
+        AND status = 'pending'
+        AND (initiator_user_id = participant_user_id) = ${isJoinRequest}
+      RETURNING
+        id,
+        crew_id AS "crewId",
+        initiator_user_id AS "initiatorUserId",
+        participant_user_id AS "participantUserId",
+        status,
+        created_at AS "createdAt",
+        updated_at AS "updatedAt",
+        responded_at AS "respondedAt"
+    `;
+  }
+
+  /**
+   * Creates membership from an accepted request.
+   * @param requestId - The accepted request UUID.
+   * @returns The created membership ID.
+   */
+  async queryCreateMembershipFromAcceptedRequest(requestId: string): Promise<{ id: string }[]> {
+    return await this.sql<{ id: string }[]>`
+      INSERT INTO
+        social.crew_membership (crew_id, user_id, status, role, joined_at)
+      SELECT
+        crew_id,
+        participant_user_id,
+        'active',
+        'member',
+        NOW()
+      FROM
+        social.crew_participation_request
+      WHERE
+        id = ${requestId}::UUID
+        AND status = 'accepted'
+      RETURNING
+        id
+    `;
+  }
+
+  /**
+   * Creates an active crew membership.
+   * @param crewId - The crew UUID.
+   * @param userId - The new member UUID.
+   * @returns A promise that resolves after insertion.
+   */
+  async queryCreateMembership(crewId: string, userId: string): Promise<void> {
+    await this.sql`
+      INSERT INTO
+        social.crew_membership (crew_id, user_id, status, role, joined_at)
+      VALUES
+        (
+          ${crewId}::UUID,
+          ${userId}::UUID,
+          'active',
+          'member',
+          NOW()
+        )
     `;
   }
 }
