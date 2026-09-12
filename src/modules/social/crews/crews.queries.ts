@@ -58,15 +58,19 @@ export class CrewsQueries {
     return this.sql<CrewParticipantQueryDto[]>`
       SELECT
         cm.id,
-        cm.crew_id AS "crewId",
         cm.user_id AS "userId",
+        cm.crew_id AS "crewId",
         cm.status,
         cm.role,
         cm.joined_at AS "joinedAt",
         cm.created_at AS "createdAt",
-        cm.updated_at AS "updatedAt"
+        cm.updated_at AS "updatedAt",
+        p."profilePicPath" AS "profilePicPath",
+        p.username,
+        p.name AS "fullName"
       FROM
         social.crew_membership cm
+        CROSS JOIN LATERAL identity.get_user_profile (cm.user_id) p
       WHERE
         cm.crew_id = ${crewId}::UUID
         AND cm.status = 'active'
