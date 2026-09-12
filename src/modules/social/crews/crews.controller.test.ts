@@ -9,6 +9,7 @@ import {
   getCrewById,
   getCrewByLeaderId,
   getCrewMembership,
+  getCrewParticipationRequest,
   getPostByAuthorId,
   getPostByContent,
   insertCrewMembership,
@@ -35,7 +36,7 @@ async function crewUser(prefix: string) {
 }
 
 async function createCrew(accessToken: string, leaderId: string, privacy: 'public' | 'private' = 'public') {
-  const response = await request(app.getHttpServer()).post('/api/social/crews').set(authHeaders(accessToken)).send({ privacy });
+  const response = await request(app.getHttpServer()).post('/api/social/crews').set(authHeaders(accessToken)).send({ name: 'Test Crew', privacy });
 
   expect(response.status).toBe(201);
   expect(response.text).toBe('');
@@ -46,6 +47,53 @@ async function createCrew(accessToken: string, leaderId: string, privacy: 'publi
 }
 
 describe('CrewsController', () => {
+  it('supports public joins, private join acceptance, and invitation acceptance through RLS', async () => {
+    const leader = await crewUser('crew_flow_leader');
+    const publicJoiner = await crewUser('crew_flow_public');
+    const privateJoiner = await crewUser('crew_flow_private');
+    const invitee = await crewUser('crew_flow_invitee');
+    const outsider = await crewUser('crew_flow_outsider');
+    const publicCrew = await createCrew(leader.accessToken, leader.userId, 'public');
+    const privateCrew = await createCrew(leader.accessToken, leader.userId, 'private');
+
+    const publicJoin = await request(app.getHttpServer())
+      .post(`/api/social/crews/${publicCrew.id}/join-requests`)
+      .set(authHeaders(publicJoiner.accessToken));
+    expect(publicJoin.status, JSON.stringify(publicJoin.body)).toBe(201);
+    expect(await getCrewMembership(publicCrew.id, publicJoiner.userId)).toMatchObject({ status: 'active', role: 'member' });
+
+    const privateJoin = await request(app.getHttpServer())
+      .post(`/api/social/crews/${privateCrew.id}/join-requests`)
+      .set(authHeaders(privateJoiner.accessToken));
+    expect(privateJoin.status).toBe(201);
+    const joinRequest = await getCrewParticipationRequest(privateCrew.id, privateJoiner.userId);
+    expect(joinRequest).toMatchObject({ status: 'pending', initiator_user_id: privateJoiner.userId });
+
+    const forbiddenAccept = await request(app.getHttpServer())
+      .post(`/api/social/crews/${privateCrew.id}/join-requests/${joinRequest!.id}/accept`)
+      .set(authHeaders(outsider.accessToken));
+    expect(forbiddenAccept.status).toBe(404);
+
+    const acceptedJoin = await request(app.getHttpServer())
+      .post(`/api/social/crews/${privateCrew.id}/join-requests/${joinRequest!.id}/accept`)
+      .set(authHeaders(leader.accessToken));
+    expect(acceptedJoin.status).toBe(204);
+    expect(await getCrewMembership(privateCrew.id, privateJoiner.userId)).toMatchObject({ status: 'active', role: 'member' });
+
+    const invitation = await request(app.getHttpServer())
+      .post(`/api/social/crews/${privateCrew.id}/invitations`)
+      .set(authHeaders(leader.accessToken))
+      .send({ userId: invitee.userId });
+    expect(invitation.status).toBe(201);
+    const inviteRequest = await getCrewParticipationRequest(privateCrew.id, invitee.userId);
+    expect(inviteRequest).toMatchObject({ status: 'pending', initiator_user_id: leader.userId });
+
+    const acceptedInvitation = await request(app.getHttpServer())
+      .post(`/api/social/crews/${privateCrew.id}/invitations/${inviteRequest!.id}/accept`)
+      .set(authHeaders(invitee.accessToken));
+    expect(acceptedInvitation.status, JSON.stringify(acceptedInvitation.body)).toBe(204);
+    expect(await getCrewMembership(privateCrew.id, invitee.userId)).toMatchObject({ status: 'active', role: 'member' });
+  });
   it('POST /api/social/crews creates a crew and returns 201 without a body', async () => {
     const leader = await crewUser('crew_create');
     const crew = await createCrew(leader.accessToken, leader.userId, 'private');
@@ -144,11 +192,11 @@ describe('CrewsController', () => {
     const forbidden = await request(app.getHttpServer())
       .patch(`/api/social/crews/${crew.id}`)
       .set(authHeaders(outsider.accessToken))
-      .send({ privacy: 'private' });
+      .send({ name: 'Updated Crew', privacy: 'private' });
     const updated = await request(app.getHttpServer())
       .patch(`/api/social/crews/${crew.id}`)
       .set(authHeaders(leader.accessToken))
-      .send({ privacy: 'private' });
+      .send({ name: 'Updated Crew', privacy: 'private' });
 
     expect(forbidden.status).toBe(404);
     expect(updated.status).toBe(204);
@@ -164,7 +212,7 @@ describe('CrewsController', () => {
     const response = await request(app.getHttpServer())
       .patch(`/api/social/crews/${crew.id}`)
       .set(authHeaders(leader.accessToken))
-      .send({ privacy: 'private' });
+      .send({ name: 'Updated Crew', privacy: 'private' });
 
     expect(response.status).toBe(404);
     expect(await getCrewByLeaderId(leader.userId)).toMatchObject({ privacy: 'public' });
@@ -259,10 +307,7 @@ describe('CrewsController', () => {
       .set(authHeaders(user.accessToken))
       .send({ privacy: 'hidden' });
     const malformedId = await request(app.getHttpServer()).get('/api/social/crews/not-a-uuid').set(authHeaders(user.accessToken));
-    const malformedPagination = await request(app.getHttpServer())
-      .get('/api/social/crews')
-      .query({ limit: 101 })
-      .set(authHeaders(user.accessToken));
+    const malformedPagination = await request(app.getHttpServer()).get('/api/social/crews').query({ limit: 101 }).set(authHeaders(user.accessToken));
     const unauthenticated = await request(app.getHttpServer()).get('/api/social/crews').query({ limit: 20, offset: 0 }).set('x-app-version', '4.5.0');
 
     expect(malformedCreate.status).toBe(400);

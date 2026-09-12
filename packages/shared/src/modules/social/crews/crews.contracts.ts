@@ -79,7 +79,9 @@ export type GetCrewResponse = ResponseOf<typeof getCrewContract>;
 // Create crew
 
 /** Validates the body used to create a crew. */
-export const createCrewRequestSchema = z.object({ body: z.object({ privacy: crewDbSchema.shape.privacy }) });
+export const createCrewRequestSchema = z.object({
+  body: z.object({ name: crewDbSchema.shape.name, privacy: crewDbSchema.shape.privacy }),
+});
 
 /** Validates the empty response returned after crew creation. */
 export const createCrewResponseSchema = z.void();
@@ -96,7 +98,10 @@ export type CreateCrewResponse = ResponseOf<typeof createCrewContract>;
 // Update crew
 
 /** Validates the route parameters and body used to update a crew. */
-export const updateCrewRequestSchema = z.object({ params: crewIdParamsSchema, body: z.object({ privacy: crewDbSchema.shape.privacy }) });
+export const updateCrewRequestSchema = z.object({
+  params: crewIdParamsSchema,
+  body: z.object({ name: crewDbSchema.shape.name, privacy: crewDbSchema.shape.privacy }),
+});
 
 /** Validates the empty response returned after updating a crew. */
 export const updateCrewResponseSchema = z.void();
@@ -146,3 +151,30 @@ export type DeleteCrewParams = ParamsOf<typeof deleteCrewContract>;
 
 /** Response returned after deleting a crew. */
 export type DeleteCrewResponse = ResponseOf<typeof deleteCrewContract>;
+
+const crewParticipationParamsSchema = z.object({ crewId: crewDbSchema.shape.id });
+const crewParticipationRequestParamsSchema = crewParticipationParamsSchema.extend({ requestId: z.uuid() });
+
+export const inviteCrewUserRequestSchema = z.object({
+  params: crewParticipationParamsSchema,
+  body: z.object({ userId: z.uuid() }),
+});
+export const inviteCrewUserContract = { request: inviteCrewUserRequestSchema, response: z.void() } satisfies Contract;
+export type InviteCrewUserParams = ParamsOf<typeof inviteCrewUserContract>;
+export type InviteCrewUserBody = BodyOf<typeof inviteCrewUserContract>;
+export type InviteCrewUserResponse = ResponseOf<typeof inviteCrewUserContract>;
+
+export const requestToJoinCrewRequestSchema = z.object({ params: crewParticipationParamsSchema });
+export const requestToJoinCrewContract = { request: requestToJoinCrewRequestSchema, response: z.void() } satisfies Contract;
+export type RequestToJoinCrewParams = ParamsOf<typeof requestToJoinCrewContract>;
+export type RequestToJoinCrewResponse = ResponseOf<typeof requestToJoinCrewContract>;
+
+export const acceptCrewJoinRequestRequestSchema = z.object({ params: crewParticipationRequestParamsSchema });
+export const acceptCrewJoinRequestContract = { request: acceptCrewJoinRequestRequestSchema, response: z.void() } satisfies Contract;
+export type AcceptCrewJoinRequestParams = ParamsOf<typeof acceptCrewJoinRequestContract>;
+export type AcceptCrewJoinRequestResponse = ResponseOf<typeof acceptCrewJoinRequestContract>;
+
+export const acceptCrewInvitationRequestSchema = z.object({ params: crewParticipationRequestParamsSchema });
+export const acceptCrewInvitationContract = { request: acceptCrewInvitationRequestSchema, response: z.void() } satisfies Contract;
+export type AcceptCrewInvitationParams = ParamsOf<typeof acceptCrewInvitationContract>;
+export type AcceptCrewInvitationResponse = ResponseOf<typeof acceptCrewInvitationContract>;

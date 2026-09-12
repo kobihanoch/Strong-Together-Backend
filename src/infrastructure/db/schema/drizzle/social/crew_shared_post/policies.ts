@@ -1,18 +1,18 @@
 import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
-import { canAccessCrew, canPublishToCrew, isPostAuthor } from '../policy-helpers';
+import { isActiveCrewMember, isPostAuthor } from '../policy-helpers';
 
 export function crewSharedPostPolicies(t: { crewId: AnyPgColumn; postId: AnyPgColumn }) {
-  const canPublish = canPublishToCrew(t.crewId);
+  const activeMember = isActiveCrewMember(t.crewId);
   const author = isPostAuthor(t.postId);
   const allowed = drizzleSql`
-    (${canPublish})
+    (${activeMember})
     AND (${author})
   `;
   return [
-    // A placement is visible through post authorship, crew participation, or the post's public visibility.
-    pgPolicy('Allow users to read visible crew post placements', { for: 'select', to: authenticatedRole, using: canAccessCrew(t.crewId) }),
+    // A placement is visible to active members of its crew.
+    pgPolicy('Allow active crew members to read crew post placements', { for: 'select', to: authenticatedRole, using: activeMember }),
     // The post author may share their post only into a crew in which they actively participate or lead.
     pgPolicy('Allow member authors to share posts with crews', { for: 'insert', to: authenticatedRole, withCheck: allowed }),
     // The author may remove their post placement while they still have access to the crew.

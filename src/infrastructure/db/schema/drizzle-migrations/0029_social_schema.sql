@@ -80,6 +80,7 @@ ALTER TABLE "social"."crew_shared_post" ENABLE ROW LEVEL SECURITY;
 --> statement-breakpoint
 CREATE TABLE "social"."crew" (
   "id" UUID DEFAULT GEN_RANDOM_UUID() NOT NULL,
+  "name" TEXT NOT NULL,
   "leader_id" UUID NOT NULL,
   "privacy" "social"."Crew Privacy" NOT NULL,
   "created_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
@@ -289,7 +290,7 @@ UPDATE ("status", "updated_at", "responded_at") ON TABLE "social"."crew_particip
 
 --> statement-breakpoint
 GRANT
-UPDATE ("privacy", "updated_at") ON TABLE "social"."crew" TO "authenticated";
+UPDATE ("name", "privacy", "updated_at") ON TABLE "social"."crew" TO "authenticated";
 
 --> statement-breakpoint
 GRANT

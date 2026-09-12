@@ -1,7 +1,7 @@
 import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
-import { canViewPost } from '../policy-helpers';
+import { isActiveCrewMember, isPostAuthor, isPublicPost } from '../policy-helpers';
 
 const uid = drizzleSql`"identity"."current_user_id" ()`;
 
@@ -11,7 +11,14 @@ export function postPolicies(t: { id: AnyPgColumn; authorUserId: AnyPgColumn; vi
   // helper's statement snapshot can observe the newly inserted post row.
   const visible = drizzleSql`
     ${owns}
-    OR ${canViewPost(t.id)}
+    OR ${isPublicPost(t.id)}
+    OR ${isPostAuthor(t.id)}
+    OR EXISTS (
+      SELECT 1
+      FROM "social"."crew_shared_post" csp
+      WHERE csp."post_id" = ${t.id}
+        AND ${isActiveCrewMember(drizzleSql`csp."crew_id"`)}
+    )
   `;
   return [
     // Public posts are visible to everyone, while crew-only posts require authorship or access to a crew where the post is shared.

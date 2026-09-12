@@ -1,25 +1,39 @@
 import { sql as drizzleSql } from 'drizzle-orm';
 import { type AnyPgColumn, pgPolicy } from 'drizzle-orm/pg-core';
 import { authenticatedRole } from '../../roles';
-import { canManageCrew, canViewCrewParticipants, isCrewLeader } from '../policy-helpers';
+import { hasAcceptedCrewParticipationRequest, isActiveCrewMember, isCrewLeader, isCrewPublic } from '../policy-helpers';
 
 const uid = drizzleSql`"identity"."current_user_id" ()`;
 export function crewMembershipPolicies(t: { crewId: AnyPgColumn; userId: AnyPgColumn; role: AnyPgColumn; status: AnyPgColumn }) {
   const self = drizzleSql`${t.userId} = ${uid}`;
-  const canManage = canManageCrew(t.crewId);
+  const activeLeader = isCrewLeader(t.crewId);
   const allowed = drizzleSql`
     ${self}
-    OR ${canManage}
+    OR ${activeLeader}
   `;
   const createsOwnLeaderMembership = drizzleSql`
     ${self}
-    AND ${isCrewLeader(t.crewId)}
+    AND EXISTS (
+      SELECT
+        1
+      FROM
+        "social"."crew" c
+      WHERE
+        c."id" = ${t.crewId}
+        AND c."leader_id" = ${uid}
+    )
     AND ${t.role} = 'leader'
     AND ${t.status} = 'active'
   `;
+  const hasAcceptedParticipationRequest = drizzleSql`
+    ${t.role} = 'member'
+    AND ${t.status} = 'active'
+    AND ${hasAcceptedCrewParticipationRequest(t.crewId, t.userId)}
+  `;
   const canCreate = drizzleSql`
-    ${canManage}
+    ${activeLeader}
     OR (${createsOwnLeaderMembership})
+    OR (${hasAcceptedParticipationRequest})
   `;
   const activeSelf = drizzleSql`
     ${self}
@@ -30,29 +44,27 @@ export function crewMembershipPolicies(t: { crewId: AnyPgColumn; userId: AnyPgCo
     AND ${t.status} = 'left'
   `;
   return [
-    // Participants are visible for public crews and to active members or leaders of private crews.
     pgPolicy('Allow authorized users to read crew participants', {
       for: 'select',
       to: authenticatedRole,
-      using: canViewCrewParticipants(t.crewId),
+      using: drizzleSql`
+        ${isCrewPublic(t.crewId)}
+        OR ${isActiveCrewMember(t.crewId)}
+      `,
     }),
-    // Only the crew leader may create a membership record.
-    pgPolicy('Allow managers and new crew leaders to create memberships', { for: 'insert', to: authenticatedRole, withCheck: canCreate }),
-    // Only the crew leader may change membership state or role.
+    pgPolicy('Allow leaders and accepted participant to create memberships', { for: 'insert', to: authenticatedRole, withCheck: canCreate }),
     pgPolicy('Allow active crew leaders to update memberships', {
       for: 'update',
       to: authenticatedRole,
-      using: canManage,
-      withCheck: canManage,
+      using: activeLeader,
+      withCheck: activeLeader,
     }),
-    // An active member may transition only their own membership to the left state.
     pgPolicy('Allow active members to leave crews', {
       for: 'update',
       to: authenticatedRole,
       using: activeSelf,
       withCheck: leftSelf,
     }),
-    // A membership may be deleted by its user or the crew leader.
     pgPolicy('Allow members and active crew leaders to delete memberships', { for: 'delete', to: authenticatedRole, using: allowed }),
   ];
 }

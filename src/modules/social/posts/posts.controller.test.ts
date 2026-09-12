@@ -37,7 +37,7 @@ async function postUser(prefix: string) {
 }
 
 async function createCrew(accessToken: string, leaderId: string) {
-  const response = await request(app.getHttpServer()).post('/api/social/crews').set(authHeaders(accessToken)).send({ privacy: 'public' });
+  const response = await request(app.getHttpServer()).post('/api/social/crews').set(authHeaders(accessToken)).send({ name: 'Test Crew', privacy: 'public' });
 
   expect(response.status, JSON.stringify(response.body)).toBe(201);
 

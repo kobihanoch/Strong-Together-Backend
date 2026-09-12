@@ -21,6 +21,10 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/index.ts
 var index_exports = {};
 __export(index_exports, {
+  acceptCrewInvitationContract: () => acceptCrewInvitationContract,
+  acceptCrewInvitationRequestSchema: () => acceptCrewInvitationRequestSchema,
+  acceptCrewJoinRequestContract: () => acceptCrewJoinRequestContract,
+  acceptCrewJoinRequestRequestSchema: () => acceptCrewJoinRequestRequestSchema,
   accessTokenPayloadDtoSchema: () => accessTokenPayloadDtoSchema,
   addAerobicInputQueryDtoSchema: () => addAerobicInputQueryDtoSchema,
   addCommentContract: () => addCommentContract,
@@ -74,6 +78,8 @@ __export(index_exports, {
   crewMembershipDbSchema: () => crewMembershipDbSchema,
   crewParticipantPreviewQueryDtoSchema: () => crewParticipantPreviewQueryDtoSchema,
   crewParticipantQueryDtoSchema: () => crewParticipantQueryDtoSchema,
+  crewParticipationRequestDbSchema: () => crewParticipationRequestDbSchema,
+  crewParticipationRequestQueryDtoSchema: () => crewParticipationRequestQueryDtoSchema,
   crewQueryDtoSchema: () => crewQueryDtoSchema,
   crewSuccessorQueryDtoSchema: () => crewSuccessorQueryDtoSchema,
   deleteAerobicEntryContract: () => deleteAerobicEntryContract,
@@ -159,6 +165,8 @@ __export(index_exports, {
   googleOAuthContract: () => googleOAuthContract,
   googleOAuthRequestSchema: () => googleOAuthRequestSchema,
   googleTokenVerificationResultDtoSchema: () => googleTokenVerificationResultDtoSchema,
+  inviteCrewUserContract: () => inviteCrewUserContract,
+  inviteCrewUserRequestSchema: () => inviteCrewUserRequestSchema,
   lastLoginQueryDtoSchema: () => lastLoginQueryDtoSchema,
   leaveCrewContextQueryDtoSchema: () => leaveCrewContextQueryDtoSchema,
   leaveCrewContract: () => leaveCrewContract,
@@ -233,6 +241,8 @@ __export(index_exports, {
   replaceWorkoutPlanResponseSchema: () => replaceWorkoutPlanResponseSchema,
   replaceWorkoutSchedulesContract: () => replaceWorkoutSchedulesContract,
   replaceWorkoutSchedulesRequestSchema: () => replaceWorkoutSchedulesRequestSchema,
+  requestToJoinCrewContract: () => requestToJoinCrewContract,
+  requestToJoinCrewRequestSchema: () => requestToJoinCrewRequestSchema,
   resetPasswordContract: () => resetPasswordContract,
   resetPasswordRequestSchema: () => resetPasswordRequestSchema,
   resetPasswordResponseSchema: () => resetPasswordResponseSchema,
@@ -1844,18 +1854,21 @@ var import_pg_core36 = require("drizzle-orm/pg-core");
 var import_drizzle_orm32 = require("drizzle-orm");
 var isCrewPublic = /* @__PURE__ */ __name((crewId) => import_drizzle_orm32.sql`"social"."is_crew_public" (${crewId})`, "isCrewPublic");
 var isCrewLeader = /* @__PURE__ */ __name((crewId) => import_drizzle_orm32.sql`"social"."is_crew_leader" (${crewId})`, "isCrewLeader");
+var isActiveCrewMember = /* @__PURE__ */ __name((crewId) => import_drizzle_orm32.sql`"social"."is_active_crew_member" (${crewId})`, "isActiveCrewMember");
+var isPublicPost = /* @__PURE__ */ __name((postId) => import_drizzle_orm32.sql`"social"."is_public_post" (${postId})`, "isPublicPost");
 var isPostAuthor = /* @__PURE__ */ __name((postId) => import_drizzle_orm32.sql`"social"."is_post_author" (${postId})`, "isPostAuthor");
-var canAccessCrew = /* @__PURE__ */ __name((crewId) => import_drizzle_orm32.sql`"social"."can_access_crew" (${crewId})`, "canAccessCrew");
-var canManageCrew = /* @__PURE__ */ __name((crewId) => import_drizzle_orm32.sql`"social"."can_manage_crew" (${crewId})`, "canManageCrew");
-var canViewCrewParticipants = /* @__PURE__ */ __name((crewId) => import_drizzle_orm32.sql`"social"."can_view_crew_participants" (${crewId})`, "canViewCrewParticipants");
-var canPublishToCrew = /* @__PURE__ */ __name((crewId) => import_drizzle_orm32.sql`"social"."can_publish_to_crew" (${crewId})`, "canPublishToCrew");
-var canViewPost = /* @__PURE__ */ __name((postId) => import_drizzle_orm32.sql`"social"."can_view_post" (${postId})`, "canViewPost");
+var hasAcceptedCrewParticipationRequest = /* @__PURE__ */ __name((crewId, userId) => import_drizzle_orm32.sql`
+  "social"."has_accepted_crew_participation_request" (
+    ${crewId},
+    ${userId}
+  )
+`, "hasAcceptedCrewParticipationRequest");
 
 // ../../src/infrastructure/db/schema/drizzle/social/crew/policies.ts
 var uid11 = import_drizzle_orm33.sql`"identity"."current_user_id" ()`;
 function crewPolicies(t) {
   const leads = import_drizzle_orm33.sql`${t.leaderId} = ${uid11}`;
-  const canManage = canManageCrew(t.id);
+  const activeLeader = import_drizzle_orm33.sql`${leads} AND ${isActiveCrewMember(t.id)}`;
   return [
     // Authenticated users may discover crews; privacy controls participation rather than visibility of the crew record.
     (0, import_pg_core36.pgPolicy)("Allow authenticated users to read crews", {
@@ -1873,14 +1886,14 @@ function crewPolicies(t) {
     (0, import_pg_core36.pgPolicy)("Allow active crew leaders to update their crews", {
       for: "update",
       to: authenticatedRole,
-      using: canManage,
-      withCheck: canAccessCrew(t.id)
+      using: activeLeader,
+      withCheck: isActiveCrewMember(t.id)
     }),
-    // Only the current leader may delete the crew.
+    // Only the active crew leader may delete the crew.
     (0, import_pg_core36.pgPolicy)("Allow active crew leaders to delete their crews", {
       for: "delete",
       to: authenticatedRole,
-      using: canManage
+      using: activeLeader
     })
   ];
 }
@@ -1893,6 +1906,7 @@ var crewPrivacy = socialSchema.enum("Crew Privacy", [
 ]);
 var crew = socialSchema.table("crew", {
   id: (0, import_pg_core37.uuid)("id").defaultRandom().notNull(),
+  name: (0, import_pg_core37.text)("name").notNull(),
   leaderId: (0, import_pg_core37.uuid)("leader_id").notNull(),
   privacy: crewPrivacy("privacy").notNull(),
   createdAt: (0, import_pg_core37.timestamp)("created_at", {
@@ -1940,20 +1954,34 @@ var import_pg_core38 = require("drizzle-orm/pg-core");
 var uid12 = import_drizzle_orm35.sql`"identity"."current_user_id" ()`;
 function crewMembershipPolicies(t) {
   const self = import_drizzle_orm35.sql`${t.userId} = ${uid12}`;
-  const canManage = canManageCrew(t.crewId);
+  const activeLeader = isCrewLeader(t.crewId);
   const allowed = import_drizzle_orm35.sql`
     ${self}
-    OR ${canManage}
+    OR ${activeLeader}
   `;
   const createsOwnLeaderMembership = import_drizzle_orm35.sql`
     ${self}
-    AND ${isCrewLeader(t.crewId)}
+    AND EXISTS (
+      SELECT
+        1
+      FROM
+        "social"."crew" c
+      WHERE
+        c."id" = ${t.crewId}
+        AND c."leader_id" = ${uid12}
+    )
     AND ${t.role} = 'leader'
     AND ${t.status} = 'active'
   `;
+  const hasAcceptedParticipationRequest = import_drizzle_orm35.sql`
+    ${t.role} = 'member'
+    AND ${t.status} = 'active'
+    AND ${hasAcceptedCrewParticipationRequest(t.crewId, t.userId)}
+  `;
   const canCreate = import_drizzle_orm35.sql`
-    ${canManage}
+    ${activeLeader}
     OR (${createsOwnLeaderMembership})
+    OR (${hasAcceptedParticipationRequest})
   `;
   const activeSelf = import_drizzle_orm35.sql`
     ${self}
@@ -1964,33 +1992,31 @@ function crewMembershipPolicies(t) {
     AND ${t.status} = 'left'
   `;
   return [
-    // Participants are visible for public crews and to active members or leaders of private crews.
     (0, import_pg_core38.pgPolicy)("Allow authorized users to read crew participants", {
       for: "select",
       to: authenticatedRole,
-      using: canViewCrewParticipants(t.crewId)
+      using: import_drizzle_orm35.sql`
+        ${isCrewPublic(t.crewId)}
+        OR ${isActiveCrewMember(t.crewId)}
+      `
     }),
-    // Only the crew leader may create a membership record.
-    (0, import_pg_core38.pgPolicy)("Allow managers and new crew leaders to create memberships", {
+    (0, import_pg_core38.pgPolicy)("Allow leaders and accepted participant to create memberships", {
       for: "insert",
       to: authenticatedRole,
       withCheck: canCreate
     }),
-    // Only the crew leader may change membership state or role.
     (0, import_pg_core38.pgPolicy)("Allow active crew leaders to update memberships", {
       for: "update",
       to: authenticatedRole,
-      using: canManage,
-      withCheck: canManage
+      using: activeLeader,
+      withCheck: activeLeader
     }),
-    // An active member may transition only their own membership to the left state.
     (0, import_pg_core38.pgPolicy)("Allow active members to leave crews", {
       for: "update",
       to: authenticatedRole,
       using: activeSelf,
       withCheck: leftSelf
     }),
-    // A membership may be deleted by its user or the crew leader.
     (0, import_pg_core38.pgPolicy)("Allow members and active crew leaders to delete memberships", {
       for: "delete",
       to: authenticatedRole,
@@ -2089,56 +2115,25 @@ function crewParticipationRequestPolicies(t) {
     ${t.initiatorUserId} = ${uid13}
     OR ${t.participantUserId} = ${uid13}
   `;
-  const canManage = canManageCrew(t.crewId);
-  const validParticipants = import_drizzle_orm37.sql`
-    ${t.initiatorUserId} = ${t.participantUserId}
-    OR EXISTS (
-      SELECT
-        1
-      FROM
-        "social"."crew" c
-      WHERE
-        c."id" = ${t.crewId}
-        AND c."leader_id" = ${t.initiatorUserId}
-    )
-  `;
+  const activeLeader = isCrewLeader(t.crewId);
   const canAccess = import_drizzle_orm37.sql`
     ${involved}
-    OR ${canManage}
+    OR ${activeLeader}
   `;
-  const publicCrew = isCrewPublic(t.crewId);
-  const insertable = import_drizzle_orm37.sql`
-    ${t.initiatorUserId} = ${uid13}
-    AND (
-      (
-        ${t.initiatorUserId} = ${t.participantUserId}
-        AND (
-          ((${publicCrew}) AND ${t.status} = 'accepted')
-          OR ((NOT (${publicCrew})) AND ${t.status} = 'pending')
-        )
-      )
-      OR (
-        ${t.initiatorUserId} <> ${t.participantUserId}
-        AND ${canManage}
-        AND ${t.status} = 'pending'
-      )
+  const joinRequest = import_drizzle_orm37.sql`${t.initiatorUserId} = ${t.participantUserId}`;
+  const invitation = import_drizzle_orm37.sql`${t.initiatorUserId} <> ${t.participantUserId}`;
+  const initiatedByUser = import_drizzle_orm37.sql`${t.initiatorUserId} = ${uid13}`;
+  const addressedToUser = import_drizzle_orm37.sql`${t.participantUserId} = ${uid13}`;
+  const canRespond = import_drizzle_orm37.sql`
+    (
+      ${joinRequest}
+      AND ${activeLeader}
+    )
+    OR (
+      ${invitation}
+      AND ${addressedToUser}
     )
   `;
-  const isJoinRequest = import_drizzle_orm37.sql`(${t.initiatorUserId} = ${t.participantUserId})`;
-  const isInvitation = import_drizzle_orm37.sql`(${t.initiatorUserId} <> ${t.participantUserId})`;
-  const canRespond = import_drizzle_orm37.sql`(
-    ((${isJoinRequest}) AND (${canManage}))
-    OR ((${isInvitation}) AND (${t.participantUserId} = ${uid13}))
-  )`;
-  const canCancel = import_drizzle_orm37.sql`(${t.initiatorUserId} = ${uid13})`;
-  const canUpdatePendingRequest = import_drizzle_orm37.sql`(
-    (${t.status} = 'pending')
-    AND ((${canRespond}) OR (${canCancel}))
-  )`;
-  const validUpdatedState = import_drizzle_orm37.sql`(
-    ((${t.status} = 'cancelled') AND (${canCancel}))
-    OR ((${t.status} IN ('accepted', 'declined')) AND (${canRespond}))
-  )`;
   return [
     // A request is visible to its initiator, participant, and the relevant crew leader.
     (0, import_pg_core40.pgPolicy)("Allow involved users and leaders to read crew requests", {
@@ -2146,29 +2141,54 @@ function crewParticipationRequestPolicies(t) {
       to: authenticatedRole,
       using: canAccess
     }),
-    // Public self-joins start accepted, private self-requests start pending, and leader invitations start pending.
-    (0, import_pg_core40.pgPolicy)("Allow users to request crews and leaders to invite users", {
+    // Users may join public crews immediately or create pending requests for private crews.
+    (0, import_pg_core40.pgPolicy)("Allow users to request to join crews", {
       for: "insert",
       to: authenticatedRole,
-      withCheck: insertable
-    }),
-    // Leaders answer join requests, invitees answer invitations, and initiators may cancel pending requests.
-    (0, import_pg_core40.pgPolicy)("Allow authorized users to resolve pending crew requests", {
-      for: "update",
-      to: authenticatedRole,
-      using: canUpdatePendingRequest,
       withCheck: import_drizzle_orm37.sql`
-        (
-          (${validUpdatedState})
-          AND (${validParticipants})
+        ${initiatedByUser}
+        AND ${joinRequest}
+        AND (
+          (
+            ${isCrewPublic(t.crewId)}
+            AND ${t.status} = 'accepted'
+          )
+          OR (
+            NOT ${isCrewPublic(t.crewId)}
+            AND ${t.status} = 'pending'
+          )
         )
       `
     }),
-    // Only the request initiator may delete the request.
-    (0, import_pg_core40.pgPolicy)("Allow initiators to delete participation requests", {
-      for: "delete",
+    // Active leaders may create pending invitations for other users.
+    (0, import_pg_core40.pgPolicy)("Allow active crew leaders to invite users", {
+      for: "insert",
       to: authenticatedRole,
-      using: import_drizzle_orm37.sql`${t.initiatorUserId} = ${uid13}`
+      withCheck: import_drizzle_orm37.sql`
+        ${initiatedByUser}
+        AND ${invitation}
+        AND ${activeLeader}
+        AND ${t.status} = 'pending'
+      `
+    }),
+    // Active leaders updates join requests and invitees update their invitations.
+    (0, import_pg_core40.pgPolicy)("Allow authorized users to update pending crew requests", {
+      for: "update",
+      to: authenticatedRole,
+      using: import_drizzle_orm37.sql`
+        ${t.status} = 'pending'
+        AND (${canRespond})
+      `,
+      withCheck: import_drizzle_orm37.sql`
+        (
+          ${t.status} = 'accepted'
+          AND (${canRespond})
+        )
+        OR (
+          ${t.status} = 'declined'
+          AND (${canRespond})
+        )
+      `
     })
   ];
 }
@@ -2277,7 +2297,14 @@ function postPolicies(t) {
   const owns = import_drizzle_orm39.sql`${t.authorUserId} = ${uid14}`;
   const visible = import_drizzle_orm39.sql`
     ${owns}
-    OR ${canViewPost(t.id)}
+    OR ${isPublicPost(t.id)}
+    OR ${isPostAuthor(t.id)}
+    OR EXISTS (
+      SELECT 1
+      FROM "social"."crew_shared_post" csp
+      WHERE csp."post_id" = ${t.id}
+        AND ${isActiveCrewMember(import_drizzle_orm39.sql`csp."crew_id"`)}
+    )
   `;
   return [
     // Public posts are visible to everyone, while crew-only posts require authorship or access to a crew where the post is shared.
@@ -2364,18 +2391,18 @@ var import_pg_core45 = require("drizzle-orm/pg-core");
 var import_drizzle_orm41 = require("drizzle-orm");
 var import_pg_core44 = require("drizzle-orm/pg-core");
 function crewSharedPostPolicies(t) {
-  const canPublish = canPublishToCrew(t.crewId);
+  const activeMember = isActiveCrewMember(t.crewId);
   const author = isPostAuthor(t.postId);
   const allowed = import_drizzle_orm41.sql`
-    (${canPublish})
+    (${activeMember})
     AND (${author})
   `;
   return [
-    // A placement is visible through post authorship, crew participation, or the post's public visibility.
-    (0, import_pg_core44.pgPolicy)("Allow users to read visible crew post placements", {
+    // A placement is visible to active members of its crew.
+    (0, import_pg_core44.pgPolicy)("Allow active crew members to read crew post placements", {
       for: "select",
       to: authenticatedRole,
-      using: canAccessCrew(t.crewId)
+      using: activeMember
     }),
     // The post author may share their post only into a crew in which they actively participate or lead.
     (0, import_pg_core44.pgPolicy)("Allow member authors to share posts with crews", {
@@ -2456,10 +2483,16 @@ var import_pg_core46 = require("drizzle-orm/pg-core");
 var uid15 = import_drizzle_orm43.sql`"identity"."current_user_id" ()`;
 function commentPolicies(t) {
   const owns = import_drizzle_orm43.sql`${t.userId} = ${uid15}`;
-  const visible = canViewPost(t.postId);
+  const visible = import_drizzle_orm43.sql`
+    EXISTS (
+      SELECT 1
+      FROM "social"."post" p
+      WHERE p."id" = ${t.postId}
+    )
+  `;
   const allowed = import_drizzle_orm43.sql`
     ${owns}
-    AND ${visible}
+    AND (${visible})
   `;
   return [
     // A comment is visible whenever its parent post is visible to the current user.
@@ -2561,10 +2594,16 @@ var import_pg_core48 = require("drizzle-orm/pg-core");
 var uid16 = import_drizzle_orm45.sql`"identity"."current_user_id" ()`;
 function reactionPolicies(t) {
   const owns = import_drizzle_orm45.sql`${t.userId} = ${uid16}`;
-  const visible = canViewPost(t.postId);
+  const visible = import_drizzle_orm45.sql`
+    EXISTS (
+      SELECT 1
+      FROM "social"."post" p
+      WHERE p."id" = ${t.postId}
+    )
+  `;
   const allowed = import_drizzle_orm45.sql`
     ${owns}
-    AND ${visible}
+    AND (${visible})
   `;
   return [
     // A reaction is visible whenever its parent post is visible to the current user.
@@ -2680,6 +2719,7 @@ var exerciseTrackingSetExpandedViewDbSchema = (0, import_drizzle_zod.createSelec
 var prsViewDbSchema = (0, import_drizzle_zod.createSelectSchema)(prsView);
 var crewDbSchema = (0, import_drizzle_zod.createSelectSchema)(crew);
 var crewMembershipDbSchema = (0, import_drizzle_zod.createSelectSchema)(crewMembership);
+var crewParticipationRequestDbSchema = (0, import_drizzle_zod.createSelectSchema)(crewParticipationRequest);
 var postDbSchema = (0, import_drizzle_zod.createSelectSchema)(post);
 var commentDbSchema = (0, import_drizzle_zod.createSelectSchema)(comment);
 var reactionDbSchema = (0, import_drizzle_zod.createSelectSchema)(reaction);
@@ -3786,6 +3826,11 @@ var crewSuccessorQueryDtoSchema = import_v436.z.object({
   membershipId: crewMembershipDbSchema.shape.id,
   userId: crewMembershipDbSchema.shape.userId
 });
+var crewParticipationRequestQueryDtoSchema = crewParticipationRequestDbSchema.extend({
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema,
+  respondedAt: serializedDateSchema.nullable()
+});
 
 // src/modules/social/crews/crews.contracts.ts
 var crewIdParamsSchema = import_v437.z.object({
@@ -3832,6 +3877,7 @@ var getCrewContract = {
 };
 var createCrewRequestSchema = import_v437.z.object({
   body: import_v437.z.object({
+    name: crewDbSchema.shape.name,
     privacy: crewDbSchema.shape.privacy
   })
 });
@@ -3843,6 +3889,7 @@ var createCrewContract = {
 var updateCrewRequestSchema = import_v437.z.object({
   params: crewIdParamsSchema,
   body: import_v437.z.object({
+    name: crewDbSchema.shape.name,
     privacy: crewDbSchema.shape.privacy
   })
 });
@@ -3866,6 +3913,43 @@ var deleteCrewResponseSchema = import_v437.z.void();
 var deleteCrewContract = {
   request: deleteCrewRequestSchema,
   response: deleteCrewResponseSchema
+};
+var crewParticipationParamsSchema = import_v437.z.object({
+  crewId: crewDbSchema.shape.id
+});
+var crewParticipationRequestParamsSchema = crewParticipationParamsSchema.extend({
+  requestId: import_v437.z.uuid()
+});
+var inviteCrewUserRequestSchema = import_v437.z.object({
+  params: crewParticipationParamsSchema,
+  body: import_v437.z.object({
+    userId: import_v437.z.uuid()
+  })
+});
+var inviteCrewUserContract = {
+  request: inviteCrewUserRequestSchema,
+  response: import_v437.z.void()
+};
+var requestToJoinCrewRequestSchema = import_v437.z.object({
+  params: crewParticipationParamsSchema
+});
+var requestToJoinCrewContract = {
+  request: requestToJoinCrewRequestSchema,
+  response: import_v437.z.void()
+};
+var acceptCrewJoinRequestRequestSchema = import_v437.z.object({
+  params: crewParticipationRequestParamsSchema
+});
+var acceptCrewJoinRequestContract = {
+  request: acceptCrewJoinRequestRequestSchema,
+  response: import_v437.z.void()
+};
+var acceptCrewInvitationRequestSchema = import_v437.z.object({
+  params: crewParticipationRequestParamsSchema
+});
+var acceptCrewInvitationContract = {
+  request: acceptCrewInvitationRequestSchema,
+  response: import_v437.z.void()
 };
 
 // src/modules/social/posts/posts.contracts.ts
@@ -4087,6 +4171,10 @@ var deleteReactionContract = {
 };
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  acceptCrewInvitationContract,
+  acceptCrewInvitationRequestSchema,
+  acceptCrewJoinRequestContract,
+  acceptCrewJoinRequestRequestSchema,
   accessTokenPayloadDtoSchema,
   addAerobicInputQueryDtoSchema,
   addCommentContract,
@@ -4140,6 +4228,8 @@ var deleteReactionContract = {
   crewMembershipDbSchema,
   crewParticipantPreviewQueryDtoSchema,
   crewParticipantQueryDtoSchema,
+  crewParticipationRequestDbSchema,
+  crewParticipationRequestQueryDtoSchema,
   crewQueryDtoSchema,
   crewSuccessorQueryDtoSchema,
   deleteAerobicEntryContract,
@@ -4225,6 +4315,8 @@ var deleteReactionContract = {
   googleOAuthContract,
   googleOAuthRequestSchema,
   googleTokenVerificationResultDtoSchema,
+  inviteCrewUserContract,
+  inviteCrewUserRequestSchema,
   lastLoginQueryDtoSchema,
   leaveCrewContextQueryDtoSchema,
   leaveCrewContract,
@@ -4299,6 +4391,8 @@ var deleteReactionContract = {
   replaceWorkoutPlanResponseSchema,
   replaceWorkoutSchedulesContract,
   replaceWorkoutSchedulesRequestSchema,
+  requestToJoinCrewContract,
+  requestToJoinCrewRequestSchema,
   resetPasswordContract,
   resetPasswordRequestSchema,
   resetPasswordResponseSchema,

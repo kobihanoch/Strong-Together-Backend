@@ -10,12 +10,16 @@ SET
 $function$;
 
 --> statement-breakpoint
-CREATE OR REPLACE FUNCTION social.is_crew_leader (crew_id_in UUID) RETURNS BOOLEAN LANGUAGE sql STABLE
-SET
-  search_path TO 'pg_catalog' AS $function$
+CREATE OR REPLACE FUNCTION social.is_crew_leader (crew_id_in UUID) RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path TO 'pg_catalog'
+SET row_security TO 'off' AS $function$
   SELECT EXISTS (
     SELECT 1
     FROM social.crew c
+    JOIN social.crew_membership cm
+      ON cm.crew_id = c.id
+      AND cm.user_id = c.leader_id
+      AND cm.status = 'active'
     WHERE c.id = crew_id_in
       AND c.leader_id = identity.current_user_id()
   )
@@ -82,84 +86,18 @@ SET
 $function$;
 
 --> statement-breakpoint
-CREATE OR REPLACE FUNCTION social.can_access_crew (crew_id_in UUID) RETURNS BOOLEAN LANGUAGE sql STABLE
-SET
-  search_path TO 'pg_catalog' AS $function$
-  SELECT social.is_active_crew_member(crew_id_in)
-$function$;
-
---> statement-breakpoint
-CREATE OR REPLACE FUNCTION social.can_manage_crew (crew_id_in UUID) RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER
-SET
-  search_path TO 'pg_catalog'
-SET
-  row_security TO 'off' AS $function$
+CREATE OR REPLACE FUNCTION social.has_accepted_crew_participation_request (crew_id_in UUID, user_id_in UUID)
+RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = pg_catalog, social, identity
+SET row_security = off
+AS $function$
   SELECT EXISTS (
-    SELECT 1
-    FROM social.crew c
-    JOIN social.crew_membership cm
-      ON cm.crew_id = c.id
-     AND cm.user_id = identity.current_user_id()
-     AND cm.status = 'active'
-    WHERE c.id = crew_id_in
-      AND c.leader_id = identity.current_user_id()
-  )
-$function$;
-
---> statement-breakpoint
-CREATE OR REPLACE FUNCTION social.can_view_crew_participants (crew_id_in UUID) RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER
-SET
-  search_path TO 'pg_catalog'
-SET
-  row_security TO 'off' AS $function$
-  SELECT EXISTS (
-    SELECT 1
-    FROM social.crew c
-    WHERE c.id = crew_id_in
-      AND (
-        c.privacy = 'public'
-        OR EXISTS (
-          SELECT 1
-          FROM social.crew_membership cm
-          WHERE cm.crew_id = c.id
-            AND cm.user_id = identity.current_user_id()
-            AND cm.status = 'active'
-        )
-      )
-  )
-$function$;
-
---> statement-breakpoint
-CREATE OR REPLACE FUNCTION social.can_publish_to_crew (crew_id_in UUID) RETURNS BOOLEAN LANGUAGE sql STABLE
-SET
-  search_path TO 'pg_catalog' AS $function$
-  SELECT social.can_access_crew(crew_id_in)
-$function$;
-
---> statement-breakpoint
-CREATE OR REPLACE FUNCTION social.can_view_post (post_id_in UUID) RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER
-SET
-  search_path TO 'pg_catalog'
-SET
-  row_security TO 'off' AS $function$
-  SELECT EXISTS (
-    SELECT 1
-    FROM social.post p
-    WHERE p.id = post_id_in
-      AND (
-        p.author_user_id = identity.current_user_id()
-        OR p.visibility = 'public'
-        OR EXISTS (
-          SELECT 1
-          FROM social.crew_shared_post csp
-          JOIN social.crew_membership cm
-            ON cm.crew_id = csp.crew_id
-           AND cm.user_id = identity.current_user_id()
-           AND cm.status = 'active'
-          WHERE csp.post_id = p.id
-        )
-      )
-  )
+    SELECT 1 FROM social.crew_participation_request request
+    WHERE request.crew_id = crew_id_in
+      AND request.participant_user_id = user_id_in
+      AND user_id_in = identity.current_user_id()
+      AND request.status = 'accepted'
+  );
 $function$;
 
 --> statement-breakpoint
@@ -197,6 +135,7 @@ CREATE OR REPLACE FUNCTION social.list_discoverable_crews (
   cursor_id_in UUID DEFAULT NULL::UUID
 ) RETURNS TABLE (
   id UUID,
+  name TEXT,
   "leaderId" UUID,
   privacy social."Crew Privacy",
   "createdAt" TIMESTAMP WITH TIME ZONE,
@@ -207,6 +146,7 @@ SET
   search_path TO 'pg_catalog' AS $function$
   SELECT
     c.id,
+    c.name,
     c.leader_id AS "leaderId",
     c.privacy,
     c.created_at AS "createdAt",
@@ -257,11 +197,7 @@ REVOKE ALL ON FUNCTION "social"."is_crew_public" (UUID),
 "social"."is_public_post" (UUID),
 "social"."is_post_author" (UUID),
 "social"."is_crew_admin" (UUID),
-"social"."can_access_crew" (UUID),
-"social"."can_manage_crew" (UUID),
-"social"."can_view_crew_participants" (UUID),
-"social"."can_publish_to_crew" (UUID),
-"social"."can_view_post" (UUID),
+"social"."has_accepted_crew_participation_request" (UUID, UUID),
 "social"."list_discoverable_crews" (INTEGER, TIMESTAMP WITH TIME ZONE, UUID)
 FROM
   PUBLIC;
@@ -274,11 +210,7 @@ EXECUTE ON FUNCTION "social"."is_crew_public" (UUID),
 "social"."is_public_post" (UUID),
 "social"."is_post_author" (UUID),
 "social"."is_crew_admin" (UUID),
-"social"."can_access_crew" (UUID),
-"social"."can_manage_crew" (UUID),
-"social"."can_view_crew_participants" (UUID),
-"social"."can_publish_to_crew" (UUID),
-"social"."can_view_post" (UUID),
+"social"."has_accepted_crew_participation_request" (UUID, UUID),
 "social"."list_discoverable_crews" (INTEGER, TIMESTAMP WITH TIME ZONE, UUID) TO "authenticated";
 
 --> statement-breakpoint

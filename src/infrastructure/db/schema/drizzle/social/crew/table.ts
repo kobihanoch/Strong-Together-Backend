@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { foreignKey, primaryKey, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { foreignKey, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { user } from '../../identity/user/table';
 import { socialSchema } from '../../schemas';
 import { crewPolicies } from './policies';
@@ -10,6 +10,7 @@ export const crew = socialSchema
     'crew',
     {
       id: uuid('id').defaultRandom().notNull(),
+      name: text('name').notNull(),
       leaderId: uuid('leader_id').notNull(),
       privacy: crewPrivacy('privacy').notNull(),
       createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
