@@ -12,10 +12,11 @@ export class CrewsService {
    *
    * @param limit - The maximum number of crews to return.
    * @param cursor - The opaque cursor returned by the preceding page.
+   * @param search - Optional text matched against crew names.
    * @returns A contract object containing the visible crews.
    */
-  async listCrewsData(limit: number, cursor?: string): Promise<ListCrewsResponse> {
-    const rows = await this.queries.queryCrews(limit, decodeSocialCursor(cursor));
+  async listCrewsData(limit: number, cursor?: string, search?: string): Promise<ListCrewsResponse> {
+    const rows = await this.queries.queryCrews(limit, decodeSocialCursor(cursor), search);
     const crews = rows.slice(0, limit);
     const last = crews.at(-1);
     return { crews, nextCursor: rows.length > limit && last ? encodeSocialCursor({ timestamp: last.createdAt, id: last.id }) : null };

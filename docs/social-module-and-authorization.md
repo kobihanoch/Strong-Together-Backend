@@ -29,7 +29,7 @@ All social tables have RLS enabled. Application grants allow only the columns ne
 
 ### Audit note
 
-The table policies and column-scoped update grants generally match the API queries, but the overall boundary is **not fully correct**: `social.list_discoverable_crews` runs as its privileged owner and always returns `top5Participants`. It therefore exposes profile previews from private crews to every authenticated user, bypassing the narrower `crew_membership` SELECT policy. Until that function conditionally omits private participants (or runs with the caller's RLS), private membership is not private through the discovery endpoint.
+The table policies and column-scoped update grants match the current API queries. `social.list_discoverable_crews` runs as its privileged owner, but returns participant previews only for public crews or crews where the caller is an active member. User search is also exposed through a narrow privileged function that returns public profile fields only.
 
 All seven tables have RLS enabled, but not forced. This is appropriate for the current design only while requests always switch to the non-owner `authenticated` role; table owners and roles with `BYPASSRLS` remain trusted infrastructure.
 
@@ -39,11 +39,12 @@ All routes require DPoP authentication and the `user` role.
 
 | Area | Endpoints | Supported behavior |
 | --- | --- | --- |
-| Crews | `GET/POST /api/social/crews`; `GET/PATCH/DELETE /api/social/crews/:id`; `GET /api/social/crews/:crewId/participants`; `POST /api/social/crews/:id/leave` | Discover, inspect, create, edit/delete as leader, list allowed participants, leave with automatic leader succession |
+| Crews | `GET/POST /api/social/crews`; `GET/PATCH/DELETE /api/social/crews/:id`; `GET /api/social/crews/:crewId/participants`; `POST /api/social/crews/:id/leave` | Search/discover, inspect, create, edit/delete as leader, list allowed participants, leave with automatic leader succession |
 | Membership requests | `POST /api/social/crews/:crewId/invitations`; `POST/GET /api/social/crews/:crewId/join-requests`; `GET /api/social/crews/invitations`; `PATCH /api/social/crews/participation-requests/:requestId` | Public instant join, private join approval, leader invites, accept/decline |
 | Posts | `GET/POST /api/social/posts`; `GET /api/social/posts/crew/:crewId`; `PATCH/DELETE /api/social/posts/:id` | Public and crew-only feeds, multi-crew placement, author edit/delete, cursor pagination |
 | Comments | `GET/POST /api/social/posts/:postId/comments`; `PATCH/DELETE /api/social/posts/comments/:id` | List/add on visible posts; author edit/delete |
 | Reactions | `GET/POST/DELETE /api/social/posts/:postId/reactions` | List, add/replace one reaction per user, remove own reaction |
+| Users | `GET /api/social/users?search=text` | Search public profile fields by username or full name with cursor pagination |
 
 ## Authorization Helpers
 
@@ -66,7 +67,7 @@ The helper functions expose authorization booleans rather than row data. Functio
 
 ### Crew discovery and participants
 
-Crew discovery uses `list_discoverable_crews(limit, cursor_created_at, cursor_id)`. Results use stable cursor pagination ordered by creation time and UUID. Crew records themselves are discoverable by every authenticated user. Participant visibility is narrower: public crew participants are visible to authenticated users, while private crew participants require active crew access.
+Crew discovery uses `list_discoverable_crews(limit, cursor_created_at, cursor_id, search)`. Results support optional case-insensitive name search and stable cursor pagination ordered by creation time and UUID. Crew records themselves are discoverable by every authenticated user. Participant visibility is narrower: public crew participants are visible to authenticated users, while private crew participants require active crew access.
 
 ### Crew creation
 

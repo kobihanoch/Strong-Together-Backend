@@ -3520,6 +3520,7 @@ var crewIdParamsSchema = z37.object({
 });
 var listCrewsRequestSchema = z37.object({
   query: z37.object({
+    search: z37.string().trim().min(1).max(50).optional(),
     limit: z37.coerce.number().int().min(1).max(100).default(20),
     cursor: z37.string().min(1).optional()
   })
@@ -3880,6 +3881,36 @@ var deleteReactionContract = {
   request: deleteReactionRequestSchema,
   response: deleteReactionResponseSchema
 };
+
+// src/modules/social/users/social-users.contracts.ts
+import { z as z46 } from "zod/v4";
+
+// src/modules/social/users/social-users.dtos.ts
+import { z as z45 } from "zod/v4";
+var socialUserQueryDtoSchema = z45.object({
+  userId: userDbSchema.shape.id,
+  username: userDbSchema.shape.username,
+  fullName: userDbSchema.shape.name,
+  profilePicPath: userDbSchema.shape.profilePicPath,
+  createdAt: serializedDateSchema
+});
+
+// src/modules/social/users/social-users.contracts.ts
+var searchSocialUsersRequestSchema = z46.object({
+  query: z46.object({
+    search: z46.string().trim().min(1).max(50),
+    limit: z46.coerce.number().int().min(1).max(100).default(20),
+    cursor: z46.string().min(1).optional()
+  })
+});
+var searchSocialUsersResponseSchema = z46.object({
+  users: z46.array(socialUserQueryDtoSchema),
+  nextCursor: z46.string().nullable()
+});
+var searchSocialUsersContract = {
+  request: searchSocialUsersRequestSchema,
+  response: searchSocialUsersResponseSchema
+};
 export {
   accessTokenPayloadDtoSchema,
   addAerobicInputQueryDtoSchema,
@@ -4110,7 +4141,11 @@ export {
   resetPasswordResponseSchema,
   saveWorkoutSplitInputQueryDtoSchema,
   saveWorkoutSplitPayloadQueryDtoSchema,
+  searchSocialUsersContract,
+  searchSocialUsersRequestSchema,
+  searchSocialUsersResponseSchema,
   serializedDateSchema,
+  socialUserQueryDtoSchema,
   squatRepetitionDtoSchema,
   timezoneSchema,
   tokenVersionQueryDtoSchema,

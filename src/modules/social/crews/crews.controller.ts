@@ -64,7 +64,7 @@ export class CrewsController {
    * @remarks Route: GET /api/social/crews
    * Access: User
    *
-   * @param data - The validated pagination query.
+   * @param data - The validated search and pagination query.
    * @returns The RLS-filtered crew collection.
    */
   @Get()
@@ -74,7 +74,7 @@ export class CrewsController {
       query: ListCrewsQuery;
     },
   ): Promise<ListCrewsResponse> {
-    return this.service.listCrewsData(data.query.limit, data.query.cursor);
+    return this.service.listCrewsData(data.query.limit, data.query.cursor, data.query.search);
   }
 
   /**

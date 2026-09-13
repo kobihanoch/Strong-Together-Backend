@@ -250,7 +250,11 @@ __export(index_exports, {
   resetPasswordResponseSchema: () => resetPasswordResponseSchema,
   saveWorkoutSplitInputQueryDtoSchema: () => saveWorkoutSplitInputQueryDtoSchema,
   saveWorkoutSplitPayloadQueryDtoSchema: () => saveWorkoutSplitPayloadQueryDtoSchema,
+  searchSocialUsersContract: () => searchSocialUsersContract,
+  searchSocialUsersRequestSchema: () => searchSocialUsersRequestSchema,
+  searchSocialUsersResponseSchema: () => searchSocialUsersResponseSchema,
   serializedDateSchema: () => serializedDateSchema,
+  socialUserQueryDtoSchema: () => socialUserQueryDtoSchema,
   squatRepetitionDtoSchema: () => squatRepetitionDtoSchema,
   timezoneSchema: () => timezoneSchema,
   tokenVersionQueryDtoSchema: () => tokenVersionQueryDtoSchema,
@@ -3837,6 +3841,7 @@ var crewIdParamsSchema = import_v437.z.object({
 });
 var listCrewsRequestSchema = import_v437.z.object({
   query: import_v437.z.object({
+    search: import_v437.z.string().trim().min(1).max(50).optional(),
     limit: import_v437.z.coerce.number().int().min(1).max(100).default(20),
     cursor: import_v437.z.string().min(1).optional()
   })
@@ -4197,6 +4202,36 @@ var deleteReactionContract = {
   request: deleteReactionRequestSchema,
   response: deleteReactionResponseSchema
 };
+
+// src/modules/social/users/social-users.contracts.ts
+var import_v446 = require("zod/v4");
+
+// src/modules/social/users/social-users.dtos.ts
+var import_v445 = require("zod/v4");
+var socialUserQueryDtoSchema = import_v445.z.object({
+  userId: userDbSchema.shape.id,
+  username: userDbSchema.shape.username,
+  fullName: userDbSchema.shape.name,
+  profilePicPath: userDbSchema.shape.profilePicPath,
+  createdAt: serializedDateSchema
+});
+
+// src/modules/social/users/social-users.contracts.ts
+var searchSocialUsersRequestSchema = import_v446.z.object({
+  query: import_v446.z.object({
+    search: import_v446.z.string().trim().min(1).max(50),
+    limit: import_v446.z.coerce.number().int().min(1).max(100).default(20),
+    cursor: import_v446.z.string().min(1).optional()
+  })
+});
+var searchSocialUsersResponseSchema = import_v446.z.object({
+  users: import_v446.z.array(socialUserQueryDtoSchema),
+  nextCursor: import_v446.z.string().nullable()
+});
+var searchSocialUsersContract = {
+  request: searchSocialUsersRequestSchema,
+  response: searchSocialUsersResponseSchema
+};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   accessTokenPayloadDtoSchema,
@@ -4428,7 +4463,11 @@ var deleteReactionContract = {
   resetPasswordResponseSchema,
   saveWorkoutSplitInputQueryDtoSchema,
   saveWorkoutSplitPayloadQueryDtoSchema,
+  searchSocialUsersContract,
+  searchSocialUsersRequestSchema,
+  searchSocialUsersResponseSchema,
   serializedDateSchema,
+  socialUserQueryDtoSchema,
   squatRepetitionDtoSchema,
   timezoneSchema,
   tokenVersionQueryDtoSchema,
