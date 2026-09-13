@@ -53,6 +53,7 @@ async function createCrew(accessToken: string, leaderId: string, privacy: 'publi
 }
 
 describe('CrewsController', () => {
+  /** Enforces request authorization, listing isolation, terminal transitions, and membership side effects for both request kinds. */
   it('supports public joins and accepting or declining participation requests through RLS', async () => {
     const leader = await crewUser('crew_flow_leader');
     const publicJoiner = await crewUser('crew_flow_public');
@@ -95,12 +96,30 @@ describe('CrewsController', () => {
       .send({ status: 'accepted' });
     expect(forbiddenAccept.status).toBe(404);
 
+    const requesterCannotAccept = await request(app.getHttpServer())
+      .patch(`/api/social/crews/participation-requests/${joinRequest!.id}`)
+      .set(authHeaders(privateJoiner.accessToken))
+      .send({ status: 'accepted' });
+    expect(requesterCannotAccept.status).toBe(404);
+
     const acceptedJoin = await request(app.getHttpServer())
       .patch(`/api/social/crews/participation-requests/${joinRequest!.id}`)
       .set(authHeaders(leader.accessToken))
       .send({ status: 'accepted' });
     expect(acceptedJoin.status).toBe(204);
     expect(await getCrewMembership(privateCrew.id, privateJoiner.userId)).toMatchObject({ status: 'active', role: 'member' });
+
+    const repeatedJoinResolution = await request(app.getHttpServer())
+      .patch(`/api/social/crews/participation-requests/${joinRequest!.id}`)
+      .set(authHeaders(leader.accessToken))
+      .send({ status: 'declined' });
+    expect(repeatedJoinResolution.status).toBe(404);
+    expect(await getCrewParticipationRequest(privateCrew.id, privateJoiner.userId)).toMatchObject({ status: 'accepted' });
+
+    const pendingAfterAcceptance = await request(app.getHttpServer())
+      .get(`/api/social/crews/${privateCrew.id}/join-requests`)
+      .set(authHeaders(leader.accessToken));
+    expect(pendingAfterAcceptance.body.requests).not.toEqual(expect.arrayContaining([expect.objectContaining({ id: joinRequest!.id })]));
 
     const invitation = await request(app.getHttpServer())
       .post(`/api/social/crews/${privateCrew.id}/invitations`)
@@ -115,12 +134,28 @@ describe('CrewsController', () => {
     expectSchema(listCrewInvitationsResponseSchema, invitations.body);
     expect(invitations.body.invitations).toEqual(expect.arrayContaining([expect.objectContaining({ id: inviteRequest!.id, status: 'pending' })]));
 
+    const outsiderInvitations = await request(app.getHttpServer()).get('/api/social/crews/invitations').set(authHeaders(outsider.accessToken));
+    expect(outsiderInvitations.status).toBe(200);
+    expectSchema(listCrewInvitationsResponseSchema, outsiderInvitations.body);
+    expect(outsiderInvitations.body.invitations).not.toEqual(expect.arrayContaining([expect.objectContaining({ id: inviteRequest!.id })]));
+
+    const inviterCannotAccept = await request(app.getHttpServer())
+      .patch(`/api/social/crews/participation-requests/${inviteRequest!.id}`)
+      .set(authHeaders(leader.accessToken))
+      .send({ status: 'accepted' });
+    expect(inviterCannotAccept.status).toBe(404);
+
     const acceptedInvitation = await request(app.getHttpServer())
       .patch(`/api/social/crews/participation-requests/${inviteRequest!.id}`)
       .set(authHeaders(invitee.accessToken))
       .send({ status: 'accepted' });
     expect(acceptedInvitation.status, JSON.stringify(acceptedInvitation.body)).toBe(204);
     expect(await getCrewMembership(privateCrew.id, invitee.userId)).toMatchObject({ status: 'active', role: 'member' });
+
+    const resolvedInvitations = await request(app.getHttpServer()).get('/api/social/crews/invitations').set(authHeaders(invitee.accessToken));
+    expect(resolvedInvitations.body.invitations).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: inviteRequest!.id, status: 'accepted' })]),
+    );
 
     await request(app.getHttpServer())
       .post(`/api/social/crews/${privateCrew.id}/join-requests`)
