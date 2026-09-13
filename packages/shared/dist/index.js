@@ -3911,6 +3911,16 @@ var searchSocialUsersContract = {
   request: searchSocialUsersRequestSchema,
   response: searchSocialUsersResponseSchema
 };
+var getSocialUserRequestSchema = z46.object({
+  params: z46.object({
+    userId: userDbSchema.shape.id
+  })
+});
+var getSocialUserResponseSchema = socialUserQueryDtoSchema;
+var getSocialUserContract = {
+  request: getSocialUserRequestSchema,
+  response: getSocialUserResponseSchema
+};
 export {
   accessTokenPayloadDtoSchema,
   addAerobicInputQueryDtoSchema,
@@ -4037,6 +4047,9 @@ export {
   getPersonalRecordsResponseSchema,
   getReminderSettingsContract,
   getReminderSettingsResponseSchema,
+  getSocialUserContract,
+  getSocialUserRequestSchema,
+  getSocialUserResponseSchema,
   getVerificationStatusContract,
   getVerificationStatusRequestSchema,
   getWorkoutHistoryContract,

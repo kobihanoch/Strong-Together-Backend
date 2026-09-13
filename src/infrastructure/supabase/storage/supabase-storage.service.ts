@@ -25,12 +25,7 @@ export class SupabaseStorageService {
    * @param contentType - The content type.
    * @returns The upload buffer to supabase result.
    */
-  async uploadBufferToSupabase(
-    bucket: string,
-    key: string,
-    buffer: Buffer,
-    contentType: string,
-  ): Promise<{ path: string; publicUrl: string }> {
+  async uploadBufferToSupabase(bucket: string, key: string, buffer: Buffer, contentType: string): Promise<{ path: string; publicUrl: string }> {
     // Dev
     if (localStorage) {
       await this.s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: buffer, ContentType: contentType }));

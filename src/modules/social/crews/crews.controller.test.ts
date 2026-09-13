@@ -2,6 +2,7 @@ import request from 'supertest';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
   getCrewResponseSchema,
+  getSocialUserResponseSchema,
   listCrewInvitationsResponseSchema,
   listCrewParticipantsResponseSchema,
   listCrewsResponseSchema,
@@ -254,6 +255,25 @@ describe('CrewsController', () => {
     expectSchema(searchSocialUsersResponseSchema, second.body);
     expect(second.body.users).toHaveLength(1);
     expect(second.body.users[0].userId).not.toBe(first.body.users[0].userId);
+  });
+
+  /** Verifies lookup by ID returns the same narrow public profile shape. */
+  it('GET /api/social/users/:userId returns one public profile', async () => {
+    const viewer = await crewUser('social_get_viewer');
+    const target = await crewUser('social_get_target');
+
+    const response = await request(app.getHttpServer())
+      .get(`/api/social/users/${target.userId}`)
+      .set(authHeaders(viewer.accessToken));
+
+    expect(response.status).toBe(200);
+    expectSchema(getSocialUserResponseSchema, response.body);
+    expect(response.body).toMatchObject({
+      userId: target.userId,
+      username: target.username,
+      fullName: 'Controller Test User',
+      profilePicPath: null,
+    });
   });
 
   it('GET /api/social/crews/:id returns a schema-valid crew', async () => {
