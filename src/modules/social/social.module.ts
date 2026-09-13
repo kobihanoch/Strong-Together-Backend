@@ -18,9 +18,12 @@ import { CommentsService } from './posts/comments/comments.service';
 import { ReactionsController } from './posts/reactions/reactions.controller';
 import { ReactionsQueries } from './posts/reactions/reactions.queries';
 import { ReactionsService } from './posts/reactions/reactions.service';
+import { SocialUsersController } from './users/social-users.controller';
+import { SocialUsersQueries } from './users/social-users.queries';
+import { SocialUsersService } from './users/social-users.service';
 
 @Module({
-  controllers: [CrewRequestsController, CrewsController, PostsController, ReactionsController, CommentsController],
+  controllers: [CrewRequestsController, CrewsController, PostsController, ReactionsController, CommentsController, SocialUsersController],
   providers: [
     CrewsQueries,
     CrewsService,
@@ -32,6 +35,8 @@ import { ReactionsService } from './posts/reactions/reactions.service';
     CommentsService,
     ReactionsQueries,
     ReactionsService,
+    SocialUsersQueries,
+    SocialUsersService,
     DpopGuard,
     AuthenticationGuard,
     AuthorizationGuard,

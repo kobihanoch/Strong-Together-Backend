@@ -6,6 +6,7 @@ import {
   listCrewParticipantsResponseSchema,
   listCrewsResponseSchema,
   listPendingCrewJoinRequestsResponseSchema,
+  searchSocialUsersResponseSchema,
 } from '@strong-together/shared';
 import { createApp } from '../../../app';
 import { authHeaders } from '../../../common/tests/helpers/auth';
@@ -41,8 +42,8 @@ async function crewUser(prefix: string) {
   return user;
 }
 
-async function createCrew(accessToken: string, leaderId: string, privacy: 'public' | 'private' = 'public') {
-  const response = await request(app.getHttpServer()).post('/api/social/crews').set(authHeaders(accessToken)).send({ name: 'Test Crew', privacy });
+async function createCrew(accessToken: string, leaderId: string, privacy: 'public' | 'private' = 'public', name = 'Test Crew') {
+  const response = await request(app.getHttpServer()).post('/api/social/crews').set(authHeaders(accessToken)).send({ name, privacy });
 
   expect(response.status).toBe(201);
   expect(response.text).toBe('');
@@ -210,6 +211,49 @@ describe('CrewsController', () => {
       fullName: 'Controller Test User',
       profilePicPath: null,
     });
+  });
+
+  /** Verifies crew-name filtering without changing the existing discovery response. */
+  it('GET /api/social/crews searches crew names with pagination', async () => {
+    const leader = await crewUser('crew_search_leader');
+    await createCrew(leader.accessToken, leader.userId, 'public', 'Morning Runners');
+
+    const response = await request(app.getHttpServer())
+      .get('/api/social/crews')
+      .query({ search: 'runner', limit: 1 })
+      .set(authHeaders(leader.accessToken));
+
+    expect(response.status).toBe(200);
+    expectSchema(listCrewsResponseSchema, response.body);
+    expect(response.body.crews).toHaveLength(1);
+    expect(response.body.crews[0].name).toBe('Morning Runners');
+  });
+
+  /** Verifies public-field user search and continuation cursors. */
+  it('GET /api/social/users searches users with cursor pagination', async () => {
+    const viewer = await crewUser('social_search_viewer');
+    await crewUser('social_search_match_one');
+    await crewUser('social_search_match_two');
+
+    const first = await request(app.getHttpServer())
+      .get('/api/social/users')
+      .query({ search: 'social_search_match', limit: 1 })
+      .set(authHeaders(viewer.accessToken));
+
+    expect(first.status).toBe(200);
+    expectSchema(searchSocialUsersResponseSchema, first.body);
+    expect(first.body.users).toHaveLength(1);
+    expect(first.body.nextCursor).toEqual(expect.any(String));
+
+    const second = await request(app.getHttpServer())
+      .get('/api/social/users')
+      .query({ search: 'social_search_match', limit: 1, cursor: first.body.nextCursor })
+      .set(authHeaders(viewer.accessToken));
+
+    expect(second.status).toBe(200);
+    expectSchema(searchSocialUsersResponseSchema, second.body);
+    expect(second.body.users).toHaveLength(1);
+    expect(second.body.users[0].userId).not.toBe(first.body.users[0].userId);
   });
 
   it('GET /api/social/crews/:id returns a schema-valid crew', async () => {

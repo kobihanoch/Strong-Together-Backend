@@ -10,6 +10,7 @@ const crewIdParamsSchema = z.object({ id: crewDbSchema.shape.id });
 /** Validates a request to list crews visible to the authenticated user. */
 export const listCrewsRequestSchema = z.object({
   query: z.object({
+    search: z.string().trim().min(1).max(50).optional(),
     limit: z.coerce.number().int().min(1).max(100).default(20),
     cursor: z.string().min(1).optional(),
   }),

@@ -25,9 +25,14 @@ export class CrewsQueries {
    *
    * @param limit - The maximum number of crews to return.
    * @param cursor - The preceding page's final creation timestamp and UUID.
+   * @param search - Optional case-insensitive crew-name search text.
    * @returns Crew rows ordered from newest to oldest.
    */
-  async queryCrews(limit: number, cursor?: { timestamp: string; id: string }): Promise<DiscoverableCrewQueryDto[]> {
+  async queryCrews(
+    limit: number,
+    cursor?: { timestamp: string; id: string },
+    search?: string,
+  ): Promise<DiscoverableCrewQueryDto[]> {
     return this.sql<DiscoverableCrewQueryDto[]>`
       SELECT
         *
@@ -35,7 +40,8 @@ export class CrewsQueries {
         social.list_discoverable_crews (
           ${limit + 1},
           ${cursor?.timestamp ?? null}::TIMESTAMPTZ,
-          ${cursor?.id ?? null}::UUID
+          ${cursor?.id ?? null}::UUID,
+          ${search ?? null}
         )
     `;
   }
