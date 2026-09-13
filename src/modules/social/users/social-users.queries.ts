@@ -29,4 +29,22 @@ export class SocialUsersQueries {
         )
     `;
   }
+
+  /**
+   * Retrieves one public profile through the narrow profile function.
+   *
+   * @param userId - The user UUID to retrieve.
+   * @returns The public profile, or an empty array when it does not exist.
+   */
+  public queryGetUser(userId: string): Promise<SocialUserQueryDto[]> {
+    return this.sql<SocialUserQueryDto[]>`
+      SELECT
+        p."userId",
+        p.username,
+        p.name AS "fullName",
+        p."profilePicPath"
+      FROM
+        identity.get_user_profile (${userId}::UUID) p
+    `;
+  }
 }

@@ -146,6 +146,9 @@ __export(index_exports, {
   getPersonalRecordsResponseSchema: () => getPersonalRecordsResponseSchema,
   getReminderSettingsContract: () => getReminderSettingsContract,
   getReminderSettingsResponseSchema: () => getReminderSettingsResponseSchema,
+  getSocialUserContract: () => getSocialUserContract,
+  getSocialUserRequestSchema: () => getSocialUserRequestSchema,
+  getSocialUserResponseSchema: () => getSocialUserResponseSchema,
   getVerificationStatusContract: () => getVerificationStatusContract,
   getVerificationStatusRequestSchema: () => getVerificationStatusRequestSchema,
   getWorkoutHistoryContract: () => getWorkoutHistoryContract,
@@ -4232,6 +4235,16 @@ var searchSocialUsersContract = {
   request: searchSocialUsersRequestSchema,
   response: searchSocialUsersResponseSchema
 };
+var getSocialUserRequestSchema = import_v446.z.object({
+  params: import_v446.z.object({
+    userId: userDbSchema.shape.id
+  })
+});
+var getSocialUserResponseSchema = socialUserQueryDtoSchema;
+var getSocialUserContract = {
+  request: getSocialUserRequestSchema,
+  response: getSocialUserResponseSchema
+};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   accessTokenPayloadDtoSchema,
@@ -4359,6 +4372,9 @@ var searchSocialUsersContract = {
   getPersonalRecordsResponseSchema,
   getReminderSettingsContract,
   getReminderSettingsResponseSchema,
+  getSocialUserContract,
+  getSocialUserRequestSchema,
+  getSocialUserResponseSchema,
   getVerificationStatusContract,
   getVerificationStatusRequestSchema,
   getWorkoutHistoryContract,

@@ -44,7 +44,7 @@ All routes require DPoP authentication and the `user` role.
 | Posts | `GET/POST /api/social/posts`; `GET /api/social/posts/crew/:crewId`; `PATCH/DELETE /api/social/posts/:id` | Public and crew-only feeds, multi-crew placement, author edit/delete, cursor pagination |
 | Comments | `GET/POST /api/social/posts/:postId/comments`; `PATCH/DELETE /api/social/posts/comments/:id` | List/add on visible posts; author edit/delete |
 | Reactions | `GET/POST/DELETE /api/social/posts/:postId/reactions` | List, add/replace one reaction per user, remove own reaction |
-| Users | `GET /api/social/users?search=text` | Search public profile fields by username or full name with cursor pagination |
+| Users | `GET /api/social/users?search=text`; `GET /api/social/users/:userId` | Search public profiles with cursor pagination or get one public profile by ID |
 
 ## Authorization Helpers
 
