@@ -201,6 +201,37 @@ export class CrewsQueries {
   }
 
   /**
+   * Reads the current picture only when the caller is the active crew leader.
+   *
+   * @param crewId - The crew UUID.
+   * @returns The current picture path, or no row when the caller cannot update it.
+   */
+  async queryCrewProfilePictureForUpdate(crewId: string): Promise<{ profilePicPath: string | null }[]> {
+    return this.sql<{ profilePicPath: string | null }[]>`
+      SELECT profile_pic_path AS "profilePicPath"
+      FROM social.crew
+      WHERE id = ${crewId}::UUID
+        AND social.is_crew_leader(id)
+    `;
+  }
+
+  /**
+   * Stores a crew profile-picture path through the crew update policy.
+   *
+   * @param crewId - The crew UUID.
+   * @param profilePicPath - The new storage path, or null when deleting it.
+   * @returns The updated picture path.
+   */
+  async queryUpdateCrewProfilePicture(crewId: string, profilePicPath: string | null): Promise<{ profilePicPath: string | null }[]> {
+    return this.sql<{ profilePicPath: string | null }[]>`
+      UPDATE social.crew
+      SET profile_pic_path = ${profilePicPath}, updated_at = NOW()
+      WHERE id = ${crewId}::UUID
+      RETURNING profile_pic_path AS "profilePicPath"
+    `;
+  }
+
+  /**
    * Leaves a crew inside the request's RLS transaction.
    * A leader promotes participant number two before their own membership is
    * marked as left, so every intermediate write remains authorized.

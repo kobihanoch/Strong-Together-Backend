@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { SocialUserQueryDto } from '@strong-together/shared';
+import type { GetSocialUserResponse, SocialUserQueryDto } from '@strong-together/shared';
 import type postgres from 'postgres';
 import { SQL } from '../../../infrastructure/db/db.tokens';
 
@@ -36,8 +36,8 @@ export class SocialUsersQueries {
    * @param userId - The user UUID to retrieve.
    * @returns The public profile, or an empty array when it does not exist.
    */
-  public queryGetUser(userId: string): Promise<SocialUserQueryDto[]> {
-    return this.sql<SocialUserQueryDto[]>`
+  public queryGetUser(userId: string): Promise<GetSocialUserResponse[]> {
+    return this.sql<GetSocialUserResponse[]>`
       SELECT
         p."userId",
         p.username,

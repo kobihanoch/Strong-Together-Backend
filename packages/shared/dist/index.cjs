@@ -84,6 +84,8 @@ __export(index_exports, {
   deleteCommentRequestSchema: () => deleteCommentRequestSchema,
   deleteCommentResponseSchema: () => deleteCommentResponseSchema,
   deleteCrewContract: () => deleteCrewContract,
+  deleteCrewProfilePictureContract: () => deleteCrewProfilePictureContract,
+  deleteCrewProfilePictureRequestSchema: () => deleteCrewProfilePictureRequestSchema,
   deleteCrewRequestSchema: () => deleteCrewRequestSchema,
   deleteCrewResponseSchema: () => deleteCrewResponseSchema,
   deleteMessageContract: () => deleteMessageContract,
@@ -237,6 +239,9 @@ __export(index_exports, {
   refreshTokenContract: () => refreshTokenContract,
   refreshTokenPayloadDtoSchema: () => refreshTokenPayloadDtoSchema,
   refreshTokenResponseSchema: () => refreshTokenResponseSchema,
+  replaceCrewProfilePictureContract: () => replaceCrewProfilePictureContract,
+  replaceCrewProfilePictureRequestSchema: () => replaceCrewProfilePictureRequestSchema,
+  replaceCrewProfilePictureResponseSchema: () => replaceCrewProfilePictureResponseSchema,
   replaceProfilePictureContract: () => replaceProfilePictureContract,
   replaceProfilePictureResponseSchema: () => replaceProfilePictureResponseSchema,
   replacePushTokenContract: () => replacePushTokenContract,
@@ -1920,6 +1925,7 @@ var crew = socialSchema.table("crew", {
   name: (0, import_pg_core37.text)("name").notNull(),
   leaderId: (0, import_pg_core37.uuid)("leader_id").notNull(),
   privacy: crewPrivacy("privacy").notNull(),
+  profilePicPath: (0, import_pg_core37.text)("profile_pic_path"),
   createdAt: (0, import_pg_core37.timestamp)("created_at", {
     withTimezone: true
   }).defaultNow().notNull(),
@@ -3800,7 +3806,9 @@ var import_v437 = require("zod/v4");
 
 // src/modules/social/crews/crews.dtos.ts
 var import_v436 = require("zod/v4");
-var crewQueryDtoSchema = crewDbSchema.extend({
+var crewQueryDtoSchema = crewDbSchema.omit({
+  profilePicPath: true
+}).extend({
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema
 });
@@ -3920,6 +3928,25 @@ var deleteCrewResponseSchema = import_v437.z.void();
 var deleteCrewContract = {
   request: deleteCrewRequestSchema,
   response: deleteCrewResponseSchema
+};
+var replaceCrewProfilePictureRequestSchema = import_v437.z.object({
+  params: crewIdParamsSchema
+});
+var replaceCrewProfilePictureResponseSchema = import_v437.z.object({
+  profilePicPath: import_v437.z.string(),
+  url: import_v437.z.string(),
+  message: import_v437.z.string()
+});
+var replaceCrewProfilePictureContract = {
+  request: replaceCrewProfilePictureRequestSchema,
+  response: replaceCrewProfilePictureResponseSchema
+};
+var deleteCrewProfilePictureRequestSchema = import_v437.z.object({
+  params: crewIdParamsSchema
+});
+var deleteCrewProfilePictureContract = {
+  request: deleteCrewProfilePictureRequestSchema,
+  response: import_v437.z.void()
 };
 
 // src/modules/social/crews/requests/crew-requests.contracts.ts
@@ -4240,7 +4267,9 @@ var getSocialUserRequestSchema = import_v446.z.object({
     userId: userDbSchema.shape.id
   })
 });
-var getSocialUserResponseSchema = socialUserQueryDtoSchema;
+var getSocialUserResponseSchema = socialUserQueryDtoSchema.omit({
+  createdAt: true
+});
 var getSocialUserContract = {
   request: getSocialUserRequestSchema,
   response: getSocialUserResponseSchema
@@ -4310,6 +4339,8 @@ var getSocialUserContract = {
   deleteCommentRequestSchema,
   deleteCommentResponseSchema,
   deleteCrewContract,
+  deleteCrewProfilePictureContract,
+  deleteCrewProfilePictureRequestSchema,
   deleteCrewRequestSchema,
   deleteCrewResponseSchema,
   deleteMessageContract,
@@ -4463,6 +4494,9 @@ var getSocialUserContract = {
   refreshTokenContract,
   refreshTokenPayloadDtoSchema,
   refreshTokenResponseSchema,
+  replaceCrewProfilePictureContract,
+  replaceCrewProfilePictureRequestSchema,
+  replaceCrewProfilePictureResponseSchema,
   replaceProfilePictureContract,
   replaceProfilePictureResponseSchema,
   replacePushTokenContract,

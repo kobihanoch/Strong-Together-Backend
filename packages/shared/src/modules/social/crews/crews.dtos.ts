@@ -3,7 +3,7 @@ import { serializedDateSchema } from '../../../common';
 import { crewDbSchema, crewMembershipDbSchema, userDbSchema } from '../../../database';
 
 /** Runtime schema for a crew row returned by the social crew queries. */
-export const crewQueryDtoSchema = crewDbSchema.extend({
+export const crewQueryDtoSchema = crewDbSchema.omit({ profilePicPath: true }).extend({
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
 });

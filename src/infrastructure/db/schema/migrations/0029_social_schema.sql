@@ -83,6 +83,7 @@ CREATE TABLE "social"."crew" (
   "name" TEXT NOT NULL,
   "leader_id" UUID NOT NULL,
   "privacy" "social"."Crew Privacy" NOT NULL,
+  "profile_pic_path" TEXT,
   "created_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
   "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
   CONSTRAINT "crew_pkey" PRIMARY KEY ("id")
@@ -290,7 +291,7 @@ UPDATE ("status", "updated_at", "responded_at") ON TABLE "social"."crew_particip
 
 --> statement-breakpoint
 GRANT
-UPDATE ("name", "privacy", "updated_at") ON TABLE "social"."crew" TO "authenticated";
+UPDATE ("name", "privacy", "profile_pic_path", "updated_at") ON TABLE "social"."crew" TO "authenticated";
 
 --> statement-breakpoint
 GRANT

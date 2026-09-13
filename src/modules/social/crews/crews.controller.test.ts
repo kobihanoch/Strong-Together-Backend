@@ -7,6 +7,7 @@ import {
   listCrewParticipantsResponseSchema,
   listCrewsResponseSchema,
   listPendingCrewJoinRequestsResponseSchema,
+  replaceCrewProfilePictureResponseSchema,
   searchSocialUsersResponseSchema,
 } from '@strong-together/shared';
 import { createApp } from '../../../app';
@@ -356,6 +357,37 @@ describe('CrewsController', () => {
     expect(updated.status).toBe(204);
     expect(updated.text).toBe('');
     expect(await getCrewByLeaderId(leader.userId)).toMatchObject({ privacy: 'private' });
+  });
+
+  /** Verifies only the active leader can upload a crew-scoped profile picture. */
+  it('PUT /api/social/crews/:id/profile-picture updates the crew picture', async () => {
+    const leader = await crewUser('crew_picture_leader');
+    const outsider = await crewUser('crew_picture_outsider');
+    const crew = await createCrew(leader.accessToken, leader.userId);
+    const image = Buffer.from('89504e470d0a1a0a', 'hex');
+
+    const forbidden = await request(app.getHttpServer())
+      .put(`/api/social/crews/${crew.id}/profile-picture`)
+      .set(authHeaders(outsider.accessToken))
+      .attach('file', image, { filename: 'crew.png', contentType: 'image/png' });
+    expect(forbidden.status).toBe(404);
+
+    const response = await request(app.getHttpServer())
+      .put(`/api/social/crews/${crew.id}/profile-picture`)
+      .set(authHeaders(leader.accessToken))
+      .attach('file', image, { filename: 'crew.png', contentType: 'image/png' });
+
+    expect(response.status).toBe(200);
+    expectSchema(replaceCrewProfilePictureResponseSchema, response.body);
+    expect(response.body.profilePicPath).toMatch(new RegExp(`/${crew.id}/.+\\.png$`));
+    expect(await getCrewById(crew.id)).toMatchObject({ profile_pic_path: response.body.profilePicPath });
+
+    const deleted = await request(app.getHttpServer())
+      .delete(`/api/social/crews/${crew.id}/profile-picture`)
+      .set(authHeaders(leader.accessToken));
+
+    expect(deleted.status).toBe(204);
+    expect(await getCrewById(crew.id)).toMatchObject({ profile_pic_path: null });
   });
 
   it('a crew leader without an active membership cannot manage the crew', async () => {
