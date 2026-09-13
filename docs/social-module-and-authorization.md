@@ -13,17 +13,37 @@ In this document:
 
 All social tables have RLS enabled. Application grants allow only the columns needed by the API; a grant does not bypass the row policies described below.
 
-## Authorization By Table
+## RLS Matrix
 
-| Table                        | Authenticated user                                                                                                                                                                                                                         | Active crew member/admin                                                                                                     | Active leader                                                                                                                                                                               | Owner/author-specific behavior                                                                                                                      |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `crew`                       | Can discover and read all crew records. Can create a crew only with themselves as leader.                                                                                                                                                  | Same read access; membership by itself does not permit crew updates or deletion.                                             | Can update or delete the crew while actively leading it. An update may transfer leadership as long as the caller still has crew access during the transaction.                              | The creator receives an active leader membership in the same transaction.                                                                           |
-| `crew_membership`            | Can read participants of public crews. Cannot read participants of a private crew without active access.                                                                                                                                   | Can read participants of their private crew. Can mark their own active membership as `left`, or delete their own membership. | Can read participants, create memberships, update membership roles/statuses, and delete memberships. Can create their own initial active leader membership immediately after crew creation. | Self-leave is restricted to the transition from the caller's own `active` row to `left`.                                                            |
-| `crew_participation_request` | Can read requests they initiated or received. A user may self-join a public crew with an immediately `accepted` request, or submit a `pending` request to a private crew. Initiators may cancel a pending request or delete their request. | Membership adds no general request-management permission. Invitees can accept or decline invitations addressed to them.      | Can read requests for their crew, send pending invitations, and accept or decline pending self-join requests.                                                                               | A request must remain a valid self-request or a leader-originated invitation after an update.                                                       |
-| `crew_shared_post`           | Cannot read placements for crews they cannot access.                                                                                                                                                                                       | Can read placements in accessible crews. May place or remove their own post while they retain publish access to that crew.   | Has the same placement behavior as an active member; leadership alone without active membership is insufficient.                                                                            | Placement writes additionally require the caller to be the post author. A post can be placed in multiple crews, once per `(post_id, crew_id)` pair. |
-| `post`                       | Can read public posts. Can create a post only as themselves.                                                                                                                                                                               | Can also read crew-only posts placed in any crew they can access.                                                            | Same as an active member unless the leader lacks an active membership.                                                                                                                      | Authors can always read, update, and delete their own posts. Authorship cannot be reassigned through an update.                                     |
-| `comment`                    | Can read and create comments only when the parent post is visible.                                                                                                                                                                         | Same rule, with crew membership potentially making a crew-only parent post visible.                                          | Same as a member when actively participating.                                                                                                                                               | Comment authors can update their own comment only while its post remains visible, and can delete their own comment.                                 |
-| `reaction`                   | Can read and create reactions only when the parent post is visible.                                                                                                                                                                        | Same rule, with crew membership potentially making a crew-only parent post visible.                                          | Same as a member when actively participating.                                                                                                                                               | A user has at most one reaction per post. They can replace its type/timestamp or delete it themselves.                                              |
+`Member` means a user with an active membership in the relevant crew. `Author` means the user who created the post or comment. A leader must also have an active membership.
+
+| Table | Read | Create | Update/delete |
+| --- | --- | --- | --- |
+| `crew` | Any signed-in user | Self as leader | Active leader |
+| `crew_membership` | Public crew or active member | Leader, accepted joiner, or initial leader | Leader may manage/remove memberships; a member may leave or delete their own membership |
+| `crew_participation_request` | Initiator, invitee, or leader | Self join; leader invite | Leader answers joins; invitee answers invites |
+| `crew_shared_post` | Member | Member + post author | Member + post author (delete only) |
+| `post` | Public, author, or member of a placed crew | Self as author | Author |
+| `comment` | Parent post visible | Self + parent visible | Author; update also needs visible parent |
+| `reaction` | Parent post visible | Self + parent visible | Reacting user; update also needs visible parent |
+
+### Audit note
+
+The table policies and column-scoped update grants generally match the API queries, but the overall boundary is **not fully correct**: `social.list_discoverable_crews` runs as its privileged owner and always returns `top5Participants`. It therefore exposes profile previews from private crews to every authenticated user, bypassing the narrower `crew_membership` SELECT policy. Until that function conditionally omits private participants (or runs with the caller's RLS), private membership is not private through the discovery endpoint.
+
+All seven tables have RLS enabled, but not forced. This is appropriate for the current design only while requests always switch to the non-owner `authenticated` role; table owners and roles with `BYPASSRLS` remain trusted infrastructure.
+
+## HTTP Endpoints
+
+All routes require DPoP authentication and the `user` role.
+
+| Area | Endpoints | Supported behavior |
+| --- | --- | --- |
+| Crews | `GET/POST /api/social/crews`; `GET/PATCH/DELETE /api/social/crews/:id`; `GET /api/social/crews/:crewId/participants`; `POST /api/social/crews/:id/leave` | Discover, inspect, create, edit/delete as leader, list allowed participants, leave with automatic leader succession |
+| Membership requests | `POST /api/social/crews/:crewId/invitations`; `POST/GET /api/social/crews/:crewId/join-requests`; `GET /api/social/crews/invitations`; `PATCH /api/social/crews/participation-requests/:requestId` | Public instant join, private join approval, leader invites, accept/decline |
+| Posts | `GET/POST /api/social/posts`; `GET /api/social/posts/crew/:crewId`; `PATCH/DELETE /api/social/posts/:id` | Public and crew-only feeds, multi-crew placement, author edit/delete, cursor pagination |
+| Comments | `GET/POST /api/social/posts/:postId/comments`; `PATCH/DELETE /api/social/posts/comments/:id` | List/add on visible posts; author edit/delete |
+| Reactions | `GET/POST/DELETE /api/social/posts/:postId/reactions` | List, add/replace one reaction per user, remove own reaction |
 
 ## Authorization Helpers
 
@@ -54,7 +74,7 @@ The API inserts the crew with the caller as `leader_id`, then inserts the caller
 
 ### Joining, requesting, and invitations
 
-A public self-join request is created in `accepted` state. A private self-request starts as `pending` and must be accepted or declined by the active leader. A leader invitation targets another user and starts as `pending`; the invitee accepts or declines it. The initiator may cancel a still-pending request. The current module defines these database rules even where an HTTP workflow has not yet been exposed.
+A public self-join request is created in `accepted` state. A private self-request starts as `pending` and must be accepted or declined by the active leader. A leader invitation targets another user and starts as `pending`; the invitee accepts or declines it. Cancellation is not currently exposed by the API or permitted by an RLS delete policy.
 
 ### Leaving and leadership transfer
 
