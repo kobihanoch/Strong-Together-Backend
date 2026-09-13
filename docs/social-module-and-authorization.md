@@ -39,7 +39,7 @@ All routes require DPoP authentication and the `user` role.
 
 | Area | Endpoints | Supported behavior |
 | --- | --- | --- |
-| Crews | `GET/POST /api/social/crews`; `GET/PATCH/DELETE /api/social/crews/:id`; `GET /api/social/crews/:crewId/participants`; `POST /api/social/crews/:id/leave` | Search/discover, inspect, create, edit/delete as leader, list allowed participants, leave with automatic leader succession |
+| Crews | `GET/POST /api/social/crews`; `GET/PATCH/DELETE /api/social/crews/:id`; `PUT/DELETE /api/social/crews/:id/profile-picture`; `GET /api/social/crews/:crewId/participants`; `POST /api/social/crews/:id/leave` | Search/discover, inspect, create, edit/delete as leader, replace/delete the crew picture, list allowed participants, leave with automatic leader succession |
 | Membership requests | `POST /api/social/crews/:crewId/invitations`; `POST/GET /api/social/crews/:crewId/join-requests`; `GET /api/social/crews/invitations`; `PATCH /api/social/crews/participation-requests/:requestId` | Public instant join, private join approval, leader invites, accept/decline |
 | Posts | `GET/POST /api/social/posts`; `GET /api/social/posts/crew/:crewId`; `PATCH/DELETE /api/social/posts/:id` | Public and crew-only feeds, multi-crew placement, author edit/delete, cursor pagination |
 | Comments | `GET/POST /api/social/posts/:postId/comments`; `PATCH/DELETE /api/social/posts/comments/:id` | List/add on visible posts; author edit/delete |

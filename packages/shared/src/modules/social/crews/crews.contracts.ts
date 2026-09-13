@@ -152,3 +152,44 @@ export type DeleteCrewParams = ParamsOf<typeof deleteCrewContract>;
 
 /** Response returned after deleting a crew. */
 export type DeleteCrewResponse = ResponseOf<typeof deleteCrewContract>;
+
+// Replace crew profile picture
+
+/** Validates the crew ID used when replacing its profile picture. */
+export const replaceCrewProfilePictureRequestSchema = z.object({ params: crewIdParamsSchema });
+
+/** Validates the stored path and public URL returned after upload. */
+export const replaceCrewProfilePictureResponseSchema = z.object({
+  profilePicPath: z.string(),
+  url: z.string(),
+  message: z.string(),
+});
+
+/** Defines the replace-crew-profile-picture request and response. */
+export const replaceCrewProfilePictureContract = {
+  request: replaceCrewProfilePictureRequestSchema,
+  response: replaceCrewProfilePictureResponseSchema,
+} satisfies Contract;
+
+/** Route parameters accepted when replacing a crew profile picture. */
+export type ReplaceCrewProfilePictureParams = ParamsOf<typeof replaceCrewProfilePictureContract>;
+
+/** Response returned after replacing a crew profile picture. */
+export type ReplaceCrewProfilePictureResponse = ResponseOf<typeof replaceCrewProfilePictureContract>;
+
+// Delete crew profile picture
+
+/** Validates the crew ID used when deleting its profile picture. */
+export const deleteCrewProfilePictureRequestSchema = z.object({ params: crewIdParamsSchema });
+
+/** Defines the delete-crew-profile-picture request and empty response. */
+export const deleteCrewProfilePictureContract = {
+  request: deleteCrewProfilePictureRequestSchema,
+  response: z.void(),
+} satisfies Contract;
+
+/** Route parameters accepted when deleting a crew profile picture. */
+export type DeleteCrewProfilePictureParams = ParamsOf<typeof deleteCrewProfilePictureContract>;
+
+/** Empty response returned after deleting a crew profile picture. */
+export type DeleteCrewProfilePictureResponse = ResponseOf<typeof deleteCrewProfilePictureContract>;

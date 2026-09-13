@@ -13,6 +13,7 @@ export const crew = socialSchema
       name: text('name').notNull(),
       leaderId: uuid('leader_id').notNull(),
       privacy: crewPrivacy('privacy').notNull(),
+      profilePicPath: text('profile_pic_path'),
       createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
       updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     },

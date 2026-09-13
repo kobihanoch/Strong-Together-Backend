@@ -465,11 +465,12 @@ export async function crewExists(crewId: string) {
 
 /** Returns a crew by ID for leadership-transfer assertions. */
 export async function getCrewById(crewId: string) {
-  const [row] = await sql<{ id: string; leader_id: string; privacy: 'public' | 'private' }[]>`
+  const [row] = await sql<{ id: string; leader_id: string; privacy: 'public' | 'private'; profile_pic_path: string | null }[]>`
     SELECT
       id,
       leader_id,
-      privacy
+      privacy,
+      profile_pic_path
     FROM
       social.crew
     WHERE

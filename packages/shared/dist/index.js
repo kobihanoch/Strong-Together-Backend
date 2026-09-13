@@ -1596,6 +1596,7 @@ var crew = socialSchema.table("crew", {
   name: text12("name").notNull(),
   leaderId: uuid14("leader_id").notNull(),
   privacy: crewPrivacy("privacy").notNull(),
+  profilePicPath: text12("profile_pic_path"),
   createdAt: timestamp14("created_at", {
     withTimezone: true
   }).defaultNow().notNull(),
@@ -3476,7 +3477,9 @@ import { z as z37 } from "zod/v4";
 
 // src/modules/social/crews/crews.dtos.ts
 import { z as z36 } from "zod/v4";
-var crewQueryDtoSchema = crewDbSchema.extend({
+var crewQueryDtoSchema = crewDbSchema.omit({
+  profilePicPath: true
+}).extend({
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema
 });
@@ -3596,6 +3599,25 @@ var deleteCrewResponseSchema = z37.void();
 var deleteCrewContract = {
   request: deleteCrewRequestSchema,
   response: deleteCrewResponseSchema
+};
+var replaceCrewProfilePictureRequestSchema = z37.object({
+  params: crewIdParamsSchema
+});
+var replaceCrewProfilePictureResponseSchema = z37.object({
+  profilePicPath: z37.string(),
+  url: z37.string(),
+  message: z37.string()
+});
+var replaceCrewProfilePictureContract = {
+  request: replaceCrewProfilePictureRequestSchema,
+  response: replaceCrewProfilePictureResponseSchema
+};
+var deleteCrewProfilePictureRequestSchema = z37.object({
+  params: crewIdParamsSchema
+});
+var deleteCrewProfilePictureContract = {
+  request: deleteCrewProfilePictureRequestSchema,
+  response: z37.void()
 };
 
 // src/modules/social/crews/requests/crew-requests.contracts.ts
@@ -3916,7 +3938,9 @@ var getSocialUserRequestSchema = z46.object({
     userId: userDbSchema.shape.id
   })
 });
-var getSocialUserResponseSchema = socialUserQueryDtoSchema;
+var getSocialUserResponseSchema = socialUserQueryDtoSchema.omit({
+  createdAt: true
+});
 var getSocialUserContract = {
   request: getSocialUserRequestSchema,
   response: getSocialUserResponseSchema
@@ -3985,6 +4009,8 @@ export {
   deleteCommentRequestSchema,
   deleteCommentResponseSchema,
   deleteCrewContract,
+  deleteCrewProfilePictureContract,
+  deleteCrewProfilePictureRequestSchema,
   deleteCrewRequestSchema,
   deleteCrewResponseSchema,
   deleteMessageContract,
@@ -4138,6 +4164,9 @@ export {
   refreshTokenContract,
   refreshTokenPayloadDtoSchema,
   refreshTokenResponseSchema,
+  replaceCrewProfilePictureContract,
+  replaceCrewProfilePictureRequestSchema,
+  replaceCrewProfilePictureResponseSchema,
   replaceProfilePictureContract,
   replaceProfilePictureResponseSchema,
   replacePushTokenContract,

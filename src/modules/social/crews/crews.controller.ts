@@ -1,8 +1,11 @@
-import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Put, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type {
   CreateCrewBody,
   CreateCrewResponse,
   DeleteCrewParams,
+  DeleteCrewProfilePictureParams,
+  DeleteCrewProfilePictureResponse,
   GetCrewParams,
   GetCrewResponse,
   ListCrewsQuery,
@@ -12,6 +15,8 @@ import type {
   ListCrewParticipantsResponse,
   LeaveCrewParams,
   LeaveCrewResponse,
+  ReplaceCrewProfilePictureParams,
+  ReplaceCrewProfilePictureResponse,
   UpdateCrewBody,
   UpdateCrewParams,
   UpdateCrewResponse,
@@ -19,20 +24,25 @@ import type {
 import {
   createCrewRequestSchema,
   deleteCrewRequestSchema,
+  deleteCrewProfilePictureRequestSchema,
   getCrewRequestSchema,
   listCrewsRequestSchema,
   listCrewParticipantsRequestSchema,
   leaveCrewRequestSchema,
+  replaceCrewProfilePictureRequestSchema,
   updateCrewRequestSchema,
 } from '@strong-together/shared';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { CurrentLogger } from '../../../common/decorators/current-logger.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
+import { imageUploadOptions } from '../../../common/interceptors/image-upload.config';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../common/types/express';
+import type { AppLogger } from '../../../infrastructure/logger';
 import { CrewsService } from './crews.service';
 
 /**
@@ -159,6 +169,41 @@ export class CrewsController {
     },
   ): Promise<UpdateCrewResponse> {
     await this.service.updateCrewData(data.params.id, data.body);
+  }
+
+  /**
+   * Replaces a crew's profile picture.
+   *
+   * @remarks Route: PUT /api/social/crews/:id/profile-picture. Access: active leader.
+   * @param data - The validated crew ID.
+   * @param file - The uploaded image file.
+   * @param requestLogger - Logger used if old-image cleanup fails.
+   * @returns The stored image path and public URL.
+   */
+  @Put(':id/profile-picture')
+  @UseInterceptors(FileInterceptor('file', imageUploadOptions))
+  async replaceProfilePicture(
+    @RequestData(new ValidateRequestPipe(replaceCrewProfilePictureRequestSchema)) data: { params: ReplaceCrewProfilePictureParams },
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @CurrentLogger() requestLogger: AppLogger,
+  ): Promise<ReplaceCrewProfilePictureResponse> {
+    return this.service.replaceProfilePicture(data.params.id, file, requestLogger);
+  }
+
+  /**
+   * Deletes a crew's current profile picture.
+   *
+   * @remarks Route: DELETE /api/social/crews/:id/profile-picture. Access: active leader.
+   * @param data - The validated crew ID.
+   * @returns No response body with a 204 No Content status.
+   * @throws NotFoundException when the crew is unavailable or has no picture.
+   */
+  @Delete(':id/profile-picture')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteProfilePicture(
+    @RequestData(new ValidateRequestPipe(deleteCrewProfilePictureRequestSchema)) data: { params: DeleteCrewProfilePictureParams },
+  ): Promise<DeleteCrewProfilePictureResponse> {
+    await this.service.deleteProfilePicture(data.params.id);
   }
 
   /**

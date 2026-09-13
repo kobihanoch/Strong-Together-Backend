@@ -34,7 +34,7 @@ export type SearchSocialUsersResponse = ResponseOf<typeof searchSocialUsersContr
 export const getSocialUserRequestSchema = z.object({ params: z.object({ userId: userDbSchema.shape.id }) });
 
 /** Validates the public profile returned for one user. */
-export const getSocialUserResponseSchema = socialUserQueryDtoSchema;
+export const getSocialUserResponseSchema = socialUserQueryDtoSchema.omit({ createdAt: true });
 
 /** Defines the get-social-user request and response. */
 export const getSocialUserContract = {

@@ -1,11 +1,19 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import type { CreateCrewBody, CrewQueryDto, ListCrewParticipantsResponse, ListCrewsResponse, UpdateCrewBody } from '@strong-together/shared';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { CreateCrewBody, CrewQueryDto, ListCrewParticipantsResponse, ListCrewsResponse, ReplaceCrewProfilePictureResponse, UpdateCrewBody } from '@strong-together/shared';
+import mime from 'mime';
+import path from 'path';
+import { supabaseConfig } from '../../../config/storage.config';
+import type { AppLogger } from '../../../infrastructure/logger';
+import { SupabaseStorageService } from '../../../infrastructure/supabase/storage/supabase-storage.service';
 import { CrewsQueries } from './crews.queries';
 import { decodeSocialCursor, encodeSocialCursor } from '../cursor-pagination';
 /** Coordinates social crew CRUD operations and maps empty query results to HTTP errors. */
 @Injectable()
 export class CrewsService {
-  constructor(private readonly queries: CrewsQueries) {}
+  constructor(
+    private readonly queries: CrewsQueries,
+    private readonly storage: SupabaseStorageService,
+  ) {}
 
   /**
    * Lists discoverable crews with a limited participant preview.
@@ -78,6 +86,54 @@ export class CrewsService {
   async updateCrewData(id: string, body: UpdateCrewBody): Promise<void> {
     const [row] = await this.queries.queryUpdateCrew(id, body.name, body.privacy);
     if (!row) throw new NotFoundException('Crew not found');
+  }
+
+  /**
+   * Uploads and stores a new crew profile picture for an active leader.
+   *
+   * @param crewId - The crew receiving the picture.
+   * @param file - The validated uploaded image.
+   * @param requestLogger - Logger used if old-image cleanup fails.
+   * @returns The stored image path and public URL.
+   */
+  async replaceProfilePicture(
+    crewId: string,
+    file: Express.Multer.File | undefined,
+    requestLogger: AppLogger,
+  ): Promise<ReplaceCrewProfilePictureResponse> {
+    if (!file) throw new BadRequestException('No file provided');
+
+    const [crew] = await this.queries.queryCrewProfilePictureForUpdate(crewId);
+    if (!crew) throw new NotFoundException('Crew not found');
+
+    const extension = path.extname(file.originalname) || `.${mime.getExtension(file.mimetype) || 'jpg'}`;
+    const key = `${crewId}/${Date.now()}${extension}`;
+    const uploaded = await this.storage.uploadBufferToSupabase(supabaseConfig.bucketName, key, file.buffer, file.mimetype);
+
+    await this.queries.queryUpdateCrewProfilePicture(crewId, uploaded.path);
+
+    if (crew.profilePicPath) {
+      this.storage.deleteFromSupabase(crew.profilePicPath).catch((error: unknown) => {
+        requestLogger.warn({ err: error, crewId, oldPath: crew.profilePicPath }, 'Failed to delete old crew profile image');
+      });
+    }
+
+    return { profilePicPath: uploaded.path, url: uploaded.publicUrl, message: 'Upload success' };
+  }
+
+  /**
+   * Deletes an active leader's crew profile picture from storage and the database.
+   *
+   * @param crewId - The crew whose picture is deleted.
+   * @returns A promise that resolves after deletion.
+   * @throws NotFoundException when the crew is unavailable or has no picture.
+   */
+  async deleteProfilePicture(crewId: string): Promise<void> {
+    const [crew] = await this.queries.queryCrewProfilePictureForUpdate(crewId);
+    if (!crew?.profilePicPath) throw new NotFoundException('Crew profile picture not found');
+
+    await this.storage.deleteFromSupabase(crew.profilePicPath);
+    await this.queries.queryUpdateCrewProfilePicture(crewId, null);
   }
 
   /**

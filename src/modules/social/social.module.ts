@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { SupabaseModule } from '../../infrastructure/supabase/supabase.module';
 import { AuthenticationGuard } from '../../common/guards/authentication.guard';
 import { AuthorizationGuard } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
@@ -23,6 +24,7 @@ import { SocialUsersQueries } from './users/social-users.queries';
 import { SocialUsersService } from './users/social-users.service';
 
 @Module({
+  imports: [SupabaseModule],
   controllers: [CrewRequestsController, CrewsController, PostsController, ReactionsController, CommentsController, SocialUsersController],
   providers: [
     CrewsQueries,
