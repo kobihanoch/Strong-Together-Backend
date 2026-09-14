@@ -3,6 +3,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
   getCrewResponseSchema,
   getSocialUserResponseSchema,
+  getSocialSummaryResponseSchema,
   listCrewInvitationsResponseSchema,
   listCrewParticipantsResponseSchema,
   listCrewsResponseSchema,
@@ -57,6 +58,31 @@ async function createCrew(accessToken: string, leaderId: string, privacy: 'publi
 }
 
 describe('CrewsController', () => {
+  /** Returns the caller's crew count and unique co-members without including the caller. */
+  it('GET /api/social/summary returns the authenticated user social summary', async () => {
+    const leader = await crewUser('summary_leader');
+    const member = await crewUser('summary_member');
+    const peer = await crewUser('summary_peer');
+    const unrelated = await crewUser('summary_unrelated');
+    const firstCrew = await createCrew(leader.accessToken, leader.userId, 'private', 'Summary One');
+    const secondCrew = await createCrew(member.accessToken, member.userId, 'public', 'Summary Two');
+    await insertCrewMembership(firstCrew.id, member.userId);
+    await insertCrewMembership(firstCrew.id, peer.userId);
+    await insertCrewMembership(secondCrew.id, peer.userId);
+
+    const response = await request(app.getHttpServer()).get('/api/social/summary').set(authHeaders(member.accessToken));
+
+    expect(response.status).toBe(200);
+    expectSchema(getSocialSummaryResponseSchema, response.body);
+    expect(response.body.activeCrewCount).toBe(2);
+    expect(response.body.participantPreviews).toEqual(
+      expect.arrayContaining([expect.objectContaining({ userId: leader.userId }), expect.objectContaining({ userId: peer.userId })]),
+    );
+    expect(response.body.participantPreviews).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ userId: member.userId }), expect.objectContaining({ userId: unrelated.userId })]),
+    );
+  });
+
   /** Enforces request authorization, listing isolation, terminal transitions, and membership side effects for both request kinds. */
   it('supports public joins and accepting or declining participation requests through RLS', async () => {
     const leader = await crewUser('crew_flow_leader');

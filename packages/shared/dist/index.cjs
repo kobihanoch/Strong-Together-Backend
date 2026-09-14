@@ -149,6 +149,8 @@ __export(index_exports, {
   getPersonalRecordsResponseSchema: () => getPersonalRecordsResponseSchema,
   getReminderSettingsContract: () => getReminderSettingsContract,
   getReminderSettingsResponseSchema: () => getReminderSettingsResponseSchema,
+  getSocialSummaryContract: () => getSocialSummaryContract,
+  getSocialSummaryResponseSchema: () => getSocialSummaryResponseSchema,
   getSocialUserContract: () => getSocialUserContract,
   getSocialUserRequestSchema: () => getSocialUserRequestSchema,
   getSocialUserResponseSchema: () => getSocialUserResponseSchema,
@@ -266,6 +268,7 @@ __export(index_exports, {
   searchSocialUsersRequestSchema: () => searchSocialUsersRequestSchema,
   searchSocialUsersResponseSchema: () => searchSocialUsersResponseSchema,
   serializedDateSchema: () => serializedDateSchema,
+  socialSummaryParticipantPreviewSchema: () => socialSummaryParticipantPreviewSchema,
   socialUserQueryDtoSchema: () => socialUserQueryDtoSchema,
   squatRepetitionDtoSchema: () => squatRepetitionDtoSchema,
   timezoneSchema: () => timezoneSchema,
@@ -4256,12 +4259,28 @@ var deleteReactionContract = {
   response: deleteReactionResponseSchema
 };
 
+// src/modules/social/summary/social-summary.contracts.ts
+var import_v445 = require("zod/v4");
+var socialSummaryParticipantPreviewSchema = import_v445.z.object({
+  userId: userDbSchema.shape.id,
+  username: userDbSchema.shape.username,
+  fullName: userDbSchema.shape.name,
+  profilePicPath: userDbSchema.shape.profilePicPath
+});
+var getSocialSummaryResponseSchema = import_v445.z.object({
+  activeCrewCount: import_v445.z.number().int().nonnegative(),
+  participantPreviews: socialSummaryParticipantPreviewSchema.array().max(3)
+});
+var getSocialSummaryContract = {
+  response: getSocialSummaryResponseSchema
+};
+
 // src/modules/social/users/social-users.contracts.ts
-var import_v446 = require("zod/v4");
+var import_v447 = require("zod/v4");
 
 // src/modules/social/users/social-users.dtos.ts
-var import_v445 = require("zod/v4");
-var socialUserQueryDtoSchema = import_v445.z.object({
+var import_v446 = require("zod/v4");
+var socialUserQueryDtoSchema = import_v446.z.object({
   userId: userDbSchema.shape.id,
   username: userDbSchema.shape.username,
   fullName: userDbSchema.shape.name,
@@ -4270,23 +4289,23 @@ var socialUserQueryDtoSchema = import_v445.z.object({
 });
 
 // src/modules/social/users/social-users.contracts.ts
-var searchSocialUsersRequestSchema = import_v446.z.object({
-  query: import_v446.z.object({
-    search: import_v446.z.string().trim().min(1).max(50),
-    limit: import_v446.z.coerce.number().int().min(1).max(100).default(20),
-    cursor: import_v446.z.string().min(1).optional()
+var searchSocialUsersRequestSchema = import_v447.z.object({
+  query: import_v447.z.object({
+    search: import_v447.z.string().trim().min(1).max(50),
+    limit: import_v447.z.coerce.number().int().min(1).max(100).default(20),
+    cursor: import_v447.z.string().min(1).optional()
   })
 });
-var searchSocialUsersResponseSchema = import_v446.z.object({
-  users: import_v446.z.array(socialUserQueryDtoSchema),
-  nextCursor: import_v446.z.string().nullable()
+var searchSocialUsersResponseSchema = import_v447.z.object({
+  users: import_v447.z.array(socialUserQueryDtoSchema),
+  nextCursor: import_v447.z.string().nullable()
 });
 var searchSocialUsersContract = {
   request: searchSocialUsersRequestSchema,
   response: searchSocialUsersResponseSchema
 };
-var getSocialUserRequestSchema = import_v446.z.object({
-  params: import_v446.z.object({
+var getSocialUserRequestSchema = import_v447.z.object({
+  params: import_v447.z.object({
     userId: userDbSchema.shape.id
   })
 });
@@ -4427,6 +4446,8 @@ var getSocialUserContract = {
   getPersonalRecordsResponseSchema,
   getReminderSettingsContract,
   getReminderSettingsResponseSchema,
+  getSocialSummaryContract,
+  getSocialSummaryResponseSchema,
   getSocialUserContract,
   getSocialUserRequestSchema,
   getSocialUserResponseSchema,
@@ -4544,6 +4565,7 @@ var getSocialUserContract = {
   searchSocialUsersRequestSchema,
   searchSocialUsersResponseSchema,
   serializedDateSchema,
+  socialSummaryParticipantPreviewSchema,
   socialUserQueryDtoSchema,
   squatRepetitionDtoSchema,
   timezoneSchema,
