@@ -7846,7 +7846,7 @@ type DeletePostParams = ParamsOf<typeof deletePostContract>;
 /** Response returned after deleting a post. */
 type DeletePostResponse = ResponseOf<typeof deletePostContract>;
 
-/** Runtime schema for a post row and its audience visibility. */
+/** Runtime schema for a post with author details and its current like and comment totals. */
 declare const postQueryDtoSchema: z.ZodObject<{
     id: z.ZodUUID;
     authorUserId: z.ZodUUID;
@@ -7870,7 +7870,7 @@ declare const postQueryDtoSchema: z.ZodObject<{
 declare const deletedPostQueryDtoSchema: z.ZodObject<{
     id: z.ZodUUID;
 }, z.core.$strip>;
-/** Typed post row returned by the social post endpoints. */
+/** Typed post row with author details and engagement totals returned by social post endpoints. */
 type PostQueryDto = z.infer<typeof postQueryDtoSchema>;
 /** Typed result used to verify that a post was deleted. */
 type DeletedPostQueryDto = z.infer<typeof deletedPostQueryDtoSchema>;
