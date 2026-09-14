@@ -13,7 +13,7 @@ export class PostsQueries {
    *
    * @param limit - The maximum number of posts to return.
    * @param cursor - The preceding page's final publication timestamp and UUID.
-   * @returns Visible post rows ordered from newest to oldest.
+   * @returns Visible post rows with like and comment counts, ordered from newest to oldest.
    */
   queryVisiblePosts(limit: number, cursor?: { timestamp: string; id: string }): Promise<PostQueryDto[]> {
     return this.sql<PostQueryDto[]>`
@@ -24,6 +24,23 @@ export class PostsQueries {
         p.visibility,
         p.published_at AS "publishedAt",
         p.updated_at AS "updatedAt",
+        (
+          SELECT
+            COUNT(*)::INTEGER
+          FROM
+            social.reaction r
+          WHERE
+            r.post_id = p.id
+            AND r.type = 'like'
+        ) AS "likeCount",
+        (
+          SELECT
+            COUNT(*)::INTEGER
+          FROM
+            social.comment c
+          WHERE
+            c.post_id = p.id
+        ) AS "commentCount",
         author.username,
         author.name AS "fullName",
         author."profilePicPath" AS "profilePicPath"
@@ -50,7 +67,7 @@ export class PostsQueries {
    * @param crewId - The UUID of the crew whose posts are requested.
    * @param limit - The maximum number of posts to return.
    * @param cursor - The preceding page's final publication timestamp and UUID.
-   * @returns Crew post rows ordered from newest to oldest.
+   * @returns Crew post rows with like and comment counts, ordered from newest to oldest.
    */
   queryCrewPosts(crewId: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<PostQueryDto[]> {
     return this.sql<PostQueryDto[]>`
@@ -61,6 +78,23 @@ export class PostsQueries {
         p.visibility,
         p.published_at AS "publishedAt",
         p.updated_at AS "updatedAt",
+        (
+          SELECT
+            COUNT(*)::INTEGER
+          FROM
+            social.reaction r
+          WHERE
+            r.post_id = p.id
+            AND r.type = 'like'
+        ) AS "likeCount",
+        (
+          SELECT
+            COUNT(*)::INTEGER
+          FROM
+            social.comment c
+          WHERE
+            c.post_id = p.id
+        ) AS "commentCount",
         author.username,
         author.name AS "fullName",
         author."profilePicPath" AS "profilePicPath"
@@ -99,8 +133,8 @@ export class PostsQueries {
     content: string,
     visibility: 'crews_only' | 'public',
     crewIds: string[],
-  ): Promise<Omit<PostQueryDto, 'username' | 'fullName' | 'profilePicPath'>[]> {
-    const [post] = await this.sql<(Omit<PostQueryDto, 'username' | 'fullName' | 'profilePicPath'>)[]>`
+  ): Promise<Omit<PostQueryDto, 'username' | 'fullName' | 'profilePicPath' | 'likeCount' | 'commentCount'>[]> {
+    const [post] = await this.sql<Omit<PostQueryDto, 'username' | 'fullName' | 'profilePicPath' | 'likeCount' | 'commentCount'>[]>`
       INSERT INTO
         social.post (author_user_id, content, visibility)
       VALUES

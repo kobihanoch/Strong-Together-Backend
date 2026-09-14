@@ -3539,6 +3539,17 @@ var listCrewsContract = {
   request: listCrewsRequestSchema,
   response: listCrewsResponseSchema
 };
+var listMyCrewsRequestSchema = z37.object({
+  query: z37.object({
+    limit: z37.coerce.number().int().min(1).max(100).default(20),
+    cursor: z37.string().min(1).optional()
+  })
+});
+var listMyCrewsResponseSchema = listCrewsResponseSchema;
+var listMyCrewsContract = {
+  request: listMyCrewsRequestSchema,
+  response: listMyCrewsResponseSchema
+};
 var listCrewParticipantsRequestSchema = z37.object({
   params: z37.object({
     crewId: crewDbSchema.shape.id
@@ -3699,6 +3710,8 @@ var postQueryDtoSchema = postDbSchema.omit({
 }).extend({
   publishedAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
+  likeCount: z39.number().int().nonnegative(),
+  commentCount: z39.number().int().nonnegative(),
   username: userDbSchema.shape.username,
   fullName: userDbSchema.shape.name,
   profilePicPath: userDbSchema.shape.profilePicPath
@@ -4123,6 +4136,9 @@ export {
   listMessagesContract,
   listMessagesRequestSchema,
   listMessagesResponseSchema,
+  listMyCrewsContract,
+  listMyCrewsRequestSchema,
+  listMyCrewsResponseSchema,
   listPendingCrewJoinRequestsContract,
   listPendingCrewJoinRequestsRequestSchema,
   listPendingCrewJoinRequestsResponseSchema,

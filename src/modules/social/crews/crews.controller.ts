@@ -10,6 +10,8 @@ import type {
   GetCrewResponse,
   ListCrewsQuery,
   ListCrewsResponse,
+  ListMyCrewsQuery,
+  ListMyCrewsResponse,
   ListCrewParticipantsParams,
   ListCrewParticipantsQuery,
   ListCrewParticipantsResponse,
@@ -27,6 +29,7 @@ import {
   deleteCrewProfilePictureRequestSchema,
   getCrewRequestSchema,
   listCrewsRequestSchema,
+  listMyCrewsRequestSchema,
   listCrewParticipantsRequestSchema,
   leaveCrewRequestSchema,
   replaceCrewProfilePictureRequestSchema,
@@ -50,6 +53,7 @@ import { CrewsService } from './crews.service';
  *
  * Routes:
  * - GET /api/social/crews
+ * - GET /api/social/crews/mine
  * - GET /api/social/crews/:id
  * - GET /api/social/crews/:crewId/participants
  * - POST /api/social/crews
@@ -85,6 +89,25 @@ export class CrewsController {
     },
   ): Promise<ListCrewsResponse> {
     return this.service.listCrewsData(data.query.limit, data.query.cursor, data.query.search);
+  }
+
+  /**
+   * Lists crews in which the authenticated user has an active membership.
+   *
+   * @remarks Route: GET /api/social/crews/mine
+   * Access: User
+   *
+   * @param data - The validated pagination query.
+   * @returns The caller's crews with participant counts and previews.
+   */
+  @Get('mine')
+  async listMine(
+    @RequestData(new ValidateRequestPipe(listMyCrewsRequestSchema))
+    data: {
+      query: ListMyCrewsQuery;
+    },
+  ): Promise<ListMyCrewsResponse> {
+    return this.service.listMyCrewsData(data.query.limit, data.query.cursor);
   }
 
   /**

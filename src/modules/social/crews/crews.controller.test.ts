@@ -6,6 +6,7 @@ import {
   listCrewInvitationsResponseSchema,
   listCrewParticipantsResponseSchema,
   listCrewsResponseSchema,
+  listMyCrewsResponseSchema,
   listPendingCrewJoinRequestsResponseSchema,
   replaceCrewProfilePictureResponseSchema,
   searchSocialUsersResponseSchema,
@@ -216,6 +217,23 @@ describe('CrewsController', () => {
     });
   });
 
+  /** Verifies that the personal crew feed contains only active memberships and preserves the discovery item shape. */
+  it('GET /api/social/crews/mine returns crews joined by the authenticated user', async () => {
+    const leader = await crewUser('crew_mine_leader');
+    const member = await crewUser('crew_mine_member');
+    const outsider = await crewUser('crew_mine_outsider');
+    const joinedCrew = await createCrew(leader.accessToken, leader.userId, 'private', 'Joined Crew');
+    const unrelatedCrew = await createCrew(outsider.accessToken, outsider.userId, 'public', 'Unrelated Crew');
+    await insertCrewMembership(joinedCrew.id, member.userId);
+
+    const response = await request(app.getHttpServer()).get('/api/social/crews/mine').set(authHeaders(member.accessToken));
+
+    expect(response.status).toBe(200);
+    expectSchema(listMyCrewsResponseSchema, response.body);
+    expect(response.body.crews).toEqual(expect.arrayContaining([expect.objectContaining({ id: joinedCrew.id, name: 'Joined Crew' })]));
+    expect(response.body.crews).not.toEqual(expect.arrayContaining([expect.objectContaining({ id: unrelatedCrew.id })]));
+  });
+
   /** Verifies crew-name filtering without changing the existing discovery response. */
   it('GET /api/social/crews searches crew names with pagination', async () => {
     const leader = await crewUser('crew_search_leader');
@@ -264,9 +282,7 @@ describe('CrewsController', () => {
     const viewer = await crewUser('social_get_viewer');
     const target = await crewUser('social_get_target');
 
-    const response = await request(app.getHttpServer())
-      .get(`/api/social/users/${target.userId}`)
-      .set(authHeaders(viewer.accessToken));
+    const response = await request(app.getHttpServer()).get(`/api/social/users/${target.userId}`).set(authHeaders(viewer.accessToken));
 
     expect(response.status).toBe(200);
     expectSchema(getSocialUserResponseSchema, response.body);
@@ -389,9 +405,7 @@ describe('CrewsController', () => {
       .set(authHeaders(outsider.accessToken));
     expect(forbiddenDelete.status).toBe(404);
 
-    const deleted = await request(app.getHttpServer())
-      .delete(`/api/social/crews/${crew.id}/profile-picture`)
-      .set(authHeaders(leader.accessToken));
+    const deleted = await request(app.getHttpServer()).delete(`/api/social/crews/${crew.id}/profile-picture`).set(authHeaders(leader.accessToken));
 
     expect(deleted.status).toBe(204);
     expect(await getCrewById(crew.id)).toMatchObject({ profile_pic_path: null });

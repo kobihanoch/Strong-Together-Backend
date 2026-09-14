@@ -192,6 +192,9 @@ __export(index_exports, {
   listMessagesContract: () => listMessagesContract,
   listMessagesRequestSchema: () => listMessagesRequestSchema,
   listMessagesResponseSchema: () => listMessagesResponseSchema,
+  listMyCrewsContract: () => listMyCrewsContract,
+  listMyCrewsRequestSchema: () => listMyCrewsRequestSchema,
+  listMyCrewsResponseSchema: () => listMyCrewsResponseSchema,
   listPendingCrewJoinRequestsContract: () => listPendingCrewJoinRequestsContract,
   listPendingCrewJoinRequestsRequestSchema: () => listPendingCrewJoinRequestsRequestSchema,
   listPendingCrewJoinRequestsResponseSchema: () => listPendingCrewJoinRequestsResponseSchema,
@@ -3869,6 +3872,17 @@ var listCrewsContract = {
   request: listCrewsRequestSchema,
   response: listCrewsResponseSchema
 };
+var listMyCrewsRequestSchema = import_v437.z.object({
+  query: import_v437.z.object({
+    limit: import_v437.z.coerce.number().int().min(1).max(100).default(20),
+    cursor: import_v437.z.string().min(1).optional()
+  })
+});
+var listMyCrewsResponseSchema = listCrewsResponseSchema;
+var listMyCrewsContract = {
+  request: listMyCrewsRequestSchema,
+  response: listMyCrewsResponseSchema
+};
 var listCrewParticipantsRequestSchema = import_v437.z.object({
   params: import_v437.z.object({
     crewId: crewDbSchema.shape.id
@@ -4029,6 +4043,8 @@ var postQueryDtoSchema = postDbSchema.omit({
 }).extend({
   publishedAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
+  likeCount: import_v439.z.number().int().nonnegative(),
+  commentCount: import_v439.z.number().int().nonnegative(),
   username: userDbSchema.shape.username,
   fullName: userDbSchema.shape.name,
   profilePicPath: userDbSchema.shape.profilePicPath
@@ -4454,6 +4470,9 @@ var getSocialUserContract = {
   listMessagesContract,
   listMessagesRequestSchema,
   listMessagesResponseSchema,
+  listMyCrewsContract,
+  listMyCrewsRequestSchema,
+  listMyCrewsResponseSchema,
   listPendingCrewJoinRequestsContract,
   listPendingCrewJoinRequestsRequestSchema,
   listPendingCrewJoinRequestsResponseSchema,
