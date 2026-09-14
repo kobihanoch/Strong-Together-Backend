@@ -29,11 +29,7 @@ export class CrewsQueries {
    * @param search - Optional case-insensitive crew-name search text.
    * @returns Crew rows ordered from newest to oldest.
    */
-  async queryCrews(
-    limit: number,
-    cursor?: { timestamp: string; id: string },
-    search?: string,
-  ): Promise<DiscoverableCrewQueryDto[]> {
+  async queryCrews(limit: number, cursor?: { timestamp: string; id: string }, search?: string): Promise<DiscoverableCrewQueryDto[]> {
     return this.sql<DiscoverableCrewQueryDto[]>`
       SELECT
         *
@@ -44,6 +40,88 @@ export class CrewsQueries {
           ${cursor?.id ?? null}::UUID,
           ${search ?? null}
         )
+    `;
+  }
+
+  /**
+   * Retrieves crews in which the authenticated user has an active membership.
+   *
+   * @param limit - The maximum number of crews to return.
+   * @param cursor - The preceding page's final creation timestamp and UUID.
+   * @returns The caller's crews with participant counts and previews, newest first.
+   */
+  async queryMyCrews(limit: number, cursor?: { timestamp: string; id: string }): Promise<DiscoverableCrewQueryDto[]> {
+    return this.sql<DiscoverableCrewQueryDto[]>`
+      SELECT
+        c.id,
+        c.name,
+        c.leader_id AS "leaderId",
+        c.privacy,
+        c.created_at AS "createdAt",
+        c.updated_at AS "updatedAt",
+        social.get_active_crew_participant_count (c.id) AS "participantCount",
+        COALESCE(participants.items, '[]'::JSONB) AS "top5Participants"
+      FROM
+        social.crew c
+        INNER JOIN social.crew_membership mine ON mine.crew_id = c.id
+        LEFT JOIN LATERAL (
+          SELECT
+            JSONB_AGG(
+              JSONB_BUILD_OBJECT(
+                'username',
+                ranked.username,
+                'fullName',
+                ranked.full_name,
+                'profilePicPath',
+                ranked.profile_pic_path
+              )
+              ORDER BY
+                ranked.rank_order
+            ) AS items
+          FROM
+            (
+              SELECT
+                profile.username,
+                profile.name AS full_name,
+                profile."profilePicPath" AS profile_pic_path,
+                ROW_NUMBER() OVER (
+                  ORDER BY
+                    (member.user_id = identity.current_user_id ()) DESC,
+                    CASE member.role
+                      WHEN 'leader' THEN 1
+                      WHEN 'admin' THEN 2
+                      ELSE 3
+                    END,
+                    member.joined_at,
+                    member.id
+                ) AS rank_order
+              FROM
+                social.crew_membership member
+                CROSS JOIN LATERAL identity.get_user_profile (member.user_id) profile
+              WHERE
+                member.crew_id = c.id
+                AND member.status = 'active'
+              ORDER BY
+                rank_order
+              LIMIT
+                5
+            ) ranked
+        ) participants ON TRUE
+      WHERE
+        mine.user_id = identity.current_user_id ()
+        AND mine.status = 'active'
+        AND (
+          ${cursor?.timestamp ?? null}::TIMESTAMPTZ IS NULL
+          OR (DATE_TRUNC('milliseconds', c.created_at), c.id) < (
+            ${cursor?.timestamp ?? null}::TIMESTAMPTZ,
+            ${cursor?.id ?? null}::UUID
+          )
+        )
+      ORDER BY
+        DATE_TRUNC('milliseconds', c.created_at) DESC,
+        c.id DESC
+      LIMIT
+        ${limit + 1}
     `;
   }
 
@@ -125,7 +203,7 @@ export class CrewsQueries {
         privacy,
         created_at AS "createdAt",
         updated_at AS "updatedAt",
-        social.get_active_crew_participant_count(c.id) AS "participantCount"
+        social.get_active_crew_participant_count (c.id) AS "participantCount"
       FROM
         social.crew c
       WHERE
@@ -210,10 +288,13 @@ export class CrewsQueries {
    */
   async queryCrewProfilePictureForUpdate(crewId: string): Promise<{ profilePicPath: string | null }[]> {
     return this.sql<{ profilePicPath: string | null }[]>`
-      SELECT profile_pic_path AS "profilePicPath"
-      FROM social.crew
-      WHERE id = ${crewId}::UUID
-        AND social.is_crew_leader(id)
+      SELECT
+        profile_pic_path AS "profilePicPath"
+      FROM
+        social.crew
+      WHERE
+        id = ${crewId}::UUID
+        AND social.is_crew_leader (id)
     `;
   }
 
@@ -227,9 +308,13 @@ export class CrewsQueries {
   async queryUpdateCrewProfilePicture(crewId: string, profilePicPath: string | null): Promise<{ profilePicPath: string | null }[]> {
     return this.sql<{ profilePicPath: string | null }[]>`
       UPDATE social.crew
-      SET profile_pic_path = ${profilePicPath}, updated_at = NOW()
-      WHERE id = ${crewId}::UUID
-      RETURNING profile_pic_path AS "profilePicPath"
+      SET
+        profile_pic_path = ${profilePicPath},
+        updated_at = NOW()
+      WHERE
+        id = ${crewId}::UUID
+      RETURNING
+        profile_pic_path AS "profilePicPath"
     `;
   }
 

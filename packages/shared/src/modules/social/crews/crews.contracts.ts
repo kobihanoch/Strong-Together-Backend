@@ -28,6 +28,28 @@ export type ListCrewsQuery = QueryOf<typeof listCrewsContract>;
 /** Response returned when listing crews visible to the caller. */
 export type ListCrewsResponse = ResponseOf<typeof listCrewsContract>;
 
+// List my crews
+
+/** Validates pagination for crews in which the authenticated user is an active member. */
+export const listMyCrewsRequestSchema = z.object({
+  query: z.object({
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    cursor: z.string().min(1).optional(),
+  }),
+});
+
+/** Validates the authenticated user's crew collection. */
+export const listMyCrewsResponseSchema = listCrewsResponseSchema;
+
+/** Defines the request and response contract for listing the authenticated user's crews. */
+export const listMyCrewsContract = { request: listMyCrewsRequestSchema, response: listMyCrewsResponseSchema } satisfies Contract;
+
+/** Pagination query accepted by the list-my-crews endpoint. */
+export type ListMyCrewsQuery = QueryOf<typeof listMyCrewsContract>;
+
+/** Response containing crews in which the authenticated user is an active member. */
+export type ListMyCrewsResponse = ResponseOf<typeof listMyCrewsContract>;
+
 // List crew participants
 
 /** Validates the crew identifier and pagination for listing participants. */

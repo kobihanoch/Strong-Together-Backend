@@ -1,5 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import type { CreateCrewBody, CrewWithParticipantCountQueryDto, ListCrewParticipantsResponse, ListCrewsResponse, ReplaceCrewProfilePictureResponse, UpdateCrewBody } from '@strong-together/shared';
+import type {
+  CreateCrewBody,
+  CrewWithParticipantCountQueryDto,
+  ListCrewParticipantsResponse,
+  ListCrewsResponse,
+  ListMyCrewsResponse,
+  ReplaceCrewProfilePictureResponse,
+  UpdateCrewBody,
+} from '@strong-together/shared';
 import mime from 'mime';
 import path from 'path';
 import { supabaseConfig } from '../../../config/storage.config';
@@ -25,6 +33,20 @@ export class CrewsService {
    */
   async listCrewsData(limit: number, cursor?: string, search?: string): Promise<ListCrewsResponse> {
     const rows = await this.queries.queryCrews(limit, decodeSocialCursor(cursor), search);
+    const crews = rows.slice(0, limit);
+    const last = crews.at(-1);
+    return { crews, nextCursor: rows.length > limit && last ? encodeSocialCursor({ timestamp: last.createdAt, id: last.id }) : null };
+  }
+
+  /**
+   * Lists crews in which the caller has an active membership.
+   *
+   * @param limit - The maximum number of crews to return.
+   * @param cursor - The opaque cursor returned by the preceding page.
+   * @returns The caller's crews using the discoverable-crew response shape.
+   */
+  async listMyCrewsData(limit: number, cursor?: string): Promise<ListMyCrewsResponse> {
+    const rows = await this.queries.queryMyCrews(limit, decodeSocialCursor(cursor));
     const crews = rows.slice(0, limit);
     const last = crews.at(-1);
     return { crews, nextCursor: rows.length > limit && last ? encodeSocialCursor({ timestamp: last.createdAt, id: last.id }) : null };

@@ -207,6 +207,22 @@ describe('PostsController', () => {
     const crew = await createCrew(leader.accessToken, leader.userId);
 
     await createPost(leader.accessToken, { content: 'Public crew update', visibility: 'public', crewIds: [crew.id] });
+    const post = await getPostByAuthorId(leader.userId);
+    await request(app.getHttpServer())
+      .post(`/api/social/posts/${post!.id}/comments`)
+      .set(authHeaders(outsider.accessToken))
+      .send({ content: 'Great work' })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post(`/api/social/posts/${post!.id}/reactions`)
+      .set(authHeaders(outsider.accessToken))
+      .send({ type: 'like' })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post(`/api/social/posts/${post!.id}/reactions`)
+      .set(authHeaders(leader.accessToken))
+      .send({ type: 'muscle' })
+      .expect(201);
 
     const response = await request(app.getHttpServer()).get('/api/social/posts').query({ limit: 20 }).set(authHeaders(outsider.accessToken));
 
@@ -218,6 +234,8 @@ describe('PostsController', () => {
       authorUserId: leader.userId,
       username: expect.any(String),
       fullName: expect.any(String),
+      likeCount: 1,
+      commentCount: 1,
     });
     expect(returnedPost).toHaveProperty('profilePicPath');
     expect(returnedPost).not.toHaveProperty('crewId');
