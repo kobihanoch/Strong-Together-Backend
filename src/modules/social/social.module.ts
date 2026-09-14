@@ -22,10 +22,21 @@ import { ReactionsService } from './posts/reactions/reactions.service';
 import { SocialUsersController } from './users/social-users.controller';
 import { SocialUsersQueries } from './users/social-users.queries';
 import { SocialUsersService } from './users/social-users.service';
+import { SocialSummaryController } from './summary/social-summary.controller';
+import { SocialSummaryQueries } from './summary/social-summary.queries';
+import { SocialSummaryService } from './summary/social-summary.service';
 
 @Module({
   imports: [SupabaseModule],
-  controllers: [CrewRequestsController, CrewsController, PostsController, ReactionsController, CommentsController, SocialUsersController],
+  controllers: [
+    CrewRequestsController,
+    CrewsController,
+    PostsController,
+    ReactionsController,
+    CommentsController,
+    SocialUsersController,
+    SocialSummaryController,
+  ],
   providers: [
     CrewsQueries,
     CrewsService,
@@ -39,6 +50,8 @@ import { SocialUsersService } from './users/social-users.service';
     ReactionsService,
     SocialUsersQueries,
     SocialUsersService,
+    SocialSummaryQueries,
+    SocialSummaryService,
     DpopGuard,
     AuthenticationGuard,
     AuthorizationGuard,

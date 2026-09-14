@@ -3923,12 +3923,28 @@ var deleteReactionContract = {
   response: deleteReactionResponseSchema
 };
 
+// src/modules/social/summary/social-summary.contracts.ts
+import { z as z45 } from "zod/v4";
+var socialSummaryParticipantPreviewSchema = z45.object({
+  userId: userDbSchema.shape.id,
+  username: userDbSchema.shape.username,
+  fullName: userDbSchema.shape.name,
+  profilePicPath: userDbSchema.shape.profilePicPath
+});
+var getSocialSummaryResponseSchema = z45.object({
+  activeCrewCount: z45.number().int().nonnegative(),
+  participantPreviews: socialSummaryParticipantPreviewSchema.array().max(3)
+});
+var getSocialSummaryContract = {
+  response: getSocialSummaryResponseSchema
+};
+
 // src/modules/social/users/social-users.contracts.ts
-import { z as z46 } from "zod/v4";
+import { z as z47 } from "zod/v4";
 
 // src/modules/social/users/social-users.dtos.ts
-import { z as z45 } from "zod/v4";
-var socialUserQueryDtoSchema = z45.object({
+import { z as z46 } from "zod/v4";
+var socialUserQueryDtoSchema = z46.object({
   userId: userDbSchema.shape.id,
   username: userDbSchema.shape.username,
   fullName: userDbSchema.shape.name,
@@ -3937,23 +3953,23 @@ var socialUserQueryDtoSchema = z45.object({
 });
 
 // src/modules/social/users/social-users.contracts.ts
-var searchSocialUsersRequestSchema = z46.object({
-  query: z46.object({
-    search: z46.string().trim().min(1).max(50),
-    limit: z46.coerce.number().int().min(1).max(100).default(20),
-    cursor: z46.string().min(1).optional()
+var searchSocialUsersRequestSchema = z47.object({
+  query: z47.object({
+    search: z47.string().trim().min(1).max(50),
+    limit: z47.coerce.number().int().min(1).max(100).default(20),
+    cursor: z47.string().min(1).optional()
   })
 });
-var searchSocialUsersResponseSchema = z46.object({
-  users: z46.array(socialUserQueryDtoSchema),
-  nextCursor: z46.string().nullable()
+var searchSocialUsersResponseSchema = z47.object({
+  users: z47.array(socialUserQueryDtoSchema),
+  nextCursor: z47.string().nullable()
 });
 var searchSocialUsersContract = {
   request: searchSocialUsersRequestSchema,
   response: searchSocialUsersResponseSchema
 };
-var getSocialUserRequestSchema = z46.object({
-  params: z46.object({
+var getSocialUserRequestSchema = z47.object({
+  params: z47.object({
     userId: userDbSchema.shape.id
   })
 });
@@ -4093,6 +4109,8 @@ export {
   getPersonalRecordsResponseSchema,
   getReminderSettingsContract,
   getReminderSettingsResponseSchema,
+  getSocialSummaryContract,
+  getSocialSummaryResponseSchema,
   getSocialUserContract,
   getSocialUserRequestSchema,
   getSocialUserResponseSchema,
@@ -4210,6 +4228,7 @@ export {
   searchSocialUsersRequestSchema,
   searchSocialUsersResponseSchema,
   serializedDateSchema,
+  socialSummaryParticipantPreviewSchema,
   socialUserQueryDtoSchema,
   squatRepetitionDtoSchema,
   timezoneSchema,
