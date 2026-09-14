@@ -382,12 +382,22 @@ describe('CrewsController', () => {
     expect(response.body.profilePicPath).toMatch(new RegExp(`/${crew.id}/.+\\.png$`));
     expect(await getCrewById(crew.id)).toMatchObject({ profile_pic_path: response.body.profilePicPath });
 
+    const forbiddenDelete = await request(app.getHttpServer())
+      .delete(`/api/social/crews/${crew.id}/profile-picture`)
+      .set(authHeaders(outsider.accessToken));
+    expect(forbiddenDelete.status).toBe(404);
+
     const deleted = await request(app.getHttpServer())
       .delete(`/api/social/crews/${crew.id}/profile-picture`)
       .set(authHeaders(leader.accessToken));
 
     expect(deleted.status).toBe(204);
     expect(await getCrewById(crew.id)).toMatchObject({ profile_pic_path: null });
+
+    const alreadyDeleted = await request(app.getHttpServer())
+      .delete(`/api/social/crews/${crew.id}/profile-picture`)
+      .set(authHeaders(leader.accessToken));
+    expect(alreadyDeleted.status).toBe(404);
   });
 
   it('a crew leader without an active membership cannot manage the crew', async () => {
