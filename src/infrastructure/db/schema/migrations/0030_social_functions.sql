@@ -11,8 +11,10 @@ $function$;
 
 --> statement-breakpoint
 CREATE OR REPLACE FUNCTION social.is_crew_leader (crew_id_in UUID) RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER
-SET search_path TO 'pg_catalog'
-SET row_security TO 'off' AS $function$
+SET
+  search_path TO 'pg_catalog'
+SET
+  row_security TO 'off' AS $function$
   SELECT EXISTS (
     SELECT 1
     FROM social.crew c
@@ -86,11 +88,13 @@ SET
 $function$;
 
 --> statement-breakpoint
-CREATE OR REPLACE FUNCTION social.has_accepted_crew_participation_request (crew_id_in UUID, user_id_in UUID)
-RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER
-SET search_path = pg_catalog, social, identity
-SET row_security = off
-AS $function$
+CREATE OR REPLACE FUNCTION social.has_accepted_crew_participation_request (crew_id_in UUID, user_id_in UUID) RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER
+SET
+  search_path = pg_catalog,
+  social,
+  identity
+SET
+  row_security = off AS $function$
   SELECT EXISTS (
     SELECT 1 FROM social.crew_participation_request request
     WHERE request.crew_id = crew_id_in
@@ -129,10 +133,23 @@ END;
 $function$;
 
 --> statement-breakpoint
+CREATE OR REPLACE FUNCTION social.get_active_crew_participant_count (crew_id_in UUID) RETURNS INTEGER LANGUAGE sql STABLE SECURITY DEFINER
+SET
+  search_path TO 'pg_catalog'
+SET
+  row_security TO 'off' AS $function$
+  SELECT COUNT(*)::INTEGER
+  FROM social.crew_membership cm
+  WHERE cm.crew_id = crew_id_in
+    AND cm.status = 'active'
+$function$;
+
+--> statement-breakpoint
 CREATE OR REPLACE FUNCTION social.list_discoverable_crews (
   limit_in INTEGER,
-  cursor_created_at_in TIMESTAMP WITH TIME ZONE DEFAULT NULL::TIMESTAMP WITH TIME ZONE,
-  cursor_id_in UUID DEFAULT NULL::UUID
+  cursor_created_at_in TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+  cursor_id_in UUID DEFAULT NULL,
+  search_in TEXT DEFAULT NULL
 ) RETURNS TABLE (
   id UUID,
   name TEXT,
@@ -140,6 +157,7 @@ CREATE OR REPLACE FUNCTION social.list_discoverable_crews (
   privacy social."Crew Privacy",
   "createdAt" TIMESTAMP WITH TIME ZONE,
   "updatedAt" TIMESTAMP WITH TIME ZONE,
+  "participantCount" INTEGER,
   "top5Participants" JSONB
 ) LANGUAGE sql STABLE SECURITY DEFINER
 SET
@@ -151,6 +169,7 @@ SET
     c.privacy,
     c.created_at AS "createdAt",
     c.updated_at AS "updatedAt",
+    social.get_active_crew_participant_count(c.id) AS "participantCount",
     COALESCE(participants.items, '[]'::JSONB) AS "top5Participants"
   FROM social.crew c
   LEFT JOIN LATERAL (
@@ -175,18 +194,55 @@ SET
         ) AS rank_order
       FROM social.crew_membership cm
       JOIN identity."user" u ON u.id = cm.user_id
-      WHERE cm.crew_id = c.id AND cm.status = 'active'
+      WHERE cm.crew_id = c.id
+        AND cm.status = 'active'
+        AND (c.privacy = 'public' OR social.is_active_crew_member(c.id))
       ORDER BY rank_order
       LIMIT 5
     ) ranked
   ) participants ON TRUE
-  WHERE
-    identity.current_user_id() IS NOT NULL
+  WHERE identity.current_user_id() IS NOT NULL
+    AND (search_in IS NULL OR STRPOS(LOWER(c.name), LOWER(search_in)) > 0)
     AND (
       cursor_created_at_in IS NULL
       OR (DATE_TRUNC('milliseconds', c.created_at), c.id) < (cursor_created_at_in, cursor_id_in)
     )
   ORDER BY DATE_TRUNC('milliseconds', c.created_at) DESC, c.id DESC
+  LIMIT LEAST(GREATEST(COALESCE(limit_in, 20), 1), 101)
+$function$;
+
+--> statement-breakpoint
+CREATE FUNCTION identity.search_user_profiles (
+  search_in TEXT,
+  limit_in INTEGER,
+  cursor_created_at_in TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+  cursor_id_in UUID DEFAULT NULL
+) RETURNS TABLE (
+  "userId" UUID,
+  username TEXT,
+  "fullName" TEXT,
+  "profilePicPath" TEXT,
+  "createdAt" TIMESTAMP WITH TIME ZONE
+) LANGUAGE sql STABLE SECURITY DEFINER
+SET
+  search_path TO 'pg_catalog' AS $function$
+  SELECT
+    u.id AS "userId",
+    u.username,
+    u.name AS "fullName",
+    u.profile_pic_path AS "profilePicPath",
+    u.created_at AS "createdAt"
+  FROM identity."user" u
+  WHERE identity.current_user_id() IS NOT NULL
+    AND (
+      STRPOS(LOWER(u.username), LOWER(search_in)) > 0
+      OR STRPOS(LOWER(u.name), LOWER(search_in)) > 0
+    )
+    AND (
+      cursor_created_at_in IS NULL
+      OR (DATE_TRUNC('milliseconds', u.created_at), u.id) < (cursor_created_at_in, cursor_id_in)
+    )
+  ORDER BY DATE_TRUNC('milliseconds', u.created_at) DESC, u.id DESC
   LIMIT LEAST(GREATEST(COALESCE(limit_in, 20), 1), 101)
 $function$;
 
@@ -198,7 +254,9 @@ REVOKE ALL ON FUNCTION "social"."is_crew_public" (UUID),
 "social"."is_post_author" (UUID),
 "social"."is_crew_admin" (UUID),
 "social"."has_accepted_crew_participation_request" (UUID, UUID),
-"social"."list_discoverable_crews" (INTEGER, TIMESTAMP WITH TIME ZONE, UUID)
+"social"."get_active_crew_participant_count" (UUID),
+"social"."list_discoverable_crews" (INTEGER, TIMESTAMP WITH TIME ZONE, UUID, TEXT),
+"identity"."search_user_profiles" (TEXT, INTEGER, TIMESTAMP WITH TIME ZONE, UUID)
 FROM
   PUBLIC;
 
@@ -211,7 +269,9 @@ EXECUTE ON FUNCTION "social"."is_crew_public" (UUID),
 "social"."is_post_author" (UUID),
 "social"."is_crew_admin" (UUID),
 "social"."has_accepted_crew_participation_request" (UUID, UUID),
-"social"."list_discoverable_crews" (INTEGER, TIMESTAMP WITH TIME ZONE, UUID) TO "authenticated";
+"social"."get_active_crew_participant_count" (UUID),
+"social"."list_discoverable_crews" (INTEGER, TIMESTAMP WITH TIME ZONE, UUID, TEXT),
+"identity"."search_user_profiles" (TEXT, INTEGER, TIMESTAMP WITH TIME ZONE, UUID) TO "authenticated";
 
 --> statement-breakpoint
 CREATE TRIGGER "delete_exclusive_crew_posts_before_crew_delete"
