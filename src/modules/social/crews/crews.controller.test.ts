@@ -208,6 +208,7 @@ describe('CrewsController', () => {
     expectSchema(listCrewsResponseSchema, response.body);
     expect(response.body.crews).toHaveLength(1);
     expect(response.body.crews[0].top5Participants.length).toBeLessThanOrEqual(5);
+    expect(response.body.crews[0].participantCount).toBeGreaterThanOrEqual(response.body.crews[0].top5Participants.length);
     expect(response.body.crews[0].top5Participants[0]).toEqual({
       username: leader.username,
       fullName: 'Controller Test User',
@@ -286,6 +287,7 @@ describe('CrewsController', () => {
 
     expect(response.status).toBe(200);
     expectSchema(getCrewResponseSchema, response.body);
+    expect(response.body.participantCount).toBeGreaterThanOrEqual(1);
     expect(response.body).toMatchObject({ id: crew.id, leaderId: leader.userId, privacy: 'private' });
   });
 

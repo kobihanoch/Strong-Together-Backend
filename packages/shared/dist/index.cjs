@@ -78,6 +78,7 @@ __export(index_exports, {
   crewParticipationRequestQueryDtoSchema: () => crewParticipationRequestQueryDtoSchema,
   crewQueryDtoSchema: () => crewQueryDtoSchema,
   crewSuccessorQueryDtoSchema: () => crewSuccessorQueryDtoSchema,
+  crewWithParticipantCountQueryDtoSchema: () => crewWithParticipantCountQueryDtoSchema,
   deleteAerobicEntryContract: () => deleteAerobicEntryContract,
   deleteAerobicEntryRequestSchema: () => deleteAerobicEntryRequestSchema,
   deleteCommentContract: () => deleteCommentContract,
@@ -3812,12 +3813,15 @@ var crewQueryDtoSchema = crewDbSchema.omit({
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema
 });
+var crewWithParticipantCountQueryDtoSchema = crewQueryDtoSchema.extend({
+  participantCount: import_v436.z.number().int().nonnegative()
+});
 var crewParticipantPreviewQueryDtoSchema = import_v436.z.object({
   username: userDbSchema.shape.username,
   fullName: userDbSchema.shape.name,
   profilePicPath: userDbSchema.shape.profilePicPath
 });
-var discoverableCrewQueryDtoSchema = crewQueryDtoSchema.extend({
+var discoverableCrewQueryDtoSchema = crewWithParticipantCountQueryDtoSchema.extend({
   top5Participants: crewParticipantPreviewQueryDtoSchema.array()
 });
 var crewParticipantQueryDtoSchema = crewMembershipDbSchema.extend({
@@ -3885,7 +3889,7 @@ var listCrewParticipantsContract = {
 var getCrewRequestSchema = import_v437.z.object({
   params: crewIdParamsSchema
 });
-var getCrewResponseSchema = crewQueryDtoSchema;
+var getCrewResponseSchema = crewWithParticipantCountQueryDtoSchema;
 var getCrewContract = {
   request: getCrewRequestSchema,
   response: getCrewResponseSchema
@@ -4024,7 +4028,10 @@ var postQueryDtoSchema = postDbSchema.omit({
   updateddAt: true
 }).extend({
   publishedAt: serializedDateSchema,
-  updatedAt: serializedDateSchema
+  updatedAt: serializedDateSchema,
+  username: userDbSchema.shape.username,
+  fullName: userDbSchema.shape.name,
+  profilePicPath: userDbSchema.shape.profilePicPath
 });
 var deletedPostQueryDtoSchema = import_v439.z.object({
   id: postDbSchema.shape.id
@@ -4333,6 +4340,7 @@ var getSocialUserContract = {
   crewParticipationRequestQueryDtoSchema,
   crewQueryDtoSchema,
   crewSuccessorQueryDtoSchema,
+  crewWithParticipantCountQueryDtoSchema,
   deleteAerobicEntryContract,
   deleteAerobicEntryRequestSchema,
   deleteCommentContract,

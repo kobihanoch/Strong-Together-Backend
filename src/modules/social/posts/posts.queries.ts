@@ -23,9 +23,13 @@ export class PostsQueries {
         p.content,
         p.visibility,
         p.published_at AS "publishedAt",
-        p.updated_at AS "updatedAt"
+        p.updated_at AS "updatedAt",
+        author.username,
+        author.name AS "fullName",
+        author."profilePicPath" AS "profilePicPath"
       FROM
         social.post p
+        CROSS JOIN LATERAL identity.get_user_profile (p.author_user_id) author
       WHERE
         ${cursor?.timestamp ?? null}::TIMESTAMPTZ IS NULL
         OR (DATE_TRUNC('milliseconds', p.published_at), p.id) < (
@@ -56,9 +60,13 @@ export class PostsQueries {
         p.content,
         p.visibility,
         p.published_at AS "publishedAt",
-        p.updated_at AS "updatedAt"
+        p.updated_at AS "updatedAt",
+        author.username,
+        author.name AS "fullName",
+        author."profilePicPath" AS "profilePicPath"
       FROM
         social.post p
+        CROSS JOIN LATERAL identity.get_user_profile (p.author_user_id) author
         INNER JOIN social.crew_shared_post csp ON csp.post_id = p.id
       WHERE
         csp.crew_id = ${crewId}::UUID
@@ -86,8 +94,13 @@ export class PostsQueries {
    * @param crewIds - The UUIDs of the crews receiving the post.
    * @returns The new post, or an empty array when any placement is unauthorized.
    */
-  async queryCreatePost(userId: string, content: string, visibility: 'crews_only' | 'public', crewIds: string[]): Promise<PostQueryDto[]> {
-    const [post] = await this.sql<PostQueryDto[]>`
+  async queryCreatePost(
+    userId: string,
+    content: string,
+    visibility: 'crews_only' | 'public',
+    crewIds: string[],
+  ): Promise<Omit<PostQueryDto, 'username' | 'fullName' | 'profilePicPath'>[]> {
+    const [post] = await this.sql<(Omit<PostQueryDto, 'username' | 'fullName' | 'profilePicPath'>)[]>`
       INSERT INTO
         social.post (author_user_id, content, visibility)
       VALUES

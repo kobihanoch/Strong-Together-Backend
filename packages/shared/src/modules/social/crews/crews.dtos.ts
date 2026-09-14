@@ -8,6 +8,11 @@ export const crewQueryDtoSchema = crewDbSchema.omit({ profilePicPath: true }).ex
   updatedAt: serializedDateSchema,
 });
 
+/** Runtime schema for a crew returned with its active participant total. */
+export const crewWithParticipantCountQueryDtoSchema = crewQueryDtoSchema.extend({
+  participantCount: z.number().int().nonnegative(),
+});
+
 /** Runtime schema for the limited participant preview shown during crew discovery. */
 export const crewParticipantPreviewQueryDtoSchema = z.object({
   username: userDbSchema.shape.username,
@@ -16,7 +21,7 @@ export const crewParticipantPreviewQueryDtoSchema = z.object({
 });
 
 /** Runtime schema for a discoverable crew and its five-participant preview. */
-export const discoverableCrewQueryDtoSchema = crewQueryDtoSchema.extend({
+export const discoverableCrewQueryDtoSchema = crewWithParticipantCountQueryDtoSchema.extend({
   top5Participants: crewParticipantPreviewQueryDtoSchema.array(),
 });
 
@@ -52,6 +57,9 @@ export const crewSuccessorQueryDtoSchema = z.object({
 
 /** Typed crew row returned by crew SELECT, INSERT, and UPDATE queries. */
 export type CrewQueryDto = typeof crewQueryDtoSchema._output;
+
+/** Typed crew row returned with its active participant total. */
+export type CrewWithParticipantCountQueryDto = typeof crewWithParticipantCountQueryDtoSchema._output;
 
 /** Public participant information included in a crew discovery result. */
 export type CrewParticipantPreviewQueryDto = typeof crewParticipantPreviewQueryDtoSchema._output;
