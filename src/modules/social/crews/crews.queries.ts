@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type {
   CrewParticipantQueryDto,
   CrewQueryDto,
+  CrewWithParticipantCountQueryDto,
   DeletedCrewQueryDto,
   DiscoverableCrewQueryDto,
   CrewSuccessorQueryDto,
@@ -115,15 +116,16 @@ export class CrewsQueries {
    * @param id - The UUID of the crew to retrieve.
    * @returns An array containing the matching crew, or an empty array.
    */
-  async queryCrew(id: string): Promise<CrewQueryDto[]> {
-    return this.sql<CrewQueryDto[]>`
+  async queryCrew(id: string): Promise<CrewWithParticipantCountQueryDto[]> {
+    return this.sql<CrewWithParticipantCountQueryDto[]>`
       SELECT
         id,
         name,
         leader_id AS "leaderId",
         privacy,
         created_at AS "createdAt",
-        updated_at AS "updatedAt"
+        updated_at AS "updatedAt",
+        social.get_active_crew_participant_count(c.id) AS "participantCount"
       FROM
         social.crew c
       WHERE

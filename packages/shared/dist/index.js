@@ -3483,12 +3483,15 @@ var crewQueryDtoSchema = crewDbSchema.omit({
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema
 });
+var crewWithParticipantCountQueryDtoSchema = crewQueryDtoSchema.extend({
+  participantCount: z36.number().int().nonnegative()
+});
 var crewParticipantPreviewQueryDtoSchema = z36.object({
   username: userDbSchema.shape.username,
   fullName: userDbSchema.shape.name,
   profilePicPath: userDbSchema.shape.profilePicPath
 });
-var discoverableCrewQueryDtoSchema = crewQueryDtoSchema.extend({
+var discoverableCrewQueryDtoSchema = crewWithParticipantCountQueryDtoSchema.extend({
   top5Participants: crewParticipantPreviewQueryDtoSchema.array()
 });
 var crewParticipantQueryDtoSchema = crewMembershipDbSchema.extend({
@@ -3556,7 +3559,7 @@ var listCrewParticipantsContract = {
 var getCrewRequestSchema = z37.object({
   params: crewIdParamsSchema
 });
-var getCrewResponseSchema = crewQueryDtoSchema;
+var getCrewResponseSchema = crewWithParticipantCountQueryDtoSchema;
 var getCrewContract = {
   request: getCrewRequestSchema,
   response: getCrewResponseSchema
@@ -3695,7 +3698,10 @@ var postQueryDtoSchema = postDbSchema.omit({
   updateddAt: true
 }).extend({
   publishedAt: serializedDateSchema,
-  updatedAt: serializedDateSchema
+  updatedAt: serializedDateSchema,
+  username: userDbSchema.shape.username,
+  fullName: userDbSchema.shape.name,
+  profilePicPath: userDbSchema.shape.profilePicPath
 });
 var deletedPostQueryDtoSchema = z39.object({
   id: postDbSchema.shape.id
@@ -4003,6 +4009,7 @@ export {
   crewParticipationRequestQueryDtoSchema,
   crewQueryDtoSchema,
   crewSuccessorQueryDtoSchema,
+  crewWithParticipantCountQueryDtoSchema,
   deleteAerobicEntryContract,
   deleteAerobicEntryRequestSchema,
   deleteCommentContract,

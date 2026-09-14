@@ -1,7 +1,7 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, ParamsOf, QueryOf, ResponseOf } from '../../../common';
 import { crewDbSchema } from '../../../database';
-import { crewParticipantQueryDtoSchema, crewQueryDtoSchema, discoverableCrewQueryDtoSchema } from './crews.dtos';
+import { crewParticipantQueryDtoSchema, crewWithParticipantCountQueryDtoSchema, discoverableCrewQueryDtoSchema } from './crews.dtos';
 
 const crewIdParamsSchema = z.object({ id: crewDbSchema.shape.id });
 
@@ -66,7 +66,7 @@ export type ListCrewParticipantsResponse = ResponseOf<typeof listCrewParticipant
 export const getCrewRequestSchema = z.object({ params: crewIdParamsSchema });
 
 /** Validates the crew returned by the get-crew endpoint. */
-export const getCrewResponseSchema = crewQueryDtoSchema;
+export const getCrewResponseSchema = crewWithParticipantCountQueryDtoSchema;
 
 /** Defines the request and response contract for retrieving one crew. */
 export const getCrewContract = { request: getCrewRequestSchema, response: getCrewResponseSchema } satisfies Contract;

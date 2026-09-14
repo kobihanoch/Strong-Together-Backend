@@ -1,11 +1,14 @@
 import { z } from 'zod/v4';
 import { serializedDateSchema } from '../../../common';
-import { postDbSchema } from '../../../database';
+import { postDbSchema, userDbSchema } from '../../../database';
 
 /** Runtime schema for a post row and its audience visibility. */
 export const postQueryDtoSchema = postDbSchema.omit({ updateddAt: true }).extend({
   publishedAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
+  username: userDbSchema.shape.username,
+  fullName: userDbSchema.shape.name,
+  profilePicPath: userDbSchema.shape.profilePicPath,
 });
 
 /** Runtime schema for a post deletion result. */

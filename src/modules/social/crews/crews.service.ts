@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import type { CreateCrewBody, CrewQueryDto, ListCrewParticipantsResponse, ListCrewsResponse, ReplaceCrewProfilePictureResponse, UpdateCrewBody } from '@strong-together/shared';
+import type { CreateCrewBody, CrewWithParticipantCountQueryDto, ListCrewParticipantsResponse, ListCrewsResponse, ReplaceCrewProfilePictureResponse, UpdateCrewBody } from '@strong-together/shared';
 import mime from 'mime';
 import path from 'path';
 import { supabaseConfig } from '../../../config/storage.config';
@@ -60,7 +60,7 @@ export class CrewsService {
    * @returns The matching crew.
    * @throws NotFoundException when the query returns no visible crew.
    */
-  async getCrewData(id: string): Promise<CrewQueryDto> {
+  async getCrewData(id: string): Promise<CrewWithParticipantCountQueryDto> {
     const [row] = await this.queries.queryCrew(id);
     if (!row) throw new NotFoundException('Crew not found');
     return row;

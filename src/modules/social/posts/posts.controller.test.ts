@@ -213,7 +213,14 @@ describe('PostsController', () => {
     expect(response.status).toBe(200);
     expectSchema(listVisiblePostsResponseSchema, response.body);
     expect(response.body.posts).toEqual(expect.arrayContaining([expect.objectContaining({ content: 'Public crew update', visibility: 'public' })]));
-    expect(response.body.posts.find((post: { content: string }) => post.content === 'Public crew update')).not.toHaveProperty('crewId');
+    const returnedPost = response.body.posts.find((post: { content: string }) => post.content === 'Public crew update');
+    expect(returnedPost).toMatchObject({
+      authorUserId: leader.userId,
+      username: expect.any(String),
+      fullName: expect.any(String),
+    });
+    expect(returnedPost).toHaveProperty('profilePicPath');
+    expect(returnedPost).not.toHaveProperty('crewId');
   });
 
   it('GET /api/social/posts continues from the returned cursor without repeating posts', async () => {
