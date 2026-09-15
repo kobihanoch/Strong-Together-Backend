@@ -58,7 +58,7 @@ BEGIN
       0,
       true,
       'app',
-      NULL,
+      'profile-pics/f1eec8b0-06cf-4cda-b3e9-1df82c8a0a7d/avatar.png',
       NULL,
       now()
     ),
@@ -74,7 +74,7 @@ BEGIN
       0,
       true,
       'app',
-      NULL,
+      'profile-pics/9b31d67c-0a5a-4f56-a0fd-7db2a50d8a01/avatar.png',
       NULL,
       now()
     ),
@@ -90,15 +90,15 @@ BEGIN
       0,
       true,
       'app',
-      NULL,
+      'profile-pics/83d44360-8d7d-4a26-8457-7f3e4f8414b1/avatar.png',
       NULL,
       now()
     ),
     (
       full_seed_user_id,
-      'u3',
-      'u3@example.com',
-      'Seed Plan Tracking Aerobics',
+      'johndoe',
+      'john.doe@example.com',
+      'John Doe',
       'Other',
       password_hash,
       'User',
@@ -106,7 +106,7 @@ BEGIN
       0,
       true,
       'app',
-      NULL,
+      'profile-pics/ec554122-8ed7-4655-b646-7eadb76fa9e4/avatar.png',
       NULL,
       now()
     ),
@@ -122,7 +122,7 @@ BEGIN
       0,
       true,
       'app',
-      NULL,
+      'profile-pics/4d4489b6-7057-4a47-b506-06cdf4e23a44/avatar.png',
       NULL,
       now()
     ),
@@ -138,7 +138,7 @@ BEGIN
       0,
       true,
       'app',
-      NULL,
+      'profile-pics/55a1d718-482b-4c17-8f45-246af142e505/avatar.png',
       NULL,
       now()
     );
