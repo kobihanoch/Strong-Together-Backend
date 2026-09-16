@@ -18,7 +18,7 @@ import { expectSchema } from '../../../common/tests/helpers/assert-schema';
 import {
   crewExists,
   getCrewById,
-  getCrewByLeaderId,
+  getCrewByCreatedBy,
   getCrewMembership,
   getCrewParticipationRequest,
   getPostByAuthorId,
@@ -46,13 +46,13 @@ async function crewUser(prefix: string) {
   return user;
 }
 
-async function createCrew(accessToken: string, leaderId: string, privacy: 'public' | 'private' = 'public', name = 'Test Crew') {
+async function createCrew(accessToken: string, createdBy: string, privacy: 'public' | 'private' = 'public', name = 'Test Crew') {
   const response = await request(app.getHttpServer()).post('/api/social/crews').set(authHeaders(accessToken)).send({ name, privacy });
 
   expect(response.status).toBe(201);
   expect(response.text).toBe('');
 
-  const crew = await getCrewByLeaderId(leaderId);
+  const crew = await getCrewByCreatedBy(createdBy);
   expect(crew).not.toBeNull();
   return crew!;
 }
@@ -218,7 +218,7 @@ describe('CrewsController', () => {
     const leader = await crewUser('crew_create');
     const crew = await createCrew(leader.accessToken, leader.userId, 'private');
 
-    expect(crew).toMatchObject({ leader_id: leader.userId, privacy: 'private' });
+    expect(crew).toMatchObject({ created_by: leader.userId, privacy: 'private' });
     expect(await crewExists(crew.id)).toBe(true);
   });
 
@@ -330,7 +330,7 @@ describe('CrewsController', () => {
     expect(response.status).toBe(200);
     expectSchema(getCrewResponseSchema, response.body);
     expect(response.body.participantCount).toBeGreaterThanOrEqual(1);
-    expect(response.body).toMatchObject({ id: crew.id, leaderId: leader.userId, privacy: 'private' });
+    expect(response.body).toMatchObject({ id: crew.id, createdBy: leader.userId, privacy: 'private' });
   });
 
   it('GET /api/social/crews/:crewId/participants exposes public crews and paginates active memberships', async () => {
@@ -400,7 +400,7 @@ describe('CrewsController', () => {
     expect(forbidden.status).toBe(404);
     expect(updated.status).toBe(204);
     expect(updated.text).toBe('');
-    expect(await getCrewByLeaderId(leader.userId)).toMatchObject({ privacy: 'private' });
+    expect(await getCrewByCreatedBy(leader.userId)).toMatchObject({ privacy: 'private' });
   });
 
   /** Verifies only the active leader can upload a crew-scoped profile picture. */
@@ -453,7 +453,7 @@ describe('CrewsController', () => {
       .send({ name: 'Updated Crew', privacy: 'private' });
 
     expect(response.status).toBe(404);
-    expect(await getCrewByLeaderId(leader.userId)).toMatchObject({ privacy: 'public' });
+    expect(await getCrewByCreatedBy(leader.userId)).toMatchObject({ privacy: 'public' });
   });
 
   it('POST /api/social/crews/:id/leave marks a regular member as left', async () => {
@@ -467,7 +467,7 @@ describe('CrewsController', () => {
     expect(response.status, JSON.stringify(response.body)).toBe(204);
     expect(response.text).toBe('');
     expect(await getCrewMembership(crew.id, member.userId)).toMatchObject({ status: 'left', role: 'member' });
-    expect(await getCrewById(crew.id)).toMatchObject({ leader_id: leader.userId });
+    expect(await getCrewById(crew.id)).toMatchObject({ created_by: leader.userId });
   });
 
   it('POST leave transfers leadership to participant number two before the leader leaves', async () => {
@@ -481,7 +481,7 @@ describe('CrewsController', () => {
     const response = await request(app.getHttpServer()).post(`/api/social/crews/${crew.id}/leave`).set(authHeaders(leader.accessToken));
 
     expect(response.status).toBe(204);
-    expect(await getCrewById(crew.id)).toMatchObject({ leader_id: successor.userId });
+    expect(await getCrewById(crew.id)).toMatchObject({ created_by: leader.userId });
     expect(await getCrewMembership(crew.id, successor.userId)).toMatchObject({ status: 'active', role: 'leader' });
     expect(await getCrewMembership(crew.id, leader.userId)).toMatchObject({ status: 'left', role: 'member' });
   });

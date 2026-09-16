@@ -428,16 +428,16 @@ export async function hasReminderSettings(userId: string) {
   return Number(row?.count ?? '0') > 0;
 }
 
-export async function getCrewByLeaderId(leaderId: string) {
-  const [row] = await sql<{ id: string; leader_id: string; privacy: 'public' | 'private' }[]>`
+export async function getCrewByCreatedBy(createdBy: string) {
+  const [row] = await sql<{ id: string; created_by: string; privacy: 'public' | 'private' }[]>`
     SELECT
       id,
-      leader_id,
+      created_by,
       privacy
     FROM
       social.crew
     WHERE
-      leader_id = ${leaderId}::UUID
+      created_by = ${createdBy}::UUID
     ORDER BY
       created_at DESC
     LIMIT
@@ -465,10 +465,10 @@ export async function crewExists(crewId: string) {
 
 /** Returns a crew by ID for leadership-transfer assertions. */
 export async function getCrewById(crewId: string) {
-  const [row] = await sql<{ id: string; leader_id: string; privacy: 'public' | 'private'; profile_pic_path: string | null }[]>`
+  const [row] = await sql<{ id: string; created_by: string; privacy: 'public' | 'private'; profile_pic_path: string | null }[]>`
     SELECT
       id,
-      leader_id,
+      created_by,
       privacy,
       profile_pic_path
     FROM

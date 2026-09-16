@@ -51,7 +51,7 @@ CREATE POLICY "Allow leaders and accepted participant to create memberships" ON 
         "social"."crew" c
       WHERE
         c."id" = "social"."crew_membership"."crew_id"
-        AND c."leader_id" = "identity"."current_user_id" ()
+        AND c."created_by" = "identity"."current_user_id" ()
     )
     AND "social"."crew_membership"."role" = 'leader'
     AND "social"."crew_membership"."status" = 'active'
@@ -180,13 +180,13 @@ CREATE POLICY "Allow member authors to remove posts from crews" ON "social"."cre
 CREATE POLICY "Allow authenticated users to read crews" ON "social"."crew" AS PERMISSIVE FOR SELECT TO "authenticated" USING (TRUE);
 
 --> statement-breakpoint
-CREATE POLICY "Allow users to create crews they lead" ON "social"."crew" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ("social"."crew"."leader_id" = "identity"."current_user_id" ());
+CREATE POLICY "Allow users to create their own crews" ON "social"."crew" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ("social"."crew"."created_by" = "identity"."current_user_id" ());
 
 --> statement-breakpoint
-CREATE POLICY "Allow active crew leaders to update their crews" ON "social"."crew" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ("social"."crew"."leader_id" = "identity"."current_user_id" () AND "social"."is_active_crew_member" ("social"."crew"."id")) WITH CHECK ("social"."is_active_crew_member" ("social"."crew"."id"));
+CREATE POLICY "Allow active crew leaders to update their crews" ON "social"."crew" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ("social"."is_crew_leader" ("social"."crew"."id")) WITH CHECK ("social"."is_crew_leader" ("social"."crew"."id"));
 
 --> statement-breakpoint
-CREATE POLICY "Allow active crew leaders to delete their crews" ON "social"."crew" AS PERMISSIVE FOR DELETE TO "authenticated" USING ("social"."crew"."leader_id" = "identity"."current_user_id" () AND "social"."is_active_crew_member" ("social"."crew"."id"));
+CREATE POLICY "Allow active crew leaders to delete their crews" ON "social"."crew" AS PERMISSIVE FOR DELETE TO "authenticated" USING ("social"."is_crew_leader" ("social"."crew"."id"));
 
 --> statement-breakpoint
 CREATE POLICY "Allow users to read public or accessible crew posts" ON "social"."post" AS PERMISSIVE FOR SELECT TO "authenticated" USING (
@@ -202,7 +202,18 @@ CREATE POLICY "Allow users to read public or accessible crew posts" ON "social".
   );
 
 --> statement-breakpoint
-CREATE POLICY "Allow users to create their own posts" ON "social"."post" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK ("social"."post"."author_user_id" = "identity"."current_user_id" ());
+CREATE POLICY "Allow users to create their own posts" ON "social"."post" AS PERMISSIVE FOR INSERT TO "authenticated" WITH CHECK (
+    "social"."post"."author_user_id" = "identity"."current_user_id" ()
+    AND (
+      "social"."post"."workout_summary_id" IS NULL
+      OR EXISTS (
+        SELECT 1
+        FROM "tracking"."workout_summary" summary
+        WHERE summary."id" = "social"."post"."workout_summary_id"
+          AND summary."user_id" = "identity"."current_user_id" ()
+      )
+    )
+  );
 
 --> statement-breakpoint
 CREATE POLICY "Allow authors to update their posts" ON "social"."post" AS PERMISSIVE FOR UPDATE TO "authenticated" USING ("social"."post"."author_user_id" = "identity"."current_user_id" ()) WITH CHECK ("social"."post"."author_user_id" = "identity"."current_user_id" ());

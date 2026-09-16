@@ -17,6 +17,7 @@ export const postExpandedView = socialSchema
   .view('v_post_expanded', {
     id: uuid('id'),
     authorUserId: uuid('author_user_id'),
+    workoutSummaryId: uuid('workout_summary_id'),
     content: text('content'),
     visibility: postVisibility('visibility'),
     publishedAt: timestamp('published_at', { withTimezone: true }),
@@ -31,6 +32,7 @@ export const postExpandedView = socialSchema
     SELECT
       p.id,
       p.author_user_id,
+      p.workout_summary_id,
       p.content,
       p.visibility,
       p.published_at,

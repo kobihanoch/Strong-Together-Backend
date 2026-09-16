@@ -7,7 +7,7 @@ DECLARE
   u2_user_id uuid := '83d44360-8d7d-4a26-8457-7f3e4f8414b1';
   u5_user_id uuid := '55a1d718-482b-4c17-8f45-246af142e505';
 BEGIN
-  INSERT INTO social.crew (id, name, leader_id, privacy, profile_pic_path)
+  INSERT INTO social.crew (id, name, created_by, privacy, profile_pic_path)
   VALUES
     (
       'a0000000-0000-4000-8000-000000000001',

@@ -8,7 +8,7 @@ In this document:
 
 - **Authenticated user** means a signed-in user with no active membership in the relevant crew.
 - **Crew member** means a user whose membership has `status = 'active'`; this includes active admins where a policy checks crew access.
-- **Leader** means the crew's `leader_id` user who also has an active membership. Merely remaining in `leader_id` without an active membership does not grant management access.
+- **Leader** means an active crew member whose membership role is `leader`. The crew's immutable `created_by` field is attribution only and grants no authority.
 - **Author** means the user referenced by a post or comment's author column.
 
 All social tables have RLS enabled. Application grants allow only the columns needed by the API; a grant does not bypass the row policies described below.
@@ -51,7 +51,7 @@ All routes require DPoP authentication and the `user` role.
 Policies use narrow SQL functions to avoid recursive RLS checks:
 
 - `is_crew_public(crew_id)` checks crew privacy.
-- `is_crew_leader(crew_id)` checks the current `leader_id` value.
+- `is_crew_leader(crew_id)` checks for the caller's active `leader` membership.
 - `is_active_crew_member(crew_id)` checks active membership.
 - `is_crew_admin(crew_id)` checks active admin membership.
 - `can_access_crew(crew_id)` requires an active membership, including the active leader membership.
@@ -71,7 +71,7 @@ Crew discovery and the caller's crew list share the `v_crew_expanded` projection
 
 ### Crew creation
 
-The API inserts the crew with the caller as `leader_id`, then inserts the caller's active `leader` membership in the same transaction. Both operations must succeed or both roll back. The special initial-membership policy permits only this caller-owned active leader row.
+The API inserts the crew with the caller as `created_by`, then inserts the caller's active `leader` membership in the same transaction. Both operations must succeed or both roll back. The special initial-membership policy permits only the creator's initial active leader row; subsequent authority comes exclusively from membership.
 
 ### Joining, requesting, and invitations
 
@@ -87,7 +87,7 @@ Only an active leader can delete a crew. Before deletion, `delete_exclusive_crew
 
 ### Post creation and feeds
 
-A post is either `public` or `crews_only`. A crew-only post must target at least one crew. Post creation and all requested crew placements happen in one transaction, so an unauthorized target crew rolls back the complete operation. A post may be placed in multiple authorized crews.
+A post is either `public` or `crews_only`. A crew-only post must target at least one crew. Post creation and all requested crew placements happen in one transaction, so an unauthorized target crew rolls back the complete operation. A post may be placed in multiple authorized crews. It may also reference one workout summary owned by its author; deleting that summary clears the optional post reference.
 
 The general feed returns public posts, the caller's own posts, and crew-only posts reachable through active crew access. A crew feed requires access to that crew. Feed pagination uses the post publication timestamp and UUID as a stable cursor.
 

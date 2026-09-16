@@ -34,7 +34,7 @@ export class CrewsQueries {
       SELECT
         crew.id,
         crew.name,
-        crew.leader_id AS "leaderId",
+        crew.created_by AS "createdBy",
         crew.privacy,
         crew.created_at AS "createdAt",
         crew.updated_at AS "updatedAt",
@@ -77,7 +77,7 @@ export class CrewsQueries {
       SELECT
         crew.id,
         crew.name,
-        crew.leader_id AS "leaderId",
+        crew.created_by AS "createdBy",
         crew.privacy,
         crew.created_at AS "createdAt",
         crew.updated_at AS "updatedAt",
@@ -178,7 +178,7 @@ export class CrewsQueries {
       SELECT
         id,
         name,
-        leader_id AS "leaderId",
+        created_by AS "createdBy",
         privacy,
         created_at AS "createdAt",
         updated_at AS "updatedAt",
@@ -203,7 +203,7 @@ export class CrewsQueries {
   async queryCreateCrew(userId: string, name: string, privacy: 'public' | 'private'): Promise<CrewQueryDto[]> {
     const [created] = await this.sql<CrewQueryDto[]>`
       INSERT INTO
-        social.crew (name, leader_id, privacy)
+        social.crew (name, created_by, privacy)
       VALUES
         (
           ${name},
@@ -213,7 +213,7 @@ export class CrewsQueries {
       RETURNING
         id,
         name,
-        leader_id AS "leaderId",
+        created_by AS "createdBy",
         privacy,
         created_at AS "createdAt",
         updated_at AS "updatedAt"
@@ -252,7 +252,7 @@ export class CrewsQueries {
       RETURNING
         id,
         name,
-        leader_id AS "leaderId",
+        created_by AS "createdBy",
         privacy,
         created_at AS "createdAt",
         updated_at AS "updatedAt"
@@ -310,10 +310,9 @@ export class CrewsQueries {
     const [context] = await this.sql<LeaveCrewContextQueryDto[]>`
       SELECT
         cm.id AS "membershipId",
-        c.leader_id = cm.user_id AS "isLeader"
+        cm.role = 'leader' AS "isLeader"
       FROM
         social.crew_membership cm
-        JOIN social.crew c ON c.id = cm.crew_id
       WHERE
         cm.crew_id = ${crewId}::UUID
         AND cm.user_id = identity.current_user_id ()
@@ -325,17 +324,6 @@ export class CrewsQueries {
     if (!context) return [{ result: 'not_member' }];
 
     if (context.isLeader) {
-      // Only a current active leader can lock this row through the crew UPDATE policy.
-      await this.sql`
-        SELECT
-          id
-        FROM
-          social.crew
-        WHERE
-          id = ${crewId}::UUID
-        FOR UPDATE
-      `;
-
       const [successor] = await this.sql<CrewSuccessorQueryDto[]>`
         SELECT
           cm.id AS "membershipId",
@@ -363,8 +351,7 @@ export class CrewsQueries {
         await this.sql`
           DELETE FROM social.crew c
           WHERE
-            c.leader_id = identity.current_user_id ()
-            AND c.id = ${crewId}::UUID
+            c.id = ${crewId}::UUID
         `;
         return [{ result: 'left' }];
       }
@@ -375,15 +362,6 @@ export class CrewsQueries {
         updated_at = NOW()
         WHERE
           id = ${successor.membershipId}::UUID
-      `;
-
-      await this.sql`
-        UPDATE social.crew
-        SET
-          leader_id = ${successor.userId}::UUID,
-          updated_at = NOW()
-        WHERE
-          id = ${crewId}::UUID
       `;
     }
 

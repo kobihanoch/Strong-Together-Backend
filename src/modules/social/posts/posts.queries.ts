@@ -20,6 +20,7 @@ export class PostsQueries {
       SELECT
         post.id,
         post.author_user_id AS "authorUserId",
+        post.workout_summary_id AS "workoutSummaryId",
         post.content,
         post.visibility,
         post.published_at AS "publishedAt",
@@ -57,6 +58,7 @@ export class PostsQueries {
       SELECT
         post.id,
         post.author_user_id AS "authorUserId",
+        post.workout_summary_id AS "workoutSummaryId",
         post.content,
         post.visibility,
         post.published_at AS "publishedAt",
@@ -99,19 +101,22 @@ export class PostsQueries {
     content: string,
     visibility: 'crews_only' | 'public',
     crewIds: string[],
+    workoutSummaryId?: string | null,
   ): Promise<Omit<PostQueryDto, 'username' | 'fullName' | 'profilePicPath' | 'interactions'>[]> {
     const [post] = await this.sql<Omit<PostQueryDto, 'username' | 'fullName' | 'profilePicPath' | 'interactions'>[]>`
       INSERT INTO
-        social.post (author_user_id, content, visibility)
+        social.post (author_user_id, workout_summary_id, content, visibility)
       VALUES
         (
           ${userId}::UUID,
+          ${workoutSummaryId ?? null}::UUID,
           ${content},
           ${visibility}::social."Post Visibility"
         )
       RETURNING
         id,
         author_user_id AS "authorUserId",
+        workout_summary_id AS "workoutSummaryId",
         content,
         visibility,
         published_at AS "publishedAt",

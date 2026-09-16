@@ -20,7 +20,7 @@ export function crewMembershipPolicies(t: { crewId: AnyPgColumn; userId: AnyPgCo
         "social"."crew" c
       WHERE
         c."id" = ${t.crewId}
-        AND c."leader_id" = ${uid}
+        AND c."created_by" = ${uid}
     )
     AND ${t.role} = 'leader'
     AND ${t.status} = 'active'

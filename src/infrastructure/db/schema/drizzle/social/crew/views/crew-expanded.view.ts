@@ -14,7 +14,7 @@ export const crewExpandedView = socialSchema
   .view('v_crew_expanded', {
     id: uuid('id'),
     name: text('name'),
-    leaderId: uuid('leader_id'),
+    createdBy: uuid('created_by'),
     privacy: crewPrivacy('privacy'),
     createdAt: timestamp('created_at', { withTimezone: true }),
     updatedAt: timestamp('updated_at', { withTimezone: true }),
@@ -26,7 +26,7 @@ export const crewExpandedView = socialSchema
     SELECT
       c.id,
       c.name,
-      c.leader_id,
+      c.created_by,
       c.privacy,
       c.created_at,
       c.updated_at,

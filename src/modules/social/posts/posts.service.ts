@@ -48,7 +48,7 @@ export class PostsService {
     if (body.visibility === 'crews_only' && body.crewIds.length === 0) {
       throw new BadRequestException('Crew-only post must target at least one crew');
     }
-    await this.queries.queryCreatePost(userId, body.content, body.visibility, body.crewIds);
+    await this.queries.queryCreatePost(userId, body.content, body.visibility, body.crewIds, body.workoutSummaryId);
   }
 
   /**

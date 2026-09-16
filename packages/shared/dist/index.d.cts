@@ -3888,8 +3888,8 @@ declare const crewDbSchema: drizzle_zod.BuildSchema<"select", {
         identity: undefined;
         generated: undefined;
     }, {}, {}>;
-    leaderId: drizzle_orm_pg_core.PgColumn<{
-        name: "leader_id";
+    createdBy: drizzle_orm_pg_core.PgColumn<{
+        name: "created_by";
         tableName: "crew";
         dataType: "string";
         columnType: "PgUUID";
@@ -4276,6 +4276,23 @@ declare const postDbSchema: drizzle_zod.BuildSchema<"select", {
         data: string;
         driverParam: string;
         notNull: true;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    workoutSummaryId: drizzle_orm_pg_core.PgColumn<{
+        name: "workout_summary_id";
+        tableName: "post";
+        dataType: "string";
+        columnType: "PgUUID";
+        data: string;
+        driverParam: string;
+        notNull: false;
         hasDefault: false;
         isPrimaryKey: false;
         isAutoincrement: false;
@@ -6891,7 +6908,7 @@ declare const listCrewsResponseSchema: z.ZodObject<{
     crews: z.ZodArray<z.ZodObject<{
         id: z.ZodUUID;
         name: z.ZodString;
-        leaderId: z.ZodUUID;
+        createdBy: z.ZodUUID;
         privacy: z.ZodEnum<{
             public: "public";
             private: "private";
@@ -6923,7 +6940,7 @@ declare const listCrewsContract: {
         crews: z.ZodArray<z.ZodObject<{
             id: z.ZodUUID;
             name: z.ZodString;
-            leaderId: z.ZodUUID;
+            createdBy: z.ZodUUID;
             privacy: z.ZodEnum<{
                 public: "public";
                 private: "private";
@@ -6959,7 +6976,7 @@ declare const listMyCrewsResponseSchema: z.ZodObject<{
     crews: z.ZodArray<z.ZodObject<{
         id: z.ZodUUID;
         name: z.ZodString;
-        leaderId: z.ZodUUID;
+        createdBy: z.ZodUUID;
         privacy: z.ZodEnum<{
             public: "public";
             private: "private";
@@ -6990,7 +7007,7 @@ declare const listMyCrewsContract: {
         crews: z.ZodArray<z.ZodObject<{
             id: z.ZodUUID;
             name: z.ZodString;
-            leaderId: z.ZodUUID;
+            createdBy: z.ZodUUID;
             privacy: z.ZodEnum<{
                 public: "public";
                 private: "private";
@@ -7109,7 +7126,7 @@ declare const getCrewRequestSchema: z.ZodObject<{
 declare const getCrewResponseSchema: z.ZodObject<{
     id: z.ZodUUID;
     name: z.ZodString;
-    leaderId: z.ZodUUID;
+    createdBy: z.ZodUUID;
     privacy: z.ZodEnum<{
         public: "public";
         private: "private";
@@ -7131,7 +7148,7 @@ declare const getCrewContract: {
     response: z.ZodObject<{
         id: z.ZodUUID;
         name: z.ZodString;
-        leaderId: z.ZodUUID;
+        createdBy: z.ZodUUID;
         privacy: z.ZodEnum<{
             public: "public";
             private: "private";
@@ -7309,7 +7326,7 @@ type DeleteCrewProfilePictureResponse = ResponseOf<typeof deleteCrewProfilePictu
 declare const crewQueryDtoSchema: z.ZodObject<{
     id: z.ZodUUID;
     name: z.ZodString;
-    leaderId: z.ZodUUID;
+    createdBy: z.ZodUUID;
     privacy: z.ZodEnum<{
         public: "public";
         private: "private";
@@ -7324,7 +7341,7 @@ declare const crewQueryDtoSchema: z.ZodObject<{
 declare const crewWithParticipantCountQueryDtoSchema: z.ZodObject<{
     id: z.ZodUUID;
     name: z.ZodString;
-    leaderId: z.ZodUUID;
+    createdBy: z.ZodUUID;
     privacy: z.ZodEnum<{
         public: "public";
         private: "private";
@@ -7346,7 +7363,7 @@ declare const crewParticipantPreviewQueryDtoSchema: z.ZodObject<{
 declare const discoverableCrewQueryDtoSchema: z.ZodObject<{
     id: z.ZodUUID;
     name: z.ZodString;
-    leaderId: z.ZodUUID;
+    createdBy: z.ZodUUID;
     privacy: z.ZodEnum<{
         public: "public";
         private: "private";
@@ -7637,6 +7654,7 @@ declare const listVisiblePostsRequestSchema: z.ZodObject<{
 declare const listVisiblePostsResponseSchema: z.ZodObject<{
     posts: z.ZodArray<z.ZodObject<{
         id: z.ZodUUID;
+        workoutSummaryId: z.ZodNullable<z.ZodUUID>;
         authorUserId: z.ZodUUID;
         content: z.ZodString;
         visibility: z.ZodEnum<{
@@ -7673,6 +7691,7 @@ declare const listVisiblePostsContract: {
     response: z.ZodObject<{
         posts: z.ZodArray<z.ZodObject<{
             id: z.ZodUUID;
+            workoutSummaryId: z.ZodNullable<z.ZodUUID>;
             authorUserId: z.ZodUUID;
             content: z.ZodString;
             visibility: z.ZodEnum<{
@@ -7717,6 +7736,7 @@ declare const listCrewPostsRequestSchema: z.ZodObject<{
 declare const listCrewPostsResponseSchema: z.ZodObject<{
     posts: z.ZodArray<z.ZodObject<{
         id: z.ZodUUID;
+        workoutSummaryId: z.ZodNullable<z.ZodUUID>;
         authorUserId: z.ZodUUID;
         content: z.ZodString;
         visibility: z.ZodEnum<{
@@ -7756,6 +7776,7 @@ declare const listCrewPostsContract: {
     response: z.ZodObject<{
         posts: z.ZodArray<z.ZodObject<{
             id: z.ZodUUID;
+            workoutSummaryId: z.ZodNullable<z.ZodUUID>;
             authorUserId: z.ZodUUID;
             content: z.ZodString;
             visibility: z.ZodEnum<{
@@ -7797,6 +7818,7 @@ declare const createPostRequestSchema: z.ZodObject<{
             crews_only: "crews_only";
         }>;
         crewIds: z.ZodDefault<z.ZodArray<z.ZodUUID>>;
+        workoutSummaryId: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
     }, z.core.$strip>;
 }, z.core.$strip>;
 /** Validates the empty response returned after post creation. */
@@ -7811,6 +7833,7 @@ declare const createPostContract: {
                 crews_only: "crews_only";
             }>;
             crewIds: z.ZodDefault<z.ZodArray<z.ZodUUID>>;
+            workoutSummaryId: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodVoid;
@@ -7873,6 +7896,7 @@ type DeletePostResponse = ResponseOf<typeof deletePostContract>;
 /** Runtime schema for a post with author details and its current like and comment totals. */
 declare const postQueryDtoSchema: z.ZodObject<{
     id: z.ZodUUID;
+    workoutSummaryId: z.ZodNullable<z.ZodUUID>;
     authorUserId: z.ZodUUID;
     content: z.ZodString;
     visibility: z.ZodEnum<{

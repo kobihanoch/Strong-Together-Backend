@@ -11,7 +11,7 @@ export const crew = socialSchema
     {
       id: uuid('id').defaultRandom().notNull(),
       name: text('name').notNull(),
-      leaderId: uuid('leader_id').notNull(),
+      createdBy: uuid('created_by').notNull(),
       privacy: crewPrivacy('privacy').notNull(),
       profilePicPath: text('profile_pic_path'),
       createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -19,9 +19,7 @@ export const crew = socialSchema
     },
     (t) => [
       primaryKey({ name: 'crew_pkey', columns: [t.id] }),
-      foreignKey({ name: 'crew_leader_id_fkey', columns: [t.leaderId], foreignColumns: [user.id] })
-        .onUpdate('cascade')
-        .onDelete('cascade'),
+      foreignKey({ name: 'crew_created_by_fkey', columns: [t.createdBy], foreignColumns: [user.id] }).onUpdate('cascade'),
       ...crewPolicies(t),
     ],
   )
@@ -29,5 +27,5 @@ export const crew = socialSchema
   .enableRLS();
 
 export const crewRelations = relations(crew, ({ one }) => ({
-  leader: one(user, { fields: [crew.leaderId], references: [user.id] }),
+  creator: one(user, { fields: [crew.createdBy], references: [user.id] }),
 }));

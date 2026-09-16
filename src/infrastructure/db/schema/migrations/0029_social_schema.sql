@@ -81,7 +81,7 @@ ALTER TABLE "social"."crew_shared_post" ENABLE ROW LEVEL SECURITY;
 CREATE TABLE "social"."crew" (
   "id" UUID DEFAULT GEN_RANDOM_UUID() NOT NULL,
   "name" TEXT NOT NULL,
-  "leader_id" UUID NOT NULL,
+  "created_by" UUID NOT NULL,
   "privacy" "social"."Crew Privacy" NOT NULL,
   "profile_pic_path" TEXT,
   "created_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
@@ -96,6 +96,7 @@ ALTER TABLE "social"."crew" ENABLE ROW LEVEL SECURITY;
 CREATE TABLE "social"."post" (
   "id" UUID DEFAULT GEN_RANDOM_UUID() NOT NULL,
   "author_user_id" UUID NOT NULL,
+  "workout_summary_id" UUID,
   "content" TEXT NOT NULL,
   "visibility" "social"."Post Visibility" NOT NULL,
   "published_at" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
@@ -158,11 +159,15 @@ ADD CONSTRAINT "crew_shared_post_post_id_fkey" FOREIGN KEY ("post_id") REFERENCE
 
 --> statement-breakpoint
 ALTER TABLE "social"."crew"
-ADD CONSTRAINT "crew_leader_id_fkey" FOREIGN KEY ("leader_id") REFERENCES "identity"."user" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ADD CONSTRAINT "crew_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "identity"."user" ("id") ON UPDATE CASCADE;
 
 --> statement-breakpoint
 ALTER TABLE "social"."post"
 ADD CONSTRAINT "post_author_user_id_fkey" FOREIGN KEY ("author_user_id") REFERENCES "identity"."user" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+--> statement-breakpoint
+ALTER TABLE "social"."post"
+ADD CONSTRAINT "post_workout_summary_id_fkey" FOREIGN KEY ("workout_summary_id") REFERENCES "tracking"."workout_summary" ("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 --> statement-breakpoint
 ALTER TABLE "social"."reaction"
@@ -200,6 +205,9 @@ CREATE INDEX "crew_shared_post_crew_id_idx" ON "social"."crew_shared_post" USING
 
 --> statement-breakpoint
 CREATE INDEX "post_author_user_id_idx" ON "social"."post" USING btree ("author_user_id");
+
+--> statement-breakpoint
+CREATE INDEX "post_workout_summary_id_idx" ON "social"."post" USING btree ("workout_summary_id");
 
 --> statement-breakpoint
 CREATE INDEX "post_published_at_idx" ON "social"."post" USING btree ("published_at");
@@ -334,12 +342,6 @@ FROM
 --> statement-breakpoint
 -- The application role needs enum usage to insert visibility values.
 GRANT USAGE ON TYPE "social"."Post Visibility" TO "authenticated";
-
---> statement-breakpoint
--- The update policy limits this column to the current active leader and keeps
--- the caller active until the leadership transfer is complete.
-GRANT
-UPDATE ("leader_id") ON TABLE "social"."crew" TO "authenticated";
 
 --> statement-breakpoint
 -- Reaction upserts refresh the reaction timestamp together with its type.

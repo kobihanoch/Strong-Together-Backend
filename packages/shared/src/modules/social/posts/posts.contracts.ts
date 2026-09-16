@@ -63,6 +63,7 @@ const createPostBodySchema = z
     content: postDbSchema.shape.content,
     visibility: postDbSchema.shape.visibility,
     crewIds: z.array(z.uuid()).default([]),
+    workoutSummaryId: postDbSchema.shape.workoutSummaryId.optional(),
   })
   .superRefine((body, context) => {
     // Crew-only posts require at least one audience crew.

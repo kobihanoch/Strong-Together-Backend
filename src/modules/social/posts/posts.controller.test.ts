@@ -10,7 +10,7 @@ import { createApp } from '../../../app';
 import { authHeaders } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
 import {
-  getCrewByLeaderId,
+  getCrewByCreatedBy,
   getPostByAuthorId,
   getPostPlacementCount,
   insertCrewMembership,
@@ -36,7 +36,7 @@ async function postUser(prefix: string) {
   return user;
 }
 
-async function createCrew(accessToken: string, leaderId: string) {
+async function createCrew(accessToken: string, createdBy: string) {
   const response = await request(app.getHttpServer())
     .post('/api/social/crews')
     .set(authHeaders(accessToken))
@@ -44,7 +44,7 @@ async function createCrew(accessToken: string, leaderId: string) {
 
   expect(response.status, JSON.stringify(response.body)).toBe(201);
 
-  const crew = await getCrewByLeaderId(leaderId);
+  const crew = await getCrewByCreatedBy(createdBy);
   expect(crew).not.toBeNull();
   return crew!;
 }
