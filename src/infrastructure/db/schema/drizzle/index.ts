@@ -20,6 +20,7 @@ export * from './social/crew/table';
 export * from './social/crew_membership/table';
 export * from './social/crew_participation_request/table';
 export * from './social/post/table';
+export * from './social/post/views';
 export * from './social/crew_shared_post/table';
 export * from './social/comment/table';
 export * from './social/reaction/table';

@@ -1,11 +1,14 @@
 import { z } from 'zod/v4';
 import { serializedDateSchema } from '../../../../common';
-import { commentDbSchema } from '../../../../database';
+import { commentDbSchema, userDbSchema } from '../../../../database';
 
 /** Runtime schema for a comment returned by a social query. */
 export const commentQueryDtoSchema = commentDbSchema.extend({
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
+  authorFullName: userDbSchema.shape.name,
+  authorProfilePicPath: userDbSchema.shape.profilePicPath,
+  authorUsername: userDbSchema.shape.username,
 });
 
 /** Runtime schema for the identifier returned after a comment write. */

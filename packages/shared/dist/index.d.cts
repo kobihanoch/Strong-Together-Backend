@@ -7645,11 +7645,17 @@ declare const listVisiblePostsResponseSchema: z.ZodObject<{
         }>;
         publishedAt: z.ZodString;
         updatedAt: z.ZodString;
-        likeCount: z.ZodNumber;
-        commentCount: z.ZodNumber;
         username: z.ZodString;
         fullName: z.ZodString;
         profilePicPath: z.ZodNullable<z.ZodString>;
+        interactions: z.ZodObject<{
+            reactionsCount: z.ZodObject<{
+                likesCount: z.ZodNumber;
+                fireUpCount: z.ZodNumber;
+                muscleCount: z.ZodNumber;
+            }, z.core.$strip>;
+            commentsCount: z.ZodNumber;
+        }, z.core.$strip>;
     }, {
         out: {};
         in: {};
@@ -7675,11 +7681,17 @@ declare const listVisiblePostsContract: {
             }>;
             publishedAt: z.ZodString;
             updatedAt: z.ZodString;
-            likeCount: z.ZodNumber;
-            commentCount: z.ZodNumber;
             username: z.ZodString;
             fullName: z.ZodString;
             profilePicPath: z.ZodNullable<z.ZodString>;
+            interactions: z.ZodObject<{
+                reactionsCount: z.ZodObject<{
+                    likesCount: z.ZodNumber;
+                    fireUpCount: z.ZodNumber;
+                    muscleCount: z.ZodNumber;
+                }, z.core.$strip>;
+                commentsCount: z.ZodNumber;
+            }, z.core.$strip>;
         }, {
             out: {};
             in: {};
@@ -7713,11 +7725,17 @@ declare const listCrewPostsResponseSchema: z.ZodObject<{
         }>;
         publishedAt: z.ZodString;
         updatedAt: z.ZodString;
-        likeCount: z.ZodNumber;
-        commentCount: z.ZodNumber;
         username: z.ZodString;
         fullName: z.ZodString;
         profilePicPath: z.ZodNullable<z.ZodString>;
+        interactions: z.ZodObject<{
+            reactionsCount: z.ZodObject<{
+                likesCount: z.ZodNumber;
+                fireUpCount: z.ZodNumber;
+                muscleCount: z.ZodNumber;
+            }, z.core.$strip>;
+            commentsCount: z.ZodNumber;
+        }, z.core.$strip>;
     }, {
         out: {};
         in: {};
@@ -7746,11 +7764,17 @@ declare const listCrewPostsContract: {
             }>;
             publishedAt: z.ZodString;
             updatedAt: z.ZodString;
-            likeCount: z.ZodNumber;
-            commentCount: z.ZodNumber;
             username: z.ZodString;
             fullName: z.ZodString;
             profilePicPath: z.ZodNullable<z.ZodString>;
+            interactions: z.ZodObject<{
+                reactionsCount: z.ZodObject<{
+                    likesCount: z.ZodNumber;
+                    fireUpCount: z.ZodNumber;
+                    muscleCount: z.ZodNumber;
+                }, z.core.$strip>;
+                commentsCount: z.ZodNumber;
+            }, z.core.$strip>;
         }, {
             out: {};
             in: {};
@@ -7857,11 +7881,17 @@ declare const postQueryDtoSchema: z.ZodObject<{
     }>;
     publishedAt: z.ZodString;
     updatedAt: z.ZodString;
-    likeCount: z.ZodNumber;
-    commentCount: z.ZodNumber;
     username: z.ZodString;
     fullName: z.ZodString;
     profilePicPath: z.ZodNullable<z.ZodString>;
+    interactions: z.ZodObject<{
+        reactionsCount: z.ZodObject<{
+            likesCount: z.ZodNumber;
+            fireUpCount: z.ZodNumber;
+            muscleCount: z.ZodNumber;
+        }, z.core.$strip>;
+        commentsCount: z.ZodNumber;
+    }, z.core.$strip>;
 }, {
     out: {};
     in: {};
@@ -7894,6 +7924,9 @@ declare const listPostCommentsResponseSchema: z.ZodObject<{
         content: z.ZodString;
         createdAt: z.ZodString;
         updatedAt: z.ZodString;
+        authorFullName: z.ZodString;
+        authorProfilePicPath: z.ZodNullable<z.ZodString>;
+        authorUsername: z.ZodString;
     }, {
         out: {};
         in: {};
@@ -7919,6 +7952,9 @@ declare const listPostCommentsContract: {
             content: z.ZodString;
             createdAt: z.ZodString;
             updatedAt: z.ZodString;
+            authorFullName: z.ZodString;
+            authorProfilePicPath: z.ZodNullable<z.ZodString>;
+            authorUsername: z.ZodString;
         }, {
             out: {};
             in: {};
@@ -8020,6 +8056,9 @@ declare const commentQueryDtoSchema: z.ZodObject<{
     content: z.ZodString;
     createdAt: z.ZodString;
     updatedAt: z.ZodString;
+    authorFullName: z.ZodString;
+    authorProfilePicPath: z.ZodNullable<z.ZodString>;
+    authorUsername: z.ZodString;
 }, {
     out: {};
     in: {};

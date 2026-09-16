@@ -2071,17 +2071,91 @@ var postRelations = relations18(post, ({ one }) => ({
   })
 }));
 
+// ../../src/infrastructure/db/schema/drizzle/social/post/views/post-expanded.view.ts
+import { sql as drizzleSql32 } from "drizzle-orm";
+import { jsonb, text as text14, timestamp as timestamp18, uuid as uuid18 } from "drizzle-orm/pg-core";
+var postExpandedView = socialSchema.view("v_post_expanded", {
+  id: uuid18("id"),
+  authorUserId: uuid18("author_user_id"),
+  content: text14("content"),
+  visibility: postVisibility("visibility"),
+  publishedAt: timestamp18("published_at", {
+    withTimezone: true
+  }),
+  updatedAt: timestamp18("updated_at", {
+    withTimezone: true
+  }),
+  username: text14("username"),
+  fullName: text14("full_name"),
+  profilePicPath: text14("profile_pic_path"),
+  interactions: jsonb("interactions").$type()
+}).with({
+  securityInvoker: true
+}).as(drizzleSql32`
+    SELECT
+      p.id,
+      p.author_user_id,
+      p.content,
+      p.visibility,
+      p.published_at,
+      p.updated_at,
+      author.username,
+      author.name AS full_name,
+      author."profilePicPath" AS profile_pic_path,
+      JSONB_BUILD_OBJECT(
+        'reactionsCount',
+        reactions_data.reactions,
+        'commentsCount',
+        comments_data.comments_count
+      ) AS interactions
+    FROM
+      social.post p
+      CROSS JOIN LATERAL identity.get_user_profile (p.author_user_id) author
+      CROSS JOIN LATERAL (
+        SELECT
+          JSONB_BUILD_OBJECT(
+            'likesCount',
+            COUNT(*) FILTER (
+              WHERE
+                reaction.type = 'like'
+            ),
+            'fireUpCount',
+            COUNT(*) FILTER (
+              WHERE
+                reaction.type = 'fire up'
+            ),
+            'muscleCount',
+            COUNT(*) FILTER (
+              WHERE
+                reaction.type = 'muscle'
+            )
+          ) AS reactions
+        FROM
+          social.reaction reaction
+        WHERE
+          reaction.post_id = p.id
+      ) reactions_data
+      CROSS JOIN LATERAL (
+        SELECT
+          COUNT(*) AS comments_count
+        FROM
+          social.comment post_comment
+        WHERE
+          post_comment.post_id = p.id
+      ) comments_data
+  `);
+
 // ../../src/infrastructure/db/schema/drizzle/social/crew_shared_post/table.ts
 import { relations as relations19 } from "drizzle-orm";
-import { foreignKey as foreignKey17, index as index12, primaryKey as primaryKey19, unique as unique8, uuid as uuid18 } from "drizzle-orm/pg-core";
+import { foreignKey as foreignKey17, index as index12, primaryKey as primaryKey19, unique as unique8, uuid as uuid19 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/social/crew_shared_post/policies.ts
-import { sql as drizzleSql32 } from "drizzle-orm";
+import { sql as drizzleSql33 } from "drizzle-orm";
 import { pgPolicy as pgPolicy19 } from "drizzle-orm/pg-core";
 function crewSharedPostPolicies(t) {
   const activeMember = isActiveCrewMember(t.crewId);
   const author = isPostAuthor(t.postId);
-  const allowed = drizzleSql32`
+  const allowed = drizzleSql33`
     (${activeMember})
     AND (${author})
   `;
@@ -2110,9 +2184,9 @@ __name(crewSharedPostPolicies, "crewSharedPostPolicies");
 
 // ../../src/infrastructure/db/schema/drizzle/social/crew_shared_post/table.ts
 var crewSharedPost = socialSchema.table("crew_shared_post", {
-  id: uuid18("id").defaultRandom().notNull(),
-  crewId: uuid18("crew_id").notNull(),
-  postId: uuid18("post_id").notNull()
+  id: uuid19("id").defaultRandom().notNull(),
+  crewId: uuid19("crew_id").notNull(),
+  postId: uuid19("post_id").notNull()
 }, (t) => [
   primaryKey19({
     name: "crew_shared_post_pkey",
@@ -2163,22 +2237,22 @@ var crewSharedPostRelations = relations19(crewSharedPost, ({ one }) => ({
 
 // ../../src/infrastructure/db/schema/drizzle/social/comment/table.ts
 import { relations as relations20 } from "drizzle-orm";
-import { foreignKey as foreignKey18, index as index13, primaryKey as primaryKey20, text as text14, timestamp as timestamp18, uuid as uuid19 } from "drizzle-orm/pg-core";
+import { foreignKey as foreignKey18, index as index13, primaryKey as primaryKey20, text as text15, timestamp as timestamp19, uuid as uuid20 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/social/comment/policies.ts
-import { sql as drizzleSql33 } from "drizzle-orm";
+import { sql as drizzleSql34 } from "drizzle-orm";
 import { pgPolicy as pgPolicy20 } from "drizzle-orm/pg-core";
-var uid15 = drizzleSql33`"identity"."current_user_id" ()`;
+var uid15 = drizzleSql34`"identity"."current_user_id" ()`;
 function commentPolicies(t) {
-  const owns = drizzleSql33`${t.userId} = ${uid15}`;
-  const visible = drizzleSql33`
+  const owns = drizzleSql34`${t.userId} = ${uid15}`;
+  const visible = drizzleSql34`
     EXISTS (
       SELECT 1
       FROM "social"."post" p
       WHERE p."id" = ${t.postId}
     )
   `;
-  const allowed = drizzleSql33`
+  const allowed = drizzleSql34`
     ${owns}
     AND (${visible})
   `;
@@ -2214,14 +2288,14 @@ __name(commentPolicies, "commentPolicies");
 
 // ../../src/infrastructure/db/schema/drizzle/social/comment/table.ts
 var comment = socialSchema.table("comment", {
-  id: uuid19("id").defaultRandom().notNull(),
-  postId: uuid19("post_id").notNull(),
-  userId: uuid19("user_id").notNull(),
-  content: text14("content").notNull(),
-  createdAt: timestamp18("created_at", {
+  id: uuid20("id").defaultRandom().notNull(),
+  postId: uuid20("post_id").notNull(),
+  userId: uuid20("user_id").notNull(),
+  content: text15("content").notNull(),
+  createdAt: timestamp19("created_at", {
     withTimezone: true
   }).defaultNow().notNull(),
-  updatedAt: timestamp18("updated_at", {
+  updatedAt: timestamp19("updated_at", {
     withTimezone: true
   }).defaultNow().notNull()
 }, (t) => [
@@ -2274,22 +2348,22 @@ var commentRelations = relations20(comment, ({ one }) => ({
 
 // ../../src/infrastructure/db/schema/drizzle/social/reaction/table.ts
 import { relations as relations21 } from "drizzle-orm";
-import { foreignKey as foreignKey19, index as index14, primaryKey as primaryKey21, timestamp as timestamp19, unique as unique9, uuid as uuid20 } from "drizzle-orm/pg-core";
+import { foreignKey as foreignKey19, index as index14, primaryKey as primaryKey21, timestamp as timestamp20, unique as unique9, uuid as uuid21 } from "drizzle-orm/pg-core";
 
 // ../../src/infrastructure/db/schema/drizzle/social/reaction/policies.ts
-import { sql as drizzleSql34 } from "drizzle-orm";
+import { sql as drizzleSql35 } from "drizzle-orm";
 import { pgPolicy as pgPolicy21 } from "drizzle-orm/pg-core";
-var uid16 = drizzleSql34`"identity"."current_user_id" ()`;
+var uid16 = drizzleSql35`"identity"."current_user_id" ()`;
 function reactionPolicies(t) {
-  const owns = drizzleSql34`${t.userId} = ${uid16}`;
-  const visible = drizzleSql34`
+  const owns = drizzleSql35`${t.userId} = ${uid16}`;
+  const visible = drizzleSql35`
     EXISTS (
       SELECT 1
       FROM "social"."post" p
       WHERE p."id" = ${t.postId}
     )
   `;
-  const allowed = drizzleSql34`
+  const allowed = drizzleSql35`
     ${owns}
     AND (${visible})
   `;
@@ -2330,11 +2404,11 @@ var reactionType = socialSchema.enum("Reaction Type", [
   "muscle"
 ]);
 var reaction = socialSchema.table("reaction", {
-  id: uuid20("id").defaultRandom().notNull(),
-  postId: uuid20("post_id").notNull(),
-  userId: uuid20("user_id").notNull(),
+  id: uuid21("id").defaultRandom().notNull(),
+  postId: uuid21("post_id").notNull(),
+  userId: uuid21("user_id").notNull(),
   type: reactionType("type").notNull(),
-  reactedAt: timestamp19("reacted_at", {
+  reactedAt: timestamp20("reacted_at", {
     withTimezone: true
   }).defaultNow().notNull()
 }, (t) => [
@@ -3710,11 +3784,17 @@ var postQueryDtoSchema = postDbSchema.omit({
 }).extend({
   publishedAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
-  likeCount: z39.number().int().nonnegative(),
-  commentCount: z39.number().int().nonnegative(),
   username: userDbSchema.shape.username,
   fullName: userDbSchema.shape.name,
-  profilePicPath: userDbSchema.shape.profilePicPath
+  profilePicPath: userDbSchema.shape.profilePicPath,
+  interactions: z39.object({
+    reactionsCount: z39.object({
+      likesCount: z39.number().int().nonnegative(),
+      fireUpCount: z39.number().int().nonnegative(),
+      muscleCount: z39.number().int().nonnegative()
+    }),
+    commentsCount: z39.number().int().nonnegative()
+  })
 });
 var deletedPostQueryDtoSchema = z39.object({
   id: postDbSchema.shape.id
@@ -3812,7 +3892,10 @@ import { z as z42 } from "zod/v4";
 import { z as z41 } from "zod/v4";
 var commentQueryDtoSchema = commentDbSchema.extend({
   createdAt: serializedDateSchema,
-  updatedAt: serializedDateSchema
+  updatedAt: serializedDateSchema,
+  authorFullName: userDbSchema.shape.name,
+  authorProfilePicPath: userDbSchema.shape.profilePicPath,
+  authorUsername: userDbSchema.shape.username
 });
 var commentWriteResultQueryDtoSchema = z41.object({
   id: commentDbSchema.shape.id

@@ -6,11 +6,17 @@ import { postDbSchema, userDbSchema } from '../../../database';
 export const postQueryDtoSchema = postDbSchema.omit({ updateddAt: true }).extend({
   publishedAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
-  likeCount: z.number().int().nonnegative(),
-  commentCount: z.number().int().nonnegative(),
   username: userDbSchema.shape.username,
   fullName: userDbSchema.shape.name,
   profilePicPath: userDbSchema.shape.profilePicPath,
+  interactions: z.object({
+    reactionsCount: z.object({
+      likesCount: z.number().int().nonnegative(),
+      fireUpCount: z.number().int().nonnegative(),
+      muscleCount: z.number().int().nonnegative(),
+    }),
+    commentsCount: z.number().int().nonnegative(),
+  }),
 });
 
 /** Runtime schema for a post deletion result. */

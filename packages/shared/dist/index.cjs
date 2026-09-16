@@ -2407,35 +2407,109 @@ var postRelations = (0, import_drizzle_orm40.relations)(post, ({ one }) => ({
   })
 }));
 
-// ../../src/infrastructure/db/schema/drizzle/social/crew_shared_post/table.ts
-var import_drizzle_orm42 = require("drizzle-orm");
-var import_pg_core45 = require("drizzle-orm/pg-core");
-
-// ../../src/infrastructure/db/schema/drizzle/social/crew_shared_post/policies.ts
+// ../../src/infrastructure/db/schema/drizzle/social/post/views/post-expanded.view.ts
 var import_drizzle_orm41 = require("drizzle-orm");
 var import_pg_core44 = require("drizzle-orm/pg-core");
+var postExpandedView = socialSchema.view("v_post_expanded", {
+  id: (0, import_pg_core44.uuid)("id"),
+  authorUserId: (0, import_pg_core44.uuid)("author_user_id"),
+  content: (0, import_pg_core44.text)("content"),
+  visibility: postVisibility("visibility"),
+  publishedAt: (0, import_pg_core44.timestamp)("published_at", {
+    withTimezone: true
+  }),
+  updatedAt: (0, import_pg_core44.timestamp)("updated_at", {
+    withTimezone: true
+  }),
+  username: (0, import_pg_core44.text)("username"),
+  fullName: (0, import_pg_core44.text)("full_name"),
+  profilePicPath: (0, import_pg_core44.text)("profile_pic_path"),
+  interactions: (0, import_pg_core44.jsonb)("interactions").$type()
+}).with({
+  securityInvoker: true
+}).as(import_drizzle_orm41.sql`
+    SELECT
+      p.id,
+      p.author_user_id,
+      p.content,
+      p.visibility,
+      p.published_at,
+      p.updated_at,
+      author.username,
+      author.name AS full_name,
+      author."profilePicPath" AS profile_pic_path,
+      JSONB_BUILD_OBJECT(
+        'reactionsCount',
+        reactions_data.reactions,
+        'commentsCount',
+        comments_data.comments_count
+      ) AS interactions
+    FROM
+      social.post p
+      CROSS JOIN LATERAL identity.get_user_profile (p.author_user_id) author
+      CROSS JOIN LATERAL (
+        SELECT
+          JSONB_BUILD_OBJECT(
+            'likesCount',
+            COUNT(*) FILTER (
+              WHERE
+                reaction.type = 'like'
+            ),
+            'fireUpCount',
+            COUNT(*) FILTER (
+              WHERE
+                reaction.type = 'fire up'
+            ),
+            'muscleCount',
+            COUNT(*) FILTER (
+              WHERE
+                reaction.type = 'muscle'
+            )
+          ) AS reactions
+        FROM
+          social.reaction reaction
+        WHERE
+          reaction.post_id = p.id
+      ) reactions_data
+      CROSS JOIN LATERAL (
+        SELECT
+          COUNT(*) AS comments_count
+        FROM
+          social.comment post_comment
+        WHERE
+          post_comment.post_id = p.id
+      ) comments_data
+  `);
+
+// ../../src/infrastructure/db/schema/drizzle/social/crew_shared_post/table.ts
+var import_drizzle_orm43 = require("drizzle-orm");
+var import_pg_core46 = require("drizzle-orm/pg-core");
+
+// ../../src/infrastructure/db/schema/drizzle/social/crew_shared_post/policies.ts
+var import_drizzle_orm42 = require("drizzle-orm");
+var import_pg_core45 = require("drizzle-orm/pg-core");
 function crewSharedPostPolicies(t) {
   const activeMember = isActiveCrewMember(t.crewId);
   const author = isPostAuthor(t.postId);
-  const allowed = import_drizzle_orm41.sql`
+  const allowed = import_drizzle_orm42.sql`
     (${activeMember})
     AND (${author})
   `;
   return [
     // A placement is visible to active members of its crew.
-    (0, import_pg_core44.pgPolicy)("Allow active crew members to read crew post placements", {
+    (0, import_pg_core45.pgPolicy)("Allow active crew members to read crew post placements", {
       for: "select",
       to: authenticatedRole,
       using: activeMember
     }),
     // The post author may share their post only into a crew in which they actively participate or lead.
-    (0, import_pg_core44.pgPolicy)("Allow member authors to share posts with crews", {
+    (0, import_pg_core45.pgPolicy)("Allow member authors to share posts with crews", {
       for: "insert",
       to: authenticatedRole,
       withCheck: allowed
     }),
     // The author may remove their post placement while they still have access to the crew.
-    (0, import_pg_core44.pgPolicy)("Allow member authors to remove posts from crews", {
+    (0, import_pg_core45.pgPolicy)("Allow member authors to remove posts from crews", {
       for: "delete",
       to: authenticatedRole,
       using: allowed
@@ -2446,17 +2520,17 @@ __name(crewSharedPostPolicies, "crewSharedPostPolicies");
 
 // ../../src/infrastructure/db/schema/drizzle/social/crew_shared_post/table.ts
 var crewSharedPost = socialSchema.table("crew_shared_post", {
-  id: (0, import_pg_core45.uuid)("id").defaultRandom().notNull(),
-  crewId: (0, import_pg_core45.uuid)("crew_id").notNull(),
-  postId: (0, import_pg_core45.uuid)("post_id").notNull()
+  id: (0, import_pg_core46.uuid)("id").defaultRandom().notNull(),
+  crewId: (0, import_pg_core46.uuid)("crew_id").notNull(),
+  postId: (0, import_pg_core46.uuid)("post_id").notNull()
 }, (t) => [
-  (0, import_pg_core45.primaryKey)({
+  (0, import_pg_core46.primaryKey)({
     name: "crew_shared_post_pkey",
     columns: [
       t.id
     ]
   }),
-  (0, import_pg_core45.foreignKey)({
+  (0, import_pg_core46.foreignKey)({
     name: "crew_shared_post_crew_id_fkey",
     columns: [
       t.crewId
@@ -2465,7 +2539,7 @@ var crewSharedPost = socialSchema.table("crew_shared_post", {
       crew.id
     ]
   }).onUpdate("cascade").onDelete("cascade"),
-  (0, import_pg_core45.foreignKey)({
+  (0, import_pg_core46.foreignKey)({
     name: "crew_shared_post_post_id_fkey",
     columns: [
       t.postId
@@ -2474,11 +2548,11 @@ var crewSharedPost = socialSchema.table("crew_shared_post", {
       post.id
     ]
   }).onUpdate("cascade").onDelete("cascade"),
-  (0, import_pg_core45.unique)("crew_shared_post_post_id_crew_id_unique").on(t.postId, t.crewId),
-  (0, import_pg_core45.index)("crew_shared_post_crew_id_idx").on(t.crewId),
+  (0, import_pg_core46.unique)("crew_shared_post_post_id_crew_id_unique").on(t.postId, t.crewId),
+  (0, import_pg_core46.index)("crew_shared_post_crew_id_idx").on(t.crewId),
   ...crewSharedPostPolicies(t)
 ]).enableRLS();
-var crewSharedPostRelations = (0, import_drizzle_orm42.relations)(crewSharedPost, ({ one }) => ({
+var crewSharedPostRelations = (0, import_drizzle_orm43.relations)(crewSharedPost, ({ one }) => ({
   crew: one(crew, {
     fields: [
       crewSharedPost.crewId
@@ -2498,48 +2572,48 @@ var crewSharedPostRelations = (0, import_drizzle_orm42.relations)(crewSharedPost
 }));
 
 // ../../src/infrastructure/db/schema/drizzle/social/comment/table.ts
-var import_drizzle_orm44 = require("drizzle-orm");
-var import_pg_core47 = require("drizzle-orm/pg-core");
+var import_drizzle_orm45 = require("drizzle-orm");
+var import_pg_core48 = require("drizzle-orm/pg-core");
 
 // ../../src/infrastructure/db/schema/drizzle/social/comment/policies.ts
-var import_drizzle_orm43 = require("drizzle-orm");
-var import_pg_core46 = require("drizzle-orm/pg-core");
-var uid15 = import_drizzle_orm43.sql`"identity"."current_user_id" ()`;
+var import_drizzle_orm44 = require("drizzle-orm");
+var import_pg_core47 = require("drizzle-orm/pg-core");
+var uid15 = import_drizzle_orm44.sql`"identity"."current_user_id" ()`;
 function commentPolicies(t) {
-  const owns = import_drizzle_orm43.sql`${t.userId} = ${uid15}`;
-  const visible = import_drizzle_orm43.sql`
+  const owns = import_drizzle_orm44.sql`${t.userId} = ${uid15}`;
+  const visible = import_drizzle_orm44.sql`
     EXISTS (
       SELECT 1
       FROM "social"."post" p
       WHERE p."id" = ${t.postId}
     )
   `;
-  const allowed = import_drizzle_orm43.sql`
+  const allowed = import_drizzle_orm44.sql`
     ${owns}
     AND (${visible})
   `;
   return [
     // A comment is visible whenever its parent post is visible to the current user.
-    (0, import_pg_core46.pgPolicy)("Allow users to read comments on visible posts", {
+    (0, import_pg_core47.pgPolicy)("Allow users to read comments on visible posts", {
       for: "select",
       to: authenticatedRole,
       using: visible
     }),
     // A user may comment as themselves only on a post they can see.
-    (0, import_pg_core46.pgPolicy)("Allow users to create their own comments on visible posts", {
+    (0, import_pg_core47.pgPolicy)("Allow users to create their own comments on visible posts", {
       for: "insert",
       to: authenticatedRole,
       withCheck: allowed
     }),
     // Only the comment author may update it, and the resulting comment must remain attached to a visible post.
-    (0, import_pg_core46.pgPolicy)("Allow authors to update their comments on visible posts", {
+    (0, import_pg_core47.pgPolicy)("Allow authors to update their comments on visible posts", {
       for: "update",
       to: authenticatedRole,
       using: owns,
       withCheck: allowed
     }),
     // Only the comment author may delete it.
-    (0, import_pg_core46.pgPolicy)("Allow authors to delete their comments", {
+    (0, import_pg_core47.pgPolicy)("Allow authors to delete their comments", {
       for: "delete",
       to: authenticatedRole,
       using: owns
@@ -2550,24 +2624,24 @@ __name(commentPolicies, "commentPolicies");
 
 // ../../src/infrastructure/db/schema/drizzle/social/comment/table.ts
 var comment = socialSchema.table("comment", {
-  id: (0, import_pg_core47.uuid)("id").defaultRandom().notNull(),
-  postId: (0, import_pg_core47.uuid)("post_id").notNull(),
-  userId: (0, import_pg_core47.uuid)("user_id").notNull(),
-  content: (0, import_pg_core47.text)("content").notNull(),
-  createdAt: (0, import_pg_core47.timestamp)("created_at", {
+  id: (0, import_pg_core48.uuid)("id").defaultRandom().notNull(),
+  postId: (0, import_pg_core48.uuid)("post_id").notNull(),
+  userId: (0, import_pg_core48.uuid)("user_id").notNull(),
+  content: (0, import_pg_core48.text)("content").notNull(),
+  createdAt: (0, import_pg_core48.timestamp)("created_at", {
     withTimezone: true
   }).defaultNow().notNull(),
-  updatedAt: (0, import_pg_core47.timestamp)("updated_at", {
+  updatedAt: (0, import_pg_core48.timestamp)("updated_at", {
     withTimezone: true
   }).defaultNow().notNull()
 }, (t) => [
-  (0, import_pg_core47.primaryKey)({
+  (0, import_pg_core48.primaryKey)({
     name: "comment_pkey",
     columns: [
       t.id
     ]
   }),
-  (0, import_pg_core47.foreignKey)({
+  (0, import_pg_core48.foreignKey)({
     name: "comment_post_id_fkey",
     columns: [
       t.postId
@@ -2576,7 +2650,7 @@ var comment = socialSchema.table("comment", {
       post.id
     ]
   }).onUpdate("cascade").onDelete("cascade"),
-  (0, import_pg_core47.foreignKey)({
+  (0, import_pg_core48.foreignKey)({
     name: "comment_user_id_fkey",
     columns: [
       t.userId
@@ -2585,11 +2659,11 @@ var comment = socialSchema.table("comment", {
       user.id
     ]
   }).onUpdate("cascade").onDelete("cascade"),
-  (0, import_pg_core47.index)("comment_post_created_at_idx").on(t.postId, t.createdAt),
-  (0, import_pg_core47.index)("comment_user_id_idx").on(t.userId),
+  (0, import_pg_core48.index)("comment_post_created_at_idx").on(t.postId, t.createdAt),
+  (0, import_pg_core48.index)("comment_user_id_idx").on(t.userId),
   ...commentPolicies(t)
 ]).enableRLS();
-var commentRelations = (0, import_drizzle_orm44.relations)(comment, ({ one }) => ({
+var commentRelations = (0, import_drizzle_orm45.relations)(comment, ({ one }) => ({
   post: one(post, {
     fields: [
       comment.postId
@@ -2609,48 +2683,48 @@ var commentRelations = (0, import_drizzle_orm44.relations)(comment, ({ one }) =>
 }));
 
 // ../../src/infrastructure/db/schema/drizzle/social/reaction/table.ts
-var import_drizzle_orm46 = require("drizzle-orm");
-var import_pg_core49 = require("drizzle-orm/pg-core");
+var import_drizzle_orm47 = require("drizzle-orm");
+var import_pg_core50 = require("drizzle-orm/pg-core");
 
 // ../../src/infrastructure/db/schema/drizzle/social/reaction/policies.ts
-var import_drizzle_orm45 = require("drizzle-orm");
-var import_pg_core48 = require("drizzle-orm/pg-core");
-var uid16 = import_drizzle_orm45.sql`"identity"."current_user_id" ()`;
+var import_drizzle_orm46 = require("drizzle-orm");
+var import_pg_core49 = require("drizzle-orm/pg-core");
+var uid16 = import_drizzle_orm46.sql`"identity"."current_user_id" ()`;
 function reactionPolicies(t) {
-  const owns = import_drizzle_orm45.sql`${t.userId} = ${uid16}`;
-  const visible = import_drizzle_orm45.sql`
+  const owns = import_drizzle_orm46.sql`${t.userId} = ${uid16}`;
+  const visible = import_drizzle_orm46.sql`
     EXISTS (
       SELECT 1
       FROM "social"."post" p
       WHERE p."id" = ${t.postId}
     )
   `;
-  const allowed = import_drizzle_orm45.sql`
+  const allowed = import_drizzle_orm46.sql`
     ${owns}
     AND (${visible})
   `;
   return [
     // A reaction is visible whenever its parent post is visible to the current user.
-    (0, import_pg_core48.pgPolicy)("Allow users to read reactions on visible posts", {
+    (0, import_pg_core49.pgPolicy)("Allow users to read reactions on visible posts", {
       for: "select",
       to: authenticatedRole,
       using: visible
     }),
     // A user may react as themselves only to a post they can see.
-    (0, import_pg_core48.pgPolicy)("Allow users to create their own reactions on visible posts", {
+    (0, import_pg_core49.pgPolicy)("Allow users to create their own reactions on visible posts", {
       for: "insert",
       to: authenticatedRole,
       withCheck: allowed
     }),
     // Only the reacting user may update it, and the resulting reaction must remain attached to a visible post.
-    (0, import_pg_core48.pgPolicy)("Allow users to update their reactions on visible posts", {
+    (0, import_pg_core49.pgPolicy)("Allow users to update their reactions on visible posts", {
       for: "update",
       to: authenticatedRole,
       using: owns,
       withCheck: allowed
     }),
     // Only the reacting user may delete it.
-    (0, import_pg_core48.pgPolicy)("Allow users to delete their own reactions", {
+    (0, import_pg_core49.pgPolicy)("Allow users to delete their own reactions", {
       for: "delete",
       to: authenticatedRole,
       using: owns
@@ -2666,21 +2740,21 @@ var reactionType = socialSchema.enum("Reaction Type", [
   "muscle"
 ]);
 var reaction = socialSchema.table("reaction", {
-  id: (0, import_pg_core49.uuid)("id").defaultRandom().notNull(),
-  postId: (0, import_pg_core49.uuid)("post_id").notNull(),
-  userId: (0, import_pg_core49.uuid)("user_id").notNull(),
+  id: (0, import_pg_core50.uuid)("id").defaultRandom().notNull(),
+  postId: (0, import_pg_core50.uuid)("post_id").notNull(),
+  userId: (0, import_pg_core50.uuid)("user_id").notNull(),
   type: reactionType("type").notNull(),
-  reactedAt: (0, import_pg_core49.timestamp)("reacted_at", {
+  reactedAt: (0, import_pg_core50.timestamp)("reacted_at", {
     withTimezone: true
   }).defaultNow().notNull()
 }, (t) => [
-  (0, import_pg_core49.primaryKey)({
+  (0, import_pg_core50.primaryKey)({
     name: "reaction_pkey",
     columns: [
       t.id
     ]
   }),
-  (0, import_pg_core49.foreignKey)({
+  (0, import_pg_core50.foreignKey)({
     name: "reaction_post_id_fkey",
     columns: [
       t.postId
@@ -2689,7 +2763,7 @@ var reaction = socialSchema.table("reaction", {
       post.id
     ]
   }).onUpdate("cascade").onDelete("cascade"),
-  (0, import_pg_core49.foreignKey)({
+  (0, import_pg_core50.foreignKey)({
     name: "reaction_user_id_fkey",
     columns: [
       t.userId
@@ -2698,11 +2772,11 @@ var reaction = socialSchema.table("reaction", {
       user.id
     ]
   }).onUpdate("cascade").onDelete("cascade"),
-  (0, import_pg_core49.unique)("reaction_post_user_unique").on(t.postId, t.userId),
-  (0, import_pg_core49.index)("reaction_user_id_idx").on(t.userId),
+  (0, import_pg_core50.unique)("reaction_post_user_unique").on(t.postId, t.userId),
+  (0, import_pg_core50.index)("reaction_user_id_idx").on(t.userId),
   ...reactionPolicies(t)
 ]).enableRLS();
-var reactionRelations = (0, import_drizzle_orm46.relations)(reaction, ({ one }) => ({
+var reactionRelations = (0, import_drizzle_orm47.relations)(reaction, ({ one }) => ({
   post: one(post, {
     fields: [
       reaction.postId
@@ -4046,11 +4120,17 @@ var postQueryDtoSchema = postDbSchema.omit({
 }).extend({
   publishedAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
-  likeCount: import_v439.z.number().int().nonnegative(),
-  commentCount: import_v439.z.number().int().nonnegative(),
   username: userDbSchema.shape.username,
   fullName: userDbSchema.shape.name,
-  profilePicPath: userDbSchema.shape.profilePicPath
+  profilePicPath: userDbSchema.shape.profilePicPath,
+  interactions: import_v439.z.object({
+    reactionsCount: import_v439.z.object({
+      likesCount: import_v439.z.number().int().nonnegative(),
+      fireUpCount: import_v439.z.number().int().nonnegative(),
+      muscleCount: import_v439.z.number().int().nonnegative()
+    }),
+    commentsCount: import_v439.z.number().int().nonnegative()
+  })
 });
 var deletedPostQueryDtoSchema = import_v439.z.object({
   id: postDbSchema.shape.id
@@ -4148,7 +4228,10 @@ var import_v442 = require("zod/v4");
 var import_v441 = require("zod/v4");
 var commentQueryDtoSchema = commentDbSchema.extend({
   createdAt: serializedDateSchema,
-  updatedAt: serializedDateSchema
+  updatedAt: serializedDateSchema,
+  authorFullName: userDbSchema.shape.name,
+  authorProfilePicPath: userDbSchema.shape.profilePicPath,
+  authorUsername: userDbSchema.shape.username
 });
 var commentWriteResultQueryDtoSchema = import_v441.z.object({
   id: commentDbSchema.shape.id

@@ -18,44 +18,27 @@ export class PostsQueries {
   queryVisiblePosts(limit: number, cursor?: { timestamp: string; id: string }): Promise<PostQueryDto[]> {
     return this.sql<PostQueryDto[]>`
       SELECT
-        p.id,
-        p.author_user_id AS "authorUserId",
-        p.content,
-        p.visibility,
-        p.published_at AS "publishedAt",
-        p.updated_at AS "updatedAt",
-        (
-          SELECT
-            COUNT(*)::INTEGER
-          FROM
-            social.reaction r
-          WHERE
-            r.post_id = p.id
-            AND r.type = 'like'
-        ) AS "likeCount",
-        (
-          SELECT
-            COUNT(*)::INTEGER
-          FROM
-            social.comment c
-          WHERE
-            c.post_id = p.id
-        ) AS "commentCount",
-        author.username,
-        author.name AS "fullName",
-        author."profilePicPath" AS "profilePicPath"
+        post.id,
+        post.author_user_id AS "authorUserId",
+        post.content,
+        post.visibility,
+        post.published_at AS "publishedAt",
+        post.updated_at AS "updatedAt",
+        post.username,
+        post.full_name AS "fullName",
+        post.profile_pic_path AS "profilePicPath",
+        post.interactions
       FROM
-        social.post p
-        CROSS JOIN LATERAL identity.get_user_profile (p.author_user_id) author
+        social.v_post_expanded post
       WHERE
         ${cursor?.timestamp ?? null}::TIMESTAMPTZ IS NULL
-        OR (DATE_TRUNC('milliseconds', p.published_at), p.id) < (
+        OR (DATE_TRUNC('milliseconds', post.published_at), post.id) < (
           ${cursor?.timestamp ?? null}::TIMESTAMPTZ,
           ${cursor?.id ?? null}::UUID
         )
       ORDER BY
-        DATE_TRUNC('milliseconds', p.published_at) DESC,
-        p.id DESC
+        DATE_TRUNC('milliseconds', post.published_at) DESC,
+        post.id DESC
       LIMIT
         ${limit + 1}
     `;
@@ -72,48 +55,31 @@ export class PostsQueries {
   queryCrewPosts(crewId: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<PostQueryDto[]> {
     return this.sql<PostQueryDto[]>`
       SELECT
-        p.id,
-        p.author_user_id AS "authorUserId",
-        p.content,
-        p.visibility,
-        p.published_at AS "publishedAt",
-        p.updated_at AS "updatedAt",
-        (
-          SELECT
-            COUNT(*)::INTEGER
-          FROM
-            social.reaction r
-          WHERE
-            r.post_id = p.id
-            AND r.type = 'like'
-        ) AS "likeCount",
-        (
-          SELECT
-            COUNT(*)::INTEGER
-          FROM
-            social.comment c
-          WHERE
-            c.post_id = p.id
-        ) AS "commentCount",
-        author.username,
-        author.name AS "fullName",
-        author."profilePicPath" AS "profilePicPath"
+        post.id,
+        post.author_user_id AS "authorUserId",
+        post.content,
+        post.visibility,
+        post.published_at AS "publishedAt",
+        post.updated_at AS "updatedAt",
+        post.username,
+        post.full_name AS "fullName",
+        post.profile_pic_path AS "profilePicPath",
+        post.interactions
       FROM
-        social.post p
-        CROSS JOIN LATERAL identity.get_user_profile (p.author_user_id) author
-        INNER JOIN social.crew_shared_post csp ON csp.post_id = p.id
+        social.v_post_expanded post
+        INNER JOIN social.crew_shared_post csp ON csp.post_id = post.id
       WHERE
         csp.crew_id = ${crewId}::UUID
         AND (
           ${cursor?.timestamp ?? null}::TIMESTAMPTZ IS NULL
-          OR (DATE_TRUNC('milliseconds', p.published_at), p.id) < (
+          OR (DATE_TRUNC('milliseconds', post.published_at), post.id) < (
             ${cursor?.timestamp ?? null}::TIMESTAMPTZ,
             ${cursor?.id ?? null}::UUID
           )
         )
       ORDER BY
-        DATE_TRUNC('milliseconds', p.published_at) DESC,
-        p.id DESC
+        DATE_TRUNC('milliseconds', post.published_at) DESC,
+        post.id DESC
       LIMIT
         ${limit + 1}
     `;
@@ -133,8 +99,8 @@ export class PostsQueries {
     content: string,
     visibility: 'crews_only' | 'public',
     crewIds: string[],
-  ): Promise<Omit<PostQueryDto, 'username' | 'fullName' | 'profilePicPath' | 'likeCount' | 'commentCount'>[]> {
-    const [post] = await this.sql<Omit<PostQueryDto, 'username' | 'fullName' | 'profilePicPath' | 'likeCount' | 'commentCount'>[]>`
+  ): Promise<Omit<PostQueryDto, 'username' | 'fullName' | 'profilePicPath' | 'interactions'>[]> {
+    const [post] = await this.sql<Omit<PostQueryDto, 'username' | 'fullName' | 'profilePicPath' | 'interactions'>[]>`
       INSERT INTO
         social.post (author_user_id, content, visibility)
       VALUES

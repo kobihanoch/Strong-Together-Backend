@@ -29,9 +29,13 @@ export class CommentsQueries {
         c.user_id AS "userId",
         c.content,
         c.created_at AS "createdAt",
-        c.updated_at AS "updatedAt"
+        c.updated_at AS "updatedAt",
+        author.name AS "authorFullName",
+        author.username AS "authorUsername",
+        author."profilePicPath" AS "authorProfilePicPath"
       FROM
         social.comment c
+        CROSS JOIN LATERAL identity.get_user_profile (c.user_id) author
       WHERE
         c.post_id = ${postId}::UUID
         AND (

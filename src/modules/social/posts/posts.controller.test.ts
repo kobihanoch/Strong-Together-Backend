@@ -234,8 +234,10 @@ describe('PostsController', () => {
       authorUserId: leader.userId,
       username: expect.any(String),
       fullName: expect.any(String),
-      likeCount: 1,
-      commentCount: 1,
+      interactions: {
+        reactionsCount: { likesCount: 1, fireUpCount: 0, muscleCount: 1 },
+        commentsCount: 1,
+      },
     });
     expect(returnedPost).toHaveProperty('profilePicPath');
     expect(returnedPost).not.toHaveProperty('crewId');
