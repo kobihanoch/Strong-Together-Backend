@@ -17,6 +17,7 @@ export * from './schedules/workout_schedule/table';
 export * from './messages/messages/table';
 export * from './workout/views';
 export * from './social/crew/table';
+export * from './social/crew/views';
 export * from './social/crew_membership/table';
 export * from './social/crew_participation_request/table';
 export * from './social/post/table';

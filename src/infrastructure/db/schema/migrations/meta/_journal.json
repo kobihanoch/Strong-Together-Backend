@@ -236,8 +236,8 @@
     {
       "idx": 33,
       "version": "7",
-      "when": 1789556097047,
-      "tag": "0033_add_crew_profile_picture_and_post_view",
+      "when": 1789557972717,
+      "tag": "0033_add_crew_profile_picture_and_social_views",
       "breakpoints": true
     }
   ]

@@ -17,19 +17,19 @@ All social tables have RLS enabled. Application grants allow only the columns ne
 
 `Member` means a user with an active membership in the relevant crew. `Author` means the user who created the post or comment. A leader must also have an active membership.
 
-| Table | Read | Create | Update/delete |
-| --- | --- | --- | --- |
-| `crew` | Any signed-in user | Self as leader | Active leader |
-| `crew_membership` | Public crew or active member | Leader, accepted joiner, or initial leader | Leader may manage/remove memberships; a member may leave or delete their own membership |
-| `crew_participation_request` | Initiator, invitee, or leader | Self join; leader invite | Leader answers joins; invitee answers invites |
-| `crew_shared_post` | Member | Member + post author | Member + post author (delete only) |
-| `post` | Public, author, or member of a placed crew | Self as author | Author |
-| `comment` | Parent post visible | Self + parent visible | Author; update also needs visible parent |
-| `reaction` | Parent post visible | Self + parent visible | Reacting user; update also needs visible parent |
+| Table                        | Read                                       | Create                                     | Update/delete                                                                           |
+| ---------------------------- | ------------------------------------------ | ------------------------------------------ | --------------------------------------------------------------------------------------- |
+| `crew`                       | Any signed-in user                         | Self as leader                             | Active leader                                                                           |
+| `crew_membership`            | Public crew or active member               | Leader, accepted joiner, or initial leader | Leader may manage/remove memberships; a member may leave or delete their own membership |
+| `crew_participation_request` | Initiator, invitee, or leader              | Self join; leader invite                   | Leader answers joins; invitee answers invites                                           |
+| `crew_shared_post`           | Member                                     | Member + post author                       | Member + post author (delete only)                                                      |
+| `post`                       | Public, author, or member of a placed crew | Self as author                             | Author                                                                                  |
+| `comment`                    | Parent post visible                        | Self + parent visible                      | Author; update also needs visible parent                                                |
+| `reaction`                   | Parent post visible                        | Self + parent visible                      | Reacting user; update also needs visible parent                                         |
 
 ### Audit note
 
-The table policies and column-scoped update grants match the current API queries. `social.list_discoverable_crews` runs as its privileged owner, but returns participant previews only for public crews or crews where the caller is an active member. User search is also exposed through a narrow privileged function that returns public profile fields only.
+The table policies and column-scoped update grants match the current API queries. Crew feeds read through the security-invoker `social.v_crew_expanded` view. Its narrow `get_top_crew_participants` security-definer helper exposes at most five public-profile previews for discoverable crews, including private crews, without exposing their full membership rows. User search is exposed through a narrow privileged function that returns public profile fields only.
 
 All seven tables have RLS enabled, but not forced. This is appropriate for the current design only while requests always switch to the non-owner `authenticated` role; table owners and roles with `BYPASSRLS` remain trusted infrastructure.
 
@@ -37,14 +37,14 @@ All seven tables have RLS enabled, but not forced. This is appropriate for the c
 
 All routes require DPoP authentication and the `user` role.
 
-| Area | Endpoints | Supported behavior |
-| --- | --- | --- |
-| Crews | `GET/POST /api/social/crews`; `GET/PATCH/DELETE /api/social/crews/:id`; `PUT/DELETE /api/social/crews/:id/profile-picture`; `GET /api/social/crews/:crewId/participants`; `POST /api/social/crews/:id/leave` | Search/discover, inspect, create, edit/delete as leader, replace/delete the crew picture, list allowed participants, leave with automatic leader succession |
-| Membership requests | `POST /api/social/crews/:crewId/invitations`; `POST/GET /api/social/crews/:crewId/join-requests`; `GET /api/social/crews/invitations`; `PATCH /api/social/crews/participation-requests/:requestId` | Public instant join, private join approval, leader invites, accept/decline |
-| Posts | `GET/POST /api/social/posts`; `GET /api/social/posts/crew/:crewId`; `PATCH/DELETE /api/social/posts/:id` | Public and crew-only feeds, multi-crew placement, author edit/delete, cursor pagination |
-| Comments | `GET/POST /api/social/posts/:postId/comments`; `PATCH/DELETE /api/social/posts/comments/:id` | List/add on visible posts; author edit/delete |
-| Reactions | `GET/POST/DELETE /api/social/posts/:postId/reactions` | List, add/replace one reaction per user, remove own reaction |
-| Users | `GET /api/social/users?search=text`; `GET /api/social/users/:userId` | Search public profiles with cursor pagination or get one public profile by ID |
+| Area                | Endpoints                                                                                                                                                                                                    | Supported behavior                                                                                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Crews               | `GET/POST /api/social/crews`; `GET/PATCH/DELETE /api/social/crews/:id`; `PUT/DELETE /api/social/crews/:id/profile-picture`; `GET /api/social/crews/:crewId/participants`; `POST /api/social/crews/:id/leave` | Search/discover, inspect, create, edit/delete as leader, replace/delete the crew picture, list allowed participants, leave with automatic leader succession |
+| Membership requests | `POST /api/social/crews/:crewId/invitations`; `POST/GET /api/social/crews/:crewId/join-requests`; `GET /api/social/crews/invitations`; `PATCH /api/social/crews/participation-requests/:requestId`           | Public instant join, private join approval, leader invites, accept/decline                                                                                  |
+| Posts               | `GET/POST /api/social/posts`; `GET /api/social/posts/crew/:crewId`; `PATCH/DELETE /api/social/posts/:id`                                                                                                     | Public and crew-only feeds, multi-crew placement, author edit/delete, cursor pagination                                                                     |
+| Comments            | `GET/POST /api/social/posts/:postId/comments`; `PATCH/DELETE /api/social/posts/comments/:id`                                                                                                                 | List/add on visible posts; author edit/delete                                                                                                               |
+| Reactions           | `GET/POST/DELETE /api/social/posts/:postId/reactions`                                                                                                                                                        | List, add/replace one reaction per user, remove own reaction                                                                                                |
+| Users               | `GET /api/social/users?search=text`; `GET /api/social/users/:userId`                                                                                                                                         | Search public profiles with cursor pagination or get one public profile by ID                                                                               |
 
 ## Authorization Helpers
 
@@ -67,7 +67,7 @@ The helper functions expose authorization booleans rather than row data. Functio
 
 ### Crew discovery and participants
 
-Crew discovery uses `list_discoverable_crews(limit, cursor_created_at, cursor_id, search)`. Results support optional case-insensitive name search and stable cursor pagination ordered by creation time and UUID. Crew records themselves are discoverable by every authenticated user. Participant visibility is narrower: public crew participants are visible to authenticated users, while private crew participants require active crew access.
+Crew discovery and the caller's crew list share the `v_crew_expanded` projection. The repository queries apply their own search, membership filter, and stable cursor pagination ordered by creation time and UUID. Crew records themselves are discoverable by every authenticated user, and each discovery item exposes up to five participant public-profile previews. Full participant listings remain protected: public crew participants are visible to authenticated users, while private crew participants require active crew access.
 
 ### Crew creation
 

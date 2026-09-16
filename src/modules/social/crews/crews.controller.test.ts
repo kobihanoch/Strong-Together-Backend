@@ -226,7 +226,7 @@ describe('CrewsController', () => {
     const leader = await crewUser('crew_list_leader');
     const participant = await crewUser('crew_list_member');
     const viewer = await crewUser('crew_list_viewer');
-    const crew = await createCrew(leader.accessToken, leader.userId);
+    const crew = await createCrew(leader.accessToken, leader.userId, 'private');
     await insertCrewMembership(crew.id, participant.userId);
 
     const response = await request(app.getHttpServer()).get('/api/social/crews').query({ limit: 1 }).set(authHeaders(viewer.accessToken));

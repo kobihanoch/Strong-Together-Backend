@@ -32,14 +32,36 @@ export class CrewsQueries {
   async queryCrews(limit: number, cursor?: { timestamp: string; id: string }, search?: string): Promise<DiscoverableCrewQueryDto[]> {
     return this.sql<DiscoverableCrewQueryDto[]>`
       SELECT
-        *
+        crew.id,
+        crew.name,
+        crew.leader_id AS "leaderId",
+        crew.privacy,
+        crew.created_at AS "createdAt",
+        crew.updated_at AS "updatedAt",
+        crew.participant_count AS "participantCount",
+        crew.top_5_participants AS "top5Participants"
       FROM
-        social.list_discoverable_crews (
-          ${limit + 1},
-          ${cursor?.timestamp ?? null}::TIMESTAMPTZ,
-          ${cursor?.id ?? null}::UUID,
-          ${search ?? null}
+        social.v_crew_expanded crew
+      WHERE
+        (
+          ${search ?? null}::TEXT IS NULL
+          OR STRPOS(
+            LOWER(crew.name),
+            LOWER(${search ?? null}::TEXT)
+          ) > 0
         )
+        AND (
+          ${cursor?.timestamp ?? null}::TIMESTAMPTZ IS NULL
+          OR (DATE_TRUNC('milliseconds', crew.created_at), crew.id) < (
+            ${cursor?.timestamp ?? null}::TIMESTAMPTZ,
+            ${cursor?.id ?? null}::UUID
+          )
+        )
+      ORDER BY
+        DATE_TRUNC('milliseconds', crew.created_at) DESC,
+        crew.id DESC
+      LIMIT
+        ${limit + 1}
     `;
   }
 
@@ -53,73 +75,30 @@ export class CrewsQueries {
   async queryMyCrews(limit: number, cursor?: { timestamp: string; id: string }): Promise<DiscoverableCrewQueryDto[]> {
     return this.sql<DiscoverableCrewQueryDto[]>`
       SELECT
-        c.id,
-        c.name,
-        c.leader_id AS "leaderId",
-        c.privacy,
-        c.created_at AS "createdAt",
-        c.updated_at AS "updatedAt",
-        social.get_active_crew_participant_count (c.id) AS "participantCount",
-        COALESCE(participants.items, '[]'::JSONB) AS "top5Participants"
+        crew.id,
+        crew.name,
+        crew.leader_id AS "leaderId",
+        crew.privacy,
+        crew.created_at AS "createdAt",
+        crew.updated_at AS "updatedAt",
+        crew.participant_count AS "participantCount",
+        crew.top_5_participants AS "top5Participants"
       FROM
-        social.crew c
-        INNER JOIN social.crew_membership mine ON mine.crew_id = c.id
-        LEFT JOIN LATERAL (
-          SELECT
-            JSONB_AGG(
-              JSONB_BUILD_OBJECT(
-                'username',
-                ranked.username,
-                'fullName',
-                ranked.full_name,
-                'profilePicPath',
-                ranked.profile_pic_path
-              )
-              ORDER BY
-                ranked.rank_order
-            ) AS items
-          FROM
-            (
-              SELECT
-                profile.username,
-                profile.name AS full_name,
-                profile."profilePicPath" AS profile_pic_path,
-                ROW_NUMBER() OVER (
-                  ORDER BY
-                    (member.user_id = identity.current_user_id ()) DESC,
-                    CASE member.role
-                      WHEN 'leader' THEN 1
-                      WHEN 'admin' THEN 2
-                      ELSE 3
-                    END,
-                    member.joined_at,
-                    member.id
-                ) AS rank_order
-              FROM
-                social.crew_membership member
-                CROSS JOIN LATERAL identity.get_user_profile (member.user_id) profile
-              WHERE
-                member.crew_id = c.id
-                AND member.status = 'active'
-              ORDER BY
-                rank_order
-              LIMIT
-                5
-            ) ranked
-        ) participants ON TRUE
+        social.v_crew_expanded crew
+        INNER JOIN social.crew_membership mine ON mine.crew_id = crew.id
       WHERE
         mine.user_id = identity.current_user_id ()
         AND mine.status = 'active'
         AND (
           ${cursor?.timestamp ?? null}::TIMESTAMPTZ IS NULL
-          OR (DATE_TRUNC('milliseconds', c.created_at), c.id) < (
+          OR (DATE_TRUNC('milliseconds', crew.created_at), crew.id) < (
             ${cursor?.timestamp ?? null}::TIMESTAMPTZ,
             ${cursor?.id ?? null}::UUID
           )
         )
       ORDER BY
-        DATE_TRUNC('milliseconds', c.created_at) DESC,
-        c.id DESC
+        DATE_TRUNC('milliseconds', crew.created_at) DESC,
+        crew.id DESC
       LIMIT
         ${limit + 1}
     `;

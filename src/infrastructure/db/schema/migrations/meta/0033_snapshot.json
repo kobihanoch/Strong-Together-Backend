@@ -1,5 +1,5 @@
 {
-  "id": "36337166-1197-4c7e-9e78-4a2a122d6f31",
+  "id": "c110855b-d27a-4a2f-be75-3314a1870ee1",
   "prevId": "4a4fde70-efa0-4c9b-b017-04a058dea86c",
   "version": "7",
   "dialect": "postgresql",
@@ -3256,6 +3256,67 @@
   },
   "policies": {},
   "views": {
+    "social.v_crew_expanded": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "leader_id": {
+          "name": "leader_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "privacy": {
+          "name": "privacy",
+          "type": "Crew Privacy",
+          "typeSchema": "social",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "participant_count": {
+          "name": "participant_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "top_5_participants": {
+          "name": "top_5_participants",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "definition": "\n    SELECT\n      c.id,\n      c.name,\n      c.leader_id,\n      c.privacy,\n      c.created_at,\n      c.updated_at,\n      social.get_active_crew_participant_count (c.id) AS participant_count,\n      social.get_top_crew_participants (c.id) AS top_5_participants\n    FROM\n      social.crew c\n  ",
+      "name": "v_crew_expanded",
+      "schema": "social",
+      "isExisting": false,
+      "with": {
+        "securityInvoker": true
+      },
+      "materialized": false
+    },
     "social.v_post_expanded": {
       "columns": {
         "id": {
