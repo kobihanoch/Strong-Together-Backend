@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type {
   CrewParticipantQueryDto,
   CrewQueryDto,
@@ -9,8 +9,7 @@ import type {
   LeaveCrewResultQueryDto,
   LeaveCrewContextQueryDto,
 } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 
 /**
  * Executes crew persistence operations inside the request's RLS transaction.
@@ -19,7 +18,7 @@ import { SQL } from '../../../infrastructure/db/db.tokens';
  */
 @Injectable()
 export class CrewsQueries {
-  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /**
    * Retrieves a page of discoverable crews and their participant previews.
@@ -30,7 +29,7 @@ export class CrewsQueries {
    * @returns Crew rows ordered from newest to oldest.
    */
   async queryCrews(limit: number, cursor?: { timestamp: string; id: string }, search?: string): Promise<DiscoverableCrewQueryDto[]> {
-    return this.sql<DiscoverableCrewQueryDto[]>`
+    return this.dbService.sql<DiscoverableCrewQueryDto[]>`
       SELECT
         crew.id,
         crew.name,
@@ -73,7 +72,7 @@ export class CrewsQueries {
    * @returns The caller's crews with participant counts and previews, newest first.
    */
   async queryMyCrews(limit: number, cursor?: { timestamp: string; id: string }): Promise<DiscoverableCrewQueryDto[]> {
-    return this.sql<DiscoverableCrewQueryDto[]>`
+    return this.dbService.sql<DiscoverableCrewQueryDto[]>`
       SELECT
         crew.id,
         crew.name,
@@ -119,7 +118,7 @@ export class CrewsQueries {
     limit: number,
     cursor?: { timestamp: string; id: string; rank: number | undefined },
   ): Promise<CrewParticipantQueryDto[]> {
-    return this.sql<CrewParticipantQueryDto[]>`
+    return this.dbService.sql<CrewParticipantQueryDto[]>`
       SELECT
         cm.id,
         cm.user_id AS "userId",
@@ -174,7 +173,7 @@ export class CrewsQueries {
    * @returns An array containing the matching crew, or an empty array.
    */
   async queryCrew(id: string): Promise<CrewWithParticipantCountQueryDto[]> {
-    return this.sql<CrewWithParticipantCountQueryDto[]>`
+    return this.dbService.sql<CrewWithParticipantCountQueryDto[]>`
       SELECT
         id,
         name,
@@ -201,7 +200,7 @@ export class CrewsQueries {
    * @returns An array containing the newly created crew.
    */
   async queryCreateCrew(userId: string, name: string, privacy: 'public' | 'private'): Promise<CrewQueryDto[]> {
-    const [created] = await this.sql<CrewQueryDto[]>`
+    const [created] = await this.dbService.sql<CrewQueryDto[]>`
       INSERT INTO
         social.crew (name, created_by, privacy)
       VALUES
@@ -218,7 +217,7 @@ export class CrewsQueries {
         created_at AS "createdAt",
         updated_at AS "updatedAt"
     `;
-    await this.sql`
+    await this.dbService.sql`
       INSERT INTO
         social.crew_membership (crew_id, user_id, role, joined_at)
       VALUES
@@ -241,7 +240,7 @@ export class CrewsQueries {
    * @returns An array containing the updated crew, or an empty array.
    */
   async queryUpdateCrew(id: string, name: string, privacy: 'public' | 'private'): Promise<CrewQueryDto[]> {
-    return this.sql<CrewQueryDto[]>`
+    return this.dbService.sql<CrewQueryDto[]>`
       UPDATE social.crew
       SET
         name = ${name},
@@ -266,7 +265,7 @@ export class CrewsQueries {
    * @returns The current picture path, or no row when the caller cannot update it.
    */
   async queryCrewProfilePictureForUpdate(crewId: string): Promise<{ profilePicPath: string | null }[]> {
-    return this.sql<{ profilePicPath: string | null }[]>`
+    return this.dbService.sql<{ profilePicPath: string | null }[]>`
       SELECT
         profile_pic_path AS "profilePicPath"
       FROM
@@ -285,7 +284,7 @@ export class CrewsQueries {
    * @returns The updated picture path.
    */
   async queryUpdateCrewProfilePicture(crewId: string, profilePicPath: string | null): Promise<{ profilePicPath: string | null }[]> {
-    return this.sql<{ profilePicPath: string | null }[]>`
+    return this.dbService.sql<{ profilePicPath: string | null }[]>`
       UPDATE social.crew
       SET
         profile_pic_path = ${profilePicPath},
@@ -307,7 +306,7 @@ export class CrewsQueries {
    */
   async queryLeaveCrew(crewId: string): Promise<LeaveCrewResultQueryDto[]> {
     // Get crew ID and lock row
-    const [context] = await this.sql<LeaveCrewContextQueryDto[]>`
+    const [context] = await this.dbService.sql<LeaveCrewContextQueryDto[]>`
       SELECT
         cm.id AS "membershipId",
         cm.role = 'leader' AS "isLeader"
@@ -324,7 +323,7 @@ export class CrewsQueries {
     if (!context) return [{ result: 'not_member' }];
 
     if (context.isLeader) {
-      const [successor] = await this.sql<CrewSuccessorQueryDto[]>`
+      const [successor] = await this.dbService.sql<CrewSuccessorQueryDto[]>`
         SELECT
           cm.id AS "membershipId",
           cm.user_id AS "userId"
@@ -348,7 +347,7 @@ export class CrewsQueries {
       `;
 
       if (!successor) {
-        await this.sql`
+        await this.dbService.sql`
           DELETE FROM social.crew c
           WHERE
             c.id = ${crewId}::UUID
@@ -356,7 +355,7 @@ export class CrewsQueries {
         return [{ result: 'left' }];
       }
 
-      await this.sql`
+      await this.dbService.sql`
         UPDATE social.crew_membership
         SET ROLE = 'leader',
         updated_at = NOW()
@@ -365,7 +364,7 @@ export class CrewsQueries {
       `;
     }
 
-    await this.sql`
+    await this.dbService.sql`
       UPDATE social.crew_membership
       SET
         status = 'left',
@@ -385,7 +384,7 @@ export class CrewsQueries {
    * @returns The deleted UUID when a row was removed, or an empty array.
    */
   async queryDeleteCrew(id: string): Promise<DeletedCrewQueryDto[]> {
-    return this.sql<DeletedCrewQueryDto[]>`
+    return this.dbService.sql<DeletedCrewQueryDto[]>`
       DELETE FROM social.crew
       WHERE
         id = ${id}::UUID

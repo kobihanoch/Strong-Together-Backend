@@ -1,7 +1,6 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { CrewParticipationRequestQueryDto } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../../infrastructure/db/db.service';
 
 /**
  * Executes crew participation-request persistence operations inside the current
@@ -14,7 +13,7 @@ import { SQL } from '../../../../infrastructure/db/db.tokens';
  */
 @Injectable()
 export class CrewRequestsQueries {
-  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /**
    * Lists invitations addressed to the authenticated database user.
@@ -22,7 +21,7 @@ export class CrewRequestsQueries {
    * @returns All RLS-visible invitation rows ordered from newest to oldest.
    */
   async queryListInvitations(): Promise<CrewParticipationRequestQueryDto[]> {
-    return this.sql<CrewParticipationRequestQueryDto[]>`
+    return this.dbService.sql<CrewParticipationRequestQueryDto[]>`
       SELECT
         id,
         crew_id AS "crewId",
@@ -50,7 +49,7 @@ export class CrewRequestsQueries {
    * @returns `true` when the caller is the active crew leader.
    */
   async queryIsCrewLeader(crewId: string): Promise<boolean> {
-    const [row] = await this.sql<{ allowed: boolean }[]>`
+    const [row] = await this.dbService.sql<{ allowed: boolean }[]>`
       SELECT
         social.is_crew_leader (${crewId}::UUID) AS allowed
     `;
@@ -64,7 +63,7 @@ export class CrewRequestsQueries {
    * @returns Pending RLS-visible join-request rows ordered from oldest to newest.
    */
   async queryListPendingJoinRequests(crewId: string): Promise<CrewParticipationRequestQueryDto[]> {
-    return this.sql<CrewParticipationRequestQueryDto[]>`
+    return this.dbService.sql<CrewParticipationRequestQueryDto[]>`
       SELECT
         id,
         crew_id AS "crewId",
@@ -95,7 +94,7 @@ export class CrewRequestsQueries {
    * @returns The inserted participation request, or an empty collection when RLS blocks insertion.
    */
   async queryInviteUser(crewId: string, initiatorUserId: string, participantUserId: string): Promise<CrewParticipationRequestQueryDto[]> {
-    return this.sql<CrewParticipationRequestQueryDto[]>`
+    return this.dbService.sql<CrewParticipationRequestQueryDto[]>`
       INSERT INTO
         social.crew_participation_request (crew_id, initiator_user_id, participant_user_id, status)
       VALUES
@@ -129,7 +128,7 @@ export class CrewRequestsQueries {
    * @returns The inserted participation request, or an empty collection when no visible crew matches.
    */
   async queryRequestToJoin(crewId: string, userId: string): Promise<CrewParticipationRequestQueryDto[]> {
-    return this.sql<CrewParticipationRequestQueryDto[]>`
+    return this.dbService.sql<CrewParticipationRequestQueryDto[]>`
       INSERT INTO
         social.crew_participation_request (crew_id, initiator_user_id, participant_user_id, status)
       SELECT
@@ -169,7 +168,7 @@ export class CrewRequestsQueries {
    * @returns The updated request, or an empty collection if it is unavailable or not pending.
    */
   async queryUpdateStatus(requestId: string, status: 'accepted' | 'declined'): Promise<CrewParticipationRequestQueryDto[]> {
-    return this.sql<CrewParticipationRequestQueryDto[]>`
+    return this.dbService.sql<CrewParticipationRequestQueryDto[]>`
       UPDATE social.crew_participation_request
       SET
         status = ${status}::social."Crew Participation Request Status",
@@ -202,7 +201,7 @@ export class CrewRequestsQueries {
    * @returns A promise that resolves after membership insertion.
    */
   async queryCreateMembership(crewId: string, userId: string): Promise<void> {
-    await this.sql`
+    await this.dbService.sql`
       INSERT INTO
         social.crew_membership (crew_id, user_id, status, role, joined_at)
       VALUES

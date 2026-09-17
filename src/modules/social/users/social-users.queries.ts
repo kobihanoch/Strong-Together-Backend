@@ -1,12 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { GetSocialUserResponse, SocialUserQueryDto } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 
 /** Runs public-profile searches inside the current RLS transaction. */
 @Injectable()
 export class SocialUsersQueries {
-  public constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  public constructor(private readonly dbService: DBService) {}
 
   /**
    * Searches the narrow public-profile database function.
@@ -17,7 +16,7 @@ export class SocialUsersQueries {
    * @returns Matching profiles plus at most one lookahead row.
    */
   public querySearchUser(search: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<SocialUserQueryDto[]> {
-    return this.sql<SocialUserQueryDto[]>`
+    return this.dbService.sql<SocialUserQueryDto[]>`
       SELECT
         *
       FROM
@@ -37,7 +36,7 @@ export class SocialUsersQueries {
    * @returns The public profile, or an empty array when it does not exist.
    */
   public queryGetUser(userId: string): Promise<GetSocialUserResponse[]> {
-    return this.sql<GetSocialUserResponse[]>`
+    return this.dbService.sql<GetSocialUserResponse[]>`
       SELECT
         p."userId",
         p.username,

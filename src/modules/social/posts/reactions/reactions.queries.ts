@@ -1,7 +1,6 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { ReactionQueryDto, ReactionWriteResultQueryDto, ReactToPostBody } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../../infrastructure/db/db.service';
 
 /** Executes reaction writes inside the current request's RLS transaction. */
 @Injectable()
@@ -11,7 +10,7 @@ export class ReactionsQueries {
    *
    * @param sql - The transaction-scoped PostgreSQL client.
    */
-  public constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  public constructor(private readonly dbService: DBService) {}
 
   /**
    * Lists reactions on a post visible to the caller, newest first.
@@ -22,7 +21,7 @@ export class ReactionsQueries {
    * @returns At most one extra row beyond the requested page size.
    */
   public queryPostReactions(postId: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<ReactionQueryDto[]> {
-    return this.sql<ReactionQueryDto[]>`
+    return this.dbService.sql<ReactionQueryDto[]>`
       SELECT
         r.id,
         r.post_id AS "postId",
@@ -57,7 +56,7 @@ export class ReactionsQueries {
    * @returns The written reaction identifier, or no row when the post is not visible.
    */
   public queryReact(postId: string, userId: string, type: ReactToPostBody['type']): Promise<ReactionWriteResultQueryDto[]> {
-    return this.sql<ReactionWriteResultQueryDto[]>`
+    return this.dbService.sql<ReactionWriteResultQueryDto[]>`
       INSERT INTO
         social.reaction (post_id, user_id, type)
       VALUES
@@ -83,7 +82,7 @@ export class ReactionsQueries {
    * @returns The deleted reaction identifier, or no row when it does not exist.
    */
   public queryDeleteReaction(postId: string, userId: string): Promise<ReactionWriteResultQueryDto[]> {
-    return this.sql<ReactionWriteResultQueryDto[]>`
+    return this.dbService.sql<ReactionWriteResultQueryDto[]>`
       DELETE FROM social.reaction
       WHERE
         post_id = ${postId}::UUID

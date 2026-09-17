@@ -1,12 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { DeletedPostQueryDto, PostQueryDto } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 
 /** Executes post persistence operations inside the request's RLS transaction. */
 @Injectable()
 export class PostsQueries {
-  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /**
    * Retrieves each post visible to the authenticated user exactly once.
@@ -16,7 +15,7 @@ export class PostsQueries {
    * @returns Visible post rows with like and comment counts, ordered from newest to oldest.
    */
   queryVisiblePosts(limit: number, cursor?: { timestamp: string; id: string }): Promise<PostQueryDto[]> {
-    return this.sql<PostQueryDto[]>`
+    return this.dbService.sql<PostQueryDto[]>`
       SELECT
         post.id,
         post.author_user_id AS "authorUserId",
@@ -54,7 +53,7 @@ export class PostsQueries {
    * @returns Crew post rows with like and comment counts, ordered from newest to oldest.
    */
   queryCrewPosts(crewId: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<PostQueryDto[]> {
-    return this.sql<PostQueryDto[]>`
+    return this.dbService.sql<PostQueryDto[]>`
       SELECT
         post.id,
         post.author_user_id AS "authorUserId",
@@ -103,7 +102,7 @@ export class PostsQueries {
     crewIds: string[],
     workoutSummaryId?: string | null,
   ): Promise<Omit<PostQueryDto, 'username' | 'fullName' | 'profilePicPath' | 'interactions'>[]> {
-    const [post] = await this.sql<Omit<PostQueryDto, 'username' | 'fullName' | 'profilePicPath' | 'interactions'>[]>`
+    const [post] = await this.dbService.sql<Omit<PostQueryDto, 'username' | 'fullName' | 'profilePicPath' | 'interactions'>[]>`
       INSERT INTO
         social.post (author_user_id, workout_summary_id, content, visibility)
       VALUES
@@ -124,7 +123,7 @@ export class PostsQueries {
     `;
 
     if (crewIds.length > 0) {
-      await this.sql`
+      await this.dbService.sql`
         INSERT INTO
           social.crew_shared_post (crew_id, post_id)
         SELECT DISTINCT
@@ -148,7 +147,7 @@ export class PostsQueries {
    * @returns The updated UUID, or an empty array when no post was authorized.
    */
   queryUpdatePost(id: string, content: string): Promise<DeletedPostQueryDto[]> {
-    return this.sql<DeletedPostQueryDto[]>`
+    return this.dbService.sql<DeletedPostQueryDto[]>`
       UPDATE social.post
       SET
         content = ${content},
@@ -167,7 +166,7 @@ export class PostsQueries {
    * @returns The deleted UUID, or an empty array when no post was authorized.
    */
   queryDeletePost(id: string): Promise<DeletedPostQueryDto[]> {
-    return this.sql<DeletedPostQueryDto[]>`
+    return this.dbService.sql<DeletedPostQueryDto[]>`
       DELETE FROM social.post
       WHERE
         id = ${id}::UUID

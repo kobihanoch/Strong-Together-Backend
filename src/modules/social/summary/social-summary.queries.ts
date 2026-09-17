@@ -1,12 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { GetSocialSummaryResponse } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 
 /** Reads the authenticated user's compact social overview inside the current RLS transaction. */
 @Injectable()
 export class SocialSummaryQueries {
-  public constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  public constructor(private readonly dbService: DBService) {}
 
   /**
    * Counts active crew memberships and selects three unique active co-members.
@@ -14,7 +13,7 @@ export class SocialSummaryQueries {
    * @returns One social-summary row for the authenticated user.
    */
   public querySocialSummary(): Promise<GetSocialSummaryResponse[]> {
-    return this.sql<GetSocialSummaryResponse[]>`
+    return this.dbService.sql<GetSocialSummaryResponse[]>`
       SELECT
         (
           SELECT

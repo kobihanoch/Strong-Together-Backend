@@ -1,7 +1,6 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { CommentQueryDto, CommentWriteResultQueryDto } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../../infrastructure/db/db.service';
 
 /** Executes comment writes inside the current request's RLS transaction. */
 @Injectable()
@@ -11,7 +10,7 @@ export class CommentsQueries {
    *
    * @param sql - The transaction-scoped PostgreSQL client.
    */
-  public constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  public constructor(private readonly dbService: DBService) {}
 
   /**
    * Lists comments on a post visible to the caller in conversation order.
@@ -22,7 +21,7 @@ export class CommentsQueries {
    * @returns At most one extra row beyond the requested page size.
    */
   public queryPostComments(postId: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<CommentQueryDto[]> {
-    return this.sql<CommentQueryDto[]>`
+    return this.dbService.sql<CommentQueryDto[]>`
       SELECT
         c.id,
         c.post_id AS "postId",
@@ -62,7 +61,7 @@ export class CommentsQueries {
    * @returns The created comment identifier, or no row when the post is not visible.
    */
   public queryAddComment(postId: string, userId: string, content: string): Promise<CommentWriteResultQueryDto[]> {
-    return this.sql<CommentWriteResultQueryDto[]>`
+    return this.dbService.sql<CommentWriteResultQueryDto[]>`
       INSERT INTO
         social.comment (post_id, user_id, content)
       VALUES
@@ -84,7 +83,7 @@ export class CommentsQueries {
    * @returns The updated comment identifier, or no row when it is unavailable.
    */
   public queryEditComment(id: string, content: string): Promise<CommentWriteResultQueryDto[]> {
-    return this.sql<CommentWriteResultQueryDto[]>`
+    return this.dbService.sql<CommentWriteResultQueryDto[]>`
       UPDATE social.comment
       SET
         content = ${content},
@@ -103,7 +102,7 @@ export class CommentsQueries {
    * @returns The deleted comment identifier, or no row when it is unavailable.
    */
   public queryDeleteComment(id: string): Promise<CommentWriteResultQueryDto[]> {
-    return this.sql<CommentWriteResultQueryDto[]>`
+    return this.dbService.sql<CommentWriteResultQueryDto[]>`
       DELETE FROM social.comment
       WHERE
         id = ${id}::UUID
