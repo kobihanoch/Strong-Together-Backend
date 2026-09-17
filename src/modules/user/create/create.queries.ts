@@ -1,11 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { CreatedUserQueryDto, CreatedUserRowQueryDto, UserExistsQueryDto } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 
 @Injectable()
 export class CreateUserQueries {
-  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /**
    * User exists by username or email.
@@ -17,7 +16,7 @@ export class CreateUserQueries {
     username: string | null,
     email: string | null,
   ): Promise<Array<Pick<UserExistsQueryDto, 'id'>>> {
-    const [row] = await this.sql<UserExistsQueryDto[]>`
+    const [row] = await this.dbService.sql<UserExistsQueryDto[]>`
       SELECT
         guest_api.user_exists (
           ${username},
@@ -44,7 +43,7 @@ export class CreateUserQueries {
     gender: string | null,
     passwordHash: string,
   ): Promise<CreatedUserQueryDto> {
-    const [row] = await this.sql<CreatedUserRowQueryDto[]>`
+    const [row] = await this.dbService.sql<CreatedUserRowQueryDto[]>`
       SELECT
         guest_api.create_app_user (
           ${username},

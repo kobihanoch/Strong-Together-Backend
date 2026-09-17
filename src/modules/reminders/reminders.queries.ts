@@ -1,18 +1,17 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type {
   GetReminderSettingsResponse,
   UpdateReminderTimeZoneBody,
   UpsertReminderSettingsBody,
 } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../infrastructure/db/db.tokens';
+import { DBService } from '../../infrastructure/db/db.service';
 
 /**
  * Database operations for authenticated users' reminder settings.
  */
 @Injectable()
 export class RemindersQueries {
-  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /**
    * Retrieves reminder settings owned by a user.
@@ -20,7 +19,7 @@ export class RemindersQueries {
    * @returns The user's reminder settings, or null when none exist.
    */
   async queryGetReminderSettings(userId: string): Promise<GetReminderSettingsResponse['reminderSettings']> {
-    const [settings] = await this.sql<NonNullable<GetReminderSettingsResponse['reminderSettings']>[]>`
+    const [settings] = await this.dbService.sql<NonNullable<GetReminderSettingsResponse['reminderSettings']>[]>`
       SELECT
         id,
         user_id AS "userId",
@@ -41,7 +40,7 @@ export class RemindersQueries {
    * @param settings - The validated reminder settings.
    */
   async queryUpsertReminderSettings(userId: string, settings: UpsertReminderSettingsBody): Promise<void> {
-    await this.sql`
+    await this.dbService.sql`
       INSERT INTO
         reminders.user_reminder_setting (user_id, reminder_enabled, time_zone)
       VALUES
@@ -64,7 +63,7 @@ export class RemindersQueries {
    * @param settings - The validated reminder time-zone settings.
    */
   async queryUpdateReminderTimeZone(userId: string, settings: UpdateReminderTimeZoneBody): Promise<void> {
-    await this.sql`
+    await this.dbService.sql`
       UPDATE reminders.user_reminder_setting
       SET
         time_zone = ${settings.timeZone},

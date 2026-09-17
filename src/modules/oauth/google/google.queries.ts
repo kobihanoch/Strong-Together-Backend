@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type {
   OAuthCreatedUserRowQueryDto,
   OAuthLinkQueryDto,
@@ -6,12 +6,11 @@ import type {
   OAuthLookupQueryDto,
   OAuthLookupRowQueryDto,
 } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 
 @Injectable()
 export class GoogleQueries {
-  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /**
    * Finds user id with google user id.
@@ -19,7 +18,7 @@ export class GoogleQueries {
    * @returns The user id with google user id result.
    */
   async queryFindUserIdWithGoogleUserId(googleUserId: string): Promise<OAuthLookupQueryDto> {
-    const rows = await this.sql<OAuthLookupRowQueryDto[]>`
+    const rows = await this.dbService.sql<OAuthLookupRowQueryDto[]>`
       SELECT guest_api.oauth_lookup('google', ${googleUserId}) AS oauth_data`;
     return {
       userId: rows[0]?.oauth_data?.user_id || null,
@@ -37,7 +36,7 @@ export class GoogleQueries {
   async queryTryToLinkUserWithEmailGoogle(googleEmail: string | null, googleSub: string): Promise<OAuthLinkQueryDto> {
     if (!googleEmail) return { userId: null };
 
-    const [row] = await this.sql<OAuthLinkRowQueryDto[]>`
+    const [row] = await this.dbService.sql<OAuthLinkRowQueryDto[]>`
       SELECT guest_api.oauth_link_by_email('google', ${googleEmail}, ${googleSub}) AS user_id
     `;
     return { userId: row?.user_id ?? null };
@@ -59,7 +58,7 @@ export class GoogleQueries {
     googleSub: string,
     googleEmail: string | null,
   ): Promise<string> {
-    const [row] = await this.sql<OAuthCreatedUserRowQueryDto[]>`
+    const [row] = await this.dbService.sql<OAuthCreatedUserRowQueryDto[]>`
       SELECT guest_api.oauth_create_user(
         'google', ${candidateUsername}, ${email}, ${fullName}, ${googleSub}, ${googleEmail}
       ) AS user_id

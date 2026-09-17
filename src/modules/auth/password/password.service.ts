@@ -1,19 +1,16 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import type { CreatePasswordResetRequestBody } from '@strong-together/shared';
 import bcrypt from 'bcryptjs';
 import { PasswordQueries } from './password.queries';
 import { SessionQueries } from '../session/session.queries';
 import { decodeForgotPasswordToken } from './password.utils';
-import { SQL } from '../../../infrastructure/db/db.tokens';
 import { PasswordEmailsService } from './password-emails/password-emails.service';
-import postgres from 'postgres';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
 import { DBService } from '../../../infrastructure/db/db.service';
 
 @Injectable()
 export class PasswordService {
   constructor(
-    @Inject(SQL) private readonly sql: postgres.Sql,
     private readonly dbService: DBService,
     private readonly passwordQueries: PasswordQueries,
     private readonly sessionQueries: SessionQueries,
@@ -29,7 +26,7 @@ export class PasswordService {
   async createPasswordResetRequestData(body: CreatePasswordResetRequestBody, requestId?: string): Promise<void> {
     const { identifier } = body;
     if (!identifier) throw new BadRequestException('Please fill username or email');
-    const [row] = await this.sql<
+    const [row] = await this.dbService.sql<
       {
         userData: { id: string; email: string; name: string; username: string } | null;
       }[]

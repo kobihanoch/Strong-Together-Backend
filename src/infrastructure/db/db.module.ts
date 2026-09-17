@@ -3,7 +3,7 @@ import { DBService } from './db.service';
 import postgres from 'postgres';
 import { appConfig } from '../../config/app.config';
 import { databaseConfig } from '../../config/database.config';
-import { DB_CLIENT, SQL } from './db.tokens';
+import { DB_CLIENT } from './db.tokens';
 
 @Global()
 @Module({
@@ -13,21 +13,16 @@ import { DB_CLIENT, SQL } from './db.tokens';
       provide: DB_CLIENT,
       useFactory: () => {
         const connectionString = databaseConfig.url;
-        return postgres(connectionString!, {
+        const client: postgres.Sql = postgres(connectionString!, {
           ssl: appConfig.isProduction ? 'require' : false,
           prepare: false,
           connect_timeout: 30,
         });
+        return client;
       },
     },
     DBService,
-    // Assign sql instance to SQL tag for wide usage
-    {
-      provide: SQL,
-      useFactory: (dbService: DBService) => dbService.sql,
-      inject: [DBService],
-    },
   ],
-  exports: [DBService, SQL],
+  exports: [DBService],
 })
 export class DBModule {}

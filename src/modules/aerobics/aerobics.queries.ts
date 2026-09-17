@@ -1,10 +1,8 @@
-import { Inject } from '@nestjs/common';
 import type { AddAerobicInputQueryDto, AerobicMutationRowQueryDto, UserAerobicsQueryDto, UserAerobicsRowQueryDto } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../infrastructure/db/db.tokens';
+import { DBService } from '../../infrastructure/db/db.service';
 
 export class AerobicsQueries {
-  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /**
    * Retrieves user aerobics for ndays.
@@ -14,7 +12,7 @@ export class AerobicsQueries {
    * @returns The user aerobics for ndays result.
    */
   async queryGetUserAerobicsForNDays(userId: string, days: number, tz: string = 'Asia/Jerusalem'): Promise<UserAerobicsQueryDto> {
-    const [obj] = await this.sql<UserAerobicsRowQueryDto[]>`
+    const [obj] = await this.dbService.sql<UserAerobicsRowQueryDto[]>`
       /* Normalize parameters (default tz to UTC if empty) */
       WITH
         params AS (
@@ -166,7 +164,7 @@ export class AerobicsQueries {
    */
   async queryAddAerobicTracking(userId: string, record: AddAerobicInputQueryDto): Promise<void> {
     const { durationMins, durationSec, type } = record;
-    await this.sql`
+    await this.dbService.sql`
       INSERT INTO
         tracking.aerobic_tracking (user_id, type, duration_sec)
       VALUES
@@ -188,7 +186,7 @@ export class AerobicsQueries {
    */
   async queryUpdateAerobicTracking(userId: string, id: number, record: AddAerobicInputQueryDto): Promise<number | null> {
     const { durationMins, durationSec, type } = record;
-    const [row] = await this.sql<AerobicMutationRowQueryDto[]>`
+    const [row] = await this.dbService.sql<AerobicMutationRowQueryDto[]>`
       UPDATE tracking.aerobic_tracking
       SET
         type = ${type},
@@ -210,7 +208,7 @@ export class AerobicsQueries {
    * @returns The deleted entry identifier, or `null` when it was not found.
    */
   async queryDeleteAerobicTracking(userId: string, id: number): Promise<number | null> {
-    const [row] = await this.sql<AerobicMutationRowQueryDto[]>`
+    const [row] = await this.dbService.sql<AerobicMutationRowQueryDto[]>`
       DELETE FROM tracking.aerobic_tracking
       WHERE
         id = ${id}::BIGINT

@@ -1,15 +1,14 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { MessageAfterSendQueryDto } from '@strong-together/shared';
-import type postgres from 'postgres';
 import { appConfig } from '../../../config/app.config';
-import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 import { getEndOfWorkoutMessage, getFirstLoginMessage } from './system-messages.templates';
 import { MessagesService } from '../messages.service';
 
 @Injectable()
 export class SystemMessagesService {
   constructor(
-    @Inject(SQL) private readonly sql: postgres.Sql,
+    private readonly dbService: DBService,
     private readonly messagesService: MessagesService,
   ) {}
 
@@ -21,7 +20,7 @@ export class SystemMessagesService {
   private async createAndSend(receiverId: string, msg: { header: string; text: string }) {
     const senderId = appConfig.systemUserId as string;
 
-    const [row] = await this.sql<[MessageAfterSendQueryDto]>`
+    const [row] = await this.dbService.sql<[MessageAfterSendQueryDto]>`
       WITH
         inserted AS (
           INSERT INTO

@@ -1,10 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type postgres from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens';
+import { Injectable } from '@nestjs/common';
+import { DBService } from '../../../infrastructure/db/db.service';
 
 @Injectable()
 export class PushTokensQueries {
-  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /**
    * Saves user push token.
@@ -12,6 +11,6 @@ export class PushTokensQueries {
    * @param token - The token to process.
    */
   async querySaveUserPushToken(userId: string, token: string): Promise<void> {
-    await this.sql`UPDATE identity.user SET push_token=${token} WHERE id=${userId}::uuid`;
+    await this.dbService.sql`UPDATE identity.user SET push_token=${token} WHERE id=${userId}::uuid`;
   }
 }

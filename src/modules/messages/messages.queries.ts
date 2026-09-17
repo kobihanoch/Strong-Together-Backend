@@ -1,7 +1,6 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { AllUserMessageQueryDto, DeletedMessageQueryDto, MessageAsReadQueryDto } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../infrastructure/db/db.tokens';
+import { DBService } from '../../infrastructure/db/db.service';
 
 // Returns sender's username, full name and profile image path too
 /*
@@ -20,7 +19,7 @@ import { SQL } from '../../infrastructure/db/db.tokens';
  */
 @Injectable()
 export class MessagesQueries {
-  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /**
    * All user messages.
@@ -29,7 +28,7 @@ export class MessagesQueries {
    * @returns The all user messages result.
    */
   async queryAllUserMessages(userId: string, tz: string = 'Asia/Jerusalem'): Promise<AllUserMessageQueryDto[]> {
-    const rows = await this.sql<AllUserMessageQueryDto[]>`
+    const rows = await this.dbService.sql<AllUserMessageQueryDto[]>`
       SELECT
         m.id AS id,
         m.subject AS subject,
@@ -57,7 +56,7 @@ export class MessagesQueries {
    * @returns The mark user message as read result.
    */
   async queryMarkUserMessageAsRead(messageId: string, userId: string): Promise<MessageAsReadQueryDto[]> {
-    return this.sql<MessageAsReadQueryDto[]>`
+    return this.dbService.sql<MessageAsReadQueryDto[]>`
       UPDATE messages.message AS m
       SET
         is_read = TRUE
@@ -77,7 +76,7 @@ export class MessagesQueries {
    * @returns The delete message result.
    */
   async queryDeleteMessage(messageId: string, userId: string): Promise<DeletedMessageQueryDto[]> {
-    return this.sql<DeletedMessageQueryDto[]>`
+    return this.dbService.sql<DeletedMessageQueryDto[]>`
       DELETE FROM messages.message AS m
       WHERE
         m.id = ${messageId}::UUID

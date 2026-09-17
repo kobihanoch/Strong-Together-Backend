@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import postgres from 'postgres';
 import type {
   AuthenticatedUserForUpdateQueryDto,
@@ -7,12 +7,11 @@ import type {
   UserMessageIdentityQueryDto,
   UserProfilePicQueryDto,
 } from '@strong-together/shared';
-import type { Sql } from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 
 @Injectable()
 export class UpdateUserQueries {
-  constructor(@Inject(SQL) private readonly sql: Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /**
    * Authenticated user by id.
@@ -20,7 +19,7 @@ export class UpdateUserQueries {
    * @returns The authenticated user by id result.
    */
   async queryAuthenticatedUserById(userId: string): Promise<UserDataRowQueryDto[]> {
-    return this.sql<UserDataRowQueryDto[]>`
+    return this.dbService.sql<UserDataRowQueryDto[]>`
       SELECT
         JSONB_BUILD_OBJECT(
           'id',
@@ -70,7 +69,7 @@ export class UpdateUserQueries {
    */
   async queryUsernameOrEmailConflict(username: string, email: string, userId: string): Promise<boolean> {
     // Cast params to text so Postgres knows their type even when null
-    const rows = await this.sql<UserConflictQueryDto[]>`
+    const rows = await this.dbService.sql<UserConflictQueryDto[]>`
       SELECT
         EXISTS (
           SELECT
@@ -108,9 +107,9 @@ export class UpdateUserQueries {
     // 1) Optional "fake" email update to trigger unique check - if user chose to update his email we only CHECK if email is valid here
     if (emailCandidate) {
       try {
-        await this.sql`SAVEPOINT email_probe`;
+        await this.dbService.sql`SAVEPOINT email_probe`;
         try {
-          await this.sql`
+          await this.dbService.sql`
             UPDATE identity.user
             SET
               email = ${emailCandidate}
@@ -118,9 +117,9 @@ export class UpdateUserQueries {
               id = ${userId}::UUID
               AND email IS DISTINCT FROM ${emailCandidate}
           `;
-          await this.sql`ROLLBACK TO SAVEPOINT email_probe`;
+          await this.dbService.sql`ROLLBACK TO SAVEPOINT email_probe`;
         } catch (e) {
-          await this.sql`ROLLBACK TO SAVEPOINT email_probe`;
+          await this.dbService.sql`ROLLBACK TO SAVEPOINT email_probe`;
           if (e instanceof postgres.PostgresError && e.code === '23505') {
             throw e; // unique violation -> will be mapped to 409 by caller
           }
@@ -134,7 +133,7 @@ export class UpdateUserQueries {
     }
 
     // 2) Real update for non-email fields
-    const rows = await this.sql<UserDataRowQueryDto[]>`
+    const rows = await this.dbService.sql<UserDataRowQueryDto[]>`
       UPDATE identity.user AS users
       SET
         username = COALESCE(${username ?? null}, username),
@@ -184,7 +183,7 @@ export class UpdateUserQueries {
    * @param id - The record identifier.
    */
   async queryDeleteUserById(id: string): Promise<void> {
-    await this.sql`
+    await this.dbService.sql`
       DELETE FROM identity.user
       WHERE
         id = ${id}::UUID
@@ -197,7 +196,7 @@ export class UpdateUserQueries {
    * @returns The user username pic and name result.
    */
   async queryUserUsernamePicAndName(id: string): Promise<UserMessageIdentityQueryDto[]> {
-    return this.sql<UserMessageIdentityQueryDto[]>`
+    return this.dbService.sql<UserMessageIdentityQueryDto[]>`
       SELECT
         id,
         username,
@@ -216,7 +215,7 @@ export class UpdateUserQueries {
    * @returns The user profile pic url result.
    */
   async queryGetUserProfilePicURL(userId: string): Promise<UserProfilePicQueryDto[]> {
-    return this.sql<UserProfilePicQueryDto[]>`
+    return this.dbService.sql<UserProfilePicQueryDto[]>`
       SELECT
         profile_pic_path AS "profilePicPath"
       FROM
@@ -235,7 +234,7 @@ export class UpdateUserQueries {
    * @returns The update user profile pic url result.
    */
   async queryUpdateUserProfilePicURL(userId: string, newURL: string | null): Promise<UserProfilePicQueryDto[]> {
-    return this.sql<UserProfilePicQueryDto[]>`
+    return this.dbService.sql<UserProfilePicQueryDto[]>`
       UPDATE identity.user
       SET
         profile_pic_path = ${newURL}
