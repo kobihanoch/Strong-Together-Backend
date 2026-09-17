@@ -108,13 +108,13 @@ export class UpdateUserService {
 
     try {
       await this.dbService.promoteCurrentRlsTxToAuthenticated(sub);
-      await this.sql.begin(async (trx) => {
-        await trx`
-          UPDATE identity.user
-          SET email = ${normalized}
-          WHERE id = ${sub}::uuid
-        `;
-      });
+      await this.sql`
+        UPDATE identity.user
+        SET
+          email = ${normalized}
+        WHERE
+          id = ${sub}::UUID
+      `;
     } catch (e: any) {
       if (e.code === '23505') {
         requestLogger.warn({ event: 'user.email_change_conflict', userId: sub }, 'Email already in use');
