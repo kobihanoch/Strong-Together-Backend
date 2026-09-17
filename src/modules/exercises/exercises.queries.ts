@@ -1,18 +1,17 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { ExercisesMapByMuscleQueryDto, ExerciseMapByMuscleRowQueryDto } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../infrastructure/db/db.tokens';
+import { DBService } from '../../infrastructure/db/db.service';
 
 @Injectable()
 export class ExercisesQueries {
-  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /**
    * Retrieves exercise map by muscle.
    * @returns The exercise map by muscle result.
    */
   async queryGetExerciseMapByMuscle(): Promise<ExercisesMapByMuscleQueryDto> {
-    const rows = await this.sql<ExerciseMapByMuscleRowQueryDto[]>`
+    const rows = await this.dbService.sql<ExerciseMapByMuscleRowQueryDto[]>`
       SELECT jsonb_build_object(
         'map',
         jsonb_object_agg(t.targetmuscle, t.ex_list)

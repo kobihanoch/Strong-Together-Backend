@@ -1,5 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type postgres from 'postgres';
+import { Injectable } from '@nestjs/common';
 import type {
   ExerciseTrackingIdQueryDto,
   ExerciseHistoryQueryDto,
@@ -14,11 +13,11 @@ import type {
   WorkoutSplitLookupQueryDto,
   WorkoutSummaryIdQueryDto,
 } from '@strong-together/shared';
-import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 
 @Injectable()
 export class WorkoutTrackingQueries {
-  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /**
    * Retrieves exercise tracking maps.
@@ -28,7 +27,7 @@ export class WorkoutTrackingQueries {
    * @returns The exercise tracking maps result.
    */
   async queryGetExerciseTrackingMaps(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<ExerciseTrackingMapsQueryDto> {
-    const [{ data }] = await this.sql<ExerciseTrackingMapsRowQueryDto[]>`
+    const [{ data }] = await this.dbService.sql<ExerciseTrackingMapsRowQueryDto[]>`
       WITH
         bounds AS (
           SELECT
@@ -231,7 +230,7 @@ export class WorkoutTrackingQueries {
    * @returns Exercise tracking grouped by exercise-to-split identifier.
    */
   async queryGetExerciseHistory(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<ExerciseHistoryQueryDto> {
-    const [{ data }] = await this.sql<ExerciseHistoryRowQueryDto[]>`
+    const [{ data }] = await this.dbService.sql<ExerciseHistoryRowQueryDto[]>`
       WITH
         bounds AS (
           SELECT
@@ -376,7 +375,7 @@ export class WorkoutTrackingQueries {
    * @returns The exercise tracking stats result.
    */
   async queryGetExerciseTrackingStats(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<ExerciseTrackingStatsQueryDto> {
-    const [{ data }] = await this.sql<ExerciseTrackingStatsRowQueryDto[]>`
+    const [{ data }] = await this.dbService.sql<ExerciseTrackingStatsRowQueryDto[]>`
       WITH
         bounds AS (
           SELECT
@@ -742,7 +741,7 @@ export class WorkoutTrackingQueries {
    * @returns All personal records keyed by exercise identifier.
    */
   async queryGetAllPersonalRecords(userId: string, tz: string): Promise<PersonalRecordsQueryDto> {
-    const [{ data }] = await this.sql<PersonalRecordsRowQueryDto[]>`
+    const [{ data }] = await this.dbService.sql<PersonalRecordsRowQueryDto[]>`
       SELECT
         JSONB_BUILD_OBJECT(
           'prs',
@@ -809,7 +808,7 @@ export class WorkoutTrackingQueries {
   ): Promise<string> {
     // Resolve the workout split that owns the exercises in the finished workout.
     const firstAssignedExercise = workoutArray.find((exercise) => exercise.isExerciseAssignedToSplit);
-    const [{ workoutSplitId }] = await this.sql<WorkoutSplitLookupQueryDto[]>`
+    const [{ workoutSplitId }] = await this.dbService.sql<WorkoutSplitLookupQueryDto[]>`
       SELECT
         workout_split_id AS "workoutSplitId"
       FROM
@@ -821,7 +820,7 @@ export class WorkoutTrackingQueries {
     `;
 
     // Create the parent summary for the completed workout.
-    const [{ id: workoutSummaryId }] = await this.sql<WorkoutSummaryIdQueryDto[]>`
+    const [{ id: workoutSummaryId }] = await this.dbService.sql<WorkoutSummaryIdQueryDto[]>`
       INSERT INTO
         tracking.workout_summary (
           user_id,
@@ -842,7 +841,7 @@ export class WorkoutTrackingQueries {
 
     for (const exercise of workoutArray) {
       // Create one tracking record for this exercise; its sets are inserted next.
-      const [{ id: exerciseTrackingId }] = await this.sql<ExerciseTrackingIdQueryDto[]>`
+      const [{ id: exerciseTrackingId }] = await this.dbService.sql<ExerciseTrackingIdQueryDto[]>`
         INSERT INTO
           tracking.exercise_tracking (
             exercise_to_split_id,
@@ -863,7 +862,7 @@ export class WorkoutTrackingQueries {
 
       for (const trackedSet of exercise.trackedSets) {
         // Store the reps and weight for one performed set at its zero-based index.
-        await this.sql`
+        await this.dbService.sql`
           INSERT INTO
             tracking.tracking_set (exercise_tracking_id, set_index, reps, weight)
           VALUES

@@ -1,7 +1,5 @@
-import { BadRequestException, ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
-import type postgres from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens';
 import { VerificationQueries } from './verification.queries';
 import { CreateUserQueries } from '../../user/create/create.queries';
 import { VerificationEmailsService } from './verification-emails/verification-emails.service';
@@ -14,7 +12,6 @@ import { decodeVerifyToken } from './verification.utils';
 @Injectable()
 export class VerificationService {
   constructor(
-    @Inject(SQL) private readonly sql: postgres.Sql,
     private readonly dbService: DBService,
     private readonly verificationQueries: VerificationQueries,
     private readonly createUserQueries: CreateUserQueries,
@@ -59,7 +56,7 @@ export class VerificationService {
    */
   async createVerificationEmailData(body: CreateVerificationEmailBody, requestId?: string): Promise<void> {
     const { email } = body;
-    const [row] = await this.sql<{ userData: { id: string; name: string | null; username: string } | null }[]>`
+    const [row] = await this.dbService.sql<{ userData: { id: string; name: string | null; username: string } | null }[]>`
       SELECT guest_api.find_user_for_email(${email}) AS "userData"
     `;
     const user = row?.userData ?? null;
@@ -89,7 +86,7 @@ export class VerificationService {
     if (exists) throw new ConflictException('Email already in use');
 
     await this.dbService.promoteCurrentRlsTxToAuthenticated(user.id);
-    await this.sql`UPDATE identity.user SET email = ${newEmail} WHERE id = ${user.id}::uuid`;
+    await this.dbService.sql`UPDATE identity.user SET email = ${newEmail} WHERE id = ${user.id}::uuid`;
     await this.verificationEmailsService.sendVerificationEmail(
       newEmail,
       user.id,
@@ -106,7 +103,7 @@ export class VerificationService {
    * @returns The check user verify result.
    */
   async getVerificationStatusData(username: string): Promise<{ isVerified: boolean }> {
-    const [user] = await this.sql<{ is_verified: boolean | null }[]>`
+    const [user] = await this.dbService.sql<{ is_verified: boolean | null }[]>`
       SELECT guest_api.verification_state(${username}) AS is_verified
     `;
     return { isVerified: user?.is_verified ?? false };

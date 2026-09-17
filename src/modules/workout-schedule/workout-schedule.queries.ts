@@ -1,14 +1,13 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import type { WorkoutScheduleInputDto, WorkoutScheduleQueryDto } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../infrastructure/db/db.tokens';
+import { DBService } from '../../infrastructure/db/db.service';
 
 /**
  * Database operations for authenticated users' weekly workout schedules.
  */
 @Injectable()
 export class WorkoutScheduleQueries {
-  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /**
    * Retrieves schedule rows attached to active splits in the user's active plan.
@@ -16,7 +15,7 @@ export class WorkoutScheduleQueries {
    * @returns The user's active workout schedules in weekday and time order.
    */
   async queryWorkoutSchedules(userId: string): Promise<WorkoutScheduleQueryDto[]> {
-    return this.sql<WorkoutScheduleQueryDto[]>`
+    return this.dbService.sql<WorkoutScheduleQueryDto[]>`
       SELECT
         schedule.id,
         schedule.user_id AS "userId",
@@ -50,7 +49,7 @@ export class WorkoutScheduleQueries {
     const splitIds = [...new Set(schedules.map((schedule) => schedule.workoutSplitId))];
 
     if (splitIds.length > 0) {
-      const [{ count }] = await this.sql<{ count: number }[]>`
+      const [{ count }] = await this.dbService.sql<{ count: number }[]>`
         SELECT
           COUNT(split.id)::INT AS count
         FROM
@@ -68,14 +67,14 @@ export class WorkoutScheduleQueries {
       }
     }
 
-    await this.sql`
+    await this.dbService.sql`
       DELETE FROM schedules.workout_schedule
       WHERE
         user_id = ${userId}::UUID
     `;
 
     for (const schedule of schedules) {
-      await this.sql`
+      await this.dbService.sql`
         INSERT INTO
           schedules.workout_schedule (user_id, workout_split_id, day_of_week, start_time)
         VALUES

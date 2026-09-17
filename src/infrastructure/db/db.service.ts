@@ -29,14 +29,6 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
   }
 
   /**
-   *  System flow SQL tag
-   *  @description For migrations, seeds etc...
-   */
-  get systemSql(): postgres.Sql {
-    return this.dbClient;
-  }
-
-  /**
    * Initializes the service when its module starts.
    */
   async onModuleInit() {

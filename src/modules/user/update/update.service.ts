@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import type {
   ChangeEmailTokenPayloadDto,
   DeleteProfilePictureBody,
@@ -8,10 +8,8 @@ import type {
 } from '@strong-together/shared';
 import mime from 'mime';
 import path from 'path';
-import type postgres from 'postgres';
 import { supabaseConfig } from '../../../config/storage.config';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
-import { SQL } from '../../../infrastructure/db/db.tokens';
 import { DBService } from '../../../infrastructure/db/db.service';
 import type { AppLogger } from '../../../infrastructure/logger';
 import { SupabaseStorageService } from '../../../infrastructure/supabase/storage/supabase-storage.service';
@@ -23,7 +21,6 @@ import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from '.
 @Injectable()
 export class UpdateUserService {
   constructor(
-    @Inject(SQL) private readonly sql: postgres.Sql,
     private readonly dbService: DBService,
     private readonly updateUserQueries: UpdateUserQueries,
     private readonly updateEmailsService: UpdateEmailsService,
@@ -108,7 +105,7 @@ export class UpdateUserService {
 
     try {
       await this.dbService.promoteCurrentRlsTxToAuthenticated(sub);
-      await this.sql`
+      await this.dbService.sql`
         UPDATE identity.user
         SET
           email = ${normalized}

@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type {
   OAuthCreatedUserRowQueryDto,
   OAuthLinkQueryDto,
@@ -6,16 +6,15 @@ import type {
   OAuthLookupQueryDto,
   OAuthLookupRowQueryDto,
 } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 
 @Injectable()
 export class AppleQueries {
-  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /** Finds the user linked to an Apple account. */
   async queryFindUserIdWithAppleUserId(appleUserId: string): Promise<OAuthLookupQueryDto> {
-    const rows = await this.sql<OAuthLookupRowQueryDto[]>`
+    const rows = await this.dbService.sql<OAuthLookupRowQueryDto[]>`
       SELECT guest_api.oauth_lookup('apple', ${appleUserId}) AS oauth_data`;
     return {
       userId: rows[0]?.oauth_data?.user_id || null,
@@ -26,7 +25,7 @@ export class AppleQueries {
   async queryTryToLinkUserWithEmailApple(appleEmail: string | null, appleSub: string): Promise<OAuthLinkQueryDto> {
     if (!appleEmail) return { userId: null };
 
-    const [row] = await this.sql<OAuthLinkRowQueryDto[]>`
+    const [row] = await this.dbService.sql<OAuthLinkRowQueryDto[]>`
       SELECT guest_api.oauth_link_by_email('apple', ${appleEmail}, ${appleSub}) AS user_id
     `;
     return { userId: row?.user_id ?? null };
@@ -40,7 +39,7 @@ export class AppleQueries {
     appleSub: string,
     appleEmail: string | null,
   ): Promise<string> {
-    const [row] = await this.sql<OAuthCreatedUserRowQueryDto[]>`
+    const [row] = await this.dbService.sql<OAuthCreatedUserRowQueryDto[]>`
       SELECT guest_api.oauth_create_user(
         'apple', ${candidateUsername}, ${email}, ${fullName}, ${appleSub}, ${appleEmail}
       ) AS user_id

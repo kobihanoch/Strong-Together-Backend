@@ -1,11 +1,10 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { UserByIdentifierQueryDto, UserByUsernameRowQueryDto } from '@strong-together/shared';
-import type postgres from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens';
+import { DBService } from '../../../infrastructure/db/db.service';
 
 @Injectable()
 export class VerificationQueries {
-  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /**
    * User by username.
@@ -13,7 +12,7 @@ export class VerificationQueries {
    * @returns The user by username result.
    */
   async queryUserByUsername(username: string): Promise<UserByIdentifierQueryDto[]> {
-    const [row] = await this.sql<UserByUsernameRowQueryDto[]>`
+    const [row] = await this.dbService.sql<UserByUsernameRowQueryDto[]>`
       SELECT guest_api.find_user_by_username(${username}) AS "userData"
     `;
     if (!row?.userData) return [];
@@ -27,6 +26,6 @@ export class VerificationQueries {
    * @param state - The verification state to store.
    */
   async queryUpdateUserVerificationStatus(userId: string, state: boolean): Promise<void> {
-    await this.sql`UPDATE identity.user AS users SET is_verified = ${state} WHERE users.id = ${userId}::uuid`;
+    await this.dbService.sql`UPDATE identity.user AS users SET is_verified = ${state} WHERE users.id = ${userId}::uuid`;
   }
 }

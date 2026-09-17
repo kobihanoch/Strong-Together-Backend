@@ -1,10 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type postgres from 'postgres';
-import { SQL } from '../../../infrastructure/db/db.tokens';
+import { Injectable } from '@nestjs/common';
+import { DBService } from '../../../infrastructure/db/db.service';
 
 @Injectable()
 export class PasswordQueries {
-  constructor(@Inject(SQL) private readonly sql: postgres.Sql) {}
+  constructor(private readonly dbService: DBService) {}
 
   /**
    * Updates user password.
@@ -12,7 +11,7 @@ export class PasswordQueries {
    * @param passwordHash - The replacement password hash.
    */
   async queryUpdateUserPassword(userId: string, passwordHash: string): Promise<void> {
-    await this.sql`
+    await this.dbService.sql`
       UPDATE identity.user
       SET password_hash=${passwordHash}
       WHERE id=${userId}::uuid AND auth_provider='app'
