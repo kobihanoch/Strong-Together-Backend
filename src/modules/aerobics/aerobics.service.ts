@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AerobicsQueries } from './aerobics.queries';
+import { AerobicsRepository } from './aerobics.repository';
 import type { AddAerobicInputQueryDto, CreateAerobicEntryBody, GetAerobicHistoryResponse } from '@strong-together/shared';
 import { buildAerobicsKeyStable, TTL_AEROBICS } from './aerobics.cache';
 import { CacheService } from '../../infrastructure/cache/cache.service';
@@ -9,7 +9,7 @@ import { DBService } from '../../infrastructure/db/db.service';
 export class AerobicsService {
   constructor(
     private readonly dbService: DBService,
-    private readonly aerobicsQueries: AerobicsQueries,
+    private readonly aerobicsRepository: AerobicsRepository,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -36,7 +36,7 @@ export class AerobicsService {
       }
     }
 
-    const rows = await this.aerobicsQueries.queryGetUserAerobicsForNDays(userId, days, tz);
+    const rows = await this.aerobicsRepository.findAerobicsByUser(userId, days, tz);
     this.dbService.afterCommit(() => cache.set(rows, TTL_AEROBICS));
 
     return { payload: rows, cacheHit: false };
@@ -48,7 +48,7 @@ export class AerobicsService {
    * @param body - The validated request body.
    */
   async createAerobicEntryData(userId: string, body: CreateAerobicEntryBody): Promise<void> {
-    await this.aerobicsQueries.queryAddAerobicTracking(userId, body.record);
+    await this.aerobicsRepository.createAerobicForUser(userId, body.record);
 
     this.dbService.afterCommit(() => this.cacheService.invalidateUser(userId));
   }
@@ -61,7 +61,7 @@ export class AerobicsService {
    * @param record - The replacement aerobic values.
    */
   async updateAerobicEntryData(userId: string, id: number, record: AddAerobicInputQueryDto): Promise<void> {
-    const updatedId = await this.aerobicsQueries.queryUpdateAerobicTracking(userId, id, record);
+    const updatedId = await this.aerobicsRepository.updateAerobicForUser(userId, id, record);
     if (updatedId === null) throw new NotFoundException('Aerobic entry not found');
     this.dbService.afterCommit(() => this.cacheService.invalidateUser(userId));
   }
@@ -73,7 +73,7 @@ export class AerobicsService {
    * @param id - The aerobic entry identifier.
    */
   async deleteAerobicEntryData(userId: string, id: number): Promise<void> {
-    const deletedId = await this.aerobicsQueries.queryDeleteAerobicTracking(userId, id);
+    const deletedId = await this.aerobicsRepository.deleteAerobicForUser(userId, id);
     if (deletedId === null) throw new NotFoundException('Aerobic entry not found');
     this.dbService.afterCommit(() => this.cacheService.invalidateUser(userId));
   }
