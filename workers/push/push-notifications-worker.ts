@@ -2,7 +2,6 @@ import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { createLogger } from '../../src/infrastructure/logger';
 import { PushNotificationsQueueService } from '../../src/infrastructure/queues/push-notifications/push-notifications-queue';
 import { captureWorkerException } from '../../src/infrastructure/sentry';
-import { DBService } from '../../src/infrastructure/db/db.service';
 import { sendPushNotification } from '../../src/modules/push/push.service';
 import { PushQueries } from '../../src/modules/push/push.queries';
 
@@ -17,7 +16,6 @@ export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDes
     private readonly pushNotificationsQueueService: PushNotificationsQueueService,
     @Inject(PushQueries)
     private readonly pushQueries: PushQueries,
-    private readonly dbService: DBService,
   ) {}
 
   async onModuleInit() {
@@ -53,9 +51,7 @@ export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDes
           }
 
           // Recheck the user's current settings and schedule after the job delay.
-          const token = await this.dbService.runWithRlsTx(userId, () =>
-            this.pushQueries.queryExpoPushToken(userId, workoutScheduleId, occurrenceDate),
-          );
+          const token = await this.pushQueries.queryExpoPushToken(userId, workoutScheduleId, occurrenceDate);
           if (!token) {
             jobLogger.info({ event: 'job.skipped_ineligible' }, 'Skipping ineligible workout reminder');
             return;

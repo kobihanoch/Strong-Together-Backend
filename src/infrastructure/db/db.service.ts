@@ -1,4 +1,4 @@
-import { Inject, Injectable, InternalServerErrorException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import dns from 'dns';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import postgres from 'postgres';
@@ -23,9 +23,7 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
    *  User flow SQL tag
    */
   get sql(): postgres.Sql {
-    const activeTx = this.als.getStore()?.tx;
-    if (!activeTx) throw new InternalServerErrorException('Database access denied: query must run inside an active RLS context.');
-    return activeTx;
+    return this.als.getStore()?.tx ?? this.dbClient;
   }
 
   /**
