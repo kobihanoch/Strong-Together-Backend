@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
 import { DBService } from '../../../infrastructure/db/db.service';
-import { WorkoutPlanQueries } from './plan.queries';
 import type { ReplaceWorkoutPlanBody, GetWorkoutPlanResponse } from '@strong-together/shared';
 
 import { buildPlanKeyStable, TTL_PLAN } from './plan.cache';
+import { WorkoutPlanRepository } from './plan.repository';
 
 @Injectable()
 export class WorkoutPlanService {
   constructor(
     private readonly dbService: DBService,
-    private readonly workoutPlanQueries: WorkoutPlanQueries,
+    private readonly workoutPlanRepository: WorkoutPlanRepository,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -34,8 +34,7 @@ export class WorkoutPlanService {
       }
     }
 
-    const rows = await this.workoutPlanQueries.queryWholeUserWorkoutPlan(userId, tz);
-    const [plan] = rows;
+    const plan = await this.workoutPlanRepository.findActivePlanByUser(userId, tz);
     if (!plan) {
       const empty = { workoutPlan: null };
       this.dbService.afterCommit(() => cache.set(empty, TTL_PLAN));
@@ -53,7 +52,7 @@ export class WorkoutPlanService {
    * @param body - The validated request body.
    */
   async replaceWorkoutPlanData(userId: string, body: ReplaceWorkoutPlanBody): Promise<void> {
-    await this.workoutPlanQueries.queryAddWorkout(userId, body.workoutData);
+    await this.workoutPlanRepository.replacePlanForUser(userId, body.workoutData);
     this.dbService.afterCommit(() => this.cacheService.invalidateUser(userId));
   }
 }
