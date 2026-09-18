@@ -3,14 +3,6 @@ import type { SaveWorkoutSplitPayloadQueryDto, WholeUserWorkoutPlanQueryDto } fr
 import { WorkoutPlanQueries } from './plan.queries';
 import { WorkoutPlanRepository } from './plan.repository';
 
-/**
- * PostgreSQL-backed implementation of {@link WorkoutPlanRepository}.
- *
- * The repository adapts the application-facing persistence contract to the
- * existing SQL query class. Raw SQL remains encapsulated by
- * {@link WorkoutPlanQueries}; this class interprets its database-oriented
- * results for the application layer.
- */
 @Injectable()
 export class PostgresWorkoutPlanRepository implements WorkoutPlanRepository {
   constructor(private readonly queries: WorkoutPlanQueries) {}

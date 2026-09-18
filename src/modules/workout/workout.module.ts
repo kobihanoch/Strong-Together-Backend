@@ -8,7 +8,9 @@ import { WorkoutPlanQueries } from './plan/plan.queries';
 import { WorkoutPlanRepository } from './plan/plan.repository';
 import { WorkoutPlanService } from './plan/plan.service';
 import { WorkoutTrackingController } from './tracking/tracking.controller';
+import { PostgresWorkoutTrackingRepository } from './tracking/postgres-tracking.repository';
 import { WorkoutTrackingQueries } from './tracking/tracking.queries';
+import { WorkoutTrackingRepository } from './tracking/tracking.repository';
 import { WorkoutTrackingService } from './tracking/tracking.service';
 
 @Module({
@@ -21,6 +23,10 @@ import { WorkoutTrackingService } from './tracking/tracking.service';
     },
     WorkoutPlanService,
     WorkoutTrackingQueries,
+    {
+      provide: WorkoutTrackingRepository,
+      useClass: PostgresWorkoutTrackingRepository,
+    },
     WorkoutTrackingService,
     DpopGuard,
     AuthenticationGuard,

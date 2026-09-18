@@ -16,14 +16,14 @@ import {
   buildPersonalRecordsKeyStable,
   TTL_TRACKING,
 } from './tracking.cache';
-import { WorkoutTrackingQueries } from './tracking.queries';
+import { WorkoutTrackingRepository } from './tracking.repository';
 
 @Injectable()
 export class WorkoutTrackingService {
   constructor(
     private readonly dbService: DBService,
     private readonly cacheService: CacheService,
-    private readonly workoutTrackingQueries: WorkoutTrackingQueries,
+    private readonly workoutTrackingRepository: WorkoutTrackingRepository,
   ) {}
 
   /**
@@ -48,7 +48,7 @@ export class WorkoutTrackingService {
       }
     }
 
-    const data = await this.workoutTrackingQueries.queryGetExerciseTrackingMaps(userId, days, tz);
+    const data = await this.workoutTrackingRepository.findWorkoutHistoryByUser(userId, days, tz);
     const payload = data;
     this.dbService.afterCommit(() => cache.set(payload, TTL_TRACKING));
     return { payload, cacheHit: false };
@@ -78,7 +78,7 @@ export class WorkoutTrackingService {
       if (cached) return { payload: cached, cacheHit: true };
     }
 
-    const payload = await this.workoutTrackingQueries.queryGetExerciseHistory(userId, days, tz);
+    const payload = await this.workoutTrackingRepository.findExerciseHistoryByUser(userId, days, tz);
     this.dbService.afterCommit(() => cache.set(payload, TTL_TRACKING));
     return { payload, cacheHit: false };
   }
@@ -105,7 +105,7 @@ export class WorkoutTrackingService {
       }
     }
 
-    const data = await this.workoutTrackingQueries.queryGetExerciseTrackingStats(userId, days, tz);
+    const data = await this.workoutTrackingRepository.findWorkoutStatisticsByUser(userId, days, tz);
     const payload = data;
     this.dbService.afterCommit(() => cache.set(payload, TTL_TRACKING));
     return { payload, cacheHit: false };
@@ -130,7 +130,7 @@ export class WorkoutTrackingService {
       if (cached) return { payload: cached, cacheHit: true };
     }
 
-    const payload = await this.workoutTrackingQueries.queryGetAllPersonalRecords(userId, tz);
+    const payload = await this.workoutTrackingRepository.findPersonalRecordsByUser(userId, tz);
     this.dbService.afterCommit(() => cache.set(payload, TTL_TRACKING));
     return { payload, cacheHit: false };
   }
@@ -174,7 +174,7 @@ export class WorkoutTrackingService {
       throw new BadRequestException('Not a valid workout');
     }
 
-    await this.workoutTrackingQueries.queryInsertUserFinishedWorkout(userId, workoutArray, workoutStartUtc, workoutEndUtc);
+    await this.workoutTrackingRepository.saveCompletedWorkoutForUser(userId, workoutArray, workoutStartUtc, workoutEndUtc);
 
     this.dbService.afterCommit(() => this.cacheService.invalidateUser(userId));
   }

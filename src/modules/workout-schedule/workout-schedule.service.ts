@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import type { GetWorkoutSchedulesResponse, ReplaceWorkoutSchedulesBody } from '@strong-together/shared';
 import { CacheService } from '../../infrastructure/cache/cache.service';
 import { DBService } from '../../infrastructure/db/db.service';
-import { WorkoutScheduleQueries } from './workout-schedule.queries';
+import { WorkoutScheduleRepository } from './workout-schedule.repository';
 
 @Injectable()
 export class WorkoutScheduleService {
   constructor(
     private readonly dbService: DBService,
-    private readonly workoutScheduleQueries: WorkoutScheduleQueries,
+    private readonly workoutScheduleRepository: WorkoutScheduleRepository,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -18,7 +18,7 @@ export class WorkoutScheduleService {
    * @returns The workout-schedule response payload.
    */
   async getWorkoutSchedulesData(userId: string): Promise<GetWorkoutSchedulesResponse> {
-    const schedules = await this.workoutScheduleQueries.queryWorkoutSchedules(userId);
+    const schedules = await this.workoutScheduleRepository.findSchedulesByUser(userId);
     return { schedules };
   }
 
@@ -28,7 +28,7 @@ export class WorkoutScheduleService {
    * @param body - The validated replacement schedule payload.
    */
   async replaceWorkoutSchedulesData(userId: string, body: ReplaceWorkoutSchedulesBody): Promise<void> {
-    await this.workoutScheduleQueries.queryReplaceWorkoutSchedules(userId, body.schedules);
+    await this.workoutScheduleRepository.replaceSchedulesForUser(userId, body.schedules);
 
     this.dbService.afterCommit(() => this.cacheService.invalidateUser(userId));
   }
