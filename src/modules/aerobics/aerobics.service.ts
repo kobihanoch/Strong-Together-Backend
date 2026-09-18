@@ -27,59 +27,54 @@ export class AerobicsService {
     fromCache: boolean = true,
     tz: string = 'Asia/Jerusalem',
   ): Promise<{ payload: GetAerobicHistoryResponse; cacheHit: boolean }> {
-    const aerobicsKey = buildAerobicsKeyStable(userId, days, tz);
+    const cache = await this.cacheService.forUser(userId, buildAerobicsKeyStable(userId, days, tz));
 
     if (fromCache) {
-      await this.cacheService.cacheDeleteOtherTimezones(aerobicsKey);
-      const cached = await this.cacheService.cacheGetJSON<GetAerobicHistoryResponse>(aerobicsKey);
+      const cached = await cache.get<GetAerobicHistoryResponse>();
       if (cached) {
         return { payload: cached, cacheHit: true };
       }
     }
 
     const rows = await this.aerobicsQueries.queryGetUserAerobicsForNDays(userId, days, tz);
-    this.dbService.afterCommit(() => this.cacheService.cacheSetJSON(aerobicsKey, rows, TTL_AEROBICS));
+    this.dbService.afterCommit(() => cache.set(rows, TTL_AEROBICS));
 
     return { payload: rows, cacheHit: false };
   }
 
   /**
-   * Adds an aerobic record and deletes its exact 45-day cache key.
+   * Adds an aerobic record and invalidates the user's cached data.
    * @param userId - The user identifier.
    * @param body - The validated request body.
-   * @param tz - The IANA timezone identifying the affected cache key.
    */
-  async createAerobicEntryData(userId: string, body: CreateAerobicEntryBody, tz: string): Promise<void> {
+  async createAerobicEntryData(userId: string, body: CreateAerobicEntryBody): Promise<void> {
     await this.aerobicsQueries.queryAddAerobicTracking(userId, body.record);
 
-    const aerobicsKey = buildAerobicsKeyStable(userId, 45, tz);
-    this.dbService.afterCommit(() => this.cacheService.cacheDeleteKey(aerobicsKey));
+    this.dbService.afterCommit(() => this.cacheService.invalidateUser(userId));
   }
 
   /**
-   * Updates an owned aerobic entry and deletes its exact 45-day cache key.
+   * Updates an owned aerobic entry and invalidates the user's cached data.
    *
    * @param userId - The authenticated user's identifier.
    * @param id - The aerobic entry identifier.
    * @param record - The replacement aerobic values.
-   * @param tz - The IANA timezone identifying the affected cache key.
    */
-  async updateAerobicEntryData(userId: string, id: number, record: AddAerobicInputQueryDto, tz: string): Promise<void> {
+  async updateAerobicEntryData(userId: string, id: number, record: AddAerobicInputQueryDto): Promise<void> {
     const updatedId = await this.aerobicsQueries.queryUpdateAerobicTracking(userId, id, record);
     if (updatedId === null) throw new NotFoundException('Aerobic entry not found');
-    this.dbService.afterCommit(() => this.cacheService.cacheDeleteKey(buildAerobicsKeyStable(userId, 45, tz)));
+    this.dbService.afterCommit(() => this.cacheService.invalidateUser(userId));
   }
 
   /**
-   * Deletes an owned aerobic entry and deletes its exact 45-day cache key.
+   * Deletes an owned aerobic entry and invalidates the user's cached data.
    *
    * @param userId - The authenticated user's identifier.
    * @param id - The aerobic entry identifier.
-   * @param tz - The IANA timezone identifying the affected cache key.
    */
-  async deleteAerobicEntryData(userId: string, id: number, tz: string): Promise<void> {
+  async deleteAerobicEntryData(userId: string, id: number): Promise<void> {
     const deletedId = await this.aerobicsQueries.queryDeleteAerobicTracking(userId, id);
     if (deletedId === null) throw new NotFoundException('Aerobic entry not found');
-    this.dbService.afterCommit(() => this.cacheService.cacheDeleteKey(buildAerobicsKeyStable(userId, 45, tz)));
+    this.dbService.afterCommit(() => this.cacheService.invalidateUser(userId));
   }
 }

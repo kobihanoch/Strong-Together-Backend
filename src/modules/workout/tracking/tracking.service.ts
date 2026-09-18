@@ -40,10 +40,9 @@ export class WorkoutTrackingService {
     fromCache: boolean = true,
     tz: string,
   ): Promise<{ payload: ExerciseTrackingMapsQueryDto; cacheHit: boolean }> {
-    const key = buildWorkoutHistoryKeyStable(userId, days, tz);
+    const cache = await this.cacheService.forUser(userId, buildWorkoutHistoryKeyStable(userId, days, tz));
     if (fromCache) {
-      await this.cacheService.cacheDeleteOtherTimezones(key);
-      const cached = await this.cacheService.cacheGetJSON(key);
+      const cached = await cache.get<ExerciseTrackingMapsQueryDto>();
       if (cached) {
         return { payload: cached, cacheHit: true };
       }
@@ -51,7 +50,7 @@ export class WorkoutTrackingService {
 
     const data = await this.workoutTrackingQueries.queryGetExerciseTrackingMaps(userId, days, tz);
     const payload = data;
-    this.dbService.afterCommit(() => this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING));
+    this.dbService.afterCommit(() => cache.set(payload, TTL_TRACKING));
     return { payload, cacheHit: false };
   }
 
@@ -73,15 +72,14 @@ export class WorkoutTrackingService {
     fromCache: boolean = true,
     tz: string,
   ): Promise<{ payload: ExerciseHistoryQueryDto; cacheHit: boolean }> {
-    const key = buildExerciseHistoryKeyStable(userId, days, tz);
+    const cache = await this.cacheService.forUser(userId, buildExerciseHistoryKeyStable(userId, days, tz));
     if (fromCache) {
-      await this.cacheService.cacheDeleteOtherTimezones(key);
-      const cached = await this.cacheService.cacheGetJSON(key);
+      const cached = await cache.get<ExerciseHistoryQueryDto>();
       if (cached) return { payload: cached, cacheHit: true };
     }
 
     const payload = await this.workoutTrackingQueries.queryGetExerciseHistory(userId, days, tz);
-    this.dbService.afterCommit(() => this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING));
+    this.dbService.afterCommit(() => cache.set(payload, TTL_TRACKING));
     return { payload, cacheHit: false };
   }
 
@@ -99,10 +97,9 @@ export class WorkoutTrackingService {
     fromCache: boolean = true,
     tz: string,
   ): Promise<{ payload: ExerciseTrackingStatsQueryDto; cacheHit: boolean }> {
-    const key = buildWorkoutStatisticsKeyStable(userId, days, tz);
+    const cache = await this.cacheService.forUser(userId, buildWorkoutStatisticsKeyStable(userId, days, tz));
     if (fromCache) {
-      await this.cacheService.cacheDeleteOtherTimezones(key);
-      const cached = await this.cacheService.cacheGetJSON(key);
+      const cached = await cache.get<ExerciseTrackingStatsQueryDto>();
       if (cached) {
         return { payload: cached, cacheHit: true };
       }
@@ -110,7 +107,7 @@ export class WorkoutTrackingService {
 
     const data = await this.workoutTrackingQueries.queryGetExerciseTrackingStats(userId, days, tz);
     const payload = data;
-    this.dbService.afterCommit(() => this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING));
+    this.dbService.afterCommit(() => cache.set(payload, TTL_TRACKING));
     return { payload, cacheHit: false };
   }
 
@@ -127,15 +124,14 @@ export class WorkoutTrackingService {
     fromCache: boolean = true,
     tz: string,
   ): Promise<{ payload: PersonalRecordsQueryDto; cacheHit: boolean }> {
-    const key = buildPersonalRecordsKeyStable(userId, tz);
+    const cache = await this.cacheService.forUser(userId, buildPersonalRecordsKeyStable(userId, tz));
     if (fromCache) {
-      await this.cacheService.cacheDeleteOtherTimezones(key);
-      const cached = await this.cacheService.cacheGetJSON(key);
+      const cached = await cache.get<PersonalRecordsQueryDto>();
       if (cached) return { payload: cached, cacheHit: true };
     }
 
     const payload = await this.workoutTrackingQueries.queryGetAllPersonalRecords(userId, tz);
-    this.dbService.afterCommit(() => this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING));
+    this.dbService.afterCommit(() => cache.set(payload, TTL_TRACKING));
     return { payload, cacheHit: false };
   }
 
@@ -165,14 +161,12 @@ export class WorkoutTrackingService {
   }
 
   /**
-   * Persists a completed workout and deletes the affected 45-day tracking,
-   * statistics, exercise-history, and personal-record cache keys for its timezone.
+   * Persists a completed workout and invalidates the user's cached data.
    * @param userId - The user identifier.
    * @param body - The validated request body.
    */
   async createWorkoutSessionData(userId: string, body: CreateWorkoutSessionBody): Promise<void> {
     const workoutArray = body.workout;
-    const tz = body.tz || 'Asia/Jerusalem';
     const workoutStartUtc = body.workoutStartUtc || null;
     const workoutEndUtc = body.workoutEndUtc || null;
 
@@ -182,13 +176,6 @@ export class WorkoutTrackingService {
 
     await this.workoutTrackingQueries.queryInsertUserFinishedWorkout(userId, workoutArray, workoutStartUtc, workoutEndUtc);
 
-    this.dbService.afterCommit(() =>
-      Promise.all([
-        this.cacheService.cacheDeleteKey(buildWorkoutHistoryKeyStable(userId, 45, tz)),
-        this.cacheService.cacheDeleteKey(buildWorkoutStatisticsKeyStable(userId, 45, tz)),
-        this.cacheService.cacheDeleteKey(buildExerciseHistoryKeyStable(userId, 45, tz)),
-        this.cacheService.cacheDeleteKey(buildPersonalRecordsKeyStable(userId, tz)),
-      ]).then(() => undefined),
-    );
+    this.dbService.afterCommit(() => this.cacheService.invalidateUser(userId));
   }
 }

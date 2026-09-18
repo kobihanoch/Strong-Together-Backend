@@ -5,7 +5,6 @@ import { WorkoutPlanQueries } from './plan.queries';
 import type { ReplaceWorkoutPlanBody, GetWorkoutPlanResponse } from '@strong-together/shared';
 
 import { buildPlanKeyStable, TTL_PLAN } from './plan.cache';
-import { buildWorkoutHistoryKeyStable, buildWorkoutStatisticsKeyStable } from '../tracking/tracking.cache';
 
 @Injectable()
 export class WorkoutPlanService {
@@ -27,10 +26,9 @@ export class WorkoutPlanService {
     fromCache: boolean = true,
     tz: string = 'Asia/Jerusalem',
   ): Promise<{ payload: GetWorkoutPlanResponse; cacheHit: boolean }> {
-    const planKey = buildPlanKeyStable(userId, tz);
+    const cache = await this.cacheService.forUser(userId, buildPlanKeyStable(userId, tz));
     if (fromCache) {
-      await this.cacheService.cacheDeleteOtherTimezones(planKey);
-      const cached = await this.cacheService.cacheGetJSON<GetWorkoutPlanResponse>(planKey);
+      const cached = await cache.get<GetWorkoutPlanResponse>();
       if (cached) {
         return { payload: cached, cacheHit: true };
       }
@@ -40,41 +38,22 @@ export class WorkoutPlanService {
     const [plan] = rows;
     if (!plan) {
       const empty = { workoutPlan: null };
-      this.dbService.afterCommit(() => this.cacheService.cacheSetJSON(planKey, empty, TTL_PLAN));
+      this.dbService.afterCommit(() => cache.set(empty, TTL_PLAN));
       return { payload: empty, cacheHit: false };
     }
 
     const payload = { workoutPlan: plan };
-    this.dbService.afterCommit(() => this.cacheService.cacheSetJSON(planKey, payload, TTL_PLAN));
+    this.dbService.afterCommit(() => cache.set(payload, TTL_PLAN));
     return { payload, cacheHit: false };
   }
 
   /**
-   * Replaces the workout plan and deletes its directly affected cache keys.
+   * Replaces the workout plan and invalidates the user's cached data.
    * @param userId - The user identifier.
    * @param body - The validated request body.
    */
   async replaceWorkoutPlanData(userId: string, body: ReplaceWorkoutPlanBody): Promise<void> {
     await this.workoutPlanQueries.queryAddWorkout(userId, body.workoutData);
-    await this.deleteWorkoutPlanCaches(userId, body.tz);
-  }
-
-  /**
-   * Deletes the plan, analytics, workout-history, and workout-statistics cache
-   * keys directly affected by replacing a user's plan.
-   * @param userId - The user identifier.
-   * @param tz - The IANA time-zone name.
-   */
-  private async deleteWorkoutPlanCaches(userId: string, tz: string): Promise<void> {
-    const planKey = buildPlanKeyStable(userId, tz);
-    const workoutHistoryKey = buildWorkoutHistoryKeyStable(userId, 45, tz);
-    const workoutStatisticsKey = buildWorkoutStatisticsKeyStable(userId, 45, tz);
-    this.dbService.afterCommit(() =>
-      Promise.all([
-        this.cacheService.cacheDeleteKey(planKey),
-        this.cacheService.cacheDeleteKey(workoutHistoryKey),
-        this.cacheService.cacheDeleteKey(workoutStatisticsKey),
-      ]).then(() => undefined),
-    );
+    this.dbService.afterCommit(() => this.cacheService.invalidateUser(userId));
   }
 }

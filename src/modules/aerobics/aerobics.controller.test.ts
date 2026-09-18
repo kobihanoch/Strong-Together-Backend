@@ -5,7 +5,7 @@ import { createApp } from '../../app';
 import { authHeaders } from '../../common/tests/helpers/auth';
 import { expectSchema } from '../../common/tests/helpers/assert-schema';
 import { waitForAerobicsRowsForUser } from '../../common/tests/helpers/db';
-import { deleteRedisKeysByPattern, getRedisKey } from '../../common/tests/helpers/infra';
+import { deleteRedisKeysByPattern, getUserCacheGeneration, getVersionedRedisKey } from '../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../common/tests/helpers/users';
 import { buildAerobicsKeyStable } from './aerobics.cache';
 
@@ -41,7 +41,7 @@ describe('AerobicsController', () => {
     expect(response.headers['x-cache']).toBe('MISS');
     expectSchema(getAerobicHistoryResponseSchema, response.body);
     expect(response.body).toEqual({ daily: {}, weekly: {} });
-    expect(await getRedisKey(buildAerobicsKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
+    expect(await getVersionedRedisKey(user.userId, buildAerobicsKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
   it('POST /api/aerobics persists a record, deletes its cache key, and returns 204', async () => {
@@ -58,7 +58,7 @@ describe('AerobicsController', () => {
     const rows = await waitForAerobicsRowsForUser(user.userId, 1);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ type: 'Walk', duration_mins: 30, duration_sec: 15 });
-    expect(await getRedisKey(buildAerobicsKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeNull();
+    expect(await getUserCacheGeneration(user.userId)).toBe(1);
   });
 
   it('GET /api/aerobics returns Redis HIT on repeated reads', async () => {

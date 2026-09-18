@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import type { GetWorkoutSchedulesResponse, ReplaceWorkoutSchedulesBody } from '@strong-together/shared';
 import { CacheService } from '../../infrastructure/cache/cache.service';
 import { DBService } from '../../infrastructure/db/db.service';
-import { buildWorkoutStatisticsKeyStable } from '../workout/tracking/tracking.cache';
 import { WorkoutScheduleQueries } from './workout-schedule.queries';
 
 @Injectable()
@@ -31,10 +30,6 @@ export class WorkoutScheduleService {
   async replaceWorkoutSchedulesData(userId: string, body: ReplaceWorkoutSchedulesBody): Promise<void> {
     await this.workoutScheduleQueries.queryReplaceWorkoutSchedules(userId, body.schedules);
 
-    const utcStatisticsKey = buildWorkoutStatisticsKeyStable(userId, 45, 'UTC');
-    this.dbService.afterCommit(async () => {
-      await this.cacheService.cacheDeleteOtherTimezones(utcStatisticsKey);
-      await this.cacheService.cacheDeleteKey(utcStatisticsKey);
-    });
+    this.dbService.afterCommit(() => this.cacheService.invalidateUser(userId));
   }
 }

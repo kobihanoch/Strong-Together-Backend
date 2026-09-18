@@ -11,7 +11,7 @@ import { createApp } from '../../../app';
 import { authHeaders } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
 import { getExerciseToWorkoutSplitId, getExerciseTrackingCountForUser, getWorkoutSummaryCount } from '../../../common/tests/helpers/db';
-import { deleteRedisKeysByPattern, getRedisKey } from '../../../common/tests/helpers/infra';
+import { deleteRedisKeysByPattern, getUserCacheGeneration, getVersionedRedisKey } from '../../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../../common/tests/helpers/users';
 import { buildExerciseHistoryKeyStable, buildPersonalRecordsKeyStable, buildWorkoutHistoryKeyStable } from './tracking.cache';
 
@@ -81,7 +81,7 @@ describe('WorkoutTrackingController', () => {
     expect(response.headers['x-cache']).toBe('MISS');
     expectSchema(getWorkoutHistoryResponseSchema, response.body);
     expect(response.body.byDate).toEqual({});
-    expect(await getRedisKey(buildWorkoutHistoryKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
+    expect(await getVersionedRedisKey(user.userId, buildWorkoutHistoryKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
 
     const personalRecordsResponse = await request(app.getHttpServer())
       .get('/api/personal-records')
@@ -91,7 +91,7 @@ describe('WorkoutTrackingController', () => {
     expect(personalRecordsResponse.headers['x-cache']).toBe('MISS');
     expectSchema(getPersonalRecordsResponseSchema, personalRecordsResponse.body);
     expect(personalRecordsResponse.body.prs).toEqual({});
-    expect(await getRedisKey(buildPersonalRecordsKeyStable(user.userId, 'Asia/Jerusalem'))).toBeTypeOf('string');
+    expect(await getVersionedRedisKey(user.userId, buildPersonalRecordsKeyStable(user.userId, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
   it('GET /api/workout-history returns User B schema-valid empty tracking when plan exists but no tracking', async () => {
@@ -190,7 +190,7 @@ describe('WorkoutTrackingController', () => {
     expect(response.text).toBe('');
     expect(await getWorkoutSummaryCount(user.userId)).toBe(1);
     expect(await getExerciseTrackingCountForUser(user.userId)).toBe(1);
-    expect(await getRedisKey(buildWorkoutHistoryKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeNull();
+    expect(await getUserCacheGeneration(user.userId)).toBe(2);
 
     const personalRecordsResponse = await request(app.getHttpServer())
       .get('/api/personal-records')
@@ -202,7 +202,7 @@ describe('WorkoutTrackingController', () => {
     expect(Object.keys(personalRecordsResponse.body.prs)).toHaveLength(1);
     const [personalRecord] = Object.values(personalRecordsResponse.body.prs) as { workoutStartLocal: unknown }[];
     expect(personalRecord.workoutStartLocal).toBeTypeOf('string');
-    expect(await getRedisKey(buildPersonalRecordsKeyStable(user.userId, 'Asia/Jerusalem'))).toBeTypeOf('string');
+    expect(await getVersionedRedisKey(user.userId, buildPersonalRecordsKeyStable(user.userId, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
   it('GET /api/exercise-history groups flattened tracking by exercise assignment newest first and caches it', async () => {
@@ -248,7 +248,7 @@ describe('WorkoutTrackingController', () => {
     expect(grouped.exerciseTracked[0].notes).toBeUndefined();
     expect(grouped.exerciseTracked[0].workoutStartLocal).toBeTypeOf('string');
     expect(grouped.exerciseTracked.map((item: { sets: { weight: number }[] }) => item.sets[0].weight)).toEqual([90, 70]);
-    expect(await getRedisKey(buildExerciseHistoryKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
+    expect(await getVersionedRedisKey(user.userId, buildExerciseHistoryKeyStable(user.userId, 45, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
   it('POST /api/workout-sessions rejects empty workouts with 400 and no DB inserts', async () => {

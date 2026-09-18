@@ -5,7 +5,7 @@ import { createApp } from '../../../app';
 import { authHeaders } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
 import { getActiveWorkoutSplitNames } from '../../../common/tests/helpers/db';
-import { deleteRedisKeysByPattern, getRedisKey } from '../../../common/tests/helpers/infra';
+import { deleteRedisKeysByPattern, getUserCacheGeneration, getVersionedRedisKey } from '../../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../../common/tests/helpers/users';
 import { buildPlanKeyStable } from './plan.cache';
 
@@ -41,7 +41,7 @@ describe('WorkoutPlanController', () => {
     expect(response.headers['x-cache']).toBe('MISS');
     expectSchema(getWorkoutPlanResponseSchema, response.body);
     expect(response.body).toEqual({ workoutPlan: null });
-    expect(await getRedisKey(buildPlanKeyStable(user.userId, 'Asia/Jerusalem'))).toBeTypeOf('string');
+    expect(await getVersionedRedisKey(user.userId, buildPlanKeyStable(user.userId, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
   it('PUT /api/workout-plan creates User B plan, deletes its cache key, and returns 204', async () => {
@@ -61,7 +61,7 @@ describe('WorkoutPlanController', () => {
     expect(response.status).toBe(204);
     expect(response.text).toBe('');
     expect(await getActiveWorkoutSplitNames(user.userId)).toEqual(['A', 'B']);
-    expect(await getRedisKey(buildPlanKeyStable(user.userId, 'Asia/Jerusalem'))).toBeNull();
+    expect(await getUserCacheGeneration(user.userId)).toBe(1);
   });
 
   it('GET /api/workout-plan returns User B plan from Redis on repeated reads', async () => {

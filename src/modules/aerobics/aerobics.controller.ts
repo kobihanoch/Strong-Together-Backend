@@ -93,7 +93,7 @@ export class AerobicsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.aerobicsService.createAerobicEntryData(user.id, data.body, data.query.tz || 'Asia/Jerusalem');
+    await this.aerobicsService.createAerobicEntryData(user.id, data.body);
   }
 
   /**
@@ -117,7 +117,7 @@ export class AerobicsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.aerobicsService.updateAerobicEntryData(user.id, data.params.id, data.body.record, data.query.tz || 'Asia/Jerusalem');
+    await this.aerobicsService.updateAerobicEntryData(user.id, data.params.id, data.body.record);
   }
 
   /**
@@ -140,6 +140,6 @@ export class AerobicsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.aerobicsService.deleteAerobicEntryData(user.id, data.params.id, data.query.tz || 'Asia/Jerusalem');
+    await this.aerobicsService.deleteAerobicEntryData(user.id, data.params.id);
   }
 }

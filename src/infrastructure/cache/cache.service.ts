@@ -6,6 +6,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import { RedisClientType } from 'redis';
 import { REDIS_CLIENT } from '../redis/redis.tokens';
 
+export interface UserCache {
+  get<T>(): Promise<T | null>;
+  set<T>(value: T, ttlSec: number): Promise<void>;
+}
+
 @Injectable()
 export class CacheService {
   private readonly enabled = appConfig.cacheEnabled;
@@ -14,25 +19,11 @@ export class CacheService {
   constructor(@Inject(REDIS_CLIENT) private readonly redis: RedisClientType) {}
 
   /**
-   * Deletes redis keys.
-   * @param keys - The cache keys to delete.
-   */
-  async deleteRedisKeys(keys: string[]): Promise<void> {
-    if (!this.enabled || !this.redis || keys.length === 0) return;
-
-    try {
-      await this.redis.unlink(keys);
-    } catch {
-      await this.redis.del(keys);
-    }
-  }
-
-  /**
    * Cache get json.
    * @param key - The cache key.
    * @returns The cache get json result.
    */
-  async cacheGetJSON<T = any>(key: string): Promise<T | null> {
+  private async getJSON<T>(key: string): Promise<T | null> {
     if (!this.enabled || !this.redis) return null;
     const keyVersion = key.match(/:v(\d+)(?=:|$)/)?.[1];
     if (keyVersion !== String(redisConfig.cacheVersion)) return null;
@@ -54,7 +45,7 @@ export class CacheService {
    * @param obj - The obj.
    * @param ttlSec - The lifetime in seconds.
    */
-  async cacheSetJSON<T = any>(key: string, obj: T, ttlSec: number): Promise<void> {
+  private async setJSON<T>(key: string, obj: T, ttlSec: number): Promise<void> {
     if (!this.enabled || !this.redis) return;
     try {
       const json = JSON.stringify(obj);
@@ -66,80 +57,34 @@ export class CacheService {
     }
   }
 
-  /**
-   * Cache delete key.
-   * @param key - The cache key.
-   */
-  async cacheDeleteKey(key: string): Promise<void> {
+  /** Captures one generation so a database result is read and written under the same key. */
+  async forUser(userId: string, dataKey: string): Promise<UserCache> {
+    let generation = '0';
+    try {
+      if (this.enabled && this.redis) generation = (await this.redis.get(this.userGenerationKey(userId))) ?? '0';
+    } catch {
+      // Cache failures fall through to the database.
+    }
+
+    const key = `${dataKey}:g${generation}`;
+    return {
+      get: <T>() => this.getJSON<T>(key),
+      set: <T>(value: T, ttlSec: number) => this.setJSON(key, value, ttlSec),
+    };
+  }
+
+  /** Invalidates all of the user's timezone variants with one atomic increment. */
+  async invalidateUser(userId: string): Promise<void> {
     if (!this.enabled || !this.redis) return;
     try {
-      await this.deleteRedisKeys([key]);
+      await this.redis.incr(this.userGenerationKey(userId));
     } catch {
-      // ignore
+      // Cache invalidation must not fail an already committed request.
     }
   }
 
-  /**
-   * Cache delete other timezones.
-   * @param currentKey - The cache key to retain.
-   */
-  async cacheDeleteOtherTimezones(currentKey: string): Promise<void> {
-    if (!this.enabled || !this.redis || !currentKey) return;
-
-    const normalizeKey = (k: string): string =>
-      String(k)
-        .normalize('NFC')
-        .replace(/[\u200E\u200F\uFEFF]/g, '')
-        .replace(/\0/g, '')
-        .trim();
-
-    const curr = normalizeKey(currentKey);
-    const lastColon = curr.lastIndexOf(':');
-    if (lastColon === -1) return;
-
-    const base = curr.slice(0, lastColon);
-    const tzToKeep = curr.slice(lastColon + 1);
-    const pattern = `${base}:*`;
-
-    const looksLikeTz = (s: string) => /^[A-Za-z]+(?:[_-][A-Za-z]+)*(?:\/[A-Za-z]+(?:[_-][A-Za-z]+)*)+$/.test(s);
-
-    const buf: string[] = [];
-
-    for await (const chunk of this.redis.scanIterator({
-      MATCH: pattern,
-      COUNT: 1000,
-    })) {
-      const keys = Array.isArray(chunk) ? chunk : [chunk];
-
-      for (const rawKey of keys) {
-        const k = normalizeKey(rawKey);
-
-        if (k === curr) continue;
-        if (!k.startsWith(base + ':')) continue;
-        const tail = k.slice(base.length + 1);
-        if (tail.includes(':')) continue;
-        if (!looksLikeTz(tail)) continue;
-        if (tail === tzToKeep) continue;
-
-        buf.push(String(rawKey));
-
-        if (buf.length >= 500) {
-          try {
-            await this.deleteRedisKeys(buf);
-          } catch {
-            // ignore
-          }
-          buf.length = 0;
-        }
-      }
-    }
-    if (buf.length) {
-      try {
-        await this.deleteRedisKeys(buf);
-      } catch {
-        // ignore
-      }
-    }
+  private userGenerationKey(userId: string): string {
+    return `xt:cache-generation:v${redisConfig.cacheVersion}:${userId}`;
   }
 
   /**

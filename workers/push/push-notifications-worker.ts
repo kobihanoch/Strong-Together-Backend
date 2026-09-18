@@ -1,9 +1,9 @@
-import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { createLogger } from '../../src/infrastructure/logger';
 import { PushNotificationsQueueService } from '../../src/infrastructure/queues/push-notifications/push-notifications-queue';
 import { captureWorkerException } from '../../src/infrastructure/sentry';
-import { sendPushNotification } from '../../src/modules/push/push.service';
 import { PushQueries } from '../../src/modules/push/push.queries';
+import { sendPushNotification } from '../../src/modules/push/push.service';
 
 const logger = createLogger('worker:push-notifications', {
   queue: 'pushNotificationsQueue',
@@ -12,9 +12,7 @@ const logger = createLogger('worker:push-notifications', {
 @Injectable()
 export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDestroy {
   constructor(
-    @Inject(PushNotificationsQueueService)
     private readonly pushNotificationsQueueService: PushNotificationsQueueService,
-    @Inject(PushQueries)
     private readonly pushQueries: PushQueries,
   ) {}
 
@@ -59,10 +57,7 @@ export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDes
 
           await sendPushNotification(token, title, body);
           const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
-          jobLogger.info(
-            { event: 'job.succeeded', durationMs: Number(durationMs.toFixed(2)) },
-            'Push notification sent',
-          );
+          jobLogger.info({ event: 'job.succeeded', durationMs: Number(durationMs.toFixed(2)) }, 'Push notification sent');
         } catch (e) {
           if (e instanceof Error) {
             const sentryEventId = captureWorkerException(e, {
