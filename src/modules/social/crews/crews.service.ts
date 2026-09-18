@@ -13,12 +13,14 @@ import path from 'path';
 import { supabaseConfig } from '../../../config/storage.config';
 import type { AppLogger } from '../../../infrastructure/logger';
 import { SupabaseStorageService } from '../../../infrastructure/supabase/storage/supabase-storage.service';
+import { DBService } from '../../../infrastructure/db/db.service';
 import { CrewsQueries } from './crews.queries';
 import { decodeSocialCursor, encodeSocialCursor } from '../cursor-pagination';
 /** Coordinates social crew CRUD operations and maps empty query results to HTTP errors. */
 @Injectable()
 export class CrewsService {
   constructor(
+    private readonly dbService: DBService,
     private readonly queries: CrewsQueries,
     private readonly storage: SupabaseStorageService,
   ) {}
@@ -135,8 +137,10 @@ export class CrewsService {
     await this.queries.queryUpdateCrewProfilePicture(crewId, uploaded.path);
 
     if (crew.profilePicPath) {
-      this.storage.deleteFromSupabase(crew.profilePicPath).catch((error: unknown) => {
-        requestLogger.warn({ err: error, crewId, oldPath: crew.profilePicPath }, 'Failed to delete old crew profile image');
+      this.dbService.afterCommit(async () => {
+        void this.storage.deleteFromSupabase(crew.profilePicPath!).catch((error: unknown) => {
+          requestLogger.warn({ err: error, crewId, oldPath: crew.profilePicPath }, 'Failed to delete old crew profile image');
+        });
       });
     }
 
@@ -154,8 +158,8 @@ export class CrewsService {
     const [crew] = await this.queries.queryCrewProfilePictureForUpdate(crewId);
     if (!crew?.profilePicPath) throw new NotFoundException('Crew profile picture not found');
 
-    await this.storage.deleteFromSupabase(crew.profilePicPath);
     await this.queries.queryUpdateCrewProfilePicture(crewId, null);
+    this.dbService.afterCommit(() => this.storage.deleteFromSupabase(crew.profilePicPath!));
   }
 
   /**

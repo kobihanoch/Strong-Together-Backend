@@ -232,6 +232,13 @@
       "when": 1789232781930,
       "tag": "0032_user_functions_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1789720400000,
+      "tag": "0033_allow_guest_cron_api",
+      "breakpoints": true
     }
   ]
 }

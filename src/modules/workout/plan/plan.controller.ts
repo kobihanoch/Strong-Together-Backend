@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Put, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Put, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import type { GetWorkoutPlanResponse, ReplaceWorkoutPlanBody, GetWorkoutPlanQuery } from '@strong-together/shared';
 import { replaceWorkoutPlanRequestSchema, getWorkoutPlanRequestSchema } from '@strong-together/shared';
@@ -7,7 +7,6 @@ import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../common/types/express';
 import { WorkoutPlanService } from './plan.service';
@@ -23,7 +22,6 @@ import { WorkoutPlanService } from './plan.service';
  */
 @Controller('api/workout-plan')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
-@UseInterceptors(RlsTxInterceptor)
 @Roles('user')
 export class WorkoutPlanController {
   constructor(private readonly workoutPlanService: WorkoutPlanService) {}

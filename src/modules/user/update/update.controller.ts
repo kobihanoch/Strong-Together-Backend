@@ -12,7 +12,6 @@ import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { RateLimit, RateLimitGuard, updateUserRateLimit, updateUserRateLimitDaily } from '../../../common/guards/rate-limit.guard';
 import { imageUploadOptions } from '../../../common/interceptors/image-upload.config';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import type { AppLogger } from '../../../infrastructure/logger';
 import type { AuthenticatedUser } from '../../../common/types/express';
@@ -32,7 +31,6 @@ import { UpdateUserService } from './update.service';
  * Access: Mixed by route
  */
 @Controller('api/users')
-@UseInterceptors(RlsTxInterceptor)
 export class UpdateUserController {
   constructor(private readonly updateUserService: UpdateUserService) {}
 

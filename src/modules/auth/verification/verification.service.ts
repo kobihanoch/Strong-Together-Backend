@@ -62,8 +62,10 @@ export class VerificationService {
     const user = row?.userData ?? null;
     if (!user) return;
     const { id, name } = user;
-    await this.verificationEmailsService.sendVerificationEmail(email, id, name ?? user.username, {
-      ...(requestId ? { requestId } : {}),
+    this.dbService.afterCommit(() => {
+      return this.verificationEmailsService.sendVerificationEmail(email, id, name ?? user.username, {
+        ...(requestId ? { requestId } : {}),
+      });
     });
   }
 
@@ -87,14 +89,11 @@ export class VerificationService {
 
     await this.dbService.promoteCurrentRlsTxToAuthenticated(user.id);
     await this.dbService.sql`UPDATE identity.user SET email = ${newEmail} WHERE id = ${user.id}::uuid`;
-    await this.verificationEmailsService.sendVerificationEmail(
-      newEmail,
-      user.id,
-      user.name ? user.name : user.username!,
-      {
+    this.dbService.afterCommit(() => {
+      return this.verificationEmailsService.sendVerificationEmail(newEmail, user.id, user.name ? user.name : user.username!, {
         ...(requestId ? { requestId } : {}),
-      },
-    );
+      });
+    });
   }
 
   /**

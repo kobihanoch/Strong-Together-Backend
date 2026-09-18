@@ -69,8 +69,10 @@ export class UpdateUserService {
     const candidate = (email || '').trim().toLowerCase();
 
     if (candidate && candidate !== currentEmail) {
-      await this.updateEmailsService.sendVerificationEmailForEmailUpdate(candidate, userId, userData.name || 'there', {
-        ...(requestId ? { requestId } : {}),
+      this.dbService.afterCommit(() => {
+        return this.updateEmailsService.sendVerificationEmailForEmailUpdate(candidate, userId, userData.name || 'there', {
+          ...(requestId ? { requestId } : {}),
+        });
       });
     }
   }
@@ -161,17 +163,19 @@ export class UpdateUserService {
     await this.updateUserQueries.queryUpdateUserProfilePicURL(userId, newPath);
 
     if (oldPath && oldPath !== newPath) {
-      this.supabaseStorageService.deleteFromSupabase(oldPath).catch((e: any) => {
-        requestLogger.warn(
-          {
-            err: e,
-            event: 'user.old_profile_image_delete_failed',
-            userId,
-            oldPath,
-            responseData: e?.response?.data,
-          },
-          'Failed to delete old profile image',
-        );
+      this.dbService.afterCommit(async () => {
+        void this.supabaseStorageService.deleteFromSupabase(oldPath).catch((e: any) => {
+          requestLogger.warn(
+            {
+              err: e,
+              event: 'user.old_profile_image_delete_failed',
+              userId,
+              oldPath,
+              responseData: e?.response?.data,
+            },
+            'Failed to delete old profile image',
+          );
+        });
       });
     }
 
@@ -184,7 +188,7 @@ export class UpdateUserService {
    * @param body - The validated request body.
    */
   async deleteProfilePictureData(userId: string, body: DeleteProfilePictureBody): Promise<void> {
-    await this.supabaseStorageService.deleteFromSupabase(body.profilePicPath);
     await this.updateUserQueries.queryUpdateUserProfilePicURL(userId, null);
+    this.dbService.afterCommit(() => this.supabaseStorageService.deleteFromSupabase(body.profilePicPath));
   }
 }

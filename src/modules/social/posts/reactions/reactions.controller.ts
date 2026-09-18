@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, HttpCode, HttpStatus, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import type {
   DeleteReactionParams,
   DeleteReactionResponse,
@@ -15,7 +15,6 @@ import { RequestData } from '../../../../common/decorators/request-data.decorato
 import { AuthenticationGuard } from '../../../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
-import { RlsTxInterceptor } from '../../../../common/interceptors/rls-tx.interceptor';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
 import { ReactionsService } from './reactions.service';
@@ -28,7 +27,6 @@ import { ReactionsService } from './reactions.service';
  */
 @Controller('api/social/posts')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
-@UseInterceptors(RlsTxInterceptor)
 @Roles('user')
 export class ReactionsController {
   /**
@@ -48,7 +46,10 @@ export class ReactionsController {
   @Get(':postId/reactions')
   public listReactions(
     @RequestData(new ValidateRequestPipe(listPostReactionsRequestSchema))
-    data: { params: ListPostReactionsParams; query: ListPostReactionsQuery },
+    data: {
+      params: ListPostReactionsParams;
+      query: ListPostReactionsQuery;
+    },
   ): Promise<ListPostReactionsResponse> {
     return this.service.listPostReactions(data.params.postId, data.query.limit, data.query.cursor);
   }

@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, HttpCode, HttpStatus, Post, Put, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Post, Put, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import type {
   CreateAerobicEntryBody,
@@ -25,7 +25,6 @@ import { AuthorizationGuard, Roles } from '../../common/guards/authorization.gua
 import { RequestData } from '../../common/decorators/request-data.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 
 /**
  * Aerobics routes for authenticated users.
@@ -41,7 +40,6 @@ import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 @Controller('api/aerobics')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
-@UseInterceptors(RlsTxInterceptor)
 export class AerobicsController {
   constructor(private readonly aerobicsService: AerobicsService) {}
 

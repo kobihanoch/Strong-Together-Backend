@@ -1,18 +1,16 @@
-import { Controller, HttpCode, HttpStatus, Post, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import type { ResetPasswordBody, ResetPasswordQuery, CreatePasswordResetRequestBody } from '@strong-together/shared';
 import { resetPasswordRequestSchema, createPasswordResetRequestSchema } from '@strong-together/shared';
 import { PasswordService } from './password.service';
 import { RateLimit, RateLimitGuard, resetPasswordEmailRateLimit, resetPasswordEmailRateLimitDaily } from '../../../common/guards/rate-limit.guard';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import type { AppRequest } from '../../../common/types/express';
 
 /**
  * Handles password HTTP requests.
  */
 @Controller('api/auth')
-@UseInterceptors(RlsTxInterceptor)
 export class PasswordController {
   constructor(private readonly passwordService: PasswordService) {}
 

@@ -37,8 +37,10 @@ export class PasswordService {
     const user = row?.userData ?? null;
     if (!user) return;
 
-    await this.passwordEmailsService.sendForgotPasswordEmail(user.email, user.id, user.name ? user.name : user.username, {
-      ...(requestId ? { requestId } : {}),
+    this.dbService.afterCommit(() => {
+      return this.passwordEmailsService.sendForgotPasswordEmail(user.email, user.id, user.name ? user.name : user.username, {
+        ...(requestId ? { requestId } : {}),
+      });
     });
   }
 

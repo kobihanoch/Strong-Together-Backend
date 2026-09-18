@@ -52,7 +52,9 @@ export class SystemMessagesService {
         LEFT JOIN identity.user u ON u.id = inserted.sender_id
     `;
 
-    this.messagesService.emitNewMessage(receiverId, row);
+    this.dbService.afterCommit(async () => {
+      this.messagesService.emitNewMessage(receiverId, row);
+    });
     return row;
   }
 

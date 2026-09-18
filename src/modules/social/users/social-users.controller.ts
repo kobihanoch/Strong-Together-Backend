@@ -1,18 +1,16 @@
-import { Controller, Get, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import type { GetSocialUserParams, GetSocialUserResponse, SearchSocialUsersQuery, SearchSocialUsersResponse } from '@strong-together/shared';
 import { getSocialUserRequestSchema, searchSocialUsersRequestSchema } from '@strong-together/shared';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import { SocialUsersService } from './social-users.service';
 
 /** Exposes authenticated social user discovery. */
 @Controller('api/social/users')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
-@UseInterceptors(RlsTxInterceptor)
 @Roles('user')
 export class SocialUsersController {
   public constructor(private readonly service: SocialUsersService) {}

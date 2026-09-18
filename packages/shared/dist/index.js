@@ -2765,18 +2765,54 @@ var changeEmailTokenPayloadDtoSchema = z7.object({
 });
 
 // src/modules/auth/session/session.dtos.ts
-var accessTokenPayloadDtoSchema = z8.object({
+var legacyTokenSchema = z8.object({
   id: userDbSchema.shape.id,
   role: userDbSchema.shape.role,
   cnf: z8.object({
     jkt: z8.string()
   }).optional(),
-  iat: z8.number().optional(),
-  exp: z8.number().optional()
+  iat: z8.number(),
+  exp: z8.number()
+}).strict();
+var currentAccessTokenSchema = z8.object({
+  id: userDbSchema.shape.id,
+  sub: userDbSchema.shape.id,
+  role: userDbSchema.shape.role,
+  typ: z8.literal("access"),
+  iss: z8.literal("strong-together"),
+  aud: z8.literal("strong-together-api"),
+  cnf: z8.object({
+    jkt: z8.string()
+  }).optional(),
+  iat: z8.number(),
+  exp: z8.number()
 });
-var refreshTokenPayloadDtoSchema = accessTokenPayloadDtoSchema.extend({
-  tokenVer: userDbSchema.shape.tokenVersion
-});
+var accessTokenPayloadDtoSchema = z8.union([
+  currentAccessTokenSchema.refine((token) => token.sub === token.id),
+  legacyTokenSchema.transform((token) => ({
+    ...token,
+    sub: token.id,
+    typ: "access",
+    iss: "strong-together",
+    aud: "strong-together-api"
+  }))
+]);
+var refreshTokenPayloadDtoSchema = z8.union([
+  currentAccessTokenSchema.extend({
+    typ: z8.literal("refresh"),
+    aud: z8.literal("strong-together-refresh"),
+    tokenVer: userDbSchema.shape.tokenVersion
+  }).refine((token) => token.sub === token.id),
+  legacyTokenSchema.extend({
+    tokenVer: userDbSchema.shape.tokenVersion
+  }).transform((token) => ({
+    ...token,
+    sub: token.id,
+    typ: "refresh",
+    iss: "strong-together",
+    aud: "strong-together-refresh"
+  }))
+]);
 var userAfterBumpQueryDtoSchema = z8.object({
   tokenVersion: userDbSchema.shape.tokenVersion,
   userData: userDataQueryDtoSchema

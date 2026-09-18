@@ -380,6 +380,23 @@ export async function deleteUserByUsername(username: string) {
   `;
 }
 
+export async function deleteCrewsByCreatorUsernames(usernames: string[]) {
+  if (usernames.length === 0) return;
+
+  await sql`
+    DELETE FROM social.crew
+    WHERE
+      created_by IN (
+        SELECT
+          id
+        FROM
+          identity.user
+        WHERE
+          username = ANY (${usernames})
+      )
+  `;
+}
+
 export async function getUserLastLoginByUsername(username: string) {
   const [row] = await sql<{ last_login: Date | null; database_now: Date }[]>`
     SELECT

@@ -135,6 +135,26 @@ describe('SessionController', () => {
   });
 
   describe('POST /api/auth/refresh', () => {
+    it('accepts legacy access and refresh tokens during the compatibility window', async () => {
+      const user = await createSessionUser();
+      const loginResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+        identifier: user.username,
+        password: user.password,
+      });
+      const currentTokenVersion = tokenVersion(loginResponse.body.refreshToken);
+      const legacyAccessToken = jwt.sign({ id: user.userId, role: 'User' }, authConfig.jwtAccessSecret, { expiresIn: '5m' });
+      const legacyRefreshToken = jwt.sign({ id: user.userId, role: 'User', tokenVer: currentTokenVersion }, authConfig.jwtRefreshSecret, {
+        expiresIn: '14d',
+      });
+
+      const protectedResponse = await request(app.getHttpServer()).get('/api/users/me').set(authHeaders(legacyAccessToken));
+      expect(protectedResponse.status).toBe(200);
+
+      const refreshResponse = await request(app.getHttpServer()).post('/api/auth/refresh').set(refreshHeaders(legacyRefreshToken));
+      expect(refreshResponse.status).toBe(200);
+      expectSchema(refreshTokenResponseSchema, refreshResponse.body);
+    });
+
     it('rotates tokens and invalidates the previous refresh token', async () => {
       const user = await createSessionUser();
       const loginResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
@@ -172,9 +192,7 @@ describe('SessionController', () => {
 
       await setUserVerificationByUsername(user.username, false);
 
-      const refreshResponse = await request(app.getHttpServer())
-        .post('/api/auth/refresh')
-        .set(refreshHeaders(loginResponse.body.refreshToken));
+      const refreshResponse = await request(app.getHttpServer()).post('/api/auth/refresh').set(refreshHeaders(loginResponse.body.refreshToken));
 
       expect(refreshResponse.status).toBe(401);
       expect(refreshResponse.body.message).toBe('A verification email is pending');
@@ -243,7 +261,13 @@ describe('SessionController', () => {
     it('accepts a recently expired refresh token for notification cleanup', async () => {
       const user = await createSessionUser();
       await setUserPushTokenByUsername(user.username, 'ExponentPushToken[expired-refresh-logout]');
-      const expiredRefreshToken = jwt.sign({ id: user.userId, role: 'user', tokenVer: 1 }, authConfig.jwtRefreshSecret, { expiresIn: -1 });
+      const expiredRefreshToken = jwt.sign({ id: user.userId, role: 'user', typ: 'refresh', tokenVer: 1 }, authConfig.jwtRefreshSecret, {
+        algorithm: 'HS256',
+        issuer: authConfig.jwtIssuer,
+        audience: authConfig.jwtRefreshAudience,
+        subject: user.userId,
+        expiresIn: -1,
+      });
 
       const response = await request(app.getHttpServer()).post('/api/auth/logout').set(refreshHeaders(expiredRefreshToken));
 

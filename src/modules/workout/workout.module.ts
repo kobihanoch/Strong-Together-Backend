@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { AuthenticationGuard } from '../../common/guards/authentication.guard';
 import { AuthorizationGuard } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { WorkoutPlanController } from './plan/plan.controller';
 import { WorkoutPlanQueries } from './plan/plan.queries';
 import { WorkoutPlanService } from './plan/plan.service';
@@ -20,7 +19,6 @@ import { WorkoutTrackingService } from './tracking/tracking.service';
     DpopGuard,
     AuthenticationGuard,
     AuthorizationGuard,
-    RlsTxInterceptor,
   ],
   exports: [WorkoutPlanService, WorkoutTrackingService],
 })

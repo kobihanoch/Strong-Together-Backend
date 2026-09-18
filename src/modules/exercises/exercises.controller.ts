@@ -1,9 +1,8 @@
-import { Controller, Get, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import type { ListExercisesResponse } from '@strong-together/shared';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { AuthenticationGuard } from '../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../common/guards/authorization.guard';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { ExercisesService } from './exercises.service';
 
 /**
@@ -16,7 +15,6 @@ import { ExercisesService } from './exercises.service';
  */
 @Controller('api/exercises')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
-@UseInterceptors(RlsTxInterceptor)
 @Roles('user')
 export class ExercisesController {
   constructor(private readonly exercisesService: ExercisesService) {}

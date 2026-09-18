@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import type { GetWorkoutSchedulesResponse, ReplaceWorkoutSchedulesBody } from '@strong-together/shared';
 import { CacheService } from '../../infrastructure/cache/cache.service';
+import { DBService } from '../../infrastructure/db/db.service';
 import { buildWorkoutStatisticsKeyStable } from '../workout/tracking/tracking.cache';
 import { WorkoutScheduleQueries } from './workout-schedule.queries';
 
 @Injectable()
 export class WorkoutScheduleService {
   constructor(
+    private readonly dbService: DBService,
     private readonly workoutScheduleQueries: WorkoutScheduleQueries,
     private readonly cacheService: CacheService,
   ) {}
@@ -30,7 +32,9 @@ export class WorkoutScheduleService {
     await this.workoutScheduleQueries.queryReplaceWorkoutSchedules(userId, body.schedules);
 
     const utcStatisticsKey = buildWorkoutStatisticsKeyStable(userId, 45, 'UTC');
-    await this.cacheService.cacheDeleteOtherTimezones(utcStatisticsKey);
-    await this.cacheService.cacheDeleteKey(utcStatisticsKey);
+    this.dbService.afterCommit(async () => {
+      await this.cacheService.cacheDeleteOtherTimezones(utcStatisticsKey);
+      await this.cacheService.cacheDeleteKey(utcStatisticsKey);
+    });
   }
 }

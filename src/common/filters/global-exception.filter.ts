@@ -17,9 +17,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const requestLogger = req.logger || logger;
 
     const statusCode =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : this.getStatusCodeFromUnknownError(exception) || HttpStatus.INTERNAL_SERVER_ERROR;
+      exception instanceof HttpException ? exception.getStatus() : this.getStatusCodeFromUnknownError(exception) || HttpStatus.INTERNAL_SERVER_ERROR;
 
     const message =
       exception instanceof HttpException

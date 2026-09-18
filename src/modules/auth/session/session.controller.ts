@@ -1,4 +1,4 @@
-import { Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import type { LoginRequestBody, LoginResponse, LogoutResponse, RefreshTokenResponse } from '@strong-together/shared';
 import { loginRequestSchema } from '@strong-together/shared';
@@ -10,14 +10,12 @@ import { RateLimit, RateLimitGuard, loginIpRateLimit, loginRateLimit } from '../
 import { CurrentLogger } from '../../../common/decorators/current-logger.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import type { AppRequest } from '../../../common/types/express';
 
 /**
  * Handles session HTTP requests.
  */
 @Controller('api/auth')
-@UseInterceptors(RlsTxInterceptor)
 export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
 

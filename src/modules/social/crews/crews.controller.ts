@@ -41,7 +41,6 @@ import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import { imageUploadOptions } from '../../../common/interceptors/image-upload.config';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../common/types/express';
@@ -67,7 +66,6 @@ import { CrewsService } from './crews.service';
  */
 @Controller('api/social/crews')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
-@UseInterceptors(RlsTxInterceptor)
 @Roles('user')
 export class CrewsController {
   constructor(private readonly service: CrewsService) {}

@@ -1,6 +1,7 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import axios from 'axios';
 import { PushNotificationsProducerService } from '../../infrastructure/queues/push-notifications/push-notifications-producer';
+import { DBService } from '../../infrastructure/db/db.service';
 import { PushQueries } from './push.queries';
 
 export type PushBatchResponse = {
@@ -17,8 +18,7 @@ export type PushBatchResponse = {
  * @param body - The validated request body.
  */
 export async function sendPushNotification(token: string, title: string, body: string) {
-  if (!token || typeof token !== 'string' || token.length < 10)
-    return { ok: false, permanent: true, reason: 'Invalid token' };
+  if (!token || typeof token !== 'string' || token.length < 10) return { ok: false, permanent: true, reason: 'Invalid token' };
 
   const message = { to: token, sound: 'default', title, body };
 
@@ -77,6 +77,7 @@ function isExpoTransientCode(code = '') {
 @Injectable()
 export class PushService {
   constructor(
+    private readonly dbService: DBService,
     private readonly pushQueries: PushQueries,
     private readonly pushNotificationsProducerService: PushNotificationsProducerService,
   ) {}
@@ -100,19 +101,21 @@ export class PushService {
     const reminders = await this.pushQueries.queryDueWorkoutReminders();
     const now = Date.now();
 
-    await this.pushNotificationsProducerService.enqueuePushNotifications(
-      reminders.map((reminder) => ({
-        userId: reminder.userId,
-        workoutScheduleId: reminder.workoutScheduleId,
-        occurrenceDate: reminder.occurrenceDate,
-        reminderAt: reminder.reminderAt.toISOString(),
-        title: `Hello, ${reminder.firstName}!`,
-        body: `Your ${reminder.splitName} workout starts soon.`,
-        delay: Math.max(0, reminder.reminderAt.getTime() - now),
-        expiresAt: 0,
-        ...(requestId ? { requestId } : {}),
-      })),
-    );
+    this.dbService.afterCommit(() => {
+      return this.pushNotificationsProducerService.enqueuePushNotifications(
+        reminders.map((reminder) => ({
+          userId: reminder.userId,
+          workoutScheduleId: reminder.workoutScheduleId,
+          occurrenceDate: reminder.occurrenceDate,
+          reminderAt: reminder.reminderAt.toISOString(),
+          title: `Hello, ${reminder.firstName}!`,
+          body: `Your ${reminder.splitName} workout starts soon.`,
+          delay: Math.max(0, reminder.reminderAt.getTime() - now),
+          expiresAt: 0,
+          ...(requestId ? { requestId } : {}),
+        })),
+      );
+    });
 
     return { success: true, message: 'Workout reminders enqueued', reminderCount: reminders.length };
   }

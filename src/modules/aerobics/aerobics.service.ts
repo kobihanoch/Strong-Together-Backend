@@ -3,10 +3,12 @@ import { AerobicsQueries } from './aerobics.queries';
 import type { AddAerobicInputQueryDto, CreateAerobicEntryBody, GetAerobicHistoryResponse } from '@strong-together/shared';
 import { buildAerobicsKeyStable, TTL_AEROBICS } from './aerobics.cache';
 import { CacheService } from '../../infrastructure/cache/cache.service';
+import { DBService } from '../../infrastructure/db/db.service';
 
 @Injectable()
 export class AerobicsService {
   constructor(
+    private readonly dbService: DBService,
     private readonly aerobicsQueries: AerobicsQueries,
     private readonly cacheService: CacheService,
   ) {}
@@ -36,7 +38,7 @@ export class AerobicsService {
     }
 
     const rows = await this.aerobicsQueries.queryGetUserAerobicsForNDays(userId, days, tz);
-    await this.cacheService.cacheSetJSON(aerobicsKey, rows, TTL_AEROBICS);
+    this.dbService.afterCommit(() => this.cacheService.cacheSetJSON(aerobicsKey, rows, TTL_AEROBICS));
 
     return { payload: rows, cacheHit: false };
   }
@@ -51,7 +53,7 @@ export class AerobicsService {
     await this.aerobicsQueries.queryAddAerobicTracking(userId, body.record);
 
     const aerobicsKey = buildAerobicsKeyStable(userId, 45, tz);
-    await this.cacheService.cacheDeleteKey(aerobicsKey);
+    this.dbService.afterCommit(() => this.cacheService.cacheDeleteKey(aerobicsKey));
   }
 
   /**
@@ -65,7 +67,7 @@ export class AerobicsService {
   async updateAerobicEntryData(userId: string, id: number, record: AddAerobicInputQueryDto, tz: string): Promise<void> {
     const updatedId = await this.aerobicsQueries.queryUpdateAerobicTracking(userId, id, record);
     if (updatedId === null) throw new NotFoundException('Aerobic entry not found');
-    await this.cacheService.cacheDeleteKey(buildAerobicsKeyStable(userId, 45, tz));
+    this.dbService.afterCommit(() => this.cacheService.cacheDeleteKey(buildAerobicsKeyStable(userId, 45, tz)));
   }
 
   /**
@@ -78,6 +80,6 @@ export class AerobicsService {
   async deleteAerobicEntryData(userId: string, id: number, tz: string): Promise<void> {
     const deletedId = await this.aerobicsQueries.queryDeleteAerobicTracking(userId, id);
     if (deletedId === null) throw new NotFoundException('Aerobic entry not found');
-    await this.cacheService.cacheDeleteKey(buildAerobicsKeyStable(userId, 45, tz));
+    this.dbService.afterCommit(() => this.cacheService.cacheDeleteKey(buildAerobicsKeyStable(userId, 45, tz)));
   }
 }

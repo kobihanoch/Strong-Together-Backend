@@ -1,4 +1,4 @@
-import { Controller, Headers, Post, Res, UnauthorizedException, UseInterceptors } from '@nestjs/common';
+import { Controller, Headers, Post, Res, UnauthorizedException } from '@nestjs/common';
 import type { Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { extractBearerToken } from '../../common/authentication/authentication.utils';
@@ -6,7 +6,6 @@ import { CurrentLogger } from '../../common/decorators/current-logger.decorator'
 import { CurrentRequestId } from '../../common/decorators/current-request-id.decorator';
 import { authConfig } from '../../config/auth.config';
 import type { AppLogger } from '../../infrastructure/logger';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { PushService } from './push.service';
 
 /**
@@ -17,7 +16,6 @@ import { PushService } from './push.service';
  * Access: Cron JWT
  */
 @Controller('api/push-jobs')
-@UseInterceptors(RlsTxInterceptor)
 export class PushController {
   constructor(private readonly pushService: PushService) {}
 
@@ -53,10 +51,7 @@ export class PushController {
       res.status(200).json(payload);
     } catch (error) {
       if (error instanceof Error) {
-        requestLogger.error(
-          { err: error, event: 'push.workout_reminders_enqueue_failed' },
-          'Failed to enqueue workout reminders',
-        );
+        requestLogger.error({ err: error, event: 'push.workout_reminders_enqueue_failed' }, 'Failed to enqueue workout reminders');
         res.status(500).json({ success: false, error: error.message });
       }
     }

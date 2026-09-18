@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, UseGuards } from '@nestjs/common';
 import type {
   AddCommentBody,
   AddCommentParams,
@@ -12,13 +12,17 @@ import type {
   ListPostCommentsQuery,
   ListPostCommentsResponse,
 } from '@strong-together/shared';
-import { addCommentRequestSchema, deleteCommentRequestSchema, editCommentRequestSchema, listPostCommentsRequestSchema } from '@strong-together/shared';
+import {
+  addCommentRequestSchema,
+  deleteCommentRequestSchema,
+  editCommentRequestSchema,
+  listPostCommentsRequestSchema,
+} from '@strong-together/shared';
 import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
-import { RlsTxInterceptor } from '../../../../common/interceptors/rls-tx.interceptor';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
 import { CommentsService } from './comments.service';
@@ -31,7 +35,6 @@ import { CommentsService } from './comments.service';
  */
 @Controller('api/social/posts')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
-@UseInterceptors(RlsTxInterceptor)
 @Roles('user')
 export class CommentsController {
   /**
@@ -51,7 +54,10 @@ export class CommentsController {
   @Get(':postId/comments')
   public listComments(
     @RequestData(new ValidateRequestPipe(listPostCommentsRequestSchema))
-    data: { params: ListPostCommentsParams; query: ListPostCommentsQuery },
+    data: {
+      params: ListPostCommentsParams;
+      query: ListPostCommentsQuery;
+    },
   ): Promise<ListPostCommentsResponse> {
     return this.service.listPostComments(data.params.postId, data.query.limit, data.query.cursor);
   }

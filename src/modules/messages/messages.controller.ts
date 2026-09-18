@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, UseGuards } from '@nestjs/common';
 import type { DeleteMessageParams, ListMessagesQuery, ListMessagesResponse, MarkMessageAsReadParams } from '@strong-together/shared';
 import { deleteMessageRequestSchema, listMessagesRequestSchema, markMessageAsReadRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -6,7 +6,6 @@ import { RequestData } from '../../common/decorators/request-data.decorator';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { AuthenticationGuard } from '../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../common/guards/authorization.guard';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../common/types/express';
 import { MessagesService } from './messages.service';
@@ -23,7 +22,6 @@ import { MessagesService } from './messages.service';
  */
 @Controller('api/messages')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
-@UseInterceptors(RlsTxInterceptor)
 @Roles('user')
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}

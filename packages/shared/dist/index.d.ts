@@ -4902,27 +4902,94 @@ type LoginResponse = ResponseOf<typeof loginContract>;
 type RefreshTokenResponse = ResponseOf<typeof refreshTokenContract>;
 type LogoutResponse = ResponseOf<typeof logoutContract>;
 
-/** Claims carried by an issued access token. */
-declare const accessTokenPayloadDtoSchema: z.ZodObject<{
+/** Accepts current access tokens and normalizes legacy access tokens. */
+declare const accessTokenPayloadDtoSchema: z.ZodUnion<readonly [z.ZodObject<{
+    id: z.ZodUUID;
+    sub: z.ZodUUID;
+    role: z.ZodString;
+    typ: z.ZodLiteral<"access">;
+    iss: z.ZodLiteral<"strong-together">;
+    aud: z.ZodLiteral<"strong-together-api">;
+    cnf: z.ZodOptional<z.ZodObject<{
+        jkt: z.ZodString;
+    }, z.core.$strip>>;
+    iat: z.ZodNumber;
+    exp: z.ZodNumber;
+}, z.core.$strip>, z.ZodPipe<z.ZodObject<{
     id: z.ZodUUID;
     role: z.ZodString;
     cnf: z.ZodOptional<z.ZodObject<{
         jkt: z.ZodString;
     }, z.core.$strip>>;
-    iat: z.ZodOptional<z.ZodNumber>;
-    exp: z.ZodOptional<z.ZodNumber>;
-}, z.core.$strip>;
+    iat: z.ZodNumber;
+    exp: z.ZodNumber;
+}, z.core.$strict>, z.ZodTransform<{
+    sub: string;
+    typ: "access";
+    iss: "strong-together";
+    aud: "strong-together-api";
+    id: string;
+    role: string;
+    iat: number;
+    exp: number;
+    cnf?: {
+        jkt: string;
+    } | undefined;
+}, {
+    id: string;
+    role: string;
+    iat: number;
+    exp: number;
+    cnf?: {
+        jkt: string;
+    } | undefined;
+}>>]>;
 /** Claims carried by an issued refresh token. */
-declare const refreshTokenPayloadDtoSchema: z.ZodObject<{
+declare const refreshTokenPayloadDtoSchema: z.ZodUnion<readonly [z.ZodObject<{
+    id: z.ZodUUID;
+    sub: z.ZodUUID;
+    role: z.ZodString;
+    iss: z.ZodLiteral<"strong-together">;
+    cnf: z.ZodOptional<z.ZodObject<{
+        jkt: z.ZodString;
+    }, z.core.$strip>>;
+    iat: z.ZodNumber;
+    exp: z.ZodNumber;
+    typ: z.ZodLiteral<"refresh">;
+    aud: z.ZodLiteral<"strong-together-refresh">;
+    tokenVer: z.ZodInt;
+}, z.core.$strip>, z.ZodPipe<z.ZodObject<{
     id: z.ZodUUID;
     role: z.ZodString;
     cnf: z.ZodOptional<z.ZodObject<{
         jkt: z.ZodString;
     }, z.core.$strip>>;
-    iat: z.ZodOptional<z.ZodNumber>;
-    exp: z.ZodOptional<z.ZodNumber>;
+    iat: z.ZodNumber;
+    exp: z.ZodNumber;
     tokenVer: z.ZodInt;
-}, z.core.$strip>;
+}, z.core.$strict>, z.ZodTransform<{
+    sub: string;
+    typ: "refresh";
+    iss: "strong-together";
+    aud: "strong-together-refresh";
+    id: string;
+    role: string;
+    iat: number;
+    exp: number;
+    tokenVer: number;
+    cnf?: {
+        jkt: string;
+    } | undefined;
+}, {
+    id: string;
+    role: string;
+    iat: number;
+    exp: number;
+    tokenVer: number;
+    cnf?: {
+        jkt: string;
+    } | undefined;
+}>>]>;
 /** User data returned after atomically incrementing the token version. */
 declare const userAfterBumpQueryDtoSchema: z.ZodObject<{
     tokenVersion: z.ZodInt;

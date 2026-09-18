@@ -1,6 +1,8 @@
 import type { AddAerobicInputQueryDto, AerobicMutationRowQueryDto, UserAerobicsQueryDto, UserAerobicsRowQueryDto } from '@strong-together/shared';
+import { Injectable } from '@nestjs/common';
 import { DBService } from '../../infrastructure/db/db.service';
 
+@Injectable()
 export class AerobicsQueries {
   constructor(private readonly dbService: DBService) {}
 

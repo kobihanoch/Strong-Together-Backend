@@ -6,7 +6,8 @@ import { createLogger } from '../logger';
 import { DB_CLIENT } from './db.tokens';
 
 interface DBStore {
-  tx: postgres.Sql | postgres.TransactionSql;
+  tx: postgres.TransactionSql;
+  afterCommit: Array<() => Promise<void>>;
 }
 
 dns.setDefaultResultOrder('ipv4first');
@@ -55,15 +56,29 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
    * @returns The run with rls tx result.
    */
   async runWithRlsTx<T>(userId: string | undefined, fn: () => Promise<T>): Promise<T> {
-    return (await this.dbClient.begin(async (tx) => {
+    const afterCommit: Array<() => Promise<void>> = [];
+    const result = await this.dbClient.begin(async (tx) => {
       if (!userId) {
         await tx`SET LOCAL ROLE guest`;
       } else {
         await tx`select set_config('app.current_user_id', ${userId}, true)`;
         await tx`SET LOCAL ROLE authenticated`;
       }
-      return this.als.run({ tx }, fn);
-    })) as T;
+      return this.als.run({ tx, afterCommit }, fn);
+    });
+
+    await Promise.all(afterCommit.map((callback) => callback()));
+    return result as T;
+  }
+
+  /**
+   * Registers external work to run only after the active request transaction commits.
+   * @param callback - The external work to perform after commit.
+   */
+  afterCommit(callback: () => Promise<void>): void {
+    const store = this.als.getStore();
+    if (!store) throw new Error('No active RLS transaction');
+    store.afterCommit.push(callback);
   }
 
   /**

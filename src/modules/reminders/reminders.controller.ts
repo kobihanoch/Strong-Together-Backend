@@ -1,16 +1,11 @@
-import { Controller, Get, HttpCode, HttpStatus, Patch, Put, UseGuards, UseInterceptors } from '@nestjs/common';
-import type {
-  GetReminderSettingsResponse,
-  UpdateReminderTimeZoneBody,
-  UpsertReminderSettingsBody,
-} from '@strong-together/shared';
+import { Controller, Get, HttpCode, HttpStatus, Patch, Put, UseGuards } from '@nestjs/common';
+import type { GetReminderSettingsResponse, UpdateReminderTimeZoneBody, UpsertReminderSettingsBody } from '@strong-together/shared';
 import { updateReminderTimeZoneRequestSchema, upsertReminderSettingsRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestData } from '../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../common/types/express';
 import { RemindersService } from './reminders.service';
@@ -27,7 +22,6 @@ import { RemindersService } from './reminders.service';
  */
 @Controller('api/reminders')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
-@UseInterceptors(RlsTxInterceptor)
 @Roles('user')
 export class RemindersController {
   constructor(private readonly remindersService: RemindersService) {}

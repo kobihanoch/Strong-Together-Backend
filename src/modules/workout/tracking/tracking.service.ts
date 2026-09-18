@@ -8,6 +8,7 @@ import type {
   CreateWorkoutSessionBody,
 } from '@strong-together/shared';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
+import { DBService } from '../../../infrastructure/db/db.service';
 import {
   buildExerciseHistoryKeyStable,
   buildWorkoutHistoryKeyStable,
@@ -20,6 +21,7 @@ import { WorkoutTrackingQueries } from './tracking.queries';
 @Injectable()
 export class WorkoutTrackingService {
   constructor(
+    private readonly dbService: DBService,
     private readonly cacheService: CacheService,
     private readonly workoutTrackingQueries: WorkoutTrackingQueries,
   ) {}
@@ -49,7 +51,7 @@ export class WorkoutTrackingService {
 
     const data = await this.workoutTrackingQueries.queryGetExerciseTrackingMaps(userId, days, tz);
     const payload = data;
-    await this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING);
+    this.dbService.afterCommit(() => this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING));
     return { payload, cacheHit: false };
   }
 
@@ -79,7 +81,7 @@ export class WorkoutTrackingService {
     }
 
     const payload = await this.workoutTrackingQueries.queryGetExerciseHistory(userId, days, tz);
-    await this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING);
+    this.dbService.afterCommit(() => this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING));
     return { payload, cacheHit: false };
   }
 
@@ -108,7 +110,7 @@ export class WorkoutTrackingService {
 
     const data = await this.workoutTrackingQueries.queryGetExerciseTrackingStats(userId, days, tz);
     const payload = data;
-    await this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING);
+    this.dbService.afterCommit(() => this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING));
     return { payload, cacheHit: false };
   }
 
@@ -133,7 +135,7 @@ export class WorkoutTrackingService {
     }
 
     const payload = await this.workoutTrackingQueries.queryGetAllPersonalRecords(userId, tz);
-    await this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING);
+    this.dbService.afterCommit(() => this.cacheService.cacheSetJSON(key, payload, TTL_TRACKING));
     return { payload, cacheHit: false };
   }
 
@@ -180,11 +182,13 @@ export class WorkoutTrackingService {
 
     await this.workoutTrackingQueries.queryInsertUserFinishedWorkout(userId, workoutArray, workoutStartUtc, workoutEndUtc);
 
-    await Promise.all([
-      this.cacheService.cacheDeleteKey(buildWorkoutHistoryKeyStable(userId, 45, tz)),
-      this.cacheService.cacheDeleteKey(buildWorkoutStatisticsKeyStable(userId, 45, tz)),
-      this.cacheService.cacheDeleteKey(buildExerciseHistoryKeyStable(userId, 45, tz)),
-      this.cacheService.cacheDeleteKey(buildPersonalRecordsKeyStable(userId, tz)),
-    ]);
+    this.dbService.afterCommit(() =>
+      Promise.all([
+        this.cacheService.cacheDeleteKey(buildWorkoutHistoryKeyStable(userId, 45, tz)),
+        this.cacheService.cacheDeleteKey(buildWorkoutStatisticsKeyStable(userId, 45, tz)),
+        this.cacheService.cacheDeleteKey(buildExerciseHistoryKeyStable(userId, 45, tz)),
+        this.cacheService.cacheDeleteKey(buildPersonalRecordsKeyStable(userId, tz)),
+      ]).then(() => undefined),
+    );
   }
 }

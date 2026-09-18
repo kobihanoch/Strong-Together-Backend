@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { Controller, Get, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import helmet from 'helmet';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AerobicsModule } from './modules/aerobics/aerobics.module';
@@ -21,6 +21,7 @@ import { CheckAppVersionMiddleware } from './common/middlewares/check-app-versio
 import { GeneralRateLimitMiddleware } from './common/middlewares/general-rate-limit.middleware';
 import { RequestLoggerMiddleware } from './common/middlewares/request-logger.middleware';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { RlsTxInterceptor } from './common/interceptors/rls-tx.interceptor';
 import { setupSentryErrorHandler } from './infrastructure/sentry';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { DBModule } from './infrastructure/db/db.module';
@@ -69,6 +70,7 @@ class AppController {
   providers: [
     GlobalExceptionFilter,
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
+    { provide: APP_INTERCEPTOR, useClass: RlsTxInterceptor },
     GeneralRateLimitMiddleware,
     RequestLoggerMiddleware,
     BotBlockerMiddleware,

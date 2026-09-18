@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
+import { DBService } from '../../../infrastructure/db/db.service';
 import { WorkoutPlanQueries } from './plan.queries';
 import type { ReplaceWorkoutPlanBody, GetWorkoutPlanResponse } from '@strong-together/shared';
 
@@ -9,6 +10,7 @@ import { buildWorkoutHistoryKeyStable, buildWorkoutStatisticsKeyStable } from '.
 @Injectable()
 export class WorkoutPlanService {
   constructor(
+    private readonly dbService: DBService,
     private readonly workoutPlanQueries: WorkoutPlanQueries,
     private readonly cacheService: CacheService,
   ) {}
@@ -38,12 +40,12 @@ export class WorkoutPlanService {
     const [plan] = rows;
     if (!plan) {
       const empty = { workoutPlan: null };
-      await this.cacheService.cacheSetJSON(planKey, empty, TTL_PLAN);
+      this.dbService.afterCommit(() => this.cacheService.cacheSetJSON(planKey, empty, TTL_PLAN));
       return { payload: empty, cacheHit: false };
     }
 
     const payload = { workoutPlan: plan };
-    await this.cacheService.cacheSetJSON(planKey, payload, TTL_PLAN);
+    this.dbService.afterCommit(() => this.cacheService.cacheSetJSON(planKey, payload, TTL_PLAN));
     return { payload, cacheHit: false };
   }
 
@@ -67,10 +69,12 @@ export class WorkoutPlanService {
     const planKey = buildPlanKeyStable(userId, tz);
     const workoutHistoryKey = buildWorkoutHistoryKeyStable(userId, 45, tz);
     const workoutStatisticsKey = buildWorkoutStatisticsKeyStable(userId, 45, tz);
-    await Promise.all([
-      this.cacheService.cacheDeleteKey(planKey),
-      this.cacheService.cacheDeleteKey(workoutHistoryKey),
-      this.cacheService.cacheDeleteKey(workoutStatisticsKey),
-    ]);
+    this.dbService.afterCommit(() =>
+      Promise.all([
+        this.cacheService.cacheDeleteKey(planKey),
+        this.cacheService.cacheDeleteKey(workoutHistoryKey),
+        this.cacheService.cacheDeleteKey(workoutStatisticsKey),
+      ]).then(() => undefined),
+    );
   }
 }

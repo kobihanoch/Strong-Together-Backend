@@ -3,7 +3,6 @@ import { AuthenticationGuard } from '../../common/guards/authentication.guard';
 import { AuthorizationGuard } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { RateLimitGuard } from '../../common/guards/rate-limit.guard';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { EmailsModule } from '../../infrastructure/queues/emails/emails.module';
 import { AuthModule } from '../auth/auth.module';
 import { CreateUserController } from './create/create.controller';
@@ -19,11 +18,7 @@ import { UpdateUserService } from './update/update.service';
 import { SupabaseModule } from '../../infrastructure/supabase/supabase.module';
 
 @Module({
-  imports: [
-    EmailsModule,
-    AuthModule /* For verification mails */,
-    SupabaseModule /* For profile pics updating */,
-  ],
+  imports: [EmailsModule, AuthModule /* For verification mails */, SupabaseModule /* For profile pics updating */],
   controllers: [CreateUserController, PushTokensController, UpdateUserController],
   providers: [
     CreateUserQueries,
@@ -36,7 +31,6 @@ import { SupabaseModule } from '../../infrastructure/supabase/supabase.module';
     AuthenticationGuard,
     AuthorizationGuard,
     RateLimitGuard,
-    RlsTxInterceptor,
     UpdateEmailsService,
   ],
   exports: [UpdateUserService],

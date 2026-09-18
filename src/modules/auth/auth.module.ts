@@ -7,7 +7,6 @@ import { VerificationService } from './verification/verification.service';
 import { PasswordService } from './password/password.service';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { RateLimitGuard } from '../../common/guards/rate-limit.guard';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { MessagesModule } from '../messages/messages.module';
 import { CreateUserQueries } from '../user/create/create.queries';
 import { PasswordQueries } from './password/password.queries';
@@ -30,7 +29,6 @@ import { EmailsModule } from '../../infrastructure/queues/emails/emails.module';
     CreateUserQueries,
     DpopGuard,
     RateLimitGuard,
-    RlsTxInterceptor,
     VerificationEmailsService,
     PasswordEmailsService,
   ],

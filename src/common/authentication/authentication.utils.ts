@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { Request } from 'express';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { authConfig } from '../../config/auth.config';
-import type { AccessTokenPayloadDto, UserRow } from '@strong-together/shared';
+import { accessTokenPayloadDtoSchema, type AccessTokenPayloadDto, type UserRow } from '@strong-together/shared';
 
 /*
  * Extracts a Bearer token from a header string safely.
@@ -29,7 +29,9 @@ export const getAccessToken = (req: Request): string | null => {
 export const decodeAccessToken = (accessToken: string | null): AccessTokenPayloadDto | null => {
   if (!accessToken) return null;
   try {
-    return jwt.verify(accessToken, authConfig.jwtAccessSecret) as AccessTokenPayloadDto;
+    const decoded = jwt.verify(accessToken, authConfig.jwtAccessSecret, { algorithms: ['HS256'] });
+    const parsed = accessTokenPayloadDtoSchema.safeParse(decoded);
+    return parsed.success ? parsed.data : null;
   } catch (e) {
     return null;
   }
@@ -55,14 +57,35 @@ export const signTokens = (
       }
     : {};
 
-  const userClaims = {
+  const accessClaims = {
     id,
     role,
+    typ: 'access',
+    ...cnfClaim,
+  };
+
+  const refreshClaims = {
+    id,
+    role,
+    typ: 'refresh',
+    tokenVer: Number(tokenVer),
     ...cnfClaim,
   };
 
   return {
-    accessToken: jwt.sign(userClaims, authConfig.jwtAccessSecret, { expiresIn: accessExp }),
-    refreshToken: jwt.sign({ ...userClaims, tokenVer }, authConfig.jwtRefreshSecret, { expiresIn: refreshExp }),
+    accessToken: jwt.sign(accessClaims, authConfig.jwtAccessSecret, {
+      algorithm: 'HS256',
+      issuer: authConfig.jwtIssuer,
+      audience: authConfig.jwtAccessAudience,
+      subject: id,
+      expiresIn: accessExp,
+    }),
+    refreshToken: jwt.sign(refreshClaims, authConfig.jwtRefreshSecret, {
+      algorithm: 'HS256',
+      issuer: authConfig.jwtIssuer,
+      audience: authConfig.jwtRefreshAudience,
+      subject: id,
+      expiresIn: refreshExp,
+    }),
   };
 };

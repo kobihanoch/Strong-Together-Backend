@@ -1,9 +1,8 @@
-import { Controller, HttpCode, HttpStatus, Post, UseInterceptors } from '@nestjs/common';
+import { Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import type { CreateUserBody } from '@strong-together/shared';
 import { createUserRequestSchema } from '@strong-together/shared';
 import { CurrentRequestId } from '../../../common/decorators/current-request-id.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import { CreateUserService } from './create.service';
 
@@ -16,7 +15,6 @@ import { CreateUserService } from './create.service';
  * Access: Public
  */
 @Controller('api/users')
-@UseInterceptors(RlsTxInterceptor)
 export class CreateUserController {
   constructor(private readonly createUserService: CreateUserService) {}
 

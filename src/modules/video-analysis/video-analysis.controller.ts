@@ -1,4 +1,4 @@
-import { Controller, Post, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Post, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import type { CreateVideoUploadUrlBody, CreateVideoUploadUrlResponse } from '@strong-together/shared';
 import { createVideoUploadUrlRequestSchema } from '@strong-together/shared';
@@ -9,7 +9,6 @@ import { RequestData } from '../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe';
 import type { AppLogger } from '../../infrastructure/logger';
 import type { AuthenticatedUser } from '../../common/types/express';
@@ -25,7 +24,6 @@ import { VideoAnalysisService, normalizeHeaderValue } from './video-analysis.ser
  */
 @Controller('api/video-analysis/upload-urls')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
-@UseInterceptors(RlsTxInterceptor)
 @Roles('user')
 export class VideoAnalysisController {
   constructor(private readonly videoAnalysisService: VideoAnalysisService) {}

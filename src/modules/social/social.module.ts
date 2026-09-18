@@ -3,7 +3,6 @@ import { SupabaseModule } from '../../infrastructure/supabase/supabase.module';
 import { AuthenticationGuard } from '../../common/guards/authentication.guard';
 import { AuthorizationGuard } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
-import { RlsTxInterceptor } from '../../common/interceptors/rls-tx.interceptor';
 import { CrewsController } from './crews/crews.controller';
 import { CrewsQueries } from './crews/crews.queries';
 import { CrewsService } from './crews/crews.service';
@@ -55,7 +54,6 @@ import { SocialSummaryService } from './summary/social-summary.service';
     DpopGuard,
     AuthenticationGuard,
     AuthorizationGuard,
-    RlsTxInterceptor,
   ],
   exports: [CrewsService, PostsService, ReactionsService, CommentsService],
 })

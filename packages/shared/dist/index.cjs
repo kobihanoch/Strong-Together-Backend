@@ -3101,18 +3101,54 @@ var changeEmailTokenPayloadDtoSchema = import_v47.z.object({
 });
 
 // src/modules/auth/session/session.dtos.ts
-var accessTokenPayloadDtoSchema = import_v48.z.object({
+var legacyTokenSchema = import_v48.z.object({
   id: userDbSchema.shape.id,
   role: userDbSchema.shape.role,
   cnf: import_v48.z.object({
     jkt: import_v48.z.string()
   }).optional(),
-  iat: import_v48.z.number().optional(),
-  exp: import_v48.z.number().optional()
+  iat: import_v48.z.number(),
+  exp: import_v48.z.number()
+}).strict();
+var currentAccessTokenSchema = import_v48.z.object({
+  id: userDbSchema.shape.id,
+  sub: userDbSchema.shape.id,
+  role: userDbSchema.shape.role,
+  typ: import_v48.z.literal("access"),
+  iss: import_v48.z.literal("strong-together"),
+  aud: import_v48.z.literal("strong-together-api"),
+  cnf: import_v48.z.object({
+    jkt: import_v48.z.string()
+  }).optional(),
+  iat: import_v48.z.number(),
+  exp: import_v48.z.number()
 });
-var refreshTokenPayloadDtoSchema = accessTokenPayloadDtoSchema.extend({
-  tokenVer: userDbSchema.shape.tokenVersion
-});
+var accessTokenPayloadDtoSchema = import_v48.z.union([
+  currentAccessTokenSchema.refine((token) => token.sub === token.id),
+  legacyTokenSchema.transform((token) => ({
+    ...token,
+    sub: token.id,
+    typ: "access",
+    iss: "strong-together",
+    aud: "strong-together-api"
+  }))
+]);
+var refreshTokenPayloadDtoSchema = import_v48.z.union([
+  currentAccessTokenSchema.extend({
+    typ: import_v48.z.literal("refresh"),
+    aud: import_v48.z.literal("strong-together-refresh"),
+    tokenVer: userDbSchema.shape.tokenVersion
+  }).refine((token) => token.sub === token.id),
+  legacyTokenSchema.extend({
+    tokenVer: userDbSchema.shape.tokenVersion
+  }).transform((token) => ({
+    ...token,
+    sub: token.id,
+    typ: "refresh",
+    iss: "strong-together",
+    aud: "strong-together-refresh"
+  }))
+]);
 var userAfterBumpQueryDtoSchema = import_v48.z.object({
   tokenVersion: userDbSchema.shape.tokenVersion,
   userData: userDataQueryDtoSchema

@@ -1,6 +1,11 @@
-import { Controller, Get, Patch, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
-import type { UpdateUnverifiedAccountEmailBody, GetVerificationStatusQuery, CreateVerificationEmailBody, VerifyEmailQuery } from '@strong-together/shared';
+import type {
+  UpdateUnverifiedAccountEmailBody,
+  GetVerificationStatusQuery,
+  CreateVerificationEmailBody,
+  VerifyEmailQuery,
+} from '@strong-together/shared';
 import {
   updateUnverifiedAccountEmailRequestSchema,
   getVerificationStatusRequestSchema,
@@ -16,14 +21,12 @@ import {
 } from '../../../common/guards/rate-limit.guard';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import type { AppRequest } from '../../../common/types/express';
 
 /**
  * Handles verification HTTP requests.
  */
 @Controller('api/auth')
-@UseInterceptors(RlsTxInterceptor)
 export class VerificationController {
   constructor(private readonly verificationService: VerificationService) {}
 

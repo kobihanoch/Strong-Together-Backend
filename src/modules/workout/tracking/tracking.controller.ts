@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Post, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Post, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import type {
   GetWorkoutHistoryResponse,
@@ -21,7 +21,6 @@ import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../common/types/express';
 import { WorkoutTrackingService } from './tracking.service';
@@ -40,7 +39,6 @@ import { WorkoutTrackingService } from './tracking.service';
  */
 @Controller('api')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
-@UseInterceptors(RlsTxInterceptor)
 @Roles('user')
 export class WorkoutTrackingController {
   constructor(private readonly workoutTrackingService: WorkoutTrackingService) {}

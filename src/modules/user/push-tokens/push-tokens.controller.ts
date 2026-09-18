@@ -1,4 +1,4 @@
-import { Controller, Put, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Put, UseGuards } from '@nestjs/common';
 import type { ReplacePushTokenBody } from '@strong-together/shared';
 import { replacePushTokenRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -6,7 +6,6 @@ import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
-import { RlsTxInterceptor } from '../../../common/interceptors/rls-tx.interceptor';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../common/types/express';
 import { PushTokensService } from './push-tokens.service';
@@ -21,7 +20,6 @@ import { PushTokensService } from './push-tokens.service';
  */
 @Controller('api/users')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
-@UseInterceptors(RlsTxInterceptor)
 @Roles('user')
 export class PushTokensController {
   constructor(private readonly pushTokensService: PushTokensService) {}
