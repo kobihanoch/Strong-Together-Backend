@@ -1,14 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../infrastructure/db/db.service';
-
-export type DueWorkoutReminder = {
-  userId: string;
-  workoutScheduleId: string;
-  occurrenceDate: string;
-  reminderAt: Date;
-  firstName: string;
-  splitName: string;
-};
+import type { DueWorkoutReminder } from './push.dtos';
 
 @Injectable()
 export class PushQueries {

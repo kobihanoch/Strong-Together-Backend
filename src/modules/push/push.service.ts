@@ -2,7 +2,7 @@ import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import axios from 'axios';
 import { PushNotificationsProducerService } from '../../infrastructure/queues/push-notifications/push-notifications-producer';
 import { DBService } from '../../infrastructure/db/db.service';
-import { PushQueries } from './push.queries';
+import { PushRepository } from './push.repository';
 
 export type PushBatchResponse = {
   success: true;
@@ -78,7 +78,7 @@ function isExpoTransientCode(code = '') {
 export class PushService {
   constructor(
     private readonly dbService: DBService,
-    private readonly pushQueries: PushQueries,
+    private readonly pushRepository: PushRepository,
     private readonly pushNotificationsProducerService: PushNotificationsProducerService,
   ) {}
 
@@ -98,7 +98,7 @@ export class PushService {
    * @returns The enqueue result and number of reminders found.
    */
   async enqueueDueWorkoutReminders(requestId?: string): Promise<PushBatchResponse> {
-    const reminders = await this.pushQueries.queryDueWorkoutReminders();
+    const reminders = await this.pushRepository.findDueWorkoutReminders();
     const now = Date.now();
 
     this.dbService.afterCommit(() => {

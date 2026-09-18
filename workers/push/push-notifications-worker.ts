@@ -2,7 +2,7 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { createLogger } from '../../src/infrastructure/logger';
 import { PushNotificationsQueueService } from '../../src/infrastructure/queues/push-notifications/push-notifications-queue';
 import { captureWorkerException } from '../../src/infrastructure/sentry';
-import { PushQueries } from '../../src/modules/push/push.queries';
+import { PushRepository } from '../../src/modules/push/push.repository';
 import { sendPushNotification } from '../../src/modules/push/push.service';
 
 const logger = createLogger('worker:push-notifications', {
@@ -13,7 +13,7 @@ const logger = createLogger('worker:push-notifications', {
 export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly pushNotificationsQueueService: PushNotificationsQueueService,
-    private readonly pushQueries: PushQueries,
+    private readonly pushRepository: PushRepository,
   ) {}
 
   async onModuleInit() {
@@ -49,7 +49,7 @@ export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDes
           }
 
           // Recheck the user's current settings and schedule after the job delay.
-          const token = await this.pushQueries.queryExpoPushToken(userId, workoutScheduleId, occurrenceDate);
+          const token = await this.pushRepository.findEligibleExpoPushToken(userId, workoutScheduleId, occurrenceDate);
           if (!token) {
             jobLogger.info({ event: 'job.skipped_ineligible' }, 'Skipping ineligible workout reminder');
             return;

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import type { MessageAfterSendQueryDto } from '@strong-together/shared';
 import { appConfig } from '../../../config/app.config';
 import { DBService } from '../../../infrastructure/db/db.service';
 import { getEndOfWorkoutMessage, getFirstLoginMessage } from './system-messages.templates';
+import { SystemMessagesRepository } from './system-messages.repository';
 import { MessagesService } from '../messages.service';
 
 @Injectable()
@@ -10,6 +10,7 @@ export class SystemMessagesService {
   constructor(
     private readonly dbService: DBService,
     private readonly messagesService: MessagesService,
+    private readonly systemMessagesRepository: SystemMessagesRepository,
   ) {}
 
   /**
@@ -20,37 +21,7 @@ export class SystemMessagesService {
   private async createAndSend(receiverId: string, msg: { header: string; text: string }) {
     const senderId = appConfig.systemUserId as string;
 
-    const [row] = await this.dbService.sql<[MessageAfterSendQueryDto]>`
-      WITH
-        inserted AS (
-          INSERT INTO
-            messages.message (sender_id, receiver_id, subject, msg)
-          VALUES
-            (
-              ${senderId}::UUID,
-              ${receiverId}::UUID,
-              ${msg.header},
-              ${msg.text}
-            )
-          RETURNING
-            *
-        )
-      SELECT
-        inserted.id,
-        inserted.sender_id AS "senderId",
-        inserted.receiver_id AS "receiverId",
-        inserted.subject,
-        inserted.msg,
-        inserted.sent_at AS "sentAt",
-        inserted.is_read AS "isRead",
-        u.username AS "senderUsername",
-        u.name AS "senderFullName",
-        u.profile_pic_path AS "senderProfilePicPath",
-        u.gender AS "senderGender"
-      FROM
-        inserted
-        LEFT JOIN identity.user u ON u.id = inserted.sender_id
-    `;
+    const row = await this.systemMessagesRepository.createSystemMessage(senderId, receiverId, msg.header, msg.text);
 
     this.dbService.afterCommit(async () => {
       this.messagesService.emitNewMessage(receiverId, row);

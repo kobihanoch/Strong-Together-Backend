@@ -9,3 +9,13 @@ export type NotificationPayload = {
   expiresAt: number;
   requestId?: string;
 };
+
+/** Workout reminder selected for delayed push-notification delivery. */
+export type DueWorkoutReminder = {
+  userId: string;
+  workoutScheduleId: string;
+  occurrenceDate: string;
+  reminderAt: Date;
+  firstName: string;
+  splitName: string;
+};
