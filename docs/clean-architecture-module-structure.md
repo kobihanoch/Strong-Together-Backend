@@ -337,6 +337,30 @@ Register each adapter in the Nest module:
 
 Create a port only when application/domain code needs the capability. Raw SQL helpers, `DBService`, Redis clients, SDK clients, configuration loaders, and other details used entirely inside infrastructure do not need their own application ports. Critical post-commit delivery should eventually use a transactional outbox; `TransactionHooks.afterCommit(...)` is intended for cache operations and other best-effort side effects.
 
+### Cache Ports and Keys
+
+Follow the aerobics cache pattern in every refactored feature:
+
+- Application use cases never construct or receive cache-key strings, Redis namespaces, cache versions, or TTL values.
+- The application cache port accepts business parameters such as `userId`, `days`, and `timezone` and returns a typed cache entry with `get()` and `set(value)` methods.
+- The infrastructure cache adapter owns the namespace, version, TTL, and stable-key builder. Export the stable-key builder only when integration tests need to inspect the physical cache entry.
+- Resolve the cache entry once in the use case, read it when caching is enabled, and reuse the same entry when scheduling the post-commit write.
+- Cache invalidation remains a business-level port method such as `invalidateUser(userId)`.
+
+```ts
+export interface AerobicsCacheEntry {
+  get(): Promise<AerobicsHistory | null>;
+  set(value: AerobicsHistory): Promise<void>;
+}
+
+export abstract class AerobicsCache {
+  abstract forUser(userId: string, days: number, timezone: string): Promise<AerobicsCacheEntry>;
+  abstract invalidateUser(userId: string): Promise<void>;
+}
+```
+
+Do not expose generic `get(userId, key)` or `set(userId, key, value)` methods from application cache ports, and do not build strings such as `` `exercise-history:${days}:${timezone}` `` inside use cases.
+
 ## Refactored Feature Completion Checklist
 
 A feature is refactored only when all applicable items below are true:
@@ -346,6 +370,7 @@ A feature is refactored only when all applicable items below are true:
 - Controllers depend on use cases; use cases depend only on domain code, application models, and application-owned ports.
 - Every application operation is an explicit use-case class with an `execute(...)` method.
 - Concrete databases, caches, queues, sockets, SDKs, and transaction mechanisms remain in infrastructure and are reached through application ports when a use case uses them directly.
+- Cache ports return typed cache entries from business parameters; application code contains no physical cache keys, namespaces, versions, or TTLs.
 - Expected errors are plain feature-owned application errors with numeric `statusCode` values; controllers do not translate them with repetitive `try/catch` blocks.
 - Lifecycle reactions across modules use the common event, a producer-owned publisher port, an infrastructure publisher, and a consumer-side listener. Awaited behavior remains awaited.
 - Shared feature indexes export only public `*.contracts.ts`; shared contracts use plain Zod and contain no Drizzle, `drizzle-zod`, `$inferSelect`, `$inferInsert`, SQL-row, database, backend model, or internal-token types.

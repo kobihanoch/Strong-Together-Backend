@@ -3099,61 +3099,57 @@ import { z as z23 } from "zod/v4";
 
 // src/modules/workout/plan/plan.dtos.ts
 import { z as z22 } from "zod/v4";
+var idSchema = z22.number().int();
+var uuidSchema = z22.string().uuid();
+var textSchema = z22.string();
+var booleanSchema = z22.boolean();
+var numberSchema = z22.number();
 var workoutExerciseInputQueryDtoSchema = z22.object({
-  exerciseId: exerciseDbSchema.shape.id,
-  sets: z22.array(workoutSetDbSchema.shape.reps),
-  orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex
+  exerciseId: idSchema,
+  sets: z22.array(numberSchema),
+  orderIndex: numberSchema
 });
 var workoutSplitInputBaseQueryDtoSchema = z22.object({
-  name: workoutSplitDbSchema.shape.name.min(1, "Split name is required"),
+  name: textSchema.min(1, "Split name is required"),
   orderIndex: z22.number().int().nonnegative(),
   exercises: z22.array(workoutExerciseInputQueryDtoSchema).min(1, "Each split must include at least one exercise")
 });
 var saveWorkoutSplitInputQueryDtoSchema = workoutSplitInputBaseQueryDtoSchema.extend({
-  id: workoutSplitDbSchema.shape.id.optional()
+  id: idSchema.optional()
 });
 var saveWorkoutSplitPayloadQueryDtoSchema = z22.array(saveWorkoutSplitInputQueryDtoSchema).min(1, "Workout must include at least one split");
 var exerciseInPlanQueryDtoSchema = z22.object({
-  exerciseToSplitId: exerciseToWorkoutSplitDbSchema.shape.id,
-  exerciseId: exerciseDbSchema.shape.id,
-  name: exerciseDbSchema.shape.name,
+  exerciseToSplitId: idSchema,
+  exerciseId: idSchema,
+  name: textSchema,
   sets: z22.array(z22.object({
-    orderIndex: workoutSetDbSchema.shape.orderIndex,
-    reps: workoutSetDbSchema.shape.reps
+    orderIndex: numberSchema,
+    reps: numberSchema
   })),
-  orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex,
-  isActive: exerciseToWorkoutSplitDbSchema.shape.isActive,
-  targetMuscle: exerciseDbSchema.shape.targetMuscle,
-  specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle
+  orderIndex: numberSchema,
+  isActive: booleanSchema,
+  targetMuscle: textSchema,
+  specificTargetMuscle: textSchema
 });
 var workoutSplitQueryDtoSchema = z22.object({
-  id: workoutSplitDbSchema.shape.id,
-  workoutId: workoutSplitDbSchema.shape.workoutId,
-  name: workoutSplitDbSchema.shape.name,
-  orderIndex: workoutSplitDbSchema.shape.orderIndex,
+  id: idSchema,
+  workoutId: idSchema,
+  name: textSchema,
+  orderIndex: numberSchema,
   createdAt: serializedDateSchema,
   muscleGroup: z22.string().nullable(),
   estimatedDurationMinutes: z22.number().nullable(),
-  isActive: workoutSplitDbSchema.shape.isActive,
+  isActive: booleanSchema,
   exercises: z22.array(exerciseInPlanQueryDtoSchema)
 });
 var wholeUserWorkoutPlanQueryDtoSchema = z22.object({
-  id: workoutPlanDbSchema.shape.id,
+  id: idSchema,
   numberOfSplits: z22.number(),
   createdAt: serializedDateSchema,
-  userId: userDbSchema.shape.id,
-  isActive: workoutPlanDbSchema.shape.isActive,
+  userId: uuidSchema,
+  isActive: booleanSchema,
   updatedAt: serializedDateSchema,
   workoutSplits: z22.array(workoutSplitQueryDtoSchema).nullable()
-});
-var workoutPlanIdQueryDtoSchema = z22.object({
-  id: workoutPlanDbSchema.shape.id
-});
-var workoutSplitIdQueryDtoSchema = z22.object({
-  id: workoutSplitDbSchema.shape.id
-});
-var exerciseAssignmentIdQueryDtoSchema = z22.object({
-  id: exerciseToWorkoutSplitDbSchema.shape.id
 });
 
 // src/modules/workout/plan/plan.contracts.ts
@@ -3187,36 +3183,78 @@ import { z as z25 } from "zod/v4";
 
 // src/modules/workout/tracking/tracking.dtos.ts
 import { z as z24 } from "zod/v4";
+var exerciseDbSchema2 = {
+  shape: {
+    id: z24.number().int(),
+    name: z24.string(),
+    targetMuscle: z24.string(),
+    specificTargetMuscle: z24.string()
+  }
+};
+var exerciseToWorkoutSplitDbSchema2 = {
+  shape: {
+    id: z24.number().int(),
+    orderIndex: z24.number(),
+    isActive: z24.boolean()
+  }
+};
+var exerciseTrackingDbSchema2 = {
+  shape: {
+    id: z24.number().int(),
+    notes: z24.string().nullable(),
+    exerciseToSplitId: z24.number().int().nullable(),
+    exerciseId: z24.number().int().nullable()
+  }
+};
+var trackingSetDbSchema2 = {
+  shape: {
+    reps: z24.number(),
+    weight: z24.number(),
+    setIndex: z24.number()
+  }
+};
+var workoutSetDbSchema2 = {
+  shape: {
+    reps: z24.number()
+  }
+};
+var workoutSplitDbSchema2 = {
+  shape: {
+    id: z24.number().int(),
+    name: z24.string(),
+    orderIndex: z24.number()
+  }
+};
 var trackedSetQueryDtoSchema = z24.object({
-  reps: trackingSetDbSchema.shape.reps,
-  weight: trackingSetDbSchema.shape.weight,
-  setIndex: trackingSetDbSchema.shape.setIndex
+  reps: trackingSetDbSchema2.shape.reps,
+  weight: trackingSetDbSchema2.shape.weight,
+  setIndex: trackingSetDbSchema2.shape.setIndex
 });
 var finishedWorkoutEntryBaseQueryDtoSchema = z24.object({
   trackedSets: z24.array(trackedSetQueryDtoSchema),
-  notes: exerciseTrackingDbSchema.shape.notes.optional()
+  notes: exerciseTrackingDbSchema2.shape.notes.optional()
 });
 var finishedWorkoutEntryQueryDtoSchema = z24.discriminatedUnion("isExerciseAssignedToSplit", [
   finishedWorkoutEntryBaseQueryDtoSchema.extend({
     isExerciseAssignedToSplit: z24.literal(true),
-    exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId.unwrap(),
+    exerciseToSplitId: exerciseTrackingDbSchema2.shape.exerciseToSplitId.unwrap(),
     // Accepted temporarily for clients using the previous redundant payload.
-    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.optional()
+    exerciseId: exerciseTrackingDbSchema2.shape.exerciseId.optional()
   }),
   finishedWorkoutEntryBaseQueryDtoSchema.extend({
     isExerciseAssignedToSplit: z24.literal(false),
     exerciseToSplitId: z24.null().optional(),
-    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap()
+    exerciseId: exerciseTrackingDbSchema2.shape.exerciseId.unwrap()
   })
 ]);
 var exerciseMetadataQueryDtoSchema = z24.object({
-  targetMuscle: exerciseDbSchema.shape.targetMuscle,
-  specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle
+  targetMuscle: exerciseDbSchema2.shape.targetMuscle,
+  specificTargetMuscle: exerciseDbSchema2.shape.specificTargetMuscle
 });
 var exerciseTrackingPrMaxQueryDtoSchema = z24.object({
-  exercise: exerciseDbSchema.shape.name,
-  weight: trackingSetDbSchema.shape.weight,
-  reps: trackingSetDbSchema.shape.reps,
+  exercise: exerciseDbSchema2.shape.name,
+  weight: trackingSetDbSchema2.shape.weight,
+  reps: trackingSetDbSchema2.shape.reps,
   workoutTimeUtc: serializedDateSchema
 });
 var exerciseTrackingAnalysisQueryDtoSchema = z24.object({
@@ -3230,19 +3268,19 @@ var exerciseTrackingAnalysisQueryDtoSchema = z24.object({
   })
 });
 var trackingMapItemQueryDtoSchema = z24.object({
-  id: exerciseTrackingDbSchema.shape.id,
-  exerciseToSplitId: exerciseToWorkoutSplitDbSchema.shape.id,
-  weight: z24.array(trackingSetDbSchema.shape.weight),
-  reps: z24.array(trackingSetDbSchema.shape.reps),
-  notes: exerciseTrackingDbSchema.shape.notes,
-  exerciseId: exerciseDbSchema.shape.id,
-  workoutSplitId: workoutSplitDbSchema.shape.id,
-  splitName: workoutSplitDbSchema.shape.name,
-  exercise: exerciseDbSchema.shape.name,
+  id: exerciseTrackingDbSchema2.shape.id,
+  exerciseToSplitId: exerciseToWorkoutSplitDbSchema2.shape.id,
+  weight: z24.array(trackingSetDbSchema2.shape.weight),
+  reps: z24.array(trackingSetDbSchema2.shape.reps),
+  notes: exerciseTrackingDbSchema2.shape.notes,
+  exerciseId: exerciseDbSchema2.shape.id,
+  workoutSplitId: workoutSplitDbSchema2.shape.id,
+  splitName: workoutSplitDbSchema2.shape.name,
+  exercise: exerciseDbSchema2.shape.name,
   workoutDate: serializedDateSchema,
-  orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex,
+  orderIndex: exerciseToWorkoutSplitDbSchema2.shape.orderIndex,
   exerciseToWorkoutSplit: z24.object({
-    sets: z24.array(workoutSetDbSchema.shape.reps),
+    sets: z24.array(workoutSetDbSchema2.shape.reps),
     exercises: exerciseMetadataQueryDtoSchema
   })
 });
@@ -3254,22 +3292,22 @@ var trackingBySplitNameItemQueryDtoSchema = trackingMapItemQueryDtoSchema.omit({
 });
 var groupedTrackingItemQueryDtoSchema = z24.object({
   exerciseTracking: z24.object({
-    exerciseTrackingId: exerciseTrackingDbSchema.shape.id,
+    exerciseTrackingId: exerciseTrackingDbSchema2.shape.id,
     sets: z24.array(z24.object({
-      setIndex: trackingSetDbSchema.shape.setIndex,
-      weight: trackingSetDbSchema.shape.weight,
-      reps: trackingSetDbSchema.shape.reps
+      setIndex: trackingSetDbSchema2.shape.setIndex,
+      weight: trackingSetDbSchema2.shape.weight,
+      reps: trackingSetDbSchema2.shape.reps
     })),
-    notes: exerciseTrackingDbSchema.shape.notes,
+    notes: exerciseTrackingDbSchema2.shape.notes,
     exerciseAssignment: z24.object({
-      exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
-      orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex.nullable(),
-      exerciseId: exerciseDbSchema.shape.id,
-      workoutSplitId: workoutSplitDbSchema.shape.id,
-      workoutSplitName: workoutSplitDbSchema.shape.name,
-      exerciseName: exerciseDbSchema.shape.name,
-      targetMuscle: exerciseDbSchema.shape.targetMuscle,
-      specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle
+      exerciseToSplitId: exerciseTrackingDbSchema2.shape.exerciseToSplitId,
+      orderIndex: exerciseToWorkoutSplitDbSchema2.shape.orderIndex.nullable(),
+      exerciseId: exerciseDbSchema2.shape.id,
+      workoutSplitId: workoutSplitDbSchema2.shape.id,
+      workoutSplitName: workoutSplitDbSchema2.shape.name,
+      exerciseName: exerciseDbSchema2.shape.name,
+      targetMuscle: exerciseDbSchema2.shape.targetMuscle,
+      specificTargetMuscle: exerciseDbSchema2.shape.specificTargetMuscle
     })
   })
 });
@@ -3279,12 +3317,12 @@ var trackingByExerciseToSplitIdItemQueryDtoSchema = groupedTrackingItemQueryDtoS
   workoutStartLocal: serializedDateSchema
 });
 var personalRecordQueryDtoSchema = z24.object({
-  exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
-  exerciseId: exerciseDbSchema.shape.id,
-  exerciseName: exerciseDbSchema.shape.name,
-  prWeight: trackingSetDbSchema.shape.weight,
-  prReps: trackingSetDbSchema.shape.reps,
-  prSetIndex: trackingSetDbSchema.shape.setIndex,
+  exerciseToSplitId: exerciseTrackingDbSchema2.shape.exerciseToSplitId,
+  exerciseId: exerciseDbSchema2.shape.id,
+  exerciseName: exerciseDbSchema2.shape.name,
+  prWeight: trackingSetDbSchema2.shape.weight,
+  prReps: trackingSetDbSchema2.shape.reps,
+  prSetIndex: trackingSetDbSchema2.shape.setIndex,
   estimatedOneRepMax: z24.number().nullable(),
   workoutStartLocal: serializedDateSchema
 });
@@ -3294,9 +3332,9 @@ var personalRecordsQueryDtoSchema = z24.object({
   }))
 });
 var nextSplitQueryDtoSchema = z24.object({
-  id: workoutSplitDbSchema.shape.id,
-  name: workoutSplitDbSchema.shape.name,
-  orderIndex: workoutSplitDbSchema.shape.orderIndex,
+  id: workoutSplitDbSchema2.shape.id,
+  name: workoutSplitDbSchema2.shape.name,
+  orderIndex: workoutSplitDbSchema2.shape.orderIndex,
   muscleGroup: z24.string().nullable()
 });
 var exerciseTrackingStatsQueryDtoSchema = z24.object({
@@ -3309,7 +3347,7 @@ var exerciseTrackingStatsQueryDtoSchema = z24.object({
   }),
   lastWorkoutStats: z24.object({
     workoutDate: z24.string().nullable(),
-    workoutSplitName: workoutSplitDbSchema.shape.name.nullable(),
+    workoutSplitName: workoutSplitDbSchema2.shape.name.nullable(),
     exerciseTrackedCount: z24.coerce.number().nullable(),
     setTrackedCount: z24.coerce.number().nullable()
   }),
@@ -3329,30 +3367,6 @@ var exerciseHistoryQueryDtoSchema = z24.object({
 var exerciseTrackingAndStatsQueryDtoSchema = z24.object({
   trackingStats: exerciseTrackingStatsQueryDtoSchema,
   trackingMaps: exerciseTrackingMapsQueryDtoSchema
-});
-var exerciseTrackingAndStatsRowQueryDtoSchema = z24.object({
-  data: exerciseTrackingAndStatsQueryDtoSchema
-});
-var exerciseTrackingStatsRowQueryDtoSchema = z24.object({
-  data: exerciseTrackingStatsQueryDtoSchema
-});
-var exerciseTrackingMapsRowQueryDtoSchema = z24.object({
-  data: exerciseTrackingMapsQueryDtoSchema
-});
-var exerciseHistoryRowQueryDtoSchema = z24.object({
-  data: exerciseHistoryQueryDtoSchema
-});
-var personalRecordsRowQueryDtoSchema = z24.object({
-  data: personalRecordsQueryDtoSchema
-});
-var workoutSplitLookupQueryDtoSchema = z24.object({
-  workoutSplitId: workoutSplitDbSchema.shape.id
-});
-var workoutSummaryIdQueryDtoSchema = z24.object({
-  id: z24.string().uuid()
-});
-var exerciseTrackingIdQueryDtoSchema = z24.object({
-  id: exerciseTrackingDbSchema.shape.id
 });
 
 // src/modules/workout/tracking/tracking.contracts.ts
@@ -4043,26 +4057,11 @@ export {
   editCommentRequestSchema,
   editCommentResponseSchema,
   enqueueAnalyzeVideoParamsDtoSchema,
-  exerciseAssignmentIdQueryDtoSchema,
   exerciseDbSchema,
-  exerciseHistoryQueryDtoSchema,
-  exerciseHistoryRowQueryDtoSchema,
-  exerciseInPlanQueryDtoSchema,
-  exerciseMetadataQueryDtoSchema,
   exerciseToWorkoutSplitDbSchema,
   exerciseToWorkoutSplitSetExpandedViewDbSchema,
-  exerciseTrackingAnalysisQueryDtoSchema,
-  exerciseTrackingAndStatsQueryDtoSchema,
-  exerciseTrackingAndStatsRowQueryDtoSchema,
   exerciseTrackingDbSchema,
-  exerciseTrackingIdQueryDtoSchema,
-  exerciseTrackingMapsQueryDtoSchema,
-  exerciseTrackingMapsRowQueryDtoSchema,
-  exerciseTrackingPrMaxQueryDtoSchema,
   exerciseTrackingSetExpandedViewDbSchema,
-  exerciseTrackingStatsQueryDtoSchema,
-  exerciseTrackingStatsRowQueryDtoSchema,
-  finishedWorkoutEntryQueryDtoSchema,
   getAerobicHistoryContract,
   getAerobicHistoryRequestSchema,
   getAerobicHistoryResponseSchema,
@@ -4156,9 +4155,6 @@ export {
   oAuthLookupRawQueryDtoSchema,
   oAuthLookupRowQueryDtoSchema,
   oauthAccountDbSchema,
-  personalRecordQueryDtoSchema,
-  personalRecordsQueryDtoSchema,
-  personalRecordsRowQueryDtoSchema,
   postDbSchema,
   postQueryDtoSchema,
   proceedLoginResponseSchema,
@@ -4188,8 +4184,6 @@ export {
   resetPasswordContract,
   resetPasswordRequestSchema,
   resetPasswordResponseSchema,
-  saveWorkoutSplitInputQueryDtoSchema,
-  saveWorkoutSplitPayloadQueryDtoSchema,
   searchSocialUsersContract,
   searchSocialUsersRequestSchema,
   searchSocialUsersResponseSchema,
@@ -4198,9 +4192,6 @@ export {
   socialUserQueryDtoSchema,
   squatRepetitionDtoSchema,
   timezoneSchema,
-  trackingByDateItemQueryDtoSchema,
-  trackingBySplitNameItemQueryDtoSchema,
-  trackingMapItemQueryDtoSchema,
   trackingSetDbSchema,
   updateAerobicEntryContract,
   updateAerobicEntryRequestSchema,
@@ -4230,18 +4221,11 @@ export {
   userWithNotificationsEnabledQueryDtoSchema,
   verifyEmailContract,
   verifyEmailRequestSchema,
-  wholeUserWorkoutPlanQueryDtoSchema,
-  workoutExerciseInputQueryDtoSchema,
   workoutPlanDbSchema,
-  workoutPlanIdQueryDtoSchema,
   workoutScheduleDbSchema,
   workoutScheduleInputDtoSchema,
   workoutScheduleQueryDtoSchema,
   workoutSetDbSchema,
   workoutSplitDbSchema,
-  workoutSplitIdQueryDtoSchema,
-  workoutSplitLookupQueryDtoSchema,
-  workoutSplitQueryDtoSchema,
-  workoutSummaryDbSchema,
-  workoutSummaryIdQueryDtoSchema
+  workoutSummaryDbSchema
 };

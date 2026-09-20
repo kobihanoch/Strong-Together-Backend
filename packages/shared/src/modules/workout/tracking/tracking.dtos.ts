@@ -1,13 +1,19 @@
 import { z } from 'zod/v4';
 import { serializedDateSchema } from '../../../common';
-import {
-  exerciseDbSchema,
-  exerciseToWorkoutSplitDbSchema,
-  exerciseTrackingDbSchema,
-  trackingSetDbSchema,
-  workoutSetDbSchema,
-  workoutSplitDbSchema,
-} from '../../../database';
+// Plain transport-field schemas; these intentionally do not depend on database metadata.
+const exerciseDbSchema = { shape: { id: z.number().int(), name: z.string(), targetMuscle: z.string(), specificTargetMuscle: z.string() } };
+const exerciseToWorkoutSplitDbSchema = { shape: { id: z.number().int(), orderIndex: z.number(), isActive: z.boolean() } };
+const exerciseTrackingDbSchema = {
+  shape: {
+    id: z.number().int(),
+    notes: z.string().nullable(),
+    exerciseToSplitId: z.number().int().nullable(),
+    exerciseId: z.number().int().nullable(),
+  },
+};
+const trackingSetDbSchema = { shape: { reps: z.number(), weight: z.number(), setIndex: z.number() } };
+const workoutSetDbSchema = { shape: { reps: z.number() } };
+const workoutSplitDbSchema = { shape: { id: z.number().int(), name: z.string(), orderIndex: z.number() } };
 
 /** Finished exercise entry consumed by the workout-insertion query. */
 const trackedSetQueryDtoSchema = z.object({
@@ -170,22 +176,6 @@ export const exerciseTrackingAndStatsQueryDtoSchema = z.object({
   trackingMaps: exerciseTrackingMapsQueryDtoSchema,
 });
 
-/** SQL row wrapping the complete tracking aggregate under `data`. */
-export const exerciseTrackingAndStatsRowQueryDtoSchema = z.object({ data: exerciseTrackingAndStatsQueryDtoSchema });
-export const exerciseTrackingStatsRowQueryDtoSchema = z.object({ data: exerciseTrackingStatsQueryDtoSchema });
-export const exerciseTrackingMapsRowQueryDtoSchema = z.object({ data: exerciseTrackingMapsQueryDtoSchema });
-export const exerciseHistoryRowQueryDtoSchema = z.object({ data: exerciseHistoryQueryDtoSchema });
-export const personalRecordsRowQueryDtoSchema = z.object({ data: personalRecordsQueryDtoSchema });
-
-/** SQL row resolving the workout split for an exercise assignment. */
-export const workoutSplitLookupQueryDtoSchema = z.object({ workoutSplitId: workoutSplitDbSchema.shape.id });
-
-/** SQL row returned after inserting a workout summary. */
-export const workoutSummaryIdQueryDtoSchema = z.object({ id: z.string().uuid() });
-
-/** SQL row returned after inserting an exercise-tracking record. */
-export const exerciseTrackingIdQueryDtoSchema = z.object({ id: exerciseTrackingDbSchema.shape.id });
-
 // SQL query DTO types
 
 export type ExerciseTrackingAnalysisQueryDto = z.infer<typeof exerciseTrackingAnalysisQueryDtoSchema>;
@@ -195,18 +185,10 @@ export type TrackingMapItemQueryDto = z.infer<typeof trackingMapItemQueryDtoSche
 export type TrackingByDateItemQueryDto = z.infer<typeof trackingByDateItemQueryDtoSchema>;
 export type TrackingBySplitNameItemQueryDto = z.infer<typeof trackingBySplitNameItemQueryDtoSchema>;
 export type ExerciseTrackingAndStatsQueryDto = z.infer<typeof exerciseTrackingAndStatsQueryDtoSchema>;
-export type ExerciseTrackingAndStatsRowQueryDto = z.infer<typeof exerciseTrackingAndStatsRowQueryDtoSchema>;
 export type ExerciseTrackingStatsQueryDto = z.infer<typeof exerciseTrackingStatsQueryDtoSchema>;
-export type ExerciseTrackingStatsRowQueryDto = z.infer<typeof exerciseTrackingStatsRowQueryDtoSchema>;
 export type ExerciseTrackingMapsQueryDto = z.infer<typeof exerciseTrackingMapsQueryDtoSchema>;
-export type ExerciseTrackingMapsRowQueryDto = z.infer<typeof exerciseTrackingMapsRowQueryDtoSchema>;
 export type ExerciseHistoryQueryDto = z.infer<typeof exerciseHistoryQueryDtoSchema>;
-export type ExerciseHistoryRowQueryDto = z.infer<typeof exerciseHistoryRowQueryDtoSchema>;
 export type PersonalRecordsQueryDto = z.infer<typeof personalRecordsQueryDtoSchema>;
-export type PersonalRecordsRowQueryDto = z.infer<typeof personalRecordsRowQueryDtoSchema>;
-export type WorkoutSplitLookupQueryDto = z.infer<typeof workoutSplitLookupQueryDtoSchema>;
-export type WorkoutSummaryIdQueryDto = z.infer<typeof workoutSummaryIdQueryDtoSchema>;
-export type ExerciseTrackingIdQueryDto = z.infer<typeof exerciseTrackingIdQueryDtoSchema>;
 
 // SQL query input DTOs
 

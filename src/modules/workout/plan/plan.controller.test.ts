@@ -7,7 +7,7 @@ import { expectSchema } from '../../../common/tests/helpers/assert-schema';
 import { getActiveWorkoutSplitNames } from '../../../common/tests/helpers/db';
 import { deleteRedisKeysByPattern, getUserCacheGeneration, getVersionedRedisKey } from '../../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../../common/tests/helpers/users';
-import { buildPlanKeyStable } from './plan.cache';
+import { buildPlanKeyStable } from './infrastructure/redis-workout-plan.cache';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 const users = new Set<string>();

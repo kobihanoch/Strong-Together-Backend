@@ -1,17 +1,17 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { DBService } from '../../../../infrastructure/db/db.service';
+import { InvalidWorkoutSplitError } from '../application/errors/workout-plan.errors';
+import type { WorkoutExerciseInput, WorkoutSplitInput } from '../application/models/workout-plan.models';
 import type {
-  ExerciseAssignmentIdQueryDto,
-  SaveWorkoutSplitInputQueryDto,
-  SaveWorkoutSplitPayloadQueryDto,
-  WorkoutExerciseInputQueryDto,
-  WholeUserWorkoutPlanQueryDto,
-  WorkoutPlanIdQueryDto,
-  WorkoutSplitIdQueryDto,
-} from '@strong-together/shared';
-import { DBService } from '../../../infrastructure/db/db.service';
+  ExerciseAssignmentIdSqlRow,
+  ExistingExercisesSqlRow,
+  WorkoutPlanIdSqlRow,
+  WorkoutPlanSqlRow,
+  WorkoutSplitIdSqlRow,
+} from './workout-plan.db-types';
 
 @Injectable()
-export class WorkoutPlanQueries {
+export class WorkoutPlanSql {
   constructor(private readonly dbService: DBService) {}
 
   // Return the complete active plan in the same shape used by clients for display and editing.
@@ -21,8 +21,8 @@ export class WorkoutPlanQueries {
    * @param tz - The IANA time-zone name.
    * @returns The whole user workout plan result.
    */
-  async queryWholeUserWorkoutPlan(userId: string, tz: string): Promise<WholeUserWorkoutPlanQueryDto[]> {
-    return this.dbService.sql<WholeUserWorkoutPlanQueryDto[]>`
+  async queryWholeUserWorkoutPlan(userId: string, tz: string): Promise<WorkoutPlanSqlRow[]> {
+    return this.dbService.sql<WorkoutPlanSqlRow[]>`
       WITH
         ranked_workout_durations AS (
           SELECT
@@ -187,8 +187,8 @@ export class WorkoutPlanQueries {
    * @param workoutData - The workout plan payload.
    * @returns The add workout result.
    */
-  async queryAddWorkout(userId: string, workoutData: SaveWorkoutSplitPayloadQueryDto): Promise<number> {
-    const [plan] = await this.dbService.sql<WorkoutPlanIdQueryDto[]>`
+  async queryAddWorkout(userId: string, workoutData: WorkoutSplitInput[]): Promise<number> {
+    const [plan] = await this.dbService.sql<WorkoutPlanIdSqlRow[]>`
       INSERT INTO
         workout.workout_plan (user_id, is_active, updated_at)
       VALUES
@@ -242,9 +242,9 @@ export class WorkoutPlanQueries {
    * @param split - The workout split to persist.
    * @returns The insert workout split result.
    */
-  private async insertWorkoutSplit(planId: number, split: SaveWorkoutSplitInputQueryDto): Promise<number> {
+  private async insertWorkoutSplit(planId: number, split: WorkoutSplitInput): Promise<number> {
     // A split without an ID is new and receives a stable database identity.
-    const [{ id }] = await this.dbService.sql<WorkoutSplitIdQueryDto[]>`
+    const [{ id }] = await this.dbService.sql<WorkoutSplitIdSqlRow[]>`
       INSERT INTO
         workout.workout_split (workout_id, name, order_index, is_active)
       VALUES
@@ -266,12 +266,12 @@ export class WorkoutPlanQueries {
    * @param split - The workout split to persist.
    * @returns The update workout split result.
    */
-  private async updateWorkoutSplit(planId: number, split: SaveWorkoutSplitInputQueryDto): Promise<number> {
+  private async updateWorkoutSplit(planId: number, split: WorkoutSplitInput): Promise<number> {
     // Preserve the split identity when it is renamed, reordered, or reactivated.
     if (split.id === undefined) {
-      throw new BadRequestException('An existing workout split must include an ID');
+      throw new InvalidWorkoutSplitError('An existing workout split must include an ID');
     }
-    const [updated] = await this.dbService.sql<WorkoutSplitIdQueryDto[]>`
+    const [updated] = await this.dbService.sql<WorkoutSplitIdSqlRow[]>`
       UPDATE workout.workout_split
       SET
         name = ${split.name},
@@ -291,7 +291,7 @@ export class WorkoutPlanQueries {
     `;
 
     if (!updated) {
-      throw new BadRequestException(`Workout split ${split.id} does not belong to the active workout plan`);
+      throw new InvalidWorkoutSplitError(`Workout split ${split.id} does not belong to the active workout plan`);
     }
     return updated.id;
   }
@@ -301,10 +301,10 @@ export class WorkoutPlanQueries {
    * @param planId - The workout plan identifier.
    * @param splits - The workout splits to process.
    */
-  private async replaceWorkoutExercises(planId: number, splits: Array<{ id: number; exercises: WorkoutExerciseInputQueryDto[] }>): Promise<void> {
+  private async replaceWorkoutExercises(planId: number, splits: Array<{ id: number; exercises: WorkoutExerciseInput[] }>): Promise<void> {
     const changedSplitIds: number[] = [];
     for (const split of splits) {
-      const [{ exercises }] = await this.dbService.sql<{ exercises: WorkoutExerciseInputQueryDto[] }[]>`
+      const [{ exercises }] = await this.dbService.sql<ExistingExercisesSqlRow[]>`
         SELECT
           COALESCE(
             JSONB_AGG(
@@ -346,7 +346,7 @@ export class WorkoutPlanQueries {
           AND assignment.is_active = TRUE
       `;
 
-      const normalizeExercises = (items: WorkoutExerciseInputQueryDto[]) =>
+      const normalizeExercises = (items: WorkoutExerciseInput[]) =>
         items
           .map((exercise) => ({
             exerciseId: Number(exercise.exerciseId),
@@ -379,7 +379,7 @@ export class WorkoutPlanQueries {
     for (const split of splits) {
       for (const exercise of split.exercises) {
         // Create this assignment or reactivate it with its latest exercise order.
-        const [savedExercise] = await this.dbService.sql<ExerciseAssignmentIdQueryDto[]>`
+        const [savedExercise] = await this.dbService.sql<ExerciseAssignmentIdSqlRow[]>`
           INSERT INTO
             workout.exercise_to_workout_split (workout_split_id, exercise_id, order_index, is_active)
           VALUES

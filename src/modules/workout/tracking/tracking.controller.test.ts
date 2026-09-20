@@ -13,7 +13,11 @@ import { expectSchema } from '../../../common/tests/helpers/assert-schema';
 import { getExerciseToWorkoutSplitId, getExerciseTrackingCountForUser, getWorkoutSummaryCount } from '../../../common/tests/helpers/db';
 import { deleteRedisKeysByPattern, getUserCacheGeneration, getVersionedRedisKey } from '../../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../../common/tests/helpers/users';
-import { buildExerciseHistoryKeyStable, buildPersonalRecordsKeyStable, buildWorkoutHistoryKeyStable } from './tracking.cache';
+import {
+  buildExerciseHistoryKeyStable,
+  buildPersonalRecordsKeyStable,
+  buildWorkoutHistoryKeyStable,
+} from './infrastructure/redis-workout-tracking.cache';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 const users = new Set<string>();

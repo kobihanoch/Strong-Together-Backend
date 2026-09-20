@@ -1,22 +1,22 @@
 import { Injectable } from '@nestjs/common';
+import { DBService } from '../../../../infrastructure/db/db.service';
+import type { FinishedWorkoutEntry } from '../application/models/workout-tracking.models';
 import type {
-  ExerciseTrackingIdQueryDto,
-  ExerciseHistoryQueryDto,
-  ExerciseHistoryRowQueryDto,
-  ExerciseTrackingMapsQueryDto,
-  ExerciseTrackingMapsRowQueryDto,
-  ExerciseTrackingStatsQueryDto,
-  ExerciseTrackingStatsRowQueryDto,
-  FinishedWorkoutEntryQueryDto,
-  PersonalRecordsQueryDto,
-  PersonalRecordsRowQueryDto,
-  WorkoutSplitLookupQueryDto,
-  WorkoutSummaryIdQueryDto,
-} from '@strong-together/shared';
-import { DBService } from '../../../infrastructure/db/db.service';
+  ExerciseHistorySqlResult,
+  ExerciseHistorySqlRow,
+  ExerciseTrackingIdSqlRow,
+  PersonalRecordsSqlResult,
+  PersonalRecordsSqlRow,
+  WorkoutHistorySqlResult,
+  WorkoutHistorySqlRow,
+  WorkoutSplitLookupSqlRow,
+  WorkoutStatisticsSqlResult,
+  WorkoutStatisticsSqlRow,
+  WorkoutSummaryIdSqlRow,
+} from './workout-tracking.db-types';
 
 @Injectable()
-export class WorkoutTrackingQueries {
+export class WorkoutTrackingSql {
   constructor(private readonly dbService: DBService) {}
 
   /**
@@ -26,8 +26,8 @@ export class WorkoutTrackingQueries {
    * @param tz - The IANA time-zone name.
    * @returns The exercise tracking maps result.
    */
-  async queryGetExerciseTrackingMaps(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<ExerciseTrackingMapsQueryDto> {
-    const [{ data }] = await this.dbService.sql<ExerciseTrackingMapsRowQueryDto[]>`
+  async queryGetExerciseTrackingMaps(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<WorkoutHistorySqlResult> {
+    const [{ data }] = await this.dbService.sql<WorkoutHistorySqlRow[]>`
       WITH
         bounds AS (
           SELECT
@@ -229,8 +229,8 @@ export class WorkoutTrackingQueries {
    * @param tz - The IANA time-zone name used to calculate date boundaries.
    * @returns Exercise tracking grouped by exercise-to-split identifier.
    */
-  async queryGetExerciseHistory(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<ExerciseHistoryQueryDto> {
-    const [{ data }] = await this.dbService.sql<ExerciseHistoryRowQueryDto[]>`
+  async queryGetExerciseHistory(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<ExerciseHistorySqlResult> {
+    const [{ data }] = await this.dbService.sql<ExerciseHistorySqlRow[]>`
       WITH
         bounds AS (
           SELECT
@@ -374,8 +374,8 @@ export class WorkoutTrackingQueries {
    * @param tz - The IANA time-zone name.
    * @returns The exercise tracking stats result.
    */
-  async queryGetExerciseTrackingStats(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<ExerciseTrackingStatsQueryDto> {
-    const [{ data }] = await this.dbService.sql<ExerciseTrackingStatsRowQueryDto[]>`
+  async queryGetExerciseTrackingStats(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<WorkoutStatisticsSqlResult> {
+    const [{ data }] = await this.dbService.sql<WorkoutStatisticsSqlRow[]>`
       WITH
         bounds AS (
           SELECT
@@ -740,8 +740,8 @@ export class WorkoutTrackingQueries {
    * @param tz - The IANA time-zone name used for local workout timestamps.
    * @returns All personal records keyed by exercise identifier.
    */
-  async queryGetAllPersonalRecords(userId: string, tz: string): Promise<PersonalRecordsQueryDto> {
-    const [{ data }] = await this.dbService.sql<PersonalRecordsRowQueryDto[]>`
+  async queryGetAllPersonalRecords(userId: string, tz: string): Promise<PersonalRecordsSqlResult> {
+    const [{ data }] = await this.dbService.sql<PersonalRecordsSqlRow[]>`
       SELECT
         JSONB_BUILD_OBJECT(
           'prs',
@@ -802,13 +802,13 @@ export class WorkoutTrackingQueries {
    */
   async queryInsertUserFinishedWorkout(
     userId: string,
-    workoutArray: FinishedWorkoutEntryQueryDto[],
+    workoutArray: FinishedWorkoutEntry[],
     workoutStartUtc: string | null,
     workoutEndUtc: string | null,
   ): Promise<string> {
     // Resolve the workout split that owns the exercises in the finished workout.
     const firstAssignedExercise = workoutArray.find((exercise) => exercise.isExerciseAssignedToSplit);
-    const [{ workoutSplitId }] = await this.dbService.sql<WorkoutSplitLookupQueryDto[]>`
+    const [{ workoutSplitId }] = await this.dbService.sql<WorkoutSplitLookupSqlRow[]>`
       SELECT
         workout_split_id AS "workoutSplitId"
       FROM
@@ -820,7 +820,7 @@ export class WorkoutTrackingQueries {
     `;
 
     // Create the parent summary for the completed workout.
-    const [{ id: workoutSummaryId }] = await this.dbService.sql<WorkoutSummaryIdQueryDto[]>`
+    const [{ id: workoutSummaryId }] = await this.dbService.sql<WorkoutSummaryIdSqlRow[]>`
       INSERT INTO
         tracking.workout_summary (
           user_id,
@@ -841,7 +841,7 @@ export class WorkoutTrackingQueries {
 
     for (const exercise of workoutArray) {
       // Create one tracking record for this exercise; its sets are inserted next.
-      const [{ id: exerciseTrackingId }] = await this.dbService.sql<ExerciseTrackingIdQueryDto[]>`
+      const [{ id: exerciseTrackingId }] = await this.dbService.sql<ExerciseTrackingIdSqlRow[]>`
         INSERT INTO
           tracking.exercise_tracking (
             exercise_to_split_id,
