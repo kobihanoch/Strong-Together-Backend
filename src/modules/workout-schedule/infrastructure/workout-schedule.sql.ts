@@ -1,21 +1,15 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import type { WorkoutScheduleInputDto, WorkoutScheduleQueryDto } from '@strong-together/shared';
-import { DBService } from '../../infrastructure/db/db.service';
+import { Injectable } from '@nestjs/common';
+import type { WorkoutScheduleInput } from '../application/models/workout-schedule.models';
+import { DBService } from '../../../infrastructure/db/db.service';
+import type { ActiveWorkoutSplitCountSqlRow, WorkoutScheduleSqlRow } from './workout-schedule.db-types';
 
-/**
- * Database operations for authenticated users' weekly workout schedules.
- */
+/** Executes workout-schedule SQL inside the active RLS transaction. */
 @Injectable()
-export class WorkoutScheduleQueries {
-  constructor(private readonly dbService: DBService) {}
+export class WorkoutScheduleSql {
+  public constructor(private readonly dbService: DBService) {}
 
-  /**
-   * Retrieves schedule rows attached to active splits in the user's active plan.
-   * @param userId - The authenticated user's identifier.
-   * @returns The user's active workout schedules in weekday and time order.
-   */
-  async queryWorkoutSchedules(userId: string): Promise<WorkoutScheduleQueryDto[]> {
-    return this.dbService.sql<WorkoutScheduleQueryDto[]>`
+  public findByUser(userId: string): Promise<WorkoutScheduleSqlRow[]> {
+    return this.dbService.sql<WorkoutScheduleSqlRow[]>`
       SELECT
         schedule.id,
         schedule.user_id AS "userId",
@@ -40,16 +34,11 @@ export class WorkoutScheduleQueries {
     `;
   }
 
-  /**
-   * Replaces all of the user's schedule rows with the submitted weekly schedule.
-   * @param userId - The authenticated user's identifier.
-   * @param schedules - The complete desired weekly schedule.
-   */
-  async queryReplaceWorkoutSchedules(userId: string, schedules: WorkoutScheduleInputDto[]): Promise<void> {
+  public async replaceForUser(userId: string, schedules: WorkoutScheduleInput[]): Promise<boolean> {
     const splitIds = [...new Set(schedules.map((schedule) => schedule.workoutSplitId))];
 
     if (splitIds.length > 0) {
-      const [{ count }] = await this.dbService.sql<{ count: number }[]>`
+      const [{ count }] = await this.dbService.sql<ActiveWorkoutSplitCountSqlRow[]>`
         SELECT
           COUNT(split.id)::INT AS count
         FROM
@@ -62,9 +51,7 @@ export class WorkoutScheduleQueries {
           AND split.is_active = TRUE
       `;
 
-      if (count !== splitIds.length) {
-        throw new BadRequestException('Every scheduled workout split must be active and belong to the active plan');
-      }
+      if (count !== splitIds.length) return false;
     }
 
     await this.dbService.sql`
@@ -86,5 +73,7 @@ export class WorkoutScheduleQueries {
           )
       `;
     }
+
+    return true;
   }
 }

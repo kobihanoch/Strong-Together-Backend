@@ -1,9 +1,23 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, ResponseOf } from '../../common';
-import { workoutScheduleInputDtoSchema, workoutScheduleQueryDtoSchema } from './workout-schedule.dtos';
+import { serializedDateSchema } from '../../common';
+
+const workoutScheduleInputSchema = z.object({
+  workoutSplitId: z.number().int(),
+  dayOfWeek: z.number().int().min(0).max(6),
+  startTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+});
+
+const workoutScheduleSchema = workoutScheduleInputSchema.extend({
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
+  startTime: z.string(),
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema,
+});
 
 export const getWorkoutSchedulesResponseSchema = z.object({
-  schedules: z.array(workoutScheduleQueryDtoSchema),
+  schedules: z.array(workoutScheduleSchema),
 });
 
 export const getWorkoutSchedulesContract = {
@@ -12,7 +26,7 @@ export const getWorkoutSchedulesContract = {
 
 export const replaceWorkoutSchedulesRequestSchema = z.object({
   body: z.object({
-    schedules: z.array(workoutScheduleInputDtoSchema).superRefine((schedules, context) => {
+    schedules: z.array(workoutScheduleInputSchema).superRefine((schedules, context) => {
       const keys = new Set<string>();
       for (const schedule of schedules) {
         const key = `${schedule.workoutSplitId}:${schedule.dayOfWeek}`;
