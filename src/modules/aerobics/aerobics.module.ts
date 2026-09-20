@@ -1,26 +1,37 @@
 import { Module } from '@nestjs/common';
 import { AuthenticationGuard } from '../../common/guards/authentication.guard';
 import { AuthorizationGuard } from '../../common/guards/authorization.guard';
-import { AerobicsController } from './aerobics.controller';
-import { AerobicsQueries } from './aerobics.queries';
-import { AerobicsRepository } from './aerobics.repository';
-import { AerobicsService } from './aerobics.service';
-import { PostgresAerobicsRepository } from './postgres-aerobics.repository';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
+import { AerobicsCache } from './application/ports/aerobics-cache.port';
+import { AerobicsRepository } from './application/ports/aerobics.repository';
+import { CreateAerobicEntryUseCase } from './application/use-cases/create-aerobic-entry.use-case';
+import { DeleteAerobicEntryUseCase } from './application/use-cases/delete-aerobic-entry.use-case';
+import { GetAerobicHistoryUseCase } from './application/use-cases/get-aerobic-history.use-case';
+import { UpdateAerobicEntryUseCase } from './application/use-cases/update-aerobic-entry.use-case';
+import { AerobicsSql } from './infrastructure/aerobics.sql';
+import { PostgresAerobicsRepository } from './infrastructure/postgres-aerobics.repository';
+import { RedisAerobicsCache } from './infrastructure/redis-aerobics.cache';
+import { AerobicsController } from './presentation/aerobics.controller';
 
 @Module({
   controllers: [AerobicsController],
   providers: [
-    AerobicsQueries,
+    AerobicsSql,
     {
       provide: AerobicsRepository,
       useClass: PostgresAerobicsRepository,
     },
-    AerobicsService,
+    {
+      provide: AerobicsCache,
+      useClass: RedisAerobicsCache,
+    },
+    GetAerobicHistoryUseCase,
+    CreateAerobicEntryUseCase,
+    UpdateAerobicEntryUseCase,
+    DeleteAerobicEntryUseCase,
     DpopGuard,
     AuthenticationGuard,
     AuthorizationGuard,
   ],
-  exports: [AerobicsService],
 })
 export class AerobicsModule {}

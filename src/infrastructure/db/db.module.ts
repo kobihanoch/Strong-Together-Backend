@@ -4,6 +4,8 @@ import postgres from 'postgres';
 import { appConfig } from '../../config/app.config';
 import { databaseConfig } from '../../config/database.config';
 import { DB_CLIENT } from './db.tokens';
+import { TransactionHooks } from '../../common/application/ports/transaction-hooks.port';
+import { DbTransactionHooks } from './db-transaction-hooks';
 
 @Global()
 @Module({
@@ -22,7 +24,11 @@ import { DB_CLIENT } from './db.tokens';
       },
     },
     DBService,
+    {
+      provide: TransactionHooks,
+      useClass: DbTransactionHooks,
+    },
   ],
-  exports: [DBService],
+  exports: [DBService, TransactionHooks],
 })
 export class DBModule {}

@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, HttpCode, HttpStatus, Post, Put, Res, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Post, Put, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import type {
   CreateAerobicEntryBody,
@@ -11,20 +11,24 @@ import type {
   UpdateAerobicEntryParams,
   UpdateAerobicEntryQuery,
 } from '@strong-together/shared';
-import type { AuthenticatedUser } from '../../common/types/express';
+import type { AuthenticatedUser } from '../../../common/types/express';
 import {
   createAerobicEntryRequestSchema,
   deleteAerobicEntryRequestSchema,
   getAerobicHistoryRequestSchema,
   updateAerobicEntryRequestSchema,
 } from '@strong-together/shared';
-import { AerobicsService } from './aerobics.service';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard';
-import { AuthenticationGuard } from '../../common/guards/authentication.guard';
-import { AuthorizationGuard, Roles } from '../../common/guards/authorization.guard';
-import { RequestData } from '../../common/decorators/request-data.decorator';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe';
+import { AerobicEntryNotFoundError } from '../application/aerobic-entry-not-found.error';
+import { CreateAerobicEntryUseCase } from '../application/use-cases/create-aerobic-entry.use-case';
+import { DeleteAerobicEntryUseCase } from '../application/use-cases/delete-aerobic-entry.use-case';
+import { GetAerobicHistoryUseCase } from '../application/use-cases/get-aerobic-history.use-case';
+import { UpdateAerobicEntryUseCase } from '../application/use-cases/update-aerobic-entry.use-case';
+import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
+import { AuthenticationGuard } from '../../../common/guards/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.guard';
+import { RequestData } from '../../../common/decorators/request-data.decorator';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 
 /**
  * Aerobics routes for authenticated users.
@@ -41,7 +45,12 @@ import { ValidateRequestPipe } from '../../common/pipes/validate-request.pipe';
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class AerobicsController {
-  constructor(private readonly aerobicsService: AerobicsService) {}
+  constructor(
+    private readonly getAerobicHistoryUseCase: GetAerobicHistoryUseCase,
+    private readonly createAerobicEntryUseCase: CreateAerobicEntryUseCase,
+    private readonly updateAerobicEntryUseCase: UpdateAerobicEntryUseCase,
+    private readonly deleteAerobicEntryUseCase: DeleteAerobicEntryUseCase,
+  ) {}
 
   /**
    * Get the authenticated user's aerobics history for the last 45 days.
@@ -50,8 +59,8 @@ export class AerobicsController {
    * sets the `X-Cache` response header to indicate whether the payload was served
    * from cache.
    *
-   * @remarks Route: GET /api/aerobics
-   * Access: User
+   * API: GET /api/aerobics
+   * Access: Authenticated user with the `user` role
    *
    * @param data - The validated request data.
    * @param user - The authenticated user.
@@ -65,7 +74,7 @@ export class AerobicsController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<GetAerobicHistoryResponse> {
     const tz = data.query.tz;
-    const { payload, cacheHit } = await this.aerobicsService.getAerobicsData(user.id, 45, true, tz);
+    const { payload, cacheHit } = await this.getAerobicHistoryUseCase.execute(user.id, 45, true, tz);
 
     res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
     return payload;
@@ -77,11 +86,12 @@ export class AerobicsController {
    * Persists the submitted aerobics entry, deletes its exact 45-day cache key,
    * and responds with 204 No Content.
    *
-   * @remarks Route: POST /api/aerobics
-   * Access: User
+   * API: POST /api/aerobics
+   * Access: Authenticated user with the `user` role
    *
    * @param data - The validated request data.
    * @param user - The authenticated user.
+   * @returns A promise that resolves with no response body after creation.
    */
   @Post()
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -93,18 +103,20 @@ export class AerobicsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.aerobicsService.createAerobicEntryData(user.id, data.body);
+    await this.createAerobicEntryUseCase.execute(user.id, data.body.record);
   }
 
   /**
    * Replaces an owned aerobic entry, deletes its exact 45-day cache key, and
    * responds with 204 No Content.
    *
-   * @remarks Route: PUT /api/aerobics/:id
-   * Access: User
+   * API: PUT /api/aerobics/:id
+   * Access: Authenticated user with the `user` role
    *
    * @param data - The validated path parameters and request body.
    * @param user - The authenticated user.
+   * @returns A promise that resolves with no response body after the update.
+   * @throws {NotFoundException} When the owned aerobic entry does not exist.
    */
   @Put(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -117,18 +129,25 @@ export class AerobicsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.aerobicsService.updateAerobicEntryData(user.id, data.params.id, data.body.record);
+    try {
+      await this.updateAerobicEntryUseCase.execute(user.id, data.params.id, data.body.record);
+    } catch (error) {
+      if (error instanceof AerobicEntryNotFoundError) throw new NotFoundException(error.message);
+      throw error;
+    }
   }
 
   /**
    * Deletes an owned aerobic entry, deletes its exact 45-day cache key, and
    * responds with 204 No Content.
    *
-   * @remarks Route: DELETE /api/aerobics/:id
-   * Access: User
+   * API: DELETE /api/aerobics/:id
+   * Access: Authenticated user with the `user` role
    *
    * @param data - The validated path parameters and query.
    * @param user - The authenticated user.
+   * @returns A promise that resolves with no response body after deletion.
+   * @throws {NotFoundException} When the owned aerobic entry does not exist.
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -140,6 +159,11 @@ export class AerobicsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.aerobicsService.deleteAerobicEntryData(user.id, data.params.id);
+    try {
+      await this.deleteAerobicEntryUseCase.execute(user.id, data.params.id);
+    } catch (error) {
+      if (error instanceof AerobicEntryNotFoundError) throw new NotFoundException(error.message);
+      throw error;
+    }
   }
 }

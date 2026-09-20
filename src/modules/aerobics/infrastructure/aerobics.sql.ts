@@ -1,9 +1,10 @@
-import type { AddAerobicInputQueryDto, AerobicMutationRowQueryDto, UserAerobicsQueryDto, UserAerobicsRowQueryDto } from '@strong-together/shared';
 import { Injectable } from '@nestjs/common';
-import { DBService } from '../../infrastructure/db/db.service';
+import { DBService } from '../../../infrastructure/db/db.service';
+import type { AerobicEntryInput, AerobicsHistory } from '../application/aerobics.models';
+import type { AerobicMutationSqlRow, AerobicsHistorySqlRow } from './aerobics.db-types';
 
 @Injectable()
-export class AerobicsQueries {
+export class AerobicsSql {
   constructor(private readonly dbService: DBService) {}
 
   /**
@@ -13,8 +14,8 @@ export class AerobicsQueries {
    * @param tz - The IANA time-zone name.
    * @returns The user aerobics for ndays result.
    */
-  async queryGetUserAerobicsForNDays(userId: string, days: number, tz: string = 'Asia/Jerusalem'): Promise<UserAerobicsQueryDto> {
-    const [obj] = await this.dbService.sql<UserAerobicsRowQueryDto[]>`
+  async findByUser(userId: string, days: number, tz: string = 'Asia/Jerusalem'): Promise<AerobicsHistory> {
+    const [obj] = await this.dbService.sql<AerobicsHistorySqlRow[]>`
       /* Normalize parameters (default tz to UTC if empty) */
       WITH
         params AS (
@@ -164,7 +165,7 @@ export class AerobicsQueries {
    * @param userId - The user identifier.
    * @param record - The aerobic tracking record.
    */
-  async queryAddAerobicTracking(userId: string, record: AddAerobicInputQueryDto): Promise<void> {
+  async createForUser(userId: string, record: AerobicEntryInput): Promise<void> {
     const { durationMins, durationSec, type } = record;
     await this.dbService.sql`
       INSERT INTO
@@ -186,9 +187,9 @@ export class AerobicsQueries {
    * @param record - The replacement aerobic entry values.
    * @returns The updated entry identifier, or `null` when it was not found.
    */
-  async queryUpdateAerobicTracking(userId: string, id: number, record: AddAerobicInputQueryDto): Promise<number | null> {
+  async updateForUser(userId: string, id: number, record: AerobicEntryInput): Promise<number | null> {
     const { durationMins, durationSec, type } = record;
-    const [row] = await this.dbService.sql<AerobicMutationRowQueryDto[]>`
+    const [row] = await this.dbService.sql<AerobicMutationSqlRow[]>`
       UPDATE tracking.aerobic_tracking
       SET
         type = ${type},
@@ -209,8 +210,8 @@ export class AerobicsQueries {
    * @param id - The aerobic entry identifier.
    * @returns The deleted entry identifier, or `null` when it was not found.
    */
-  async queryDeleteAerobicTracking(userId: string, id: number): Promise<number | null> {
-    const [row] = await this.dbService.sql<AerobicMutationRowQueryDto[]>`
+  async deleteForUser(userId: string, id: number): Promise<number | null> {
+    const [row] = await this.dbService.sql<AerobicMutationSqlRow[]>`
       DELETE FROM tracking.aerobic_tracking
       WHERE
         id = ${id}::BIGINT

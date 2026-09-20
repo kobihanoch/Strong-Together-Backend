@@ -7,7 +7,7 @@ import { expectSchema } from '../../common/tests/helpers/assert-schema';
 import { waitForAerobicsRowsForUser } from '../../common/tests/helpers/db';
 import { deleteRedisKeysByPattern, getUserCacheGeneration, getVersionedRedisKey } from '../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../common/tests/helpers/users';
-import { buildAerobicsKeyStable } from './aerobics.cache';
+import { buildAerobicsKeyStable } from './infrastructure/redis-aerobics.cache';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 const users = new Set<string>();

@@ -2558,172 +2558,161 @@ var commentDbSchema = createSelectSchema(comment);
 var reactionDbSchema = createSelectSchema(reaction);
 
 // src/modules/aerobics/aerobics.contracts.ts
-import { z as z3 } from "zod/v4";
-
-// src/modules/aerobics/aerobics.dtos.ts
 import { z as z2 } from "zod/v4";
-var addAerobicInputQueryDtoSchema = z2.object({
+var aerobicEntrySchema = z2.object({
   durationMins: z2.number(),
-  durationSec: aerobicTrackingDbSchema.shape.durationSec,
-  type: aerobicTrackingDbSchema.shape.type
+  durationSec: z2.number(),
+  type: z2.string()
 });
-var aerobicsDailyRecordQueryDtoSchema = z2.object({
-  id: aerobicTrackingDbSchema.shape.id,
-  type: aerobicTrackingDbSchema.shape.type,
-  durationSec: aerobicTrackingDbSchema.shape.durationSec,
-  durationMins: aerobicTrackingDbSchema.shape.durationSec
+var aerobicsDailyRecordSchema = z2.object({
+  id: z2.number(),
+  type: z2.string(),
+  durationSec: z2.number(),
+  durationMins: z2.number()
 });
-var aerobicsWeeklyRecordQueryDtoSchema = aerobicsDailyRecordQueryDtoSchema.extend({
+var aerobicsWeeklyRecordSchema = aerobicsDailyRecordSchema.extend({
   workoutTimeLocal: serializedDateSchema
 });
-var weeklyDataQueryDtoSchema = z2.object({
-  records: z2.array(aerobicsWeeklyRecordQueryDtoSchema),
+var aerobicsWeeklyDataSchema = z2.object({
+  records: z2.array(aerobicsWeeklyRecordSchema),
   totalDurationSec: z2.number(),
   totalDurationMins: z2.number()
 });
-var userAerobicsQueryDtoSchema = z2.object({
-  daily: z2.record(z2.string(), z2.array(aerobicsDailyRecordQueryDtoSchema)),
-  weekly: z2.record(z2.string(), weeklyDataQueryDtoSchema)
+var aerobicHistorySchema = z2.object({
+  daily: z2.record(z2.string(), z2.array(aerobicsDailyRecordSchema)),
+  weekly: z2.record(z2.string(), aerobicsWeeklyDataSchema)
 });
-var userAerobicsRowQueryDtoSchema = z2.object({
-  data: userAerobicsQueryDtoSchema
-});
-var aerobicMutationRowQueryDtoSchema = z2.object({
-  id: aerobicTrackingDbSchema.shape.id
-});
-
-// src/modules/aerobics/aerobics.contracts.ts
-var createAerobicEntryRequestSchema = z3.object({
-  query: z3.object({
+var createAerobicEntryRequestSchema = z2.object({
+  query: z2.object({
     tz: timezoneSchema.optional()
   }),
-  body: z3.object({
-    record: addAerobicInputQueryDtoSchema
+  body: z2.object({
+    record: aerobicEntrySchema
   })
 });
-var createAerobicEntryResponseSchema = z3.void();
+var createAerobicEntryResponseSchema = z2.void();
 var createAerobicEntryContract = {
   request: createAerobicEntryRequestSchema,
   response: createAerobicEntryResponseSchema
 };
-var getAerobicHistoryRequestSchema = z3.object({
-  query: z3.object({
+var getAerobicHistoryRequestSchema = z2.object({
+  query: z2.object({
     tz: timezoneSchema.optional()
   })
 });
-var getAerobicHistoryResponseSchema = userAerobicsQueryDtoSchema;
+var getAerobicHistoryResponseSchema = aerobicHistorySchema;
 var getAerobicHistoryContract = {
   request: getAerobicHistoryRequestSchema,
   response: getAerobicHistoryResponseSchema
 };
-var aerobicEntryIdParamsSchema = z3.object({
-  id: z3.coerce.number().int().positive()
+var aerobicEntryIdParamsSchema = z2.object({
+  id: z2.coerce.number().int().positive()
 });
-var updateAerobicEntryRequestSchema = z3.object({
+var updateAerobicEntryRequestSchema = z2.object({
   params: aerobicEntryIdParamsSchema,
-  query: z3.object({
+  query: z2.object({
     tz: timezoneSchema.optional()
   }),
-  body: z3.object({
-    record: addAerobicInputQueryDtoSchema
+  body: z2.object({
+    record: aerobicEntrySchema
   })
 });
 var updateAerobicEntryContract = {
   request: updateAerobicEntryRequestSchema,
-  response: z3.void()
+  response: z2.void()
 };
-var deleteAerobicEntryRequestSchema = z3.object({
+var deleteAerobicEntryRequestSchema = z2.object({
   params: aerobicEntryIdParamsSchema,
-  query: z3.object({
+  query: z2.object({
     tz: timezoneSchema.optional()
   })
 });
 var deleteAerobicEntryContract = {
   request: deleteAerobicEntryRequestSchema,
-  response: z3.void()
+  response: z2.void()
 };
 
 // src/modules/auth/password/password.contracts.ts
-import { z as z4 } from "zod/v4";
-var createPasswordResetRequestSchema = z4.object({
-  body: z4.object({
-    identifier: z4.string()
+import { z as z3 } from "zod/v4";
+var createPasswordResetRequestSchema = z3.object({
+  body: z3.object({
+    identifier: z3.string()
   })
 });
 var createPasswordResetRequestContract = {
   request: createPasswordResetRequestSchema
 };
-var resetPasswordRequestSchema = z4.object({
-  body: z4.object({
-    newPassword: z4.string().min(8, "Password must be at least 8 characters long")
+var resetPasswordRequestSchema = z3.object({
+  body: z3.object({
+    newPassword: z3.string().min(8, "Password must be at least 8 characters long")
   }),
-  query: z4.object({
-    token: z4.string().optional()
+  query: z3.object({
+    token: z3.string().optional()
   })
 });
-var resetPasswordResponseSchema = z4.void();
+var resetPasswordResponseSchema = z3.void();
 var resetPasswordContract = {
   request: resetPasswordRequestSchema,
   response: resetPasswordResponseSchema
 };
 
 // src/modules/auth/password/password.dtos.ts
-import { z as z5 } from "zod/v4";
-var forgotPasswordPayloadDtoSchema = z5.object({
+import { z as z4 } from "zod/v4";
+var forgotPasswordPayloadDtoSchema = z4.object({
   sub: userDbSchema.shape.id,
-  jti: z5.string(),
-  exp: z5.number(),
-  iss: z5.string(),
-  typ: z5.string()
+  jti: z4.string(),
+  exp: z4.number(),
+  iss: z4.string(),
+  typ: z4.string()
 });
 
 // src/modules/auth/session/session.contracts.ts
-import { z as z6 } from "zod/v4";
-var loginRequestSchema = z6.object({
-  body: z6.object({
-    identifier: z6.string().min(3).refine((value) => z6.string().email().safeParse(value).success || /^[a-zA-Z0-9_]{3,20}$/.test(value), {
+import { z as z5 } from "zod/v4";
+var loginRequestSchema = z5.object({
+  body: z5.object({
+    identifier: z5.string().min(3).refine((value) => z5.string().email().safeParse(value).success || /^[a-zA-Z0-9_]{3,20}$/.test(value), {
       message: "Must be a valid email or username"
     }),
-    password: z6.string().min(1, "Username and password are required")
+    password: z5.string().min(1, "Username and password are required")
   })
 });
-var loginResponseSchema = z6.object({
-  message: z6.string(),
+var loginResponseSchema = z5.object({
+  message: z5.string(),
   user: userDbSchema.shape.id,
-  accessToken: z6.string(),
-  refreshToken: z6.string()
+  accessToken: z5.string(),
+  refreshToken: z5.string()
 });
 var loginContract = {
   request: loginRequestSchema,
   response: loginResponseSchema
 };
-var refreshTokenResponseSchema = z6.object({
-  message: z6.string(),
-  accessToken: z6.string(),
-  refreshToken: z6.string(),
+var refreshTokenResponseSchema = z5.object({
+  message: z5.string(),
+  accessToken: z5.string(),
+  refreshToken: z5.string(),
   userId: userDbSchema.shape.id
 });
 var refreshTokenContract = {
   response: refreshTokenResponseSchema
 };
-var logoutResponseSchema = z6.object({
-  message: z6.string()
+var logoutResponseSchema = z5.object({
+  message: z5.string()
 });
 var logoutContract = {
   response: logoutResponseSchema
 };
 
 // src/modules/auth/session/session.dtos.ts
-import { z as z8 } from "zod/v4";
+import { z as z7 } from "zod/v4";
 
 // src/modules/user/update/update.dtos.ts
-import { z as z7 } from "zod/v4";
-var authenticatedUserForUpdateQueryDtoSchema = z7.object({
+import { z as z6 } from "zod/v4";
+var authenticatedUserForUpdateQueryDtoSchema = z6.object({
   username: userDbSchema.shape.username.trim().min(3, "Username must be at least 3 characters").max(15, "Username must be at most 15 characters").regex(/^[a-zA-Z0-9_]+$/, "Username may contain letters, numbers, and underscore only"),
   fullName: userDbSchema.shape.name.trim().min(1, "Full name is required").max(20, "Full name is too long").regex(/^[a-zA-Z\s]+$/, "Full name may contain letters and spaces only"),
   email: userDbSchema.shape.email.trim().toLowerCase().email("Invalid email format")
 }).partial();
-var userDataQueryDtoSchema = z7.object({
+var userDataQueryDtoSchema = z6.object({
   id: userDbSchema.shape.id,
   username: userDbSchema.shape.username,
   email: userDbSchema.shape.email,
@@ -2734,60 +2723,60 @@ var userDataQueryDtoSchema = z7.object({
   profilePicPath: userDbSchema.shape.profilePicPath,
   pushToken: userDbSchema.shape.pushToken,
   role: userDbSchema.shape.role,
-  isFirstLogin: z7.boolean(),
+  isFirstLogin: z6.boolean(),
   tokenVersion: userDbSchema.shape.tokenVersion,
   isVerified: userDbSchema.shape.isVerified,
   authProvider: userDbSchema.shape.authProvider,
   lastLogin: serializedDateSchema.nullable()
 });
-var userDataRowQueryDtoSchema = z7.object({
+var userDataRowQueryDtoSchema = z6.object({
   userData: userDataQueryDtoSchema
 });
-var userConflictQueryDtoSchema = z7.object({
-  conflict: z7.boolean()
+var userConflictQueryDtoSchema = z6.object({
+  conflict: z6.boolean()
 });
-var userMessageIdentityQueryDtoSchema = z7.object({
+var userMessageIdentityQueryDtoSchema = z6.object({
   id: userDbSchema.shape.id,
   username: userDbSchema.shape.username,
   name: userDbSchema.shape.name,
   profilePicPath: userDbSchema.shape.profilePicPath
 });
-var userProfilePicQueryDtoSchema = z7.object({
+var userProfilePicQueryDtoSchema = z6.object({
   profilePicPath: userDbSchema.shape.profilePicPath
 });
-var changeEmailTokenPayloadDtoSchema = z7.object({
-  jti: z7.string(),
-  sub: z7.string(),
-  newEmail: z7.string(),
-  exp: z7.number(),
-  iss: z7.string(),
-  typ: z7.string()
+var changeEmailTokenPayloadDtoSchema = z6.object({
+  jti: z6.string(),
+  sub: z6.string(),
+  newEmail: z6.string(),
+  exp: z6.number(),
+  iss: z6.string(),
+  typ: z6.string()
 });
 
 // src/modules/auth/session/session.dtos.ts
-var legacyTokenSchema = z8.object({
+var legacyTokenSchema = z7.object({
   id: userDbSchema.shape.id,
   role: userDbSchema.shape.role,
-  cnf: z8.object({
-    jkt: z8.string()
+  cnf: z7.object({
+    jkt: z7.string()
   }).optional(),
-  iat: z8.number(),
-  exp: z8.number()
+  iat: z7.number(),
+  exp: z7.number()
 }).strict();
-var currentAccessTokenSchema = z8.object({
+var currentAccessTokenSchema = z7.object({
   id: userDbSchema.shape.id,
   sub: userDbSchema.shape.id,
   role: userDbSchema.shape.role,
-  typ: z8.literal("access"),
-  iss: z8.literal("strong-together"),
-  aud: z8.literal("strong-together-api"),
-  cnf: z8.object({
-    jkt: z8.string()
+  typ: z7.literal("access"),
+  iss: z7.literal("strong-together"),
+  aud: z7.literal("strong-together-api"),
+  cnf: z7.object({
+    jkt: z7.string()
   }).optional(),
-  iat: z8.number(),
-  exp: z8.number()
+  iat: z7.number(),
+  exp: z7.number()
 });
-var accessTokenPayloadDtoSchema = z8.union([
+var accessTokenPayloadDtoSchema = z7.union([
   currentAccessTokenSchema.refine((token) => token.sub === token.id),
   legacyTokenSchema.transform((token) => ({
     ...token,
@@ -2797,10 +2786,10 @@ var accessTokenPayloadDtoSchema = z8.union([
     aud: "strong-together-api"
   }))
 ]);
-var refreshTokenPayloadDtoSchema = z8.union([
+var refreshTokenPayloadDtoSchema = z7.union([
   currentAccessTokenSchema.extend({
-    typ: z8.literal("refresh"),
-    aud: z8.literal("strong-together-refresh"),
+    typ: z7.literal("refresh"),
+    aud: z7.literal("strong-together-refresh"),
     tokenVer: userDbSchema.shape.tokenVersion
   }).refine((token) => token.sub === token.id),
   legacyTokenSchema.extend({
@@ -2813,47 +2802,47 @@ var refreshTokenPayloadDtoSchema = z8.union([
     aud: "strong-together-refresh"
   }))
 ]);
-var userAfterBumpQueryDtoSchema = z8.object({
+var userAfterBumpQueryDtoSchema = z7.object({
   tokenVersion: userDbSchema.shape.tokenVersion,
   userData: userDataQueryDtoSchema
 });
-var tokenVersionQueryDtoSchema = z8.object({
+var tokenVersionQueryDtoSchema = z7.object({
   tokenVersion: userDbSchema.shape.tokenVersion
 });
-var lastLoginQueryDtoSchema = z8.object({
-  lastLogin: z8.date().nullable()
+var lastLoginQueryDtoSchema = z7.object({
+  lastLogin: z7.date().nullable()
 });
 
 // src/modules/auth/verification/verification.contracts.ts
-import { z as z9 } from "zod/v4";
-var verifyEmailRequestSchema = z9.object({
-  query: z9.object({
-    token: z9.string().optional()
+import { z as z8 } from "zod/v4";
+var verifyEmailRequestSchema = z8.object({
+  query: z8.object({
+    token: z8.string().optional()
   })
 });
 var verifyEmailContract = {
   request: verifyEmailRequestSchema
 };
-var createVerificationEmailRequestSchema = z9.object({
-  body: z9.object({
+var createVerificationEmailRequestSchema = z8.object({
+  body: z8.object({
     email: userDbSchema.shape.email.trim().email("Invalid email")
   })
 });
 var createVerificationEmailContract = {
   request: createVerificationEmailRequestSchema
 };
-var updateUnverifiedAccountEmailRequestSchema = z9.object({
-  body: z9.object({
+var updateUnverifiedAccountEmailRequestSchema = z8.object({
+  body: z8.object({
     username: userDbSchema.shape.username,
-    password: z9.string(),
+    password: z8.string(),
     newEmail: userDbSchema.shape.email.trim().email("Invalid email")
   })
 });
 var updateUnverifiedAccountEmailContract = {
   request: updateUnverifiedAccountEmailRequestSchema
 };
-var getVerificationStatusRequestSchema = z9.object({
-  query: z9.object({
+var getVerificationStatusRequestSchema = z8.object({
+  query: z8.object({
     username: userDbSchema.shape.username
   })
 });
@@ -2862,18 +2851,18 @@ var getVerificationStatusContract = {
 };
 
 // src/modules/auth/verification/verification.dtos.ts
-import { z as z10 } from "zod/v4";
-var emailVerifyPayloadDtoSchema = z10.object({
+import { z as z9 } from "zod/v4";
+var emailVerifyPayloadDtoSchema = z9.object({
   sub: userDbSchema.shape.id,
-  jti: z10.string(),
-  exp: z10.number(),
-  iss: z10.string(),
-  typ: z10.string()
+  jti: z9.string(),
+  exp: z9.number(),
+  iss: z9.string(),
+  typ: z9.string()
 });
 
 // src/modules/auth/auth.dtos.ts
-import { z as z11 } from "zod/v4";
-var userByIdentifierQueryDtoSchema = z11.object({
+import { z as z10 } from "zod/v4";
+var userByIdentifierQueryDtoSchema = z10.object({
   id: userDbSchema.shape.id,
   name: userDbSchema.shape.name,
   username: userDbSchema.shape.username,
@@ -2889,10 +2878,10 @@ var userByIdentifierRawQueryDtoSchema = userByIdentifierQueryDtoSchema.omit({
   passwordHash: true
 }).extend({
   password_hash: userDbSchema.shape.passwordHash,
-  is_verified: z11.boolean(),
+  is_verified: z10.boolean(),
   last_login: serializedDateSchema.nullable()
 });
-var userByIdentifierRowQueryDtoSchema = z11.object({
+var userByIdentifierRowQueryDtoSchema = z10.object({
   userData: userByIdentifierRawQueryDtoSchema.nullable()
 });
 var userByUsernameRawQueryDtoSchema = userByIdentifierQueryDtoSchema.omit({
@@ -2900,22 +2889,22 @@ var userByUsernameRawQueryDtoSchema = userByIdentifierQueryDtoSchema.omit({
   passwordHash: true
 }).extend({
   password_hash: userDbSchema.shape.passwordHash,
-  is_verified: z11.boolean()
+  is_verified: z10.boolean()
 });
-var userByUsernameRowQueryDtoSchema = z11.object({
+var userByUsernameRowQueryDtoSchema = z10.object({
   userData: userByUsernameRawQueryDtoSchema.nullable()
 });
 
 // src/modules/exercises/exercises.dtos.ts
-import { z as z12 } from "zod/v4";
-var getAllExercisesExerciseQueryDtoSchema = z12.object({
+import { z as z11 } from "zod/v4";
+var getAllExercisesExerciseQueryDtoSchema = z11.object({
   id: exerciseDbSchema.shape.id,
   name: exerciseDbSchema.shape.name,
   specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle
 });
-var exercisesMapByMuscleQueryDtoSchema = z12.record(z12.string(), z12.array(getAllExercisesExerciseQueryDtoSchema));
-var exerciseMapByMuscleRowQueryDtoSchema = z12.object({
-  result: z12.object({
+var exercisesMapByMuscleQueryDtoSchema = z11.record(z11.string(), z11.array(getAllExercisesExerciseQueryDtoSchema));
+var exerciseMapByMuscleRowQueryDtoSchema = z11.object({
+  result: z11.object({
     map: exercisesMapByMuscleQueryDtoSchema.nullable()
   }).nullable()
 });
@@ -2927,11 +2916,11 @@ var listExercisesContract = {
 };
 
 // src/modules/messages/messages.contracts.ts
-import { z as z14 } from "zod/v4";
+import { z as z13 } from "zod/v4";
 
 // src/modules/messages/messages.dtos.ts
-import { z as z13 } from "zod/v4";
-var allUserMessageQueryDtoSchema = z13.object({
+import { z as z12 } from "zod/v4";
+var allUserMessageQueryDtoSchema = z12.object({
   id: messageDbSchema.shape.id,
   subject: messageDbSchema.shape.subject,
   msg: messageDbSchema.shape.msg,
@@ -2940,14 +2929,14 @@ var allUserMessageQueryDtoSchema = z13.object({
   senderFullName: userDbSchema.shape.name,
   senderProfilePicPath: userDbSchema.shape.profilePicPath
 });
-var messageAsReadQueryDtoSchema = z13.object({
+var messageAsReadQueryDtoSchema = z12.object({
   id: messageDbSchema.shape.id,
   isRead: messageDbSchema.shape.isRead
 });
-var deletedMessageQueryDtoSchema = z13.object({
+var deletedMessageQueryDtoSchema = z12.object({
   id: messageDbSchema.shape.id
 });
-var messageAfterSendQueryDtoSchema = z13.object({
+var messageAfterSendQueryDtoSchema = z12.object({
   id: messageDbSchema.shape.id,
   senderId: messageDbSchema.shape.senderId,
   receiverId: messageDbSchema.shape.receiverId,
@@ -2962,51 +2951,51 @@ var messageAfterSendQueryDtoSchema = z13.object({
 });
 
 // src/modules/messages/messages.contracts.ts
-var listMessagesRequestSchema = z14.object({
-  query: z14.object({
+var listMessagesRequestSchema = z13.object({
+  query: z13.object({
     tz: timezoneSchema
   })
 });
-var listMessagesResponseSchema = z14.object({
-  messages: z14.array(allUserMessageQueryDtoSchema)
+var listMessagesResponseSchema = z13.object({
+  messages: z13.array(allUserMessageQueryDtoSchema)
 });
 var listMessagesContract = {
   request: listMessagesRequestSchema,
   response: listMessagesResponseSchema
 };
-var markMessageAsReadRequestSchema = z14.object({
-  params: z14.object({
+var markMessageAsReadRequestSchema = z13.object({
+  params: z13.object({
     id: messageDbSchema.shape.id
   })
 });
-var markMessageAsReadResponseSchema = z14.void();
+var markMessageAsReadResponseSchema = z13.void();
 var markMessageAsReadContract = {
   request: markMessageAsReadRequestSchema,
   response: markMessageAsReadResponseSchema
 };
-var deleteMessageRequestSchema = z14.object({
-  params: z14.object({
+var deleteMessageRequestSchema = z13.object({
+  params: z13.object({
     id: messageDbSchema.shape.id
   })
 });
-var deleteMessageResponseSchema = z14.void();
+var deleteMessageResponseSchema = z13.void();
 var deleteMessageContract = {
   request: deleteMessageRequestSchema,
   response: deleteMessageResponseSchema
 };
 
 // src/modules/oauth/apple/apple.contracts.ts
-import { z as z15 } from "zod/v4";
-var appleNameInputSchema = z15.object({
-  givenName: z15.string().nullable(),
-  familyName: z15.string().nullable()
+import { z as z14 } from "zod/v4";
+var appleNameInputSchema = z14.object({
+  givenName: z14.string().nullable(),
+  familyName: z14.string().nullable()
 });
-var appleOAuthRequestSchema = z15.object({
-  body: z15.object({
-    idToken: z15.string({
+var appleOAuthRequestSchema = z14.object({
+  body: z14.object({
+    idToken: z14.string({
       error: "Missing or invalid Apple identityToken"
     }),
-    rawNonce: z15.string(),
+    rawNonce: z14.string(),
     name: appleNameInputSchema.optional(),
     email: userDbSchema.shape.email.email().nullable()
   })
@@ -3016,19 +3005,19 @@ var appleOAuthContract = {
 };
 
 // src/modules/oauth/apple/apple.dtos.ts
-import { z as z16 } from "zod/v4";
-var appleTokenVerificationResultDtoSchema = z16.object({
-  appleSub: z16.string(),
+import { z as z15 } from "zod/v4";
+var appleTokenVerificationResultDtoSchema = z15.object({
+  appleSub: z15.string(),
   email: userDbSchema.shape.email.nullable(),
-  emailVerified: z16.boolean(),
+  emailVerified: z15.boolean(),
   fullName: userDbSchema.shape.name
 });
 
 // src/modules/oauth/google/google.contracts.ts
-import { z as z17 } from "zod/v4";
-var googleOAuthRequestSchema = z17.object({
-  body: z17.object({
-    idToken: z17.string().optional()
+import { z as z16 } from "zod/v4";
+var googleOAuthRequestSchema = z16.object({
+  body: z16.object({
+    idToken: z16.string().optional()
   })
 });
 var googleOAuthContract = {
@@ -3036,21 +3025,21 @@ var googleOAuthContract = {
 };
 
 // src/modules/oauth/google/google.dtos.ts
-import { z as z18 } from "zod/v4";
-var googleTokenVerificationResultDtoSchema = z18.object({
-  googleSub: z18.string(),
+import { z as z17 } from "zod/v4";
+var googleTokenVerificationResultDtoSchema = z17.object({
+  googleSub: z17.string(),
   email: userDbSchema.shape.email.nullable(),
-  emailVerified: z18.boolean(),
+  emailVerified: z17.boolean(),
   fullName: userDbSchema.shape.name
 });
 
 // src/modules/oauth/oauth.contracts.ts
-import { z as z19 } from "zod/v4";
-var oAuthLoginResponseSchema = z19.object({
-  message: z19.string(),
+import { z as z18 } from "zod/v4";
+var oAuthLoginResponseSchema = z18.object({
+  message: z18.string(),
   user: userDbSchema.shape.id,
-  accessToken: z19.string(),
-  refreshToken: z19.string()
+  accessToken: z18.string(),
+  refreshToken: z18.string()
 });
 var proceedLoginResponseSchema = loginResponseSchema;
 var oAuthLoginContract = {
@@ -3058,36 +3047,36 @@ var oAuthLoginContract = {
 };
 
 // src/modules/oauth/oauth.dtos.ts
-import { z as z20 } from "zod/v4";
-var oAuthLookupQueryDtoSchema = z20.object({
+import { z as z19 } from "zod/v4";
+var oAuthLookupQueryDtoSchema = z19.object({
   userId: userDbSchema.shape.id.nullable()
 });
-var oAuthLookupRawQueryDtoSchema = z20.object({
+var oAuthLookupRawQueryDtoSchema = z19.object({
   user_id: userDbSchema.shape.id
 });
-var oAuthLookupRowQueryDtoSchema = z20.object({
+var oAuthLookupRowQueryDtoSchema = z19.object({
   oauth_data: oAuthLookupRawQueryDtoSchema.nullable()
 });
-var oAuthLinkQueryDtoSchema = z20.object({
+var oAuthLinkQueryDtoSchema = z19.object({
   userId: userDbSchema.shape.id.nullable()
 });
-var oAuthLinkRowQueryDtoSchema = z20.object({
+var oAuthLinkRowQueryDtoSchema = z19.object({
   user_id: userDbSchema.shape.id.nullable()
 });
-var oAuthCreatedUserRowQueryDtoSchema = z20.object({
+var oAuthCreatedUserRowQueryDtoSchema = z19.object({
   user_id: userDbSchema.shape.id
 });
 
 // src/modules/push/push.dtos.ts
-import { z as z21 } from "zod/v4";
-var userWithNotificationsEnabledQueryDtoSchema = z21.object({
+import { z as z20 } from "zod/v4";
+var userWithNotificationsEnabledQueryDtoSchema = z20.object({
   pushToken: userDbSchema.shape.pushToken,
   name: userDbSchema.shape.name
 });
 
 // src/modules/reminders/reminders.contracts.ts
-import { z as z22 } from "zod/v4";
-var getReminderSettingsResponseSchema = z22.object({
+import { z as z21 } from "zod/v4";
+var getReminderSettingsResponseSchema = z21.object({
   reminderSettings: userReminderSettingDbSchema.extend({
     createdAt: serializedDateSchema,
     updatedAt: serializedDateSchema
@@ -3096,32 +3085,32 @@ var getReminderSettingsResponseSchema = z22.object({
 var getReminderSettingsContract = {
   response: getReminderSettingsResponseSchema
 };
-var upsertReminderSettingsRequestSchema = z22.object({
-  body: z22.object({
+var upsertReminderSettingsRequestSchema = z21.object({
+  body: z21.object({
     reminderEnabled: userReminderSettingDbSchema.shape.reminderEnabled,
     timeZone: timezoneSchema
   })
 });
 var upsertReminderSettingsContract = {
   request: upsertReminderSettingsRequestSchema,
-  response: z22.void()
+  response: z21.void()
 };
-var updateReminderTimeZoneRequestSchema = z22.object({
-  body: z22.object({
+var updateReminderTimeZoneRequestSchema = z21.object({
+  body: z21.object({
     timeZone: timezoneSchema
   })
 });
 var updateReminderTimeZoneContract = {
   request: updateReminderTimeZoneRequestSchema,
-  response: z22.void()
+  response: z21.void()
 };
 
 // src/modules/user/create/create.contracts.ts
-import { z as z24 } from "zod/v4";
+import { z as z23 } from "zod/v4";
 
 // src/modules/user/create/create.dtos.ts
-import { z as z23 } from "zod/v4";
-var createdUserQueryDtoSchema = z23.object({
+import { z as z22 } from "zod/v4";
+var createdUserQueryDtoSchema = z22.object({
   id: userDbSchema.shape.id,
   username: userDbSchema.shape.username,
   name: userDbSchema.shape.name,
@@ -3135,23 +3124,23 @@ var createdUserRawQueryDtoSchema = createdUserQueryDtoSchema.omit({
 }).extend({
   created_at: serializedDateSchema
 });
-var createdUserRowQueryDtoSchema = z23.object({
+var createdUserRowQueryDtoSchema = z22.object({
   userData: createdUserRawQueryDtoSchema
 });
-var userExistsQueryDtoSchema = z23.object({
+var userExistsQueryDtoSchema = z22.object({
   id: userDbSchema.shape.id.nullable()
 });
 
 // src/modules/user/create/create.contracts.ts
 var usernameSchema = userDbSchema.shape.username.trim().min(3, "Username must be at least 3 characters").max(15, "Username must be at most 15 characters").regex(/^[a-zA-Z0-9_]+$/, "Username may contain letters, numbers, and underscore only");
 var fullNameSchema = userDbSchema.shape.name.trim().max(20, "Full name is too long").regex(/^[a-zA-Z\s]+$/, "Full name may contain letters and spaces only");
-var createUserRequestSchema = z24.object({
-  body: z24.object({
+var createUserRequestSchema = z23.object({
+  body: z23.object({
     username: usernameSchema,
-    fullName: z24.preprocess((value) => value == null || typeof value === "string" && value.trim() === "" ? "User" : value, fullNameSchema),
+    fullName: z23.preprocess((value) => value == null || typeof value === "string" && value.trim() === "" ? "User" : value, fullNameSchema),
     email: userDbSchema.shape.email.trim().toLowerCase().email("Invalid email format"),
-    password: z24.string().min(8, "Password must be at least 8 characters long"),
-    gender: z24.preprocess((value) => value === "" || value == null ? "Unknown" : value, z24.enum([
+    password: z23.string().min(8, "Password must be at least 8 characters long"),
+    gender: z23.preprocess((value) => value === "" || value == null ? "Unknown" : value, z23.enum([
       "Male",
       "Female",
       "Other",
@@ -3160,16 +3149,16 @@ var createUserRequestSchema = z24.object({
   })
 });
 var createUserUserSchema = createdUserQueryDtoSchema;
-var createUserResponseSchema = z24.void();
+var createUserResponseSchema = z23.void();
 var createUserContract = {
   request: createUserRequestSchema,
   response: createUserResponseSchema
 };
 
 // src/modules/user/push-tokens/push-tokens.contracts.ts
-import { z as z25 } from "zod/v4";
-var replacePushTokenRequestSchema = z25.object({
-  body: z25.object({
+import { z as z24 } from "zod/v4";
+var replacePushTokenRequestSchema = z24.object({
+  body: z24.object({
     token: userDbSchema.shape.pushToken.unwrap()
   })
 });
@@ -3178,16 +3167,16 @@ var replacePushTokenContract = {
 };
 
 // src/modules/user/update/update.contracts.ts
-import { z as z26 } from "zod/v4";
-var updateCurrentUserRequestSchema = z26.object({
+import { z as z25 } from "zod/v4";
+var updateCurrentUserRequestSchema = z25.object({
   body: authenticatedUserForUpdateQueryDtoSchema
 });
-var updateCurrentUserResponseSchema = z26.void();
+var updateCurrentUserResponseSchema = z25.void();
 var updateCurrentUserContract = {
   request: updateCurrentUserRequestSchema,
   response: updateCurrentUserResponseSchema
 };
-var userDataResponseSchema = z26.object({
+var userDataResponseSchema = z25.object({
   userData: userDataQueryDtoSchema
 });
 var userDataContract = {
@@ -3197,36 +3186,36 @@ var getCurrentUserResponseSchema = userDataQueryDtoSchema;
 var getCurrentUserContract = {
   response: getCurrentUserResponseSchema
 };
-var deleteProfilePictureRequestSchema = z26.object({
-  body: z26.object({
-    profilePicPath: z26.string()
+var deleteProfilePictureRequestSchema = z25.object({
+  body: z25.object({
+    profilePicPath: z25.string()
   })
 });
 var deleteProfilePictureContract = {
   request: deleteProfilePictureRequestSchema
 };
-var replaceProfilePictureResponseSchema = z26.object({
-  profilePicPath: z26.string(),
-  url: z26.string(),
-  message: z26.string()
+var replaceProfilePictureResponseSchema = z25.object({
+  profilePicPath: z25.string(),
+  url: z25.string(),
+  message: z25.string()
 });
 var replaceProfilePictureContract = {
   response: replaceProfilePictureResponseSchema
 };
 
 // src/modules/video-analysis/video-analysis.contracts.ts
-import { z as z27 } from "zod/v4";
-var createVideoUploadUrlRequestSchema = z27.object({
-  body: z27.object({
+import { z as z26 } from "zod/v4";
+var createVideoUploadUrlRequestSchema = z26.object({
+  body: z26.object({
     exercise: exerciseDbSchema.shape.name,
-    fileType: z27.string(),
-    jobId: z27.string()
+    fileType: z26.string(),
+    jobId: z26.string()
   })
 });
-var createVideoUploadUrlResponseSchema = z27.object({
-  uploadUrl: z27.string(),
-  fileKey: z27.string(),
-  requestId: z27.string()
+var createVideoUploadUrlResponseSchema = z26.object({
+  uploadUrl: z26.string(),
+  fileKey: z26.string(),
+  requestId: z26.string()
 });
 var createVideoUploadUrlContract = {
   request: createVideoUploadUrlRequestSchema,
@@ -3234,64 +3223,64 @@ var createVideoUploadUrlContract = {
 };
 
 // src/modules/video-analysis/video-analysis.dtos.ts
-import { z as z28 } from "zod/v4";
-var enqueueAnalyzeVideoParamsDtoSchema = z28.object({
-  fileKey: z28.string(),
-  exercise: z28.string(),
+import { z as z27 } from "zod/v4";
+var enqueueAnalyzeVideoParamsDtoSchema = z27.object({
+  fileKey: z27.string(),
+  exercise: z27.string(),
   userId: userDbSchema.shape.id,
-  requestId: z28.string(),
-  sentryTrace: z28.string().optional(),
-  baggage: z28.string().optional()
+  requestId: z27.string(),
+  sentryTrace: z27.string().optional(),
+  baggage: z27.string().optional()
 });
 var analyzeVideoPayloadDtoSchema = enqueueAnalyzeVideoParamsDtoSchema.extend({
-  expiresAt: z28.number()
+  expiresAt: z27.number()
 });
-var squatRepetitionDtoSchema = z28.object({
-  depth: z28.object({
-    value: z28.number(),
-    status: z28.string(),
-    confidence: z28.number()
+var squatRepetitionDtoSchema = z27.object({
+  depth: z27.object({
+    value: z27.number(),
+    status: z27.string(),
+    confidence: z27.number()
   }),
-  backLean: z28.object({
-    value: z28.number(),
-    excessive: z28.boolean(),
-    confidence: z28.number()
+  backLean: z27.object({
+    value: z27.number(),
+    excessive: z27.boolean(),
+    confidence: z27.number()
   }),
-  audit: z28.object({
-    framesAnalyzed: z28.number(),
-    validFrames: z28.number(),
-    cameraAngle: z28.string(),
-    rawBottomAngle: z28.number(),
-    samplingRate: z28.string()
+  audit: z27.object({
+    framesAnalyzed: z27.number(),
+    validFrames: z27.number(),
+    cameraAngle: z27.string(),
+    rawBottomAngle: z27.number(),
+    samplingRate: z27.string()
   })
 });
-var analyzeVideoResultPayloadDtoSchema = /* @__PURE__ */ __name((resultSchema) => z28.intersection(z28.object({
-  jobId: z28.string(),
+var analyzeVideoResultPayloadDtoSchema = /* @__PURE__ */ __name((resultSchema) => z27.intersection(z27.object({
+  jobId: z27.string(),
   userId: userDbSchema.shape.id,
-  exercise: z28.string(),
-  requestId: z28.string().optional()
-}), z28.discriminatedUnion("status", [
-  z28.object({
-    status: z28.literal("completed"),
-    result: z28.array(resultSchema),
-    error: z28.null()
+  exercise: z27.string(),
+  requestId: z27.string().optional()
+}), z27.discriminatedUnion("status", [
+  z27.object({
+    status: z27.literal("completed"),
+    result: z27.array(resultSchema),
+    error: z27.null()
   }),
-  z28.object({
-    status: z28.literal("failed"),
-    result: z28.null(),
-    error: z28.string()
+  z27.object({
+    status: z27.literal("failed"),
+    result: z27.null(),
+    error: z27.string()
   })
 ])), "analyzeVideoResultPayloadDtoSchema");
 
 // src/modules/web-sockets/web-sockets.contracts.ts
-import { z as z29 } from "zod/v4";
-var createWebSocketTicketRequestSchema = z29.object({
-  body: z29.object({
+import { z as z28 } from "zod/v4";
+var createWebSocketTicketRequestSchema = z28.object({
+  body: z28.object({
     username: userDbSchema.shape.username
   })
 });
-var createWebSocketTicketResponseSchema = z29.object({
-  ticket: z29.string()
+var createWebSocketTicketResponseSchema = z28.object({
+  ticket: z28.string()
 });
 var createWebSocketTicketContract = {
   request: createWebSocketTicketRequestSchema,
@@ -3299,29 +3288,29 @@ var createWebSocketTicketContract = {
 };
 
 // src/modules/workout/plan/plan.contracts.ts
-import { z as z31 } from "zod/v4";
+import { z as z30 } from "zod/v4";
 
 // src/modules/workout/plan/plan.dtos.ts
-import { z as z30 } from "zod/v4";
-var workoutExerciseInputQueryDtoSchema = z30.object({
+import { z as z29 } from "zod/v4";
+var workoutExerciseInputQueryDtoSchema = z29.object({
   exerciseId: exerciseDbSchema.shape.id,
-  sets: z30.array(workoutSetDbSchema.shape.reps),
+  sets: z29.array(workoutSetDbSchema.shape.reps),
   orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex
 });
-var workoutSplitInputBaseQueryDtoSchema = z30.object({
+var workoutSplitInputBaseQueryDtoSchema = z29.object({
   name: workoutSplitDbSchema.shape.name.min(1, "Split name is required"),
-  orderIndex: z30.number().int().nonnegative(),
-  exercises: z30.array(workoutExerciseInputQueryDtoSchema).min(1, "Each split must include at least one exercise")
+  orderIndex: z29.number().int().nonnegative(),
+  exercises: z29.array(workoutExerciseInputQueryDtoSchema).min(1, "Each split must include at least one exercise")
 });
 var saveWorkoutSplitInputQueryDtoSchema = workoutSplitInputBaseQueryDtoSchema.extend({
   id: workoutSplitDbSchema.shape.id.optional()
 });
-var saveWorkoutSplitPayloadQueryDtoSchema = z30.array(saveWorkoutSplitInputQueryDtoSchema).min(1, "Workout must include at least one split");
-var exerciseInPlanQueryDtoSchema = z30.object({
+var saveWorkoutSplitPayloadQueryDtoSchema = z29.array(saveWorkoutSplitInputQueryDtoSchema).min(1, "Workout must include at least one split");
+var exerciseInPlanQueryDtoSchema = z29.object({
   exerciseToSplitId: exerciseToWorkoutSplitDbSchema.shape.id,
   exerciseId: exerciseDbSchema.shape.id,
   name: exerciseDbSchema.shape.name,
-  sets: z30.array(z30.object({
+  sets: z29.array(z29.object({
     orderIndex: workoutSetDbSchema.shape.orderIndex,
     reps: workoutSetDbSchema.shape.reps
   })),
@@ -3330,114 +3319,114 @@ var exerciseInPlanQueryDtoSchema = z30.object({
   targetMuscle: exerciseDbSchema.shape.targetMuscle,
   specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle
 });
-var workoutSplitQueryDtoSchema = z30.object({
+var workoutSplitQueryDtoSchema = z29.object({
   id: workoutSplitDbSchema.shape.id,
   workoutId: workoutSplitDbSchema.shape.workoutId,
   name: workoutSplitDbSchema.shape.name,
   orderIndex: workoutSplitDbSchema.shape.orderIndex,
   createdAt: serializedDateSchema,
-  muscleGroup: z30.string().nullable(),
-  estimatedDurationMinutes: z30.number().nullable(),
+  muscleGroup: z29.string().nullable(),
+  estimatedDurationMinutes: z29.number().nullable(),
   isActive: workoutSplitDbSchema.shape.isActive,
-  exercises: z30.array(exerciseInPlanQueryDtoSchema)
+  exercises: z29.array(exerciseInPlanQueryDtoSchema)
 });
-var wholeUserWorkoutPlanQueryDtoSchema = z30.object({
+var wholeUserWorkoutPlanQueryDtoSchema = z29.object({
   id: workoutPlanDbSchema.shape.id,
-  numberOfSplits: z30.number(),
+  numberOfSplits: z29.number(),
   createdAt: serializedDateSchema,
   userId: userDbSchema.shape.id,
   isActive: workoutPlanDbSchema.shape.isActive,
   updatedAt: serializedDateSchema,
-  workoutSplits: z30.array(workoutSplitQueryDtoSchema).nullable()
+  workoutSplits: z29.array(workoutSplitQueryDtoSchema).nullable()
 });
-var workoutPlanIdQueryDtoSchema = z30.object({
+var workoutPlanIdQueryDtoSchema = z29.object({
   id: workoutPlanDbSchema.shape.id
 });
-var workoutSplitIdQueryDtoSchema = z30.object({
+var workoutSplitIdQueryDtoSchema = z29.object({
   id: workoutSplitDbSchema.shape.id
 });
-var exerciseAssignmentIdQueryDtoSchema = z30.object({
+var exerciseAssignmentIdQueryDtoSchema = z29.object({
   id: exerciseToWorkoutSplitDbSchema.shape.id
 });
 
 // src/modules/workout/plan/plan.contracts.ts
-var getWorkoutPlanRequestSchema = z31.object({
-  query: z31.object({
+var getWorkoutPlanRequestSchema = z30.object({
+  query: z30.object({
     tz: timezoneSchema.optional()
   })
 });
-var getWorkoutPlanResponseSchema = z31.object({
+var getWorkoutPlanResponseSchema = z30.object({
   workoutPlan: wholeUserWorkoutPlanQueryDtoSchema.nullable()
 });
 var getWorkoutPlanContract = {
   request: getWorkoutPlanRequestSchema,
   response: getWorkoutPlanResponseSchema
 };
-var replaceWorkoutPlanRequestSchema = z31.object({
-  body: z31.object({
+var replaceWorkoutPlanRequestSchema = z30.object({
+  body: z30.object({
     workoutData: saveWorkoutSplitPayloadQueryDtoSchema,
-    workoutName: z31.string().optional(),
+    workoutName: z30.string().optional(),
     tz: timezoneSchema
   })
 });
-var replaceWorkoutPlanResponseSchema = z31.void();
+var replaceWorkoutPlanResponseSchema = z30.void();
 var replaceWorkoutPlanContract = {
   request: replaceWorkoutPlanRequestSchema,
   response: replaceWorkoutPlanResponseSchema
 };
 
 // src/modules/workout/tracking/tracking.contracts.ts
-import { z as z33 } from "zod/v4";
+import { z as z32 } from "zod/v4";
 
 // src/modules/workout/tracking/tracking.dtos.ts
-import { z as z32 } from "zod/v4";
-var trackedSetQueryDtoSchema = z32.object({
+import { z as z31 } from "zod/v4";
+var trackedSetQueryDtoSchema = z31.object({
   reps: trackingSetDbSchema.shape.reps,
   weight: trackingSetDbSchema.shape.weight,
   setIndex: trackingSetDbSchema.shape.setIndex
 });
-var finishedWorkoutEntryBaseQueryDtoSchema = z32.object({
-  trackedSets: z32.array(trackedSetQueryDtoSchema),
+var finishedWorkoutEntryBaseQueryDtoSchema = z31.object({
+  trackedSets: z31.array(trackedSetQueryDtoSchema),
   notes: exerciseTrackingDbSchema.shape.notes.optional()
 });
-var finishedWorkoutEntryQueryDtoSchema = z32.discriminatedUnion("isExerciseAssignedToSplit", [
+var finishedWorkoutEntryQueryDtoSchema = z31.discriminatedUnion("isExerciseAssignedToSplit", [
   finishedWorkoutEntryBaseQueryDtoSchema.extend({
-    isExerciseAssignedToSplit: z32.literal(true),
+    isExerciseAssignedToSplit: z31.literal(true),
     exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId.unwrap(),
     // Accepted temporarily for clients using the previous redundant payload.
     exerciseId: exerciseTrackingDbSchema.shape.exerciseId.optional()
   }),
   finishedWorkoutEntryBaseQueryDtoSchema.extend({
-    isExerciseAssignedToSplit: z32.literal(false),
-    exerciseToSplitId: z32.null().optional(),
+    isExerciseAssignedToSplit: z31.literal(false),
+    exerciseToSplitId: z31.null().optional(),
     exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap()
   })
 ]);
-var exerciseMetadataQueryDtoSchema = z32.object({
+var exerciseMetadataQueryDtoSchema = z31.object({
   targetMuscle: exerciseDbSchema.shape.targetMuscle,
   specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle
 });
-var exerciseTrackingPrMaxQueryDtoSchema = z32.object({
+var exerciseTrackingPrMaxQueryDtoSchema = z31.object({
   exercise: exerciseDbSchema.shape.name,
   weight: trackingSetDbSchema.shape.weight,
   reps: trackingSetDbSchema.shape.reps,
   workoutTimeUtc: serializedDateSchema
 });
-var exerciseTrackingAnalysisQueryDtoSchema = z32.object({
-  uniqueDays: z32.number(),
-  mostFrequentSplit: z32.string().nullable(),
-  mostFrequentSplitDays: z32.number().nullable(),
-  lastWorkoutDate: z32.string().nullable(),
-  splitDaysByName: z32.record(z32.string(), z32.number()),
-  prs: z32.object({
+var exerciseTrackingAnalysisQueryDtoSchema = z31.object({
+  uniqueDays: z31.number(),
+  mostFrequentSplit: z31.string().nullable(),
+  mostFrequentSplitDays: z31.number().nullable(),
+  lastWorkoutDate: z31.string().nullable(),
+  splitDaysByName: z31.record(z31.string(), z31.number()),
+  prs: z31.object({
     prMax: exerciseTrackingPrMaxQueryDtoSchema.nullable()
   })
 });
-var trackingMapItemQueryDtoSchema = z32.object({
+var trackingMapItemQueryDtoSchema = z31.object({
   id: exerciseTrackingDbSchema.shape.id,
   exerciseToSplitId: exerciseToWorkoutSplitDbSchema.shape.id,
-  weight: z32.array(trackingSetDbSchema.shape.weight),
-  reps: z32.array(trackingSetDbSchema.shape.reps),
+  weight: z31.array(trackingSetDbSchema.shape.weight),
+  reps: z31.array(trackingSetDbSchema.shape.reps),
   notes: exerciseTrackingDbSchema.shape.notes,
   exerciseId: exerciseDbSchema.shape.id,
   workoutSplitId: workoutSplitDbSchema.shape.id,
@@ -3445,8 +3434,8 @@ var trackingMapItemQueryDtoSchema = z32.object({
   exercise: exerciseDbSchema.shape.name,
   workoutDate: serializedDateSchema,
   orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex,
-  exerciseToWorkoutSplit: z32.object({
-    sets: z32.array(workoutSetDbSchema.shape.reps),
+  exerciseToWorkoutSplit: z31.object({
+    sets: z31.array(workoutSetDbSchema.shape.reps),
     exercises: exerciseMetadataQueryDtoSchema
   })
 });
@@ -3456,16 +3445,16 @@ var trackingByDateItemQueryDtoSchema = trackingMapItemQueryDtoSchema.omit({
 var trackingBySplitNameItemQueryDtoSchema = trackingMapItemQueryDtoSchema.omit({
   splitName: true
 });
-var groupedTrackingItemQueryDtoSchema = z32.object({
-  exerciseTracking: z32.object({
+var groupedTrackingItemQueryDtoSchema = z31.object({
+  exerciseTracking: z31.object({
     exerciseTrackingId: exerciseTrackingDbSchema.shape.id,
-    sets: z32.array(z32.object({
+    sets: z31.array(z31.object({
       setIndex: trackingSetDbSchema.shape.setIndex,
       weight: trackingSetDbSchema.shape.weight,
       reps: trackingSetDbSchema.shape.reps
     })),
     notes: exerciseTrackingDbSchema.shape.notes,
-    exerciseAssignment: z32.object({
+    exerciseAssignment: z31.object({
       exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
       orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex.nullable(),
       exerciseId: exerciseDbSchema.shape.id,
@@ -3482,86 +3471,86 @@ var trackingByExerciseToSplitIdItemQueryDtoSchema = groupedTrackingItemQueryDtoS
 }).extend({
   workoutStartLocal: serializedDateSchema
 });
-var personalRecordQueryDtoSchema = z32.object({
+var personalRecordQueryDtoSchema = z31.object({
   exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
   exerciseId: exerciseDbSchema.shape.id,
   exerciseName: exerciseDbSchema.shape.name,
   prWeight: trackingSetDbSchema.shape.weight,
   prReps: trackingSetDbSchema.shape.reps,
   prSetIndex: trackingSetDbSchema.shape.setIndex,
-  estimatedOneRepMax: z32.number().nullable(),
+  estimatedOneRepMax: z31.number().nullable(),
   workoutStartLocal: serializedDateSchema
 });
-var personalRecordsQueryDtoSchema = z32.object({
-  prs: z32.record(z32.string(), personalRecordQueryDtoSchema.omit({
+var personalRecordsQueryDtoSchema = z31.object({
+  prs: z31.record(z31.string(), personalRecordQueryDtoSchema.omit({
     exerciseId: true
   }))
 });
-var nextSplitQueryDtoSchema = z32.object({
+var nextSplitQueryDtoSchema = z31.object({
   id: workoutSplitDbSchema.shape.id,
   name: workoutSplitDbSchema.shape.name,
   orderIndex: workoutSplitDbSchema.shape.orderIndex,
-  muscleGroup: z32.string().nullable()
+  muscleGroup: z31.string().nullable()
 });
-var exerciseTrackingStatsQueryDtoSchema = z32.object({
-  workoutCount: z32.coerce.number(),
-  hasExerciseTracking: z32.boolean(),
+var exerciseTrackingStatsQueryDtoSchema = z31.object({
+  workoutCount: z31.coerce.number(),
+  hasExerciseTracking: z31.boolean(),
   nextSplitByOrderIndex: nextSplitQueryDtoSchema.nullable(),
-  workoutTargets: z32.object({
-    workoutCountThisWeek: z32.coerce.number(),
-    workoutCountScheduledPerWeek: z32.coerce.number()
+  workoutTargets: z31.object({
+    workoutCountThisWeek: z31.coerce.number(),
+    workoutCountScheduledPerWeek: z31.coerce.number()
   }),
-  lastWorkoutStats: z32.object({
-    workoutDate: z32.string().nullable(),
+  lastWorkoutStats: z31.object({
+    workoutDate: z31.string().nullable(),
     workoutSplitName: workoutSplitDbSchema.shape.name.nullable(),
-    exerciseTrackedCount: z32.coerce.number().nullable(),
-    setTrackedCount: z32.coerce.number().nullable()
+    exerciseTrackedCount: z31.coerce.number().nullable(),
+    setTrackedCount: z31.coerce.number().nullable()
   }),
-  latestPr: z32.array(personalRecordQueryDtoSchema).max(1)
+  latestPr: z31.array(personalRecordQueryDtoSchema).max(1)
 });
-var exerciseTrackingMapsQueryDtoSchema = z32.object({
-  byDate: z32.record(z32.string(), z32.object({
-    durationMins: z32.number(),
-    exerciseTracked: z32.array(groupedTrackingItemQueryDtoSchema)
+var exerciseTrackingMapsQueryDtoSchema = z31.object({
+  byDate: z31.record(z31.string(), z31.object({
+    durationMins: z31.number(),
+    exerciseTracked: z31.array(groupedTrackingItemQueryDtoSchema)
   }))
 });
-var exerciseHistoryQueryDtoSchema = z32.object({
-  byExerciseToSplitId: z32.record(z32.string(), z32.object({
-    exerciseTracked: z32.array(trackingByExerciseToSplitIdItemQueryDtoSchema)
+var exerciseHistoryQueryDtoSchema = z31.object({
+  byExerciseToSplitId: z31.record(z31.string(), z31.object({
+    exerciseTracked: z31.array(trackingByExerciseToSplitIdItemQueryDtoSchema)
   }))
 });
-var exerciseTrackingAndStatsQueryDtoSchema = z32.object({
+var exerciseTrackingAndStatsQueryDtoSchema = z31.object({
   trackingStats: exerciseTrackingStatsQueryDtoSchema,
   trackingMaps: exerciseTrackingMapsQueryDtoSchema
 });
-var exerciseTrackingAndStatsRowQueryDtoSchema = z32.object({
+var exerciseTrackingAndStatsRowQueryDtoSchema = z31.object({
   data: exerciseTrackingAndStatsQueryDtoSchema
 });
-var exerciseTrackingStatsRowQueryDtoSchema = z32.object({
+var exerciseTrackingStatsRowQueryDtoSchema = z31.object({
   data: exerciseTrackingStatsQueryDtoSchema
 });
-var exerciseTrackingMapsRowQueryDtoSchema = z32.object({
+var exerciseTrackingMapsRowQueryDtoSchema = z31.object({
   data: exerciseTrackingMapsQueryDtoSchema
 });
-var exerciseHistoryRowQueryDtoSchema = z32.object({
+var exerciseHistoryRowQueryDtoSchema = z31.object({
   data: exerciseHistoryQueryDtoSchema
 });
-var personalRecordsRowQueryDtoSchema = z32.object({
+var personalRecordsRowQueryDtoSchema = z31.object({
   data: personalRecordsQueryDtoSchema
 });
-var workoutSplitLookupQueryDtoSchema = z32.object({
+var workoutSplitLookupQueryDtoSchema = z31.object({
   workoutSplitId: workoutSplitDbSchema.shape.id
 });
-var workoutSummaryIdQueryDtoSchema = z32.object({
-  id: z32.string().uuid()
+var workoutSummaryIdQueryDtoSchema = z31.object({
+  id: z31.string().uuid()
 });
-var exerciseTrackingIdQueryDtoSchema = z32.object({
+var exerciseTrackingIdQueryDtoSchema = z31.object({
   id: exerciseTrackingDbSchema.shape.id
 });
 
 // src/modules/workout/tracking/tracking.contracts.ts
-var getWorkoutHistoryRequestSchema = z33.object({
-  query: z33.object({
+var getWorkoutHistoryRequestSchema = z32.object({
+  query: z32.object({
     tz: timezoneSchema.optional()
   })
 });
@@ -3570,8 +3559,8 @@ var getWorkoutHistoryContract = {
   request: getWorkoutHistoryRequestSchema,
   response: getWorkoutHistoryResponseSchema
 };
-var getExerciseHistoryRequestSchema = z33.object({
-  query: z33.object({
+var getExerciseHistoryRequestSchema = z32.object({
+  query: z32.object({
     tz: timezoneSchema.optional()
   })
 });
@@ -3585,22 +3574,22 @@ var getWorkoutStatisticsContract = {
   request: getWorkoutHistoryRequestSchema,
   response: getWorkoutStatisticsResponseSchema
 };
-var createWorkoutSessionRequestSchema = z33.object({
-  body: z33.object({
-    workout: z33.array(finishedWorkoutEntryQueryDtoSchema),
+var createWorkoutSessionRequestSchema = z32.object({
+  body: z32.object({
+    workout: z32.array(finishedWorkoutEntryQueryDtoSchema),
     tz: timezoneSchema.optional(),
-    workoutStartUtc: z33.string().datetime("workoutStartUtc must be a valid ISO datetime"),
-    workoutEndUtc: z33.string().datetime("workoutEndUtc must be a valid ISO datetime").optional().nullable()
+    workoutStartUtc: z32.string().datetime("workoutStartUtc must be a valid ISO datetime"),
+    workoutEndUtc: z32.string().datetime("workoutEndUtc must be a valid ISO datetime").optional().nullable()
   })
 });
-var createWorkoutSessionResponseSchema = z33.void();
+var createWorkoutSessionResponseSchema = z32.void();
 var createWorkoutSessionContract = {
   request: createWorkoutSessionRequestSchema,
   response: createWorkoutSessionResponseSchema
 };
 var getPersonalRecordsResponseSchema = personalRecordsQueryDtoSchema;
-var getPersonalRecordsRequestSchema = z33.object({
-  query: z33.object({
+var getPersonalRecordsRequestSchema = z32.object({
+  query: z32.object({
     tz: timezoneSchema.optional()
   })
 });
@@ -3610,11 +3599,11 @@ var getPersonalRecordsContract = {
 };
 
 // src/modules/workout-schedule/workout-schedule.contracts.ts
-import { z as z35 } from "zod/v4";
+import { z as z34 } from "zod/v4";
 
 // src/modules/workout-schedule/workout-schedule.dtos.ts
-import { z as z34 } from "zod/v4";
-var workoutScheduleInputDtoSchema = z34.object({
+import { z as z33 } from "zod/v4";
+var workoutScheduleInputDtoSchema = z33.object({
   workoutSplitId: workoutScheduleDbSchema.shape.workoutSplitId,
   dayOfWeek: workoutScheduleDbSchema.shape.dayOfWeek.int().min(0).max(6),
   startTime: workoutScheduleDbSchema.shape.startTime.regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/)
@@ -3625,15 +3614,15 @@ var workoutScheduleQueryDtoSchema = workoutScheduleDbSchema.extend({
 });
 
 // src/modules/workout-schedule/workout-schedule.contracts.ts
-var getWorkoutSchedulesResponseSchema = z35.object({
-  schedules: z35.array(workoutScheduleQueryDtoSchema)
+var getWorkoutSchedulesResponseSchema = z34.object({
+  schedules: z34.array(workoutScheduleQueryDtoSchema)
 });
 var getWorkoutSchedulesContract = {
   response: getWorkoutSchedulesResponseSchema
 };
-var replaceWorkoutSchedulesRequestSchema = z35.object({
-  body: z35.object({
-    schedules: z35.array(workoutScheduleInputDtoSchema).superRefine((schedules, context) => {
+var replaceWorkoutSchedulesRequestSchema = z34.object({
+  body: z34.object({
+    schedules: z34.array(workoutScheduleInputDtoSchema).superRefine((schedules, context) => {
       const keys = /* @__PURE__ */ new Set();
       for (const schedule of schedules) {
         const key = `${schedule.workoutSplitId}:${schedule.dayOfWeek}`;
@@ -3650,14 +3639,14 @@ var replaceWorkoutSchedulesRequestSchema = z35.object({
 });
 var replaceWorkoutSchedulesContract = {
   request: replaceWorkoutSchedulesRequestSchema,
-  response: z35.void()
+  response: z34.void()
 };
 
 // src/modules/social/crews/crews.contracts.ts
-import { z as z37 } from "zod/v4";
+import { z as z36 } from "zod/v4";
 
 // src/modules/social/crews/crews.dtos.ts
-import { z as z36 } from "zod/v4";
+import { z as z35 } from "zod/v4";
 var crewQueryDtoSchema = crewDbSchema.omit({
   profilePicPath: true
 }).extend({
@@ -3665,9 +3654,9 @@ var crewQueryDtoSchema = crewDbSchema.omit({
   updatedAt: serializedDateSchema
 });
 var crewWithParticipantCountQueryDtoSchema = crewQueryDtoSchema.extend({
-  participantCount: z36.number().int().nonnegative()
+  participantCount: z35.number().int().nonnegative()
 });
-var crewParticipantPreviewQueryDtoSchema = z36.object({
+var crewParticipantPreviewQueryDtoSchema = z35.object({
   username: userDbSchema.shape.username,
   fullName: userDbSchema.shape.name,
   profilePicPath: userDbSchema.shape.profilePicPath
@@ -3683,47 +3672,47 @@ var crewParticipantQueryDtoSchema = crewMembershipDbSchema.extend({
   profilePicPath: userDbSchema.shape.profilePicPath,
   username: userDbSchema.shape.username
 });
-var deletedCrewQueryDtoSchema = z36.object({
+var deletedCrewQueryDtoSchema = z35.object({
   id: crewDbSchema.shape.id
 });
-var leaveCrewResultQueryDtoSchema = z36.object({
-  result: z36.enum([
+var leaveCrewResultQueryDtoSchema = z35.object({
+  result: z35.enum([
     "left",
     "not_member"
   ])
 });
-var leaveCrewContextQueryDtoSchema = z36.object({
+var leaveCrewContextQueryDtoSchema = z35.object({
   membershipId: crewMembershipDbSchema.shape.id,
-  isLeader: z36.boolean()
+  isLeader: z35.boolean()
 });
-var crewSuccessorQueryDtoSchema = z36.object({
+var crewSuccessorQueryDtoSchema = z35.object({
   membershipId: crewMembershipDbSchema.shape.id,
   userId: crewMembershipDbSchema.shape.userId
 });
 
 // src/modules/social/crews/crews.contracts.ts
-var crewIdParamsSchema = z37.object({
+var crewIdParamsSchema = z36.object({
   id: crewDbSchema.shape.id
 });
-var listCrewsRequestSchema = z37.object({
-  query: z37.object({
-    search: z37.string().trim().min(1).max(50).optional(),
-    limit: z37.coerce.number().int().min(1).max(100).default(20),
-    cursor: z37.string().min(1).optional()
+var listCrewsRequestSchema = z36.object({
+  query: z36.object({
+    search: z36.string().trim().min(1).max(50).optional(),
+    limit: z36.coerce.number().int().min(1).max(100).default(20),
+    cursor: z36.string().min(1).optional()
   })
 });
-var listCrewsResponseSchema = z37.object({
-  crews: z37.array(discoverableCrewQueryDtoSchema),
-  nextCursor: z37.string().nullable()
+var listCrewsResponseSchema = z36.object({
+  crews: z36.array(discoverableCrewQueryDtoSchema),
+  nextCursor: z36.string().nullable()
 });
 var listCrewsContract = {
   request: listCrewsRequestSchema,
   response: listCrewsResponseSchema
 };
-var listMyCrewsRequestSchema = z37.object({
-  query: z37.object({
-    limit: z37.coerce.number().int().min(1).max(100).default(20),
-    cursor: z37.string().min(1).optional()
+var listMyCrewsRequestSchema = z36.object({
+  query: z36.object({
+    limit: z36.coerce.number().int().min(1).max(100).default(20),
+    cursor: z36.string().min(1).optional()
   })
 });
 var listMyCrewsResponseSchema = listCrewsResponseSchema;
@@ -3731,24 +3720,24 @@ var listMyCrewsContract = {
   request: listMyCrewsRequestSchema,
   response: listMyCrewsResponseSchema
 };
-var listCrewParticipantsRequestSchema = z37.object({
-  params: z37.object({
+var listCrewParticipantsRequestSchema = z36.object({
+  params: z36.object({
     crewId: crewDbSchema.shape.id
   }),
-  query: z37.object({
-    limit: z37.coerce.number().int().min(1).max(100).default(20),
-    cursor: z37.string().min(1).optional()
+  query: z36.object({
+    limit: z36.coerce.number().int().min(1).max(100).default(20),
+    cursor: z36.string().min(1).optional()
   })
 });
-var listCrewParticipantsResponseSchema = z37.object({
-  participants: z37.array(crewParticipantQueryDtoSchema),
-  nextCursor: z37.string().nullable()
+var listCrewParticipantsResponseSchema = z36.object({
+  participants: z36.array(crewParticipantQueryDtoSchema),
+  nextCursor: z36.string().nullable()
 });
 var listCrewParticipantsContract = {
   request: listCrewParticipantsRequestSchema,
   response: listCrewParticipantsResponseSchema
 };
-var getCrewRequestSchema = z37.object({
+var getCrewRequestSchema = z36.object({
   params: crewIdParamsSchema
 });
 var getCrewResponseSchema = crewWithParticipantCountQueryDtoSchema;
@@ -3756,67 +3745,67 @@ var getCrewContract = {
   request: getCrewRequestSchema,
   response: getCrewResponseSchema
 };
-var createCrewRequestSchema = z37.object({
-  body: z37.object({
+var createCrewRequestSchema = z36.object({
+  body: z36.object({
     name: crewDbSchema.shape.name,
     privacy: crewDbSchema.shape.privacy
   })
 });
-var createCrewResponseSchema = z37.void();
+var createCrewResponseSchema = z36.void();
 var createCrewContract = {
   request: createCrewRequestSchema,
   response: createCrewResponseSchema
 };
-var updateCrewRequestSchema = z37.object({
+var updateCrewRequestSchema = z36.object({
   params: crewIdParamsSchema,
-  body: z37.object({
+  body: z36.object({
     name: crewDbSchema.shape.name,
     privacy: crewDbSchema.shape.privacy
   })
 });
-var updateCrewResponseSchema = z37.void();
+var updateCrewResponseSchema = z36.void();
 var updateCrewContract = {
   request: updateCrewRequestSchema,
   response: updateCrewResponseSchema
 };
-var leaveCrewRequestSchema = z37.object({
+var leaveCrewRequestSchema = z36.object({
   params: crewIdParamsSchema
 });
-var leaveCrewResponseSchema = z37.void();
+var leaveCrewResponseSchema = z36.void();
 var leaveCrewContract = {
   request: leaveCrewRequestSchema,
   response: leaveCrewResponseSchema
 };
-var deleteCrewRequestSchema = z37.object({
+var deleteCrewRequestSchema = z36.object({
   params: crewIdParamsSchema
 });
-var deleteCrewResponseSchema = z37.void();
+var deleteCrewResponseSchema = z36.void();
 var deleteCrewContract = {
   request: deleteCrewRequestSchema,
   response: deleteCrewResponseSchema
 };
-var replaceCrewProfilePictureRequestSchema = z37.object({
+var replaceCrewProfilePictureRequestSchema = z36.object({
   params: crewIdParamsSchema
 });
-var replaceCrewProfilePictureResponseSchema = z37.object({
-  profilePicPath: z37.string(),
-  url: z37.string(),
-  message: z37.string()
+var replaceCrewProfilePictureResponseSchema = z36.object({
+  profilePicPath: z36.string(),
+  url: z36.string(),
+  message: z36.string()
 });
 var replaceCrewProfilePictureContract = {
   request: replaceCrewProfilePictureRequestSchema,
   response: replaceCrewProfilePictureResponseSchema
 };
-var deleteCrewProfilePictureRequestSchema = z37.object({
+var deleteCrewProfilePictureRequestSchema = z36.object({
   params: crewIdParamsSchema
 });
 var deleteCrewProfilePictureContract = {
   request: deleteCrewProfilePictureRequestSchema,
-  response: z37.void()
+  response: z36.void()
 };
 
 // src/modules/social/crews/requests/crew-requests.contracts.ts
-import { z as z38 } from "zod/v4";
+import { z as z37 } from "zod/v4";
 
 // src/modules/social/crews/requests/crew-requests.dtos.ts
 var crewParticipationRequestQueryDtoSchema = crewParticipationRequestDbSchema.extend({
@@ -3826,33 +3815,33 @@ var crewParticipationRequestQueryDtoSchema = crewParticipationRequestDbSchema.ex
 });
 
 // src/modules/social/crews/requests/crew-requests.contracts.ts
-var crewParamsSchema = z38.object({
+var crewParamsSchema = z37.object({
   crewId: crewDbSchema.shape.id
 });
-var requestParamsSchema = z38.object({
-  requestId: z38.uuid()
+var requestParamsSchema = z37.object({
+  requestId: z37.uuid()
 });
-var inviteCrewUserRequestSchema = z38.object({
+var inviteCrewUserRequestSchema = z37.object({
   params: crewParamsSchema,
-  body: z38.object({
-    userId: z38.uuid()
+  body: z37.object({
+    userId: z37.uuid()
   })
 });
 var inviteCrewUserContract = {
   request: inviteCrewUserRequestSchema,
-  response: z38.void()
+  response: z37.void()
 };
-var requestToJoinCrewRequestSchema = z38.object({
+var requestToJoinCrewRequestSchema = z37.object({
   params: crewParamsSchema
 });
 var requestToJoinCrewContract = {
   request: requestToJoinCrewRequestSchema,
-  response: z38.void()
+  response: z37.void()
 };
-var updateCrewParticipationRequestStatusRequestSchema = z38.object({
+var updateCrewParticipationRequestStatusRequestSchema = z37.object({
   params: requestParamsSchema,
-  body: z38.object({
-    status: z38.enum([
+  body: z37.object({
+    status: z37.enum([
       "accepted",
       "declined"
     ])
@@ -3860,21 +3849,21 @@ var updateCrewParticipationRequestStatusRequestSchema = z38.object({
 });
 var updateCrewParticipationRequestStatusContract = {
   request: updateCrewParticipationRequestStatusRequestSchema,
-  response: z38.void()
+  response: z37.void()
 };
-var listCrewInvitationsRequestSchema = z38.object({});
-var listCrewInvitationsResponseSchema = z38.object({
-  invitations: z38.array(crewParticipationRequestQueryDtoSchema)
+var listCrewInvitationsRequestSchema = z37.object({});
+var listCrewInvitationsResponseSchema = z37.object({
+  invitations: z37.array(crewParticipationRequestQueryDtoSchema)
 });
 var listCrewInvitationsContract = {
   request: listCrewInvitationsRequestSchema,
   response: listCrewInvitationsResponseSchema
 };
-var listPendingCrewJoinRequestsRequestSchema = z38.object({
+var listPendingCrewJoinRequestsRequestSchema = z37.object({
   params: crewParamsSchema
 });
-var listPendingCrewJoinRequestsResponseSchema = z38.object({
-  requests: z38.array(crewParticipationRequestQueryDtoSchema)
+var listPendingCrewJoinRequestsResponseSchema = z37.object({
+  requests: z37.array(crewParticipationRequestQueryDtoSchema)
 });
 var listPendingCrewJoinRequestsContract = {
   request: listPendingCrewJoinRequestsRequestSchema,
@@ -3882,10 +3871,10 @@ var listPendingCrewJoinRequestsContract = {
 };
 
 // src/modules/social/posts/posts.contracts.ts
-import { z as z40 } from "zod/v4";
+import { z as z39 } from "zod/v4";
 
 // src/modules/social/posts/posts.dtos.ts
-import { z as z39 } from "zod/v4";
+import { z as z38 } from "zod/v4";
 var postQueryDtoSchema = postDbSchema.omit({
   updateddAt: true
 }).extend({
@@ -3894,56 +3883,56 @@ var postQueryDtoSchema = postDbSchema.omit({
   username: userDbSchema.shape.username,
   fullName: userDbSchema.shape.name,
   profilePicPath: userDbSchema.shape.profilePicPath,
-  interactions: z39.object({
-    reactionsCount: z39.object({
-      likesCount: z39.number().int().nonnegative(),
-      fireUpCount: z39.number().int().nonnegative(),
-      muscleCount: z39.number().int().nonnegative()
+  interactions: z38.object({
+    reactionsCount: z38.object({
+      likesCount: z38.number().int().nonnegative(),
+      fireUpCount: z38.number().int().nonnegative(),
+      muscleCount: z38.number().int().nonnegative()
     }),
-    commentsCount: z39.number().int().nonnegative()
+    commentsCount: z38.number().int().nonnegative()
   })
 });
-var deletedPostQueryDtoSchema = z39.object({
+var deletedPostQueryDtoSchema = z38.object({
   id: postDbSchema.shape.id
 });
 
 // src/modules/social/posts/posts.contracts.ts
-var postIdParamsSchema = z40.object({
+var postIdParamsSchema = z39.object({
   id: postDbSchema.shape.id
 });
-var postPaginationSchema = z40.object({
-  limit: z40.coerce.number().int().min(1).max(100).default(20),
-  cursor: z40.string().min(1).optional()
+var postPaginationSchema = z39.object({
+  limit: z39.coerce.number().int().min(1).max(100).default(20),
+  cursor: z39.string().min(1).optional()
 });
-var listVisiblePostsRequestSchema = z40.object({
+var listVisiblePostsRequestSchema = z39.object({
   query: postPaginationSchema
 });
-var listVisiblePostsResponseSchema = z40.object({
-  posts: z40.array(postQueryDtoSchema),
-  nextCursor: z40.string().nullable()
+var listVisiblePostsResponseSchema = z39.object({
+  posts: z39.array(postQueryDtoSchema),
+  nextCursor: z39.string().nullable()
 });
 var listVisiblePostsContract = {
   request: listVisiblePostsRequestSchema,
   response: listVisiblePostsResponseSchema
 };
-var listCrewPostsRequestSchema = z40.object({
-  params: z40.object({
-    crewId: z40.uuid()
+var listCrewPostsRequestSchema = z39.object({
+  params: z39.object({
+    crewId: z39.uuid()
   }),
   query: postPaginationSchema
 });
-var listCrewPostsResponseSchema = z40.object({
-  posts: z40.array(postQueryDtoSchema),
-  nextCursor: z40.string().nullable()
+var listCrewPostsResponseSchema = z39.object({
+  posts: z39.array(postQueryDtoSchema),
+  nextCursor: z39.string().nullable()
 });
 var listCrewPostsContract = {
   request: listCrewPostsRequestSchema,
   response: listCrewPostsResponseSchema
 };
-var createPostBodySchema = z40.object({
+var createPostBodySchema = z39.object({
   content: postDbSchema.shape.content,
   visibility: postDbSchema.shape.visibility,
-  crewIds: z40.array(z40.uuid()).default([]),
+  crewIds: z39.array(z39.uuid()).default([]),
   workoutSummaryId: postDbSchema.shape.workoutSummaryId.optional()
 }).superRefine((body, context) => {
   if (body.visibility === "crews_only" && body.crewIds.length === 0) {
@@ -3965,39 +3954,39 @@ var createPostBodySchema = z40.object({
     });
   }
 });
-var createPostRequestSchema = z40.object({
+var createPostRequestSchema = z39.object({
   body: createPostBodySchema
 });
-var createPostResponseSchema = z40.void();
+var createPostResponseSchema = z39.void();
 var createPostContract = {
   request: createPostRequestSchema,
   response: createPostResponseSchema
 };
-var updatePostRequestSchema = z40.object({
+var updatePostRequestSchema = z39.object({
   params: postIdParamsSchema,
-  body: z40.object({
+  body: z39.object({
     content: postDbSchema.shape.content
   })
 });
-var updatePostResponseSchema = z40.void();
+var updatePostResponseSchema = z39.void();
 var updatePostContract = {
   request: updatePostRequestSchema,
   response: updatePostResponseSchema
 };
-var deletePostRequestSchema = z40.object({
+var deletePostRequestSchema = z39.object({
   params: postIdParamsSchema
 });
-var deletePostResponseSchema = z40.void();
+var deletePostResponseSchema = z39.void();
 var deletePostContract = {
   request: deletePostRequestSchema,
   response: deletePostResponseSchema
 };
 
 // src/modules/social/posts/comments/comments.contracts.ts
-import { z as z42 } from "zod/v4";
+import { z as z41 } from "zod/v4";
 
 // src/modules/social/posts/comments/comments.dtos.ts
-import { z as z41 } from "zod/v4";
+import { z as z40 } from "zod/v4";
 var commentQueryDtoSchema = commentDbSchema.extend({
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
@@ -4005,125 +3994,125 @@ var commentQueryDtoSchema = commentDbSchema.extend({
   authorProfilePicPath: userDbSchema.shape.profilePicPath,
   authorUsername: userDbSchema.shape.username
 });
-var commentWriteResultQueryDtoSchema = z41.object({
+var commentWriteResultQueryDtoSchema = z40.object({
   id: commentDbSchema.shape.id
 });
 
 // src/modules/social/posts/comments/comments.contracts.ts
-var postParamsSchema = z42.object({
+var postParamsSchema = z41.object({
   postId: postDbSchema.shape.id
 });
-var commentParamsSchema = z42.object({
+var commentParamsSchema = z41.object({
   id: commentDbSchema.shape.id
 });
 var commentContentSchema = commentDbSchema.shape.content.trim().min(1).max(2e3);
-var listPostCommentsRequestSchema = z42.object({
+var listPostCommentsRequestSchema = z41.object({
   params: postParamsSchema,
-  query: z42.object({
-    limit: z42.coerce.number().int().min(1).max(100).default(20),
-    cursor: z42.string().min(1).optional()
+  query: z41.object({
+    limit: z41.coerce.number().int().min(1).max(100).default(20),
+    cursor: z41.string().min(1).optional()
   })
 });
-var listPostCommentsResponseSchema = z42.object({
-  comments: z42.array(commentQueryDtoSchema),
-  nextCursor: z42.string().nullable()
+var listPostCommentsResponseSchema = z41.object({
+  comments: z41.array(commentQueryDtoSchema),
+  nextCursor: z41.string().nullable()
 });
 var listPostCommentsContract = {
   request: listPostCommentsRequestSchema,
   response: listPostCommentsResponseSchema
 };
-var addCommentRequestSchema = z42.object({
+var addCommentRequestSchema = z41.object({
   params: postParamsSchema,
-  body: z42.object({
+  body: z41.object({
     content: commentContentSchema
   })
 });
-var addCommentResponseSchema = z42.void();
+var addCommentResponseSchema = z41.void();
 var addCommentContract = {
   request: addCommentRequestSchema,
   response: addCommentResponseSchema
 };
-var editCommentRequestSchema = z42.object({
+var editCommentRequestSchema = z41.object({
   params: commentParamsSchema,
-  body: z42.object({
+  body: z41.object({
     content: commentContentSchema
   })
 });
-var editCommentResponseSchema = z42.void();
+var editCommentResponseSchema = z41.void();
 var editCommentContract = {
   request: editCommentRequestSchema,
   response: editCommentResponseSchema
 };
-var deleteCommentRequestSchema = z42.object({
+var deleteCommentRequestSchema = z41.object({
   params: commentParamsSchema
 });
-var deleteCommentResponseSchema = z42.void();
+var deleteCommentResponseSchema = z41.void();
 var deleteCommentContract = {
   request: deleteCommentRequestSchema,
   response: deleteCommentResponseSchema
 };
 
 // src/modules/social/posts/reactions/reactions.contracts.ts
-import { z as z44 } from "zod/v4";
+import { z as z43 } from "zod/v4";
 
 // src/modules/social/posts/reactions/reactions.dtos.ts
-import { z as z43 } from "zod/v4";
+import { z as z42 } from "zod/v4";
 var reactionQueryDtoSchema = reactionDbSchema.extend({
   reactedAt: serializedDateSchema
 });
-var reactionWriteResultQueryDtoSchema = z43.object({
+var reactionWriteResultQueryDtoSchema = z42.object({
   id: reactionDbSchema.shape.id
 });
 
 // src/modules/social/posts/reactions/reactions.contracts.ts
-var postParamsSchema2 = z44.object({
+var postParamsSchema2 = z43.object({
   postId: postDbSchema.shape.id
 });
-var listPostReactionsRequestSchema = z44.object({
+var listPostReactionsRequestSchema = z43.object({
   params: postParamsSchema2,
-  query: z44.object({
-    limit: z44.coerce.number().int().min(1).max(100).default(20),
-    cursor: z44.string().min(1).optional()
+  query: z43.object({
+    limit: z43.coerce.number().int().min(1).max(100).default(20),
+    cursor: z43.string().min(1).optional()
   })
 });
-var listPostReactionsResponseSchema = z44.object({
-  reactions: z44.array(reactionQueryDtoSchema),
-  nextCursor: z44.string().nullable()
+var listPostReactionsResponseSchema = z43.object({
+  reactions: z43.array(reactionQueryDtoSchema),
+  nextCursor: z43.string().nullable()
 });
 var listPostReactionsContract = {
   request: listPostReactionsRequestSchema,
   response: listPostReactionsResponseSchema
 };
-var reactToPostRequestSchema = z44.object({
+var reactToPostRequestSchema = z43.object({
   params: postParamsSchema2,
-  body: z44.object({
+  body: z43.object({
     type: reactionDbSchema.shape.type
   })
 });
-var reactToPostResponseSchema = z44.void();
+var reactToPostResponseSchema = z43.void();
 var reactToPostContract = {
   request: reactToPostRequestSchema,
   response: reactToPostResponseSchema
 };
-var deleteReactionRequestSchema = z44.object({
+var deleteReactionRequestSchema = z43.object({
   params: postParamsSchema2
 });
-var deleteReactionResponseSchema = z44.void();
+var deleteReactionResponseSchema = z43.void();
 var deleteReactionContract = {
   request: deleteReactionRequestSchema,
   response: deleteReactionResponseSchema
 };
 
 // src/modules/social/summary/social-summary.contracts.ts
-import { z as z45 } from "zod/v4";
-var socialSummaryParticipantPreviewSchema = z45.object({
+import { z as z44 } from "zod/v4";
+var socialSummaryParticipantPreviewSchema = z44.object({
   userId: userDbSchema.shape.id,
   username: userDbSchema.shape.username,
   fullName: userDbSchema.shape.name,
   profilePicPath: userDbSchema.shape.profilePicPath
 });
-var getSocialSummaryResponseSchema = z45.object({
-  activeCrewCount: z45.number().int().nonnegative(),
+var getSocialSummaryResponseSchema = z44.object({
+  activeCrewCount: z44.number().int().nonnegative(),
   participantPreviews: socialSummaryParticipantPreviewSchema.array().max(3)
 });
 var getSocialSummaryContract = {
@@ -4131,11 +4120,11 @@ var getSocialSummaryContract = {
 };
 
 // src/modules/social/users/social-users.contracts.ts
-import { z as z47 } from "zod/v4";
+import { z as z46 } from "zod/v4";
 
 // src/modules/social/users/social-users.dtos.ts
-import { z as z46 } from "zod/v4";
-var socialUserQueryDtoSchema = z46.object({
+import { z as z45 } from "zod/v4";
+var socialUserQueryDtoSchema = z45.object({
   userId: userDbSchema.shape.id,
   username: userDbSchema.shape.username,
   fullName: userDbSchema.shape.name,
@@ -4144,23 +4133,23 @@ var socialUserQueryDtoSchema = z46.object({
 });
 
 // src/modules/social/users/social-users.contracts.ts
-var searchSocialUsersRequestSchema = z47.object({
-  query: z47.object({
-    search: z47.string().trim().min(1).max(50),
-    limit: z47.coerce.number().int().min(1).max(100).default(20),
-    cursor: z47.string().min(1).optional()
+var searchSocialUsersRequestSchema = z46.object({
+  query: z46.object({
+    search: z46.string().trim().min(1).max(50),
+    limit: z46.coerce.number().int().min(1).max(100).default(20),
+    cursor: z46.string().min(1).optional()
   })
 });
-var searchSocialUsersResponseSchema = z47.object({
-  users: z47.array(socialUserQueryDtoSchema),
-  nextCursor: z47.string().nullable()
+var searchSocialUsersResponseSchema = z46.object({
+  users: z46.array(socialUserQueryDtoSchema),
+  nextCursor: z46.string().nullable()
 });
 var searchSocialUsersContract = {
   request: searchSocialUsersRequestSchema,
   response: searchSocialUsersResponseSchema
 };
-var getSocialUserRequestSchema = z47.object({
-  params: z47.object({
+var getSocialUserRequestSchema = z46.object({
+  params: z46.object({
     userId: userDbSchema.shape.id
   })
 });
@@ -4173,14 +4162,10 @@ var getSocialUserContract = {
 };
 export {
   accessTokenPayloadDtoSchema,
-  addAerobicInputQueryDtoSchema,
   addCommentContract,
   addCommentRequestSchema,
   addCommentResponseSchema,
-  aerobicMutationRowQueryDtoSchema,
   aerobicTrackingDbSchema,
-  aerobicsDailyRecordQueryDtoSchema,
-  aerobicsWeeklyRecordQueryDtoSchema,
   allUserMessageQueryDtoSchema,
   analyzeVideoPayloadDtoSchema,
   analyzeVideoResultPayloadDtoSchema,
@@ -4447,8 +4432,6 @@ export {
   updateUnverifiedAccountEmailRequestSchema,
   upsertReminderSettingsContract,
   upsertReminderSettingsRequestSchema,
-  userAerobicsQueryDtoSchema,
-  userAerobicsRowQueryDtoSchema,
   userAfterBumpQueryDtoSchema,
   userByIdentifierQueryDtoSchema,
   userByIdentifierRawQueryDtoSchema,
@@ -4470,7 +4453,6 @@ export {
   userWithNotificationsEnabledQueryDtoSchema,
   verifyEmailContract,
   verifyEmailRequestSchema,
-  weeklyDataQueryDtoSchema,
   wholeUserWorkoutPlanQueryDtoSchema,
   workoutExerciseInputQueryDtoSchema,
   workoutPlanDbSchema,
