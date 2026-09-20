@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Controller, Get, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import helmet from 'helmet';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AerobicsModule } from './modules/aerobics/aerobics.module';
@@ -47,6 +48,7 @@ class AppController {
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot(),
     RedisModule,
     DBModule,
     SocketIOModule,

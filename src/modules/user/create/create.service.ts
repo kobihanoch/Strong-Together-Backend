@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import { CreateUserQueries } from './create.queries';
 import type { CreateUserBody } from '@strong-together/shared';
-import { VerificationEmailsService } from '../../auth/verification/verification-emails/verification-emails.service';
+import { VerificationEmailSender } from '../../auth/verification/application/ports/verification-email-sender.port';
 import { DBService } from '../../../infrastructure/db/db.service';
 
 @Injectable()
@@ -10,7 +10,7 @@ export class CreateUserService {
   constructor(
     private readonly dbService: DBService,
     private readonly createUserQueries: CreateUserQueries,
-    private readonly verificationEmailsService: VerificationEmailsService,
+    private readonly verificationEmailSender: VerificationEmailSender,
   ) {}
 
   /**
@@ -30,7 +30,7 @@ export class CreateUserService {
     const created = await this.createUserQueries.queryInsertUser(username!, fullName, email!, gender, passwordHash);
 
     this.dbService.afterCommit(() => {
-      return this.verificationEmailsService.sendVerificationEmail(email as string, created.id, fullName, {
+      return this.verificationEmailSender.send(email as string, created.id, fullName, {
         ...(requestId ? { requestId } : {}),
       });
     });

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TransactionHooks } from '../../../../common/application/ports/transaction-hooks.port';
-import { AerobicEntryNotFoundError } from '../aerobic-entry-not-found.error';
+import { AerobicEntryNotFoundError } from '../errors/aerobic-entry-not-found.error';
 import { AerobicsCache } from '../ports/aerobics-cache.port';
 import { AerobicsRepository } from '../ports/aerobics.repository';
 

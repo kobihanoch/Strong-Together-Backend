@@ -4752,16 +4752,6 @@ type ResetPasswordBody = BodyOf<typeof resetPasswordContract>;
 type ResetPasswordQuery = QueryOf<typeof resetPasswordContract>;
 type ResetPasswordResponse = ResponseOf<typeof resetPasswordContract>;
 
-/** Claims carried by a forgot-password token. */
-declare const forgotPasswordPayloadDtoSchema: z.ZodObject<{
-    sub: z.ZodUUID;
-    jti: z.ZodString;
-    exp: z.ZodNumber;
-    iss: z.ZodString;
-    typ: z.ZodString;
-}, z.core.$strip>;
-type ForgotPasswordPayloadDto = z.infer<typeof forgotPasswordPayloadDtoSchema>;
-
 declare const loginRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         identifier: z.ZodString;
@@ -4770,7 +4760,7 @@ declare const loginRequestSchema: z.ZodObject<{
 }, z.core.$strip>;
 declare const loginResponseSchema: z.ZodObject<{
     message: z.ZodString;
-    user: z.ZodUUID;
+    user: z.ZodString;
     accessToken: z.ZodString;
     refreshToken: z.ZodString;
 }, z.core.$strip>;
@@ -4783,7 +4773,7 @@ declare const loginContract: {
     }, z.core.$strip>;
     response: z.ZodObject<{
         message: z.ZodString;
-        user: z.ZodUUID;
+        user: z.ZodString;
         accessToken: z.ZodString;
         refreshToken: z.ZodString;
     }, z.core.$strip>;
@@ -4792,14 +4782,14 @@ declare const refreshTokenResponseSchema: z.ZodObject<{
     message: z.ZodString;
     accessToken: z.ZodString;
     refreshToken: z.ZodString;
-    userId: z.ZodUUID;
+    userId: z.ZodString;
 }, z.core.$strip>;
 declare const refreshTokenContract: {
     response: z.ZodObject<{
         message: z.ZodString;
         accessToken: z.ZodString;
         refreshToken: z.ZodString;
-        userId: z.ZodUUID;
+        userId: z.ZodString;
     }, z.core.$strip>;
 };
 declare const logoutResponseSchema: z.ZodObject<{
@@ -4814,129 +4804,6 @@ type LoginRequestBody = BodyOf<typeof loginContract>;
 type LoginResponse = ResponseOf<typeof loginContract>;
 type RefreshTokenResponse = ResponseOf<typeof refreshTokenContract>;
 type LogoutResponse = ResponseOf<typeof logoutContract>;
-
-/** Accepts current access tokens and normalizes legacy access tokens. */
-declare const accessTokenPayloadDtoSchema: z.ZodUnion<readonly [z.ZodObject<{
-    id: z.ZodUUID;
-    sub: z.ZodUUID;
-    role: z.ZodString;
-    typ: z.ZodLiteral<"access">;
-    iss: z.ZodLiteral<"strong-together">;
-    aud: z.ZodLiteral<"strong-together-api">;
-    cnf: z.ZodOptional<z.ZodObject<{
-        jkt: z.ZodString;
-    }, z.core.$strip>>;
-    iat: z.ZodNumber;
-    exp: z.ZodNumber;
-}, z.core.$strip>, z.ZodPipe<z.ZodObject<{
-    id: z.ZodUUID;
-    role: z.ZodString;
-    cnf: z.ZodOptional<z.ZodObject<{
-        jkt: z.ZodString;
-    }, z.core.$strip>>;
-    iat: z.ZodNumber;
-    exp: z.ZodNumber;
-}, z.core.$strict>, z.ZodTransform<{
-    sub: string;
-    typ: "access";
-    iss: "strong-together";
-    aud: "strong-together-api";
-    id: string;
-    role: string;
-    iat: number;
-    exp: number;
-    cnf?: {
-        jkt: string;
-    } | undefined;
-}, {
-    id: string;
-    role: string;
-    iat: number;
-    exp: number;
-    cnf?: {
-        jkt: string;
-    } | undefined;
-}>>]>;
-/** Claims carried by an issued refresh token. */
-declare const refreshTokenPayloadDtoSchema: z.ZodUnion<readonly [z.ZodObject<{
-    id: z.ZodUUID;
-    sub: z.ZodUUID;
-    role: z.ZodString;
-    iss: z.ZodLiteral<"strong-together">;
-    cnf: z.ZodOptional<z.ZodObject<{
-        jkt: z.ZodString;
-    }, z.core.$strip>>;
-    iat: z.ZodNumber;
-    exp: z.ZodNumber;
-    typ: z.ZodLiteral<"refresh">;
-    aud: z.ZodLiteral<"strong-together-refresh">;
-    tokenVer: z.ZodInt;
-}, z.core.$strip>, z.ZodPipe<z.ZodObject<{
-    id: z.ZodUUID;
-    role: z.ZodString;
-    cnf: z.ZodOptional<z.ZodObject<{
-        jkt: z.ZodString;
-    }, z.core.$strip>>;
-    iat: z.ZodNumber;
-    exp: z.ZodNumber;
-    tokenVer: z.ZodInt;
-}, z.core.$strict>, z.ZodTransform<{
-    sub: string;
-    typ: "refresh";
-    iss: "strong-together";
-    aud: "strong-together-refresh";
-    id: string;
-    role: string;
-    iat: number;
-    exp: number;
-    tokenVer: number;
-    cnf?: {
-        jkt: string;
-    } | undefined;
-}, {
-    id: string;
-    role: string;
-    iat: number;
-    exp: number;
-    tokenVer: number;
-    cnf?: {
-        jkt: string;
-    } | undefined;
-}>>]>;
-/** User data returned after atomically incrementing the token version. */
-declare const userAfterBumpQueryDtoSchema: z.ZodObject<{
-    tokenVersion: z.ZodInt;
-    userData: z.ZodObject<{
-        id: z.ZodUUID;
-        username: z.ZodString;
-        email: z.ZodString;
-        name: z.ZodString;
-        gender: z.ZodString;
-        createdAt: z.ZodString;
-        updatedAt: z.ZodString;
-        profilePicPath: z.ZodNullable<z.ZodString>;
-        pushToken: z.ZodNullable<z.ZodString>;
-        role: z.ZodString;
-        isFirstLogin: z.ZodBoolean;
-        tokenVersion: z.ZodInt;
-        isVerified: z.ZodBoolean;
-        authProvider: z.ZodString;
-        lastLogin: z.ZodNullable<z.ZodString>;
-    }, z.core.$strip>;
-}, z.core.$strip>;
-/** Current token-version row returned by authentication checks. */
-declare const tokenVersionQueryDtoSchema: z.ZodObject<{
-    tokenVersion: z.ZodInt;
-}, z.core.$strip>;
-/** Last-login row returned by the session lookup function. */
-declare const lastLoginQueryDtoSchema: z.ZodObject<{
-    lastLogin: z.ZodNullable<z.ZodDate>;
-}, z.core.$strip>;
-type AccessTokenPayloadDto = z.infer<typeof accessTokenPayloadDtoSchema>;
-type RefreshTokenPayloadDto = z.infer<typeof refreshTokenPayloadDtoSchema>;
-type UserAfterBumpQueryDto = z.infer<typeof userAfterBumpQueryDtoSchema>;
-type TokenVersionQueryDto = z.infer<typeof tokenVersionQueryDtoSchema>;
-type LastLoginQueryDto = z.infer<typeof lastLoginQueryDtoSchema>;
 
 declare const verifyEmailRequestSchema: z.ZodObject<{
     query: z.ZodObject<{
@@ -4994,81 +4861,6 @@ type VerifyEmailQuery = QueryOf<typeof verifyEmailContract>;
 type CreateVerificationEmailBody = BodyOf<typeof createVerificationEmailContract>;
 type UpdateUnverifiedAccountEmailBody = BodyOf<typeof updateUnverifiedAccountEmailContract>;
 type GetVerificationStatusQuery = QueryOf<typeof getVerificationStatusContract>;
-
-/** Claims carried by an email-verification token. */
-declare const emailVerifyPayloadDtoSchema: z.ZodObject<{
-    sub: z.ZodUUID;
-    jti: z.ZodString;
-    exp: z.ZodNumber;
-    iss: z.ZodString;
-    typ: z.ZodString;
-}, z.core.$strip>;
-type EmailVerifyPayloadDto = z.infer<typeof emailVerifyPayloadDtoSchema>;
-
-/** Normalized user record returned by identifier-based authentication queries. */
-declare const userByIdentifierQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    name: z.ZodString;
-    username: z.ZodString;
-    email: z.ZodOptional<z.ZodString>;
-    passwordHash: z.ZodNullable<z.ZodString>;
-    role: z.ZodString;
-    isVerified: z.ZodBoolean;
-    lastLogin: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-}, z.core.$strip>;
-/** Raw database function payload before snake_case fields are normalized. */
-declare const userByIdentifierRawQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    name: z.ZodString;
-    username: z.ZodString;
-    email: z.ZodOptional<z.ZodString>;
-    role: z.ZodString;
-    password_hash: z.ZodNullable<z.ZodString>;
-    is_verified: z.ZodBoolean;
-    last_login: z.ZodNullable<z.ZodString>;
-}, z.core.$strip>;
-/** SQL row wrapping an identifier lookup result under `userData`. */
-declare const userByIdentifierRowQueryDtoSchema: z.ZodObject<{
-    userData: z.ZodNullable<z.ZodObject<{
-        id: z.ZodUUID;
-        name: z.ZodString;
-        username: z.ZodString;
-        email: z.ZodOptional<z.ZodString>;
-        role: z.ZodString;
-        password_hash: z.ZodNullable<z.ZodString>;
-        is_verified: z.ZodBoolean;
-        last_login: z.ZodNullable<z.ZodString>;
-    }, z.core.$strip>>;
-}, z.core.$strip>;
-/** Raw username lookup payload before `is_verified` is normalized. */
-declare const userByUsernameRawQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    name: z.ZodString;
-    username: z.ZodString;
-    email: z.ZodOptional<z.ZodString>;
-    role: z.ZodString;
-    lastLogin: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    password_hash: z.ZodNullable<z.ZodString>;
-    is_verified: z.ZodBoolean;
-}, z.core.$strip>;
-/** SQL row wrapping a username lookup result under `userData`. */
-declare const userByUsernameRowQueryDtoSchema: z.ZodObject<{
-    userData: z.ZodNullable<z.ZodObject<{
-        id: z.ZodUUID;
-        name: z.ZodString;
-        username: z.ZodString;
-        email: z.ZodOptional<z.ZodString>;
-        role: z.ZodString;
-        lastLogin: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-        password_hash: z.ZodNullable<z.ZodString>;
-        is_verified: z.ZodBoolean;
-    }, z.core.$strip>>;
-}, z.core.$strip>;
-type UserByIdentifierQueryDto = z.infer<typeof userByIdentifierQueryDtoSchema>;
-type UserByIdentifierRawQueryDto = z.infer<typeof userByIdentifierRawQueryDtoSchema>;
-type UserByIdentifierRowQueryDto = z.infer<typeof userByIdentifierRowQueryDtoSchema>;
-type UserByUsernameRawQueryDto = z.infer<typeof userByUsernameRawQueryDtoSchema>;
-type UserByUsernameRowQueryDto = z.infer<typeof userByUsernameRowQueryDtoSchema>;
 
 declare const listExercisesResponseSchema: zod_v4.ZodRecord<zod_v4.ZodString, zod_v4.ZodArray<zod_v4.ZodObject<{
     id: zod_v4.ZodInt;
@@ -5283,7 +5075,7 @@ declare const oAuthLoginResponseSchema: z.ZodObject<{
 }, z.core.$strip>;
 declare const proceedLoginResponseSchema: z.ZodObject<{
     message: z.ZodString;
-    user: z.ZodUUID;
+    user: z.ZodString;
     accessToken: z.ZodString;
     refreshToken: z.ZodString;
 }, z.core.$strip>;
@@ -8340,4 +8132,4 @@ declare const socialUserQueryDtoSchema: z.ZodObject<{
 /** A public user profile returned by social search. */
 type SocialUserQueryDto = typeof socialUserQueryDtoSchema._output;
 
-export { type AccessTokenPayloadDto, type AddCommentBody, type AddCommentParams, type AddCommentResponse, type AerobicTrackingRow, type AllUserMessageQueryDto, type AnalyzeVideoPayloadDto, type AnalyzeVideoResultPayloadDto, type AppleOAuthBody, type AppleTokenVerificationResultDto, type AuthenticatedUserForUpdateQueryDto, type BodyOf, type ChangeEmailTokenPayloadDto, type CommentQueryDto, type CommentWriteResultQueryDto, type Contract, type CreateAerobicEntryBody, type CreateAerobicEntryQuery, type CreateCrewBody, type CreateCrewResponse, type CreatePasswordResetRequestBody, type CreatePostBody, type CreatePostResponse, type CreateUserBody, type CreateUserResponse, type CreateVerificationEmailBody, type CreateVideoUploadUrlBody, type CreateVideoUploadUrlResponse, type CreateWebSocketTicketBody, type CreateWebSocketTicketResponse, type CreateWorkoutSessionBody, type CreateWorkoutSessionResponse, type CreatedUserQueryDto, type CreatedUserRawQueryDto, type CreatedUserRowQueryDto, type CrewParticipantPreviewQueryDto, type CrewParticipantQueryDto, type CrewParticipationRequestQueryDto, type CrewQueryDto, type CrewSuccessorQueryDto, type CrewWithParticipantCountQueryDto, type DeleteAerobicEntryParams, type DeleteAerobicEntryQuery, type DeleteAerobicEntryResponse, type DeleteCommentParams, type DeleteCommentResponse, type DeleteCrewParams, type DeleteCrewProfilePictureParams, type DeleteCrewProfilePictureResponse, type DeleteCrewResponse, type DeleteMessageParams, type DeleteMessageResponse, type DeletePostParams, type DeletePostResponse, type DeleteProfilePictureBody, type DeleteReactionParams, type DeleteReactionResponse, type DeletedCrewQueryDto, type DeletedMessageQueryDto, type DeletedPostQueryDto, type DiscoverableCrewQueryDto, type EditCommentBody, type EditCommentParams, type EditCommentResponse, type EmailVerifyPayloadDto, type EnqueueAnalyzeVideoParamsDto, type ExerciseAssignmentIdQueryDto, type ExerciseHistoryQueryDto, type ExerciseHistoryRowQueryDto, type ExerciseInPlanQueryDto, type ExerciseMapByMuscleRowQueryDto, type ExerciseMetadataQueryDto, type ExerciseRow, type ExerciseToWorkoutSplitRow, type ExerciseTrackingAnalysisQueryDto, type ExerciseTrackingAndStatsQueryDto, type ExerciseTrackingAndStatsRowQueryDto, type ExerciseTrackingIdQueryDto, type ExerciseTrackingMapsQueryDto, type ExerciseTrackingMapsRowQueryDto, type ExerciseTrackingPrMaxQueryDto, type ExerciseTrackingRow, type ExerciseTrackingStatsQueryDto, type ExerciseTrackingStatsRowQueryDto, type ExercisesMapByMuscleQueryDto, type FinishedWorkoutEntryQueryDto, type ForgotPasswordPayloadDto, type GetAerobicHistoryQuery, type GetAerobicHistoryResponse, type GetAllExercisesExerciseQueryDto, type GetCrewParams, type GetCrewResponse, type GetCurrentUserResponse, type GetExerciseHistoryQuery, type GetExerciseHistoryResponse, type GetPersonalRecordsQuery, type GetPersonalRecordsResponse, type GetReminderSettingsResponse, type GetSocialSummaryResponse, type GetSocialUserParams, type GetSocialUserResponse, type GetVerificationStatusQuery, type GetWorkoutHistoryQuery, type GetWorkoutHistoryResponse, type GetWorkoutPlanQuery, type GetWorkoutPlanResponse, type GetWorkoutSchedulesResponse, type GetWorkoutStatisticsResponse, type GoogleOAuthBody, type GoogleTokenVerificationResultDto, type InviteCrewUserBody, type InviteCrewUserParams, type InviteCrewUserResponse, type LastLoginQueryDto, type LeaveCrewContextQueryDto, type LeaveCrewParams, type LeaveCrewResponse, type LeaveCrewResultQueryDto, type ListCrewInvitationsResponse, type ListCrewParticipantsParams, type ListCrewParticipantsQuery, type ListCrewParticipantsResponse, type ListCrewPostsParams, type ListCrewPostsQuery, type ListCrewPostsResponse, type ListCrewsQuery, type ListCrewsResponse, type ListExercisesResponse, type ListMessagesQuery, type ListMessagesResponse, type ListMyCrewsQuery, type ListMyCrewsResponse, type ListPendingCrewJoinRequestsParams, type ListPendingCrewJoinRequestsResponse, type ListPostCommentsParams, type ListPostCommentsQuery, type ListPostCommentsResponse, type ListPostReactionsParams, type ListPostReactionsQuery, type ListPostReactionsResponse, type ListVisiblePostsQuery, type ListVisiblePostsResponse, type LoginRequestBody, type LoginResponse, type LogoutResponse, type MarkMessageAsReadParams, type MarkMessageAsReadResponse, type MessageAfterSendQueryDto, type MessageAsReadQueryDto, type MessageRow, type OAuthCreatedUserRowQueryDto, type OAuthLinkQueryDto, type OAuthLinkRowQueryDto, type OAuthLoginResponse, type OAuthLookupQueryDto, type OAuthLookupRawQueryDto, type OAuthLookupRowQueryDto, type ParamsOf, type PersonalRecordsQueryDto, type PersonalRecordsRowQueryDto, type PostQueryDto, type QueryOf, type ReactToPostBody, type ReactToPostParams, type ReactToPostResponse, type ReactionQueryDto, type ReactionWriteResultQueryDto, type RefreshTokenPayloadDto, type RefreshTokenResponse, type ReplaceCrewProfilePictureParams, type ReplaceCrewProfilePictureResponse, type ReplaceProfilePictureResponse, type ReplacePushTokenBody, type ReplaceWorkoutPlanBody, type ReplaceWorkoutPlanResponse, type ReplaceWorkoutSchedulesBody, type ReplaceWorkoutSchedulesResponse, type RequestOf, type RequestSchema, type RequestToJoinCrewParams, type RequestToJoinCrewResponse, type ResetPasswordBody, type ResetPasswordQuery, type ResetPasswordResponse, type ResponseOf, type SaveWorkoutSplitInputQueryDto, type SaveWorkoutSplitPayloadQueryDto, type SearchSocialUsersQuery, type SearchSocialUsersResponse, type SocialUserQueryDto, type SquatRepetitionDto, type TokenVersionQueryDto, type TrackingByDateItemQueryDto, type TrackingBySplitNameItemQueryDto, type TrackingMapItemQueryDto, type UpdateAerobicEntryBody, type UpdateAerobicEntryParams, type UpdateAerobicEntryQuery, type UpdateAerobicEntryResponse, type UpdateCrewBody, type UpdateCrewParams, type UpdateCrewParticipationRequestStatusBody, type UpdateCrewParticipationRequestStatusParams, type UpdateCrewParticipationRequestStatusResponse, type UpdateCrewResponse, type UpdateCurrentUserBody, type UpdateCurrentUserResponse, type UpdatePostBody, type UpdatePostParams, type UpdatePostResponse, type UpdateReminderTimeZoneBody, type UpdateReminderTimeZoneResponse, type UpdateUnverifiedAccountEmailBody, type UpsertReminderSettingsBody, type UpsertReminderSettingsResponse, type UserAfterBumpQueryDto, type UserByIdentifierQueryDto, type UserByIdentifierRawQueryDto, type UserByIdentifierRowQueryDto, type UserByUsernameRawQueryDto, type UserByUsernameRowQueryDto, type UserConflictQueryDto, type UserDataQueryDto, type UserDataResponse, type UserDataRowQueryDto, type UserExistsQueryDto, type UserInsert, type UserMessageIdentityQueryDto, type UserProfilePicQueryDto, type UserRow, type UserWithNotificationsEnabledQueryDto, type VerifyEmailQuery, type WholeUserWorkoutPlanQueryDto, type WorkoutExerciseInputQueryDto, type WorkoutPlanIdQueryDto, type WorkoutPlanRow, type WorkoutScheduleInputDto, type WorkoutScheduleQueryDto, type WorkoutSplitIdQueryDto, type WorkoutSplitLookupQueryDto, type WorkoutSplitQueryDto, type WorkoutSplitRow, type WorkoutSummaryIdQueryDto, type WorkoutSummaryRow, accessTokenPayloadDtoSchema, addCommentContract, addCommentRequestSchema, addCommentResponseSchema, aerobicTrackingDbSchema, allUserMessageQueryDtoSchema, analyzeVideoPayloadDtoSchema, analyzeVideoResultPayloadDtoSchema, appleOAuthContract, appleOAuthRequestSchema, appleTokenVerificationResultDtoSchema, authenticatedUserForUpdateQueryDtoSchema, changeEmailTokenPayloadDtoSchema, commentDbSchema, commentQueryDtoSchema, commentWriteResultQueryDtoSchema, createAerobicEntryContract, createAerobicEntryRequestSchema, createAerobicEntryResponseSchema, createCrewContract, createCrewRequestSchema, createCrewResponseSchema, createPasswordResetRequestContract, createPasswordResetRequestSchema, createPostContract, createPostRequestSchema, createPostResponseSchema, createUserContract, createUserRequestSchema, createUserResponseSchema, createUserUserSchema, createVerificationEmailContract, createVerificationEmailRequestSchema, createVideoUploadUrlContract, createVideoUploadUrlRequestSchema, createVideoUploadUrlResponseSchema, createWebSocketTicketContract, createWebSocketTicketRequestSchema, createWebSocketTicketResponseSchema, createWorkoutSessionContract, createWorkoutSessionRequestSchema, createWorkoutSessionResponseSchema, createdUserQueryDtoSchema, createdUserRawQueryDtoSchema, createdUserRowQueryDtoSchema, crewDbSchema, crewMembershipDbSchema, crewParticipantPreviewQueryDtoSchema, crewParticipantQueryDtoSchema, crewParticipationRequestDbSchema, crewParticipationRequestQueryDtoSchema, crewQueryDtoSchema, crewSuccessorQueryDtoSchema, crewWithParticipantCountQueryDtoSchema, deleteAerobicEntryContract, deleteAerobicEntryRequestSchema, deleteCommentContract, deleteCommentRequestSchema, deleteCommentResponseSchema, deleteCrewContract, deleteCrewProfilePictureContract, deleteCrewProfilePictureRequestSchema, deleteCrewRequestSchema, deleteCrewResponseSchema, deleteMessageContract, deleteMessageRequestSchema, deleteMessageResponseSchema, deletePostContract, deletePostRequestSchema, deletePostResponseSchema, deleteProfilePictureContract, deleteProfilePictureRequestSchema, deleteReactionContract, deleteReactionRequestSchema, deleteReactionResponseSchema, deletedCrewQueryDtoSchema, deletedMessageQueryDtoSchema, deletedPostQueryDtoSchema, discoverableCrewQueryDtoSchema, editCommentContract, editCommentRequestSchema, editCommentResponseSchema, emailVerifyPayloadDtoSchema, enqueueAnalyzeVideoParamsDtoSchema, exerciseAssignmentIdQueryDtoSchema, exerciseDbSchema, exerciseHistoryQueryDtoSchema, exerciseHistoryRowQueryDtoSchema, exerciseInPlanQueryDtoSchema, exerciseMapByMuscleRowQueryDtoSchema, exerciseMetadataQueryDtoSchema, exerciseToWorkoutSplitDbSchema, exerciseToWorkoutSplitSetExpandedViewDbSchema, exerciseTrackingAnalysisQueryDtoSchema, exerciseTrackingAndStatsQueryDtoSchema, exerciseTrackingAndStatsRowQueryDtoSchema, exerciseTrackingDbSchema, exerciseTrackingIdQueryDtoSchema, exerciseTrackingMapsQueryDtoSchema, exerciseTrackingMapsRowQueryDtoSchema, exerciseTrackingPrMaxQueryDtoSchema, exerciseTrackingSetExpandedViewDbSchema, exerciseTrackingStatsQueryDtoSchema, exerciseTrackingStatsRowQueryDtoSchema, exercisesMapByMuscleQueryDtoSchema, finishedWorkoutEntryQueryDtoSchema, forgotPasswordPayloadDtoSchema, getAerobicHistoryContract, getAerobicHistoryRequestSchema, getAerobicHistoryResponseSchema, getAllExercisesExerciseQueryDtoSchema, getCrewContract, getCrewRequestSchema, getCrewResponseSchema, getCurrentUserContract, getCurrentUserResponseSchema, getExerciseHistoryContract, getExerciseHistoryRequestSchema, getExerciseHistoryResponseSchema, getPersonalRecordsContract, getPersonalRecordsRequestSchema, getPersonalRecordsResponseSchema, getReminderSettingsContract, getReminderSettingsResponseSchema, getSocialSummaryContract, getSocialSummaryResponseSchema, getSocialUserContract, getSocialUserRequestSchema, getSocialUserResponseSchema, getVerificationStatusContract, getVerificationStatusRequestSchema, getWorkoutHistoryContract, getWorkoutHistoryRequestSchema, getWorkoutHistoryResponseSchema, getWorkoutPlanContract, getWorkoutPlanRequestSchema, getWorkoutPlanResponseSchema, getWorkoutSchedulesContract, getWorkoutSchedulesResponseSchema, getWorkoutStatisticsContract, getWorkoutStatisticsResponseSchema, googleOAuthContract, googleOAuthRequestSchema, googleTokenVerificationResultDtoSchema, inviteCrewUserContract, inviteCrewUserRequestSchema, lastLoginQueryDtoSchema, leaveCrewContextQueryDtoSchema, leaveCrewContract, leaveCrewRequestSchema, leaveCrewResponseSchema, leaveCrewResultQueryDtoSchema, listCrewInvitationsContract, listCrewInvitationsRequestSchema, listCrewInvitationsResponseSchema, listCrewParticipantsContract, listCrewParticipantsRequestSchema, listCrewParticipantsResponseSchema, listCrewPostsContract, listCrewPostsRequestSchema, listCrewPostsResponseSchema, listCrewsContract, listCrewsRequestSchema, listCrewsResponseSchema, listExercisesContract, listExercisesResponseSchema, listMessagesContract, listMessagesRequestSchema, listMessagesResponseSchema, listMyCrewsContract, listMyCrewsRequestSchema, listMyCrewsResponseSchema, listPendingCrewJoinRequestsContract, listPendingCrewJoinRequestsRequestSchema, listPendingCrewJoinRequestsResponseSchema, listPostCommentsContract, listPostCommentsRequestSchema, listPostCommentsResponseSchema, listPostReactionsContract, listPostReactionsRequestSchema, listPostReactionsResponseSchema, listVisiblePostsContract, listVisiblePostsRequestSchema, listVisiblePostsResponseSchema, loginContract, loginRequestSchema, loginResponseSchema, logoutContract, logoutResponseSchema, markMessageAsReadContract, markMessageAsReadRequestSchema, markMessageAsReadResponseSchema, messageAfterSendQueryDtoSchema, messageAsReadQueryDtoSchema, messageDbSchema, oAuthCreatedUserRowQueryDtoSchema, oAuthLinkQueryDtoSchema, oAuthLinkRowQueryDtoSchema, oAuthLoginContract, oAuthLoginResponseSchema, oAuthLookupQueryDtoSchema, oAuthLookupRawQueryDtoSchema, oAuthLookupRowQueryDtoSchema, oauthAccountDbSchema, personalRecordQueryDtoSchema, personalRecordsQueryDtoSchema, personalRecordsRowQueryDtoSchema, postDbSchema, postQueryDtoSchema, proceedLoginResponseSchema, prsViewDbSchema, reactToPostContract, reactToPostRequestSchema, reactToPostResponseSchema, reactionDbSchema, reactionQueryDtoSchema, reactionWriteResultQueryDtoSchema, refreshTokenContract, refreshTokenPayloadDtoSchema, refreshTokenResponseSchema, replaceCrewProfilePictureContract, replaceCrewProfilePictureRequestSchema, replaceCrewProfilePictureResponseSchema, replaceProfilePictureContract, replaceProfilePictureResponseSchema, replacePushTokenContract, replacePushTokenRequestSchema, replaceWorkoutPlanContract, replaceWorkoutPlanRequestSchema, replaceWorkoutPlanResponseSchema, replaceWorkoutSchedulesContract, replaceWorkoutSchedulesRequestSchema, requestToJoinCrewContract, requestToJoinCrewRequestSchema, resetPasswordContract, resetPasswordRequestSchema, resetPasswordResponseSchema, saveWorkoutSplitInputQueryDtoSchema, saveWorkoutSplitPayloadQueryDtoSchema, searchSocialUsersContract, searchSocialUsersRequestSchema, searchSocialUsersResponseSchema, serializedDateSchema, socialSummaryParticipantPreviewSchema, socialUserQueryDtoSchema, squatRepetitionDtoSchema, timezoneSchema, tokenVersionQueryDtoSchema, trackingByDateItemQueryDtoSchema, trackingBySplitNameItemQueryDtoSchema, trackingMapItemQueryDtoSchema, trackingSetDbSchema, updateAerobicEntryContract, updateAerobicEntryRequestSchema, updateCrewContract, updateCrewParticipationRequestStatusContract, updateCrewParticipationRequestStatusRequestSchema, updateCrewRequestSchema, updateCrewResponseSchema, updateCurrentUserContract, updateCurrentUserRequestSchema, updateCurrentUserResponseSchema, updatePostContract, updatePostRequestSchema, updatePostResponseSchema, updateReminderTimeZoneContract, updateReminderTimeZoneRequestSchema, updateUnverifiedAccountEmailContract, updateUnverifiedAccountEmailRequestSchema, upsertReminderSettingsContract, upsertReminderSettingsRequestSchema, userAfterBumpQueryDtoSchema, userByIdentifierQueryDtoSchema, userByIdentifierRawQueryDtoSchema, userByIdentifierRowQueryDtoSchema, userByUsernameRawQueryDtoSchema, userByUsernameRowQueryDtoSchema, userConflictQueryDtoSchema, userDataContract, userDataQueryDtoSchema, userDataResponseSchema, userDataRowQueryDtoSchema, userDbSchema, userExistsQueryDtoSchema, userInsertDbSchema, userMessageIdentityQueryDtoSchema, userProfilePicQueryDtoSchema, userReminderSettingDbSchema, userUpdateDbSchema, userWithNotificationsEnabledQueryDtoSchema, verifyEmailContract, verifyEmailRequestSchema, wholeUserWorkoutPlanQueryDtoSchema, workoutExerciseInputQueryDtoSchema, workoutPlanDbSchema, workoutPlanIdQueryDtoSchema, workoutScheduleDbSchema, workoutScheduleInputDtoSchema, workoutScheduleQueryDtoSchema, workoutSetDbSchema, workoutSplitDbSchema, workoutSplitIdQueryDtoSchema, workoutSplitLookupQueryDtoSchema, workoutSplitQueryDtoSchema, workoutSummaryDbSchema, workoutSummaryIdQueryDtoSchema };
+export { type AddCommentBody, type AddCommentParams, type AddCommentResponse, type AerobicTrackingRow, type AllUserMessageQueryDto, type AnalyzeVideoPayloadDto, type AnalyzeVideoResultPayloadDto, type AppleOAuthBody, type AppleTokenVerificationResultDto, type AuthenticatedUserForUpdateQueryDto, type BodyOf, type ChangeEmailTokenPayloadDto, type CommentQueryDto, type CommentWriteResultQueryDto, type Contract, type CreateAerobicEntryBody, type CreateAerobicEntryQuery, type CreateCrewBody, type CreateCrewResponse, type CreatePasswordResetRequestBody, type CreatePostBody, type CreatePostResponse, type CreateUserBody, type CreateUserResponse, type CreateVerificationEmailBody, type CreateVideoUploadUrlBody, type CreateVideoUploadUrlResponse, type CreateWebSocketTicketBody, type CreateWebSocketTicketResponse, type CreateWorkoutSessionBody, type CreateWorkoutSessionResponse, type CreatedUserQueryDto, type CreatedUserRawQueryDto, type CreatedUserRowQueryDto, type CrewParticipantPreviewQueryDto, type CrewParticipantQueryDto, type CrewParticipationRequestQueryDto, type CrewQueryDto, type CrewSuccessorQueryDto, type CrewWithParticipantCountQueryDto, type DeleteAerobicEntryParams, type DeleteAerobicEntryQuery, type DeleteAerobicEntryResponse, type DeleteCommentParams, type DeleteCommentResponse, type DeleteCrewParams, type DeleteCrewProfilePictureParams, type DeleteCrewProfilePictureResponse, type DeleteCrewResponse, type DeleteMessageParams, type DeleteMessageResponse, type DeletePostParams, type DeletePostResponse, type DeleteProfilePictureBody, type DeleteReactionParams, type DeleteReactionResponse, type DeletedCrewQueryDto, type DeletedMessageQueryDto, type DeletedPostQueryDto, type DiscoverableCrewQueryDto, type EditCommentBody, type EditCommentParams, type EditCommentResponse, type EnqueueAnalyzeVideoParamsDto, type ExerciseAssignmentIdQueryDto, type ExerciseHistoryQueryDto, type ExerciseHistoryRowQueryDto, type ExerciseInPlanQueryDto, type ExerciseMapByMuscleRowQueryDto, type ExerciseMetadataQueryDto, type ExerciseRow, type ExerciseToWorkoutSplitRow, type ExerciseTrackingAnalysisQueryDto, type ExerciseTrackingAndStatsQueryDto, type ExerciseTrackingAndStatsRowQueryDto, type ExerciseTrackingIdQueryDto, type ExerciseTrackingMapsQueryDto, type ExerciseTrackingMapsRowQueryDto, type ExerciseTrackingPrMaxQueryDto, type ExerciseTrackingRow, type ExerciseTrackingStatsQueryDto, type ExerciseTrackingStatsRowQueryDto, type ExercisesMapByMuscleQueryDto, type FinishedWorkoutEntryQueryDto, type GetAerobicHistoryQuery, type GetAerobicHistoryResponse, type GetAllExercisesExerciseQueryDto, type GetCrewParams, type GetCrewResponse, type GetCurrentUserResponse, type GetExerciseHistoryQuery, type GetExerciseHistoryResponse, type GetPersonalRecordsQuery, type GetPersonalRecordsResponse, type GetReminderSettingsResponse, type GetSocialSummaryResponse, type GetSocialUserParams, type GetSocialUserResponse, type GetVerificationStatusQuery, type GetWorkoutHistoryQuery, type GetWorkoutHistoryResponse, type GetWorkoutPlanQuery, type GetWorkoutPlanResponse, type GetWorkoutSchedulesResponse, type GetWorkoutStatisticsResponse, type GoogleOAuthBody, type GoogleTokenVerificationResultDto, type InviteCrewUserBody, type InviteCrewUserParams, type InviteCrewUserResponse, type LeaveCrewContextQueryDto, type LeaveCrewParams, type LeaveCrewResponse, type LeaveCrewResultQueryDto, type ListCrewInvitationsResponse, type ListCrewParticipantsParams, type ListCrewParticipantsQuery, type ListCrewParticipantsResponse, type ListCrewPostsParams, type ListCrewPostsQuery, type ListCrewPostsResponse, type ListCrewsQuery, type ListCrewsResponse, type ListExercisesResponse, type ListMessagesQuery, type ListMessagesResponse, type ListMyCrewsQuery, type ListMyCrewsResponse, type ListPendingCrewJoinRequestsParams, type ListPendingCrewJoinRequestsResponse, type ListPostCommentsParams, type ListPostCommentsQuery, type ListPostCommentsResponse, type ListPostReactionsParams, type ListPostReactionsQuery, type ListPostReactionsResponse, type ListVisiblePostsQuery, type ListVisiblePostsResponse, type LoginRequestBody, type LoginResponse, type LogoutResponse, type MarkMessageAsReadParams, type MarkMessageAsReadResponse, type MessageAfterSendQueryDto, type MessageAsReadQueryDto, type MessageRow, type OAuthCreatedUserRowQueryDto, type OAuthLinkQueryDto, type OAuthLinkRowQueryDto, type OAuthLoginResponse, type OAuthLookupQueryDto, type OAuthLookupRawQueryDto, type OAuthLookupRowQueryDto, type ParamsOf, type PersonalRecordsQueryDto, type PersonalRecordsRowQueryDto, type PostQueryDto, type QueryOf, type ReactToPostBody, type ReactToPostParams, type ReactToPostResponse, type ReactionQueryDto, type ReactionWriteResultQueryDto, type RefreshTokenResponse, type ReplaceCrewProfilePictureParams, type ReplaceCrewProfilePictureResponse, type ReplaceProfilePictureResponse, type ReplacePushTokenBody, type ReplaceWorkoutPlanBody, type ReplaceWorkoutPlanResponse, type ReplaceWorkoutSchedulesBody, type ReplaceWorkoutSchedulesResponse, type RequestOf, type RequestSchema, type RequestToJoinCrewParams, type RequestToJoinCrewResponse, type ResetPasswordBody, type ResetPasswordQuery, type ResetPasswordResponse, type ResponseOf, type SaveWorkoutSplitInputQueryDto, type SaveWorkoutSplitPayloadQueryDto, type SearchSocialUsersQuery, type SearchSocialUsersResponse, type SocialUserQueryDto, type SquatRepetitionDto, type TrackingByDateItemQueryDto, type TrackingBySplitNameItemQueryDto, type TrackingMapItemQueryDto, type UpdateAerobicEntryBody, type UpdateAerobicEntryParams, type UpdateAerobicEntryQuery, type UpdateAerobicEntryResponse, type UpdateCrewBody, type UpdateCrewParams, type UpdateCrewParticipationRequestStatusBody, type UpdateCrewParticipationRequestStatusParams, type UpdateCrewParticipationRequestStatusResponse, type UpdateCrewResponse, type UpdateCurrentUserBody, type UpdateCurrentUserResponse, type UpdatePostBody, type UpdatePostParams, type UpdatePostResponse, type UpdateReminderTimeZoneBody, type UpdateReminderTimeZoneResponse, type UpdateUnverifiedAccountEmailBody, type UpsertReminderSettingsBody, type UpsertReminderSettingsResponse, type UserConflictQueryDto, type UserDataQueryDto, type UserDataResponse, type UserDataRowQueryDto, type UserExistsQueryDto, type UserInsert, type UserMessageIdentityQueryDto, type UserProfilePicQueryDto, type UserRow, type UserWithNotificationsEnabledQueryDto, type VerifyEmailQuery, type WholeUserWorkoutPlanQueryDto, type WorkoutExerciseInputQueryDto, type WorkoutPlanIdQueryDto, type WorkoutPlanRow, type WorkoutScheduleInputDto, type WorkoutScheduleQueryDto, type WorkoutSplitIdQueryDto, type WorkoutSplitLookupQueryDto, type WorkoutSplitQueryDto, type WorkoutSplitRow, type WorkoutSummaryIdQueryDto, type WorkoutSummaryRow, addCommentContract, addCommentRequestSchema, addCommentResponseSchema, aerobicTrackingDbSchema, allUserMessageQueryDtoSchema, analyzeVideoPayloadDtoSchema, analyzeVideoResultPayloadDtoSchema, appleOAuthContract, appleOAuthRequestSchema, appleTokenVerificationResultDtoSchema, authenticatedUserForUpdateQueryDtoSchema, changeEmailTokenPayloadDtoSchema, commentDbSchema, commentQueryDtoSchema, commentWriteResultQueryDtoSchema, createAerobicEntryContract, createAerobicEntryRequestSchema, createAerobicEntryResponseSchema, createCrewContract, createCrewRequestSchema, createCrewResponseSchema, createPasswordResetRequestContract, createPasswordResetRequestSchema, createPostContract, createPostRequestSchema, createPostResponseSchema, createUserContract, createUserRequestSchema, createUserResponseSchema, createUserUserSchema, createVerificationEmailContract, createVerificationEmailRequestSchema, createVideoUploadUrlContract, createVideoUploadUrlRequestSchema, createVideoUploadUrlResponseSchema, createWebSocketTicketContract, createWebSocketTicketRequestSchema, createWebSocketTicketResponseSchema, createWorkoutSessionContract, createWorkoutSessionRequestSchema, createWorkoutSessionResponseSchema, createdUserQueryDtoSchema, createdUserRawQueryDtoSchema, createdUserRowQueryDtoSchema, crewDbSchema, crewMembershipDbSchema, crewParticipantPreviewQueryDtoSchema, crewParticipantQueryDtoSchema, crewParticipationRequestDbSchema, crewParticipationRequestQueryDtoSchema, crewQueryDtoSchema, crewSuccessorQueryDtoSchema, crewWithParticipantCountQueryDtoSchema, deleteAerobicEntryContract, deleteAerobicEntryRequestSchema, deleteCommentContract, deleteCommentRequestSchema, deleteCommentResponseSchema, deleteCrewContract, deleteCrewProfilePictureContract, deleteCrewProfilePictureRequestSchema, deleteCrewRequestSchema, deleteCrewResponseSchema, deleteMessageContract, deleteMessageRequestSchema, deleteMessageResponseSchema, deletePostContract, deletePostRequestSchema, deletePostResponseSchema, deleteProfilePictureContract, deleteProfilePictureRequestSchema, deleteReactionContract, deleteReactionRequestSchema, deleteReactionResponseSchema, deletedCrewQueryDtoSchema, deletedMessageQueryDtoSchema, deletedPostQueryDtoSchema, discoverableCrewQueryDtoSchema, editCommentContract, editCommentRequestSchema, editCommentResponseSchema, enqueueAnalyzeVideoParamsDtoSchema, exerciseAssignmentIdQueryDtoSchema, exerciseDbSchema, exerciseHistoryQueryDtoSchema, exerciseHistoryRowQueryDtoSchema, exerciseInPlanQueryDtoSchema, exerciseMapByMuscleRowQueryDtoSchema, exerciseMetadataQueryDtoSchema, exerciseToWorkoutSplitDbSchema, exerciseToWorkoutSplitSetExpandedViewDbSchema, exerciseTrackingAnalysisQueryDtoSchema, exerciseTrackingAndStatsQueryDtoSchema, exerciseTrackingAndStatsRowQueryDtoSchema, exerciseTrackingDbSchema, exerciseTrackingIdQueryDtoSchema, exerciseTrackingMapsQueryDtoSchema, exerciseTrackingMapsRowQueryDtoSchema, exerciseTrackingPrMaxQueryDtoSchema, exerciseTrackingSetExpandedViewDbSchema, exerciseTrackingStatsQueryDtoSchema, exerciseTrackingStatsRowQueryDtoSchema, exercisesMapByMuscleQueryDtoSchema, finishedWorkoutEntryQueryDtoSchema, getAerobicHistoryContract, getAerobicHistoryRequestSchema, getAerobicHistoryResponseSchema, getAllExercisesExerciseQueryDtoSchema, getCrewContract, getCrewRequestSchema, getCrewResponseSchema, getCurrentUserContract, getCurrentUserResponseSchema, getExerciseHistoryContract, getExerciseHistoryRequestSchema, getExerciseHistoryResponseSchema, getPersonalRecordsContract, getPersonalRecordsRequestSchema, getPersonalRecordsResponseSchema, getReminderSettingsContract, getReminderSettingsResponseSchema, getSocialSummaryContract, getSocialSummaryResponseSchema, getSocialUserContract, getSocialUserRequestSchema, getSocialUserResponseSchema, getVerificationStatusContract, getVerificationStatusRequestSchema, getWorkoutHistoryContract, getWorkoutHistoryRequestSchema, getWorkoutHistoryResponseSchema, getWorkoutPlanContract, getWorkoutPlanRequestSchema, getWorkoutPlanResponseSchema, getWorkoutSchedulesContract, getWorkoutSchedulesResponseSchema, getWorkoutStatisticsContract, getWorkoutStatisticsResponseSchema, googleOAuthContract, googleOAuthRequestSchema, googleTokenVerificationResultDtoSchema, inviteCrewUserContract, inviteCrewUserRequestSchema, leaveCrewContextQueryDtoSchema, leaveCrewContract, leaveCrewRequestSchema, leaveCrewResponseSchema, leaveCrewResultQueryDtoSchema, listCrewInvitationsContract, listCrewInvitationsRequestSchema, listCrewInvitationsResponseSchema, listCrewParticipantsContract, listCrewParticipantsRequestSchema, listCrewParticipantsResponseSchema, listCrewPostsContract, listCrewPostsRequestSchema, listCrewPostsResponseSchema, listCrewsContract, listCrewsRequestSchema, listCrewsResponseSchema, listExercisesContract, listExercisesResponseSchema, listMessagesContract, listMessagesRequestSchema, listMessagesResponseSchema, listMyCrewsContract, listMyCrewsRequestSchema, listMyCrewsResponseSchema, listPendingCrewJoinRequestsContract, listPendingCrewJoinRequestsRequestSchema, listPendingCrewJoinRequestsResponseSchema, listPostCommentsContract, listPostCommentsRequestSchema, listPostCommentsResponseSchema, listPostReactionsContract, listPostReactionsRequestSchema, listPostReactionsResponseSchema, listVisiblePostsContract, listVisiblePostsRequestSchema, listVisiblePostsResponseSchema, loginContract, loginRequestSchema, loginResponseSchema, logoutContract, logoutResponseSchema, markMessageAsReadContract, markMessageAsReadRequestSchema, markMessageAsReadResponseSchema, messageAfterSendQueryDtoSchema, messageAsReadQueryDtoSchema, messageDbSchema, oAuthCreatedUserRowQueryDtoSchema, oAuthLinkQueryDtoSchema, oAuthLinkRowQueryDtoSchema, oAuthLoginContract, oAuthLoginResponseSchema, oAuthLookupQueryDtoSchema, oAuthLookupRawQueryDtoSchema, oAuthLookupRowQueryDtoSchema, oauthAccountDbSchema, personalRecordQueryDtoSchema, personalRecordsQueryDtoSchema, personalRecordsRowQueryDtoSchema, postDbSchema, postQueryDtoSchema, proceedLoginResponseSchema, prsViewDbSchema, reactToPostContract, reactToPostRequestSchema, reactToPostResponseSchema, reactionDbSchema, reactionQueryDtoSchema, reactionWriteResultQueryDtoSchema, refreshTokenContract, refreshTokenResponseSchema, replaceCrewProfilePictureContract, replaceCrewProfilePictureRequestSchema, replaceCrewProfilePictureResponseSchema, replaceProfilePictureContract, replaceProfilePictureResponseSchema, replacePushTokenContract, replacePushTokenRequestSchema, replaceWorkoutPlanContract, replaceWorkoutPlanRequestSchema, replaceWorkoutPlanResponseSchema, replaceWorkoutSchedulesContract, replaceWorkoutSchedulesRequestSchema, requestToJoinCrewContract, requestToJoinCrewRequestSchema, resetPasswordContract, resetPasswordRequestSchema, resetPasswordResponseSchema, saveWorkoutSplitInputQueryDtoSchema, saveWorkoutSplitPayloadQueryDtoSchema, searchSocialUsersContract, searchSocialUsersRequestSchema, searchSocialUsersResponseSchema, serializedDateSchema, socialSummaryParticipantPreviewSchema, socialUserQueryDtoSchema, squatRepetitionDtoSchema, timezoneSchema, trackingByDateItemQueryDtoSchema, trackingBySplitNameItemQueryDtoSchema, trackingMapItemQueryDtoSchema, trackingSetDbSchema, updateAerobicEntryContract, updateAerobicEntryRequestSchema, updateCrewContract, updateCrewParticipationRequestStatusContract, updateCrewParticipationRequestStatusRequestSchema, updateCrewRequestSchema, updateCrewResponseSchema, updateCurrentUserContract, updateCurrentUserRequestSchema, updateCurrentUserResponseSchema, updatePostContract, updatePostRequestSchema, updatePostResponseSchema, updateReminderTimeZoneContract, updateReminderTimeZoneRequestSchema, updateUnverifiedAccountEmailContract, updateUnverifiedAccountEmailRequestSchema, upsertReminderSettingsContract, upsertReminderSettingsRequestSchema, userConflictQueryDtoSchema, userDataContract, userDataQueryDtoSchema, userDataResponseSchema, userDataRowQueryDtoSchema, userDbSchema, userExistsQueryDtoSchema, userInsertDbSchema, userMessageIdentityQueryDtoSchema, userProfilePicQueryDtoSchema, userReminderSettingDbSchema, userUpdateDbSchema, userWithNotificationsEnabledQueryDtoSchema, verifyEmailContract, verifyEmailRequestSchema, wholeUserWorkoutPlanQueryDtoSchema, workoutExerciseInputQueryDtoSchema, workoutPlanDbSchema, workoutPlanIdQueryDtoSchema, workoutScheduleDbSchema, workoutScheduleInputDtoSchema, workoutScheduleQueryDtoSchema, workoutSetDbSchema, workoutSplitDbSchema, workoutSplitIdQueryDtoSchema, workoutSplitLookupQueryDtoSchema, workoutSplitQueryDtoSchema, workoutSummaryDbSchema, workoutSummaryIdQueryDtoSchema };

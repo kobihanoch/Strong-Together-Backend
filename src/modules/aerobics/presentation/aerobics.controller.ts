@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, HttpCode, HttpStatus, NotFoundException, Post, Put, Res, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Post, Put, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import type {
   CreateAerobicEntryBody,
@@ -18,7 +18,6 @@ import {
   getAerobicHistoryRequestSchema,
   updateAerobicEntryRequestSchema,
 } from '@strong-together/shared';
-import { AerobicEntryNotFoundError } from '../application/aerobic-entry-not-found.error';
 import { CreateAerobicEntryUseCase } from '../application/use-cases/create-aerobic-entry.use-case';
 import { DeleteAerobicEntryUseCase } from '../application/use-cases/delete-aerobic-entry.use-case';
 import { GetAerobicHistoryUseCase } from '../application/use-cases/get-aerobic-history.use-case';
@@ -116,7 +115,7 @@ export class AerobicsController {
    * @param data - The validated path parameters and request body.
    * @param user - The authenticated user.
    * @returns A promise that resolves with no response body after the update.
-   * @throws {NotFoundException} When the owned aerobic entry does not exist.
+   * @throws {AerobicEntryNotFoundError} When the owned aerobic entry does not exist.
    */
   @Put(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -129,12 +128,7 @@ export class AerobicsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    try {
-      await this.updateAerobicEntryUseCase.execute(user.id, data.params.id, data.body.record);
-    } catch (error) {
-      if (error instanceof AerobicEntryNotFoundError) throw new NotFoundException(error.message);
-      throw error;
-    }
+    await this.updateAerobicEntryUseCase.execute(user.id, data.params.id, data.body.record);
   }
 
   /**
@@ -147,7 +141,7 @@ export class AerobicsController {
    * @param data - The validated path parameters and query.
    * @param user - The authenticated user.
    * @returns A promise that resolves with no response body after deletion.
-   * @throws {NotFoundException} When the owned aerobic entry does not exist.
+   * @throws {AerobicEntryNotFoundError} When the owned aerobic entry does not exist.
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -159,11 +153,6 @@ export class AerobicsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    try {
-      await this.deleteAerobicEntryUseCase.execute(user.id, data.params.id);
-    } catch (error) {
-      if (error instanceof AerobicEntryNotFoundError) throw new NotFoundException(error.message);
-      throw error;
-    }
+    await this.deleteAerobicEntryUseCase.execute(user.id, data.params.id);
   }
 }

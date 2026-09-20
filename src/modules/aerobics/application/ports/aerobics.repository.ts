@@ -1,4 +1,4 @@
-import type { AerobicEntryInput, AerobicsHistory } from '../aerobics.models';
+import type { AerobicEntryInput, AerobicsHistory } from '../models/aerobics.models';
 
 /** Persistence operations required by aerobics use cases. */
 export abstract class AerobicsRepository {

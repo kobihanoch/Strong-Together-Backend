@@ -1,5 +1,5 @@
 import { aerobicTracking } from '../../../infrastructure/db/schema/drizzle/tracking/aerobic_tracking/table';
-import type { AerobicsHistory } from '../application/aerobics.models';
+import type { AerobicsHistory } from '../application/models/aerobics.models';
 
 /** SQL row wrapping the aggregated aerobics history under its selected alias. */
 export interface AerobicsHistorySqlRow {

@@ -1,10 +1,9 @@
 import type { Request } from 'express';
 import type { Logger } from 'pino';
-import type { UserRow } from '@strong-together/shared';
 
 export type AuthenticatedUser = {
-  id: UserRow['id'];
-  role: UserRow['role'];
+  id: string;
+  role: string;
 };
 
 export type AppRequest = Request & {

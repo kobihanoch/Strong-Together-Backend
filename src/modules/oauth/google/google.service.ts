@@ -3,7 +3,7 @@ import type { GoogleOAuthBody, GoogleTokenVerificationResultDto, OAuthLoginRespo
 import { signTokens } from '../../../common/authentication/authentication.utils';
 import { DBService } from '../../../infrastructure/db/db.service';
 import type { AppLogger } from '../../../infrastructure/logger';
-import { SessionQueries } from '../../auth/session/session.queries';
+import { SessionRepository } from '../../auth/session/application/ports/session.repository';
 import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
 import { GoogleQueries } from './google.queries';
 import { verifyGoogleIdToken } from './google.utils';
@@ -12,7 +12,7 @@ export class GoogleService {
   constructor(
     private readonly dbService: DBService,
     private readonly systemMessagesService: SystemMessagesService,
-    private readonly sessionQueries: SessionQueries,
+    private readonly sessions: SessionRepository,
     private readonly googleQueries: GoogleQueries,
   ) {}
 
@@ -58,10 +58,9 @@ export class GoogleService {
     const finalUserId = userId as string;
     requestLogger.info({ event: 'oauth.google_login_completed', userId: finalUserId }, 'Google OAuth user authenticated');
 
-    const hasNeverLoggedIn = (await this.sessionQueries.queryLastLogin(finalUserId)) === null;
+    const hasNeverLoggedIn = (await this.sessions.findLastLogin(finalUserId)) === null;
     await this.dbService.promoteCurrentRlsTxToAuthenticated(finalUserId);
-    const rowsUserData = await this.sessionQueries.queryBumpTokenVersionAndGetSelfData(finalUserId);
-    const [{ tokenVersion, userData }] = rowsUserData;
+    const { tokenVersion, userData } = await this.sessions.rotate(finalUserId);
     if (!userData.isVerified) throw new UnauthorizedException('A verification email is pending');
     if (hasNeverLoggedIn) {
       try {

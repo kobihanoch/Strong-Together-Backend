@@ -1,4 +1,4 @@
-import type { AerobicsHistory } from '../aerobics.models';
+import type { AerobicsHistory } from '../models/aerobics.models';
 
 /** A generation-stable cache entry for one aerobics-history request. */
 export interface AerobicsCacheEntry {

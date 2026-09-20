@@ -11,6 +11,7 @@ import { PostgresSystemMessagesRepository } from './system-messages/postgres-sys
 import { SystemMessagesQueries } from './system-messages/system-messages.queries';
 import { SystemMessagesRepository } from './system-messages/system-messages.repository';
 import { SystemMessagesService } from './system-messages/system-messages.service';
+import { UserFirstLoginListener } from './system-messages/user-first-login.listener';
 
 @Module({
   controllers: [MessagesController],
@@ -27,6 +28,7 @@ import { SystemMessagesService } from './system-messages/system-messages.service
     },
     MessagesService,
     SystemMessagesService,
+    UserFirstLoginListener,
     DpopGuard,
     AuthenticationGuard,
     AuthorizationGuard,

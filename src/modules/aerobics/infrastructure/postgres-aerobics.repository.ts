@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { AerobicEntryInput, AerobicsHistory } from '../application/aerobics.models';
+import type { AerobicEntryInput, AerobicsHistory } from '../application/models/aerobics.models';
 import { AerobicsRepository } from '../application/ports/aerobics.repository';
 import { AerobicsSql } from './aerobics.sql';
 

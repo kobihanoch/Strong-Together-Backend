@@ -1,8 +1,43 @@
 import crypto from 'crypto';
 import { Request } from 'express';
 import jwt, { SignOptions } from 'jsonwebtoken';
+import { z } from 'zod/v4';
 import { authConfig } from '../../config/auth.config';
-import { accessTokenPayloadDtoSchema, type AccessTokenPayloadDto, type UserRow } from '@strong-together/shared';
+
+const legacyAccessTokenSchema = z
+  .object({
+    id: z.string().uuid(),
+    role: z.string(),
+    cnf: z.object({ jkt: z.string() }).optional(),
+    iat: z.number(),
+    exp: z.number(),
+  })
+  .strict();
+
+const currentAccessTokenSchema = z.object({
+  id: z.string().uuid(),
+  sub: z.string().uuid(),
+  role: z.string(),
+  typ: z.literal('access'),
+  iss: z.literal('strong-together'),
+  aud: z.literal('strong-together-api'),
+  cnf: z.object({ jkt: z.string() }).optional(),
+  iat: z.number(),
+  exp: z.number(),
+});
+
+const accessTokenPayloadSchema = z.union([
+  currentAccessTokenSchema.refine((token) => token.sub === token.id),
+  legacyAccessTokenSchema.transform((token) => ({
+    ...token,
+    sub: token.id,
+    typ: 'access' as const,
+    iss: 'strong-together' as const,
+    aud: 'strong-together-api' as const,
+  })),
+]);
+
+type AccessTokenPayload = z.infer<typeof accessTokenPayloadSchema>;
 
 /*
  * Extracts a Bearer token from a header string safely.
@@ -26,11 +61,11 @@ export const getAccessToken = (req: Request): string | null => {
   return extractDpopToken(authHeader) || extractBearerToken(authHeader);
 };
 
-export const decodeAccessToken = (accessToken: string | null): AccessTokenPayloadDto | null => {
+export const decodeAccessToken = (accessToken: string | null): AccessTokenPayload | null => {
   if (!accessToken) return null;
   try {
     const decoded = jwt.verify(accessToken, authConfig.jwtAccessSecret, { algorithms: ['HS256'] });
-    const parsed = accessTokenPayloadDtoSchema.safeParse(decoded);
+    const parsed = accessTokenPayloadSchema.safeParse(decoded);
     return parsed.success ? parsed.data : null;
   } catch (e) {
     return null;
@@ -42,9 +77,9 @@ export const generateJti = (): string => {
 };
 
 export const signTokens = (
-  id: UserRow['id'],
-  role: UserRow['role'],
-  tokenVer: UserRow['tokenVersion'],
+  id: string,
+  role: string,
+  tokenVer: number,
   accessExp: NonNullable<SignOptions['expiresIn']>,
   refreshExp: NonNullable<SignOptions['expiresIn']>,
   jkt?: string,

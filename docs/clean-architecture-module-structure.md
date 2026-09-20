@@ -8,9 +8,15 @@ feature/
     feature.entity.ts
     feature.errors.ts
   application/
+    errors/
+      feature.errors.ts
+    models/
+      feature.models.ts
+    ports/
+      feature.repository.ts
+      dependency.port.ts
     use-cases/
       action.use-case.ts
-    feature.repository.ts
   infrastructure/
     postgres-feature.repository.ts
     feature.db-types.ts
@@ -20,6 +26,8 @@ feature/
   feature.module.ts
 ```
 
+This layout is required for refactored features. Do not place application models, errors, ports, or use cases directly in the feature root or directly in `application/`.
+
 ## Responsibilities
 
 - `domain/`: Entities and business rules. Add value objects, domain services, and events only when the feature needs them. It must not depend on NestJS, HTTP, PostgreSQL, Drizzle, Redis, or queues.
@@ -27,6 +35,35 @@ feature/
 - `infrastructure/`: PostgreSQL repositories, raw SQL, Drizzle-derived row types, Redis implementations, queues, storage, and mappings to domain/application types.
 - `presentation/`: Controllers, request validation, authentication decorators, HTTP error mapping, and optional response presenters.
 - `feature.module.ts`: The composition root that connects application ports to infrastructure implementations.
+
+## Compound Features and Submodules
+
+When a feature contains independently usable capabilities, split it into submodules. Each submodule follows the same `application/`, `infrastructure/`, `presentation/`, and optional `domain/` layout and owns its ports, use cases, adapters, controller, and `*.module.ts`.
+
+```text
+feature/
+  core/
+    application/
+      errors/
+      models/
+      ports/
+    infrastructure/
+    feature-core.module.ts
+  capability-a/
+    application/
+      errors/
+      models/
+      ports/
+      use-cases/
+    infrastructure/
+    presentation/
+    capability-a.module.ts
+  capability-b/
+    ...
+  feature.module.ts
+```
+
+Use `core/` only for dependencies genuinely shared by multiple submodules. The top-level feature module only composes and re-exports submodules; it must not contain controllers, SQL classes, use cases, or adapter registrations.
 
 ## Add Only When Needed
 
@@ -74,6 +111,16 @@ Use-case methods use the same documentation standard but must not mention an API
  * @returns The active workout plan, or `null` when none exists.
  */
 ```
+
+## Error Convention
+
+Every refactored feature or submodule that raises expected errors must own an `application/errors/` folder and a feature-specific `*.errors.ts` file. Do not centralize capability-specific errors in a parent or `core` module. Each error carries its own numeric `statusCode`, which the global exception filter translates to the HTTP response. Controllers call use cases directly; do not add per-controller `executeOperation` wrappers or repetitive `try/catch` mappings. Errors remain plain application classes and must not extend Nest HTTP exceptions.
+
+## Cross-Module Events
+
+Use an event when one module reacts to a lifecycle occurrence owned by another module. Put the event name and payload class under `src/common/application/events/`, define an event-publisher port in the producing module, implement it in infrastructure, and keep the listener in the consuming module.
+
+Use awaited publication (`emitAsync`) when existing behavior requires listener completion or error propagation. Do not replace an awaited call with fire-and-forget emission. Direct service imports across feature modules are not allowed when the dependency represents a reaction to an event; synchronous request/response capabilities may instead be exported as application ports.
 
 The required dependency direction is:
 

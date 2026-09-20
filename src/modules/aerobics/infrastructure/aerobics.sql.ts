@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../infrastructure/db/db.service';
-import type { AerobicEntryInput, AerobicsHistory } from '../application/aerobics.models';
+import type { AerobicEntryInput, AerobicsHistory } from '../application/models/aerobics.models';
 import type { AerobicMutationSqlRow, AerobicsHistorySqlRow } from './aerobics.db-types';
 
 @Injectable()

@@ -1,6 +1,7 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, ResponseOf } from '../../../common';
-import { userDbSchema } from '../../../database';
+
+const userIdSchema = z.string().uuid();
 
 // Log in
 
@@ -17,7 +18,7 @@ export const loginRequestSchema = z.object({
 });
 export const loginResponseSchema = z.object({
   message: z.string(),
-  user: userDbSchema.shape.id,
+  user: userIdSchema,
   accessToken: z.string(),
   refreshToken: z.string(),
 });
@@ -30,7 +31,7 @@ export const refreshTokenResponseSchema = z.object({
   message: z.string(),
   accessToken: z.string(),
   refreshToken: z.string(),
-  userId: userDbSchema.shape.id,
+  userId: userIdSchema,
 });
 export const refreshTokenContract = { response: refreshTokenResponseSchema } satisfies Contract;
 

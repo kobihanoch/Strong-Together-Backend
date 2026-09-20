@@ -1,6 +1,8 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, QueryOf } from '../../../common';
-import { userDbSchema } from '../../../database';
+
+const usernameSchema = z.string();
+const emailSchema = z.string().trim().email('Invalid email');
 
 // Verify user account
 
@@ -11,7 +13,7 @@ export const verifyEmailContract = { request: verifyEmailRequestSchema } satisfi
 // Send verification email
 
 export const createVerificationEmailRequestSchema = z.object({
-  body: z.object({ email: userDbSchema.shape.email.trim().email('Invalid email') }),
+  body: z.object({ email: emailSchema }),
 });
 export const createVerificationEmailContract = { request: createVerificationEmailRequestSchema } satisfies Contract;
 
@@ -19,9 +21,9 @@ export const createVerificationEmailContract = { request: createVerificationEmai
 
 export const updateUnverifiedAccountEmailRequestSchema = z.object({
   body: z.object({
-    username: userDbSchema.shape.username,
+    username: usernameSchema,
     password: z.string(),
-    newEmail: userDbSchema.shape.email.trim().email('Invalid email'),
+    newEmail: emailSchema,
   }),
 });
 export const updateUnverifiedAccountEmailContract = {
@@ -31,7 +33,7 @@ export const updateUnverifiedAccountEmailContract = {
 // Check verification status
 
 export const getVerificationStatusRequestSchema = z.object({
-  query: z.object({ username: userDbSchema.shape.username }),
+  query: z.object({ username: usernameSchema }),
 });
 export const getVerificationStatusContract = { request: getVerificationStatusRequestSchema } satisfies Contract;
 
