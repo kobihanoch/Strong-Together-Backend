@@ -1,4 +1,3 @@
-import * as zod_v4 from 'zod/v4';
 import { z } from 'zod/v4';
 import * as drizzle_zod from 'drizzle-zod';
 import * as drizzle_orm_pg_core from 'drizzle-orm/pg-core';
@@ -5273,12 +5272,11 @@ declare const createVideoUploadUrlContract: {
 };
 type CreateVideoUploadUrlBody = BodyOf<typeof createVideoUploadUrlContract>;
 type CreateVideoUploadUrlResponse = ResponseOf<typeof createVideoUploadUrlContract>;
-
 /** Parameters used to enqueue a video-analysis job. */
 declare const enqueueAnalyzeVideoParamsDtoSchema: z.ZodObject<{
     fileKey: z.ZodString;
     exercise: z.ZodString;
-    userId: z.ZodUUID;
+    userId: z.ZodString;
     requestId: z.ZodString;
     sentryTrace: z.ZodOptional<z.ZodString>;
     baggage: z.ZodOptional<z.ZodString>;
@@ -5287,7 +5285,7 @@ declare const enqueueAnalyzeVideoParamsDtoSchema: z.ZodObject<{
 declare const analyzeVideoPayloadDtoSchema: z.ZodObject<{
     fileKey: z.ZodString;
     exercise: z.ZodString;
-    userId: z.ZodUUID;
+    userId: z.ZodString;
     requestId: z.ZodString;
     sentryTrace: z.ZodOptional<z.ZodString>;
     baggage: z.ZodOptional<z.ZodString>;
@@ -5313,10 +5311,10 @@ declare const squatRepetitionDtoSchema: z.ZodObject<{
         samplingRate: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
-/** Completed-or-failed result payload emitted by a video-analysis worker. */
+/** Completed-or-failed result emitted by a video-analysis worker. */
 declare const analyzeVideoResultPayloadDtoSchema: <TResultSchema extends z.ZodType>(resultSchema: TResultSchema) => z.ZodIntersection<z.ZodObject<{
     jobId: z.ZodString;
-    userId: z.ZodUUID;
+    userId: z.ZodString;
     exercise: z.ZodString;
     requestId: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>, z.ZodDiscriminatedUnion<[z.ZodObject<{
@@ -5852,9 +5850,9 @@ declare const listCrewsRequestSchema: z.ZodObject<{
 /** Validates the collection returned by the list-crews endpoint. */
 declare const listCrewsResponseSchema: z.ZodObject<{
     crews: z.ZodArray<z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
         name: z.ZodString;
-        createdBy: z.ZodUUID;
+        createdBy: z.ZodString;
         privacy: z.ZodEnum<{
             public: "public";
             private: "private";
@@ -5867,10 +5865,7 @@ declare const listCrewsResponseSchema: z.ZodObject<{
             fullName: z.ZodString;
             profilePicPath: z.ZodNullable<z.ZodString>;
         }, z.core.$strip>>;
-    }, {
-        out: {};
-        in: {};
-    }>>;
+    }, z.core.$strip>>;
     nextCursor: z.ZodNullable<z.ZodString>;
 }, z.core.$strip>;
 /** Defines the request and response contract for listing visible crews. */
@@ -5884,9 +5879,9 @@ declare const listCrewsContract: {
     }, z.core.$strip>;
     response: z.ZodObject<{
         crews: z.ZodArray<z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
             name: z.ZodString;
-            createdBy: z.ZodUUID;
+            createdBy: z.ZodString;
             privacy: z.ZodEnum<{
                 public: "public";
                 private: "private";
@@ -5899,10 +5894,7 @@ declare const listCrewsContract: {
                 fullName: z.ZodString;
                 profilePicPath: z.ZodNullable<z.ZodString>;
             }, z.core.$strip>>;
-        }, {
-            out: {};
-            in: {};
-        }>>;
+        }, z.core.$strip>>;
         nextCursor: z.ZodNullable<z.ZodString>;
     }, z.core.$strip>;
 };
@@ -5920,9 +5912,9 @@ declare const listMyCrewsRequestSchema: z.ZodObject<{
 /** Validates the authenticated user's crew collection. */
 declare const listMyCrewsResponseSchema: z.ZodObject<{
     crews: z.ZodArray<z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
         name: z.ZodString;
-        createdBy: z.ZodUUID;
+        createdBy: z.ZodString;
         privacy: z.ZodEnum<{
             public: "public";
             private: "private";
@@ -5935,10 +5927,7 @@ declare const listMyCrewsResponseSchema: z.ZodObject<{
             fullName: z.ZodString;
             profilePicPath: z.ZodNullable<z.ZodString>;
         }, z.core.$strip>>;
-    }, {
-        out: {};
-        in: {};
-    }>>;
+    }, z.core.$strip>>;
     nextCursor: z.ZodNullable<z.ZodString>;
 }, z.core.$strip>;
 /** Defines the request and response contract for listing the authenticated user's crews. */
@@ -5951,9 +5940,9 @@ declare const listMyCrewsContract: {
     }, z.core.$strip>;
     response: z.ZodObject<{
         crews: z.ZodArray<z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
             name: z.ZodString;
-            createdBy: z.ZodUUID;
+            createdBy: z.ZodString;
             privacy: z.ZodEnum<{
                 public: "public";
                 private: "private";
@@ -5966,10 +5955,7 @@ declare const listMyCrewsContract: {
                 fullName: z.ZodString;
                 profilePicPath: z.ZodNullable<z.ZodString>;
             }, z.core.$strip>>;
-        }, {
-            out: {};
-            in: {};
-        }>>;
+        }, z.core.$strip>>;
         nextCursor: z.ZodNullable<z.ZodString>;
     }, z.core.$strip>;
 };
@@ -5980,7 +5966,7 @@ type ListMyCrewsResponse = ResponseOf<typeof listMyCrewsContract>;
 /** Validates the crew identifier and pagination for listing participants. */
 declare const listCrewParticipantsRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        crewId: z.ZodUUID;
+        crewId: z.ZodString;
     }, z.core.$strip>;
     query: z.ZodObject<{
         limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
@@ -5990,9 +5976,9 @@ declare const listCrewParticipantsRequestSchema: z.ZodObject<{
 /** Validates the participant collection returned by the endpoint. */
 declare const listCrewParticipantsResponseSchema: z.ZodObject<{
     participants: z.ZodArray<z.ZodObject<{
-        id: z.ZodUUID;
-        crewId: z.ZodUUID;
-        userId: z.ZodUUID;
+        id: z.ZodString;
+        crewId: z.ZodString;
+        userId: z.ZodString;
         status: z.ZodEnum<{
             active: "active";
             left: "left";
@@ -6010,17 +5996,14 @@ declare const listCrewParticipantsResponseSchema: z.ZodObject<{
         fullName: z.ZodString;
         profilePicPath: z.ZodNullable<z.ZodString>;
         username: z.ZodString;
-    }, {
-        out: {};
-        in: {};
-    }>>;
+    }, z.core.$strip>>;
     nextCursor: z.ZodNullable<z.ZodString>;
 }, z.core.$strip>;
 /** Defines the request and response contract for listing crew participants. */
 declare const listCrewParticipantsContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            crewId: z.ZodUUID;
+            crewId: z.ZodString;
         }, z.core.$strip>;
         query: z.ZodObject<{
             limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
@@ -6029,9 +6012,9 @@ declare const listCrewParticipantsContract: {
     }, z.core.$strip>;
     response: z.ZodObject<{
         participants: z.ZodArray<z.ZodObject<{
-            id: z.ZodUUID;
-            crewId: z.ZodUUID;
-            userId: z.ZodUUID;
+            id: z.ZodString;
+            crewId: z.ZodString;
+            userId: z.ZodString;
             status: z.ZodEnum<{
                 active: "active";
                 left: "left";
@@ -6049,10 +6032,7 @@ declare const listCrewParticipantsContract: {
             fullName: z.ZodString;
             profilePicPath: z.ZodNullable<z.ZodString>;
             username: z.ZodString;
-        }, {
-            out: {};
-            in: {};
-        }>>;
+        }, z.core.$strip>>;
         nextCursor: z.ZodNullable<z.ZodString>;
     }, z.core.$strip>;
 };
@@ -6065,14 +6045,14 @@ type ListCrewParticipantsResponse = ResponseOf<typeof listCrewParticipantsContra
 /** Validates the route parameters used to retrieve one crew. */
 declare const getCrewRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
 /** Validates the crew returned by the get-crew endpoint. */
 declare const getCrewResponseSchema: z.ZodObject<{
-    id: z.ZodUUID;
+    id: z.ZodString;
     name: z.ZodString;
-    createdBy: z.ZodUUID;
+    createdBy: z.ZodString;
     privacy: z.ZodEnum<{
         public: "public";
         private: "private";
@@ -6080,21 +6060,18 @@ declare const getCrewResponseSchema: z.ZodObject<{
     createdAt: z.ZodString;
     updatedAt: z.ZodString;
     participantCount: z.ZodNumber;
-}, {
-    out: {};
-    in: {};
-}>;
+}, z.core.$strip>;
 /** Defines the request and response contract for retrieving one crew. */
 declare const getCrewContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
         name: z.ZodString;
-        createdBy: z.ZodUUID;
+        createdBy: z.ZodString;
         privacy: z.ZodEnum<{
             public: "public";
             private: "private";
@@ -6102,10 +6079,7 @@ declare const getCrewContract: {
         createdAt: z.ZodString;
         updatedAt: z.ZodString;
         participantCount: z.ZodNumber;
-    }, {
-        out: {};
-        in: {};
-    }>;
+    }, z.core.$strip>;
 };
 /** Route parameters accepted by the get-crew endpoint. */
 type GetCrewParams = ParamsOf<typeof getCrewContract>;
@@ -6143,7 +6117,7 @@ type CreateCrewResponse = ResponseOf<typeof createCrewContract>;
 /** Validates the route parameters and body used to update a crew. */
 declare const updateCrewRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
     }, z.core.$strip>;
     body: z.ZodObject<{
         name: z.ZodString;
@@ -6159,7 +6133,7 @@ declare const updateCrewResponseSchema: z.ZodVoid;
 declare const updateCrewContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
         }, z.core.$strip>;
         body: z.ZodObject<{
             name: z.ZodString;
@@ -6180,7 +6154,7 @@ type UpdateCrewResponse = ResponseOf<typeof updateCrewContract>;
 /** Validates the crew identifier used by the authenticated user leaving a crew. */
 declare const leaveCrewRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
 /** Validates the empty response returned after leaving a crew. */
@@ -6189,7 +6163,7 @@ declare const leaveCrewResponseSchema: z.ZodVoid;
 declare const leaveCrewContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodVoid;
@@ -6201,7 +6175,7 @@ type LeaveCrewResponse = ResponseOf<typeof leaveCrewContract>;
 /** Validates the route parameters used to delete a crew. */
 declare const deleteCrewRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
 /** Validates the empty response returned after deleting a crew. */
@@ -6210,7 +6184,7 @@ declare const deleteCrewResponseSchema: z.ZodVoid;
 declare const deleteCrewContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodVoid;
@@ -6222,7 +6196,7 @@ type DeleteCrewResponse = ResponseOf<typeof deleteCrewContract>;
 /** Validates the crew ID used when replacing its profile picture. */
 declare const replaceCrewProfilePictureRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
 /** Validates the stored path and public URL returned after upload. */
@@ -6235,7 +6209,7 @@ declare const replaceCrewProfilePictureResponseSchema: z.ZodObject<{
 declare const replaceCrewProfilePictureContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodObject<{
@@ -6251,14 +6225,14 @@ type ReplaceCrewProfilePictureResponse = ResponseOf<typeof replaceCrewProfilePic
 /** Validates the crew ID used when deleting its profile picture. */
 declare const deleteCrewProfilePictureRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
 /** Defines the delete-crew-profile-picture request and empty response. */
 declare const deleteCrewProfilePictureContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodVoid;
@@ -6268,134 +6242,10 @@ type DeleteCrewProfilePictureParams = ParamsOf<typeof deleteCrewProfilePictureCo
 /** Empty response returned after deleting a crew profile picture. */
 type DeleteCrewProfilePictureResponse = ResponseOf<typeof deleteCrewProfilePictureContract>;
 
-/** Runtime schema for a crew row returned by the social crew queries. */
-declare const crewQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    name: z.ZodString;
-    createdBy: z.ZodUUID;
-    privacy: z.ZodEnum<{
-        public: "public";
-        private: "private";
-    }>;
-    createdAt: z.ZodString;
-    updatedAt: z.ZodString;
-}, {
-    out: {};
-    in: {};
-}>;
-/** Runtime schema for a crew returned with its active participant total. */
-declare const crewWithParticipantCountQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    name: z.ZodString;
-    createdBy: z.ZodUUID;
-    privacy: z.ZodEnum<{
-        public: "public";
-        private: "private";
-    }>;
-    createdAt: z.ZodString;
-    updatedAt: z.ZodString;
-    participantCount: z.ZodNumber;
-}, {
-    out: {};
-    in: {};
-}>;
-/** Runtime schema for the limited participant preview shown during crew discovery. */
-declare const crewParticipantPreviewQueryDtoSchema: z.ZodObject<{
-    username: z.ZodString;
-    fullName: z.ZodString;
-    profilePicPath: z.ZodNullable<z.ZodString>;
-}, z.core.$strip>;
-/** Runtime schema for a discoverable crew and its five-participant preview. */
-declare const discoverableCrewQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    name: z.ZodString;
-    createdBy: z.ZodUUID;
-    privacy: z.ZodEnum<{
-        public: "public";
-        private: "private";
-    }>;
-    createdAt: z.ZodString;
-    updatedAt: z.ZodString;
-    participantCount: z.ZodNumber;
-    top5Participants: z.ZodArray<z.ZodObject<{
-        username: z.ZodString;
-        fullName: z.ZodString;
-        profilePicPath: z.ZodNullable<z.ZodString>;
-    }, z.core.$strip>>;
-}, {
-    out: {};
-    in: {};
-}>;
-/** Runtime schema for an active crew participant and their public profile data. */
-declare const crewParticipantQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    crewId: z.ZodUUID;
-    userId: z.ZodUUID;
-    status: z.ZodEnum<{
-        active: "active";
-        left: "left";
-        removed: "removed";
-        banned: "banned";
-    }>;
-    role: z.ZodEnum<{
-        leader: "leader";
-        admin: "admin";
-        member: "member";
-    }>;
-    joinedAt: z.ZodString;
-    createdAt: z.ZodString;
-    updatedAt: z.ZodString;
-    fullName: z.ZodString;
-    profilePicPath: z.ZodNullable<z.ZodString>;
-    username: z.ZodString;
-}, {
-    out: {};
-    in: {};
-}>;
-/** Runtime schema for a crew deletion result. */
-declare const deletedCrewQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-}, z.core.$strip>;
-/** Runtime schema for the outcome returned by the leave-crew query. */
-declare const leaveCrewResultQueryDtoSchema: z.ZodObject<{
-    result: z.ZodEnum<{
-        left: "left";
-        not_member: "not_member";
-    }>;
-}, z.core.$strip>;
-/** Runtime schema for the locked active membership being left. */
-declare const leaveCrewContextQueryDtoSchema: z.ZodObject<{
-    membershipId: z.ZodUUID;
-    isLeader: z.ZodBoolean;
-}, z.core.$strip>;
-/** Runtime schema for the participant selected to succeed a leaving leader. */
-declare const crewSuccessorQueryDtoSchema: z.ZodObject<{
-    membershipId: z.ZodUUID;
-    userId: z.ZodUUID;
-}, z.core.$strip>;
-/** Typed crew row returned by crew SELECT, INSERT, and UPDATE queries. */
-type CrewQueryDto = typeof crewQueryDtoSchema._output;
-/** Typed crew row returned with its active participant total. */
-type CrewWithParticipantCountQueryDto = typeof crewWithParticipantCountQueryDtoSchema._output;
-/** Public participant information included in a crew discovery result. */
-type CrewParticipantPreviewQueryDto = typeof crewParticipantPreviewQueryDtoSchema._output;
-/** Typed crew discovery row returned by the security-definer function. */
-type DiscoverableCrewQueryDto = typeof discoverableCrewQueryDtoSchema._output;
-/** Typed active participant returned by the crew-participants query. */
-type CrewParticipantQueryDto = typeof crewParticipantQueryDtoSchema._output;
-/** Typed result used to verify that a crew was deleted. */
-type DeletedCrewQueryDto = typeof deletedCrewQueryDtoSchema._output;
-/** Typed outcome returned after attempting to leave a crew. */
-type LeaveCrewResultQueryDto = typeof leaveCrewResultQueryDtoSchema._output;
-/** Typed locked membership used by the leave workflow. */
-type LeaveCrewContextQueryDto = typeof leaveCrewContextQueryDtoSchema._output;
-/** Typed active participant selected as the next crew leader. */
-type CrewSuccessorQueryDto = typeof crewSuccessorQueryDtoSchema._output;
-
 /** Validates a crew invitation creation request. */
 declare const inviteCrewUserRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        crewId: z.ZodUUID;
+        crewId: z.ZodString;
     }, z.core.$strip>;
     body: z.ZodObject<{
         userId: z.ZodUUID;
@@ -6404,7 +6254,7 @@ declare const inviteCrewUserRequestSchema: z.ZodObject<{
 declare const inviteCrewUserContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            crewId: z.ZodUUID;
+            crewId: z.ZodString;
         }, z.core.$strip>;
         body: z.ZodObject<{
             userId: z.ZodUUID;
@@ -6418,13 +6268,13 @@ type InviteCrewUserResponse = ResponseOf<typeof inviteCrewUserContract>;
 /** Validates a request by the authenticated user to join a crew. */
 declare const requestToJoinCrewRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        crewId: z.ZodUUID;
+        crewId: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
 declare const requestToJoinCrewContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            crewId: z.ZodUUID;
+            crewId: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodVoid;
@@ -6464,10 +6314,10 @@ type UpdateCrewParticipationRequestStatusResponse = ResponseOf<typeof updateCrew
 declare const listCrewInvitationsRequestSchema: z.ZodObject<{}, z.core.$strip>;
 declare const listCrewInvitationsResponseSchema: z.ZodObject<{
     invitations: z.ZodArray<z.ZodObject<{
-        id: z.ZodUUID;
-        crewId: z.ZodUUID;
-        initiatorUserId: z.ZodUUID;
-        participantUserId: z.ZodUUID;
+        id: z.ZodString;
+        crewId: z.ZodString;
+        initiatorUserId: z.ZodString;
+        participantUserId: z.ZodString;
         status: z.ZodEnum<{
             pending: "pending";
             accepted: "accepted";
@@ -6478,19 +6328,16 @@ declare const listCrewInvitationsResponseSchema: z.ZodObject<{
         createdAt: z.ZodString;
         updatedAt: z.ZodString;
         respondedAt: z.ZodNullable<z.ZodString>;
-    }, {
-        out: {};
-        in: {};
-    }>>;
+    }, z.core.$strip>>;
 }, z.core.$strip>;
 declare const listCrewInvitationsContract: {
     request: z.ZodObject<{}, z.core.$strip>;
     response: z.ZodObject<{
         invitations: z.ZodArray<z.ZodObject<{
-            id: z.ZodUUID;
-            crewId: z.ZodUUID;
-            initiatorUserId: z.ZodUUID;
-            participantUserId: z.ZodUUID;
+            id: z.ZodString;
+            crewId: z.ZodString;
+            initiatorUserId: z.ZodString;
+            participantUserId: z.ZodString;
             status: z.ZodEnum<{
                 pending: "pending";
                 accepted: "accepted";
@@ -6501,25 +6348,22 @@ declare const listCrewInvitationsContract: {
             createdAt: z.ZodString;
             updatedAt: z.ZodString;
             respondedAt: z.ZodNullable<z.ZodString>;
-        }, {
-            out: {};
-            in: {};
-        }>>;
+        }, z.core.$strip>>;
     }, z.core.$strip>;
 };
 type ListCrewInvitationsResponse = ResponseOf<typeof listCrewInvitationsContract>;
 /** Validates a request to list pending join requests for a crew. */
 declare const listPendingCrewJoinRequestsRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        crewId: z.ZodUUID;
+        crewId: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
 declare const listPendingCrewJoinRequestsResponseSchema: z.ZodObject<{
     requests: z.ZodArray<z.ZodObject<{
-        id: z.ZodUUID;
-        crewId: z.ZodUUID;
-        initiatorUserId: z.ZodUUID;
-        participantUserId: z.ZodUUID;
+        id: z.ZodString;
+        crewId: z.ZodString;
+        initiatorUserId: z.ZodString;
+        participantUserId: z.ZodString;
         status: z.ZodEnum<{
             pending: "pending";
             accepted: "accepted";
@@ -6530,23 +6374,20 @@ declare const listPendingCrewJoinRequestsResponseSchema: z.ZodObject<{
         createdAt: z.ZodString;
         updatedAt: z.ZodString;
         respondedAt: z.ZodNullable<z.ZodString>;
-    }, {
-        out: {};
-        in: {};
-    }>>;
+    }, z.core.$strip>>;
 }, z.core.$strip>;
 declare const listPendingCrewJoinRequestsContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            crewId: z.ZodUUID;
+            crewId: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodObject<{
         requests: z.ZodArray<z.ZodObject<{
-            id: z.ZodUUID;
-            crewId: z.ZodUUID;
-            initiatorUserId: z.ZodUUID;
-            participantUserId: z.ZodUUID;
+            id: z.ZodString;
+            crewId: z.ZodString;
+            initiatorUserId: z.ZodString;
+            participantUserId: z.ZodString;
             status: z.ZodEnum<{
                 pending: "pending";
                 accepted: "accepted";
@@ -6557,37 +6398,11 @@ declare const listPendingCrewJoinRequestsContract: {
             createdAt: z.ZodString;
             updatedAt: z.ZodString;
             respondedAt: z.ZodNullable<z.ZodString>;
-        }, {
-            out: {};
-            in: {};
-        }>>;
+        }, z.core.$strip>>;
     }, z.core.$strip>;
 };
 type ListPendingCrewJoinRequestsParams = ParamsOf<typeof listPendingCrewJoinRequestsContract>;
 type ListPendingCrewJoinRequestsResponse = ResponseOf<typeof listPendingCrewJoinRequestsContract>;
-
-/** Runtime schema for a crew invitation or join-request persistence row. */
-declare const crewParticipationRequestQueryDtoSchema: zod_v4.ZodObject<{
-    id: zod_v4.ZodUUID;
-    crewId: zod_v4.ZodUUID;
-    initiatorUserId: zod_v4.ZodUUID;
-    participantUserId: zod_v4.ZodUUID;
-    status: zod_v4.ZodEnum<{
-        pending: "pending";
-        accepted: "accepted";
-        declined: "declined";
-        cancelled: "cancelled";
-        expired: "expired";
-    }>;
-    createdAt: zod_v4.ZodString;
-    updatedAt: zod_v4.ZodString;
-    respondedAt: zod_v4.ZodNullable<zod_v4.ZodString>;
-}, {
-    out: {};
-    in: {};
-}>;
-/** Typed participation-request row returned by crew request queries. */
-type CrewParticipationRequestQueryDto = typeof crewParticipationRequestQueryDtoSchema._output;
 
 /** Validates a request to list posts visible to the authenticated user. */
 declare const listVisiblePostsRequestSchema: z.ZodObject<{
@@ -6599,9 +6414,9 @@ declare const listVisiblePostsRequestSchema: z.ZodObject<{
 /** Validates the collection returned by the list-posts endpoint. */
 declare const listVisiblePostsResponseSchema: z.ZodObject<{
     posts: z.ZodArray<z.ZodObject<{
-        id: z.ZodUUID;
-        workoutSummaryId: z.ZodNullable<z.ZodUUID>;
-        authorUserId: z.ZodUUID;
+        id: z.ZodString;
+        authorUserId: z.ZodString;
+        workoutSummaryId: z.ZodNullable<z.ZodString>;
         content: z.ZodString;
         visibility: z.ZodEnum<{
             public: "public";
@@ -6620,10 +6435,7 @@ declare const listVisiblePostsResponseSchema: z.ZodObject<{
             }, z.core.$strip>;
             commentsCount: z.ZodNumber;
         }, z.core.$strip>;
-    }, {
-        out: {};
-        in: {};
-    }>>;
+    }, z.core.$strip>>;
     nextCursor: z.ZodNullable<z.ZodString>;
 }, z.core.$strip>;
 /** Defines the request and response contract for listing visible posts. */
@@ -6636,9 +6448,9 @@ declare const listVisiblePostsContract: {
     }, z.core.$strip>;
     response: z.ZodObject<{
         posts: z.ZodArray<z.ZodObject<{
-            id: z.ZodUUID;
-            workoutSummaryId: z.ZodNullable<z.ZodUUID>;
-            authorUserId: z.ZodUUID;
+            id: z.ZodString;
+            authorUserId: z.ZodString;
+            workoutSummaryId: z.ZodNullable<z.ZodString>;
             content: z.ZodString;
             visibility: z.ZodEnum<{
                 public: "public";
@@ -6657,10 +6469,7 @@ declare const listVisiblePostsContract: {
                 }, z.core.$strip>;
                 commentsCount: z.ZodNumber;
             }, z.core.$strip>;
-        }, {
-            out: {};
-            in: {};
-        }>>;
+        }, z.core.$strip>>;
         nextCursor: z.ZodNullable<z.ZodString>;
     }, z.core.$strip>;
 };
@@ -6681,9 +6490,9 @@ declare const listCrewPostsRequestSchema: z.ZodObject<{
 /** Validates the collection returned by the list-crew-posts endpoint. */
 declare const listCrewPostsResponseSchema: z.ZodObject<{
     posts: z.ZodArray<z.ZodObject<{
-        id: z.ZodUUID;
-        workoutSummaryId: z.ZodNullable<z.ZodUUID>;
-        authorUserId: z.ZodUUID;
+        id: z.ZodString;
+        authorUserId: z.ZodString;
+        workoutSummaryId: z.ZodNullable<z.ZodString>;
         content: z.ZodString;
         visibility: z.ZodEnum<{
             public: "public";
@@ -6702,10 +6511,7 @@ declare const listCrewPostsResponseSchema: z.ZodObject<{
             }, z.core.$strip>;
             commentsCount: z.ZodNumber;
         }, z.core.$strip>;
-    }, {
-        out: {};
-        in: {};
-    }>>;
+    }, z.core.$strip>>;
     nextCursor: z.ZodNullable<z.ZodString>;
 }, z.core.$strip>;
 /** Defines the request and response contract for listing posts from one crew. */
@@ -6721,9 +6527,9 @@ declare const listCrewPostsContract: {
     }, z.core.$strip>;
     response: z.ZodObject<{
         posts: z.ZodArray<z.ZodObject<{
-            id: z.ZodUUID;
-            workoutSummaryId: z.ZodNullable<z.ZodUUID>;
-            authorUserId: z.ZodUUID;
+            id: z.ZodString;
+            authorUserId: z.ZodString;
+            workoutSummaryId: z.ZodNullable<z.ZodString>;
             content: z.ZodString;
             visibility: z.ZodEnum<{
                 public: "public";
@@ -6742,10 +6548,7 @@ declare const listCrewPostsContract: {
                 }, z.core.$strip>;
                 commentsCount: z.ZodNumber;
             }, z.core.$strip>;
-        }, {
-            out: {};
-            in: {};
-        }>>;
+        }, z.core.$strip>>;
         nextCursor: z.ZodNullable<z.ZodString>;
     }, z.core.$strip>;
 };
@@ -6764,7 +6567,7 @@ declare const createPostRequestSchema: z.ZodObject<{
             crews_only: "crews_only";
         }>;
         crewIds: z.ZodDefault<z.ZodArray<z.ZodUUID>>;
-        workoutSummaryId: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
+        workoutSummaryId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     }, z.core.$strip>;
 }, z.core.$strip>;
 /** Validates the empty response returned after post creation. */
@@ -6779,7 +6582,7 @@ declare const createPostContract: {
                 crews_only: "crews_only";
             }>;
             crewIds: z.ZodDefault<z.ZodArray<z.ZodUUID>>;
-            workoutSummaryId: z.ZodOptional<z.ZodNullable<z.ZodUUID>>;
+            workoutSummaryId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodVoid;
@@ -6791,7 +6594,7 @@ type CreatePostResponse = ResponseOf<typeof createPostContract>;
 /** Validates the route parameters and body used to update a post. */
 declare const updatePostRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
     }, z.core.$strip>;
     body: z.ZodObject<{
         content: z.ZodString;
@@ -6803,7 +6606,7 @@ declare const updatePostResponseSchema: z.ZodVoid;
 declare const updatePostContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
         }, z.core.$strip>;
         body: z.ZodObject<{
             content: z.ZodString;
@@ -6820,7 +6623,7 @@ type UpdatePostResponse = ResponseOf<typeof updatePostContract>;
 /** Validates the route parameters used to delete a post. */
 declare const deletePostRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
 /** Validates the empty response returned after deleting a post. */
@@ -6829,7 +6632,7 @@ declare const deletePostResponseSchema: z.ZodVoid;
 declare const deletePostContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodVoid;
@@ -6839,46 +6642,10 @@ type DeletePostParams = ParamsOf<typeof deletePostContract>;
 /** Response returned after deleting a post. */
 type DeletePostResponse = ResponseOf<typeof deletePostContract>;
 
-/** Runtime schema for a post with author details and its current like and comment totals. */
-declare const postQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    workoutSummaryId: z.ZodNullable<z.ZodUUID>;
-    authorUserId: z.ZodUUID;
-    content: z.ZodString;
-    visibility: z.ZodEnum<{
-        public: "public";
-        crews_only: "crews_only";
-    }>;
-    publishedAt: z.ZodString;
-    updatedAt: z.ZodString;
-    username: z.ZodString;
-    fullName: z.ZodString;
-    profilePicPath: z.ZodNullable<z.ZodString>;
-    interactions: z.ZodObject<{
-        reactionsCount: z.ZodObject<{
-            likesCount: z.ZodNumber;
-            fireUpCount: z.ZodNumber;
-            muscleCount: z.ZodNumber;
-        }, z.core.$strip>;
-        commentsCount: z.ZodNumber;
-    }, z.core.$strip>;
-}, {
-    out: {};
-    in: {};
-}>;
-/** Runtime schema for a post deletion result. */
-declare const deletedPostQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-}, z.core.$strip>;
-/** Typed post row with author details and engagement totals returned by social post endpoints. */
-type PostQueryDto = z.infer<typeof postQueryDtoSchema>;
-/** Typed result used to verify that a post was deleted. */
-type DeletedPostQueryDto = z.infer<typeof deletedPostQueryDtoSchema>;
-
 /** Validates cursor pagination for comments on a visible post. */
 declare const listPostCommentsRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        postId: z.ZodUUID;
+        postId: z.ZodString;
     }, z.core.$strip>;
     query: z.ZodObject<{
         limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
@@ -6888,26 +6655,23 @@ declare const listPostCommentsRequestSchema: z.ZodObject<{
 /** Validates a page of comments and its continuation cursor. */
 declare const listPostCommentsResponseSchema: z.ZodObject<{
     comments: z.ZodArray<z.ZodObject<{
-        id: z.ZodUUID;
-        postId: z.ZodUUID;
-        userId: z.ZodUUID;
+        id: z.ZodString;
+        postId: z.ZodString;
+        userId: z.ZodString;
         content: z.ZodString;
         createdAt: z.ZodString;
         updatedAt: z.ZodString;
         authorFullName: z.ZodString;
         authorProfilePicPath: z.ZodNullable<z.ZodString>;
         authorUsername: z.ZodString;
-    }, {
-        out: {};
-        in: {};
-    }>>;
+    }, z.core.$strip>>;
     nextCursor: z.ZodNullable<z.ZodString>;
 }, z.core.$strip>;
 /** Defines the contract for listing comments on a post. */
 declare const listPostCommentsContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            postId: z.ZodUUID;
+            postId: z.ZodString;
         }, z.core.$strip>;
         query: z.ZodObject<{
             limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
@@ -6916,19 +6680,16 @@ declare const listPostCommentsContract: {
     }, z.core.$strip>;
     response: z.ZodObject<{
         comments: z.ZodArray<z.ZodObject<{
-            id: z.ZodUUID;
-            postId: z.ZodUUID;
-            userId: z.ZodUUID;
+            id: z.ZodString;
+            postId: z.ZodString;
+            userId: z.ZodString;
             content: z.ZodString;
             createdAt: z.ZodString;
             updatedAt: z.ZodString;
             authorFullName: z.ZodString;
             authorProfilePicPath: z.ZodNullable<z.ZodString>;
             authorUsername: z.ZodString;
-        }, {
-            out: {};
-            in: {};
-        }>>;
+        }, z.core.$strip>>;
         nextCursor: z.ZodNullable<z.ZodString>;
     }, z.core.$strip>;
 };
@@ -6941,7 +6702,7 @@ type ListPostCommentsResponse = ResponseOf<typeof listPostCommentsContract>;
 /** Validates a comment to add to a post. */
 declare const addCommentRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        postId: z.ZodUUID;
+        postId: z.ZodString;
     }, z.core.$strip>;
     body: z.ZodObject<{
         content: z.ZodString;
@@ -6953,7 +6714,7 @@ declare const addCommentResponseSchema: z.ZodVoid;
 declare const addCommentContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            postId: z.ZodUUID;
+            postId: z.ZodString;
         }, z.core.$strip>;
         body: z.ZodObject<{
             content: z.ZodString;
@@ -6970,7 +6731,7 @@ type AddCommentResponse = ResponseOf<typeof addCommentContract>;
 /** Validates a comment identifier and its replacement content. */
 declare const editCommentRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
     }, z.core.$strip>;
     body: z.ZodObject<{
         content: z.ZodString;
@@ -6982,7 +6743,7 @@ declare const editCommentResponseSchema: z.ZodVoid;
 declare const editCommentContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
         }, z.core.$strip>;
         body: z.ZodObject<{
             content: z.ZodString;
@@ -6999,7 +6760,7 @@ type EditCommentResponse = ResponseOf<typeof editCommentContract>;
 /** Validates the identifier of a comment to delete. */
 declare const deleteCommentRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
 /** Defines the contract for deleting an authored comment. */
@@ -7008,7 +6769,7 @@ declare const deleteCommentResponseSchema: z.ZodVoid;
 declare const deleteCommentContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodVoid;
@@ -7018,34 +6779,10 @@ type DeleteCommentParams = ParamsOf<typeof deleteCommentContract>;
 /** Empty response returned after deleting a comment. */
 type DeleteCommentResponse = ResponseOf<typeof deleteCommentContract>;
 
-/** Runtime schema for a comment returned by a social query. */
-declare const commentQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    postId: z.ZodUUID;
-    userId: z.ZodUUID;
-    content: z.ZodString;
-    createdAt: z.ZodString;
-    updatedAt: z.ZodString;
-    authorFullName: z.ZodString;
-    authorProfilePicPath: z.ZodNullable<z.ZodString>;
-    authorUsername: z.ZodString;
-}, {
-    out: {};
-    in: {};
-}>;
-/** Runtime schema for the identifier returned after a comment write. */
-declare const commentWriteResultQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-}, z.core.$strip>;
-/** Typed comment returned by social comment queries. */
-type CommentQueryDto = z.infer<typeof commentQueryDtoSchema>;
-/** Typed identifier returned after creating, editing, or deleting a comment. */
-type CommentWriteResultQueryDto = z.infer<typeof commentWriteResultQueryDtoSchema>;
-
 /** Validates cursor pagination for reactions on a visible post. */
 declare const listPostReactionsRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        postId: z.ZodUUID;
+        postId: z.ZodString;
     }, z.core.$strip>;
     query: z.ZodObject<{
         limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
@@ -7055,26 +6792,23 @@ declare const listPostReactionsRequestSchema: z.ZodObject<{
 /** Validates a page of reactions and its continuation cursor. */
 declare const listPostReactionsResponseSchema: z.ZodObject<{
     reactions: z.ZodArray<z.ZodObject<{
-        id: z.ZodUUID;
-        postId: z.ZodUUID;
-        userId: z.ZodUUID;
+        id: z.ZodString;
+        postId: z.ZodString;
+        userId: z.ZodString;
         type: z.ZodEnum<{
             like: "like";
             "fire up": "fire up";
             muscle: "muscle";
         }>;
         reactedAt: z.ZodString;
-    }, {
-        out: {};
-        in: {};
-    }>>;
+    }, z.core.$strip>>;
     nextCursor: z.ZodNullable<z.ZodString>;
 }, z.core.$strip>;
 /** Defines the contract for listing reactions on a post. */
 declare const listPostReactionsContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            postId: z.ZodUUID;
+            postId: z.ZodString;
         }, z.core.$strip>;
         query: z.ZodObject<{
             limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
@@ -7083,19 +6817,16 @@ declare const listPostReactionsContract: {
     }, z.core.$strip>;
     response: z.ZodObject<{
         reactions: z.ZodArray<z.ZodObject<{
-            id: z.ZodUUID;
-            postId: z.ZodUUID;
-            userId: z.ZodUUID;
+            id: z.ZodString;
+            postId: z.ZodString;
+            userId: z.ZodString;
             type: z.ZodEnum<{
                 like: "like";
                 "fire up": "fire up";
                 muscle: "muscle";
             }>;
             reactedAt: z.ZodString;
-        }, {
-            out: {};
-            in: {};
-        }>>;
+        }, z.core.$strip>>;
         nextCursor: z.ZodNullable<z.ZodString>;
     }, z.core.$strip>;
 };
@@ -7108,7 +6839,7 @@ type ListPostReactionsResponse = ResponseOf<typeof listPostReactionsContract>;
 /** Validates a request that creates or replaces the caller's reaction to a post. */
 declare const reactToPostRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        postId: z.ZodUUID;
+        postId: z.ZodString;
     }, z.core.$strip>;
     body: z.ZodObject<{
         type: z.ZodEnum<{
@@ -7124,7 +6855,7 @@ declare const reactToPostResponseSchema: z.ZodVoid;
 declare const reactToPostContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            postId: z.ZodUUID;
+            postId: z.ZodString;
         }, z.core.$strip>;
         body: z.ZodObject<{
             type: z.ZodEnum<{
@@ -7145,7 +6876,7 @@ type ReactToPostResponse = ResponseOf<typeof reactToPostContract>;
 /** Validates the post whose reaction the caller wants to remove. */
 declare const deleteReactionRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        postId: z.ZodUUID;
+        postId: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
 /** Defines the empty response returned after deleting a reaction. */
@@ -7154,7 +6885,7 @@ declare const deleteReactionResponseSchema: z.ZodVoid;
 declare const deleteReactionContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            postId: z.ZodUUID;
+            postId: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodVoid;
@@ -7164,33 +6895,9 @@ type DeleteReactionParams = ParamsOf<typeof deleteReactionContract>;
 /** Empty response returned after deleting a reaction. */
 type DeleteReactionResponse = ResponseOf<typeof deleteReactionContract>;
 
-/** Runtime schema for a reaction returned by a social query. */
-declare const reactionQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    postId: z.ZodUUID;
-    userId: z.ZodUUID;
-    type: z.ZodEnum<{
-        like: "like";
-        "fire up": "fire up";
-        muscle: "muscle";
-    }>;
-    reactedAt: z.ZodString;
-}, {
-    out: {};
-    in: {};
-}>;
-/** Runtime schema for the identifier returned after a reaction write. */
-declare const reactionWriteResultQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-}, z.core.$strip>;
-/** Typed reaction returned by social reaction queries. */
-type ReactionQueryDto = z.infer<typeof reactionQueryDtoSchema>;
-/** Typed identifier returned after creating, changing, or deleting a reaction. */
-type ReactionWriteResultQueryDto = z.infer<typeof reactionWriteResultQueryDtoSchema>;
-
 /** Validates the public profile fields shown in the social summary. */
 declare const socialSummaryParticipantPreviewSchema: z.ZodObject<{
-    userId: z.ZodUUID;
+    userId: z.ZodString;
     username: z.ZodString;
     fullName: z.ZodString;
     profilePicPath: z.ZodNullable<z.ZodString>;
@@ -7199,7 +6906,7 @@ declare const socialSummaryParticipantPreviewSchema: z.ZodObject<{
 declare const getSocialSummaryResponseSchema: z.ZodObject<{
     activeCrewCount: z.ZodNumber;
     participantPreviews: z.ZodArray<z.ZodObject<{
-        userId: z.ZodUUID;
+        userId: z.ZodString;
         username: z.ZodString;
         fullName: z.ZodString;
         profilePicPath: z.ZodNullable<z.ZodString>;
@@ -7210,7 +6917,7 @@ declare const getSocialSummaryContract: {
     response: z.ZodObject<{
         activeCrewCount: z.ZodNumber;
         participantPreviews: z.ZodArray<z.ZodObject<{
-            userId: z.ZodUUID;
+            userId: z.ZodString;
             username: z.ZodString;
             fullName: z.ZodString;
             profilePicPath: z.ZodNullable<z.ZodString>;
@@ -7231,7 +6938,7 @@ declare const searchSocialUsersRequestSchema: z.ZodObject<{
 /** Validates a page of public user search results. */
 declare const searchSocialUsersResponseSchema: z.ZodObject<{
     users: z.ZodArray<z.ZodObject<{
-        userId: z.ZodUUID;
+        userId: z.ZodString;
         username: z.ZodString;
         fullName: z.ZodString;
         profilePicPath: z.ZodNullable<z.ZodString>;
@@ -7250,7 +6957,7 @@ declare const searchSocialUsersContract: {
     }, z.core.$strip>;
     response: z.ZodObject<{
         users: z.ZodArray<z.ZodObject<{
-            userId: z.ZodUUID;
+            userId: z.ZodString;
             username: z.ZodString;
             fullName: z.ZodString;
             profilePicPath: z.ZodNullable<z.ZodString>;
@@ -7266,27 +6973,27 @@ type SearchSocialUsersResponse = ResponseOf<typeof searchSocialUsersContract>;
 /** Validates the user ID used to retrieve one public profile. */
 declare const getSocialUserRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        userId: z.ZodUUID;
+        userId: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
 /** Validates the public profile returned for one user. */
 declare const getSocialUserResponseSchema: z.ZodObject<{
     username: z.ZodString;
     profilePicPath: z.ZodNullable<z.ZodString>;
-    userId: z.ZodUUID;
+    userId: z.ZodString;
     fullName: z.ZodString;
 }, z.core.$strip>;
 /** Defines the get-social-user request and response. */
 declare const getSocialUserContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            userId: z.ZodUUID;
+            userId: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodObject<{
         username: z.ZodString;
         profilePicPath: z.ZodNullable<z.ZodString>;
-        userId: z.ZodUUID;
+        userId: z.ZodString;
         fullName: z.ZodString;
     }, z.core.$strip>;
 };
@@ -7295,15 +7002,4 @@ type GetSocialUserParams = ParamsOf<typeof getSocialUserContract>;
 /** Public profile returned by the get-social-user endpoint. */
 type GetSocialUserResponse = ResponseOf<typeof getSocialUserContract>;
 
-/** Public profile fields returned by social user search. */
-declare const socialUserQueryDtoSchema: z.ZodObject<{
-    userId: z.ZodUUID;
-    username: z.ZodString;
-    fullName: z.ZodString;
-    profilePicPath: z.ZodNullable<z.ZodString>;
-    createdAt: z.ZodString;
-}, z.core.$strip>;
-/** A public user profile returned by social search. */
-type SocialUserQueryDto = typeof socialUserQueryDtoSchema._output;
-
-export { type AddCommentBody, type AddCommentParams, type AddCommentResponse, type AerobicTrackingRow, type AnalyzeVideoPayloadDto, type AnalyzeVideoResultPayloadDto, type AppleOAuthBody, type BodyOf, type CommentQueryDto, type CommentWriteResultQueryDto, type Contract, type CreateAerobicEntryBody, type CreateAerobicEntryQuery, type CreateCrewBody, type CreateCrewResponse, type CreatePasswordResetRequestBody, type CreatePostBody, type CreatePostResponse, type CreateUserBody, type CreateUserResponse, type CreateVerificationEmailBody, type CreateVideoUploadUrlBody, type CreateVideoUploadUrlResponse, type CreateWebSocketTicketBody, type CreateWebSocketTicketResponse, type CreateWorkoutSessionBody, type CreateWorkoutSessionResponse, type CrewParticipantPreviewQueryDto, type CrewParticipantQueryDto, type CrewParticipationRequestQueryDto, type CrewQueryDto, type CrewSuccessorQueryDto, type CrewWithParticipantCountQueryDto, type DeleteAerobicEntryParams, type DeleteAerobicEntryQuery, type DeleteAerobicEntryResponse, type DeleteCommentParams, type DeleteCommentResponse, type DeleteCrewParams, type DeleteCrewProfilePictureParams, type DeleteCrewProfilePictureResponse, type DeleteCrewResponse, type DeleteMessageParams, type DeleteMessageResponse, type DeletePostParams, type DeletePostResponse, type DeleteProfilePictureBody, type DeleteReactionParams, type DeleteReactionResponse, type DeletedCrewQueryDto, type DeletedPostQueryDto, type DiscoverableCrewQueryDto, type EditCommentBody, type EditCommentParams, type EditCommentResponse, type EnqueueAnalyzeVideoParamsDto, type ExerciseRow, type ExerciseToWorkoutSplitRow, type ExerciseTrackingRow, type GetAerobicHistoryQuery, type GetAerobicHistoryResponse, type GetCrewParams, type GetCrewResponse, type GetCurrentUserResponse, type GetExerciseHistoryQuery, type GetExerciseHistoryResponse, type GetPersonalRecordsQuery, type GetPersonalRecordsResponse, type GetReminderSettingsResponse, type GetSocialSummaryResponse, type GetSocialUserParams, type GetSocialUserResponse, type GetVerificationStatusQuery, type GetWorkoutHistoryQuery, type GetWorkoutHistoryResponse, type GetWorkoutPlanQuery, type GetWorkoutPlanResponse, type GetWorkoutSchedulesResponse, type GetWorkoutStatisticsResponse, type GoogleOAuthBody, type InviteCrewUserBody, type InviteCrewUserParams, type InviteCrewUserResponse, type LeaveCrewContextQueryDto, type LeaveCrewParams, type LeaveCrewResponse, type LeaveCrewResultQueryDto, type ListCrewInvitationsResponse, type ListCrewParticipantsParams, type ListCrewParticipantsQuery, type ListCrewParticipantsResponse, type ListCrewPostsParams, type ListCrewPostsQuery, type ListCrewPostsResponse, type ListCrewsQuery, type ListCrewsResponse, type ListExercisesResponse, type ListMessagesQuery, type ListMessagesResponse, type ListMyCrewsQuery, type ListMyCrewsResponse, type ListPendingCrewJoinRequestsParams, type ListPendingCrewJoinRequestsResponse, type ListPostCommentsParams, type ListPostCommentsQuery, type ListPostCommentsResponse, type ListPostReactionsParams, type ListPostReactionsQuery, type ListPostReactionsResponse, type ListVisiblePostsQuery, type ListVisiblePostsResponse, type LoginRequestBody, type LoginResponse, type LogoutResponse, type MarkMessageAsReadParams, type MarkMessageAsReadResponse, type MessageRow, type OAuthLoginResponse, type ParamsOf, type PostQueryDto, type QueryOf, type ReactToPostBody, type ReactToPostParams, type ReactToPostResponse, type ReactionQueryDto, type ReactionWriteResultQueryDto, type RefreshTokenResponse, type ReplaceCrewProfilePictureParams, type ReplaceCrewProfilePictureResponse, type ReplaceProfilePictureResponse, type ReplacePushTokenBody, type ReplaceWorkoutPlanBody, type ReplaceWorkoutPlanResponse, type ReplaceWorkoutSchedulesBody, type ReplaceWorkoutSchedulesResponse, type RequestOf, type RequestSchema, type RequestToJoinCrewParams, type RequestToJoinCrewResponse, type ResetPasswordBody, type ResetPasswordQuery, type ResetPasswordResponse, type ResponseOf, type SearchSocialUsersQuery, type SearchSocialUsersResponse, type SocialUserQueryDto, type SquatRepetitionDto, type UpdateAerobicEntryBody, type UpdateAerobicEntryParams, type UpdateAerobicEntryQuery, type UpdateAerobicEntryResponse, type UpdateCrewBody, type UpdateCrewParams, type UpdateCrewParticipationRequestStatusBody, type UpdateCrewParticipationRequestStatusParams, type UpdateCrewParticipationRequestStatusResponse, type UpdateCrewResponse, type UpdateCurrentUserBody, type UpdateCurrentUserResponse, type UpdatePostBody, type UpdatePostParams, type UpdatePostResponse, type UpdateReminderTimeZoneBody, type UpdateReminderTimeZoneResponse, type UpdateUnverifiedAccountEmailBody, type UpsertReminderSettingsBody, type UpsertReminderSettingsResponse, type UserDataResponse, type UserInsert, type UserRow, type VerifyEmailQuery, type WorkoutPlanRow, type WorkoutScheduleInputDto, type WorkoutScheduleQueryDto, type WorkoutSplitRow, type WorkoutSummaryRow, addCommentContract, addCommentRequestSchema, addCommentResponseSchema, aerobicTrackingDbSchema, analyzeVideoPayloadDtoSchema, analyzeVideoResultPayloadDtoSchema, appleOAuthContract, appleOAuthRequestSchema, commentDbSchema, commentQueryDtoSchema, commentWriteResultQueryDtoSchema, createAerobicEntryContract, createAerobicEntryRequestSchema, createAerobicEntryResponseSchema, createCrewContract, createCrewRequestSchema, createCrewResponseSchema, createPasswordResetRequestContract, createPasswordResetRequestSchema, createPostContract, createPostRequestSchema, createPostResponseSchema, createUserContract, createUserRequestSchema, createUserResponseSchema, createUserUserSchema, createVerificationEmailContract, createVerificationEmailRequestSchema, createVideoUploadUrlContract, createVideoUploadUrlRequestSchema, createVideoUploadUrlResponseSchema, createWebSocketTicketContract, createWebSocketTicketRequestSchema, createWebSocketTicketResponseSchema, createWorkoutSessionContract, createWorkoutSessionRequestSchema, createWorkoutSessionResponseSchema, crewDbSchema, crewMembershipDbSchema, crewParticipantPreviewQueryDtoSchema, crewParticipantQueryDtoSchema, crewParticipationRequestDbSchema, crewParticipationRequestQueryDtoSchema, crewQueryDtoSchema, crewSuccessorQueryDtoSchema, crewWithParticipantCountQueryDtoSchema, deleteAerobicEntryContract, deleteAerobicEntryRequestSchema, deleteCommentContract, deleteCommentRequestSchema, deleteCommentResponseSchema, deleteCrewContract, deleteCrewProfilePictureContract, deleteCrewProfilePictureRequestSchema, deleteCrewRequestSchema, deleteCrewResponseSchema, deleteMessageContract, deleteMessageRequestSchema, deleteMessageResponseSchema, deletePostContract, deletePostRequestSchema, deletePostResponseSchema, deleteProfilePictureContract, deleteProfilePictureRequestSchema, deleteReactionContract, deleteReactionRequestSchema, deleteReactionResponseSchema, deletedCrewQueryDtoSchema, deletedPostQueryDtoSchema, discoverableCrewQueryDtoSchema, editCommentContract, editCommentRequestSchema, editCommentResponseSchema, enqueueAnalyzeVideoParamsDtoSchema, exerciseDbSchema, exerciseToWorkoutSplitDbSchema, exerciseToWorkoutSplitSetExpandedViewDbSchema, exerciseTrackingDbSchema, exerciseTrackingSetExpandedViewDbSchema, getAerobicHistoryContract, getAerobicHistoryRequestSchema, getAerobicHistoryResponseSchema, getCrewContract, getCrewRequestSchema, getCrewResponseSchema, getCurrentUserContract, getCurrentUserResponseSchema, getExerciseHistoryContract, getExerciseHistoryRequestSchema, getExerciseHistoryResponseSchema, getPersonalRecordsContract, getPersonalRecordsRequestSchema, getPersonalRecordsResponseSchema, getReminderSettingsContract, getReminderSettingsResponseSchema, getSocialSummaryContract, getSocialSummaryResponseSchema, getSocialUserContract, getSocialUserRequestSchema, getSocialUserResponseSchema, getVerificationStatusContract, getVerificationStatusRequestSchema, getWorkoutHistoryContract, getWorkoutHistoryRequestSchema, getWorkoutHistoryResponseSchema, getWorkoutPlanContract, getWorkoutPlanRequestSchema, getWorkoutPlanResponseSchema, getWorkoutSchedulesContract, getWorkoutSchedulesResponseSchema, getWorkoutStatisticsContract, getWorkoutStatisticsResponseSchema, googleOAuthContract, googleOAuthRequestSchema, inviteCrewUserContract, inviteCrewUserRequestSchema, leaveCrewContextQueryDtoSchema, leaveCrewContract, leaveCrewRequestSchema, leaveCrewResponseSchema, leaveCrewResultQueryDtoSchema, listCrewInvitationsContract, listCrewInvitationsRequestSchema, listCrewInvitationsResponseSchema, listCrewParticipantsContract, listCrewParticipantsRequestSchema, listCrewParticipantsResponseSchema, listCrewPostsContract, listCrewPostsRequestSchema, listCrewPostsResponseSchema, listCrewsContract, listCrewsRequestSchema, listCrewsResponseSchema, listExercisesContract, listExercisesResponseSchema, listMessagesContract, listMessagesRequestSchema, listMessagesResponseSchema, listMyCrewsContract, listMyCrewsRequestSchema, listMyCrewsResponseSchema, listPendingCrewJoinRequestsContract, listPendingCrewJoinRequestsRequestSchema, listPendingCrewJoinRequestsResponseSchema, listPostCommentsContract, listPostCommentsRequestSchema, listPostCommentsResponseSchema, listPostReactionsContract, listPostReactionsRequestSchema, listPostReactionsResponseSchema, listVisiblePostsContract, listVisiblePostsRequestSchema, listVisiblePostsResponseSchema, loginContract, loginRequestSchema, loginResponseSchema, logoutContract, logoutResponseSchema, markMessageAsReadContract, markMessageAsReadRequestSchema, markMessageAsReadResponseSchema, messageDbSchema, oAuthLoginContract, oAuthLoginResponseSchema, oauthAccountDbSchema, postDbSchema, postQueryDtoSchema, proceedLoginResponseSchema, prsViewDbSchema, reactToPostContract, reactToPostRequestSchema, reactToPostResponseSchema, reactionDbSchema, reactionQueryDtoSchema, reactionWriteResultQueryDtoSchema, refreshTokenContract, refreshTokenResponseSchema, replaceCrewProfilePictureContract, replaceCrewProfilePictureRequestSchema, replaceCrewProfilePictureResponseSchema, replaceProfilePictureContract, replaceProfilePictureResponseSchema, replacePushTokenContract, replacePushTokenRequestSchema, replaceWorkoutPlanContract, replaceWorkoutPlanRequestSchema, replaceWorkoutPlanResponseSchema, replaceWorkoutSchedulesContract, replaceWorkoutSchedulesRequestSchema, requestToJoinCrewContract, requestToJoinCrewRequestSchema, resetPasswordContract, resetPasswordRequestSchema, resetPasswordResponseSchema, searchSocialUsersContract, searchSocialUsersRequestSchema, searchSocialUsersResponseSchema, serializedDateSchema, socialSummaryParticipantPreviewSchema, socialUserQueryDtoSchema, squatRepetitionDtoSchema, timezoneSchema, trackingSetDbSchema, updateAerobicEntryContract, updateAerobicEntryRequestSchema, updateCrewContract, updateCrewParticipationRequestStatusContract, updateCrewParticipationRequestStatusRequestSchema, updateCrewRequestSchema, updateCrewResponseSchema, updateCurrentUserContract, updateCurrentUserRequestSchema, updateCurrentUserResponseSchema, updatePostContract, updatePostRequestSchema, updatePostResponseSchema, updateReminderTimeZoneContract, updateReminderTimeZoneRequestSchema, updateUnverifiedAccountEmailContract, updateUnverifiedAccountEmailRequestSchema, upsertReminderSettingsContract, upsertReminderSettingsRequestSchema, userDataContract, userDataResponseSchema, userDbSchema, userInsertDbSchema, userReminderSettingDbSchema, userUpdateDbSchema, verifyEmailContract, verifyEmailRequestSchema, workoutPlanDbSchema, workoutScheduleDbSchema, workoutScheduleInputDtoSchema, workoutScheduleQueryDtoSchema, workoutSetDbSchema, workoutSplitDbSchema, workoutSummaryDbSchema };
+export { type AddCommentBody, type AddCommentParams, type AddCommentResponse, type AerobicTrackingRow, type AnalyzeVideoPayloadDto, type AnalyzeVideoResultPayloadDto, type AppleOAuthBody, type BodyOf, type Contract, type CreateAerobicEntryBody, type CreateAerobicEntryQuery, type CreateCrewBody, type CreateCrewResponse, type CreatePasswordResetRequestBody, type CreatePostBody, type CreatePostResponse, type CreateUserBody, type CreateUserResponse, type CreateVerificationEmailBody, type CreateVideoUploadUrlBody, type CreateVideoUploadUrlResponse, type CreateWebSocketTicketBody, type CreateWebSocketTicketResponse, type CreateWorkoutSessionBody, type CreateWorkoutSessionResponse, type DeleteAerobicEntryParams, type DeleteAerobicEntryQuery, type DeleteAerobicEntryResponse, type DeleteCommentParams, type DeleteCommentResponse, type DeleteCrewParams, type DeleteCrewProfilePictureParams, type DeleteCrewProfilePictureResponse, type DeleteCrewResponse, type DeleteMessageParams, type DeleteMessageResponse, type DeletePostParams, type DeletePostResponse, type DeleteProfilePictureBody, type DeleteReactionParams, type DeleteReactionResponse, type EditCommentBody, type EditCommentParams, type EditCommentResponse, type EnqueueAnalyzeVideoParamsDto, type ExerciseRow, type ExerciseToWorkoutSplitRow, type ExerciseTrackingRow, type GetAerobicHistoryQuery, type GetAerobicHistoryResponse, type GetCrewParams, type GetCrewResponse, type GetCurrentUserResponse, type GetExerciseHistoryQuery, type GetExerciseHistoryResponse, type GetPersonalRecordsQuery, type GetPersonalRecordsResponse, type GetReminderSettingsResponse, type GetSocialSummaryResponse, type GetSocialUserParams, type GetSocialUserResponse, type GetVerificationStatusQuery, type GetWorkoutHistoryQuery, type GetWorkoutHistoryResponse, type GetWorkoutPlanQuery, type GetWorkoutPlanResponse, type GetWorkoutSchedulesResponse, type GetWorkoutStatisticsResponse, type GoogleOAuthBody, type InviteCrewUserBody, type InviteCrewUserParams, type InviteCrewUserResponse, type LeaveCrewParams, type LeaveCrewResponse, type ListCrewInvitationsResponse, type ListCrewParticipantsParams, type ListCrewParticipantsQuery, type ListCrewParticipantsResponse, type ListCrewPostsParams, type ListCrewPostsQuery, type ListCrewPostsResponse, type ListCrewsQuery, type ListCrewsResponse, type ListExercisesResponse, type ListMessagesQuery, type ListMessagesResponse, type ListMyCrewsQuery, type ListMyCrewsResponse, type ListPendingCrewJoinRequestsParams, type ListPendingCrewJoinRequestsResponse, type ListPostCommentsParams, type ListPostCommentsQuery, type ListPostCommentsResponse, type ListPostReactionsParams, type ListPostReactionsQuery, type ListPostReactionsResponse, type ListVisiblePostsQuery, type ListVisiblePostsResponse, type LoginRequestBody, type LoginResponse, type LogoutResponse, type MarkMessageAsReadParams, type MarkMessageAsReadResponse, type MessageRow, type OAuthLoginResponse, type ParamsOf, type QueryOf, type ReactToPostBody, type ReactToPostParams, type ReactToPostResponse, type RefreshTokenResponse, type ReplaceCrewProfilePictureParams, type ReplaceCrewProfilePictureResponse, type ReplaceProfilePictureResponse, type ReplacePushTokenBody, type ReplaceWorkoutPlanBody, type ReplaceWorkoutPlanResponse, type ReplaceWorkoutSchedulesBody, type ReplaceWorkoutSchedulesResponse, type RequestOf, type RequestSchema, type RequestToJoinCrewParams, type RequestToJoinCrewResponse, type ResetPasswordBody, type ResetPasswordQuery, type ResetPasswordResponse, type ResponseOf, type SearchSocialUsersQuery, type SearchSocialUsersResponse, type SquatRepetitionDto, type UpdateAerobicEntryBody, type UpdateAerobicEntryParams, type UpdateAerobicEntryQuery, type UpdateAerobicEntryResponse, type UpdateCrewBody, type UpdateCrewParams, type UpdateCrewParticipationRequestStatusBody, type UpdateCrewParticipationRequestStatusParams, type UpdateCrewParticipationRequestStatusResponse, type UpdateCrewResponse, type UpdateCurrentUserBody, type UpdateCurrentUserResponse, type UpdatePostBody, type UpdatePostParams, type UpdatePostResponse, type UpdateReminderTimeZoneBody, type UpdateReminderTimeZoneResponse, type UpdateUnverifiedAccountEmailBody, type UpsertReminderSettingsBody, type UpsertReminderSettingsResponse, type UserDataResponse, type UserInsert, type UserRow, type VerifyEmailQuery, type WorkoutPlanRow, type WorkoutScheduleInputDto, type WorkoutScheduleQueryDto, type WorkoutSplitRow, type WorkoutSummaryRow, addCommentContract, addCommentRequestSchema, addCommentResponseSchema, aerobicTrackingDbSchema, analyzeVideoPayloadDtoSchema, analyzeVideoResultPayloadDtoSchema, appleOAuthContract, appleOAuthRequestSchema, commentDbSchema, createAerobicEntryContract, createAerobicEntryRequestSchema, createAerobicEntryResponseSchema, createCrewContract, createCrewRequestSchema, createCrewResponseSchema, createPasswordResetRequestContract, createPasswordResetRequestSchema, createPostContract, createPostRequestSchema, createPostResponseSchema, createUserContract, createUserRequestSchema, createUserResponseSchema, createUserUserSchema, createVerificationEmailContract, createVerificationEmailRequestSchema, createVideoUploadUrlContract, createVideoUploadUrlRequestSchema, createVideoUploadUrlResponseSchema, createWebSocketTicketContract, createWebSocketTicketRequestSchema, createWebSocketTicketResponseSchema, createWorkoutSessionContract, createWorkoutSessionRequestSchema, createWorkoutSessionResponseSchema, crewDbSchema, crewMembershipDbSchema, crewParticipationRequestDbSchema, deleteAerobicEntryContract, deleteAerobicEntryRequestSchema, deleteCommentContract, deleteCommentRequestSchema, deleteCommentResponseSchema, deleteCrewContract, deleteCrewProfilePictureContract, deleteCrewProfilePictureRequestSchema, deleteCrewRequestSchema, deleteCrewResponseSchema, deleteMessageContract, deleteMessageRequestSchema, deleteMessageResponseSchema, deletePostContract, deletePostRequestSchema, deletePostResponseSchema, deleteProfilePictureContract, deleteProfilePictureRequestSchema, deleteReactionContract, deleteReactionRequestSchema, deleteReactionResponseSchema, editCommentContract, editCommentRequestSchema, editCommentResponseSchema, enqueueAnalyzeVideoParamsDtoSchema, exerciseDbSchema, exerciseToWorkoutSplitDbSchema, exerciseToWorkoutSplitSetExpandedViewDbSchema, exerciseTrackingDbSchema, exerciseTrackingSetExpandedViewDbSchema, getAerobicHistoryContract, getAerobicHistoryRequestSchema, getAerobicHistoryResponseSchema, getCrewContract, getCrewRequestSchema, getCrewResponseSchema, getCurrentUserContract, getCurrentUserResponseSchema, getExerciseHistoryContract, getExerciseHistoryRequestSchema, getExerciseHistoryResponseSchema, getPersonalRecordsContract, getPersonalRecordsRequestSchema, getPersonalRecordsResponseSchema, getReminderSettingsContract, getReminderSettingsResponseSchema, getSocialSummaryContract, getSocialSummaryResponseSchema, getSocialUserContract, getSocialUserRequestSchema, getSocialUserResponseSchema, getVerificationStatusContract, getVerificationStatusRequestSchema, getWorkoutHistoryContract, getWorkoutHistoryRequestSchema, getWorkoutHistoryResponseSchema, getWorkoutPlanContract, getWorkoutPlanRequestSchema, getWorkoutPlanResponseSchema, getWorkoutSchedulesContract, getWorkoutSchedulesResponseSchema, getWorkoutStatisticsContract, getWorkoutStatisticsResponseSchema, googleOAuthContract, googleOAuthRequestSchema, inviteCrewUserContract, inviteCrewUserRequestSchema, leaveCrewContract, leaveCrewRequestSchema, leaveCrewResponseSchema, listCrewInvitationsContract, listCrewInvitationsRequestSchema, listCrewInvitationsResponseSchema, listCrewParticipantsContract, listCrewParticipantsRequestSchema, listCrewParticipantsResponseSchema, listCrewPostsContract, listCrewPostsRequestSchema, listCrewPostsResponseSchema, listCrewsContract, listCrewsRequestSchema, listCrewsResponseSchema, listExercisesContract, listExercisesResponseSchema, listMessagesContract, listMessagesRequestSchema, listMessagesResponseSchema, listMyCrewsContract, listMyCrewsRequestSchema, listMyCrewsResponseSchema, listPendingCrewJoinRequestsContract, listPendingCrewJoinRequestsRequestSchema, listPendingCrewJoinRequestsResponseSchema, listPostCommentsContract, listPostCommentsRequestSchema, listPostCommentsResponseSchema, listPostReactionsContract, listPostReactionsRequestSchema, listPostReactionsResponseSchema, listVisiblePostsContract, listVisiblePostsRequestSchema, listVisiblePostsResponseSchema, loginContract, loginRequestSchema, loginResponseSchema, logoutContract, logoutResponseSchema, markMessageAsReadContract, markMessageAsReadRequestSchema, markMessageAsReadResponseSchema, messageDbSchema, oAuthLoginContract, oAuthLoginResponseSchema, oauthAccountDbSchema, postDbSchema, proceedLoginResponseSchema, prsViewDbSchema, reactToPostContract, reactToPostRequestSchema, reactToPostResponseSchema, reactionDbSchema, refreshTokenContract, refreshTokenResponseSchema, replaceCrewProfilePictureContract, replaceCrewProfilePictureRequestSchema, replaceCrewProfilePictureResponseSchema, replaceProfilePictureContract, replaceProfilePictureResponseSchema, replacePushTokenContract, replacePushTokenRequestSchema, replaceWorkoutPlanContract, replaceWorkoutPlanRequestSchema, replaceWorkoutPlanResponseSchema, replaceWorkoutSchedulesContract, replaceWorkoutSchedulesRequestSchema, requestToJoinCrewContract, requestToJoinCrewRequestSchema, resetPasswordContract, resetPasswordRequestSchema, resetPasswordResponseSchema, searchSocialUsersContract, searchSocialUsersRequestSchema, searchSocialUsersResponseSchema, serializedDateSchema, socialSummaryParticipantPreviewSchema, squatRepetitionDtoSchema, timezoneSchema, trackingSetDbSchema, updateAerobicEntryContract, updateAerobicEntryRequestSchema, updateCrewContract, updateCrewParticipationRequestStatusContract, updateCrewParticipationRequestStatusRequestSchema, updateCrewRequestSchema, updateCrewResponseSchema, updateCurrentUserContract, updateCurrentUserRequestSchema, updateCurrentUserResponseSchema, updatePostContract, updatePostRequestSchema, updatePostResponseSchema, updateReminderTimeZoneContract, updateReminderTimeZoneRequestSchema, updateUnverifiedAccountEmailContract, updateUnverifiedAccountEmailRequestSchema, upsertReminderSettingsContract, upsertReminderSettingsRequestSchema, userDataContract, userDataResponseSchema, userDbSchema, userInsertDbSchema, userReminderSettingDbSchema, userUpdateDbSchema, verifyEmailContract, verifyEmailRequestSchema, workoutPlanDbSchema, workoutScheduleDbSchema, workoutScheduleInputDtoSchema, workoutScheduleQueryDtoSchema, workoutSetDbSchema, workoutSplitDbSchema, workoutSummaryDbSchema };

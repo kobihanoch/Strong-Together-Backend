@@ -1,7 +1,6 @@
 import { z } from 'zod/v4';
 import type { Contract, ParamsOf, QueryOf, ResponseOf } from '../../../common';
-import { userDbSchema } from '../../../database';
-import { socialUserQueryDtoSchema } from './social-users.dtos';
+import { socialUserSchema } from './social-users.schemas';
 
 /** Validates user-search text and cursor pagination. */
 export const searchSocialUsersRequestSchema = z.object({
@@ -14,7 +13,7 @@ export const searchSocialUsersRequestSchema = z.object({
 
 /** Validates a page of public user search results. */
 export const searchSocialUsersResponseSchema = z.object({
-  users: z.array(socialUserQueryDtoSchema),
+  users: z.array(socialUserSchema),
   nextCursor: z.string().nullable(),
 });
 
@@ -31,10 +30,10 @@ export type SearchSocialUsersQuery = QueryOf<typeof searchSocialUsersContract>;
 export type SearchSocialUsersResponse = ResponseOf<typeof searchSocialUsersContract>;
 
 /** Validates the user ID used to retrieve one public profile. */
-export const getSocialUserRequestSchema = z.object({ params: z.object({ userId: userDbSchema.shape.id }) });
+export const getSocialUserRequestSchema = z.object({ params: z.object({ userId: z.string().uuid() }) });
 
 /** Validates the public profile returned for one user. */
-export const getSocialUserResponseSchema = socialUserQueryDtoSchema.omit({ createdAt: true });
+export const getSocialUserResponseSchema = socialUserSchema.omit({ createdAt: true });
 
 /** Defines the get-social-user request and response. */
 export const getSocialUserContract = {

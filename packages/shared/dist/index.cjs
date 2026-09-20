@@ -30,8 +30,6 @@ __export(index_exports, {
   appleOAuthContract: () => appleOAuthContract,
   appleOAuthRequestSchema: () => appleOAuthRequestSchema,
   commentDbSchema: () => commentDbSchema,
-  commentQueryDtoSchema: () => commentQueryDtoSchema,
-  commentWriteResultQueryDtoSchema: () => commentWriteResultQueryDtoSchema,
   createAerobicEntryContract: () => createAerobicEntryContract,
   createAerobicEntryRequestSchema: () => createAerobicEntryRequestSchema,
   createAerobicEntryResponseSchema: () => createAerobicEntryResponseSchema,
@@ -60,13 +58,7 @@ __export(index_exports, {
   createWorkoutSessionResponseSchema: () => createWorkoutSessionResponseSchema,
   crewDbSchema: () => crewDbSchema,
   crewMembershipDbSchema: () => crewMembershipDbSchema,
-  crewParticipantPreviewQueryDtoSchema: () => crewParticipantPreviewQueryDtoSchema,
-  crewParticipantQueryDtoSchema: () => crewParticipantQueryDtoSchema,
   crewParticipationRequestDbSchema: () => crewParticipationRequestDbSchema,
-  crewParticipationRequestQueryDtoSchema: () => crewParticipationRequestQueryDtoSchema,
-  crewQueryDtoSchema: () => crewQueryDtoSchema,
-  crewSuccessorQueryDtoSchema: () => crewSuccessorQueryDtoSchema,
-  crewWithParticipantCountQueryDtoSchema: () => crewWithParticipantCountQueryDtoSchema,
   deleteAerobicEntryContract: () => deleteAerobicEntryContract,
   deleteAerobicEntryRequestSchema: () => deleteAerobicEntryRequestSchema,
   deleteCommentContract: () => deleteCommentContract,
@@ -88,9 +80,6 @@ __export(index_exports, {
   deleteReactionContract: () => deleteReactionContract,
   deleteReactionRequestSchema: () => deleteReactionRequestSchema,
   deleteReactionResponseSchema: () => deleteReactionResponseSchema,
-  deletedCrewQueryDtoSchema: () => deletedCrewQueryDtoSchema,
-  deletedPostQueryDtoSchema: () => deletedPostQueryDtoSchema,
-  discoverableCrewQueryDtoSchema: () => discoverableCrewQueryDtoSchema,
   editCommentContract: () => editCommentContract,
   editCommentRequestSchema: () => editCommentRequestSchema,
   editCommentResponseSchema: () => editCommentResponseSchema,
@@ -137,11 +126,9 @@ __export(index_exports, {
   googleOAuthRequestSchema: () => googleOAuthRequestSchema,
   inviteCrewUserContract: () => inviteCrewUserContract,
   inviteCrewUserRequestSchema: () => inviteCrewUserRequestSchema,
-  leaveCrewContextQueryDtoSchema: () => leaveCrewContextQueryDtoSchema,
   leaveCrewContract: () => leaveCrewContract,
   leaveCrewRequestSchema: () => leaveCrewRequestSchema,
   leaveCrewResponseSchema: () => leaveCrewResponseSchema,
-  leaveCrewResultQueryDtoSchema: () => leaveCrewResultQueryDtoSchema,
   listCrewInvitationsContract: () => listCrewInvitationsContract,
   listCrewInvitationsRequestSchema: () => listCrewInvitationsRequestSchema,
   listCrewInvitationsResponseSchema: () => listCrewInvitationsResponseSchema,
@@ -187,15 +174,12 @@ __export(index_exports, {
   oAuthLoginResponseSchema: () => oAuthLoginResponseSchema,
   oauthAccountDbSchema: () => oauthAccountDbSchema,
   postDbSchema: () => postDbSchema,
-  postQueryDtoSchema: () => postQueryDtoSchema,
   proceedLoginResponseSchema: () => proceedLoginResponseSchema,
   prsViewDbSchema: () => prsViewDbSchema,
   reactToPostContract: () => reactToPostContract,
   reactToPostRequestSchema: () => reactToPostRequestSchema,
   reactToPostResponseSchema: () => reactToPostResponseSchema,
   reactionDbSchema: () => reactionDbSchema,
-  reactionQueryDtoSchema: () => reactionQueryDtoSchema,
-  reactionWriteResultQueryDtoSchema: () => reactionWriteResultQueryDtoSchema,
   refreshTokenContract: () => refreshTokenContract,
   refreshTokenResponseSchema: () => refreshTokenResponseSchema,
   replaceCrewProfilePictureContract: () => replaceCrewProfilePictureContract,
@@ -220,7 +204,6 @@ __export(index_exports, {
   searchSocialUsersResponseSchema: () => searchSocialUsersResponseSchema,
   serializedDateSchema: () => serializedDateSchema,
   socialSummaryParticipantPreviewSchema: () => socialSummaryParticipantPreviewSchema,
-  socialUserQueryDtoSchema: () => socialUserQueryDtoSchema,
   squatRepetitionDtoSchema: () => squatRepetitionDtoSchema,
   timezoneSchema: () => timezoneSchema,
   trackingSetDbSchema: () => trackingSetDbSchema,
@@ -3233,7 +3216,7 @@ var replaceProfilePictureContract = {
 var import_v415 = require("zod/v4");
 var createVideoUploadUrlRequestSchema = import_v415.z.object({
   body: import_v415.z.object({
-    exercise: exerciseDbSchema.shape.name,
+    exercise: import_v415.z.string(),
     fileType: import_v415.z.string(),
     jobId: import_v415.z.string()
   })
@@ -3247,66 +3230,63 @@ var createVideoUploadUrlContract = {
   request: createVideoUploadUrlRequestSchema,
   response: createVideoUploadUrlResponseSchema
 };
-
-// src/modules/video-analysis/video-analysis.dtos.ts
-var import_v416 = require("zod/v4");
-var enqueueAnalyzeVideoParamsDtoSchema = import_v416.z.object({
-  fileKey: import_v416.z.string(),
-  exercise: import_v416.z.string(),
-  userId: userDbSchema.shape.id,
-  requestId: import_v416.z.string(),
-  sentryTrace: import_v416.z.string().optional(),
-  baggage: import_v416.z.string().optional()
+var enqueueAnalyzeVideoParamsDtoSchema = import_v415.z.object({
+  fileKey: import_v415.z.string(),
+  exercise: import_v415.z.string(),
+  userId: import_v415.z.string().uuid(),
+  requestId: import_v415.z.string(),
+  sentryTrace: import_v415.z.string().optional(),
+  baggage: import_v415.z.string().optional()
 });
 var analyzeVideoPayloadDtoSchema = enqueueAnalyzeVideoParamsDtoSchema.extend({
-  expiresAt: import_v416.z.number()
+  expiresAt: import_v415.z.number()
 });
-var squatRepetitionDtoSchema = import_v416.z.object({
-  depth: import_v416.z.object({
-    value: import_v416.z.number(),
-    status: import_v416.z.string(),
-    confidence: import_v416.z.number()
+var squatRepetitionDtoSchema = import_v415.z.object({
+  depth: import_v415.z.object({
+    value: import_v415.z.number(),
+    status: import_v415.z.string(),
+    confidence: import_v415.z.number()
   }),
-  backLean: import_v416.z.object({
-    value: import_v416.z.number(),
-    excessive: import_v416.z.boolean(),
-    confidence: import_v416.z.number()
+  backLean: import_v415.z.object({
+    value: import_v415.z.number(),
+    excessive: import_v415.z.boolean(),
+    confidence: import_v415.z.number()
   }),
-  audit: import_v416.z.object({
-    framesAnalyzed: import_v416.z.number(),
-    validFrames: import_v416.z.number(),
-    cameraAngle: import_v416.z.string(),
-    rawBottomAngle: import_v416.z.number(),
-    samplingRate: import_v416.z.string()
+  audit: import_v415.z.object({
+    framesAnalyzed: import_v415.z.number(),
+    validFrames: import_v415.z.number(),
+    cameraAngle: import_v415.z.string(),
+    rawBottomAngle: import_v415.z.number(),
+    samplingRate: import_v415.z.string()
   })
 });
-var analyzeVideoResultPayloadDtoSchema = /* @__PURE__ */ __name((resultSchema) => import_v416.z.intersection(import_v416.z.object({
-  jobId: import_v416.z.string(),
-  userId: userDbSchema.shape.id,
-  exercise: import_v416.z.string(),
-  requestId: import_v416.z.string().optional()
-}), import_v416.z.discriminatedUnion("status", [
-  import_v416.z.object({
-    status: import_v416.z.literal("completed"),
-    result: import_v416.z.array(resultSchema),
-    error: import_v416.z.null()
+var analyzeVideoResultPayloadDtoSchema = /* @__PURE__ */ __name((resultSchema) => import_v415.z.intersection(import_v415.z.object({
+  jobId: import_v415.z.string(),
+  userId: import_v415.z.string().uuid(),
+  exercise: import_v415.z.string(),
+  requestId: import_v415.z.string().optional()
+}), import_v415.z.discriminatedUnion("status", [
+  import_v415.z.object({
+    status: import_v415.z.literal("completed"),
+    result: import_v415.z.array(resultSchema),
+    error: import_v415.z.null()
   }),
-  import_v416.z.object({
-    status: import_v416.z.literal("failed"),
-    result: import_v416.z.null(),
-    error: import_v416.z.string()
+  import_v415.z.object({
+    status: import_v415.z.literal("failed"),
+    result: import_v415.z.null(),
+    error: import_v415.z.string()
   })
 ])), "analyzeVideoResultPayloadDtoSchema");
 
 // src/modules/web-sockets/web-sockets.contracts.ts
-var import_v417 = require("zod/v4");
-var createWebSocketTicketRequestSchema = import_v417.z.object({
-  body: import_v417.z.object({
-    username: userDbSchema.shape.username
+var import_v416 = require("zod/v4");
+var createWebSocketTicketRequestSchema = import_v416.z.object({
+  body: import_v416.z.object({
+    username: import_v416.z.string()
   })
 });
-var createWebSocketTicketResponseSchema = import_v417.z.object({
-  ticket: import_v417.z.string()
+var createWebSocketTicketResponseSchema = import_v416.z.object({
+  ticket: import_v416.z.string()
 });
 var createWebSocketTicketContract = {
   request: createWebSocketTicketRequestSchema,
@@ -3314,34 +3294,34 @@ var createWebSocketTicketContract = {
 };
 
 // src/modules/workout/plan/plan.contracts.ts
-var import_v419 = require("zod/v4");
+var import_v418 = require("zod/v4");
 
 // src/modules/workout/plan/plan.dtos.ts
-var import_v418 = require("zod/v4");
-var idSchema = import_v418.z.number().int();
-var uuidSchema = import_v418.z.string().uuid();
-var textSchema = import_v418.z.string();
-var booleanSchema = import_v418.z.boolean();
-var numberSchema = import_v418.z.number();
-var workoutExerciseInputQueryDtoSchema = import_v418.z.object({
+var import_v417 = require("zod/v4");
+var idSchema = import_v417.z.number().int();
+var uuidSchema = import_v417.z.string().uuid();
+var textSchema = import_v417.z.string();
+var booleanSchema = import_v417.z.boolean();
+var numberSchema = import_v417.z.number();
+var workoutExerciseInputQueryDtoSchema = import_v417.z.object({
   exerciseId: idSchema,
-  sets: import_v418.z.array(numberSchema),
+  sets: import_v417.z.array(numberSchema),
   orderIndex: numberSchema
 });
-var workoutSplitInputBaseQueryDtoSchema = import_v418.z.object({
+var workoutSplitInputBaseQueryDtoSchema = import_v417.z.object({
   name: textSchema.min(1, "Split name is required"),
-  orderIndex: import_v418.z.number().int().nonnegative(),
-  exercises: import_v418.z.array(workoutExerciseInputQueryDtoSchema).min(1, "Each split must include at least one exercise")
+  orderIndex: import_v417.z.number().int().nonnegative(),
+  exercises: import_v417.z.array(workoutExerciseInputQueryDtoSchema).min(1, "Each split must include at least one exercise")
 });
 var saveWorkoutSplitInputQueryDtoSchema = workoutSplitInputBaseQueryDtoSchema.extend({
   id: idSchema.optional()
 });
-var saveWorkoutSplitPayloadQueryDtoSchema = import_v418.z.array(saveWorkoutSplitInputQueryDtoSchema).min(1, "Workout must include at least one split");
-var exerciseInPlanQueryDtoSchema = import_v418.z.object({
+var saveWorkoutSplitPayloadQueryDtoSchema = import_v417.z.array(saveWorkoutSplitInputQueryDtoSchema).min(1, "Workout must include at least one split");
+var exerciseInPlanQueryDtoSchema = import_v417.z.object({
   exerciseToSplitId: idSchema,
   exerciseId: idSchema,
   name: textSchema,
-  sets: import_v418.z.array(import_v418.z.object({
+  sets: import_v417.z.array(import_v417.z.object({
     orderIndex: numberSchema,
     reps: numberSchema
   })),
@@ -3350,147 +3330,147 @@ var exerciseInPlanQueryDtoSchema = import_v418.z.object({
   targetMuscle: textSchema,
   specificTargetMuscle: textSchema
 });
-var workoutSplitQueryDtoSchema = import_v418.z.object({
+var workoutSplitQueryDtoSchema = import_v417.z.object({
   id: idSchema,
   workoutId: idSchema,
   name: textSchema,
   orderIndex: numberSchema,
   createdAt: serializedDateSchema,
-  muscleGroup: import_v418.z.string().nullable(),
-  estimatedDurationMinutes: import_v418.z.number().nullable(),
+  muscleGroup: import_v417.z.string().nullable(),
+  estimatedDurationMinutes: import_v417.z.number().nullable(),
   isActive: booleanSchema,
-  exercises: import_v418.z.array(exerciseInPlanQueryDtoSchema)
+  exercises: import_v417.z.array(exerciseInPlanQueryDtoSchema)
 });
-var wholeUserWorkoutPlanQueryDtoSchema = import_v418.z.object({
+var wholeUserWorkoutPlanQueryDtoSchema = import_v417.z.object({
   id: idSchema,
-  numberOfSplits: import_v418.z.number(),
+  numberOfSplits: import_v417.z.number(),
   createdAt: serializedDateSchema,
   userId: uuidSchema,
   isActive: booleanSchema,
   updatedAt: serializedDateSchema,
-  workoutSplits: import_v418.z.array(workoutSplitQueryDtoSchema).nullable()
+  workoutSplits: import_v417.z.array(workoutSplitQueryDtoSchema).nullable()
 });
 
 // src/modules/workout/plan/plan.contracts.ts
-var getWorkoutPlanRequestSchema = import_v419.z.object({
-  query: import_v419.z.object({
+var getWorkoutPlanRequestSchema = import_v418.z.object({
+  query: import_v418.z.object({
     tz: timezoneSchema.optional()
   })
 });
-var getWorkoutPlanResponseSchema = import_v419.z.object({
+var getWorkoutPlanResponseSchema = import_v418.z.object({
   workoutPlan: wholeUserWorkoutPlanQueryDtoSchema.nullable()
 });
 var getWorkoutPlanContract = {
   request: getWorkoutPlanRequestSchema,
   response: getWorkoutPlanResponseSchema
 };
-var replaceWorkoutPlanRequestSchema = import_v419.z.object({
-  body: import_v419.z.object({
+var replaceWorkoutPlanRequestSchema = import_v418.z.object({
+  body: import_v418.z.object({
     workoutData: saveWorkoutSplitPayloadQueryDtoSchema,
-    workoutName: import_v419.z.string().optional(),
+    workoutName: import_v418.z.string().optional(),
     tz: timezoneSchema
   })
 });
-var replaceWorkoutPlanResponseSchema = import_v419.z.void();
+var replaceWorkoutPlanResponseSchema = import_v418.z.void();
 var replaceWorkoutPlanContract = {
   request: replaceWorkoutPlanRequestSchema,
   response: replaceWorkoutPlanResponseSchema
 };
 
 // src/modules/workout/tracking/tracking.contracts.ts
-var import_v421 = require("zod/v4");
+var import_v420 = require("zod/v4");
 
 // src/modules/workout/tracking/tracking.dtos.ts
-var import_v420 = require("zod/v4");
+var import_v419 = require("zod/v4");
 var exerciseDbSchema2 = {
   shape: {
-    id: import_v420.z.number().int(),
-    name: import_v420.z.string(),
-    targetMuscle: import_v420.z.string(),
-    specificTargetMuscle: import_v420.z.string()
+    id: import_v419.z.number().int(),
+    name: import_v419.z.string(),
+    targetMuscle: import_v419.z.string(),
+    specificTargetMuscle: import_v419.z.string()
   }
 };
 var exerciseToWorkoutSplitDbSchema2 = {
   shape: {
-    id: import_v420.z.number().int(),
-    orderIndex: import_v420.z.number(),
-    isActive: import_v420.z.boolean()
+    id: import_v419.z.number().int(),
+    orderIndex: import_v419.z.number(),
+    isActive: import_v419.z.boolean()
   }
 };
 var exerciseTrackingDbSchema2 = {
   shape: {
-    id: import_v420.z.number().int(),
-    notes: import_v420.z.string().nullable(),
-    exerciseToSplitId: import_v420.z.number().int().nullable(),
-    exerciseId: import_v420.z.number().int().nullable()
+    id: import_v419.z.number().int(),
+    notes: import_v419.z.string().nullable(),
+    exerciseToSplitId: import_v419.z.number().int().nullable(),
+    exerciseId: import_v419.z.number().int().nullable()
   }
 };
 var trackingSetDbSchema2 = {
   shape: {
-    reps: import_v420.z.number(),
-    weight: import_v420.z.number(),
-    setIndex: import_v420.z.number()
+    reps: import_v419.z.number(),
+    weight: import_v419.z.number(),
+    setIndex: import_v419.z.number()
   }
 };
 var workoutSetDbSchema2 = {
   shape: {
-    reps: import_v420.z.number()
+    reps: import_v419.z.number()
   }
 };
 var workoutSplitDbSchema2 = {
   shape: {
-    id: import_v420.z.number().int(),
-    name: import_v420.z.string(),
-    orderIndex: import_v420.z.number()
+    id: import_v419.z.number().int(),
+    name: import_v419.z.string(),
+    orderIndex: import_v419.z.number()
   }
 };
-var trackedSetQueryDtoSchema = import_v420.z.object({
+var trackedSetQueryDtoSchema = import_v419.z.object({
   reps: trackingSetDbSchema2.shape.reps,
   weight: trackingSetDbSchema2.shape.weight,
   setIndex: trackingSetDbSchema2.shape.setIndex
 });
-var finishedWorkoutEntryBaseQueryDtoSchema = import_v420.z.object({
-  trackedSets: import_v420.z.array(trackedSetQueryDtoSchema),
+var finishedWorkoutEntryBaseQueryDtoSchema = import_v419.z.object({
+  trackedSets: import_v419.z.array(trackedSetQueryDtoSchema),
   notes: exerciseTrackingDbSchema2.shape.notes.optional()
 });
-var finishedWorkoutEntryQueryDtoSchema = import_v420.z.discriminatedUnion("isExerciseAssignedToSplit", [
+var finishedWorkoutEntryQueryDtoSchema = import_v419.z.discriminatedUnion("isExerciseAssignedToSplit", [
   finishedWorkoutEntryBaseQueryDtoSchema.extend({
-    isExerciseAssignedToSplit: import_v420.z.literal(true),
+    isExerciseAssignedToSplit: import_v419.z.literal(true),
     exerciseToSplitId: exerciseTrackingDbSchema2.shape.exerciseToSplitId.unwrap(),
     // Accepted temporarily for clients using the previous redundant payload.
     exerciseId: exerciseTrackingDbSchema2.shape.exerciseId.optional()
   }),
   finishedWorkoutEntryBaseQueryDtoSchema.extend({
-    isExerciseAssignedToSplit: import_v420.z.literal(false),
-    exerciseToSplitId: import_v420.z.null().optional(),
+    isExerciseAssignedToSplit: import_v419.z.literal(false),
+    exerciseToSplitId: import_v419.z.null().optional(),
     exerciseId: exerciseTrackingDbSchema2.shape.exerciseId.unwrap()
   })
 ]);
-var exerciseMetadataQueryDtoSchema = import_v420.z.object({
+var exerciseMetadataQueryDtoSchema = import_v419.z.object({
   targetMuscle: exerciseDbSchema2.shape.targetMuscle,
   specificTargetMuscle: exerciseDbSchema2.shape.specificTargetMuscle
 });
-var exerciseTrackingPrMaxQueryDtoSchema = import_v420.z.object({
+var exerciseTrackingPrMaxQueryDtoSchema = import_v419.z.object({
   exercise: exerciseDbSchema2.shape.name,
   weight: trackingSetDbSchema2.shape.weight,
   reps: trackingSetDbSchema2.shape.reps,
   workoutTimeUtc: serializedDateSchema
 });
-var exerciseTrackingAnalysisQueryDtoSchema = import_v420.z.object({
-  uniqueDays: import_v420.z.number(),
-  mostFrequentSplit: import_v420.z.string().nullable(),
-  mostFrequentSplitDays: import_v420.z.number().nullable(),
-  lastWorkoutDate: import_v420.z.string().nullable(),
-  splitDaysByName: import_v420.z.record(import_v420.z.string(), import_v420.z.number()),
-  prs: import_v420.z.object({
+var exerciseTrackingAnalysisQueryDtoSchema = import_v419.z.object({
+  uniqueDays: import_v419.z.number(),
+  mostFrequentSplit: import_v419.z.string().nullable(),
+  mostFrequentSplitDays: import_v419.z.number().nullable(),
+  lastWorkoutDate: import_v419.z.string().nullable(),
+  splitDaysByName: import_v419.z.record(import_v419.z.string(), import_v419.z.number()),
+  prs: import_v419.z.object({
     prMax: exerciseTrackingPrMaxQueryDtoSchema.nullable()
   })
 });
-var trackingMapItemQueryDtoSchema = import_v420.z.object({
+var trackingMapItemQueryDtoSchema = import_v419.z.object({
   id: exerciseTrackingDbSchema2.shape.id,
   exerciseToSplitId: exerciseToWorkoutSplitDbSchema2.shape.id,
-  weight: import_v420.z.array(trackingSetDbSchema2.shape.weight),
-  reps: import_v420.z.array(trackingSetDbSchema2.shape.reps),
+  weight: import_v419.z.array(trackingSetDbSchema2.shape.weight),
+  reps: import_v419.z.array(trackingSetDbSchema2.shape.reps),
   notes: exerciseTrackingDbSchema2.shape.notes,
   exerciseId: exerciseDbSchema2.shape.id,
   workoutSplitId: workoutSplitDbSchema2.shape.id,
@@ -3498,8 +3478,8 @@ var trackingMapItemQueryDtoSchema = import_v420.z.object({
   exercise: exerciseDbSchema2.shape.name,
   workoutDate: serializedDateSchema,
   orderIndex: exerciseToWorkoutSplitDbSchema2.shape.orderIndex,
-  exerciseToWorkoutSplit: import_v420.z.object({
-    sets: import_v420.z.array(workoutSetDbSchema2.shape.reps),
+  exerciseToWorkoutSplit: import_v419.z.object({
+    sets: import_v419.z.array(workoutSetDbSchema2.shape.reps),
     exercises: exerciseMetadataQueryDtoSchema
   })
 });
@@ -3509,16 +3489,16 @@ var trackingByDateItemQueryDtoSchema = trackingMapItemQueryDtoSchema.omit({
 var trackingBySplitNameItemQueryDtoSchema = trackingMapItemQueryDtoSchema.omit({
   splitName: true
 });
-var groupedTrackingItemQueryDtoSchema = import_v420.z.object({
-  exerciseTracking: import_v420.z.object({
+var groupedTrackingItemQueryDtoSchema = import_v419.z.object({
+  exerciseTracking: import_v419.z.object({
     exerciseTrackingId: exerciseTrackingDbSchema2.shape.id,
-    sets: import_v420.z.array(import_v420.z.object({
+    sets: import_v419.z.array(import_v419.z.object({
       setIndex: trackingSetDbSchema2.shape.setIndex,
       weight: trackingSetDbSchema2.shape.weight,
       reps: trackingSetDbSchema2.shape.reps
     })),
     notes: exerciseTrackingDbSchema2.shape.notes,
-    exerciseAssignment: import_v420.z.object({
+    exerciseAssignment: import_v419.z.object({
       exerciseToSplitId: exerciseTrackingDbSchema2.shape.exerciseToSplitId,
       orderIndex: exerciseToWorkoutSplitDbSchema2.shape.orderIndex.nullable(),
       exerciseId: exerciseDbSchema2.shape.id,
@@ -3535,62 +3515,62 @@ var trackingByExerciseToSplitIdItemQueryDtoSchema = groupedTrackingItemQueryDtoS
 }).extend({
   workoutStartLocal: serializedDateSchema
 });
-var personalRecordQueryDtoSchema = import_v420.z.object({
+var personalRecordQueryDtoSchema = import_v419.z.object({
   exerciseToSplitId: exerciseTrackingDbSchema2.shape.exerciseToSplitId,
   exerciseId: exerciseDbSchema2.shape.id,
   exerciseName: exerciseDbSchema2.shape.name,
   prWeight: trackingSetDbSchema2.shape.weight,
   prReps: trackingSetDbSchema2.shape.reps,
   prSetIndex: trackingSetDbSchema2.shape.setIndex,
-  estimatedOneRepMax: import_v420.z.number().nullable(),
+  estimatedOneRepMax: import_v419.z.number().nullable(),
   workoutStartLocal: serializedDateSchema
 });
-var personalRecordsQueryDtoSchema = import_v420.z.object({
-  prs: import_v420.z.record(import_v420.z.string(), personalRecordQueryDtoSchema.omit({
+var personalRecordsQueryDtoSchema = import_v419.z.object({
+  prs: import_v419.z.record(import_v419.z.string(), personalRecordQueryDtoSchema.omit({
     exerciseId: true
   }))
 });
-var nextSplitQueryDtoSchema = import_v420.z.object({
+var nextSplitQueryDtoSchema = import_v419.z.object({
   id: workoutSplitDbSchema2.shape.id,
   name: workoutSplitDbSchema2.shape.name,
   orderIndex: workoutSplitDbSchema2.shape.orderIndex,
-  muscleGroup: import_v420.z.string().nullable()
+  muscleGroup: import_v419.z.string().nullable()
 });
-var exerciseTrackingStatsQueryDtoSchema = import_v420.z.object({
-  workoutCount: import_v420.z.coerce.number(),
-  hasExerciseTracking: import_v420.z.boolean(),
+var exerciseTrackingStatsQueryDtoSchema = import_v419.z.object({
+  workoutCount: import_v419.z.coerce.number(),
+  hasExerciseTracking: import_v419.z.boolean(),
   nextSplitByOrderIndex: nextSplitQueryDtoSchema.nullable(),
-  workoutTargets: import_v420.z.object({
-    workoutCountThisWeek: import_v420.z.coerce.number(),
-    workoutCountScheduledPerWeek: import_v420.z.coerce.number()
+  workoutTargets: import_v419.z.object({
+    workoutCountThisWeek: import_v419.z.coerce.number(),
+    workoutCountScheduledPerWeek: import_v419.z.coerce.number()
   }),
-  lastWorkoutStats: import_v420.z.object({
-    workoutDate: import_v420.z.string().nullable(),
+  lastWorkoutStats: import_v419.z.object({
+    workoutDate: import_v419.z.string().nullable(),
     workoutSplitName: workoutSplitDbSchema2.shape.name.nullable(),
-    exerciseTrackedCount: import_v420.z.coerce.number().nullable(),
-    setTrackedCount: import_v420.z.coerce.number().nullable()
+    exerciseTrackedCount: import_v419.z.coerce.number().nullable(),
+    setTrackedCount: import_v419.z.coerce.number().nullable()
   }),
-  latestPr: import_v420.z.array(personalRecordQueryDtoSchema).max(1)
+  latestPr: import_v419.z.array(personalRecordQueryDtoSchema).max(1)
 });
-var exerciseTrackingMapsQueryDtoSchema = import_v420.z.object({
-  byDate: import_v420.z.record(import_v420.z.string(), import_v420.z.object({
-    durationMins: import_v420.z.number(),
-    exerciseTracked: import_v420.z.array(groupedTrackingItemQueryDtoSchema)
+var exerciseTrackingMapsQueryDtoSchema = import_v419.z.object({
+  byDate: import_v419.z.record(import_v419.z.string(), import_v419.z.object({
+    durationMins: import_v419.z.number(),
+    exerciseTracked: import_v419.z.array(groupedTrackingItemQueryDtoSchema)
   }))
 });
-var exerciseHistoryQueryDtoSchema = import_v420.z.object({
-  byExerciseToSplitId: import_v420.z.record(import_v420.z.string(), import_v420.z.object({
-    exerciseTracked: import_v420.z.array(trackingByExerciseToSplitIdItemQueryDtoSchema)
+var exerciseHistoryQueryDtoSchema = import_v419.z.object({
+  byExerciseToSplitId: import_v419.z.record(import_v419.z.string(), import_v419.z.object({
+    exerciseTracked: import_v419.z.array(trackingByExerciseToSplitIdItemQueryDtoSchema)
   }))
 });
-var exerciseTrackingAndStatsQueryDtoSchema = import_v420.z.object({
+var exerciseTrackingAndStatsQueryDtoSchema = import_v419.z.object({
   trackingStats: exerciseTrackingStatsQueryDtoSchema,
   trackingMaps: exerciseTrackingMapsQueryDtoSchema
 });
 
 // src/modules/workout/tracking/tracking.contracts.ts
-var getWorkoutHistoryRequestSchema = import_v421.z.object({
-  query: import_v421.z.object({
+var getWorkoutHistoryRequestSchema = import_v420.z.object({
+  query: import_v420.z.object({
     tz: timezoneSchema.optional()
   })
 });
@@ -3599,8 +3579,8 @@ var getWorkoutHistoryContract = {
   request: getWorkoutHistoryRequestSchema,
   response: getWorkoutHistoryResponseSchema
 };
-var getExerciseHistoryRequestSchema = import_v421.z.object({
-  query: import_v421.z.object({
+var getExerciseHistoryRequestSchema = import_v420.z.object({
+  query: import_v420.z.object({
     tz: timezoneSchema.optional()
   })
 });
@@ -3614,22 +3594,22 @@ var getWorkoutStatisticsContract = {
   request: getWorkoutHistoryRequestSchema,
   response: getWorkoutStatisticsResponseSchema
 };
-var createWorkoutSessionRequestSchema = import_v421.z.object({
-  body: import_v421.z.object({
-    workout: import_v421.z.array(finishedWorkoutEntryQueryDtoSchema),
+var createWorkoutSessionRequestSchema = import_v420.z.object({
+  body: import_v420.z.object({
+    workout: import_v420.z.array(finishedWorkoutEntryQueryDtoSchema),
     tz: timezoneSchema.optional(),
-    workoutStartUtc: import_v421.z.string().datetime("workoutStartUtc must be a valid ISO datetime"),
-    workoutEndUtc: import_v421.z.string().datetime("workoutEndUtc must be a valid ISO datetime").optional().nullable()
+    workoutStartUtc: import_v420.z.string().datetime("workoutStartUtc must be a valid ISO datetime"),
+    workoutEndUtc: import_v420.z.string().datetime("workoutEndUtc must be a valid ISO datetime").optional().nullable()
   })
 });
-var createWorkoutSessionResponseSchema = import_v421.z.void();
+var createWorkoutSessionResponseSchema = import_v420.z.void();
 var createWorkoutSessionContract = {
   request: createWorkoutSessionRequestSchema,
   response: createWorkoutSessionResponseSchema
 };
 var getPersonalRecordsResponseSchema = personalRecordsQueryDtoSchema;
-var getPersonalRecordsRequestSchema = import_v421.z.object({
-  query: import_v421.z.object({
+var getPersonalRecordsRequestSchema = import_v420.z.object({
+  query: import_v420.z.object({
     tz: timezoneSchema.optional()
   })
 });
@@ -3639,11 +3619,11 @@ var getPersonalRecordsContract = {
 };
 
 // src/modules/workout-schedule/workout-schedule.contracts.ts
-var import_v423 = require("zod/v4");
+var import_v422 = require("zod/v4");
 
 // src/modules/workout-schedule/workout-schedule.dtos.ts
-var import_v422 = require("zod/v4");
-var workoutScheduleInputDtoSchema = import_v422.z.object({
+var import_v421 = require("zod/v4");
+var workoutScheduleInputDtoSchema = import_v421.z.object({
   workoutSplitId: workoutScheduleDbSchema.shape.workoutSplitId,
   dayOfWeek: workoutScheduleDbSchema.shape.dayOfWeek.int().min(0).max(6),
   startTime: workoutScheduleDbSchema.shape.startTime.regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/)
@@ -3654,15 +3634,15 @@ var workoutScheduleQueryDtoSchema = workoutScheduleDbSchema.extend({
 });
 
 // src/modules/workout-schedule/workout-schedule.contracts.ts
-var getWorkoutSchedulesResponseSchema = import_v423.z.object({
-  schedules: import_v423.z.array(workoutScheduleQueryDtoSchema)
+var getWorkoutSchedulesResponseSchema = import_v422.z.object({
+  schedules: import_v422.z.array(workoutScheduleQueryDtoSchema)
 });
 var getWorkoutSchedulesContract = {
   response: getWorkoutSchedulesResponseSchema
 };
-var replaceWorkoutSchedulesRequestSchema = import_v423.z.object({
-  body: import_v423.z.object({
-    schedules: import_v423.z.array(workoutScheduleInputDtoSchema).superRefine((schedules, context) => {
+var replaceWorkoutSchedulesRequestSchema = import_v422.z.object({
+  body: import_v422.z.object({
+    schedules: import_v422.z.array(workoutScheduleInputDtoSchema).superRefine((schedules, context) => {
       const keys = /* @__PURE__ */ new Set();
       for (const schedule of schedules) {
         const key = `${schedule.workoutSplitId}:${schedule.dayOfWeek}`;
@@ -3679,80 +3659,82 @@ var replaceWorkoutSchedulesRequestSchema = import_v423.z.object({
 });
 var replaceWorkoutSchedulesContract = {
   request: replaceWorkoutSchedulesRequestSchema,
-  response: import_v423.z.void()
+  response: import_v422.z.void()
 };
 
 // src/modules/social/crews/crews.contracts.ts
-var import_v425 = require("zod/v4");
-
-// src/modules/social/crews/crews.dtos.ts
 var import_v424 = require("zod/v4");
-var crewQueryDtoSchema = crewDbSchema.omit({
-  profilePicPath: true
-}).extend({
+
+// src/modules/social/crews/crews.schemas.ts
+var import_v423 = require("zod/v4");
+var crewSchema = import_v423.z.object({
+  id: import_v423.z.string().uuid(),
+  name: import_v423.z.string(),
+  createdBy: import_v423.z.string().uuid(),
+  privacy: import_v423.z.enum([
+    "public",
+    "private"
+  ]),
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema
 });
-var crewWithParticipantCountQueryDtoSchema = crewQueryDtoSchema.extend({
-  participantCount: import_v424.z.number().int().nonnegative()
+var crewWithParticipantCountSchema = crewSchema.extend({
+  participantCount: import_v423.z.number().int().nonnegative()
 });
-var crewParticipantPreviewQueryDtoSchema = import_v424.z.object({
-  username: userDbSchema.shape.username,
-  fullName: userDbSchema.shape.name,
-  profilePicPath: userDbSchema.shape.profilePicPath
+var crewParticipantPreviewSchema = import_v423.z.object({
+  username: import_v423.z.string(),
+  fullName: import_v423.z.string(),
+  profilePicPath: import_v423.z.string().nullable()
 });
-var discoverableCrewQueryDtoSchema = crewWithParticipantCountQueryDtoSchema.extend({
-  top5Participants: crewParticipantPreviewQueryDtoSchema.array()
+var discoverableCrewSchema = crewWithParticipantCountSchema.extend({
+  top5Participants: crewParticipantPreviewSchema.array()
 });
-var crewParticipantQueryDtoSchema = crewMembershipDbSchema.extend({
+var crewParticipantSchema = import_v423.z.object({
+  id: import_v423.z.string().uuid(),
+  crewId: import_v423.z.string().uuid(),
+  userId: import_v423.z.string().uuid(),
+  status: import_v423.z.enum([
+    "active",
+    "left",
+    "removed",
+    "banned"
+  ]),
+  role: import_v423.z.enum([
+    "leader",
+    "admin",
+    "member"
+  ]),
   joinedAt: serializedDateSchema,
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
-  fullName: userDbSchema.shape.name,
-  profilePicPath: userDbSchema.shape.profilePicPath,
-  username: userDbSchema.shape.username
-});
-var deletedCrewQueryDtoSchema = import_v424.z.object({
-  id: crewDbSchema.shape.id
-});
-var leaveCrewResultQueryDtoSchema = import_v424.z.object({
-  result: import_v424.z.enum([
-    "left",
-    "not_member"
-  ])
-});
-var leaveCrewContextQueryDtoSchema = import_v424.z.object({
-  membershipId: crewMembershipDbSchema.shape.id,
-  isLeader: import_v424.z.boolean()
-});
-var crewSuccessorQueryDtoSchema = import_v424.z.object({
-  membershipId: crewMembershipDbSchema.shape.id,
-  userId: crewMembershipDbSchema.shape.userId
+  fullName: import_v423.z.string(),
+  profilePicPath: import_v423.z.string().nullable(),
+  username: import_v423.z.string()
 });
 
 // src/modules/social/crews/crews.contracts.ts
-var crewIdParamsSchema = import_v425.z.object({
-  id: crewDbSchema.shape.id
+var crewIdParamsSchema = import_v424.z.object({
+  id: import_v424.z.string().uuid()
 });
-var listCrewsRequestSchema = import_v425.z.object({
-  query: import_v425.z.object({
-    search: import_v425.z.string().trim().min(1).max(50).optional(),
-    limit: import_v425.z.coerce.number().int().min(1).max(100).default(20),
-    cursor: import_v425.z.string().min(1).optional()
+var listCrewsRequestSchema = import_v424.z.object({
+  query: import_v424.z.object({
+    search: import_v424.z.string().trim().min(1).max(50).optional(),
+    limit: import_v424.z.coerce.number().int().min(1).max(100).default(20),
+    cursor: import_v424.z.string().min(1).optional()
   })
 });
-var listCrewsResponseSchema = import_v425.z.object({
-  crews: import_v425.z.array(discoverableCrewQueryDtoSchema),
-  nextCursor: import_v425.z.string().nullable()
+var listCrewsResponseSchema = import_v424.z.object({
+  crews: import_v424.z.array(discoverableCrewSchema),
+  nextCursor: import_v424.z.string().nullable()
 });
 var listCrewsContract = {
   request: listCrewsRequestSchema,
   response: listCrewsResponseSchema
 };
-var listMyCrewsRequestSchema = import_v425.z.object({
-  query: import_v425.z.object({
-    limit: import_v425.z.coerce.number().int().min(1).max(100).default(20),
-    cursor: import_v425.z.string().min(1).optional()
+var listMyCrewsRequestSchema = import_v424.z.object({
+  query: import_v424.z.object({
+    limit: import_v424.z.coerce.number().int().min(1).max(100).default(20),
+    cursor: import_v424.z.string().min(1).optional()
   })
 });
 var listMyCrewsResponseSchema = listCrewsResponseSchema;
@@ -3760,95 +3742,113 @@ var listMyCrewsContract = {
   request: listMyCrewsRequestSchema,
   response: listMyCrewsResponseSchema
 };
-var listCrewParticipantsRequestSchema = import_v425.z.object({
-  params: import_v425.z.object({
-    crewId: crewDbSchema.shape.id
+var listCrewParticipantsRequestSchema = import_v424.z.object({
+  params: import_v424.z.object({
+    crewId: import_v424.z.string().uuid()
   }),
-  query: import_v425.z.object({
-    limit: import_v425.z.coerce.number().int().min(1).max(100).default(20),
-    cursor: import_v425.z.string().min(1).optional()
+  query: import_v424.z.object({
+    limit: import_v424.z.coerce.number().int().min(1).max(100).default(20),
+    cursor: import_v424.z.string().min(1).optional()
   })
 });
-var listCrewParticipantsResponseSchema = import_v425.z.object({
-  participants: import_v425.z.array(crewParticipantQueryDtoSchema),
-  nextCursor: import_v425.z.string().nullable()
+var listCrewParticipantsResponseSchema = import_v424.z.object({
+  participants: import_v424.z.array(crewParticipantSchema),
+  nextCursor: import_v424.z.string().nullable()
 });
 var listCrewParticipantsContract = {
   request: listCrewParticipantsRequestSchema,
   response: listCrewParticipantsResponseSchema
 };
-var getCrewRequestSchema = import_v425.z.object({
+var getCrewRequestSchema = import_v424.z.object({
   params: crewIdParamsSchema
 });
-var getCrewResponseSchema = crewWithParticipantCountQueryDtoSchema;
+var getCrewResponseSchema = crewWithParticipantCountSchema;
 var getCrewContract = {
   request: getCrewRequestSchema,
   response: getCrewResponseSchema
 };
-var createCrewRequestSchema = import_v425.z.object({
-  body: import_v425.z.object({
-    name: crewDbSchema.shape.name,
-    privacy: crewDbSchema.shape.privacy
+var createCrewRequestSchema = import_v424.z.object({
+  body: import_v424.z.object({
+    name: import_v424.z.string(),
+    privacy: import_v424.z.enum([
+      "public",
+      "private"
+    ])
   })
 });
-var createCrewResponseSchema = import_v425.z.void();
+var createCrewResponseSchema = import_v424.z.void();
 var createCrewContract = {
   request: createCrewRequestSchema,
   response: createCrewResponseSchema
 };
-var updateCrewRequestSchema = import_v425.z.object({
+var updateCrewRequestSchema = import_v424.z.object({
   params: crewIdParamsSchema,
-  body: import_v425.z.object({
-    name: crewDbSchema.shape.name,
-    privacy: crewDbSchema.shape.privacy
+  body: import_v424.z.object({
+    name: import_v424.z.string(),
+    privacy: import_v424.z.enum([
+      "public",
+      "private"
+    ])
   })
 });
-var updateCrewResponseSchema = import_v425.z.void();
+var updateCrewResponseSchema = import_v424.z.void();
 var updateCrewContract = {
   request: updateCrewRequestSchema,
   response: updateCrewResponseSchema
 };
-var leaveCrewRequestSchema = import_v425.z.object({
+var leaveCrewRequestSchema = import_v424.z.object({
   params: crewIdParamsSchema
 });
-var leaveCrewResponseSchema = import_v425.z.void();
+var leaveCrewResponseSchema = import_v424.z.void();
 var leaveCrewContract = {
   request: leaveCrewRequestSchema,
   response: leaveCrewResponseSchema
 };
-var deleteCrewRequestSchema = import_v425.z.object({
+var deleteCrewRequestSchema = import_v424.z.object({
   params: crewIdParamsSchema
 });
-var deleteCrewResponseSchema = import_v425.z.void();
+var deleteCrewResponseSchema = import_v424.z.void();
 var deleteCrewContract = {
   request: deleteCrewRequestSchema,
   response: deleteCrewResponseSchema
 };
-var replaceCrewProfilePictureRequestSchema = import_v425.z.object({
+var replaceCrewProfilePictureRequestSchema = import_v424.z.object({
   params: crewIdParamsSchema
 });
-var replaceCrewProfilePictureResponseSchema = import_v425.z.object({
-  profilePicPath: import_v425.z.string(),
-  url: import_v425.z.string(),
-  message: import_v425.z.string()
+var replaceCrewProfilePictureResponseSchema = import_v424.z.object({
+  profilePicPath: import_v424.z.string(),
+  url: import_v424.z.string(),
+  message: import_v424.z.string()
 });
 var replaceCrewProfilePictureContract = {
   request: replaceCrewProfilePictureRequestSchema,
   response: replaceCrewProfilePictureResponseSchema
 };
-var deleteCrewProfilePictureRequestSchema = import_v425.z.object({
+var deleteCrewProfilePictureRequestSchema = import_v424.z.object({
   params: crewIdParamsSchema
 });
 var deleteCrewProfilePictureContract = {
   request: deleteCrewProfilePictureRequestSchema,
-  response: import_v425.z.void()
+  response: import_v424.z.void()
 };
 
 // src/modules/social/crews/requests/crew-requests.contracts.ts
 var import_v426 = require("zod/v4");
 
-// src/modules/social/crews/requests/crew-requests.dtos.ts
-var crewParticipationRequestQueryDtoSchema = crewParticipationRequestDbSchema.extend({
+// src/modules/social/crews/requests/crew-requests.schemas.ts
+var import_v425 = require("zod/v4");
+var crewParticipationRequestSchema = import_v425.z.object({
+  id: import_v425.z.string().uuid(),
+  crewId: import_v425.z.string().uuid(),
+  initiatorUserId: import_v425.z.string().uuid(),
+  participantUserId: import_v425.z.string().uuid(),
+  status: import_v425.z.enum([
+    "pending",
+    "accepted",
+    "declined",
+    "cancelled",
+    "expired"
+  ]),
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
   respondedAt: serializedDateSchema.nullable()
@@ -3856,7 +3856,7 @@ var crewParticipationRequestQueryDtoSchema = crewParticipationRequestDbSchema.ex
 
 // src/modules/social/crews/requests/crew-requests.contracts.ts
 var crewParamsSchema = import_v426.z.object({
-  crewId: crewDbSchema.shape.id
+  crewId: import_v426.z.string().uuid()
 });
 var requestParamsSchema = import_v426.z.object({
   requestId: import_v426.z.uuid()
@@ -3893,7 +3893,7 @@ var updateCrewParticipationRequestStatusContract = {
 };
 var listCrewInvitationsRequestSchema = import_v426.z.object({});
 var listCrewInvitationsResponseSchema = import_v426.z.object({
-  invitations: import_v426.z.array(crewParticipationRequestQueryDtoSchema)
+  invitations: import_v426.z.array(crewParticipationRequestSchema)
 });
 var listCrewInvitationsContract = {
   request: listCrewInvitationsRequestSchema,
@@ -3903,7 +3903,7 @@ var listPendingCrewJoinRequestsRequestSchema = import_v426.z.object({
   params: crewParamsSchema
 });
 var listPendingCrewJoinRequestsResponseSchema = import_v426.z.object({
-  requests: import_v426.z.array(crewParticipationRequestQueryDtoSchema)
+  requests: import_v426.z.array(crewParticipationRequestSchema)
 });
 var listPendingCrewJoinRequestsContract = {
   request: listPendingCrewJoinRequestsRequestSchema,
@@ -3913,16 +3913,22 @@ var listPendingCrewJoinRequestsContract = {
 // src/modules/social/posts/posts.contracts.ts
 var import_v428 = require("zod/v4");
 
-// src/modules/social/posts/posts.dtos.ts
+// src/modules/social/posts/posts.schemas.ts
 var import_v427 = require("zod/v4");
-var postQueryDtoSchema = postDbSchema.omit({
-  updateddAt: true
-}).extend({
+var postSchema = import_v427.z.object({
+  id: import_v427.z.string().uuid(),
+  authorUserId: import_v427.z.string().uuid(),
+  workoutSummaryId: import_v427.z.string().uuid().nullable(),
+  content: import_v427.z.string(),
+  visibility: import_v427.z.enum([
+    "crews_only",
+    "public"
+  ]),
   publishedAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
-  username: userDbSchema.shape.username,
-  fullName: userDbSchema.shape.name,
-  profilePicPath: userDbSchema.shape.profilePicPath,
+  username: import_v427.z.string(),
+  fullName: import_v427.z.string(),
+  profilePicPath: import_v427.z.string().nullable(),
   interactions: import_v427.z.object({
     reactionsCount: import_v427.z.object({
       likesCount: import_v427.z.number().int().nonnegative(),
@@ -3932,13 +3938,10 @@ var postQueryDtoSchema = postDbSchema.omit({
     commentsCount: import_v427.z.number().int().nonnegative()
   })
 });
-var deletedPostQueryDtoSchema = import_v427.z.object({
-  id: postDbSchema.shape.id
-});
 
 // src/modules/social/posts/posts.contracts.ts
 var postIdParamsSchema = import_v428.z.object({
-  id: postDbSchema.shape.id
+  id: import_v428.z.string().uuid()
 });
 var postPaginationSchema = import_v428.z.object({
   limit: import_v428.z.coerce.number().int().min(1).max(100).default(20),
@@ -3948,7 +3951,7 @@ var listVisiblePostsRequestSchema = import_v428.z.object({
   query: postPaginationSchema
 });
 var listVisiblePostsResponseSchema = import_v428.z.object({
-  posts: import_v428.z.array(postQueryDtoSchema),
+  posts: import_v428.z.array(postSchema),
   nextCursor: import_v428.z.string().nullable()
 });
 var listVisiblePostsContract = {
@@ -3962,7 +3965,7 @@ var listCrewPostsRequestSchema = import_v428.z.object({
   query: postPaginationSchema
 });
 var listCrewPostsResponseSchema = import_v428.z.object({
-  posts: import_v428.z.array(postQueryDtoSchema),
+  posts: import_v428.z.array(postSchema),
   nextCursor: import_v428.z.string().nullable()
 });
 var listCrewPostsContract = {
@@ -3970,10 +3973,13 @@ var listCrewPostsContract = {
   response: listCrewPostsResponseSchema
 };
 var createPostBodySchema = import_v428.z.object({
-  content: postDbSchema.shape.content,
-  visibility: postDbSchema.shape.visibility,
+  content: import_v428.z.string(),
+  visibility: import_v428.z.enum([
+    "crews_only",
+    "public"
+  ]),
   crewIds: import_v428.z.array(import_v428.z.uuid()).default([]),
-  workoutSummaryId: postDbSchema.shape.workoutSummaryId.optional()
+  workoutSummaryId: import_v428.z.string().uuid().nullable().optional()
 }).superRefine((body, context) => {
   if (body.visibility === "crews_only" && body.crewIds.length === 0) {
     context.addIssue({
@@ -4005,7 +4011,7 @@ var createPostContract = {
 var updatePostRequestSchema = import_v428.z.object({
   params: postIdParamsSchema,
   body: import_v428.z.object({
-    content: postDbSchema.shape.content
+    content: import_v428.z.string()
   })
 });
 var updatePostResponseSchema = import_v428.z.void();
@@ -4025,27 +4031,28 @@ var deletePostContract = {
 // src/modules/social/posts/comments/comments.contracts.ts
 var import_v430 = require("zod/v4");
 
-// src/modules/social/posts/comments/comments.dtos.ts
+// src/modules/social/posts/comments/comments.schemas.ts
 var import_v429 = require("zod/v4");
-var commentQueryDtoSchema = commentDbSchema.extend({
+var commentSchema = import_v429.z.object({
+  id: import_v429.z.string().uuid(),
+  postId: import_v429.z.string().uuid(),
+  userId: import_v429.z.string().uuid(),
+  content: import_v429.z.string(),
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema,
-  authorFullName: userDbSchema.shape.name,
-  authorProfilePicPath: userDbSchema.shape.profilePicPath,
-  authorUsername: userDbSchema.shape.username
-});
-var commentWriteResultQueryDtoSchema = import_v429.z.object({
-  id: commentDbSchema.shape.id
+  authorFullName: import_v429.z.string(),
+  authorProfilePicPath: import_v429.z.string().nullable(),
+  authorUsername: import_v429.z.string()
 });
 
 // src/modules/social/posts/comments/comments.contracts.ts
 var postParamsSchema = import_v430.z.object({
-  postId: postDbSchema.shape.id
+  postId: import_v430.z.string().uuid()
 });
 var commentParamsSchema = import_v430.z.object({
-  id: commentDbSchema.shape.id
+  id: import_v430.z.string().uuid()
 });
-var commentContentSchema = commentDbSchema.shape.content.trim().min(1).max(2e3);
+var commentContentSchema = import_v430.z.string().trim().min(1).max(2e3);
 var listPostCommentsRequestSchema = import_v430.z.object({
   params: postParamsSchema,
   query: import_v430.z.object({
@@ -4054,7 +4061,7 @@ var listPostCommentsRequestSchema = import_v430.z.object({
   })
 });
 var listPostCommentsResponseSchema = import_v430.z.object({
-  comments: import_v430.z.array(commentQueryDtoSchema),
+  comments: import_v430.z.array(commentSchema),
   nextCursor: import_v430.z.string().nullable()
 });
 var listPostCommentsContract = {
@@ -4095,18 +4102,23 @@ var deleteCommentContract = {
 // src/modules/social/posts/reactions/reactions.contracts.ts
 var import_v432 = require("zod/v4");
 
-// src/modules/social/posts/reactions/reactions.dtos.ts
+// src/modules/social/posts/reactions/reactions.schemas.ts
 var import_v431 = require("zod/v4");
-var reactionQueryDtoSchema = reactionDbSchema.extend({
+var reactionSchema = import_v431.z.object({
+  id: import_v431.z.string().uuid(),
+  postId: import_v431.z.string().uuid(),
+  userId: import_v431.z.string().uuid(),
+  type: import_v431.z.enum([
+    "like",
+    "fire up",
+    "muscle"
+  ]),
   reactedAt: serializedDateSchema
-});
-var reactionWriteResultQueryDtoSchema = import_v431.z.object({
-  id: reactionDbSchema.shape.id
 });
 
 // src/modules/social/posts/reactions/reactions.contracts.ts
 var postParamsSchema2 = import_v432.z.object({
-  postId: postDbSchema.shape.id
+  postId: import_v432.z.string().uuid()
 });
 var listPostReactionsRequestSchema = import_v432.z.object({
   params: postParamsSchema2,
@@ -4116,7 +4128,7 @@ var listPostReactionsRequestSchema = import_v432.z.object({
   })
 });
 var listPostReactionsResponseSchema = import_v432.z.object({
-  reactions: import_v432.z.array(reactionQueryDtoSchema),
+  reactions: import_v432.z.array(reactionSchema),
   nextCursor: import_v432.z.string().nullable()
 });
 var listPostReactionsContract = {
@@ -4126,7 +4138,11 @@ var listPostReactionsContract = {
 var reactToPostRequestSchema = import_v432.z.object({
   params: postParamsSchema2,
   body: import_v432.z.object({
-    type: reactionDbSchema.shape.type
+    type: import_v432.z.enum([
+      "like",
+      "fire up",
+      "muscle"
+    ])
   })
 });
 var reactToPostResponseSchema = import_v432.z.void();
@@ -4146,10 +4162,10 @@ var deleteReactionContract = {
 // src/modules/social/summary/social-summary.contracts.ts
 var import_v433 = require("zod/v4");
 var socialSummaryParticipantPreviewSchema = import_v433.z.object({
-  userId: userDbSchema.shape.id,
-  username: userDbSchema.shape.username,
-  fullName: userDbSchema.shape.name,
-  profilePicPath: userDbSchema.shape.profilePicPath
+  userId: import_v433.z.string().uuid(),
+  username: import_v433.z.string(),
+  fullName: import_v433.z.string(),
+  profilePicPath: import_v433.z.string().nullable()
 });
 var getSocialSummaryResponseSchema = import_v433.z.object({
   activeCrewCount: import_v433.z.number().int().nonnegative(),
@@ -4162,13 +4178,13 @@ var getSocialSummaryContract = {
 // src/modules/social/users/social-users.contracts.ts
 var import_v435 = require("zod/v4");
 
-// src/modules/social/users/social-users.dtos.ts
+// src/modules/social/users/social-users.schemas.ts
 var import_v434 = require("zod/v4");
-var socialUserQueryDtoSchema = import_v434.z.object({
-  userId: userDbSchema.shape.id,
-  username: userDbSchema.shape.username,
-  fullName: userDbSchema.shape.name,
-  profilePicPath: userDbSchema.shape.profilePicPath,
+var socialUserSchema = import_v434.z.object({
+  userId: import_v434.z.string().uuid(),
+  username: import_v434.z.string(),
+  fullName: import_v434.z.string(),
+  profilePicPath: import_v434.z.string().nullable(),
   createdAt: serializedDateSchema
 });
 
@@ -4181,7 +4197,7 @@ var searchSocialUsersRequestSchema = import_v435.z.object({
   })
 });
 var searchSocialUsersResponseSchema = import_v435.z.object({
-  users: import_v435.z.array(socialUserQueryDtoSchema),
+  users: import_v435.z.array(socialUserSchema),
   nextCursor: import_v435.z.string().nullable()
 });
 var searchSocialUsersContract = {
@@ -4190,10 +4206,10 @@ var searchSocialUsersContract = {
 };
 var getSocialUserRequestSchema = import_v435.z.object({
   params: import_v435.z.object({
-    userId: userDbSchema.shape.id
+    userId: import_v435.z.string().uuid()
   })
 });
-var getSocialUserResponseSchema = socialUserQueryDtoSchema.omit({
+var getSocialUserResponseSchema = socialUserSchema.omit({
   createdAt: true
 });
 var getSocialUserContract = {
@@ -4211,8 +4227,6 @@ var getSocialUserContract = {
   appleOAuthContract,
   appleOAuthRequestSchema,
   commentDbSchema,
-  commentQueryDtoSchema,
-  commentWriteResultQueryDtoSchema,
   createAerobicEntryContract,
   createAerobicEntryRequestSchema,
   createAerobicEntryResponseSchema,
@@ -4241,13 +4255,7 @@ var getSocialUserContract = {
   createWorkoutSessionResponseSchema,
   crewDbSchema,
   crewMembershipDbSchema,
-  crewParticipantPreviewQueryDtoSchema,
-  crewParticipantQueryDtoSchema,
   crewParticipationRequestDbSchema,
-  crewParticipationRequestQueryDtoSchema,
-  crewQueryDtoSchema,
-  crewSuccessorQueryDtoSchema,
-  crewWithParticipantCountQueryDtoSchema,
   deleteAerobicEntryContract,
   deleteAerobicEntryRequestSchema,
   deleteCommentContract,
@@ -4269,9 +4277,6 @@ var getSocialUserContract = {
   deleteReactionContract,
   deleteReactionRequestSchema,
   deleteReactionResponseSchema,
-  deletedCrewQueryDtoSchema,
-  deletedPostQueryDtoSchema,
-  discoverableCrewQueryDtoSchema,
   editCommentContract,
   editCommentRequestSchema,
   editCommentResponseSchema,
@@ -4318,11 +4323,9 @@ var getSocialUserContract = {
   googleOAuthRequestSchema,
   inviteCrewUserContract,
   inviteCrewUserRequestSchema,
-  leaveCrewContextQueryDtoSchema,
   leaveCrewContract,
   leaveCrewRequestSchema,
   leaveCrewResponseSchema,
-  leaveCrewResultQueryDtoSchema,
   listCrewInvitationsContract,
   listCrewInvitationsRequestSchema,
   listCrewInvitationsResponseSchema,
@@ -4368,15 +4371,12 @@ var getSocialUserContract = {
   oAuthLoginResponseSchema,
   oauthAccountDbSchema,
   postDbSchema,
-  postQueryDtoSchema,
   proceedLoginResponseSchema,
   prsViewDbSchema,
   reactToPostContract,
   reactToPostRequestSchema,
   reactToPostResponseSchema,
   reactionDbSchema,
-  reactionQueryDtoSchema,
-  reactionWriteResultQueryDtoSchema,
   refreshTokenContract,
   refreshTokenResponseSchema,
   replaceCrewProfilePictureContract,
@@ -4401,7 +4401,6 @@ var getSocialUserContract = {
   searchSocialUsersResponseSchema,
   serializedDateSchema,
   socialSummaryParticipantPreviewSchema,
-  socialUserQueryDtoSchema,
   squatRepetitionDtoSchema,
   timezoneSchema,
   trackingSetDbSchema,

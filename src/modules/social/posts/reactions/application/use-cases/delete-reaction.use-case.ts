@@ -1,0 +1,20 @@
+import { Injectable } from '@nestjs/common';
+import { ReactionNotFoundError } from '../errors/reactions.errors';
+import { ReactionsRepository } from '../ports/reactions.repository';
+
+/** Deletes a user's post reaction. */ @Injectable()
+export class DeleteReactionUseCase {
+  public constructor(private readonly repository: ReactionsRepository) {}
+  /**
+   * Executes the application operation.
+   *
+   *
+   * @param postId - Post identifier.
+   * @param userId - Reacting user.
+   * @returns Nothing after deletion.
+   * @throws {ReactionNotFoundError} When no reaction exists.
+   */
+  public async execute(postId: string, userId: string): Promise<void> {
+    if (!(await this.repository.delete(postId, userId))) throw new ReactionNotFoundError();
+  }
+}

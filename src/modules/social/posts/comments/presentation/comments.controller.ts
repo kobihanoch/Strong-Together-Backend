@@ -1,0 +1,123 @@
+import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, UseGuards } from '@nestjs/common';
+import type {
+  AddCommentBody,
+  AddCommentParams,
+  AddCommentResponse,
+  DeleteCommentParams,
+  DeleteCommentResponse,
+  EditCommentBody,
+  EditCommentParams,
+  EditCommentResponse,
+  ListPostCommentsParams,
+  ListPostCommentsQuery,
+  ListPostCommentsResponse,
+} from '@strong-together/shared';
+import {
+  addCommentRequestSchema,
+  deleteCommentRequestSchema,
+  editCommentRequestSchema,
+  listPostCommentsRequestSchema,
+} from '@strong-together/shared';
+import { CurrentUser } from '../../../../../common/decorators/current-user.decorator';
+import { RequestData } from '../../../../../common/decorators/request-data.decorator';
+import { AuthenticationGuard } from '../../../../../common/guards/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../../../../common/guards/authorization.guard';
+import { DpopGuard } from '../../../../../common/guards/dpop-validation.guard';
+import { ValidateRequestPipe } from '../../../../../common/pipes/validate-request.pipe';
+import type { AuthenticatedUser } from '../../../../../common/types/express';
+import { AddCommentUseCase } from '../application/use-cases/add-comment.use-case';
+import { DeleteCommentUseCase } from '../application/use-cases/delete-comment.use-case';
+import { EditCommentUseCase } from '../application/use-cases/edit-comment.use-case';
+import { ListPostCommentsUseCase } from '../application/use-cases/list-post-comments.use-case';
+
+/**
+ * Exposes authenticated comment writes for social posts.
+ *
+ * @remarks Every route uses DPoP authentication, user authorization, request
+ * validation, and the RLS transaction interceptor. Access: User.
+ */
+@Controller('api/social/posts')
+@UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
+@Roles('user')
+export class CommentsController {
+  /**
+   * Creates the comment controller.
+   *
+   * @param service - The comment application service.
+   */
+  public constructor(
+    private readonly listPostComments: ListPostCommentsUseCase,
+    private readonly addPostComment: AddCommentUseCase,
+    private readonly editPostComment: EditCommentUseCase,
+    private readonly deletePostComment: DeleteCommentUseCase,
+  ) {}
+
+  /**
+   * Lists comments on a post visible to the caller.
+   *
+   * API: GET /api/social/posts/:postId/comments
+   * Access: Authenticated user
+   * @param data - The validated post identifier and cursor pagination.
+   * @returns Comments in oldest-first conversation order.
+   */
+  @Get(':postId/comments')
+  public listComments(
+    @RequestData(new ValidateRequestPipe(listPostCommentsRequestSchema))
+    data: {
+      params: ListPostCommentsParams;
+      query: ListPostCommentsQuery;
+    },
+  ): Promise<ListPostCommentsResponse> {
+    return this.listPostComments.execute(data.params.postId, data.query.limit, data.query.cursor);
+  }
+
+  /**
+   * Adds a comment to a visible post.
+   *
+   * API: POST /api/social/posts/:postId/comments
+   * Access: Authenticated user
+   * @param data - The validated post identifier and comment content.
+   * @param user - The authenticated comment author.
+   * @returns No response body with a 201 Created status.
+   */
+  @Post(':postId/comments')
+  @HttpCode(HttpStatus.CREATED)
+  public async addComment(
+    @RequestData(new ValidateRequestPipe(addCommentRequestSchema)) data: { params: AddCommentParams; body: AddCommentBody },
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<AddCommentResponse> {
+    await this.addPostComment.execute(data.params.postId, user.id, data.body.content);
+  }
+
+  /**
+   * Edits a comment authored by the caller.
+   *
+   * API: PATCH /api/social/posts/comments/:id
+   * Access: Authenticated user
+   * @param data - The validated comment identifier and replacement content.
+   * @returns No response body with a 204 No Content status.
+   */
+  @Patch('comments/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  public async editComment(
+    @RequestData(new ValidateRequestPipe(editCommentRequestSchema)) data: { params: EditCommentParams; body: EditCommentBody },
+  ): Promise<EditCommentResponse> {
+    await this.editPostComment.execute(data.params.id, data.body.content);
+  }
+
+  /**
+   * Deletes a comment authored by the caller.
+   *
+   * API: DELETE /api/social/posts/comments/:id
+   * Access: Authenticated user
+   * @param data - The validated comment identifier.
+   * @returns No response body with a 204 No Content status.
+   */
+  @Delete('comments/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  public async deleteComment(
+    @RequestData(new ValidateRequestPipe(deleteCommentRequestSchema)) data: { params: DeleteCommentParams },
+  ): Promise<DeleteCommentResponse> {
+    await this.deletePostComment.execute(data.params.id);
+  }
+}

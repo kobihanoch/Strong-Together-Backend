@@ -1,9 +1,8 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, ParamsOf, ResponseOf } from '../../../../common';
-import { crewDbSchema } from '../../../../database';
-import { crewParticipationRequestQueryDtoSchema } from './crew-requests.dtos';
+import { crewParticipationRequestSchema } from './crew-requests.schemas';
 
-const crewParamsSchema = z.object({ crewId: crewDbSchema.shape.id });
+const crewParamsSchema = z.object({ crewId: z.string().uuid() });
 const requestParamsSchema = z.object({ requestId: z.uuid() });
 
 /** Validates a crew invitation creation request. */
@@ -37,7 +36,7 @@ export type UpdateCrewParticipationRequestStatusResponse = ResponseOf<typeof upd
 
 /** Validates a request to list invitations addressed to the authenticated user. */
 export const listCrewInvitationsRequestSchema = z.object({});
-export const listCrewInvitationsResponseSchema = z.object({ invitations: z.array(crewParticipationRequestQueryDtoSchema) });
+export const listCrewInvitationsResponseSchema = z.object({ invitations: z.array(crewParticipationRequestSchema) });
 export const listCrewInvitationsContract = {
   request: listCrewInvitationsRequestSchema,
   response: listCrewInvitationsResponseSchema,
@@ -46,7 +45,7 @@ export type ListCrewInvitationsResponse = ResponseOf<typeof listCrewInvitationsC
 
 /** Validates a request to list pending join requests for a crew. */
 export const listPendingCrewJoinRequestsRequestSchema = z.object({ params: crewParamsSchema });
-export const listPendingCrewJoinRequestsResponseSchema = z.object({ requests: z.array(crewParticipationRequestQueryDtoSchema) });
+export const listPendingCrewJoinRequestsResponseSchema = z.object({ requests: z.array(crewParticipationRequestSchema) });
 export const listPendingCrewJoinRequestsContract = {
   request: listPendingCrewJoinRequestsRequestSchema,
   response: listPendingCrewJoinRequestsResponseSchema,

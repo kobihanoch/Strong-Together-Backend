@@ -1,10 +1,9 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, ResponseOf } from '../../common';
-import { userDbSchema } from '../../database';
 
 // Generate WebSocket ticket
 
-export const createWebSocketTicketRequestSchema = z.object({ body: z.object({ username: userDbSchema.shape.username }) });
+export const createWebSocketTicketRequestSchema = z.object({ body: z.object({ username: z.string() }) });
 export const createWebSocketTicketResponseSchema = z.object({ ticket: z.string() });
 
 export const createWebSocketTicketContract = {

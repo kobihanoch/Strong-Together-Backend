@@ -1,9 +1,8 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, ParamsOf, QueryOf, ResponseOf } from '../../../../common';
-import { postDbSchema, reactionDbSchema } from '../../../../database';
-import { reactionQueryDtoSchema } from './reactions.dtos';
+import { reactionSchema } from './reactions.schemas';
 
-const postParamsSchema = z.object({ postId: postDbSchema.shape.id });
+const postParamsSchema = z.object({ postId: z.string().uuid() });
 
 // List post reactions
 
@@ -18,7 +17,7 @@ export const listPostReactionsRequestSchema = z.object({
 
 /** Validates a page of reactions and its continuation cursor. */
 export const listPostReactionsResponseSchema = z.object({
-  reactions: z.array(reactionQueryDtoSchema),
+  reactions: z.array(reactionSchema),
   nextCursor: z.string().nullable(),
 });
 
@@ -40,7 +39,7 @@ export type ListPostReactionsResponse = ResponseOf<typeof listPostReactionsContr
 /** Validates a request that creates or replaces the caller's reaction to a post. */
 export const reactToPostRequestSchema = z.object({
   params: postParamsSchema,
-  body: z.object({ type: reactionDbSchema.shape.type }),
+  body: z.object({ type: z.enum(['like', 'fire up', 'muscle']) }),
 });
 
 /** Defines the empty response returned after reacting to a post. */

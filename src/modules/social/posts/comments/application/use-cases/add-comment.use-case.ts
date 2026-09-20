@@ -1,0 +1,21 @@
+import { Injectable } from '@nestjs/common';
+import { PostNotFoundError } from '../errors/comments.errors';
+import { CommentsRepository } from '../ports/comments.repository';
+
+/** Adds a comment to a visible post. */ @Injectable()
+export class AddCommentUseCase {
+  public constructor(private readonly repository: CommentsRepository) {}
+  /**
+   * Executes the application operation.
+   *
+   *
+   * @param postId - Post identifier.
+   * @param userId - Author identifier.
+   * @param content - Comment text.
+   * @returns Nothing after creation.
+   * @throws {PostNotFoundError} When the post is inaccessible.
+   */
+  public async execute(postId: string, userId: string, content: string): Promise<void> {
+    if (!(await this.repository.add(postId, userId, content))) throw new PostNotFoundError();
+  }
+}

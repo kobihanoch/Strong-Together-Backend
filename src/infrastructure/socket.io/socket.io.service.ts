@@ -2,7 +2,7 @@ import { BadRequestException, Inject, Injectable, OnApplicationBootstrap, Unauth
 import { HttpAdapterHost } from '@nestjs/core';
 import { RedisClientType } from 'redis';
 import { Server, Socket } from 'socket.io';
-import { decodeSocketToken } from '../../modules/web-sockets/web-sockets.utils';
+import { decodeSocketToken } from './socket.io.utils';
 import { createLogger } from '../logger';
 import { SOCKET_ADAPTER_CLIENTS } from '../redis/redis.tokens';
 import { SOCKET_IO } from './socket.io.tokens';
