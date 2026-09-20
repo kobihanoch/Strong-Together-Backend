@@ -1,8 +1,11 @@
 import postgres from 'postgres';
 import dotenv from 'dotenv';
-import type { AerobicTrackingRow, UserRow } from '@strong-together/shared';
 import { appConfig } from '../../../config/app.config';
 import { databaseConfig } from '../../../config/database.config';
+import { aerobicTracking, user } from '../../../infrastructure/db/schema/drizzle/index';
+
+type AerobicTrackingRow = typeof aerobicTracking.$inferSelect;
+type UserRow = typeof user.$inferSelect;
 
 dotenv.config({ path: '.env.test', override: true });
 
