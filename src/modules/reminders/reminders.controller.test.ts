@@ -54,11 +54,7 @@ describe('RemindersController', () => {
     const user = await createAndLoginTestUser(app, 'reminders_invalid');
     users.add(user.username);
     const headers = authHeaders(user.accessToken);
-    await request(app.getHttpServer())
-      .put('/api/reminders')
-      .set(headers)
-      .send({ reminderEnabled: true, timeZone: 'Asia/Jerusalem' })
-      .expect(204);
+    await request(app.getHttpServer()).put('/api/reminders').set(headers).send({ reminderEnabled: true, timeZone: 'Asia/Jerusalem' }).expect(204);
 
     const missing = await request(app.getHttpServer()).put('/api/reminders').set(headers).send({});
     const invalidTimeZone = await request(app.getHttpServer())
@@ -76,17 +72,9 @@ describe('RemindersController', () => {
     const user = await createAndLoginTestUser(app, 'reminders_timezone');
     users.add(user.username);
     const headers = authHeaders(user.accessToken);
-    await request(app.getHttpServer())
-      .put('/api/reminders')
-      .set(headers)
-      .send({ reminderEnabled: false, timeZone: 'Asia/Jerusalem' })
-      .expect(204);
+    await request(app.getHttpServer()).put('/api/reminders').set(headers).send({ reminderEnabled: false, timeZone: 'Asia/Jerusalem' }).expect(204);
 
-    await request(app.getHttpServer())
-      .patch('/api/reminders/time-zone')
-      .set(headers)
-      .send({ timeZone: 'America/New_York' })
-      .expect(204);
+    await request(app.getHttpServer()).patch('/api/reminders/time-zone').set(headers).send({ timeZone: 'America/New_York' }).expect(204);
 
     const response = await request(app.getHttpServer()).get('/api/reminders').set(headers).expect(200);
     expect(response.body.reminderSettings).toMatchObject({

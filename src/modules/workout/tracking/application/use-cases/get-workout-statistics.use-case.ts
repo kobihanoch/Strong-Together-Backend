@@ -3,7 +3,8 @@ import { TransactionHooks } from '../../../../../common/application/ports/transa
 import type { WorkoutStatistics } from '../models/workout-tracking.models';
 import { WorkoutTrackingCache } from '../ports/workout-tracking-cache.port';
 import { WorkoutTrackingRepository } from '../ports/workout-tracking.repository';
-/** Retrieves cached workout statistics. */ @Injectable()
+/** Retrieves cached workout statistics. */
+@Injectable()
 export class GetWorkoutStatisticsUseCase {
   constructor(
     private readonly repository: WorkoutTrackingRepository,

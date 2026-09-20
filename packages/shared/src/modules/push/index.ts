@@ -1,1 +1,1 @@
-export * from './push.dtos';
+export {};

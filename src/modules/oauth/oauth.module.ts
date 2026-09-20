@@ -1,16 +1,10 @@
 import { Module } from '@nestjs/common';
-import { RateLimitGuard } from '../../common/guards/rate-limit.guard';
-import { AuthModule } from '../auth/auth.module';
-import { AppleController } from './apple/apple.controller';
-import { AppleQueries } from './apple/apple.queries';
-import { AppleService } from './apple/apple.service';
-import { GoogleController } from './google/google.controller';
-import { GoogleQueries } from './google/google.queries';
-import { GoogleService } from './google/google.service';
+import { AppleOAuthModule } from './apple/apple.module';
+import { GoogleOAuthModule } from './google/google.module';
 
 @Module({
-  imports: [AuthModule],
-  controllers: [AppleController, GoogleController],
-  providers: [AppleQueries, AppleService, GoogleQueries, GoogleService, RateLimitGuard],
+  imports: [AppleOAuthModule, GoogleOAuthModule],
+  exports: [AppleOAuthModule, GoogleOAuthModule],
 })
+/** Composes the independent OAuth provider capabilities. */
 export class OAuthModule {}

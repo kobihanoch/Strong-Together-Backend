@@ -1,11 +1,17 @@
 import { z } from 'zod/v4';
 import { serializedDateSchema, timezoneSchema, type BodyOf, type Contract, type ResponseOf } from '../../common';
-import { userReminderSettingDbSchema } from '../../database';
+
+const reminderSettingsSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
+  reminderEnabled: z.boolean(),
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema,
+  timeZone: timezoneSchema,
+});
 
 export const getReminderSettingsResponseSchema = z.object({
-  reminderSettings: userReminderSettingDbSchema
-    .extend({ createdAt: serializedDateSchema, updatedAt: serializedDateSchema })
-    .nullable(),
+  reminderSettings: reminderSettingsSchema.nullable(),
 });
 
 export const getReminderSettingsContract = {
@@ -14,7 +20,7 @@ export const getReminderSettingsContract = {
 
 export const upsertReminderSettingsRequestSchema = z.object({
   body: z.object({
-    reminderEnabled: userReminderSettingDbSchema.shape.reminderEnabled,
+    reminderEnabled: z.boolean(),
     timeZone: timezoneSchema,
   }),
 });
