@@ -4,7 +4,7 @@ import { signTokens } from '../../../common/authentication/authentication.utils'
 import { DBService } from '../../../infrastructure/db/db.service';
 import type { AppLogger } from '../../../infrastructure/logger';
 import { SessionRepository } from '../../auth/session/application/ports/session.repository';
-import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
+import { AuthenticationEvents } from '../../auth/session/application/ports/authentication-events.port';
 import { AppleQueries } from './apple.queries';
 import { verifyAppleIdToken } from './apple.utils';
 
@@ -12,7 +12,7 @@ import { verifyAppleIdToken } from './apple.utils';
 export class AppleService {
   constructor(
     private readonly dbService: DBService,
-    private readonly systemMessagesService: SystemMessagesService,
+    private readonly authenticationEvents: AuthenticationEvents,
     private readonly sessions: SessionRepository,
     private readonly appleQueries: AppleQueries,
   ) {}
@@ -78,7 +78,7 @@ export class AppleService {
 
     if (hasNeverLoggedIn) {
       try {
-        await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
+        await this.authenticationEvents.userFirstLogin(userData.id, userData.name as string);
       } catch (e) {
         requestLogger.error(
           { err: e, event: 'oauth.apple_first_login_message_failed', userId: userData.id },

@@ -4,14 +4,14 @@ import { signTokens } from '../../../common/authentication/authentication.utils'
 import { DBService } from '../../../infrastructure/db/db.service';
 import type { AppLogger } from '../../../infrastructure/logger';
 import { SessionRepository } from '../../auth/session/application/ports/session.repository';
-import { SystemMessagesService } from '../../messages/system-messages/system-messages.service';
+import { AuthenticationEvents } from '../../auth/session/application/ports/authentication-events.port';
 import { GoogleQueries } from './google.queries';
 import { verifyGoogleIdToken } from './google.utils';
 @Injectable()
 export class GoogleService {
   constructor(
     private readonly dbService: DBService,
-    private readonly systemMessagesService: SystemMessagesService,
+    private readonly authenticationEvents: AuthenticationEvents,
     private readonly sessions: SessionRepository,
     private readonly googleQueries: GoogleQueries,
   ) {}
@@ -64,7 +64,7 @@ export class GoogleService {
     if (!userData.isVerified) throw new UnauthorizedException('A verification email is pending');
     if (hasNeverLoggedIn) {
       try {
-        await this.systemMessagesService.sendSystemMessageToUserWhenFirstLogin(userData.id, userData.name as string);
+        await this.authenticationEvents.userFirstLogin(userData.id, userData.name as string);
       } catch (e) {
         requestLogger.error(
           { err: e, event: 'oauth.google_first_login_message_failed', userId: userData.id },

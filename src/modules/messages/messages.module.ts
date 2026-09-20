@@ -1,38 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AuthenticationGuard } from '../../common/guards/authentication.guard';
-import { AuthorizationGuard } from '../../common/guards/authorization.guard';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard';
-import { MessagesController } from './messages.controller';
-import { MessagesQueries } from './messages.queries';
-import { MessagesRepository } from './messages.repository';
-import { MessagesService } from './messages.service';
-import { PostgresMessagesRepository } from './postgres-messages.repository';
-import { PostgresSystemMessagesRepository } from './system-messages/postgres-system-messages.repository';
-import { SystemMessagesQueries } from './system-messages/system-messages.queries';
-import { SystemMessagesRepository } from './system-messages/system-messages.repository';
-import { SystemMessagesService } from './system-messages/system-messages.service';
-import { UserFirstLoginListener } from './system-messages/user-first-login.listener';
+import { MessagesInboxModule } from './inbox/messages-inbox.module';
+import { SystemMessagesModule } from './system-messages/system-messages.module';
 
+/** Composes and re-exports the independent message capabilities. */
 @Module({
-  controllers: [MessagesController],
-  providers: [
-    MessagesQueries,
-    {
-      provide: MessagesRepository,
-      useClass: PostgresMessagesRepository,
-    },
-    SystemMessagesQueries,
-    {
-      provide: SystemMessagesRepository,
-      useClass: PostgresSystemMessagesRepository,
-    },
-    MessagesService,
-    SystemMessagesService,
-    UserFirstLoginListener,
-    DpopGuard,
-    AuthenticationGuard,
-    AuthorizationGuard,
-  ],
-  exports: [MessagesService, SystemMessagesService],
+  imports: [MessagesInboxModule, SystemMessagesModule],
+  exports: [MessagesInboxModule, SystemMessagesModule],
 })
 export class MessagesModule {}

@@ -83,9 +83,26 @@ Do not force classes onto data-only declarations. Zod schemas with inferred type
 
 ## Required TSDoc
 
-Add TSDoc above every controller handler and every public use-case method. Explain the operation, every parameter, and the return value. Document thrown errors when they are meaningful.
+TSDoc is required for every exported runtime class, every controller handler, and every public use-case method. Documentation must explain intent and behavior rather than restating the method name.
 
-Controller handlers must additionally state the complete API path and access requirement:
+### Classes
+
+Add a concise class-level TSDoc summary to controllers, use cases, entities, domain services, ports, repositories, adapters, listeners, and presenters. Exported application models, events, and errors also require a short ownership or purpose description.
+
+### Controller Handlers
+
+Every controller handler must document:
+
+- What the endpoint does.
+- The complete HTTP method and path using `API: METHOD /full/path`.
+- Its access requirement using `Access: ...`.
+- Every handler parameter with `@param`.
+- Its resolved response or absence of a response body with `@returns`.
+- Expected errors with `@throws` when relevant. Put the error class in braces, for example `@throws {WorkoutPlanNotFoundError} When no active plan exists.` This is the project convention used by editor tooling; do not use `{@link ...}` in `@throws`.
+
+Do not use only `@remarks Route`; use the explicit `API:` and `Access:` lines.
+
+Example:
 
 ```ts
 /**
@@ -100,7 +117,16 @@ Controller handlers must additionally state the complete API path and access req
  */
 ```
 
-Use-case methods use the same documentation standard but must not mention an API route, because the application layer is transport-independent:
+### Use Cases
+
+Every public `execute(...)` method must document:
+
+- The application operation and meaningful behavior.
+- Every input with `@param`.
+- The resolved result with `@returns`, including `Promise<void>` operations.
+- Every expected application/domain error with `@throws {ErrorClassName}`. Do not use TSDoc `{@link ...}` syntax in a `@throws` tag.
+
+Use-case TSDoc must not mention HTTP methods, paths, status codes, controllers, or request/response objects because the application layer is transport-independent:
 
 ```ts
 /**
@@ -111,6 +137,25 @@ Use-case methods use the same documentation standard but must not mention an API
  * @returns The active workout plan, or `null` when none exists.
  */
 ```
+
+Expected errors use a symbol link so editors and generated documentation can navigate to the error declaration:
+
+```ts
+/**
+ * Deletes a message visible to a user.
+ *
+ * @param messageId - The message to delete.
+ * @param userId - The user requesting deletion.
+ * @returns Nothing when deletion succeeds.
+ * @throws {MessageNotFoundError} When the message is absent or inaccessible.
+ */
+```
+
+Do not add documentation-only imports for error types. The braces form is the complete project convention.
+
+### Avoid Redundant Documentation
+
+Private helpers and trivial implementation overrides do not require repetitive TSDoc when the class or port already defines the contract. Comments must not claim behavior that the code does not provide. Update TSDoc whenever parameters, return values, access requirements, routes, or expected errors change.
 
 ## Error Convention
 
@@ -150,6 +195,65 @@ Migrate feature by feature: keep current contracts working, stop adding new Driz
 
 Keep SQL input/result rows and Drizzle-derived select/insert/update types in the module's infrastructure layer, normally in `feature.db-types.ts`. These types may import Drizzle tables and application models, but they must not be exported from `packages/shared` or used by domain/application ports. The adjacent `feature.sql.ts` imports them for typed database operations.
 
+## Strict Type and DTO Placement
+
+Treat each type as owned by exactly one boundary. Do not create a generic shared DTO layer inside the backend.
+
+### Shared Package
+
+`@strong-together/shared` exports only contracts that cross a process boundary:
+
+- HTTP request and response Zod schemas and their inferred `Body`, `Query`, `Params`, and `Response` types.
+- Public WebSocket event contracts.
+- Queue or worker payload contracts only when another package or runtime consumes them.
+
+Keep the existing public naming convention exactly, for example `loginRequestSchema`, `loginResponseSchema`, `LoginRequestBody`, `GetWorkoutPlanQuery`, and `DeleteMessageParams`. Feature `index.ts` files export only their `*.contracts.ts` files.
+
+Shared contracts must use plain Zod and common transport schemas. They must not import Drizzle tables, database schemas, backend entities, application models, SQL types, repositories, internal JWT payloads, or infrastructure code. Do not export database rows, insert/update types, `*QueryDto` types, or internal token schemas from the shared package.
+
+### Domain Types
+
+Entities, value objects, domain errors, and domain events belong under the feature's `domain/` folder. They are defined from business rules and are never derived from Drizzle or HTTP contracts. Domain types are backend-internal unless a separate public contract explicitly represents the same concept.
+
+### Application Types
+
+Use `application/models/*.models.ts` for data-only inputs, commands, results, and read projections used by use cases and ports. Use interfaces or type aliases for these shapes; use classes only when behavior or construction rules exist. Repository and other port signatures use domain types or application models, never SQL rows or HTTP request types.
+
+Do not suffix application types with `Dto`. Prefer names such as `AerobicEntryInput`, `AerobicsHistory`, `LoginResult`, `VisiblePostItem`, or `ReplaceWorkoutPlanCommand`.
+
+Application code must not import public HTTP request or response types from `@strong-together/shared`. Use cases return domain entities or application models. The presentation layer owns the shared transport contract and may return a structurally compatible application result without copying it.
+
+### Infrastructure Types
+
+Use `infrastructure/persistence/*.db-types.ts`, or `infrastructure/*.db-types.ts` when persistence is the module's only infrastructure concern.
+
+- Derive complete table rows and table-column selections from Drizzle with `$inferSelect`, `$inferInsert`, `Pick`, or `Omit`.
+- SQL result fields that directly originate from a Drizzle table column must reuse that column's inferred type, including selected columns that SQL aliases. Use `Pick<typeof table.$inferSelect, ...>` when property names are unchanged, or indexed access such as `(typeof table.$inferSelect)['sentAt']` when an aliased/custom result interface needs the field under another name.
+- Define only genuinely computed fields, function results, JSON aggregations, and fields whose runtime type changes because of a SQL expression manually. For joins, derive each direct column from its owning table and explicitly add `null` when the join can make the row absent.
+- Do not define primitive copies such as `{ id: string }` when `Pick<typeof message.$inferSelect, 'id'>` is available. Do not alias an application model as a SQL row merely because their current shapes match; persistence types must express the database result independently, and the repository maps them to application models.
+- Name persistence types by their actual role, such as `UserDbRow`, `WorkoutPlanDbInsert`, `LoginUserSqlRow`, or `AerobicsHistorySqlRow`.
+- Keep internal JWT validation schemas, provider SDK results, Redis representations, and adapter-only payloads beside their infrastructure adapter.
+
+Infrastructure types are private to the backend and must not be re-exported through the shared package.
+
+### DTO Naming
+
+Use `DTO` only for a real transport object crossing a process boundary. Public HTTP types continue using the existing contract naming rather than adding `Dto`. SQL results are `*SqlRow`, Drizzle records are `*DbRow`/`*DbInsert`, application values are `*Input`/`*Command`/`*Result`/descriptive model names, and event data is `*Event` or `*Payload`.
+
+### Required Data Flow
+
+```text
+Drizzle/table type or manual SQL row
+  -> infrastructure repository mapping
+  -> domain entity or application model
+  -> presentation/controller mapping when needed
+  -> shared response contract
+```
+
+Matching shapes do not require runtime copying: TypeScript structural typing allows a controller to return an application model when it already satisfies the shared response type. Add a mapper or presenter only when fields, formats, visibility, or semantics differ.
+
+Migrate feature by feature. Existing unmigrated exports may remain temporarily, but a refactored feature must remove its database/query DTO exports from `packages/shared` and expose only its public contracts.
+
 ## Infrastructure Ports and Naming
 
 Every infrastructure capability used directly by a use case must be accessed through an application-owned port. Use abstract classes so the same declaration serves as the TypeScript contract and Nest injection token. Do not use `I` prefixes or names such as `Interface`, `Manager`, or `Helper`.
@@ -186,6 +290,39 @@ SystemClock
 UuidIdGenerator
 ```
 
+### External Adapter Naming
+
+Preserve the application port's business role as the adapter class suffix and add the delivery mechanism as a prefix. Do not switch between synonyms such as `Publisher`, `Emitter`, `Broadcaster`, `Notifier`, or `Sender` for the same port role.
+
+| External mechanism | Application port type | Infrastructure adapter type | File name | Wrapped dependency field and type |
+| --- | --- | --- | --- | --- |
+| Socket delivery | `<Capability>Publisher` | `Socket<Capability>Publisher` | `socket-<capability>.publisher.ts` | `publisher: SocketIOService` |
+| Queue-backed delivery for a publisher port | `<Capability>Publisher` | `Queued<Capability>Publisher` | `queued-<capability>.publisher.ts` | `<capability>Producer: <Capability>ProducerService` |
+| Queue-backed email sending | `<Purpose>EmailSender` | `Queued<Purpose>EmailSender` | `queued-<purpose>-email.sender.ts` | `emailsProducer: EmailsProducerService` |
+
+Concrete examples:
+
+```text
+MessagePublisher          -> SocketMessagePublisher
+MessagePublisher          -> QueuedMessagePublisher
+VerificationEmailSender   -> QueuedVerificationEmailSender
+PasswordResetEmailSender  -> QueuedPasswordResetEmailSender
+```
+
+The constructor property name describes the wrapped external dependency consistently:
+
+```ts
+export class SocketMessagePublisher implements MessagePublisher {
+  constructor(private readonly publisher: SocketIOService) {}
+}
+
+export class QueuedVerificationEmailSender implements VerificationEmailSender {
+  constructor(private readonly emailsProducer: EmailsProducerService) {}
+}
+```
+
+For socket publisher adapters, the wrapped `SocketIOService` property is always named `publisher`. For queue adapters, retain the producer's capability name and `Producer` suffix (for example `emailsProducer: EmailsProducerService`); do not call a queue producer `queue`, `client`, or `service`. The port token, injected use-case property, adapter class, and file must keep the same business-role noun.
+
 Register each adapter in the Nest module:
 
 ```ts
@@ -196,3 +333,21 @@ Register each adapter in the Nest module:
 ```
 
 Create a port only when application/domain code needs the capability. Raw SQL helpers, `DBService`, Redis clients, SDK clients, configuration loaders, and other details used entirely inside infrastructure do not need their own application ports. Critical post-commit delivery should eventually use a transactional outbox; `TransactionHooks.afterCommit(...)` is intended for cache operations and other best-effort side effects.
+
+## Refactored Feature Completion Checklist
+
+A feature is refactored only when all applicable items below are true:
+
+- Files follow the required layer/subfolder layout; compound capabilities own their own module, ports, use cases, adapters, and presentation.
+- The top-level module of a compound feature only imports and re-exports submodules.
+- Controllers depend on use cases; use cases depend only on domain code, application models, and application-owned ports.
+- Every application operation is an explicit use-case class with an `execute(...)` method.
+- Concrete databases, caches, queues, sockets, SDKs, and transaction mechanisms remain in infrastructure and are reached through application ports when a use case uses them directly.
+- Expected errors are plain feature-owned application errors with numeric `statusCode` values; controllers do not translate them with repetitive `try/catch` blocks.
+- Lifecycle reactions across modules use the common event, a producer-owned publisher port, an infrastructure publisher, and a consumer-side listener. Awaited behavior remains awaited.
+- Shared feature indexes export only public `*.contracts.ts`; shared contracts use plain Zod and contain no Drizzle, SQL-row, database, backend model, or internal-token types.
+- Application ports use domain entities or application models—not SQL rows or shared HTTP contracts.
+- SQL result types live in infrastructure. Every direct table-column field derives its type from Drizzle; only computed or runtime-transformed fields are manually typed. Repositories map SQL rows to domain/application values, including date serialization or other representation changes.
+- Public contract names and behavior remain unchanged unless the task explicitly changes the API.
+- Exported runtime classes, exported application models/events/errors, controller handlers, and public use-case methods have the required TSDoc. Every expected error uses `@throws {ErrorClassName}` and never `{@link ...}`.
+- Relevant shared builds, TypeScript checks, and feature tests pass.

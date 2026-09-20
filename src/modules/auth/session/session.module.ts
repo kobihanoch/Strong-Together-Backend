@@ -25,6 +25,6 @@ import { SessionController } from './presentation/session.controller';
     DpopGuard,
     RateLimitGuard,
   ],
-  exports: [SessionRepository],
+  exports: [SessionRepository, AuthenticationEvents],
 })
 export class SessionModule {}

@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { RateLimitGuard } from '../../common/guards/rate-limit.guard';
-import { MessagesModule } from '../messages/messages.module';
 import { AuthModule } from '../auth/auth.module';
 import { AppleController } from './apple/apple.controller';
 import { AppleQueries } from './apple/apple.queries';
@@ -10,7 +9,7 @@ import { GoogleQueries } from './google/google.queries';
 import { GoogleService } from './google/google.service';
 
 @Module({
-  imports: [MessagesModule, AuthModule],
+  imports: [AuthModule],
   controllers: [AppleController, GoogleController],
   providers: [AppleQueries, AppleService, GoogleQueries, GoogleService, RateLimitGuard],
 })
