@@ -12,6 +12,7 @@ import { PostgresVerificationRepository } from './infrastructure/postgres-verifi
 import { QueuedVerificationEmailSender } from './infrastructure/queued-verification-email.sender';
 import { VerificationSql } from './infrastructure/verification.sql';
 import { VerificationController } from './presentation/verification.controller';
+import { UserRegisteredListener } from './user-registered.listener';
 
 @Module({
   imports: [AuthCoreModule, EmailsModule],
@@ -24,8 +25,8 @@ import { VerificationController } from './presentation/verification.controller';
     CreateVerificationEmailUseCase,
     UpdateUnverifiedEmailUseCase,
     GetVerificationStatusUseCase,
+    UserRegisteredListener,
     RateLimitGuard,
   ],
-  exports: [VerificationEmailSender],
 })
 export class VerificationModule {}

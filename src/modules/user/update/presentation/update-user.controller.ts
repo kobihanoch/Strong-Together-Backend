@@ -1,0 +1,152 @@
+import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Put, Query, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { DeleteProfilePictureBody, GetCurrentUserResponse, ReplaceProfilePictureResponse, UpdateCurrentUserBody } from '@strong-together/shared';
+import { deleteProfilePictureRequestSchema, updateCurrentUserRequestSchema } from '@strong-together/shared';
+import type { Response } from 'express';
+import { CurrentLogger } from '../../../../common/decorators/current-logger.decorator';
+import { CurrentRequestId } from '../../../../common/decorators/current-request-id.decorator';
+import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
+import { RequestData } from '../../../../common/decorators/request-data.decorator';
+import { AuthenticationGuard } from '../../../../common/guards/authentication.guard';
+import { AuthorizationGuard, Roles } from '../../../../common/guards/authorization.guard';
+import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
+import { RateLimit, RateLimitGuard, updateUserRateLimit, updateUserRateLimitDaily } from '../../../../common/guards/rate-limit.guard';
+import { imageUploadOptions } from '../../../../common/interceptors/image-upload.config';
+import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
+import type { AuthenticatedUser } from '../../../../common/types/express';
+import type { AppLogger } from '../../../../infrastructure/logger';
+import { ConfirmEmailChangeUseCase } from '../application/use-cases/confirm-email-change.use-case';
+import { DeleteProfilePictureUseCase } from '../application/use-cases/delete-profile-picture.use-case';
+import { DeleteUserUseCase } from '../application/use-cases/delete-user.use-case';
+import { GetCurrentUserUseCase } from '../application/use-cases/get-current-user.use-case';
+import { ReplaceProfilePictureUseCase } from '../application/use-cases/replace-profile-picture.use-case';
+import { UpdateCurrentUserUseCase } from '../application/use-cases/update-current-user.use-case';
+import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from './update-user.views';
+
+/** Exposes user profile-management endpoints. */
+@Controller('api/users')
+export class UpdateUserController {
+  constructor(
+    private readonly getUser: GetCurrentUserUseCase,
+    private readonly updateUser: UpdateCurrentUserUseCase,
+    private readonly confirmEmail: ConfirmEmailChangeUseCase,
+    private readonly deleteUser: DeleteUserUseCase,
+    private readonly replacePicture: ReplaceProfilePictureUseCase,
+    private readonly deletePicture: DeleteProfilePictureUseCase,
+  ) {}
+
+  /**
+   * Retrieves the authenticated user's profile.
+   * API: GET /api/users/me
+   * Access: Authenticated user
+   * @param user - The authenticated request user.
+   * @returns The current profile.
+   * @throws {UserNotFoundError} When the user is absent.
+   */
+  @Get('me')
+  @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
+  @Roles('user')
+  async getCurrentUser(@CurrentUser() user: AuthenticatedUser): Promise<GetCurrentUserResponse> {
+    return this.getUser.execute(user.id);
+  }
+
+  /**
+   * Updates the authenticated user's profile.
+   * API: PATCH /api/users/me
+   * Access: Authenticated user
+   * @param data - Validated profile changes.
+   * @param user - The authenticated request user.
+   * @param requestId - Optional request correlation identifier.
+   * @returns No response body.
+   * @throws {UserNotFoundError} When the user is absent.
+   * @throws {UserConflictError} When a username or email is already used.
+   */
+  @Patch('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(RateLimitGuard, DpopGuard, AuthenticationGuard, AuthorizationGuard)
+  @RateLimit(updateUserRateLimitDaily, updateUserRateLimit)
+  @Roles('user')
+  async updateCurrentUser(
+    @RequestData(new ValidateRequestPipe(updateCurrentUserRequestSchema)) data: { body: UpdateCurrentUserBody },
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentRequestId() requestId?: string,
+  ): Promise<void> {
+    await this.updateUser.execute(user.id, data.body, requestId);
+  }
+
+  /**
+   * Confirms a pending email-address change.
+   * API: GET /api/users/email-change
+   * Access: Public
+   * @param token - The signed email-change token.
+   * @param logger - The request-scoped logger.
+   * @param res - The response used to render the result page.
+   * @returns No response body from Nest; the response is sent directly.
+   */
+  @Get('email-change')
+  async updateSelfEmail(@Query('token') token: string | undefined, @CurrentLogger() logger: AppLogger, @Res() res: Response): Promise<void> {
+    const result = await this.confirmEmail.execute(token, logger);
+    const html = result.statusCode === 200 ? generateEmailChangeSuccessHTML() : generateEmailChangeFailedHTML(result.reason);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.status(result.statusCode).type('html').set('Cache-Control', 'no-store').send(html);
+  }
+
+  /**
+   * Deletes the authenticated user's account.
+   * API: DELETE /api/users/me
+   * Access: Authenticated user
+   * @param user - The authenticated request user.
+   * @returns No response body.
+   */
+  @Delete('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
+  @Roles('user')
+  async deleteSelfUser(@CurrentUser() user: AuthenticatedUser): Promise<void> {
+    await this.deleteUser.execute(user.id);
+  }
+
+  /**
+   * Replaces the authenticated user's profile picture.
+   * API: PUT /api/users/me/profile-picture
+   * Access: Authenticated user
+   * @param user - The authenticated request user.
+   * @param file - The uploaded image file.
+   * @param logger - The request-scoped logger.
+   * @param res - The response used to set the created status.
+   * @returns The stored picture path and public URL.
+   * @throws {ProfilePictureRequiredError} When no image is supplied.
+   */
+  @Put('me/profile-picture')
+  @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
+  @UseInterceptors(FileInterceptor('file', imageUploadOptions))
+  @Roles('user')
+  async replaceProfilePicture(
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @CurrentLogger() logger: AppLogger,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ReplaceProfilePictureResponse> {
+    const result = await this.replacePicture.execute(user.id, file, logger);
+    res.status(201);
+    return result;
+  }
+
+  /**
+   * Deletes the authenticated user's profile picture.
+   * API: DELETE /api/users/me/profile-picture
+   * Access: Authenticated user
+   * @param data - The validated stored-object path.
+   * @param user - The authenticated request user.
+   * @returns No response body.
+   */
+  @Delete('me/profile-picture')
+  @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
+  @Roles('user')
+  async deleteProfilePicture(
+    @RequestData(new ValidateRequestPipe(deleteProfilePictureRequestSchema)) data: { body: DeleteProfilePictureBody },
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<void> {
+    await this.deletePicture.execute(user.id, data.body.profilePicPath);
+  }
+}
