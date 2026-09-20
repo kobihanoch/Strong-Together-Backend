@@ -1,9 +1,11 @@
-import type { AuthEmailRecipient, LoginUser } from '../../core/application/models/auth.models';
+import { user } from '../../../../infrastructure/db/schema/drizzle/identity/user/table';
+
+type UserDbRow = typeof user.$inferSelect;
 
 /** Raw username lookup before database field normalization. */
-export interface VerificationUserRawSqlResult extends Omit<LoginUser, 'passwordHash' | 'isVerified'> {
-  password_hash: string | null;
-  is_verified: boolean;
+export interface VerificationUserRawSqlResult extends Pick<UserDbRow, 'id' | 'name' | 'username' | 'role'> {
+  password_hash: UserDbRow['passwordHash'];
+  is_verified: UserDbRow['isVerified'];
 }
 
 /** SQL row wrapping a username lookup. */
@@ -13,15 +15,15 @@ export interface VerificationUserSqlRow {
 
 /** SQL row wrapping an email-recipient lookup. */
 export interface VerificationRecipientSqlRow {
-  userData: Omit<AuthEmailRecipient, 'email'> | null;
+  userData: Pick<UserDbRow, 'id' | 'name' | 'username'> | null;
 }
 
 /** SQL row returned by the email-existence function. */
 export interface EmailExistsSqlRow {
-  id: string | null;
+  id: UserDbRow['id'] | null;
 }
 
 /** SQL row returned by the public verification-state function. */
 export interface VerificationStatusSqlRow {
-  is_verified: boolean | null;
+  is_verified: UserDbRow['isVerified'] | null;
 }

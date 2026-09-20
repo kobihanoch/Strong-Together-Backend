@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../infrastructure/db/db.service';
-import type { ExerciseCatalogue } from '../application/models/exercises.models';
-import type { ExerciseCatalogueSqlRow } from './exercises.db-types';
+import type { ExerciseCatalogueSqlMap, ExerciseCatalogueSqlRow } from './exercises.db-types';
 
 /** Executes exercise-catalogue SQL queries. */
 @Injectable()
 export class ExercisesSql {
   constructor(private readonly dbService: DBService) {}
 
-  async findCatalogue(): Promise<ExerciseCatalogue> {
+  async findCatalogue(): Promise<ExerciseCatalogueSqlMap> {
     const rows = await this.dbService.sql<ExerciseCatalogueSqlRow[]>`
       SELECT jsonb_build_object('map', jsonb_object_agg(t.targetmuscle, t.ex_list)) AS result
       FROM (

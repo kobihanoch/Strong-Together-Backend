@@ -1,6 +1,8 @@
-import type { AuthEmailRecipient } from '../../core/application/models/auth.models';
+import { user } from '../../../../infrastructure/db/schema/drizzle/identity/user/table';
+
+type UserDbRow = typeof user.$inferSelect;
 
 /** SQL row wrapping a password-reset recipient lookup. */
 export interface PasswordResetRecipientSqlRow {
-  userData: AuthEmailRecipient | null;
+  userData: Pick<UserDbRow, 'id' | 'email' | 'name' | 'username'> | null;
 }

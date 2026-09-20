@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../infrastructure/db/db.service';
-import type { AerobicEntryInput, AerobicsHistory } from '../application/models/aerobics.models';
-import type { AerobicMutationSqlRow, AerobicsHistorySqlRow } from './aerobics.db-types';
+import type { AerobicEntryInput } from '../application/models/aerobics.models';
+import type { AerobicMutationSqlRow, AerobicsHistorySqlData, AerobicsHistorySqlRow } from './aerobics.db-types';
 
 @Injectable()
 export class AerobicsSql {
@@ -14,7 +14,7 @@ export class AerobicsSql {
    * @param tz - The IANA time-zone name.
    * @returns The user aerobics for ndays result.
    */
-  async findByUser(userId: string, days: number, tz: string = 'Asia/Jerusalem'): Promise<AerobicsHistory> {
+  async findByUser(userId: string, days: number, tz: string = 'Asia/Jerusalem'): Promise<AerobicsHistorySqlData> {
     const [obj] = await this.dbService.sql<AerobicsHistorySqlRow[]>`
       /* Normalize parameters (default tz to UTC if empty) */
       WITH

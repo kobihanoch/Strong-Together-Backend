@@ -1,9 +1,11 @@
-import type { LoginUser, RotatedSession } from '../../core/application/models/auth.models';
+import { user } from '../../../../infrastructure/db/schema/drizzle/identity/user/table';
+
+type UserDbRow = typeof user.$inferSelect;
 
 /** Raw payload returned by the guest login function before field normalization. */
-export interface LoginUserRawSqlResult extends Omit<LoginUser, 'passwordHash' | 'isVerified' | 'lastLogin'> {
-  password_hash: string | null;
-  is_verified: boolean;
+export interface LoginUserRawSqlResult extends Pick<UserDbRow, 'id' | 'name' | 'username' | 'email' | 'role'> {
+  password_hash: UserDbRow['passwordHash'];
+  is_verified: UserDbRow['isVerified'];
   last_login: string | null;
 }
 
@@ -14,13 +16,32 @@ export interface LoginUserSqlRow {
 
 /** SQL row returned by the last-login lookup. */
 export interface LastLoginSqlRow {
-  lastLogin: Date | null;
+  lastLogin: UserDbRow['lastLogin'];
 }
 
 /** SQL row returned by session rotation. */
-export type RotatedSessionSqlRow = RotatedSession;
+export interface RotatedSessionSqlRow {
+  tokenVersion: UserDbRow['tokenVersion'];
+  userData: {
+    id: UserDbRow['id'];
+    username: UserDbRow['username'];
+    email: UserDbRow['email'];
+    name: UserDbRow['name'];
+    gender: UserDbRow['gender'];
+    createdAt: string;
+    updatedAt: string;
+    profilePicPath: UserDbRow['profilePicPath'];
+    pushToken: UserDbRow['pushToken'];
+    role: UserDbRow['role'];
+    isFirstLogin: boolean;
+    tokenVersion: UserDbRow['tokenVersion'];
+    isVerified: UserDbRow['isVerified'];
+    authProvider: UserDbRow['authProvider'];
+    lastLogin: string | null;
+  };
+}
 
 /** SQL row returned by token-version lookup. */
 export interface TokenVersionSqlRow {
-  tokenVersion: number;
+  tokenVersion: UserDbRow['tokenVersion'];
 }

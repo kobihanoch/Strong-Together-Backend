@@ -227,6 +227,9 @@ Application code must not import public HTTP request or response types from `@st
 
 Use `infrastructure/persistence/*.db-types.ts`, or `infrastructure/*.db-types.ts` when persistence is the module's only infrastructure concern.
 
+- All Drizzle type inference declarations belong in the applicable `*.db-types.ts` file. This includes `typeof table.$inferSelect`, `typeof table.$inferInsert`, `Pick`/`Omit` based on those inferred types, and indexed access into inferred rows. Do not declare these types in SQL classes, repositories, application models, domain files, controllers, or `packages/shared`.
+- Database-derived Zod inference also belongs to backend infrastructure. If an infrastructure adapter genuinely needs `createSelectSchema`, `createInsertSchema`, or `createUpdateSchema` from `drizzle-zod`, declare the resulting schema beside its persistence types in the applicable `*.db-types.ts` file. Never place or export a Drizzle-derived Zod schema from `packages/shared`.
+- A refactored feature's shared contract must recreate its public validation with ordinary Zod primitives and reusable transport schemas. It must not reuse a backend database schema even when the current field constraints happen to match.
 - Derive complete table rows and table-column selections from Drizzle with `$inferSelect`, `$inferInsert`, `Pick`, or `Omit`.
 - SQL result fields that directly originate from a Drizzle table column must reuse that column's inferred type, including selected columns that SQL aliases. Use `Pick<typeof table.$inferSelect, ...>` when property names are unchanged, or indexed access such as `(typeof table.$inferSelect)['sentAt']` when an aliased/custom result interface needs the field under another name.
 - Define only genuinely computed fields, function results, JSON aggregations, and fields whose runtime type changes because of a SQL expression manually. For joins, derive each direct column from its owning table and explicitly add `null` when the join can make the row absent.
@@ -345,9 +348,9 @@ A feature is refactored only when all applicable items below are true:
 - Concrete databases, caches, queues, sockets, SDKs, and transaction mechanisms remain in infrastructure and are reached through application ports when a use case uses them directly.
 - Expected errors are plain feature-owned application errors with numeric `statusCode` values; controllers do not translate them with repetitive `try/catch` blocks.
 - Lifecycle reactions across modules use the common event, a producer-owned publisher port, an infrastructure publisher, and a consumer-side listener. Awaited behavior remains awaited.
-- Shared feature indexes export only public `*.contracts.ts`; shared contracts use plain Zod and contain no Drizzle, SQL-row, database, backend model, or internal-token types.
+- Shared feature indexes export only public `*.contracts.ts`; shared contracts use plain Zod and contain no Drizzle, `drizzle-zod`, `$inferSelect`, `$inferInsert`, SQL-row, database, backend model, or internal-token types.
 - Application ports use domain entities or application models—not SQL rows or shared HTTP contracts.
-- SQL result types live in infrastructure. Every direct table-column field derives its type from Drizzle; only computed or runtime-transformed fields are manually typed. Repositories map SQL rows to domain/application values, including date serialization or other representation changes.
+- SQL result types and every Drizzle type/schema inference declaration live in the feature's infrastructure `*.db-types.ts` file. Every direct table-column field derives its type from Drizzle; only computed or runtime-transformed fields are manually typed. Repositories map SQL rows to domain/application values, including date serialization or other representation changes.
 - Public contract names and behavior remain unchanged unless the task explicitly changes the API.
 - Exported runtime classes, exported application models/events/errors, controller handlers, and public use-case methods have the required TSDoc. Every expected error uses `@throws {ErrorClassName}` and never `{@link ...}`.
 - Relevant shared builds, TypeScript checks, and feature tests pass.
