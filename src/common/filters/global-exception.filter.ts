@@ -3,6 +3,13 @@ import type { Response } from 'express';
 import { createLogger } from '../../infrastructure/logger';
 import { captureHttpException } from '../../infrastructure/sentry';
 import type { AppRequest } from '../types/express';
+import {
+  ApplicationConflictError,
+  ApplicationForbiddenError,
+  ApplicationNotFoundError,
+  ApplicationUnauthorizedError,
+  ApplicationValidationError,
+} from '../application/errors/application.errors';
 
 const logger = createLogger('filter:error-handler');
 
@@ -16,8 +23,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     const requestLogger = req.logger || logger;
 
-    const statusCode =
-      exception instanceof HttpException ? exception.getStatus() : this.getStatusCodeFromUnknownError(exception) || HttpStatus.INTERNAL_SERVER_ERROR;
+    const statusCode = exception instanceof HttpException ? exception.getStatus() : this.getApplicationErrorStatus(exception);
 
     const message =
       exception instanceof HttpException
@@ -46,17 +52,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     });
   }
 
-  private getStatusCodeFromUnknownError(exception: unknown): number | undefined {
-    if (
-      typeof exception === 'object' &&
-      exception !== null &&
-      'statusCode' in exception &&
-      typeof (exception as { statusCode?: unknown }).statusCode === 'number'
-    ) {
-      return (exception as { statusCode: number }).statusCode;
-    }
-
-    return undefined;
+  private getApplicationErrorStatus(exception: unknown): HttpStatus {
+    if (exception instanceof ApplicationNotFoundError) return HttpStatus.NOT_FOUND;
+    if (exception instanceof ApplicationValidationError) return HttpStatus.BAD_REQUEST;
+    if (exception instanceof ApplicationConflictError) return HttpStatus.CONFLICT;
+    if (exception instanceof ApplicationUnauthorizedError) return HttpStatus.UNAUTHORIZED;
+    if (exception instanceof ApplicationForbiddenError) return HttpStatus.FORBIDDEN;
+    return HttpStatus.INTERNAL_SERVER_ERROR;
   }
 
   private getMessageFromUnknownError(exception: unknown): string | undefined {

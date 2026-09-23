@@ -1,12 +1,13 @@
-/** Base error for expected session workflow failures. */
-export abstract class SessionError extends Error {
-  abstract readonly statusCode: number;
+import { ApplicationUnauthorizedError, ApplicationValidationError } from '../../../../../common/application/errors/application.errors';
+
+export class SessionBadRequestError extends ApplicationValidationError {
+  public constructor(message: string) {
+    super(message);
+  }
 }
 
-export class SessionBadRequestError extends SessionError {
-  readonly statusCode = 400;
-}
-
-export class SessionUnauthorizedError extends SessionError {
-  readonly statusCode = 401;
+export class SessionUnauthorizedError extends ApplicationUnauthorizedError {
+  public constructor(message: string) {
+    super(message);
+  }
 }

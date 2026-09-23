@@ -22,7 +22,7 @@ export class ReplaceWorkoutPlanUseCase {
   async execute(userId: string, splits: WorkoutSplitInput[]): Promise<void> {
     const outcome = await this.repository.replaceForUser(userId, splits);
     if (outcome.kind === 'split-not-owned') {
-      throw new InvalidWorkoutSplitError(`Workout split ${outcome.splitId} does not belong to the active workout plan`);
+      throw new InvalidWorkoutSplitError(outcome.splitId);
     }
     this.hooks.afterCommit(() => this.cache.invalidateUser(userId));
   }

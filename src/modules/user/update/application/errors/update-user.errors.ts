@@ -1,24 +1,24 @@
+import {
+  ApplicationConflictError,
+  ApplicationNotFoundError,
+  ApplicationValidationError,
+} from '../../../../../common/application/errors/application.errors';
+
 /** Raised when an authenticated user cannot be found. */
-export class UserNotFoundError extends Error {
-  readonly statusCode = 404;
+export class UserNotFoundError extends ApplicationNotFoundError {
   constructor() {
     super('User not found');
-    this.name = 'UserNotFoundError';
   }
 }
 /** Raised when profile identity fields conflict with another account. */
-export class UserConflictError extends Error {
-  readonly statusCode = 409;
+export class UserConflictError extends ApplicationConflictError {
   constructor() {
     super('Username or email already in use');
-    this.name = 'UserConflictError';
   }
 }
 /** Raised when a profile-picture upload omits the image file. */
-export class ProfilePictureRequiredError extends Error {
-  readonly statusCode = 400;
+export class ProfilePictureRequiredError extends ApplicationValidationError {
   constructor() {
     super('No file provided');
-    this.name = 'ProfilePictureRequiredError';
   }
 }

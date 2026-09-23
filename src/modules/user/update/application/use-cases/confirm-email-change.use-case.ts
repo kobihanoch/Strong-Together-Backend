@@ -14,25 +14,25 @@ export class ConfirmEmailChangeUseCase {
   /**
    * Confirms an email-change token once.
    * @param token - Signed token, when provided.
-   * @returns The browser-facing status and optional failure reason.
+   * @returns The domain outcome and optional failure reason.
    */
   async execute(token: string | undefined): Promise<EmailChangeOutcome> {
-    if (!token) return { statusCode: 401, reason: 'Missing token' };
+    if (!token) return { kind: 'missing-token', reason: 'Missing token' };
     const claims = this.tokens.verify(token);
-    if (!claims) return { statusCode: 401, reason: 'Invalid or expired link' };
+    if (!claims) return { kind: 'invalid-token', reason: 'Invalid or expired link' };
     if (claims.iss !== 'strong-together' || claims.typ !== 'email-confirm' || !claims.jti || !claims.sub || !claims.newEmail || !claims.exp)
-      return { statusCode: 400, reason: 'Malformed token' };
-    if (!(await this.tokens.consume(claims.jti, claims.exp))) return { statusCode: 401, reason: 'URL already used or expired' };
+      return { kind: 'malformed-token', reason: 'Malformed token' };
+    if (!(await this.tokens.consume(claims.jti, claims.exp))) return { kind: 'token-already-used', reason: 'URL already used or expired' };
     try {
       const outcome = await this.repository.updateEmail(claims.sub, claims.newEmail.trim().toLowerCase());
       if (outcome.kind === 'conflict') {
         this.logger.warn({ event: 'user.email_change_conflict', userId: claims.sub }, 'Email already in use');
-        return { statusCode: 409, reason: 'Email already in use' };
+        return { kind: 'email-in-use', reason: 'Email already in use' };
       }
     } catch (error) {
       this.logger.error({ err: error, event: 'user.email_change_failed', userId: claims.sub }, 'Failed to update user email');
-      return { statusCode: 500, reason: 'Server error' };
+      return { kind: 'failed', reason: 'Server error' };
     }
-    return { statusCode: 200 };
+    return { kind: 'confirmed' };
   }
 }

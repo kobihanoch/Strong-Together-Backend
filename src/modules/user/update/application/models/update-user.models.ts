@@ -43,17 +43,16 @@ export interface EmailChangeClaims {
   iss: string;
   typ: string;
 }
-/** Browser-facing outcome of an email confirmation attempt. */
-export interface EmailChangeOutcome {
-  statusCode: number;
-  reason?: string;
-}
+/** Transport-neutral outcome of an email confirmation attempt. */
+export type EmailChangeOutcome =
+  | { kind: 'confirmed' }
+  | {
+      kind: 'missing-token' | 'invalid-token' | 'malformed-token' | 'token-already-used' | 'email-in-use' | 'failed';
+      reason: string;
+    };
 
 /** Persistence outcome for mutable profile fields. */
-export type UpdateUserProfileOutcome =
-  | { kind: 'updated'; profile: UserProfile }
-  | { kind: 'not-found' }
-  | { kind: 'conflict' };
+export type UpdateUserProfileOutcome = { kind: 'updated'; profile: UserProfile } | { kind: 'not-found' } | { kind: 'conflict' };
 
 /** Persistence outcome for committing a confirmed email address. */
 export type UpdateUserEmailOutcome = { kind: 'updated' } | { kind: 'conflict' };

@@ -13,6 +13,7 @@ import { RateLimit, RateLimitGuard, updateUserRateLimit, updateUserRateLimitDail
 import { imageUploadOptions } from '../../../../common/interceptors/image-upload.config';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
+import type { EmailChangeOutcome } from '../application/models/update-user.models';
 import { ConfirmEmailChangeUseCase } from '../application/use-cases/confirm-email-change.use-case';
 import { DeleteProfilePictureUseCase } from '../application/use-cases/delete-profile-picture.use-case';
 import { DeleteUserUseCase } from '../application/use-cases/delete-user.use-case';
@@ -20,6 +21,16 @@ import { GetCurrentUserUseCase } from '../application/use-cases/get-current-user
 import { ReplaceProfilePictureUseCase } from '../application/use-cases/replace-profile-picture.use-case';
 import { UpdateCurrentUserUseCase } from '../application/use-cases/update-current-user.use-case';
 import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from './update-user.views';
+
+const emailChangeStatus: Record<EmailChangeOutcome['kind'], HttpStatus> = {
+  confirmed: HttpStatus.OK,
+  'missing-token': HttpStatus.UNAUTHORIZED,
+  'invalid-token': HttpStatus.UNAUTHORIZED,
+  'malformed-token': HttpStatus.BAD_REQUEST,
+  'token-already-used': HttpStatus.UNAUTHORIZED,
+  'email-in-use': HttpStatus.CONFLICT,
+  failed: HttpStatus.INTERNAL_SERVER_ERROR,
+};
 
 /** Exposes user profile-management endpoints. */
 @Controller('api/users')
@@ -83,9 +94,9 @@ export class UpdateUserController {
   @Get('email-change')
   async updateSelfEmail(@Query('token') token: string | undefined, @Res() res: Response): Promise<void> {
     const result = await this.confirmEmail.execute(token);
-    const html = result.statusCode === 200 ? generateEmailChangeSuccessHTML() : generateEmailChangeFailedHTML(result.reason);
+    const html = result.kind === 'confirmed' ? generateEmailChangeSuccessHTML() : generateEmailChangeFailedHTML(result.reason);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.status(result.statusCode).type('html').set('Cache-Control', 'no-store').send(html);
+    res.status(emailChangeStatus[result.kind]).type('html').set('Cache-Control', 'no-store').send(html);
   }
 
   /**

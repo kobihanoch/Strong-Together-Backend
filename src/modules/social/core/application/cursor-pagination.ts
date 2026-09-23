@@ -1,5 +1,5 @@
-import { BadRequestException } from '@nestjs/common';
 import { z } from 'zod/v4';
+import { InvalidPaginationCursorError } from './errors/cursor-pagination.errors';
 
 const cursorSchema = z.object({ timestamp: z.iso.datetime(), id: z.uuid(), rank: z.number().int().optional() });
 
@@ -17,6 +17,6 @@ export function decodeSocialCursor(cursor?: string): SocialCursor | undefined {
   try {
     return cursorSchema.parse(JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')));
   } catch {
-    throw new BadRequestException('Invalid pagination cursor');
+    throw new InvalidPaginationCursorError();
   }
 }

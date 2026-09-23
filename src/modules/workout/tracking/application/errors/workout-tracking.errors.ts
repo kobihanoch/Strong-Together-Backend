@@ -1,8 +1,8 @@
+import { ApplicationValidationError } from '../../../../../common/application/errors/application.errors';
+
 /** Raised when a completed workout contains no exercise entries. */
-export class InvalidCompletedWorkoutError extends Error {
-  readonly statusCode = 400;
+export class InvalidCompletedWorkoutError extends ApplicationValidationError {
   constructor() {
     super('Not a valid workout');
-    this.name = 'InvalidCompletedWorkoutError';
   }
 }
