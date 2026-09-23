@@ -23,7 +23,8 @@ export class ReplaceWorkoutSchedulesUseCase {
    * @throws {InvalidWorkoutScheduleSplitError} When any split is inactive or belongs to another plan.
    */
   public async execute(userId: string, schedules: WorkoutScheduleInput[]): Promise<void> {
-    if (!(await this.repository.replaceForUser(userId, schedules))) {
+    const outcome = await this.repository.replaceForUser(userId, schedules);
+    if (outcome.kind === 'invalid-splits') {
       throw new InvalidWorkoutScheduleSplitError();
     }
 

@@ -16,6 +16,7 @@ export class AddCommentUseCase {
    * @throws {PostNotFoundError} When the post is inaccessible.
    */
   public async execute(postId: string, userId: string, content: string): Promise<void> {
-    if (!(await this.repository.add(postId, userId, content))) throw new PostNotFoundError();
+    const outcome = await this.repository.add(postId, userId, content);
+    if (outcome.kind === 'post-not-found') throw new PostNotFoundError();
   }
 }

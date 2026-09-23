@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../infrastructure/db/db.service';
-import { InvalidWorkoutSplitError } from '../application/errors/workout-plan.errors';
 import type { WorkoutExerciseInput, WorkoutSplitInput } from '../application/models/workout-plan.models';
 import type {
   ExerciseAssignmentIdSqlRow,
@@ -9,6 +8,8 @@ import type {
   WorkoutPlanSqlRow,
   WorkoutSplitIdSqlRow,
 } from './workout-plan.db-types';
+
+type ExistingWorkoutSplitInput = WorkoutSplitInput & { id: number };
 
 @Injectable()
 export class WorkoutPlanSql {
@@ -187,7 +188,29 @@ export class WorkoutPlanSql {
    * @param workoutData - The workout plan payload.
    * @returns The add workout result.
    */
-  async queryAddWorkout(userId: string, workoutData: WorkoutSplitInput[]): Promise<number> {
+  async queryAddWorkout(userId: string, workoutData: WorkoutSplitInput[]): Promise<number | { invalidSplitId: number }> {
+    const submittedExistingIds = workoutData.flatMap((split) => (split.id === undefined ? [] : [split.id]));
+
+    if (submittedExistingIds.length > 0) {
+      const ownedSplits = await this.dbService.sql<WorkoutSplitIdSqlRow[]>`
+        SELECT
+          split.id::INT
+        FROM
+          workout.workout_split split
+          JOIN workout.workout_plan plan ON plan.id = split.workout_id
+        WHERE
+          split.id = ANY (${submittedExistingIds}::BIGINT[])
+          AND plan.user_id = ${userId}::UUID
+          AND plan.is_active = TRUE
+        FOR UPDATE OF
+          split,
+          plan
+      `;
+      const ownedSplitIds = new Set(ownedSplits.map(({ id }) => id));
+      const invalidSplitId = submittedExistingIds.find((id) => !ownedSplitIds.has(id));
+      if (invalidSplitId !== undefined) return { invalidSplitId };
+    }
+
     const [plan] = await this.dbService.sql<WorkoutPlanIdSqlRow[]>`
       INSERT INTO
         workout.workout_plan (user_id, is_active, updated_at)
@@ -202,7 +225,6 @@ export class WorkoutPlanSql {
         id;
     `;
 
-    const submittedExistingIds = workoutData.flatMap((split) => (split.id === undefined ? [] : [split.id]));
     await this.dbService.sql`
       UPDATE workout.workout_split
       SET
@@ -219,8 +241,10 @@ export class WorkoutPlanSql {
       // cannot collide with the active-plan unique index during row updates.
       await this.dbService.sql`
         UPDATE workout.workout_split
-        SET order_index = -order_index - 1
-        WHERE workout_id = ${plan.id}
+        SET
+          order_index = - order_index - 1
+        WHERE
+          workout_id = ${plan.id}
           AND is_active = TRUE
           AND id = ANY (${submittedExistingIds}::BIGINT[]);
       `;
@@ -228,7 +252,8 @@ export class WorkoutPlanSql {
 
     const savedSplits = [];
     for (const split of workoutData) {
-      const id = split.id !== undefined ? await this.updateWorkoutSplit(plan.id, split) : await this.insertWorkoutSplit(plan.id, split);
+      const id =
+        split.id !== undefined ? await this.updateWorkoutSplit(plan.id, { ...split, id: split.id }) : await this.insertWorkoutSplit(plan.id, split);
       savedSplits.push({ id, exercises: split.exercises });
     }
 
@@ -266,11 +291,8 @@ export class WorkoutPlanSql {
    * @param split - The workout split to persist.
    * @returns The update workout split result.
    */
-  private async updateWorkoutSplit(planId: number, split: WorkoutSplitInput): Promise<number> {
+  private async updateWorkoutSplit(planId: number, split: ExistingWorkoutSplitInput): Promise<number> {
     // Preserve the split identity when it is renamed, reordered, or reactivated.
-    if (split.id === undefined) {
-      throw new InvalidWorkoutSplitError('An existing workout split must include an ID');
-    }
     const [updated] = await this.dbService.sql<WorkoutSplitIdSqlRow[]>`
       UPDATE workout.workout_split
       SET
@@ -290,9 +312,7 @@ export class WorkoutPlanSql {
         id;
     `;
 
-    if (!updated) {
-      throw new InvalidWorkoutSplitError(`Workout split ${split.id} does not belong to the active workout plan`);
-    }
+    if (!updated) throw new Error(`Locked workout split ${split.id} could not be updated`);
     return updated.id;
   }
 

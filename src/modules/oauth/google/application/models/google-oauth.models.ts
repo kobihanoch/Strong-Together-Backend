@@ -10,3 +10,6 @@ export interface VerifiedGoogleIdentity {
   emailVerified: boolean;
   fullName: string;
 }
+
+/** Result of validating a Google identity token. */
+export type VerifyGoogleIdentityOutcome = { kind: 'verified'; identity: VerifiedGoogleIdentity } | { kind: 'invalid-audience' };

@@ -53,3 +53,6 @@ export interface WorkoutPlan {
 export interface WorkoutPlanResult {
   workoutPlan: WorkoutPlan | null;
 }
+
+/** Outcome of atomically replacing an active workout plan. */
+export type ReplaceWorkoutPlanOutcome = { kind: 'replaced' } | { kind: 'split-not-owned'; splitId: number };

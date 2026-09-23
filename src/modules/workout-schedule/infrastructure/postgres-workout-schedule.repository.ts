@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { WorkoutSchedule, WorkoutScheduleInput } from '../application/models/workout-schedule.models';
+import type { ReplaceWorkoutSchedulesOutcome, WorkoutSchedule, WorkoutScheduleInput } from '../application/models/workout-schedule.models';
 import { WorkoutScheduleRepository } from '../application/ports/workout-schedule.repository';
 import { WorkoutScheduleSql } from './workout-schedule.sql';
 
@@ -12,7 +12,7 @@ export class PostgresWorkoutScheduleRepository implements WorkoutScheduleReposit
     return this.sql.findByUser(userId);
   }
 
-  public replaceForUser(userId: string, schedules: WorkoutScheduleInput[]): Promise<boolean> {
-    return this.sql.replaceForUser(userId, schedules);
+  public async replaceForUser(userId: string, schedules: WorkoutScheduleInput[]): Promise<ReplaceWorkoutSchedulesOutcome> {
+    return (await this.sql.replaceForUser(userId, schedules)) ? { kind: 'replaced' } : { kind: 'invalid-splits' };
   }
 }

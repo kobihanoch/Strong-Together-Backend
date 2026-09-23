@@ -46,3 +46,15 @@ export type CrewProfilePictureResult = { profilePicPath: string; url: string; me
 
 /** Uploaded image data consumed by the crew application layer. */
 export type CrewImageUpload = { originalname: string; mimetype: string; buffer: Buffer };
+
+/** Outcome of atomically leaving a crew under its leadership rules. */
+export type LeaveCrewOutcome =
+  | { kind: 'member-left' }
+  | { kind: 'leadership-transferred'; successorId: string }
+  | { kind: 'crew-deleted' }
+  | { kind: 'not-member' };
+
+/** Outcome of updating a crew visible to its leader. */
+export type UpdateCrewOutcome = { kind: 'updated' } | { kind: 'not-found' };
+/** Outcome of deleting a crew visible to its leader. */
+export type DeleteCrewOutcome = { kind: 'deleted' } | { kind: 'not-found' };

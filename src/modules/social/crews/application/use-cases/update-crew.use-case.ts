@@ -16,6 +16,7 @@ export class UpdateCrewUseCase {
    * @returns Nothing after update.
    * @throws {CrewNotFoundError} When inaccessible or absent. */
   public async execute(id: string, input: CrewInput): Promise<void> {
-    if (!(await this.repository.update(id, input))) throw new CrewNotFoundError();
+    const outcome = await this.repository.update(id, input);
+    if (outcome.kind === 'not-found') throw new CrewNotFoundError();
   }
 }

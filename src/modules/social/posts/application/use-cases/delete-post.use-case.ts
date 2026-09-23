@@ -14,6 +14,7 @@ export class DeletePostUseCase {
    * @throws {PostNotFoundError} When inaccessible or absent.
    */
   public async execute(id: string): Promise<void> {
-    if (!(await this.repository.delete(id))) throw new PostNotFoundError();
+    const outcome = await this.repository.delete(id);
+    if (outcome.kind === 'not-found') throw new PostNotFoundError();
   }
 }

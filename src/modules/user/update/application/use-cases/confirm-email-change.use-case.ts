@@ -24,12 +24,12 @@ export class ConfirmEmailChangeUseCase {
       return { statusCode: 400, reason: 'Malformed token' };
     if (!(await this.tokens.consume(claims.jti, claims.exp))) return { statusCode: 401, reason: 'URL already used or expired' };
     try {
-      await this.repository.updateEmail(claims.sub, claims.newEmail.trim().toLowerCase());
-    } catch (error: any) {
-      if (error.code === '23505') {
+      const outcome = await this.repository.updateEmail(claims.sub, claims.newEmail.trim().toLowerCase());
+      if (outcome.kind === 'conflict') {
         this.logger.warn({ event: 'user.email_change_conflict', userId: claims.sub }, 'Email already in use');
         return { statusCode: 409, reason: 'Email already in use' };
       }
+    } catch (error) {
       this.logger.error({ err: error, event: 'user.email_change_failed', userId: claims.sub }, 'Failed to update user email');
       return { statusCode: 500, reason: 'Server error' };
     }

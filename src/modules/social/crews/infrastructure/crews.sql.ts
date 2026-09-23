@@ -352,7 +352,7 @@ export class CrewsSql {
           WHERE
             c.id = ${crewId}::UUID
         `;
-        return [{ result: 'left' }];
+        return [{ result: 'crew_deleted' }];
       }
 
       await this.dbService.sql`
@@ -362,6 +362,18 @@ export class CrewsSql {
         WHERE
           id = ${successor.membershipId}::UUID
       `;
+
+      await this.dbService.sql`
+        UPDATE social.crew_membership
+        SET
+          status = 'left',
+          role = 'member',
+          updated_at = NOW()
+        WHERE
+          id = ${context.membershipId}::UUID
+      `;
+
+      return [{ result: 'leadership_transferred', successorId: successor.userId }];
     }
 
     await this.dbService.sql`
@@ -374,7 +386,7 @@ export class CrewsSql {
         id = ${context.membershipId}::UUID
     `;
 
-    return [{ result: 'left' }];
+    return [{ result: 'member_left' }];
   }
 
   /**

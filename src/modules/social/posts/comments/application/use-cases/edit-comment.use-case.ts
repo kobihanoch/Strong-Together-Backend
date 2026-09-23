@@ -15,6 +15,7 @@ export class EditCommentUseCase {
    * @throws {CommentNotFoundError} When inaccessible or absent.
    */
   public async execute(id: string, content: string): Promise<void> {
-    if (!(await this.repository.edit(id, content))) throw new CommentNotFoundError();
+    const outcome = await this.repository.edit(id, content);
+    if (outcome.kind === 'not-found') throw new CommentNotFoundError();
   }
 }

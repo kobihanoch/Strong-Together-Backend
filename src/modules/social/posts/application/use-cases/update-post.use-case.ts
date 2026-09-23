@@ -15,6 +15,7 @@ export class UpdatePostUseCase {
    * @throws {PostNotFoundError} When inaccessible or absent.
    */
   public async execute(id: string, content: string): Promise<void> {
-    if (!(await this.repository.update(id, content))) throw new PostNotFoundError();
+    const outcome = await this.repository.update(id, content);
+    if (outcome.kind === 'not-found') throw new PostNotFoundError();
   }
 }

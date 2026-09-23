@@ -1,4 +1,4 @@
-import type { WorkoutSchedule, WorkoutScheduleInput } from '../models/workout-schedule.models';
+import type { ReplaceWorkoutSchedulesOutcome, WorkoutSchedule, WorkoutScheduleInput } from '../models/workout-schedule.models';
 
 /** Persistence operations required by workout-schedule use cases. */
 export abstract class WorkoutScheduleRepository {
@@ -8,7 +8,7 @@ export abstract class WorkoutScheduleRepository {
   /**
    * Atomically replaces a user's weekly schedule when every split is valid.
    *
-   * @returns Whether all submitted splits belong to the user's active plan.
+   * @returns The replacement outcome.
    */
-  public abstract replaceForUser(userId: string, schedules: WorkoutScheduleInput[]): Promise<boolean>;
+  public abstract replaceForUser(userId: string, schedules: WorkoutScheduleInput[]): Promise<ReplaceWorkoutSchedulesOutcome>;
 }

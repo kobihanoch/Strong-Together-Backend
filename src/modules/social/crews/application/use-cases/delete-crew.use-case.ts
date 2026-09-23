@@ -14,6 +14,7 @@ export class DeleteCrewUseCase {
    * @returns Nothing after deletion.
    * @throws {CrewNotFoundError} When inaccessible or absent. */
   public async execute(id: string): Promise<void> {
-    if (!(await this.repository.delete(id))) throw new CrewNotFoundError();
+    const outcome = await this.repository.delete(id);
+    if (outcome.kind === 'not-found') throw new CrewNotFoundError();
   }
 }

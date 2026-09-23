@@ -2,7 +2,7 @@ import type { JWTPayload } from 'jose';
 import * as jose from 'jose';
 import { Injectable } from '@nestjs/common';
 import { authConfig } from '../../../../config/auth.config';
-import type { AppleIdentityName, VerifiedAppleIdentity } from '../application/models/apple-oauth.models';
+import type { AppleIdentityName, VerifyAppleIdentityOutcome } from '../application/models/apple-oauth.models';
 import { AppleIdentityVerifier } from '../application/ports/apple-identity-verifier.port';
 import { buildOAuthDisplayName } from '../../core/domain/oauth-display-name';
 
@@ -20,8 +20,7 @@ const ALLOWED_AUDS = authConfig.appleAllowedAuds;
 /** JOSE-backed Apple identity-token verifier. */
 @Injectable()
 export class JoseAppleIdentityVerifier implements AppleIdentityVerifier {
-  async verify(identityToken: string, rawNonce: string, name?: AppleIdentityName): Promise<VerifiedAppleIdentity> {
-    // 1) Verify token signature and claims
+  async verify(identityToken: string, rawNonce: string, name?: AppleIdentityName): Promise<VerifyAppleIdentityOutcome> {
     const { payload } = await jose.jwtVerify<AppleJwtPayload>(identityToken, jwks, {
       issuer: APPLE_ISS,
       audience: ALLOWED_AUDS,
@@ -35,7 +34,7 @@ export class JoseAppleIdentityVerifier implements AppleIdentityVerifier {
       .join('');
 
     if ((payload.nonce ?? '').toLowerCase() !== nonceHashHex.toLowerCase()) {
-      throw new Error('Invalid nonce');
+      return { kind: 'invalid-nonce' };
     }
 
     // 3) Extract identity fields
@@ -45,6 +44,6 @@ export class JoseAppleIdentityVerifier implements AppleIdentityVerifier {
 
     const fullName = buildOAuthDisplayName(name?.givenName, name?.familyName);
 
-    return { appleSub, email, emailVerified, fullName };
+    return { kind: 'verified', identity: { appleSub, email, emailVerified, fullName } };
   }
 }

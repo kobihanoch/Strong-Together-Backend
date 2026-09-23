@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TransactionHooks } from '../../../../../common/application/ports/transaction-hooks.port';
+import { InvalidWorkoutSplitError } from '../errors/workout-plan.errors';
 import type { WorkoutSplitInput } from '../models/workout-plan.models';
 import { WorkoutPlanCache } from '../ports/workout-plan-cache.port';
 import { WorkoutPlanRepository } from '../ports/workout-plan.repository';
@@ -19,7 +20,10 @@ export class ReplaceWorkoutPlanUseCase {
    * @throws {InvalidWorkoutSplitError} When a submitted existing split is not owned by the plan.
    */
   async execute(userId: string, splits: WorkoutSplitInput[]): Promise<void> {
-    await this.repository.replaceForUser(userId, splits);
+    const outcome = await this.repository.replaceForUser(userId, splits);
+    if (outcome.kind === 'split-not-owned') {
+      throw new InvalidWorkoutSplitError(`Workout split ${outcome.splitId} does not belong to the active workout plan`);
+    }
     this.hooks.afterCommit(() => this.cache.invalidateUser(userId));
   }
 }

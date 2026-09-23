@@ -19,3 +19,6 @@ export interface VerifiedAppleIdentity {
   emailVerified: boolean;
   fullName: string;
 }
+
+/** Result of validating an Apple identity token and nonce. */
+export type VerifyAppleIdentityOutcome = { kind: 'verified'; identity: VerifiedAppleIdentity } | { kind: 'invalid-nonce' };

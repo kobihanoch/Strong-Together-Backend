@@ -17,3 +17,6 @@ export type WorkoutSchedule = WorkoutScheduleInput & {
 export type WorkoutSchedules = {
   schedules: WorkoutSchedule[];
 };
+
+/** Outcome of atomically replacing a user's weekly schedule. */
+export type ReplaceWorkoutSchedulesOutcome = { kind: 'replaced' } | { kind: 'invalid-splits' };

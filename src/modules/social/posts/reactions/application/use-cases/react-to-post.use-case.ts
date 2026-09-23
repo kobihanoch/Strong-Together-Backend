@@ -17,6 +17,7 @@ export class ReactToPostUseCase {
    * @throws {PostNotFoundError} When the post is inaccessible.
    */
   public async execute(postId: string, userId: string, type: PostReaction['type']): Promise<void> {
-    if (!(await this.repository.save(postId, userId, type))) throw new PostNotFoundError();
+    const outcome = await this.repository.save(postId, userId, type);
+    if (outcome.kind === 'post-not-found') throw new PostNotFoundError();
   }
 }

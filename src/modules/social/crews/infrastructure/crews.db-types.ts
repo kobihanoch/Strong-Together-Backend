@@ -37,6 +37,9 @@ export type CrewParticipantSqlRow = Omit<CrewMembershipDbRow, 'joinedAt' | 'crea
 
 export type DeletedCrewSqlRow = Pick<CrewDbRow, 'id'>;
 export type CrewProfilePictureSqlRow = Pick<CrewDbRow, 'profilePicPath'>;
-export type LeaveCrewResultSqlRow = { result: 'left' | 'not_member' };
+export type LeaveCrewResultSqlRow = {
+  result: 'member_left' | 'leadership_transferred' | 'crew_deleted' | 'not_member';
+  successorId?: string;
+};
 export type LeaveCrewContextSqlRow = { membershipId: string; isLeader: boolean };
 export type CrewSuccessorSqlRow = { membershipId: string; userId: string };

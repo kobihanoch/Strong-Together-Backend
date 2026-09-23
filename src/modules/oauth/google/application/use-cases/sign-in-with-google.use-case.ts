@@ -36,7 +36,9 @@ export class SignInWithGoogleUseCase {
     const idToken = body.idToken;
 
     if (!idToken) throw new InvalidGoogleOAuthError('Missing google id token');
-    const { googleSub, email, emailVerified, fullName } = await this.identityVerifier.verify(idToken);
+    const verification = await this.identityVerifier.verify(idToken);
+    if (verification.kind === 'invalid-audience') throw new InvalidGoogleOAuthError('Invalid audience for Google ID token');
+    const { googleSub, email, emailVerified, fullName } = verification.identity;
 
     let userId = await this.repository.findLinkedUser('google', googleSub);
     const userExistOnOAuthUsers = !!userId;

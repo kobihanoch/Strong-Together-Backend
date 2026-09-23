@@ -1,5 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import type { Crew, CrewParticipant, CrewWithParticipantCount, DiscoverableCrew } from '../application/models/crews.models';
+import type {
+  Crew,
+  CrewParticipant,
+  CrewWithParticipantCount,
+  DeleteCrewOutcome,
+  DiscoverableCrew,
+  LeaveCrewOutcome,
+  UpdateCrewOutcome,
+} from '../application/models/crews.models';
 import { CrewsRepository } from '../application/ports/crews.repository';
 import { CrewsSql } from './crews.sql';
 
@@ -26,8 +34,8 @@ export class PostgresCrewsRepository implements CrewsRepository {
   public async create(userId: string, input: { name: string; privacy: 'public' | 'private' }): Promise<Crew> {
     return (await this.sql.queryCreateCrew(userId, input.name, input.privacy))[0];
   }
-  public async update(id: string, input: { name: string; privacy: 'public' | 'private' }): Promise<boolean> {
-    return (await this.sql.queryUpdateCrew(id, input.name, input.privacy)).length > 0;
+  public async update(id: string, input: { name: string; privacy: 'public' | 'private' }): Promise<UpdateCrewOutcome> {
+    return (await this.sql.queryUpdateCrew(id, input.name, input.privacy)).length > 0 ? { kind: 'updated' } : { kind: 'not-found' };
   }
   public async getProfilePictureForUpdate(crewId: string): Promise<string | null | undefined> {
     return (await this.sql.queryCrewProfilePictureForUpdate(crewId))[0]?.profilePicPath;
@@ -35,10 +43,16 @@ export class PostgresCrewsRepository implements CrewsRepository {
   public async updateProfilePicture(crewId: string, path: string | null): Promise<void> {
     await this.sql.queryUpdateCrewProfilePicture(crewId, path);
   }
-  public async leave(crewId: string): Promise<'left' | 'not_member'> {
-    return (await this.sql.queryLeaveCrew(crewId))[0]?.result ?? 'not_member';
+  public async leave(crewId: string): Promise<LeaveCrewOutcome> {
+    const outcome = (await this.sql.queryLeaveCrew(crewId))[0];
+    if (!outcome || outcome.result === 'not_member') return { kind: 'not-member' };
+    if (outcome.result === 'crew_deleted') return { kind: 'crew-deleted' };
+    if (outcome.result === 'leadership_transferred') {
+      return { kind: 'leadership-transferred', successorId: outcome.successorId! };
+    }
+    return { kind: 'member-left' };
   }
-  public async delete(id: string): Promise<boolean> {
-    return (await this.sql.queryDeleteCrew(id)).length > 0;
+  public async delete(id: string): Promise<DeleteCrewOutcome> {
+    return (await this.sql.queryDeleteCrew(id)).length > 0 ? { kind: 'deleted' } : { kind: 'not-found' };
   }
 }

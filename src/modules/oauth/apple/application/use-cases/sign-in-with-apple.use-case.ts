@@ -42,7 +42,9 @@ export class SignInWithAppleUseCase {
       throw new InvalidAppleOAuthError('Missing rawNonce');
     }
 
-    const { appleSub, email: tokenEmail, emailVerified, fullName: normalizedName } = await this.identityVerifier.verify(idToken, rawNonce, name);
+    const verification = await this.identityVerifier.verify(idToken, rawNonce, name);
+    if (verification.kind === 'invalid-nonce') throw new Error('Invalid nonce');
+    const { appleSub, email: tokenEmail, emailVerified, fullName: normalizedName } = verification.identity;
 
     const resolvedEmail = tokenEmail ?? email ?? null;
 
