@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { ParticipationRequestNotFoundError } from '../errors/crew-requests.errors';
 import { CrewRequestsRepository } from '../ports/crew-requests.repository';
 
-/** Resolves a pending crew participation request. */ @Injectable()
+/** Resolves a pending crew participation request. */
+
+@Injectable()
 export class UpdateCrewParticipationRequestUseCase {
   public constructor(private readonly repository: CrewRequestsRepository) {}
   /**
    * Executes the application operation.
-   *
    *
    * @param requestId - Request identifier.
    * @param status - Accepted or declined outcome.

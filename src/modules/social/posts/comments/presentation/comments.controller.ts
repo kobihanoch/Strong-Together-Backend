@@ -30,12 +30,7 @@ import { DeleteCommentUseCase } from '../application/use-cases/delete-comment.us
 import { EditCommentUseCase } from '../application/use-cases/edit-comment.use-case';
 import { ListPostCommentsUseCase } from '../application/use-cases/list-post-comments.use-case';
 
-/**
- * Exposes authenticated comment writes for social posts.
- *
- * @remarks Every route uses DPoP authentication, user authorization, request
- * validation, and the RLS transaction interceptor. Access: User.
- */
+/** Exposes authenticated comment writes for social posts. */
 @Controller('api/social/posts')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
@@ -55,10 +50,15 @@ export class CommentsController {
   /**
    * Lists comments on a post visible to the caller.
    *
-   * API: GET /api/social/posts/:postId/comments
-   * Access: Authenticated user
+   * API: `GET /api/social/posts/:postId/comments`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
    * @param data - The validated post identifier and cursor pagination.
    * @returns Comments in oldest-first conversation order.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get(':postId/comments')
   public listComments(
@@ -74,11 +74,16 @@ export class CommentsController {
   /**
    * Adds a comment to a visible post.
    *
-   * API: POST /api/social/posts/:postId/comments
-   * Access: Authenticated user
+   * API: `POST /api/social/posts/:postId/comments`.
+   * Authorized roles: `user`.
+   * HTTP responses: `201 Created`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
    * @param data - The validated post identifier and comment content.
    * @param user - The authenticated comment author.
    * @returns No response body with a 201 Created status.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Post(':postId/comments')
   @HttpCode(HttpStatus.CREATED)
@@ -92,10 +97,15 @@ export class CommentsController {
   /**
    * Edits a comment authored by the caller.
    *
-   * API: PATCH /api/social/posts/comments/:id
-   * Access: Authenticated user
+   * API: `PATCH /api/social/posts/comments/:id`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
    * @param data - The validated comment identifier and replacement content.
    * @returns No response body with a 204 No Content status.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Patch('comments/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -108,10 +118,15 @@ export class CommentsController {
   /**
    * Deletes a comment authored by the caller.
    *
-   * API: DELETE /api/social/posts/comments/:id
-   * Access: Authenticated user
+   * API: `DELETE /api/social/posts/comments/:id`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
    * @param data - The validated comment identifier.
    * @returns No response body with a 204 No Content status.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Delete('comments/:id')
   @HttpCode(HttpStatus.NO_CONTENT)

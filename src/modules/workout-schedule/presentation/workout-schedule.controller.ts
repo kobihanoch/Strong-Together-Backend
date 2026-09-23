@@ -11,7 +11,7 @@ import type { AuthenticatedUser } from '../../../common/types/express';
 import { GetWorkoutSchedulesUseCase } from '../application/use-cases/get-workout-schedules.use-case';
 import { ReplaceWorkoutSchedulesUseCase } from '../application/use-cases/replace-workout-schedules.use-case';
 
-/** Exposes authenticated weekly workout-schedule operations. */
+/** E */
 @Controller('api/workout-schedules')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
@@ -24,11 +24,14 @@ export class WorkoutScheduleController {
   /**
    * Retrieves the authenticated user's active weekly workout schedule.
    *
-   * API: GET /api/workout-schedules
-   * Access: Authenticated user
+   * API: `GET /api/workout-schedules`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param user - The authenticated user.
    * @returns Schedule entries attached to active splits in the active plan.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get()
   public get(@CurrentUser() user: AuthenticatedUser): Promise<GetWorkoutSchedulesResponse> {
@@ -38,13 +41,17 @@ export class WorkoutScheduleController {
   /**
    * Replaces the authenticated user's complete weekly workout schedule.
    *
-   * API: PUT /api/workout-schedules
-   * Access: Authenticated user
+   * API: `PUT /api/workout-schedules`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated complete schedule replacement.
    * @param user - The authenticated user.
    * @returns No response body.
    * @throws {InvalidWorkoutScheduleSplitError} When a split is inactive or belongs to another plan.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Put()
   @HttpCode(HttpStatus.NO_CONTENT)

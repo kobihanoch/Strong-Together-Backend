@@ -1,4 +1,5 @@
-/** Comment enriched with public author details. */ export type PostComment = {
+/** Comment enriched with public author details. */
+export type PostComment = {
   id: string;
   postId: string;
   userId: string;
@@ -9,7 +10,8 @@
   authorProfilePicPath: string | null;
   authorUsername: string;
 };
-/** Cursor-paginated comment collection. */ export type CommentsPage = { comments: PostComment[]; nextCursor: string | null };
+/** Cursor-paginated comment collection. */
+export type CommentsPage = { comments: PostComment[]; nextCursor: string | null };
 /** Outcome of adding a comment to a visible post. */
 export type AddCommentOutcome = { kind: 'added' } | { kind: 'post-not-found' };
 /** Outcome of editing a comment visible to its owner. */

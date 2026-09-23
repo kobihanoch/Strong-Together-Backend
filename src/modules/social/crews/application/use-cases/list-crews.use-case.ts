@@ -10,11 +10,11 @@ export class ListCrewsUseCase {
   /**
    * Executes the application operation.
    *
-   *
    * @param limit - Page size.
    * @param cursor - Previous page cursor.
    * @param search - Optional name filter.
-   * @returns A page of visible crews. */
+   * @returns A page of visible crews.
+   */
   public async execute(limit: number, cursor?: string, search?: string): Promise<CrewsPage> {
     const rows = await this.repository.list(limit, decodeSocialCursor(cursor), search);
     const crews = rows.slice(0, limit);

@@ -3,12 +3,13 @@ import { PostNotFoundError } from '../errors/reactions.errors';
 import type { PostReaction } from '../models/reactions.models';
 import { ReactionsRepository } from '../ports/reactions.repository';
 
-/** Creates or replaces a user's post reaction. */ @Injectable()
+/** Creates or replaces a user's post reaction. */
+
+@Injectable()
 export class ReactToPostUseCase {
   public constructor(private readonly repository: ReactionsRepository) {}
   /**
    * Executes the application operation.
-   *
    *
    * @param postId - Post identifier.
    * @param userId - Reacting user.

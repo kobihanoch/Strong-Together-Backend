@@ -9,7 +9,7 @@ import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.p
 import { GetSocialUserUseCase } from '../application/use-cases/get-social-user.use-case';
 import { SearchSocialUsersUseCase } from '../application/use-cases/search-social-users.use-case';
 
-/** Exposes authenticated social-user discovery endpoints. */
+/** E */
 @Controller('api/social/users')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
@@ -22,11 +22,15 @@ export class SocialUsersController {
   /**
    * Searches public user profile fields by username or full name.
    *
-   * API: GET /api/social/users
-   * Access: Authenticated user
+   * API: `GET /api/social/users`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated search and cursor parameters.
    * @returns Matching users ordered from newest to oldest.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get()
   public search(
@@ -38,12 +42,16 @@ export class SocialUsersController {
   /**
    * Gets one user's public social profile.
    *
-   * API: GET /api/social/users/:userId
-   * Access: Authenticated user
+   * API: `GET /api/social/users/:userId`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`; `404 Not Found`.
    *
    * @param data - The validated user identifier.
    * @returns The user's public profile.
    * @throws {SocialUserNotFoundError} When the user does not exist.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get(':userId')
   public getUser(

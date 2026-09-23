@@ -9,6 +9,7 @@ export class SessionSql {
 
   /**
    * User by identifier for login.
+   *
    * @param identifier - The username or email address.
    * @returns The user by identifier for login result.
    */
@@ -24,6 +25,7 @@ export class SessionSql {
 
   /**
    * Last login.
+   *
    * @param userId - The user identifier.
    * @returns The last login result.
    */
@@ -37,6 +39,7 @@ export class SessionSql {
 
   /**
    * Increments token version and get self.
+   *
    * @param userId - The user identifier.
    * @returns The bump token version and get self result.
    */
@@ -88,6 +91,7 @@ export class SessionSql {
 
   /**
    * Increments token version and get self data cas.
+   *
    * @param userId - The user identifier.
    * @param prevTokenVer - The expected current token version.
    * @returns The bump token version and get self data cas result.
@@ -141,6 +145,7 @@ export class SessionSql {
 
   /**
    * Retrieves current token version.
+   *
    * @param userId - The user identifier.
    * @returns The current token version result.
    */
@@ -158,7 +163,9 @@ export class SessionSql {
 
   /**
    * Updates expo push token to null.
+   *
    * @param userId - The user identifier.
+   * @returns A promise that resolves when the operation completes.
    */
   async clearPushToken(userId: string): Promise<void> {
     await this.dbService.sql`
@@ -170,7 +177,12 @@ export class SessionSql {
     `;
   }
 
-  /** Clears notification delivery state and invalidates the current session atomically. */
+  /**
+   * Clears notification delivery state and invalidates the current session atomically.
+   *
+   * @param userId - The user identifier.
+   * @returns A promise that resolves when the operation completes.
+   */
   async logout(userId: string): Promise<void> {
     await this.dbService.sql`
       UPDATE identity.user

@@ -8,6 +8,12 @@ import type { ActiveWorkoutSplitCountSqlRow, WorkoutScheduleSqlRow } from './wor
 export class WorkoutScheduleSql {
   public constructor(private readonly dbService: DBService) {}
 
+  /**
+   * Executes the find by user SQL operation.
+   *
+   * @param userId - The user identifier.
+   * @returns The query result.
+   */
   public findByUser(userId: string): Promise<WorkoutScheduleSqlRow[]> {
     return this.dbService.sql<WorkoutScheduleSqlRow[]>`
       SELECT
@@ -34,6 +40,13 @@ export class WorkoutScheduleSql {
     `;
   }
 
+  /**
+   * Executes the replace for user SQL operation.
+   *
+   * @param userId - The user identifier.
+   * @param schedules - The schedules value.
+   * @returns The query result.
+   */
   public async replaceForUser(userId: string, schedules: WorkoutScheduleInput[]): Promise<boolean> {
     const splitIds = [...new Set(schedules.map((schedule) => schedule.workoutSplitId))];
 

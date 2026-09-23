@@ -10,10 +10,10 @@ export class ListMyCrewsUseCase {
   /**
    * Executes the application operation.
    *
-   *
    * @param limit - Page size.
    * @param cursor - Previous page cursor.
-   * @returns A page of joined crews. */
+   * @returns A page of joined crews.
+   */
   public async execute(limit: number, cursor?: string): Promise<CrewsPage> {
     const rows = await this.repository.listMine(limit, decodeSocialCursor(cursor));
     const crews = rows.slice(0, limit);

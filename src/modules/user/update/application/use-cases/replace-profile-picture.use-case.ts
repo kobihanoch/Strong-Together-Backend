@@ -16,6 +16,7 @@ export class ReplaceProfilePictureUseCase {
   ) {}
   /**
    * Replaces a profile picture and schedules deletion of the previous object.
+   *
    * @param userId - The user identifier.
    * @param file - Uploaded image data.
    * @returns The new path and public URL.

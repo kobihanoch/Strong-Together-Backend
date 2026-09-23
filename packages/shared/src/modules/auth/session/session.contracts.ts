@@ -40,7 +40,11 @@ export const refreshTokenContract = { response: refreshTokenResponseSchema } sat
 export const logoutResponseSchema = z.object({ message: z.string() });
 export const logoutContract = { response: logoutResponseSchema } satisfies Contract;
 
+/** Represents the login request body value. */
 export type LoginRequestBody = BodyOf<typeof loginContract>;
+/** Represents the login response value. */
 export type LoginResponse = ResponseOf<typeof loginContract>;
+/** Represents the refresh token response value. */
 export type RefreshTokenResponse = ResponseOf<typeof refreshTokenContract>;
+/** Represents the logout response value. */
 export type LogoutResponse = ResponseOf<typeof logoutContract>;

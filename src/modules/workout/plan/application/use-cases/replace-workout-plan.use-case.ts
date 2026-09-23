@@ -14,6 +14,7 @@ export class ReplaceWorkoutPlanUseCase {
   ) {}
   /**
    * Replaces the complete plan snapshot.
+   *
    * @param userId - Plan owner.
    * @param splits - Splits that should remain active.
    * @returns Nothing.

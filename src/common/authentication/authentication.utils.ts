@@ -37,6 +37,7 @@ const accessTokenPayloadSchema = z.union([
   })),
 ]);
 
+/** Represents the access token payload value. */
 type AccessTokenPayload = z.infer<typeof accessTokenPayloadSchema>;
 
 /*

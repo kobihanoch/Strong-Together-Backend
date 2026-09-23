@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { appConfig } from '../../config/app.config';
 import type { AppRequest } from '../types/express';
 
+/** Represents the rate limit options value. */
 export type RateLimitOptions = {
   windowMs: number;
   max: number;
@@ -10,6 +11,7 @@ export type RateLimitOptions = {
   bodyKey?: string;
 };
 
+/** Represents the bucket value. */
 type Bucket = {
   count: number;
   resetAt: number;
@@ -31,10 +33,7 @@ export class RateLimitGuard implements CanActivate {
       return true;
     }
 
-    const optionsList = this.reflector.getAllAndOverride<RateLimitOptions[]>(RATE_LIMIT_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const optionsList = this.reflector.getAllAndOverride<RateLimitOptions[]>(RATE_LIMIT_KEY, [context.getHandler(), context.getClass()]);
 
     // If the route has no rate-limit metadata, allow it
     if (!optionsList?.length) {

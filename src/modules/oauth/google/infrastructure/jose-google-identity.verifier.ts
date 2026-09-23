@@ -6,6 +6,7 @@ import type { VerifyGoogleIdentityOutcome } from '../application/models/google-o
 import { GoogleIdentityVerifier } from '../application/ports/google-identity-verifier.port';
 import { buildOAuthDisplayName } from '../../core/domain/oauth-display-name';
 
+/** Describes the google jwt payload shape. */
 interface GoogleJwtPayload extends JWTPayload {
   email?: string | null;
   email_verified?: boolean;

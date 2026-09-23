@@ -1,3 +1,4 @@
+/** Represents the email payload value. */
 export type EmailPayload = {
   to: string;
   subject: string;

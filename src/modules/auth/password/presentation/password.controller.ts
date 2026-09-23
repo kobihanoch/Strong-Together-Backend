@@ -8,9 +8,7 @@ import { RequestData } from '../../../../common/decorators/request-data.decorato
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AppRequest } from '../../../../common/types/express';
 
-/**
- * Handles password HTTP requests.
- */
+/** H */
 @Controller('api/auth')
 export class PasswordController {
   constructor(
@@ -24,12 +22,15 @@ export class PasswordController {
    * Accepts a username or email address and dispatches a reset email without
    * revealing whether the account exists.
    *
-   * API: POST /api/auth/password-reset-requests
-   * Access: Public
+   * API: `POST /api/auth/password-reset-requests`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `201 Created`; `400 Bad Request`; `429 Too Many Requests`.
    *
    * @param data - The validated request data.
    * @param req - The HTTP request.
    * @returns A promise that resolves without disclosing account existence.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {HttpException} When the rate limit is exceeded.
    */
   @Post('password-reset-requests')
   @UseGuards(RateLimitGuard)
@@ -49,11 +50,13 @@ export class PasswordController {
    * updates the stored password hash, invalidates older sessions by bumping
    * token version state, and responds with 204 No Content.
    *
-   * API: POST /api/auth/password-resets
-   * Access: Public
+   * API: `POST /api/auth/password-resets`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `204 No Content`; `400 Bad Request`.
    *
    * @param data - The validated request data.
    * @returns A promise that resolves with no response body after reset.
+   * @throws {BadRequestException} When request validation fails.
    */
   @Post('password-resets')
   @HttpCode(HttpStatus.NO_CONTENT)

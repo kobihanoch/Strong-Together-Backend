@@ -3,6 +3,7 @@ import { integer, jsonb, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { socialSchema } from '../../../schemas';
 import { crewPrivacy } from '../table';
 
+/** Represents the crew participant preview value. */
 export type CrewParticipantPreview = {
   username: string;
   fullName: string;

@@ -9,6 +9,7 @@ export class PublishVideoAnalysisResultUseCase {
 
   /**
    * Publishes a completed or failed analysis result.
+   *
    * @param result - The validated worker result.
    * @returns Nothing.
    */

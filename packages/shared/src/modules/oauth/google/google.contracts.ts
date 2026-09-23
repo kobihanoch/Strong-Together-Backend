@@ -7,4 +7,5 @@ export const googleOAuthRequestSchema = z.object({ body: z.object({ idToken: z.s
 
 export const googleOAuthContract = { request: googleOAuthRequestSchema } satisfies Contract;
 
+/** Represents the google oauth body value. */
 export type GoogleOAuthBody = BodyOf<typeof googleOAuthContract>;

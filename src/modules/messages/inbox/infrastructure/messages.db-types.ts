@@ -1,7 +1,9 @@
 import { user } from '../../../../infrastructure/db/schema/drizzle/identity/user/table';
 import { message } from '../../../../infrastructure/db/schema/drizzle/messages/messages/table';
 
+/** Represents the message db row value. */
 type MessageDbRow = typeof message.$inferSelect;
+/** Represents the user db row value. */
 type UserDbRow = typeof user.$inferSelect;
 
 /** SQL projection returned for an inbox message and its sender. */

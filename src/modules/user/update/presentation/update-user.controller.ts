@@ -32,7 +32,7 @@ const emailChangeStatus: Record<EmailChangeOutcome['kind'], HttpStatus> = {
   failed: HttpStatus.INTERNAL_SERVER_ERROR,
 };
 
-/** Exposes user profile-management endpoints. */
+/** E */
 @Controller('api/users')
 export class UpdateUserController {
   constructor(
@@ -46,11 +46,16 @@ export class UpdateUserController {
 
   /**
    * Retrieves the authenticated user's profile.
-   * API: GET /api/users/me
-   * Access: Authenticated user
+   *
+   * API: `GET /api/users/me`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `401 Unauthorized`; `403 Forbidden`; `404 Not Found`.
+   *
    * @param user - The authenticated request user.
    * @returns The current profile.
    * @throws {UserNotFoundError} When the user is absent.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get('me')
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
@@ -61,14 +66,21 @@ export class UpdateUserController {
 
   /**
    * Updates the authenticated user's profile.
-   * API: PATCH /api/users/me
-   * Access: Authenticated user
+   *
+   * API: `PATCH /api/users/me`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`; `404 Not Found`; `409 Conflict`; `429 Too Many Requests`.
+   *
    * @param data - Validated profile changes.
    * @param user - The authenticated request user.
    * @param requestId - Optional request correlation identifier.
    * @returns No response body.
    * @throws {UserNotFoundError} When the user is absent.
    * @throws {UserConflictError} When a username or email is already used.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
+   * @throws {HttpException} When the rate limit is exceeded.
    */
   @Patch('me')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -85,8 +97,11 @@ export class UpdateUserController {
 
   /**
    * Confirms a pending email-address change.
-   * API: GET /api/users/email-change
-   * Access: Public
+   *
+   * API: `GET /api/users/email-change`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `409 Conflict`; `500 Internal Server Error`.
+   *
    * @param token - The signed email-change token.
    * @param res - The response used to render the result page.
    * @returns No response body from Nest; the response is sent directly.
@@ -101,10 +116,15 @@ export class UpdateUserController {
 
   /**
    * Deletes the authenticated user's account.
-   * API: DELETE /api/users/me
-   * Access: Authenticated user
+   *
+   * API: `DELETE /api/users/me`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `401 Unauthorized`; `403 Forbidden`.
+   *
    * @param user - The authenticated request user.
    * @returns No response body.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Delete('me')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -116,13 +136,19 @@ export class UpdateUserController {
 
   /**
    * Replaces the authenticated user's profile picture.
-   * API: PUT /api/users/me/profile-picture
-   * Access: Authenticated user
+   *
+   * API: `PUT /api/users/me/profile-picture`.
+   * Authorized roles: `user`.
+   * HTTP responses: `201 Created`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
    * @param user - The authenticated request user.
    * @param file - The uploaded image file.
    * @param res - The response used to set the created status.
    * @returns The stored picture path and public URL.
    * @throws {ProfilePictureRequiredError} When no image is supplied.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Put('me/profile-picture')
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
@@ -140,11 +166,17 @@ export class UpdateUserController {
 
   /**
    * Deletes the authenticated user's profile picture.
-   * API: DELETE /api/users/me/profile-picture
-   * Access: Authenticated user
+   *
+   * API: `DELETE /api/users/me/profile-picture`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
    * @param data - The validated stored-object path.
    * @param user - The authenticated request user.
    * @returns No response body.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Delete('me/profile-picture')
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)

@@ -28,7 +28,8 @@ import { GetExerciseHistoryUseCase } from '../application/use-cases/get-exercise
 import { GetPersonalRecordsUseCase } from '../application/use-cases/get-personal-records.use-case';
 import { GetWorkoutHistoryUseCase } from '../application/use-cases/get-workout-history.use-case';
 import { GetWorkoutStatisticsUseCase } from '../application/use-cases/get-workout-statistics.use-case';
-/** Exposes authenticated workout-tracking endpoints. */ @Controller('api')
+/** E */
+@Controller('api')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class WorkoutTrackingController {
@@ -42,9 +43,22 @@ export class WorkoutTrackingController {
   private cache(res: Response, hit: boolean) {
     res.set('X-Cache', hit ? 'HIT' : 'MISS');
   }
-  /** Retrieves workout history. API: GET /api/workout-history Access: Authenticated user @param data - Timezone query. @param user - Authenticated user. @param res - Response metadata. @returns Workout history. */ @Get(
-    'workout-history',
-  )
+  /**
+   * Retrieves workout history.
+   *
+   * API: `GET /api/workout-history`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param res - The HTTP response used to set response metadata.
+   * @returns The endpoint response.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
+   */
+  @Get('workout-history')
   async getWorkoutHistory(
     @RequestData(new ValidateRequestPipe(getWorkoutHistoryRequestSchema)) data: { query: GetWorkoutHistoryQuery },
     @CurrentUser() user: AuthenticatedUser,
@@ -54,9 +68,22 @@ export class WorkoutTrackingController {
     this.cache(res, r.cacheHit);
     return r.payload;
   }
-  /** Retrieves exercise history. API: GET /api/exercise-history Access: Authenticated user @param data - Timezone query. @param user - Authenticated user. @param res - Response metadata. @returns Exercise history. */ @Get(
-    'exercise-history',
-  )
+  /**
+   * Retrieves exercise history.
+   *
+   * API: `GET /api/exercise-history`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param res - The HTTP response used to set response metadata.
+   * @returns The endpoint response.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
+   */
+  @Get('exercise-history')
   async getExerciseHistory(
     @RequestData(new ValidateRequestPipe(getExerciseHistoryRequestSchema)) data: { query: GetExerciseHistoryQuery },
     @CurrentUser() user: AuthenticatedUser,
@@ -66,9 +93,22 @@ export class WorkoutTrackingController {
     this.cache(res, r.cacheHit);
     return r.payload;
   }
-  /** Retrieves workout statistics. API: GET /api/workout-statistics Access: Authenticated user @param data - Timezone query. @param user - Authenticated user. @param res - Response metadata. @returns Workout statistics. */ @Get(
-    'workout-statistics',
-  )
+  /**
+   * Retrieves workout statistics.
+   *
+   * API: `GET /api/workout-statistics`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param res - The HTTP response used to set response metadata.
+   * @returns The endpoint response.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
+   */
+  @Get('workout-statistics')
   async getWorkoutStatistics(
     @RequestData(new ValidateRequestPipe(getWorkoutHistoryRequestSchema)) data: { query: GetWorkoutHistoryQuery },
     @CurrentUser() user: AuthenticatedUser,
@@ -78,9 +118,22 @@ export class WorkoutTrackingController {
     this.cache(res, r.cacheHit);
     return r.payload;
   }
-  /** Retrieves personal records. API: GET /api/personal-records Access: Authenticated user @param data - Timezone query. @param user - Authenticated user. @param res - Response metadata. @returns Personal records. */ @Get(
-    'personal-records',
-  )
+  /**
+   * Retrieves personal records.
+   *
+   * API: `GET /api/personal-records`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param res - The HTTP response used to set response metadata.
+   * @returns The endpoint response.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
+   */
+  @Get('personal-records')
   async getPersonalRecords(
     @RequestData(new ValidateRequestPipe(getPersonalRecordsRequestSchema)) data: { query: GetPersonalRecordsQuery },
     @CurrentUser() user: AuthenticatedUser,
@@ -92,12 +145,18 @@ export class WorkoutTrackingController {
   }
   /**
    * Persists a completed workout.
-   * API: POST /api/workout-sessions
-   * Access: Authenticated user
+   *
+   * API: `POST /api/workout-sessions`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
    * @param data - Completed workout data.
    * @param user - Authenticated user.
    * @returns No body.
    * @throws {InvalidCompletedWorkoutError} When no exercises are supplied.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Post('workout-sessions')
   @HttpCode(HttpStatus.NO_CONTENT)

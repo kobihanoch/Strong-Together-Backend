@@ -32,21 +32,7 @@ import { ListCrewPostsUseCase } from '../application/use-cases/list-crew-posts.u
 import { ListVisiblePostsUseCase } from '../application/use-cases/list-visible-posts.use-case';
 import { UpdatePostUseCase } from '../application/use-cases/update-post.use-case';
 
-/**
- * Exposes authenticated CRUD endpoints for social posts.
- *
- * Routes:
- * - GET /api/social/posts
- * - GET /api/social/posts/crew/:crewId
- * - POST /api/social/posts
- * - PATCH /api/social/posts/:id
- * - DELETE /api/social/posts/:id
- *
- * @remarks Every request passes DPoP, authentication, authorization, and the
- * RLS transaction interceptor. Visibility determines public access independently
- * from the optional crew placement.
- * Access: User
- */
+/** Exposes authenticated CRUD endpoints for social posts. */
 @Controller('api/social/posts')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
@@ -62,12 +48,15 @@ export class PostsController {
   /**
    * Lists posts visible to the authenticated user.
    *
-   * API: GET /api/social/posts
-   * Access: Authenticated user
-   * Access: User
+   * API: `GET /api/social/posts`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated pagination query.
    * @returns Global posts and crew posts the caller is authorized to view.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get()
   async getVisiblePosts(
@@ -82,12 +71,15 @@ export class PostsController {
   /**
    * Lists posts shared in one crew when the caller belongs to that crew.
    *
-   * API: GET /api/social/posts/crew/:crewId
-   * Access: Authenticated user
-   * Access: User
+   * API: `GET /api/social/posts/crew/:crewId`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated crew identifier and pagination query.
    * @returns Posts shared in the requested crew, ordered newest first.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get('crew/:crewId')
   async getCrewPosts(
@@ -103,13 +95,16 @@ export class PostsController {
   /**
    * Creates a public or crew-only post and optionally shares it with multiple crews.
    *
-   * API: POST /api/social/posts
-   * Access: Authenticated user
-   * Access: User
+   * API: `POST /api/social/posts`.
+   * Authorized roles: `user`.
+   * HTTP responses: `201 Created`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated post creation body.
    * @param user - The authenticated user supplied by the authentication guard.
    * @returns No response body with a 201 Created status.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -124,13 +119,16 @@ export class PostsController {
   /**
    * Updates the content of a post authored by the caller.
    *
-   * API: PATCH /api/social/posts/:id
-   * Access: Authenticated user
-   * Access: User
+   * API: `PATCH /api/social/posts/:id`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`; `404 Not Found`.
    *
    * @param data - The validated route parameters and update body.
    * @returns No response body with a 204 No Content status.
    * @throws {PostNotFoundError} When RLS exposes no matching post.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Patch(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -147,13 +145,16 @@ export class PostsController {
   /**
    * Deletes a post authored by the caller.
    *
-   * API: DELETE /api/social/posts/:id
-   * Access: Authenticated user
-   * Access: User
+   * API: `DELETE /api/social/posts/:id`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`; `404 Not Found`.
    *
    * @param data - The validated route parameters.
    * @returns No response body.
    * @throws {PostNotFoundError} When RLS exposes no matching post.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)

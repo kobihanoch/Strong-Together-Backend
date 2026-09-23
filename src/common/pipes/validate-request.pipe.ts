@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 
+/** Represents the parse success value. */
 type ParseSuccess = {
   success: true;
   data: {
@@ -9,6 +10,7 @@ type ParseSuccess = {
   };
 };
 
+/** Represents the parse failure value. */
 type ParseFailure = {
   success: false;
   error: {
@@ -16,6 +18,7 @@ type ParseFailure = {
   };
 };
 
+/** Represents the compatible schema value. */
 type CompatibleSchema = {
   safeParse(input: unknown): ParseSuccess | ParseFailure;
 };

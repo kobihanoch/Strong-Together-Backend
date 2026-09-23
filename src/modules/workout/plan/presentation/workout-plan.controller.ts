@@ -12,7 +12,7 @@ import type { AuthenticatedUser } from '../../../../common/types/express';
 import { GetWorkoutPlanUseCase } from '../application/use-cases/get-workout-plan.use-case';
 import { ReplaceWorkoutPlanUseCase } from '../application/use-cases/replace-workout-plan.use-case';
 
-/** Exposes authenticated workout-plan endpoints. */
+/** E */
 @Controller('api/workout-plan')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
@@ -21,7 +21,22 @@ export class WorkoutPlanController {
     private readonly getPlan: GetWorkoutPlanUseCase,
     private readonly replacePlan: ReplaceWorkoutPlanUseCase,
   ) {}
-  /** Retrieves the active plan. API: GET /api/workout-plan Access: Authenticated user @param data - Validated timezone. @param user - Authenticated user. @param res - Response used for cache metadata. @returns The active plan payload. */ @Get()
+  /**
+   * Retrieves the active plan.
+   *
+   * API: `GET /api/workout-plan`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
+   * @param data - The validated request data.
+   * @param user - The authenticated user.
+   * @param res - The HTTP response used to set response metadata.
+   * @returns The endpoint response.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
+   */
+  @Get()
   async getWorkoutPlan(
     @RequestData(new ValidateRequestPipe(getWorkoutPlanRequestSchema)) data: { query: GetWorkoutPlanQuery },
     @CurrentUser() user: AuthenticatedUser,
@@ -33,12 +48,18 @@ export class WorkoutPlanController {
   }
   /**
    * Replaces the active plan.
-   * API: PUT /api/workout-plan
-   * Access: Authenticated user
+   *
+   * API: `PUT /api/workout-plan`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
    * @param data - Validated plan.
    * @param user - Authenticated user.
    * @returns No body.
    * @throws {InvalidWorkoutSplitError} When an existing split is invalid.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Put()
   @HttpCode(HttpStatus.NO_CONTENT)

@@ -8,7 +8,8 @@ import type {
 } from '../application/models/workout-tracking.models';
 import { WorkoutTrackingRepository } from '../application/ports/workout-tracking.repository';
 import { WorkoutTrackingSql } from './workout-tracking.sql';
-/** PostgreSQL adapter for workout tracking. */ @Injectable()
+/** PostgreSQL adapter for workout tracking. */
+@Injectable()
 export class PostgresWorkoutTrackingRepository implements WorkoutTrackingRepository {
   constructor(private readonly sql: WorkoutTrackingSql) {}
   findWorkoutHistory(u: string, d: number, t: string): Promise<WorkoutHistory> {

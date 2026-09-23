@@ -10,7 +10,6 @@ export class GetSocialSummaryUseCase {
   /**
    * Retrieves the active crew count and unique participant previews.
    *
-   *
    * @returns The current user's social summary.
    */
   public execute(): Promise<SocialSummary> {

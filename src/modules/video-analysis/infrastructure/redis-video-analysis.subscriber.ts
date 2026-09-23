@@ -2,7 +2,9 @@ import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import {
   analyzeVideoResultPayloadDtoSchema,
   squatRepetitionDtoSchema,
+  /** Represents the analyze video result payload dto value. */
   type AnalyzeVideoResultPayloadDto,
+  /** Represents the squat repetition dto value. */
   type SquatRepetitionDto,
 } from '@strong-together/shared';
 import { RedisClientType } from 'redis';

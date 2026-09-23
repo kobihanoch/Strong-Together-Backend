@@ -5,7 +5,7 @@ import { AuthorizationGuard, Roles } from '../../../../common/guards/authorizati
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { GetSocialSummaryUseCase } from '../application/use-cases/get-social-summary.use-case';
 
-/** Exposes the authenticated user's compact social overview. */
+/** E */
 @Controller('api/social/summary')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
@@ -15,10 +15,13 @@ export class SocialSummaryController {
   /**
    * Gets the caller's active crew total and unique co-member previews.
    *
-   * API: GET /api/social/summary
-   * Access: Authenticated user
+   * API: `GET /api/social/summary`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @returns The caller's social summary.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get()
   public getSummary(): Promise<GetSocialSummaryResponse> {

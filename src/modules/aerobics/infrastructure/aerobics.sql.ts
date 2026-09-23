@@ -9,6 +9,7 @@ export class AerobicsSql {
 
   /**
    * Retrieves user aerobics for ndays.
+   *
    * @param userId - The user identifier.
    * @param days - The days.
    * @param tz - The IANA time-zone name.
@@ -162,8 +163,10 @@ export class AerobicsSql {
   // Add a new aerobic record
   /**
    * Adds aerobic tracking.
+   *
    * @param userId - The user identifier.
    * @param record - The aerobic tracking record.
+   * @returns A promise that resolves when the operation completes.
    */
   async createForUser(userId: string, record: AerobicEntryInput): Promise<void> {
     const { durationMins, durationSec, type } = record;

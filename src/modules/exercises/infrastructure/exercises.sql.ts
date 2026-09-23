@@ -7,15 +7,36 @@ import type { ExerciseCatalogueSqlMap, ExerciseCatalogueSqlRow } from './exercis
 export class ExercisesSql {
   constructor(private readonly dbService: DBService) {}
 
+  /**
+   * Executes the find catalogue SQL operation.
+   *
+   * @returns The query result.
+   */
   async findCatalogue(): Promise<ExerciseCatalogueSqlMap> {
     const rows = await this.dbService.sql<ExerciseCatalogueSqlRow[]>`
-      SELECT jsonb_build_object('map', jsonb_object_agg(t.targetmuscle, t.ex_list)) AS result
-      FROM (
-        SELECT e.target_muscle AS targetmuscle,
-          jsonb_agg(jsonb_build_object('id', e.id, 'name', e.name, 'specificTargetMuscle', e.specific_target_muscle) ORDER BY e.name) AS ex_list
-        FROM workout.exercise e
-        GROUP BY e.target_muscle
-      ) AS t
+      SELECT
+        JSONB_BUILD_OBJECT('map', JSONB_OBJECT_AGG(t.targetmuscle, t.ex_list)) AS result
+      FROM
+        (
+          SELECT
+            e.target_muscle AS targetmuscle,
+            JSONB_AGG(
+              JSONB_BUILD_OBJECT(
+                'id',
+                e.id,
+                'name',
+                e.name,
+                'specificTargetMuscle',
+                e.specific_target_muscle
+              )
+              ORDER BY
+                e.name
+            ) AS ex_list
+          FROM
+            workout.exercise e
+          GROUP BY
+            e.target_muscle
+        ) AS t
     `;
     return rows[0]?.result?.map ?? {};
   }

@@ -93,6 +93,7 @@ export class PostsSql {
    * @param content - The textual content of the post.
    * @param visibility - Whether everyone or only eligible crew participants can see the post.
    * @param crewIds - The UUIDs of the crews receiving the post.
+   * @param workoutSummaryId - The workout summary id value.
    * @returns The new post, or an empty array when any placement is unauthorized.
    */
   async create(

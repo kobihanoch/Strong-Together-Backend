@@ -8,6 +8,7 @@ export class GetCurrentUserUseCase {
   constructor(private readonly repository: UserProfileRepository) {}
   /**
    * Retrieves a user profile.
+   *
    * @param userId - The user identifier.
    * @returns The profile.
    * @throws {UserNotFoundError} When the user is absent.

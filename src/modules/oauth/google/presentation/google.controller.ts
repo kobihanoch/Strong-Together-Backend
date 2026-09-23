@@ -8,14 +8,7 @@ import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.p
 import { validateJkt } from '../../core/presentation/oauth-request.utils';
 import { SignInWithGoogleUseCase } from '../application/use-cases/sign-in-with-google.use-case';
 
-/**
- * OAuth routes for Google sign-in.
- *
- * Preserves the existing route path and behavior from the Express version:
- * - POST /api/oauth/google
- *
- * Access: Public
- */
+/** OAuth routes for Google sign-in. */
 @Controller('api/oauth')
 export class GoogleController {
   constructor(private readonly signInWithGoogleUseCase: SignInWithGoogleUseCase) {}
@@ -26,13 +19,18 @@ export class GoogleController {
    * Verifies the Google identity token, links or creates the local user record as
    * needed, and returns the session payload.
    *
-   * API: POST /api/oauth/google
-   * Access: Public
+   * API: `POST /api/oauth/google`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `201 Created`; `400 Bad Request`; `401 Unauthorized`; `429 Too Many Requests`.
    *
    * @param data - The validated request data.
    * @param req - The HTTP request.
    * @param res - The HTTP response.
    * @returns The response payload.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {InvalidGoogleOAuthError} When the Google identity token is invalid.
+   * @throws {GoogleOAuthUnauthorizedError} When the account cannot start a session.
+   * @throws {HttpException} When the rate limit is exceeded.
    */
   @Post('google')
   @UseGuards(RateLimitGuard)

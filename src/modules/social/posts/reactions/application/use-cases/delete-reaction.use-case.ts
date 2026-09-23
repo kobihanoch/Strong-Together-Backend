@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { ReactionNotFoundError } from '../errors/reactions.errors';
 import { ReactionsRepository } from '../ports/reactions.repository';
 
-/** Deletes a user's post reaction. */ @Injectable()
+/** Deletes a user's post reaction. */
+
+@Injectable()
 export class DeleteReactionUseCase {
   public constructor(private readonly repository: ReactionsRepository) {}
   /**
    * Executes the application operation.
-   *
    *
    * @param postId - Post identifier.
    * @param userId - Reacting user.

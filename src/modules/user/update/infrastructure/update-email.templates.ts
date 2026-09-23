@@ -1,3 +1,4 @@
+/** Represents the confirm email change params value. */
 type ConfirmEmailChangeParams = {
   fullName: string;
   confirmUrl: string;

@@ -67,12 +67,18 @@ export const wholeUserWorkoutPlanQueryDtoSchema = z.object({
 
 // SQL query DTO types
 
+/** Represents the workout exercise input query dto value. */
 export type WorkoutExerciseInputQueryDto = z.infer<typeof workoutExerciseInputQueryDtoSchema>;
+/** Represents the save workout split input query dto value. */
 export type SaveWorkoutSplitInputQueryDto = z.infer<typeof saveWorkoutSplitInputQueryDtoSchema>;
+/** Represents the exercise in plan query dto value. */
 export type ExerciseInPlanQueryDto = z.infer<typeof exerciseInPlanQueryDtoSchema>;
+/** Represents the workout split query dto value. */
 export type WorkoutSplitQueryDto = z.infer<typeof workoutSplitQueryDtoSchema>;
+/** Represents the whole user workout plan query dto value. */
 export type WholeUserWorkoutPlanQueryDto = z.infer<typeof wholeUserWorkoutPlanQueryDtoSchema>;
 
 // SQL query input DTOs
 
+/** Represents the save workout split payload query dto value. */
 export type SaveWorkoutSplitPayloadQueryDto = z.infer<typeof saveWorkoutSplitPayloadQueryDtoSchema>;

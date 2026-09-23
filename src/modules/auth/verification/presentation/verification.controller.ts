@@ -27,9 +27,7 @@ import { RequestData } from '../../../../common/decorators/request-data.decorato
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AppRequest } from '../../../../common/types/express';
 
-/**
- * Handles verification HTTP requests.
- */
+/** H */
 @Controller('api/auth')
 export class VerificationController {
   constructor(
@@ -46,11 +44,15 @@ export class VerificationController {
    * JTI cache, updates the user's verification state, and returns an HTML result
    * page.
    *
-   * API: GET /api/auth/email-verification
-   * Access: Public
+   * API: `GET /api/auth/email-verification`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`.
    *
    * @param data - The validated request data.
    * @param res - The HTTP response.
+   * @returns A promise that resolves when the operation completes.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {VerificationBadRequestError} When the verification token is missing.
    */
   @Get('email-verification')
   async verifyEmail(
@@ -70,12 +72,15 @@ export class VerificationController {
    * Resolves the user by email and, when found, dispatches a fresh verification
    * email without exposing whether the address exists.
    *
-   * API: POST /api/auth/verification-emails
-   * Access: Public
+   * API: `POST /api/auth/verification-emails`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `201 Created`; `400 Bad Request`; `429 Too Many Requests`.
    *
    * @param data - The validated request data.
    * @param req - The HTTP request.
    * @returns A promise that resolves without disclosing account existence.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {HttpException} When the rate limit is exceeded.
    */
   @Post('verification-emails')
   @UseGuards(RateLimitGuard)
@@ -95,12 +100,18 @@ export class VerificationController {
    * email address when allowed, and dispatches a fresh verification email to the
    * new address.
    *
-   * API: PATCH /api/auth/unverified-account/email
-   * Access: Public
+   * API: `PATCH /api/auth/unverified-account/email`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `409 Conflict`; `429 Too Many Requests`.
    *
    * @param data - The validated request data.
    * @param req - The HTTP request.
    * @returns A promise that resolves after the email is changed.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {VerificationBadRequestError} When the account is already verified.
+   * @throws {VerificationUnauthorizedError} When credentials are invalid.
+   * @throws {VerificationConflictError} When the replacement email is already used.
+   * @throws {HttpException} When the rate limit is exceeded.
    */
   @Patch('unverified-account/email')
   @UseGuards(RateLimitGuard)
@@ -118,11 +129,13 @@ export class VerificationController {
    *
    * Returns a minimal verification-state payload for the supplied username.
    *
-   * API: GET /api/auth/verification-status
-   * Access: Public
+   * API: `GET /api/auth/verification-status`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `200 OK`; `400 Bad Request`.
    *
    * @param data - The validated request data.
    * @returns The response payload.
+   * @throws {BadRequestException} When request validation fails.
    */
   @Get('verification-status')
   async getVerificationStatus(

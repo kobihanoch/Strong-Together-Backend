@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import type { CreatePostInput, DeletePostOutcome, UpdatePostOutcome, VisiblePost } from '../application/models/posts.models';
 import { PostsRepository } from '../application/ports/posts.repository';
 import { PostsSql } from './posts.sql';
-/** PostgreSQL implementation of post persistence. */ @Injectable()
+/** PostgreSQL implementation of post persistence. */
+@Injectable()
 export class PostgresPostsRepository implements PostsRepository {
   public constructor(private readonly sql: PostsSql) {}
   public listVisible(limit: number, cursor?: { timestamp: string; id: string }): Promise<VisiblePost[]> {

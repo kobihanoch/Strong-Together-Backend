@@ -15,6 +15,7 @@ export class EnqueueDueWorkoutRemindersUseCase {
 
   /**
    * Finds due reminders and schedules their delayed push jobs after commit.
+   *
    * @param requestId - Optional request correlation identifier.
    * @returns The number of reminders scheduled for delivery.
    */

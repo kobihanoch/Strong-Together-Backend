@@ -12,6 +12,7 @@ export class DeleteProfilePictureUseCase {
   ) {}
   /**
    * Deletes a profile picture.
+   *
    * @param userId - The user identifier.
    * @param path - The stored object path.
    * @returns Nothing.

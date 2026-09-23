@@ -4,12 +4,18 @@ import { workoutPlan } from '../../../../infrastructure/db/schema/drizzle/workou
 import { workoutSet } from '../../../../infrastructure/db/schema/drizzle/workout/workout_set/table';
 import { workoutSplit } from '../../../../infrastructure/db/schema/drizzle/workout/workout_split/table';
 
+/** Represents the plan db row value. */
 type PlanDbRow = typeof workoutPlan.$inferSelect;
+/** Represents the split db row value. */
 type SplitDbRow = typeof workoutSplit.$inferSelect;
+/** Represents the assignment db row value. */
 type AssignmentDbRow = typeof exerciseToWorkoutSplit.$inferSelect;
+/** Represents the exercise db row value. */
 type ExerciseDbRow = typeof exercise.$inferSelect;
+/** Represents the set db row value. */
 type SetDbRow = typeof workoutSet.$inferSelect;
 
+/** Describes the workout plan exercise sql row shape. */
 export interface WorkoutPlanExerciseSqlRow {
   exerciseToSplitId: AssignmentDbRow['id'];
   exerciseId: ExerciseDbRow['id'];
@@ -20,6 +26,7 @@ export interface WorkoutPlanExerciseSqlRow {
   targetMuscle: ExerciseDbRow['targetMuscle'];
   specificTargetMuscle: ExerciseDbRow['specificTargetMuscle'];
 }
+/** Describes the workout plan split sql row shape. */
 export interface WorkoutPlanSplitSqlRow {
   id: SplitDbRow['id'];
   workoutId: SplitDbRow['workoutId'];
@@ -31,6 +38,7 @@ export interface WorkoutPlanSplitSqlRow {
   isActive: SplitDbRow['isActive'];
   exercises: WorkoutPlanExerciseSqlRow[];
 }
+/** Describes the workout plan sql row shape. */
 export interface WorkoutPlanSqlRow {
   id: PlanDbRow['id'];
   numberOfSplits: number;
@@ -40,9 +48,13 @@ export interface WorkoutPlanSqlRow {
   updatedAt: string;
   workoutSplits: WorkoutPlanSplitSqlRow[] | null;
 }
+/** Represents the workout plan id sql row value. */
 export type WorkoutPlanIdSqlRow = Pick<PlanDbRow, 'id'>;
+/** Represents the workout split id sql row value. */
 export type WorkoutSplitIdSqlRow = Pick<SplitDbRow, 'id'>;
+/** Represents the exercise assignment id sql row value. */
 export type ExerciseAssignmentIdSqlRow = Pick<AssignmentDbRow, 'id'>;
+/** Describes the existing exercises sql row shape. */
 export interface ExistingExercisesSqlRow {
   exercises: Array<{ exerciseId: ExerciseDbRow['id']; orderIndex: AssignmentDbRow['orderIndex']; sets: SetDbRow['reps'][] }>;
 }

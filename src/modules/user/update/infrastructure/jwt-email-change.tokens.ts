@@ -4,7 +4,8 @@ import { authConfig } from '../../../../config/auth.config';
 import { CacheService } from '../../../../infrastructure/cache/cache.service';
 import type { EmailChangeClaims } from '../application/models/update-user.models';
 import { EmailChangeTokens } from '../application/ports/email-change-tokens.port';
-/** JWT and cache adapter for one-time email-change tokens. */ @Injectable()
+/** JWT and cache adapter for one-time email-change tokens. */
+@Injectable()
 export class JwtEmailChangeTokens implements EmailChangeTokens {
   constructor(private readonly cache: CacheService) {}
   verify(token: string): EmailChangeClaims | null {

@@ -14,6 +14,7 @@ export class CreateWorkoutSessionUseCase {
   ) {}
   /**
    * Persists a completed workout.
+   *
    * @param userId - User identifier.
    * @param command - Completed workout values.
    * @returns Nothing.

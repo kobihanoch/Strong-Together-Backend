@@ -55,23 +55,7 @@ import { ListMyCrewsUseCase } from '../application/use-cases/list-my-crews.use-c
 import { ReplaceCrewProfilePictureUseCase } from '../application/use-cases/replace-crew-profile-picture.use-case';
 import { UpdateCrewUseCase } from '../application/use-cases/update-crew.use-case';
 
-/**
- * Exposes authenticated CRUD endpoints for crews.
- *
- * Routes:
- * - GET /api/social/crews
- * - GET /api/social/crews/mine
- * - GET /api/social/crews/:id
- * - GET /api/social/crews/:crewId/participants
- * - POST /api/social/crews
- * - PATCH /api/social/crews/:id
- * - POST /api/social/crews/:id/leave
- * - DELETE /api/social/crews/:id
- *
- * @remarks Every request passes DPoP, authentication, authorization, and the
- * RLS transaction interceptor before reaching the service layer.
- * Access: User
- */
+/** Exposes authenticated CRUD endpoints for crews. */
 @Controller('api/social/crews')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
@@ -93,12 +77,15 @@ export class CrewsController {
   /**
    * Lists the crews visible to the authenticated user.
    *
-   * API: GET /api/social/crews
-   * Access: Authenticated user
-   * Access: User
+   * API: `GET /api/social/crews`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated search and pagination query.
    * @returns The RLS-filtered crew collection.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get()
   async list(
@@ -113,12 +100,15 @@ export class CrewsController {
   /**
    * Lists crews in which the authenticated user has an active membership.
    *
-   * API: GET /api/social/crews/mine
-   * Access: Authenticated user
-   * Access: User
+   * API: `GET /api/social/crews/mine`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated pagination query.
    * @returns The caller's crews with participant counts and previews.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get('mine')
   async listMine(
@@ -135,12 +125,15 @@ export class CrewsController {
    * Public crews expose participants to every authenticated user. Private crews
    * expose participants only to active members.
    *
-   * API: GET /api/social/crews/:crewId/participants
-   * Access: Authenticated user
-   * Access: User
+   * API: `GET /api/social/crews/:crewId/participants`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated crew identifier and pagination query.
    * @returns The paginated active participant collection.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get(':crewId/participants')
   async listParticipants(
@@ -156,13 +149,16 @@ export class CrewsController {
   /**
    * Gets a crew by its UUID.
    *
-   * API: GET /api/social/crews/:id
-   * Access: Authenticated user
-   * Access: User
+   * API: `GET /api/social/crews/:id`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`; `404 Not Found`.
    *
    * @param data - The validated route parameters.
    * @returns The requested crew when it is visible to the caller.
    * @throws {CrewNotFoundError} when no visible crew has the supplied UUID.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get(':id')
   async get(
@@ -177,13 +173,16 @@ export class CrewsController {
   /**
    * Creates a crew led by the authenticated user.
    *
-   * API: POST /api/social/crews
-   * Access: Authenticated user
-   * Access: User
+   * API: `POST /api/social/crews`.
+   * Authorized roles: `user`.
+   * HTTP responses: `201 Created`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated crew creation body.
    * @param user - The authenticated user supplied by the authentication guard.
    * @returns No response body with a 201 Created status.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -198,13 +197,16 @@ export class CrewsController {
   /**
    * Updates a crew that the authenticated user is allowed to manage.
    *
-   * API: PATCH /api/social/crews/:id
-   * Access: Authenticated user
-   * Access: User
+   * API: `PATCH /api/social/crews/:id`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`; `404 Not Found`.
    *
    * @param data - The validated route parameters and update body.
    * @returns No response body with a 204 No Content status.
    * @throws {CrewNotFoundError} when RLS exposes no matching crew.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Patch(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -221,11 +223,16 @@ export class CrewsController {
   /**
    * Replaces a crew's profile picture.
    *
-   * API: PUT /api/social/crews/:id/profile-picture. Access: active leader.
-   * Access: Authenticated user
+   * API: `PUT /api/social/crews/:id/profile-picture`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
    * @param data - The validated crew ID.
    * @param file - The uploaded image file.
    * @returns The stored image path and public URL.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Put(':id/profile-picture')
   @UseInterceptors(FileInterceptor('file', imageUploadOptions))
@@ -241,11 +248,16 @@ export class CrewsController {
   /**
    * Deletes a crew's current profile picture.
    *
-   * API: DELETE /api/social/crews/:id/profile-picture. Access: active leader.
-   * Access: Authenticated user
+   * API: `DELETE /api/social/crews/:id/profile-picture`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`; `404 Not Found`.
+   *
    * @param data - The validated crew ID.
    * @returns No response body with a 204 No Content status.
    * @throws {CrewProfilePictureNotFoundError} When the crew is unavailable or has no picture.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Delete(':id/profile-picture')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -257,19 +269,20 @@ export class CrewsController {
 
   /**
    * Leaves an active crew membership.
-   *
-   * API: POST /api/social/crews/:id/leave
-   * Access: Authenticated user
-   * Access: User
-   *
    * A regular member is marked as left. When the caller is the leader,
    * leadership first transfers to participant number two using the established
    * participant ordering.
    *
+   * API: `POST /api/social/crews/:id/leave`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`; `404 Not Found`.
+   *
    * @param data - The validated crew identifier.
    * @returns No response body with a 204 No Content status.
-   * @throws {ActiveCrewMembershipNotFoundError} When the caller is not an active member.
-   * When the leader is the crew's final active member, leaving deletes the crew.
+   * @throws {ActiveCrewMembershipNotFoundError} When the caller is not an active member. When the leader is the crew's final active member, leaving deletes the crew.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Post(':id/leave')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -285,13 +298,16 @@ export class CrewsController {
   /**
    * Deletes a crew that the authenticated user is allowed to manage.
    *
-   * API: DELETE /api/social/crews/:id
-   * Access: Authenticated user
-   * Access: User
+   * API: `DELETE /api/social/crews/:id`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`; `404 Not Found`.
    *
    * @param data - The validated route parameters.
    * @returns No response body.
    * @throws {CrewNotFoundError} when RLS exposes no matching crew.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)

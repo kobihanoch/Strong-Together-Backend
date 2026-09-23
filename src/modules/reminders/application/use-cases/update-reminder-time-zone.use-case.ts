@@ -9,6 +9,7 @@ export class UpdateReminderTimeZoneUseCase {
 
   /**
    * Updates only a user's reminder time zone.
+   *
    * @param userId - The settings owner.
    * @param settings - The new time zone.
    * @returns Nothing.

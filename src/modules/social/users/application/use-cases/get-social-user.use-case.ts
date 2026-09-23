@@ -11,11 +11,8 @@ export class GetSocialUserUseCase {
   /**
    * Retrieves a public profile by its user identifier.
    *
-   *
    * @param userId - The user whose public profile is requested.
-   *
    * @returns The matching public profile.
-   *
    * @throws {SocialUserNotFoundError} When the user does not exist.
    */
   public async execute(userId: string): Promise<SocialUserProfile> {

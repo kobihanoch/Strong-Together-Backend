@@ -17,6 +17,7 @@ export class CreateUserUseCase {
   ) {}
   /**
    * Creates a local account when its username and email are available.
+   *
    * @param input - Validated registration values.
    * @param requestId - Optional request correlation identifier.
    * @returns Nothing after registration is persisted and email delivery is scheduled.

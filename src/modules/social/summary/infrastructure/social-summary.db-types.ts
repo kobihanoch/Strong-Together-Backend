@@ -1,5 +1,6 @@
 import { user } from '../../../../infrastructure/db/schema/drizzle/identity/user/table';
 
+/** Represents the user db row value. */
 type UserDbRow = typeof user.$inferSelect;
 
 /** Participant JSON projection returned by the social-summary query. */

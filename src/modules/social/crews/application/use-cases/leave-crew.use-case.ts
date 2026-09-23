@@ -9,10 +9,10 @@ export class LeaveCrewUseCase {
   /**
    * Executes the application operation.
    *
-   *
    * @param crewId - Crew identifier.
    * @returns Nothing after leaving.
-   * @throws {ActiveCrewMembershipNotFoundError} When no active membership exists. */
+   * @throws {ActiveCrewMembershipNotFoundError} When no active membership exists.
+   */
   public async execute(crewId: string): Promise<void> {
     const outcome = await this.repository.leave(crewId);
     if (outcome.kind === 'not-member') throw new ActiveCrewMembershipNotFoundError();

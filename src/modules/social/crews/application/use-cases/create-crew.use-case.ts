@@ -9,10 +9,10 @@ export class CreateCrewUseCase {
   /**
    * Executes the application operation.
    *
-   *
    * @param userId - Creator identifier.
    * @param input - Crew properties.
-   * @returns Nothing after creation. */
+   * @returns Nothing after creation.
+   */
   public async execute(userId: string, input: CrewInput): Promise<void> {
     await this.repository.create(userId, input);
   }

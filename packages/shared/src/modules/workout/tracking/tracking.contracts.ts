@@ -54,12 +54,21 @@ export const getPersonalRecordsContract = {
   response: getPersonalRecordsResponseSchema,
 } satisfies Contract;
 
+/** Represents the get workout history query value. */
 export type GetWorkoutHistoryQuery = QueryOf<typeof getWorkoutHistoryContract>;
+/** Represents the get exercise history query value. */
 export type GetExerciseHistoryQuery = QueryOf<typeof getExerciseHistoryContract>;
+/** Represents the get personal records query value. */
 export type GetPersonalRecordsQuery = QueryOf<typeof getPersonalRecordsContract>;
+/** Represents the get workout history response value. */
 export type GetWorkoutHistoryResponse = ResponseOf<typeof getWorkoutHistoryContract>;
+/** Represents the get exercise history response value. */
 export type GetExerciseHistoryResponse = ResponseOf<typeof getExerciseHistoryContract>;
+/** Represents the get workout statistics response value. */
 export type GetWorkoutStatisticsResponse = ResponseOf<typeof getWorkoutStatisticsContract>;
+/** Represents the get personal records response value. */
 export type GetPersonalRecordsResponse = ResponseOf<typeof getPersonalRecordsContract>;
+/** Represents the create workout session body value. */
 export type CreateWorkoutSessionBody = BodyOf<typeof createWorkoutSessionContract>;
+/** Represents the create workout session response value. */
 export type CreateWorkoutSessionResponse = ResponseOf<typeof createWorkoutSessionContract>;

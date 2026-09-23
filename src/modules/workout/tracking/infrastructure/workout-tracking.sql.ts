@@ -21,6 +21,7 @@ export class WorkoutTrackingSql {
 
   /**
    * Retrieves exercise tracking maps.
+   *
    * @param userId - The user identifier.
    * @param days - The days.
    * @param tz - The IANA time-zone name.
@@ -369,6 +370,7 @@ export class WorkoutTrackingSql {
 
   /**
    * Retrieves exercise tracking stats.
+   *
    * @param userId - The user identifier.
    * @param days - The days.
    * @param tz - The IANA time-zone name.
@@ -794,6 +796,7 @@ export class WorkoutTrackingSql {
 
   /**
    * Inserts user finished workout.
+   *
    * @param userId - The user identifier.
    * @param workoutArray - The completed workout records.
    * @param workoutStartUtc - The workout start utc.

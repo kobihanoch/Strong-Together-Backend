@@ -9,6 +9,7 @@ import type {
   WorkoutSplitIdSqlRow,
 } from './workout-plan.db-types';
 
+/** Represents the existing workout split input value. */
 type ExistingWorkoutSplitInput = WorkoutSplitInput & { id: number };
 
 @Injectable()
@@ -18,6 +19,7 @@ export class WorkoutPlanSql {
   // Return the complete active plan in the same shape used by clients for display and editing.
   /**
    * Whole user workout plan.
+   *
    * @param userId - The user identifier.
    * @param tz - The IANA time-zone name.
    * @returns The whole user workout plan result.
@@ -184,6 +186,7 @@ export class WorkoutPlanSql {
   // Save a complete plan snapshot: IDs update existing splits, while missing IDs create new splits.
   /**
    * Adds workout.
+   *
    * @param userId - The user identifier.
    * @param workoutData - The workout plan payload.
    * @returns The add workout result.
@@ -263,6 +266,7 @@ export class WorkoutPlanSql {
 
   /**
    * Inserts a workout split and returns its identifier.
+   *
    * @param planId - The workout plan identifier.
    * @param split - The workout split to persist.
    * @returns The insert workout split result.
@@ -287,9 +291,11 @@ export class WorkoutPlanSql {
 
   /**
    * Updates a workout split and returns its identifier.
+   *
    * @param planId - The workout plan identifier.
    * @param split - The workout split to persist.
    * @returns The update workout split result.
+   * @throws {Error} When the locked split cannot be updated.
    */
   private async updateWorkoutSplit(planId: number, split: ExistingWorkoutSplitInput): Promise<number> {
     // Preserve the split identity when it is renamed, reordered, or reactivated.
@@ -318,8 +324,10 @@ export class WorkoutPlanSql {
 
   /**
    * Replaces the exercises and sets assigned to workout splits.
+   *
    * @param planId - The workout plan identifier.
    * @param splits - The workout splits to process.
+   * @returns A promise that resolves when the operation completes.
    */
   private async replaceWorkoutExercises(planId: number, splits: Array<{ id: number; exercises: WorkoutExerciseInput[] }>): Promise<void> {
     const changedSplitIds: number[] = [];

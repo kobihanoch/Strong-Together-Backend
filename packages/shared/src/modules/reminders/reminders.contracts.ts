@@ -41,8 +41,13 @@ export const updateReminderTimeZoneContract = {
   response: z.void(),
 } satisfies Contract;
 
+/** Represents the upsert reminder settings body value. */
 export type UpsertReminderSettingsBody = BodyOf<typeof upsertReminderSettingsContract>;
+/** Represents the upsert reminder settings response value. */
 export type UpsertReminderSettingsResponse = ResponseOf<typeof upsertReminderSettingsContract>;
+/** Represents the update reminder time zone body value. */
 export type UpdateReminderTimeZoneBody = BodyOf<typeof updateReminderTimeZoneContract>;
+/** Represents the update reminder time zone response value. */
 export type UpdateReminderTimeZoneResponse = ResponseOf<typeof updateReminderTimeZoneContract>;
+/** Represents the get reminder settings response value. */
 export type GetReminderSettingsResponse = ResponseOf<typeof getReminderSettingsContract>;

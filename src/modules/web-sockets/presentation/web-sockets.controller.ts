@@ -11,14 +11,7 @@ import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe
 import type { AuthenticatedUser } from '../../../common/types/express';
 import { CreateWebSocketTicketUseCase } from '../application/use-cases/create-web-socket-ticket.use-case';
 
-/**
- * WebSocket helper routes for authenticated users.
- *
- * Preserves the existing route path and behavior from the Express version:
- * - POST /api/websocket-tickets
- *
- * Access: User
- */
+/** WebSocket helper routes for authenticated users. */
 @Controller('api/websocket-tickets')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
@@ -31,13 +24,17 @@ export class WebSocketsController {
    * Returns a short-lived signed token that the client can use to establish a
    * Socket.IO session.
    *
-   * API: POST /api/websocket-tickets
-   * Access: User
+   * API: `POST /api/websocket-tickets`.
+   * Authorized roles: `user`.
+   * HTTP responses: `201 Created`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated request data.
    * @param user - The authenticated user.
    * @param res - The HTTP response.
    * @returns The response payload.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Post()
   async createWebSocketTicket(

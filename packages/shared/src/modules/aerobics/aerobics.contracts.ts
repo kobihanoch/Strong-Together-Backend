@@ -72,14 +72,25 @@ export const deleteAerobicEntryContract = {
   response: z.void(),
 } satisfies Contract;
 
+/** Represents the create aerobic entry body value. */
 export type CreateAerobicEntryBody = BodyOf<typeof createAerobicEntryContract>;
+/** Represents the create aerobic entry query value. */
 export type CreateAerobicEntryQuery = QueryOf<typeof createAerobicEntryContract>;
+/** Represents the get aerobic history query value. */
 export type GetAerobicHistoryQuery = QueryOf<typeof getAerobicHistoryContract>;
+/** Represents the get aerobic history response value. */
 export type GetAerobicHistoryResponse = ResponseOf<typeof getAerobicHistoryContract>;
+/** Represents the update aerobic entry body value. */
 export type UpdateAerobicEntryBody = BodyOf<typeof updateAerobicEntryContract>;
+/** Represents the update aerobic entry params value. */
 export type UpdateAerobicEntryParams = ParamsOf<typeof updateAerobicEntryContract>;
+/** Represents the update aerobic entry query value. */
 export type UpdateAerobicEntryQuery = QueryOf<typeof updateAerobicEntryContract>;
+/** Represents the update aerobic entry response value. */
 export type UpdateAerobicEntryResponse = ResponseOf<typeof updateAerobicEntryContract>;
+/** Represents the delete aerobic entry query value. */
 export type DeleteAerobicEntryQuery = QueryOf<typeof deleteAerobicEntryContract>;
+/** Represents the delete aerobic entry params value. */
 export type DeleteAerobicEntryParams = ParamsOf<typeof deleteAerobicEntryContract>;
+/** Represents the delete aerobic entry response value. */
 export type DeleteAerobicEntryResponse = ResponseOf<typeof deleteAerobicEntryContract>;

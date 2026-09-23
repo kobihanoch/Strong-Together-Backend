@@ -29,17 +29,7 @@ import { RequestData } from '../../../common/decorators/request-data.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 
-/**
- * Aerobics routes for authenticated users.
- *
- * Preserves the existing route paths and behavior from the Express version:
- * - GET /api/aerobics
- * - POST /api/aerobics
- * - PUT /api/aerobics/:id
- * - DELETE /api/aerobics/:id
- *
- * Access: User
- */
+/** Aerobics routes for authenticated users. */
 @Controller('api/aerobics')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
@@ -58,13 +48,17 @@ export class AerobicsController {
    * sets the `X-Cache` response header to indicate whether the payload was served
    * from cache.
    *
-   * API: GET /api/aerobics
-   * Access: Authenticated user with the `user` role
+   * API: `GET /api/aerobics`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated request data.
    * @param user - The authenticated user.
    * @param res - The HTTP response.
    * @returns The response payload.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get()
   async getAerobicHistory(
@@ -85,12 +79,16 @@ export class AerobicsController {
    * Persists the submitted aerobics entry, deletes its exact 45-day cache key,
    * and responds with 204 No Content.
    *
-   * API: POST /api/aerobics
-   * Access: Authenticated user with the `user` role
+   * API: `POST /api/aerobics`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated request data.
    * @param user - The authenticated user.
    * @returns A promise that resolves with no response body after creation.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Post()
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -109,13 +107,17 @@ export class AerobicsController {
    * Replaces an owned aerobic entry, deletes its exact 45-day cache key, and
    * responds with 204 No Content.
    *
-   * API: PUT /api/aerobics/:id
-   * Access: Authenticated user with the `user` role
+   * API: `PUT /api/aerobics/:id`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`; `404 Not Found`.
    *
    * @param data - The validated path parameters and request body.
    * @param user - The authenticated user.
    * @returns A promise that resolves with no response body after the update.
    * @throws {AerobicEntryNotFoundError} When the owned aerobic entry does not exist.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Put(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -135,13 +137,17 @@ export class AerobicsController {
    * Deletes an owned aerobic entry, deletes its exact 45-day cache key, and
    * responds with 204 No Content.
    *
-   * API: DELETE /api/aerobics/:id
-   * Access: Authenticated user with the `user` role
+   * API: `DELETE /api/aerobics/:id`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`; `404 Not Found`.
    *
    * @param data - The validated path parameters and query.
    * @param user - The authenticated user.
    * @returns A promise that resolves with no response body after deletion.
    * @throws {AerobicEntryNotFoundError} When the owned aerobic entry does not exist.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)

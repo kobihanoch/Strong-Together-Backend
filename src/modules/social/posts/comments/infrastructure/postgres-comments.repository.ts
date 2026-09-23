@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import type { AddCommentOutcome, DeleteCommentOutcome, EditCommentOutcome, PostComment } from '../application/models/comments.models';
 import { CommentsRepository } from '../application/ports/comments.repository';
 import { CommentsSql } from './comments.sql';
-/** PostgreSQL implementation of comment persistence. */ @Injectable()
+/** PostgreSQL implementation of comment persistence. */
+@Injectable()
 export class PostgresCommentsRepository implements CommentsRepository {
   public constructor(private readonly sql: CommentsSql) {}
   public list(postId: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<PostComment[]> {

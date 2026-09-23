@@ -14,4 +14,5 @@ export const proceedLoginResponseSchema = loginResponseSchema;
 
 export const oAuthLoginContract = { response: oAuthLoginResponseSchema } satisfies Contract;
 
+/** Represents the oauth login response value. */
 export type OAuthLoginResponse = ResponseOf<typeof oAuthLoginContract>;

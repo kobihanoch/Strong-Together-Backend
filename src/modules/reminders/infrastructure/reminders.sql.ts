@@ -12,6 +12,7 @@ export class RemindersSql {
 
   /**
    * Retrieves reminder settings owned by a user.
+   *
    * @param userId - The authenticated user's identifier.
    * @returns The user's reminder settings, or null when none exist.
    */
@@ -24,8 +25,10 @@ export class RemindersSql {
         created_at AS "createdAt",
         updated_at AS "updatedAt",
         time_zone AS "timeZone"
-      FROM reminders.user_reminder_setting
-      WHERE user_id = ${userId}::UUID
+      FROM
+        reminders.user_reminder_setting
+      WHERE
+        user_id = ${userId}::UUID
     `;
 
     return settings ?? null;
@@ -33,8 +36,10 @@ export class RemindersSql {
 
   /**
    * Creates or replaces the reminder settings owned by a user.
+   *
    * @param userId - The authenticated user's identifier.
    * @param settings - The validated reminder settings.
+   * @returns A promise that resolves when the operation completes.
    */
   async upsertSettings(userId: string, settings: UpsertReminderSettingsInput): Promise<void> {
     await this.dbService.sql`
@@ -56,8 +61,10 @@ export class RemindersSql {
 
   /**
    * Updates only the time zone of reminder settings owned by a user.
+   *
    * @param userId - The authenticated user's identifier.
    * @param settings - The validated reminder time-zone settings.
+   * @returns A promise that resolves when the operation completes.
    */
   async updateTimeZone(userId: string, settings: UpdateReminderTimeZoneInput): Promise<void> {
     await this.dbService.sql`
@@ -65,7 +72,8 @@ export class RemindersSql {
       SET
         time_zone = ${settings.timeZone},
         updated_at = NOW()
-      WHERE user_id = ${userId}::UUID
+      WHERE
+        user_id = ${userId}::UUID
     `;
   }
 }

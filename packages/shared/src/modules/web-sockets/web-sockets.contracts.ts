@@ -11,5 +11,7 @@ export const createWebSocketTicketContract = {
   response: createWebSocketTicketResponseSchema,
 } satisfies Contract;
 
+/** Represents the create web socket ticket body value. */
 export type CreateWebSocketTicketBody = BodyOf<typeof createWebSocketTicketContract>;
+/** Represents the create web socket ticket response value. */
 export type CreateWebSocketTicketResponse = ResponseOf<typeof createWebSocketTicketContract>;

@@ -8,14 +8,7 @@ import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.p
 import { validateJkt } from '../../core/presentation/oauth-request.utils';
 import { SignInWithAppleUseCase } from '../application/use-cases/sign-in-with-apple.use-case';
 
-/**
- * OAuth routes for Apple sign-in.
- *
- * Preserves the existing route path and behavior from the Express version:
- * - POST /api/oauth/apple
- *
- * Access: Public
- */
+/** OAuth routes for Apple sign-in. */
 @Controller('api/oauth')
 export class AppleController {
   constructor(private readonly signInWithAppleUseCase: SignInWithAppleUseCase) {}
@@ -26,13 +19,19 @@ export class AppleController {
    * Verifies the Apple identity token, links or creates the local user record as
    * needed, and returns the session payload.
    *
-   * API: POST /api/oauth/apple
-   * Access: Public
+   * API: `POST /api/oauth/apple`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `201 Created`; `400 Bad Request`; `401 Unauthorized`; `429 Too Many Requests`; `500 Internal Server Error`.
    *
    * @param data - The validated request data.
    * @param req - The HTTP request.
    * @param res - The HTTP response.
    * @returns The response payload.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {InvalidAppleOAuthError} When the Apple identity token is invalid.
+   * @throws {AppleOAuthUnauthorizedError} When the account cannot start a session.
+   * @throws {Error} When verified Apple claims contain an invalid nonce.
+   * @throws {HttpException} When the rate limit is exceeded.
    */
   @Post('apple')
   @UseGuards(RateLimitGuard)

@@ -6,6 +6,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { RedisClientType } from 'redis';
 import { REDIS_CLIENT } from '../redis/redis.tokens';
 
+/** Describes the user cache shape. */
 export interface UserCache {
   get<T>(): Promise<T | null>;
   set<T>(value: T, ttlSec: number): Promise<void>;

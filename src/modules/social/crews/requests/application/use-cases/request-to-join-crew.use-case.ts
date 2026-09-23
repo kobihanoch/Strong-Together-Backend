@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { CrewNotFoundError } from '../errors/crew-requests.errors';
 import { CrewRequestsRepository } from '../ports/crew-requests.repository';
 
-/** Requests membership in a crew. */ @Injectable()
+/** Requests membership in a crew. */
+
+@Injectable()
 export class RequestToJoinCrewUseCase {
   public constructor(private readonly repository: CrewRequestsRepository) {}
   /**
    * Executes the application operation.
-   *
    *
    * @param crewId - Crew identifier.
    * @param userId - Requesting user.

@@ -14,14 +14,7 @@ import type { AuthenticatedUser } from '../../../common/types/express';
 import { CreateVideoUploadUrlUseCase } from '../application/use-cases/create-video-upload-url.use-case';
 import { normalizeHeaderValue } from './video-analysis.utils';
 
-/**
- * Video-analysis routes for authenticated users.
- *
- * Preserves the existing route path and behavior from the Express version:
- * - POST /api/video-analysis/upload-urls
- *
- * Access: User
- */
+/** Video-analysis routes for authenticated users. */
 @Controller('api/video-analysis/upload-urls')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
@@ -38,14 +31,18 @@ export class VideoAnalysisController {
    * metadata, and returns the upload URL the client should use for direct video
    * upload.
    *
-   * API: POST /api/video-analysis/upload-urls
-   * Access: User
+   * API: `POST /api/video-analysis/upload-urls`.
+   * Authorized roles: `user`.
+   * HTTP responses: `201 Created`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated request data.
    * @param user - The authenticated user.
    * @param requestId - The request id.
-   * @param req - The HTTP request.
+   * @param requestId - The request id.
    * @returns The response payload.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Post()
   async createVideoUploadUrl(

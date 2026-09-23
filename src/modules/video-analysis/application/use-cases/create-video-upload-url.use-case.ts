@@ -13,6 +13,7 @@ export class CreateVideoUploadUrlUseCase {
 
   /**
    * Creates an object key and presigned upload URL with tracing metadata.
+   *
    * @param input - The job, user, file, and tracing values.
    * @returns The upload response and generated object key.
    */

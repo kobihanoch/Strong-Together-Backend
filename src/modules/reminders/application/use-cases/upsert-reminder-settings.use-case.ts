@@ -9,6 +9,7 @@ export class UpsertReminderSettingsUseCase {
 
   /**
    * Persists the complete reminder-settings state for a user.
+   *
    * @param userId - The settings owner.
    * @param settings - The settings to persist.
    * @returns Nothing.

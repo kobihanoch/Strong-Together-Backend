@@ -3,9 +3,16 @@ import postgres from 'postgres';
 import { DBService } from '../../../../infrastructure/db/db.service';
 import type { UpdateUserInput } from '../application/models/update-user.models';
 import type { UserProfilePictureSqlRow, UserProfileSqlRow } from './update-user.db-types';
-/** Executes user profile SQL operations. */ @Injectable()
+/** Executes user profile SQL operations. */
+@Injectable()
 export class UpdateUserSql {
   constructor(private readonly db: DBService) {}
+  /**
+   * Executes the find SQL operation.
+   *
+   * @param userId - The user identifier.
+   * @returns The query result.
+   */
   find(userId: string): Promise<UserProfileSqlRow[]> {
     return this.db.sql<UserProfileSqlRow[]>`
       SELECT
@@ -47,6 +54,13 @@ export class UpdateUserSql {
         id = ${userId}::UUID
     `;
   }
+  /**
+   * Executes the update SQL operation.
+   *
+   * @param userId - The user identifier.
+   * @param input - The input value.
+   * @returns The query result.
+   */
   async update(userId: string, input: UpdateUserInput): Promise<UserProfileSqlRow[]> {
     if (input.email) {
       try {
@@ -111,6 +125,13 @@ export class UpdateUserSql {
         ) AS "userData"
     `;
   }
+  /**
+   * Executes the update email SQL operation.
+   *
+   * @param userId - The user identifier.
+   * @param email - The normalized email address.
+   * @returns A promise that resolves when the operation completes.
+   */
   async updateEmail(userId: string, email: string): Promise<void> {
     await this.db.promoteCurrentRlsTxToAuthenticated(userId);
     try {
@@ -141,6 +162,12 @@ export class UpdateUserSql {
       throw error;
     }
   }
+  /**
+   * Executes the delete SQL operation.
+   *
+   * @param userId - The user identifier.
+   * @returns A promise that resolves when the operation completes.
+   */
   async delete(userId: string): Promise<void> {
     await this.db.sql`
       DELETE FROM identity.user
@@ -148,6 +175,12 @@ export class UpdateUserSql {
         id = ${userId}::UUID
     `;
   }
+  /**
+   * Executes the find profile picture SQL operation.
+   *
+   * @param userId - The user identifier.
+   * @returns The query result.
+   */
   findProfilePicture(userId: string): Promise<UserProfilePictureSqlRow[]> {
     return this.db.sql<UserProfilePictureSqlRow[]>`
       SELECT
@@ -160,6 +193,13 @@ export class UpdateUserSql {
         1
     `;
   }
+  /**
+   * Executes the update profile picture SQL operation.
+   *
+   * @param userId - The user identifier.
+   * @param path - The path value.
+   * @returns A promise that resolves when the operation completes.
+   */
   async updateProfilePicture(userId: string, path: string | null): Promise<void> {
     await this.db.sql`
       UPDATE identity.user

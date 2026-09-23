@@ -3,12 +3,13 @@ import { decodeSocialCursor, encodeSocialCursor } from '../../../../core/applica
 import type { CommentsPage } from '../models/comments.models';
 import { CommentsRepository } from '../ports/comments.repository';
 
-/** Lists comments for a visible post. */ @Injectable()
+/** Lists comments for a visible post. */
+
+@Injectable()
 export class ListPostCommentsUseCase {
   public constructor(private readonly repository: CommentsRepository) {}
   /**
    * Executes the application operation.
-   *
    *
    * @param postId - Post identifier.
    * @param limit - Page size.

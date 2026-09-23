@@ -18,13 +18,13 @@ export class ReplaceCrewProfilePictureUseCase {
   /**
    * Executes the application operation.
    *
-   *
    * @param crewId - Crew identifier.
    * @param file - Uploaded image.
    * @param onCleanupFailure - Best-effort cleanup failure reporter.
    * @returns Stored image details.
    * @throws {CrewImageRequiredError} When no image is supplied.
-   * @throws {CrewNotFoundError} When inaccessible or absent. */
+   * @throws {CrewNotFoundError} When inaccessible or absent.
+   */
   public async execute(
     crewId: string,
     file: CrewImageUpload | undefined,

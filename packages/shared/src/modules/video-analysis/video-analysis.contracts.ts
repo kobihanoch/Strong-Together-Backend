@@ -17,7 +17,9 @@ export const createVideoUploadUrlContract = {
   response: createVideoUploadUrlResponseSchema,
 } satisfies Contract;
 
+/** Represents the create video upload url body value. */
 export type CreateVideoUploadUrlBody = BodyOf<typeof createVideoUploadUrlContract>;
+/** Represents the create video upload url response value. */
 export type CreateVideoUploadUrlResponse = ResponseOf<typeof createVideoUploadUrlContract>;
 
 /** Parameters used to enqueue a video-analysis job. */
@@ -56,7 +58,11 @@ export const analyzeVideoResultPayloadDtoSchema = <TResultSchema extends z.ZodTy
     ]),
   );
 
+/** Represents the enqueue analyze video params dto value. */
 export type EnqueueAnalyzeVideoParamsDto = z.infer<typeof enqueueAnalyzeVideoParamsDtoSchema>;
+/** Represents the analyze video payload dto value. */
 export type AnalyzeVideoPayloadDto = z.infer<typeof analyzeVideoPayloadDtoSchema>;
+/** Represents the squat repetition dto value. */
 export type SquatRepetitionDto = z.infer<typeof squatRepetitionDtoSchema>;
+/** Represents the analyze video result payload dto value. */
 export type AnalyzeVideoResultPayloadDto<TResult> = z.infer<ReturnType<typeof analyzeVideoResultPayloadDtoSchema<z.ZodType<TResult>>>>;

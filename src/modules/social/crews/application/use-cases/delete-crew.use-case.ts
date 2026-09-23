@@ -9,10 +9,10 @@ export class DeleteCrewUseCase {
   /**
    * Executes the application operation.
    *
-   *
    * @param id - Crew identifier.
    * @returns Nothing after deletion.
-   * @throws {CrewNotFoundError} When inaccessible or absent. */
+   * @throws {CrewNotFoundError} When inaccessible or absent.
+   */
   public async execute(id: string): Promise<void> {
     const outcome = await this.repository.delete(id);
     if (outcome.kind === 'not-found') throw new CrewNotFoundError();

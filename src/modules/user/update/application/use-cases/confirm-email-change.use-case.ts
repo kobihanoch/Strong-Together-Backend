@@ -13,6 +13,7 @@ export class ConfirmEmailChangeUseCase {
   ) {}
   /**
    * Confirms an email-change token once.
+   *
    * @param token - Signed token, when provided.
    * @returns The domain outcome and optional failure reason.
    */

@@ -6,6 +6,7 @@ import type { AppleIdentityName, VerifyAppleIdentityOutcome } from '../applicati
 import { AppleIdentityVerifier } from '../application/ports/apple-identity-verifier.port';
 import { buildOAuthDisplayName } from '../../core/domain/oauth-display-name';
 
+/** Describes the apple jwt payload shape. */
 interface AppleJwtPayload extends JWTPayload {
   email?: string | null;
   email_verified?: boolean | 'true' | 'false';

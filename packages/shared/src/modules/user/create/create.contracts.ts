@@ -3,12 +3,14 @@ import type { BodyOf, Contract, ResponseOf } from '../../../common';
 
 // Create user
 
-const usernameSchema = z.string()
+const usernameSchema = z
+  .string()
   .trim()
   .min(3, 'Username must be at least 3 characters')
   .max(15, 'Username must be at most 15 characters')
   .regex(/^[a-zA-Z0-9_]+$/, 'Username may contain letters, numbers, and underscore only');
-const fullNameSchema = z.string()
+const fullNameSchema = z
+  .string()
   .trim()
   .max(20, 'Full name is too long')
   .regex(/^[a-zA-Z\s]+$/, 'Full name may contain letters and spaces only');
@@ -37,5 +39,7 @@ export const createUserContract = {
   response: createUserResponseSchema,
 } satisfies Contract;
 
+/** Represents the create user body value. */
 export type CreateUserBody = BodyOf<typeof createUserContract>;
+/** Represents the create user response value. */
 export type CreateUserResponse = ResponseOf<typeof createUserContract>;

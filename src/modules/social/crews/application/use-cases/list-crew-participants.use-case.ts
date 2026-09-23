@@ -10,11 +10,11 @@ export class ListCrewParticipantsUseCase {
   /**
    * Executes the application operation.
    *
-   *
    * @param crewId - Crew identifier.
    * @param limit - Page size.
    * @param cursor - Previous page cursor.
-   * @returns A participant page. */
+   * @returns A participant page.
+   */
   public async execute(crewId: string, limit: number, cursor?: string): Promise<CrewParticipantsPage> {
     const decoded = decodeSocialCursor(cursor);
     const rows = await this.repository.listParticipants(

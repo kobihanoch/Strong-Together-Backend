@@ -9,4 +9,5 @@ export const replacePushTokenRequestSchema = z.object({
 
 export const replacePushTokenContract = { request: replacePushTokenRequestSchema } satisfies Contract;
 
+/** Represents the replace push token body value. */
 export type ReplacePushTokenBody = BodyOf<typeof replacePushTokenContract>;

@@ -11,13 +11,9 @@ export class SearchSocialUsersUseCase {
   /**
    * Searches public profiles by username or full name.
    *
-   *
    * @param search - Text matched against public profile names.
-   *
    * @param limit - Maximum number of profiles returned.
-   *
    * @param cursor - Opaque cursor from the previous page.
-   *
    * @returns The matching profiles and an optional continuation cursor.
    */
   public async execute(search: string, limit: number, cursor?: string): Promise<SocialUsersSearchResult> {

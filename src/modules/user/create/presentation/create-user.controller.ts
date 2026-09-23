@@ -6,18 +6,22 @@ import { RequestData } from '../../../../common/decorators/request-data.decorato
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import { CreateUserUseCase } from '../application/use-cases/create-user.use-case';
 
-/** Exposes public user-registration endpoints. */
+/** E */
 @Controller('api/users')
 export class CreateUserController {
   constructor(private readonly createUser: CreateUserUseCase) {}
   /**
    * Registers a local user and schedules account verification.
-   * API: POST /api/users
-   * Access: Public
+   *
+   * API: `POST /api/users`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `201 Created`; `400 Bad Request`.
+   *
    * @param data - Validated registration data.
    * @param requestId - Optional request correlation identifier.
    * @returns No response body.
    * @throws {UserAlreadyExistsError} When the username or email is already used.
+   * @throws {BadRequestException} When request validation fails.
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)

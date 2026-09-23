@@ -5,6 +5,7 @@ import postgres from 'postgres';
 import { createLogger } from '../logger';
 import { DB_CLIENT } from './db.tokens';
 
+/** Describes the dbstore shape. */
 interface DBStore {
   tx: postgres.TransactionSql;
   afterCommit: Array<() => Promise<void>>;

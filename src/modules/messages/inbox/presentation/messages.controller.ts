@@ -12,7 +12,7 @@ import { DeleteMessageUseCase } from '../application/use-cases/delete-message.us
 import { ListMessagesUseCase } from '../application/use-cases/list-messages.use-case';
 import { MarkMessageAsReadUseCase } from '../application/use-cases/mark-message-as-read.use-case';
 
-/** Exposes authenticated message inbox endpoints. */
+/** E */
 @Controller('api/messages')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
@@ -26,12 +26,16 @@ export class MessagesController {
   /**
    * Retrieves the authenticated user's inbox.
    *
-   * API: GET /api/messages
-   * Access: Authenticated user
+   * API: `GET /api/messages`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated time-zone query.
    * @param user - The authenticated request user.
    * @returns The user's messages.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get()
   async list(
@@ -44,13 +48,17 @@ export class MessagesController {
   /**
    * Marks an owned message as read.
    *
-   * API: PATCH /api/messages/:id/read
-   * Access: Authenticated user
+   * API: `PATCH /api/messages/:id/read`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`; `404 Not Found`.
    *
    * @param data - The validated message identifier.
    * @param user - The authenticated request user.
    * @returns Nothing.
    * @throws {MessageNotFoundError} When the message is absent or not owned by the user.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Patch(':id/read')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -64,13 +72,17 @@ export class MessagesController {
   /**
    * Deletes a message visible to the authenticated user.
    *
-   * API: DELETE /api/messages/:id
-   * Access: Authenticated user
+   * API: `DELETE /api/messages/:id`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`; `404 Not Found`.
    *
    * @param data - The validated message identifier.
    * @param user - The authenticated request user.
    * @returns Nothing.
    * @throws {MessageNotFoundError} When the message is absent or inaccessible to the user.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)

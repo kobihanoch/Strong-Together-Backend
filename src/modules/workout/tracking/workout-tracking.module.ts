@@ -13,7 +13,8 @@ import { PostgresWorkoutTrackingRepository } from './infrastructure/postgres-wor
 import { RedisWorkoutTrackingCache } from './infrastructure/redis-workout-tracking.cache';
 import { WorkoutTrackingSql } from './infrastructure/workout-tracking.sql';
 import { WorkoutTrackingController } from './presentation/workout-tracking.controller';
-/** Composes workout tracking and its adapters. */ @Module({
+/** Composes workout tracking and its adapters. */
+@Module({
   controllers: [WorkoutTrackingController],
   providers: [
     WorkoutTrackingSql,

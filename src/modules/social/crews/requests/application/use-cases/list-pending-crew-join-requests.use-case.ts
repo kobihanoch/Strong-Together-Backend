@@ -3,12 +3,13 @@ import { CrewRequestAccessDeniedError } from '../errors/crew-requests.errors';
 import type { PendingCrewJoinRequests } from '../models/crew-requests.models';
 import { CrewRequestsRepository } from '../ports/crew-requests.repository';
 
-/** Lists pending join requests for a managed crew. */ @Injectable()
+/** Lists pending join requests for a managed crew. */
+
+@Injectable()
 export class ListPendingCrewJoinRequestsUseCase {
   public constructor(private readonly repository: CrewRequestsRepository) {}
   /**
    * Executes the application operation.
-   *
    *
    * @param crewId - Crew identifier.
    * @returns Pending requests.

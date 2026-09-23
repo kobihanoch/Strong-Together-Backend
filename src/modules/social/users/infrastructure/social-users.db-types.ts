@@ -1,5 +1,6 @@
 import { user } from '../../../../infrastructure/db/schema/drizzle/identity/user/table';
 
+/** Represents the user db row value. */
 type UserDbRow = typeof user.$inferSelect;
 
 /** Serialized public-user row returned by social search SQL. */

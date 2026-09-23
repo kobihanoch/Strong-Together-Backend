@@ -9,6 +9,7 @@ export class GetReminderSettingsUseCase {
 
   /**
    * Retrieves reminder settings owned by a user.
+   *
    * @param userId - The settings owner.
    * @returns The settings result, containing `null` when none exist.
    */

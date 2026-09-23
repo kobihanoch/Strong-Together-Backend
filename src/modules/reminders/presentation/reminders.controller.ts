@@ -12,16 +12,7 @@ import { GetReminderSettingsUseCase } from '../application/use-cases/get-reminde
 import { UpdateReminderTimeZoneUseCase } from '../application/use-cases/update-reminder-time-zone.use-case';
 import { UpsertReminderSettingsUseCase } from '../application/use-cases/upsert-reminder-settings.use-case';
 
-/**
- * Reminder-settings routes for authenticated users.
- *
- * Exposes reminder-settings read and create-or-replace operations:
- * - GET /api/reminders
- * - PUT /api/reminders
- * - PATCH /api/reminders/time-zone
- *
- * Access: User
- */
+/** Reminder-settings routes for authenticated users. */
 @Controller('api/reminders')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
@@ -34,10 +25,15 @@ export class RemindersController {
 
   /**
    * Gets the authenticated user's reminder settings.
-   * API: GET /api/reminders
-   * Access: User
+   *
+   * API: `GET /api/reminders`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `401 Unauthorized`; `403 Forbidden`.
+   *
    * @param user - The authenticated user.
    * @returns The user's reminder settings, or null when none exist.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get()
   async getReminderSettings(@CurrentUser() user: AuthenticatedUser): Promise<GetReminderSettingsResponse> {
@@ -50,12 +46,16 @@ export class RemindersController {
    * Creates a settings row when none exists. Otherwise, updates the enabled
    * state, time zone, and modification timestamp of the existing row.
    *
-   * API: PUT /api/reminders
-   * Access: User
+   * API: `PUT /api/reminders`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated reminder-settings request.
    * @param user - The authenticated user.
    * @returns No body.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Put()
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -72,12 +72,16 @@ export class RemindersController {
    *
    * Leaves the reminder-enabled setting unchanged.
    *
-   * API: PATCH /api/reminders/time-zone
-   * Access: User
+   * API: `PATCH /api/reminders/time-zone`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
    *
    * @param data - The validated reminder time-zone request.
    * @param user - The authenticated user.
    * @returns No body.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Patch('time-zone')
   @HttpCode(HttpStatus.NO_CONTENT)

@@ -10,4 +10,5 @@ export const listExercisesResponseSchema = z.record(
 
 export const listExercisesContract = { response: listExercisesResponseSchema } satisfies Contract;
 
+/** Represents the list exercises response value. */
 export type ListExercisesResponse = ResponseOf<typeof listExercisesContract>;

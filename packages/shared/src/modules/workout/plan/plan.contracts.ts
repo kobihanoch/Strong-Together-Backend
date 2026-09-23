@@ -29,7 +29,11 @@ export const replaceWorkoutPlanContract = {
   response: replaceWorkoutPlanResponseSchema,
 } satisfies Contract;
 
+/** Represents the get workout plan query value. */
 export type GetWorkoutPlanQuery = QueryOf<typeof getWorkoutPlanContract>;
+/** Represents the get workout plan response value. */
 export type GetWorkoutPlanResponse = ResponseOf<typeof getWorkoutPlanContract>;
+/** Represents the replace workout plan body value. */
 export type ReplaceWorkoutPlanBody = BodyOf<typeof replaceWorkoutPlanContract>;
+/** Represents the replace workout plan response value. */
 export type ReplaceWorkoutPlanResponse = ResponseOf<typeof replaceWorkoutPlanContract>;

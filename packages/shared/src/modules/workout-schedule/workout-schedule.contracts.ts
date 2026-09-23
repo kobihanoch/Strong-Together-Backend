@@ -44,6 +44,9 @@ export const replaceWorkoutSchedulesContract = {
   response: z.void(),
 } satisfies Contract;
 
+/** Represents the get workout schedules response value. */
 export type GetWorkoutSchedulesResponse = ResponseOf<typeof getWorkoutSchedulesContract>;
+/** Represents the replace workout schedules body value. */
 export type ReplaceWorkoutSchedulesBody = BodyOf<typeof replaceWorkoutSchedulesContract>;
+/** Represents the replace workout schedules response value. */
 export type ReplaceWorkoutSchedulesResponse = ResponseOf<typeof replaceWorkoutSchedulesContract>;

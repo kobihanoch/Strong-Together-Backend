@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { appConfig } from '../../config/app.config';
 import { generalRateLimit } from '../guards/rate-limit.guard';
 
+/** Represents the bucket value. */
 type Bucket = {
   count: number;
   resetAt: number;

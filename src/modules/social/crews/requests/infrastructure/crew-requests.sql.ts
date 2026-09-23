@@ -119,10 +119,6 @@ export class CrewRequestsSql {
   /**
    * Inserts a self-initiated request to join a crew.
    *
-   * @remarks
-   * The database assigns `accepted` for a public crew and `pending` for a private
-   * crew. Both initiator and participant are the requesting user.
-   *
    * @param crewId - The UUID of the target crew.
    * @param userId - The UUID used as both request initiator and participant.
    * @returns The inserted participation request, or an empty collection when no visible crew matches.
@@ -158,11 +154,6 @@ export class CrewRequestsSql {
   /**
    * Updates a pending participation request to a terminal response status.
    *
-   * @remarks
-   * The request ID uniquely determines its crew, so no crew ID is required.
-   * RLS permits leaders to resolve join requests and invitees to resolve their
-   * invitations. The response and update timestamps are set together.
-   *
    * @param requestId - The UUID of the participation request to update.
    * @param status - The requested terminal status, either `accepted` or `declined`.
    * @returns The updated request, or an empty collection if it is unavailable or not pending.
@@ -191,10 +182,6 @@ export class CrewRequestsSql {
 
   /**
    * Creates active member membership for a specific crew participant.
-   *
-   * @remarks
-   * The identifiers come from the request row returned by the preceding insert
-   * or status update. Membership RLS authorizes the insertion.
    *
    * @param crewId - The UUID of the crew the participant is joining.
    * @param userId - The UUID of the user receiving active member membership.

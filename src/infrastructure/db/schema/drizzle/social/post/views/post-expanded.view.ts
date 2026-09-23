@@ -3,6 +3,7 @@ import { jsonb, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { socialSchema } from '../../../schemas';
 import { postVisibility } from '../table';
 
+/** Represents the post interactions value. */
 export type PostInteractions = {
   reactionsCount: {
     likesCount: number;

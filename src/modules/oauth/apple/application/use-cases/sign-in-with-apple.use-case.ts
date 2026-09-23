@@ -31,6 +31,7 @@ export class SignInWithAppleUseCase {
    * @returns The issued application session.
    * @throws {InvalidAppleOAuthError} When required Apple identity input is missing.
    * @throws {AppleOAuthUnauthorizedError} When the linked user cannot start a session.
+   * @throws {Error} When verified Apple claims contain an invalid nonce.
    */
   async execute(body: AppleOAuthInput, jkt: string): Promise<OAuthLoginResult> {
     const { idToken, rawNonce, name, email } = body || {};

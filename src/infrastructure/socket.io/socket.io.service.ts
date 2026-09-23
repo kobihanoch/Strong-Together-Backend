@@ -8,11 +8,13 @@ import { SOCKET_ADAPTER_CLIENTS } from '../redis/redis.tokens';
 import { SOCKET_IO } from './socket.io.tokens';
 import { createAdapter } from '@socket.io/redis-adapter';
 
+/** Represents the socket user value. */
 type SocketUser = {
   id: string;
   username: string | null;
 };
 
+/** Represents the authed socket value. */
 type AuthedSocket = Socket & {
   user?: SocketUser;
 };

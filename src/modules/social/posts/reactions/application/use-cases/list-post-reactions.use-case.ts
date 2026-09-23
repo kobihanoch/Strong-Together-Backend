@@ -3,12 +3,13 @@ import { decodeSocialCursor, encodeSocialCursor } from '../../../../core/applica
 import type { ReactionsPage } from '../models/reactions.models';
 import { ReactionsRepository } from '../ports/reactions.repository';
 
-/** Lists reactions for a visible post. */ @Injectable()
+/** Lists reactions for a visible post. */
+
+@Injectable()
 export class ListPostReactionsUseCase {
   public constructor(private readonly repository: ReactionsRepository) {}
   /**
    * Executes the application operation.
-   *
    *
    * @param postId - Post identifier.
    * @param limit - Page size.

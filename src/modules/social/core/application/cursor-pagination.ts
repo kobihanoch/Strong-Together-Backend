@@ -3,6 +3,7 @@ import { InvalidPaginationCursorError } from './errors/cursor-pagination.errors'
 
 const cursorSchema = z.object({ timestamp: z.iso.datetime(), id: z.uuid(), rank: z.number().int().optional() });
 
+/** Represents the social cursor value. */
 export type SocialCursor = z.infer<typeof cursorSchema>;
 
 /** Encodes stable sort values as an opaque URL-safe cursor. */

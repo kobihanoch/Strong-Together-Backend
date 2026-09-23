@@ -11,12 +11,15 @@ export class GetWorkoutStatisticsUseCase {
     private readonly cache: WorkoutTrackingCache,
     private readonly hooks: TransactionHooks,
   ) {}
-  /** Retrieves workout statistics. @param userId - User identifier. @param days - Recent local days. @param fromCache - Whether cache may be used. @param timezone - Local timezone. @returns Statistics and cache status. */ async execute(
-    userId: string,
-    days = 45,
-    fromCache = true,
-    timezone: string,
-  ): Promise<{ payload: WorkoutStatistics; cacheHit: boolean }> {
+  /**
+   * Retrieves workout statistics.
+   *
+   * @param userId - The user identifier.
+   * @param days - The number of recent local days to include.
+   * @param fromCache - Whether cached data may be returned.
+   * @param timezone - The IANA time-zone name.
+   * @returns The use-case result.
+   */ async execute(userId: string, days = 45, fromCache = true, timezone: string): Promise<{ payload: WorkoutStatistics; cacheHit: boolean }> {
     const cacheEntry = await this.cache.workoutStatisticsForUser(userId, days, timezone);
     if (fromCache) {
       const value = await cacheEntry.get();

@@ -1,14 +1,11 @@
+/** Describes the forgot password email params shape. */
 interface ForgotPasswordEmailParams {
   fullName: string;
   changePasswordUrl: string;
   logoUrl: string;
 }
 
-export const generateForgotPasswordEmail = ({
-  fullName,
-  changePasswordUrl,
-  logoUrl,
-}: ForgotPasswordEmailParams): string => `
+export const generateForgotPasswordEmail = ({ fullName, changePasswordUrl, logoUrl }: ForgotPasswordEmailParams): string => `
 <!DOCTYPE html>
 <html lang="en">
   <head>

@@ -15,4 +15,5 @@ export const appleOAuthRequestSchema = z.object({
 
 export const appleOAuthContract = { request: appleOAuthRequestSchema } satisfies Contract;
 
+/** Represents the apple oauth body value. */
 export type AppleOAuthBody = BodyOf<typeof appleOAuthContract>;

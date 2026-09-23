@@ -9,6 +9,7 @@ export class CreateWebSocketTicketUseCase {
 
   /**
    * Issues a short-lived ticket for a user.
+   *
    * @param userId - The authenticated user identifier.
    * @param username - The optional username embedded in the ticket.
    * @returns The signed connection ticket.

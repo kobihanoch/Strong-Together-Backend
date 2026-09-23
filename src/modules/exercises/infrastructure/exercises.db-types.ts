@@ -1,5 +1,6 @@
 import { exercise } from '../../../infrastructure/db/schema/drizzle/workout/exercises/table';
 
+/** Represents the exercise db row value. */
 type ExerciseDbRow = typeof exercise.$inferSelect;
 
 /** Exercise fields embedded in the catalogue JSON aggregation. */

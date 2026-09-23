@@ -12,9 +12,7 @@ import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.p
 import type { AppRequest } from '../../../../common/types/express';
 import { getRefreshToken } from './refresh-token.extractor';
 
-/**
- * Handles session HTTP requests.
- */
+/** H */
 @Controller('api/auth')
 export class SessionController {
   constructor(
@@ -30,13 +28,18 @@ export class SessionController {
    * performs first-login side effects when needed, and returns a fresh access and
    * refresh token pair.
    *
-   * API: POST /api/auth/login
-   * Access: Public
+   * API: `POST /api/auth/login`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `429 Too Many Requests`.
    *
    * @param data - The validated request data.
    * @param req - The HTTP request.
    * @param res - The HTTP response.
    * @returns The response payload.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {SessionBadRequestError} When required DPoP binding is missing.
+   * @throws {SessionUnauthorizedError} When credentials or verification state are invalid.
+   * @throws {HttpException} When the rate limit is exceeded.
    */
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -62,11 +65,13 @@ export class SessionController {
    * Decodes the submitted refresh token when present, clears the stored push
    * token, bumps token version state, and returns a success message.
    *
-   * API: POST /api/auth/logout
-   * Access: Refresh token, with DPoP proof when enabled
+   * API: `POST /api/auth/logout`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `200 OK`; `401 Unauthorized`.
    *
    * @param req - The HTTP request.
    * @returns The response payload.
+   * @throws {SessionUnauthorizedError} When the refresh token or DPoP proof is invalid.
    */
   @Post('logout')
   @HttpCode(HttpStatus.OK)
@@ -85,12 +90,14 @@ export class SessionController {
    * rotates token version state, and returns a fresh access and refresh token
    * pair.
    *
-   * API: POST /api/auth/refresh
-   * Access: Public
+   * API: `POST /api/auth/refresh`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `200 OK`; `401 Unauthorized`.
    *
    * @param req - The HTTP request.
    * @param res - The HTTP response.
    * @returns The response payload.
+   * @throws {SessionUnauthorizedError} When the session, refresh token, or DPoP proof is invalid.
    */
   @Post('refresh')
   @HttpCode(HttpStatus.OK)

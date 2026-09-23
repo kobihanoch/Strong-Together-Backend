@@ -52,9 +52,9 @@ export const logger = pino({
   },
 });
 
-export const createLogger = (module: string, bindings: Bindings = {}): Logger =>
-  logger.child({ module, ...bindings });
+export const createLogger = (module: string, bindings: Bindings = {}): Logger => logger.child({ module, ...bindings });
 
 export const createRequestId = (): string => randomUUID();
 
+/** Represents the app logger value. */
 export type AppLogger = Logger;

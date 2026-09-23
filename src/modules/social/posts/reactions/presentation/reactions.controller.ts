@@ -21,12 +21,7 @@ import { DeleteReactionUseCase } from '../application/use-cases/delete-reaction.
 import { ListPostReactionsUseCase } from '../application/use-cases/list-post-reactions.use-case';
 import { ReactToPostUseCase } from '../application/use-cases/react-to-post.use-case';
 
-/**
- * Exposes authenticated reaction writes for social posts.
- *
- * @remarks Every route uses DPoP authentication, user authorization, request
- * validation, and the RLS transaction interceptor. Access: User.
- */
+/** Exposes authenticated reaction writes for social posts. */
 @Controller('api/social/posts')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
@@ -45,10 +40,15 @@ export class ReactionsController {
   /**
    * Lists reactions on a post visible to the caller.
    *
-   * API: GET /api/social/posts/:postId/reactions
-   * Access: Authenticated user
+   * API: `GET /api/social/posts/:postId/reactions`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
    * @param data - The validated post identifier and cursor pagination.
    * @returns Reactions ordered from newest to oldest.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Get(':postId/reactions')
   public listReactions(
@@ -64,11 +64,16 @@ export class ReactionsController {
   /**
    * Creates or replaces the caller's reaction to a post.
    *
-   * API: POST /api/social/posts/:postId/reactions
-   * Access: Authenticated user
+   * API: `POST /api/social/posts/:postId/reactions`.
+   * Authorized roles: `user`.
+   * HTTP responses: `201 Created`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
    * @param data - The validated post identifier and reaction type.
    * @param user - The authenticated caller.
    * @returns No response body with a 201 Created status.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Post(':postId/reactions')
   @HttpCode(HttpStatus.CREATED)
@@ -82,11 +87,16 @@ export class ReactionsController {
   /**
    * Deletes the caller's reaction from a post.
    *
-   * API: DELETE /api/social/posts/:postId/reactions
-   * Access: Authenticated user
+   * API: `DELETE /api/social/posts/:postId/reactions`.
+   * Authorized roles: `user`.
+   * HTTP responses: `204 No Content`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
    * @param data - The validated post identifier.
    * @param user - The authenticated caller.
    * @returns No response body with a 204 No Content status.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Delete(':postId/reactions')
   @HttpCode(HttpStatus.NO_CONTENT)

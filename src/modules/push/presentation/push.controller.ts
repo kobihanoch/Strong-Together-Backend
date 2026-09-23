@@ -6,13 +6,7 @@ import { authConfig } from '../../../config/auth.config';
 import type { PushBatchResult } from '../application/models/push.models';
 import { EnqueueDueWorkoutRemindersUseCase } from '../application/use-cases/enqueue-due-workout-reminders.use-case';
 
-/**
- * Push-notification trigger routes.
- *
- * - POST /api/push-jobs/workout-reminders
- *
- * Access: Cron JWT
- */
+/** Push-notification trigger routes. */
 @Controller('api/push-jobs')
 export class PushController {
   constructor(private readonly enqueueDueWorkoutRemindersUseCase: EnqueueDueWorkoutRemindersUseCase) {}
@@ -20,8 +14,9 @@ export class PushController {
   /**
    * Enqueues workout reminders due during the cron look-ahead window.
    *
-   * API: POST /api/push-jobs/workout-reminders
-   * Access: Cron JWT
+   * API: `POST /api/push-jobs/workout-reminders`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `200 OK`; `401 Unauthorized`.
    *
    * @param authorization - Bearer JWT supplied by the cron service.
    * @param requestId - The request id.

@@ -19,7 +19,11 @@ export const resetPasswordContract = {
   response: resetPasswordResponseSchema,
 } satisfies Contract;
 
+/** Represents the create password reset request body value. */
 export type CreatePasswordResetRequestBody = BodyOf<typeof createPasswordResetRequestContract>;
+/** Represents the reset password body value. */
 export type ResetPasswordBody = BodyOf<typeof resetPasswordContract>;
+/** Represents the reset password query value. */
 export type ResetPasswordQuery = QueryOf<typeof resetPasswordContract>;
+/** Represents the reset password response value. */
 export type ResetPasswordResponse = ResponseOf<typeof resetPasswordContract>;

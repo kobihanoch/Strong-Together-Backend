@@ -3,18 +3,22 @@ import { TransactionHooks } from '../../../../../common/application/ports/transa
 import type { PersonalRecords } from '../models/workout-tracking.models';
 import { WorkoutTrackingCache } from '../ports/workout-tracking-cache.port';
 import { WorkoutTrackingRepository } from '../ports/workout-tracking.repository';
-/** Retrieves cached personal records. */ @Injectable()
+/** Retrieves cached personal records. */
+@Injectable()
 export class GetPersonalRecordsUseCase {
   constructor(
     private readonly repository: WorkoutTrackingRepository,
     private readonly cache: WorkoutTrackingCache,
     private readonly hooks: TransactionHooks,
   ) {}
-  /** Retrieves personal records. @param userId - User identifier. @param fromCache - Whether cache may be used. @param timezone - Local timezone. @returns Records and cache status. */ async execute(
-    userId: string,
-    fromCache = true,
-    timezone: string,
-  ): Promise<{ payload: PersonalRecords; cacheHit: boolean }> {
+  /**
+   * Retrieves personal records.
+   *
+   * @param userId - The user identifier.
+   * @param fromCache - Whether cached data may be returned.
+   * @param timezone - The IANA time-zone name.
+   * @returns The use-case result.
+   */ async execute(userId: string, fromCache = true, timezone: string): Promise<{ payload: PersonalRecords; cacheHit: boolean }> {
     const cacheEntry = await this.cache.personalRecordsForUser(userId, timezone);
     if (fromCache) {
       const value = await cacheEntry.get();

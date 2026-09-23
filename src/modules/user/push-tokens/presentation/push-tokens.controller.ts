@@ -10,7 +10,7 @@ import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.p
 import type { AuthenticatedUser } from '../../../../common/types/express';
 import { ReplacePushTokenUseCase } from '../application/use-cases/replace-push-token.use-case';
 
-/** Exposes authenticated push-token endpoints. */
+/** E */
 @Controller('api/users')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
@@ -18,11 +18,17 @@ export class PushTokensController {
   constructor(private readonly replaceToken: ReplacePushTokenUseCase) {}
   /**
    * Replaces the authenticated user's push-notification token.
-   * API: PUT /api/users/me/push-token
-   * Access: Authenticated user
+   *
+   * API: `PUT /api/users/me/push-token`.
+   * Authorized roles: `user`.
+   * HTTP responses: `200 OK`; `400 Bad Request`; `401 Unauthorized`; `403 Forbidden`.
+   *
    * @param data - Validated push-token data.
    * @param user - The authenticated request user.
    * @returns No response body.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {UnauthorizedException} When authentication fails.
+   * @throws {ForbiddenException} When role authorization fails.
    */
   @Put('me/push-token')
   async replace(

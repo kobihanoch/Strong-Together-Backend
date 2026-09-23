@@ -6,6 +6,7 @@ export class ReplacePushTokenUseCase {
   constructor(private readonly repository: PushTokensRepository) {}
   /**
    * Stores a user's latest device push token.
+   *
    * @param userId - The user whose token is replaced.
    * @param token - The device push token.
    * @returns Nothing.

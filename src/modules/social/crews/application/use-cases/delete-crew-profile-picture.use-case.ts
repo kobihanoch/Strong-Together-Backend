@@ -15,10 +15,10 @@ export class DeleteCrewProfilePictureUseCase {
   /**
    * Executes the application operation.
    *
-   *
    * @param crewId - Crew identifier.
    * @returns Nothing after deletion.
-   * @throws {CrewProfilePictureNotFoundError} When no picture can be removed. */
+   * @throws {CrewProfilePictureNotFoundError} When no picture can be removed.
+   */
   public async execute(crewId: string): Promise<void> {
     const oldPath = await this.repository.getProfilePictureForUpdate(crewId);
     if (!oldPath) throw new CrewProfilePictureNotFoundError();

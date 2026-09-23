@@ -40,12 +40,7 @@ export class RefreshSessionUseCase {
     if (!session) throw new SessionUnauthorizedError('New login required');
     if (!session.userData.isVerified) throw new SessionUnauthorizedError('A verification email is pending');
 
-    const issued = this.tokens.issueSession(
-      session.userData.id,
-      session.userData.role,
-      session.tokenVersion,
-      dpopJkt ?? undefined,
-    );
+    const issued = this.tokens.issueSession(session.userData.id, session.userData.role, session.tokenVersion, dpopJkt ?? undefined);
     return { message: 'Access token refreshed', userId: session.userData.id, ...issued };
   }
 }

@@ -178,18 +178,30 @@ export const exerciseTrackingAndStatsQueryDtoSchema = z.object({
 
 // SQL query DTO types
 
+/** Represents the exercise tracking analysis query dto value. */
 export type ExerciseTrackingAnalysisQueryDto = z.infer<typeof exerciseTrackingAnalysisQueryDtoSchema>;
+/** Represents the exercise metadata query dto value. */
 export type ExerciseMetadataQueryDto = z.infer<typeof exerciseMetadataQueryDtoSchema>;
+/** Represents the exercise tracking pr max query dto value. */
 export type ExerciseTrackingPrMaxQueryDto = z.infer<typeof exerciseTrackingPrMaxQueryDtoSchema>;
+/** Represents the tracking map item query dto value. */
 export type TrackingMapItemQueryDto = z.infer<typeof trackingMapItemQueryDtoSchema>;
+/** Represents the tracking by date item query dto value. */
 export type TrackingByDateItemQueryDto = z.infer<typeof trackingByDateItemQueryDtoSchema>;
+/** Represents the tracking by split name item query dto value. */
 export type TrackingBySplitNameItemQueryDto = z.infer<typeof trackingBySplitNameItemQueryDtoSchema>;
+/** Represents the exercise tracking and stats query dto value. */
 export type ExerciseTrackingAndStatsQueryDto = z.infer<typeof exerciseTrackingAndStatsQueryDtoSchema>;
+/** Represents the exercise tracking stats query dto value. */
 export type ExerciseTrackingStatsQueryDto = z.infer<typeof exerciseTrackingStatsQueryDtoSchema>;
+/** Represents the exercise tracking maps query dto value. */
 export type ExerciseTrackingMapsQueryDto = z.infer<typeof exerciseTrackingMapsQueryDtoSchema>;
+/** Represents the exercise history query dto value. */
 export type ExerciseHistoryQueryDto = z.infer<typeof exerciseHistoryQueryDtoSchema>;
+/** Represents the personal records query dto value. */
 export type PersonalRecordsQueryDto = z.infer<typeof personalRecordsQueryDtoSchema>;
 
 // SQL query input DTOs
 
+/** Represents the finished workout entry query dto value. */
 export type FinishedWorkoutEntryQueryDto = z.infer<typeof finishedWorkoutEntryQueryDtoSchema>;

@@ -1,3 +1,4 @@
+/** Represents the validate user email params value. */
 type ValidateUserEmailParams = {
   fullName: string;
   verifyUrl: string;

@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { CommentNotFoundError } from '../errors/comments.errors';
 import { CommentsRepository } from '../ports/comments.repository';
 
-/** Edits a comment owned by the caller. */ @Injectable()
+/** Edits a comment owned by the caller. */
+
+@Injectable()
 export class EditCommentUseCase {
   public constructor(private readonly repository: CommentsRepository) {}
   /**
    * Executes the application operation.
-   *
    *
    * @param id - Comment identifier.
    * @param content - Replacement text.

@@ -1,7 +1,9 @@
 import { user } from '../../../infrastructure/db/schema/drizzle/identity/user/table';
 import { workoutSchedule } from '../../../infrastructure/db/schema/drizzle/schedules/workout_schedule/table';
 
+/** Represents the user db row value. */
 type UserDbRow = typeof user.$inferSelect;
+/** Represents the workout schedule db row value. */
 type WorkoutScheduleDbRow = typeof workoutSchedule.$inferSelect;
 
 /** Row returned by the due-workout-reminders database function. */

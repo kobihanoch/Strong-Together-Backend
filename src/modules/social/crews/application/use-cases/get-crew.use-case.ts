@@ -10,10 +10,10 @@ export class GetCrewUseCase {
   /**
    * Executes the application operation.
    *
-   *
    * @param id - Crew identifier.
    * @returns The visible crew.
-   * @throws {CrewNotFoundError} When inaccessible or absent. */
+   * @throws {CrewNotFoundError} When inaccessible or absent.
+   */
   public async execute(id: string): Promise<CrewWithParticipantCount> {
     const crew = await this.repository.findById(id);
     if (!crew) throw new CrewNotFoundError();

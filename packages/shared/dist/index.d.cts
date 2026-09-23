@@ -1,10 +1,12 @@
 import { z } from 'zod/v4';
 
+/** Represents the request schema value. */
 type RequestSchema = z.ZodObject<{
     body?: z.ZodTypeAny;
     query?: z.ZodTypeAny;
     params?: z.ZodTypeAny;
 }>;
+/** Represents the contract value. */
 type Contract = {
     request: RequestSchema;
     response?: z.ZodTypeAny;
@@ -12,18 +14,23 @@ type Contract = {
     request?: RequestSchema;
     response: z.ZodTypeAny;
 };
+/** Represents the request of value. */
 type RequestOf<TContract extends Contract> = TContract extends {
     request: infer TRequest extends RequestSchema;
 } ? z.infer<TRequest> : never;
+/** Represents the body of value. */
 type BodyOf<TContract extends Contract> = RequestOf<TContract> extends {
     body: infer TBody;
 } ? TBody : never;
+/** Represents the query of value. */
 type QueryOf<TContract extends Contract> = RequestOf<TContract> extends {
     query: infer TQuery;
 } ? TQuery : never;
+/** Represents the params of value. */
 type ParamsOf<TContract extends Contract> = RequestOf<TContract> extends {
     params: infer TParams;
 } ? TParams : never;
+/** Represents the response of value. */
 type ResponseOf<TContract extends Contract> = TContract extends {
     response: infer TResponse extends z.ZodTypeAny;
 } ? z.infer<TResponse> : never;
@@ -163,16 +170,27 @@ declare const deleteAerobicEntryContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the create aerobic entry body value. */
 type CreateAerobicEntryBody = BodyOf<typeof createAerobicEntryContract>;
+/** Represents the create aerobic entry query value. */
 type CreateAerobicEntryQuery = QueryOf<typeof createAerobicEntryContract>;
+/** Represents the get aerobic history query value. */
 type GetAerobicHistoryQuery = QueryOf<typeof getAerobicHistoryContract>;
+/** Represents the get aerobic history response value. */
 type GetAerobicHistoryResponse = ResponseOf<typeof getAerobicHistoryContract>;
+/** Represents the update aerobic entry body value. */
 type UpdateAerobicEntryBody = BodyOf<typeof updateAerobicEntryContract>;
+/** Represents the update aerobic entry params value. */
 type UpdateAerobicEntryParams = ParamsOf<typeof updateAerobicEntryContract>;
+/** Represents the update aerobic entry query value. */
 type UpdateAerobicEntryQuery = QueryOf<typeof updateAerobicEntryContract>;
+/** Represents the update aerobic entry response value. */
 type UpdateAerobicEntryResponse = ResponseOf<typeof updateAerobicEntryContract>;
+/** Represents the delete aerobic entry query value. */
 type DeleteAerobicEntryQuery = QueryOf<typeof deleteAerobicEntryContract>;
+/** Represents the delete aerobic entry params value. */
 type DeleteAerobicEntryParams = ParamsOf<typeof deleteAerobicEntryContract>;
+/** Represents the delete aerobic entry response value. */
 type DeleteAerobicEntryResponse = ResponseOf<typeof deleteAerobicEntryContract>;
 
 declare const createPasswordResetRequestSchema: z.ZodObject<{
@@ -207,9 +225,13 @@ declare const resetPasswordContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the create password reset request body value. */
 type CreatePasswordResetRequestBody = BodyOf<typeof createPasswordResetRequestContract>;
+/** Represents the reset password body value. */
 type ResetPasswordBody = BodyOf<typeof resetPasswordContract>;
+/** Represents the reset password query value. */
 type ResetPasswordQuery = QueryOf<typeof resetPasswordContract>;
+/** Represents the reset password response value. */
 type ResetPasswordResponse = ResponseOf<typeof resetPasswordContract>;
 
 declare const loginRequestSchema: z.ZodObject<{
@@ -260,9 +282,13 @@ declare const logoutContract: {
         message: z.ZodString;
     }, z.core.$strip>;
 };
+/** Represents the login request body value. */
 type LoginRequestBody = BodyOf<typeof loginContract>;
+/** Represents the login response value. */
 type LoginResponse = ResponseOf<typeof loginContract>;
+/** Represents the refresh token response value. */
 type RefreshTokenResponse = ResponseOf<typeof refreshTokenContract>;
+/** Represents the logout response value. */
 type LogoutResponse = ResponseOf<typeof logoutContract>;
 
 declare const verifyEmailRequestSchema: z.ZodObject<{
@@ -317,9 +343,13 @@ declare const getVerificationStatusContract: {
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
+/** Represents the verify email query value. */
 type VerifyEmailQuery = QueryOf<typeof verifyEmailContract>;
+/** Represents the create verification email body value. */
 type CreateVerificationEmailBody = BodyOf<typeof createVerificationEmailContract>;
+/** Represents the update unverified account email body value. */
 type UpdateUnverifiedAccountEmailBody = BodyOf<typeof updateUnverifiedAccountEmailContract>;
+/** Represents the get verification status query value. */
 type GetVerificationStatusQuery = QueryOf<typeof getVerificationStatusContract>;
 
 declare const listExercisesResponseSchema: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
@@ -334,6 +364,7 @@ declare const listExercisesContract: {
         specificTargetMuscle: z.ZodString;
     }, z.core.$strip>>>;
 };
+/** Represents the list exercises response value. */
 type ListExercisesResponse = ResponseOf<typeof listExercisesContract>;
 
 declare const listMessagesRequestSchema: z.ZodObject<{
@@ -370,7 +401,9 @@ declare const listMessagesContract: {
         }, z.core.$strip>>;
     }, z.core.$strip>;
 };
+/** Represents the list messages query value. */
 type ListMessagesQuery = QueryOf<typeof listMessagesContract>;
+/** Represents the list messages response value. */
 type ListMessagesResponse = ResponseOf<typeof listMessagesContract>;
 declare const markMessageAsReadRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
@@ -386,7 +419,9 @@ declare const markMessageAsReadContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the mark message as read params value. */
 type MarkMessageAsReadParams = ParamsOf<typeof markMessageAsReadContract>;
+/** Represents the mark message as read response value. */
 type MarkMessageAsReadResponse = ResponseOf<typeof markMessageAsReadContract>;
 declare const deleteMessageRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
@@ -402,7 +437,9 @@ declare const deleteMessageContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the delete message params value. */
 type DeleteMessageParams = ParamsOf<typeof deleteMessageContract>;
+/** Represents the delete message response value. */
 type DeleteMessageResponse = ResponseOf<typeof deleteMessageContract>;
 
 declare const appleOAuthRequestSchema: z.ZodObject<{
@@ -429,6 +466,7 @@ declare const appleOAuthContract: {
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
+/** Represents the apple oauth body value. */
 type AppleOAuthBody = BodyOf<typeof appleOAuthContract>;
 
 declare const googleOAuthRequestSchema: z.ZodObject<{
@@ -443,6 +481,7 @@ declare const googleOAuthContract: {
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
+/** Represents the google oauth body value. */
 type GoogleOAuthBody = BodyOf<typeof googleOAuthContract>;
 
 declare const oAuthLoginResponseSchema: z.ZodObject<{
@@ -465,6 +504,7 @@ declare const oAuthLoginContract: {
         refreshToken: z.ZodString;
     }, z.core.$strip>;
 };
+/** Represents the oauth login response value. */
 type OAuthLoginResponse = ResponseOf<typeof oAuthLoginContract>;
 
 declare const getReminderSettingsResponseSchema: z.ZodObject<{
@@ -517,10 +557,15 @@ declare const updateReminderTimeZoneContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the upsert reminder settings body value. */
 type UpsertReminderSettingsBody = BodyOf<typeof upsertReminderSettingsContract>;
+/** Represents the upsert reminder settings response value. */
 type UpsertReminderSettingsResponse = ResponseOf<typeof upsertReminderSettingsContract>;
+/** Represents the update reminder time zone body value. */
 type UpdateReminderTimeZoneBody = BodyOf<typeof updateReminderTimeZoneContract>;
+/** Represents the update reminder time zone response value. */
 type UpdateReminderTimeZoneResponse = ResponseOf<typeof updateReminderTimeZoneContract>;
+/** Represents the get reminder settings response value. */
 type GetReminderSettingsResponse = ResponseOf<typeof getReminderSettingsContract>;
 
 declare const createUserRequestSchema: z.ZodObject<{
@@ -564,7 +609,9 @@ declare const createUserContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the create user body value. */
 type CreateUserBody = BodyOf<typeof createUserContract>;
+/** Represents the create user response value. */
 type CreateUserResponse = ResponseOf<typeof createUserContract>;
 
 declare const replacePushTokenRequestSchema: z.ZodObject<{
@@ -579,6 +626,7 @@ declare const replacePushTokenContract: {
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
+/** Represents the replace push token body value. */
 type ReplacePushTokenBody = BodyOf<typeof replacePushTokenContract>;
 
 declare const updateCurrentUserRequestSchema: z.ZodObject<{
@@ -699,11 +747,17 @@ declare const replaceProfilePictureContract: {
         message: z.ZodString;
     }, z.core.$strip>;
 };
+/** Represents the update current user body value. */
 type UpdateCurrentUserBody = BodyOf<typeof updateCurrentUserContract>;
+/** Represents the update current user response value. */
 type UpdateCurrentUserResponse = ResponseOf<typeof updateCurrentUserContract>;
+/** Represents the user data response value. */
 type UserDataResponse = ResponseOf<typeof userDataContract>;
+/** Represents the get current user response value. */
 type GetCurrentUserResponse = ResponseOf<typeof getCurrentUserContract>;
+/** Represents the delete profile picture body value. */
 type DeleteProfilePictureBody = BodyOf<typeof deleteProfilePictureContract>;
+/** Represents the replace profile picture response value. */
 type ReplaceProfilePictureResponse = ResponseOf<typeof replaceProfilePictureContract>;
 
 declare const createVideoUploadUrlRequestSchema: z.ZodObject<{
@@ -732,7 +786,9 @@ declare const createVideoUploadUrlContract: {
         requestId: z.ZodString;
     }, z.core.$strip>;
 };
+/** Represents the create video upload url body value. */
 type CreateVideoUploadUrlBody = BodyOf<typeof createVideoUploadUrlContract>;
+/** Represents the create video upload url response value. */
 type CreateVideoUploadUrlResponse = ResponseOf<typeof createVideoUploadUrlContract>;
 /** Parameters used to enqueue a video-analysis job. */
 declare const enqueueAnalyzeVideoParamsDtoSchema: z.ZodObject<{
@@ -788,9 +844,13 @@ declare const analyzeVideoResultPayloadDtoSchema: <TResultSchema extends z.ZodTy
     result: z.ZodNull;
     error: z.ZodString;
 }, z.core.$strip>]>>;
+/** Represents the enqueue analyze video params dto value. */
 type EnqueueAnalyzeVideoParamsDto = z.infer<typeof enqueueAnalyzeVideoParamsDtoSchema>;
+/** Represents the analyze video payload dto value. */
 type AnalyzeVideoPayloadDto = z.infer<typeof analyzeVideoPayloadDtoSchema>;
+/** Represents the squat repetition dto value. */
 type SquatRepetitionDto = z.infer<typeof squatRepetitionDtoSchema>;
+/** Represents the analyze video result payload dto value. */
 type AnalyzeVideoResultPayloadDto<TResult> = z.infer<ReturnType<typeof analyzeVideoResultPayloadDtoSchema<z.ZodType<TResult>>>>;
 
 declare const createWebSocketTicketRequestSchema: z.ZodObject<{
@@ -811,7 +871,9 @@ declare const createWebSocketTicketContract: {
         ticket: z.ZodString;
     }, z.core.$strip>;
 };
+/** Represents the create web socket ticket body value. */
 type CreateWebSocketTicketBody = BodyOf<typeof createWebSocketTicketContract>;
+/** Represents the create web socket ticket response value. */
 type CreateWebSocketTicketResponse = ResponseOf<typeof createWebSocketTicketContract>;
 
 declare const getWorkoutPlanRequestSchema: z.ZodObject<{
@@ -928,9 +990,13 @@ declare const replaceWorkoutPlanContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the get workout plan query value. */
 type GetWorkoutPlanQuery = QueryOf<typeof getWorkoutPlanContract>;
+/** Represents the get workout plan response value. */
 type GetWorkoutPlanResponse = ResponseOf<typeof getWorkoutPlanContract>;
+/** Represents the replace workout plan body value. */
 type ReplaceWorkoutPlanBody = BodyOf<typeof replaceWorkoutPlanContract>;
+/** Represents the replace workout plan response value. */
 type ReplaceWorkoutPlanResponse = ResponseOf<typeof replaceWorkoutPlanContract>;
 
 declare const getWorkoutHistoryRequestSchema: z.ZodObject<{
@@ -1216,14 +1282,23 @@ declare const getPersonalRecordsContract: {
         }, z.core.$strip>>;
     }, z.core.$strip>;
 };
+/** Represents the get workout history query value. */
 type GetWorkoutHistoryQuery = QueryOf<typeof getWorkoutHistoryContract>;
+/** Represents the get exercise history query value. */
 type GetExerciseHistoryQuery = QueryOf<typeof getExerciseHistoryContract>;
+/** Represents the get personal records query value. */
 type GetPersonalRecordsQuery = QueryOf<typeof getPersonalRecordsContract>;
+/** Represents the get workout history response value. */
 type GetWorkoutHistoryResponse = ResponseOf<typeof getWorkoutHistoryContract>;
+/** Represents the get exercise history response value. */
 type GetExerciseHistoryResponse = ResponseOf<typeof getExerciseHistoryContract>;
+/** Represents the get workout statistics response value. */
 type GetWorkoutStatisticsResponse = ResponseOf<typeof getWorkoutStatisticsContract>;
+/** Represents the get personal records response value. */
 type GetPersonalRecordsResponse = ResponseOf<typeof getPersonalRecordsContract>;
+/** Represents the create workout session body value. */
 type CreateWorkoutSessionBody = BodyOf<typeof createWorkoutSessionContract>;
+/** Represents the create workout session response value. */
 type CreateWorkoutSessionResponse = ResponseOf<typeof createWorkoutSessionContract>;
 
 declare const getWorkoutSchedulesResponseSchema: z.ZodObject<{
@@ -1271,8 +1346,11 @@ declare const replaceWorkoutSchedulesContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the get workout schedules response value. */
 type GetWorkoutSchedulesResponse = ResponseOf<typeof getWorkoutSchedulesContract>;
+/** Represents the replace workout schedules body value. */
 type ReplaceWorkoutSchedulesBody = BodyOf<typeof replaceWorkoutSchedulesContract>;
+/** Represents the replace workout schedules response value. */
 type ReplaceWorkoutSchedulesResponse = ResponseOf<typeof replaceWorkoutSchedulesContract>;
 
 /** Validates a request to list crews visible to the authenticated user. */
@@ -1698,8 +1776,11 @@ declare const inviteCrewUserContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the invite crew user params value. */
 type InviteCrewUserParams = ParamsOf<typeof inviteCrewUserContract>;
+/** Represents the invite crew user body value. */
 type InviteCrewUserBody = BodyOf<typeof inviteCrewUserContract>;
+/** Represents the invite crew user response value. */
 type InviteCrewUserResponse = ResponseOf<typeof inviteCrewUserContract>;
 /** Validates a request by the authenticated user to join a crew. */
 declare const requestToJoinCrewRequestSchema: z.ZodObject<{
@@ -1715,7 +1796,9 @@ declare const requestToJoinCrewContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the request to join crew params value. */
 type RequestToJoinCrewParams = ParamsOf<typeof requestToJoinCrewContract>;
+/** Represents the request to join crew response value. */
 type RequestToJoinCrewResponse = ResponseOf<typeof requestToJoinCrewContract>;
 /** Validates an accepted or declined participation-request status update. */
 declare const updateCrewParticipationRequestStatusRequestSchema: z.ZodObject<{
@@ -1743,8 +1826,11 @@ declare const updateCrewParticipationRequestStatusContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the update crew participation request status params value. */
 type UpdateCrewParticipationRequestStatusParams = ParamsOf<typeof updateCrewParticipationRequestStatusContract>;
+/** Represents the update crew participation request status body value. */
 type UpdateCrewParticipationRequestStatusBody = BodyOf<typeof updateCrewParticipationRequestStatusContract>;
+/** Represents the update crew participation request status response value. */
 type UpdateCrewParticipationRequestStatusResponse = ResponseOf<typeof updateCrewParticipationRequestStatusContract>;
 /** Validates a request to list invitations addressed to the authenticated user. */
 declare const listCrewInvitationsRequestSchema: z.ZodObject<{}, z.core.$strip>;
@@ -1787,6 +1873,7 @@ declare const listCrewInvitationsContract: {
         }, z.core.$strip>>;
     }, z.core.$strip>;
 };
+/** Represents the list crew invitations response value. */
 type ListCrewInvitationsResponse = ResponseOf<typeof listCrewInvitationsContract>;
 /** Validates a request to list pending join requests for a crew. */
 declare const listPendingCrewJoinRequestsRequestSchema: z.ZodObject<{
@@ -1837,7 +1924,9 @@ declare const listPendingCrewJoinRequestsContract: {
         }, z.core.$strip>>;
     }, z.core.$strip>;
 };
+/** Represents the list pending crew join requests params value. */
 type ListPendingCrewJoinRequestsParams = ParamsOf<typeof listPendingCrewJoinRequestsContract>;
+/** Represents the list pending crew join requests response value. */
 type ListPendingCrewJoinRequestsResponse = ResponseOf<typeof listPendingCrewJoinRequestsContract>;
 
 /** Validates a request to list posts visible to the authenticated user. */

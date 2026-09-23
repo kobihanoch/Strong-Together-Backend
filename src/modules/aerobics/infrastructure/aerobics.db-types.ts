@@ -1,5 +1,6 @@
 import { aerobicTracking } from '../../../infrastructure/db/schema/drizzle/tracking/aerobic_tracking/table';
 
+/** Represents the aerobic tracking db row value. */
 type AerobicTrackingDbRow = typeof aerobicTracking.$inferSelect;
 
 /** Direct and calculated aerobic fields embedded in daily SQL aggregates. */

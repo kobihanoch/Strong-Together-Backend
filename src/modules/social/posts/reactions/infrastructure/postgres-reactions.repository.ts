@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import type { DeleteReactionOutcome, PostReaction, SaveReactionOutcome } from '../application/models/reactions.models';
 import { ReactionsRepository } from '../application/ports/reactions.repository';
 import { ReactionsSql } from './reactions.sql';
-/** PostgreSQL implementation of reaction persistence. */ @Injectable()
+/** PostgreSQL implementation of reaction persistence. */
+@Injectable()
 export class PostgresReactionsRepository implements ReactionsRepository {
   public constructor(private readonly sql: ReactionsSql) {}
   public list(postId: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<PostReaction[]> {

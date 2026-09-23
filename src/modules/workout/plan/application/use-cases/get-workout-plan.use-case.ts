@@ -12,11 +12,14 @@ export class GetWorkoutPlanUseCase {
     private readonly hooks: TransactionHooks,
   ) {}
 
-  /** Retrieves the active plan.
+  /**
+   * Retrieves the active plan.
+   *
    * @param userId - Plan owner.
    * @param fromCache - Whether cached data may be returned.
    * @param timezone - Time zone for localized values.
-   * @returns The plan payload and cache status. */
+   * @returns The plan payload and cache status.
+   */
   async execute(userId: string, fromCache = true, timezone = 'Asia/Jerusalem'): Promise<{ payload: WorkoutPlanResult; cacheHit: boolean }> {
     const cacheEntry = await this.cache.forUser(userId, timezone);
     if (fromCache) {

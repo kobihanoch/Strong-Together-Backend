@@ -37,7 +37,11 @@ export const getVerificationStatusRequestSchema = z.object({
 });
 export const getVerificationStatusContract = { request: getVerificationStatusRequestSchema } satisfies Contract;
 
+/** Represents the verify email query value. */
 export type VerifyEmailQuery = QueryOf<typeof verifyEmailContract>;
+/** Represents the create verification email body value. */
 export type CreateVerificationEmailBody = BodyOf<typeof createVerificationEmailContract>;
+/** Represents the update unverified account email body value. */
 export type UpdateUnverifiedAccountEmailBody = BodyOf<typeof updateUnverifiedAccountEmailContract>;
+/** Represents the get verification status query value. */
 export type GetVerificationStatusQuery = QueryOf<typeof getVerificationStatusContract>;
