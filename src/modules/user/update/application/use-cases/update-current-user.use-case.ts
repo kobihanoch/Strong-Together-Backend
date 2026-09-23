@@ -26,9 +26,11 @@ export class UpdateCurrentUserUseCase {
   async execute(userId: string, input: UpdateUserInput, requestId?: string): Promise<void> {
     const current = await this.repository.find(userId);
     if (!current) throw new UserNotFoundError();
+
     const outcome = await this.repository.update(userId, input);
     if (outcome.kind === 'conflict') throw new UserConflictError();
     if (outcome.kind === 'not-found') throw new UserNotFoundError();
+
     const candidate = (input.email ?? '').trim().toLowerCase();
     if (candidate && candidate !== current.email.trim().toLowerCase())
       this.hooks.afterCommit(() => this.emailSender.send(candidate, userId, outcome.profile.name || 'there', requestId));

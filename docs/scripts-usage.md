@@ -135,7 +135,7 @@ npm run test:env:down
 npm run db:migrate:diff -- add_feature_name
 ```
 
-4. Review the generated SQL in `src/infrastructure/db/schema/drizzle-migrations`.
+4. Review the generated SQL in `src/infrastructure/db/schema/migrations`.
 
 Drizzle Kit generates table and policy diffs, but it does not fully model PostgreSQL routines and detailed privilege boundaries. When a change includes `SECURITY DEFINER` functions or role grants, add and review those statements in the generated migration. Grant function execution explicitly and keep runtime roles without direct table access unless the documented RLS model requires it.
 5. Apply locally:

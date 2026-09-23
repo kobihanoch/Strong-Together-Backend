@@ -1,4 +1,6 @@
-# Minimal Clean Architecture Module Structure
+# Clean Architecture + Hexagonal Architecture Module Structure
+
+> **This is the required architecture for non-trivial backend features: Clean Architecture defines the inward dependency rule, while Hexagonal Architecture defines application-owned ports and replaceable inbound/outbound adapters.**
 
 Use these layers for non-trivial features. The goal is dependency separation, not creating every possible abstraction.
 
@@ -159,7 +161,7 @@ Private helpers and trivial implementation overrides do not require repetitive T
 
 ## Error Convention
 
-Every refactored feature or submodule that raises expected errors must own an `application/errors/` folder and a feature-specific `*.errors.ts` file. Do not centralize capability-specific errors in a parent or `core` module. Each error carries its own numeric `statusCode`, which the global exception filter translates to the HTTP response. Controllers call use cases directly; do not add per-controller `executeOperation` wrappers or repetitive `try/catch` mappings. Errors remain plain application classes and must not extend Nest HTTP exceptions.
+Every refactored feature or submodule that raises expected errors must own an `application/errors/` folder and a feature-specific `*.errors.ts` file. Do not centralize capability-specific errors in a parent or `core` module. Feature errors extend the appropriate transport-neutral application category (`ApplicationNotFoundError`, `ApplicationValidationError`, `ApplicationConflictError`, `ApplicationUnauthorizedError`, or `ApplicationForbiddenError`). The global exception filter maps those categories to HTTP status codes at the presentation boundary. Controllers call use cases directly; do not add per-controller `executeOperation` wrappers or repetitive `try/catch` mappings. Application errors must not contain HTTP status codes or extend Nest HTTP exceptions.
 
 ## Cross-Module Events
 
@@ -371,7 +373,7 @@ A feature is refactored only when all applicable items below are true:
 - Every application operation is an explicit use-case class with an `execute(...)` method.
 - Concrete databases, caches, queues, sockets, SDKs, and transaction mechanisms remain in infrastructure and are reached through application ports when a use case uses them directly.
 - Cache ports return typed cache entries from business parameters; application code contains no physical cache keys, namespaces, versions, or TTLs.
-- Expected errors are plain feature-owned application errors with numeric `statusCode` values; controllers do not translate them with repetitive `try/catch` blocks.
+- Expected errors are feature-owned, transport-neutral application errors categorized by shared application base classes; the global HTTP filter owns status mapping and controllers do not translate errors with repetitive `try/catch` blocks.
 - Lifecycle reactions across modules use the common event, a producer-owned publisher port, an infrastructure publisher, and a consumer-side listener. Awaited behavior remains awaited.
 - Shared feature indexes export only public `*.contracts.ts`; shared contracts use plain Zod and contain no Drizzle, `drizzle-zod`, `$inferSelect`, `$inferInsert`, SQL-row, database, backend model, or internal-token types.
 - Application ports use domain entities or application models—not SQL rows or shared HTTP contracts.

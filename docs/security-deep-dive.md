@@ -64,7 +64,7 @@ This makes authentication, proof-of-possession, and role authorization explicit 
 
 ## Request Validation
 
-`ValidateRequestPipe` validates request data with schemas imported from `@strong-together/shared`. Invalid input fails before service logic executes.
+`ValidateRequestPipe` validates request data with schemas imported from `@strong-together/shared`. Invalid input fails before application use-case logic executes.
 
 This matters for security because controllers do not trust TypeScript types at runtime. API contracts are checked at the edge, and tests reuse the shared response schemas to detect drift.
 

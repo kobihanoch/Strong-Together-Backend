@@ -18,6 +18,7 @@ The API is organized under `/api` with domain-oriented route groups:
 | Push | `/api/push-jobs` | Scheduled push notification entrypoints |
 | Video analysis | `/api/video-analysis` | Presigned upload URL generation |
 | WebSockets | `/api/websocket-tickets` | Authenticated socket ticket generation |
+| Social | `/api/social` | Crews, participation requests, profiles, posts, comments, reactions, summary |
 
 The full route-level reference remains in [api-documentation.md](./api-documentation.md).
 
@@ -31,14 +32,15 @@ Request validation uses schemas from `@strong-together/shared`:
 
 Response types are also imported from the shared package. Tests commonly assert response bodies against shared response schemas, which turns the package into an executable contract between client and server.
 
-The package is Drizzle-first and Zod-first: database-backed Zod fields are generated from backend-owned Drizzle tables, request/response schemas compose those fields, and TypeScript contracts/DTOs are inferred with `z.infer`. There is no handwritten entity layer. Public request/response/event fields are camelCase; SQL maps physical snake_case columns to those boundary names.
+The package is transport-first and Zod-first: request, response, and cross-process schemas use plain Zod and TypeScript contracts are inferred with `z.infer`. It does not import Drizzle tables or expose database types. Public request/response/event fields are camelCase; infrastructure repositories map physical snake_case columns to application models.
 
 Standard:
 
 - Controllers validate input at the boundary.
-- Services assume validated data and focus on use cases.
-- Query classes own SQL.
-- Shared schemas and their inferred types replace duplicated local API DTOs.
+- Controllers call focused application use cases with validated values.
+- Use cases depend on application-owned ports rather than concrete infrastructure.
+- PostgreSQL repository adapters own explicit SQL and persistence mappings.
+- Shared schemas and inferred contracts replace duplicated public API DTOs.
 - Tests assert the contract shape for successful responses.
 
 ## Authentication Standard
@@ -59,6 +61,8 @@ That stack means:
 - The authentication guard validates its database state in an authenticated RLS transaction, and the interceptor binds controller/service SQL to the authenticated user. Public auth requests remain `guest` until credentials or a signed token are verified.
 
 ## Error Handling
+
+Feature errors are transport-neutral and extend a shared application category such as not-found, validation, conflict, unauthorized, or forbidden. They contain no HTTP status code. `GlobalExceptionFilter` is the presentation-boundary adapter that maps those categories to HTTP responses.
 
 `GlobalExceptionFilter` normalizes failures as:
 
@@ -109,7 +113,7 @@ Socket.IO is used for authenticated realtime delivery. The API exposes a ticket 
 
 ## Data Access Standard
 
-SQL is written explicitly through query classes and the `postgres` tagged template client. The application avoids hiding important database behavior behind a generic ORM because the schema uses:
+SQL is written explicitly inside PostgreSQL repository adapters using the `postgres` tagged-template client. Use cases see repository ports, not SQL helpers or database row types. The project avoids hiding important database behavior behind a generic ORM because the schema uses:
 
 - domain schemas
 - RLS policies
@@ -117,4 +121,4 @@ SQL is written explicitly through query classes and the `postgres` tagged templa
 - hand-tuned indexes
 - analytics-oriented projections
 
-The standard is clarity over abstraction: queries should make ownership, joins, and performance implications visible.
+Drizzle defines tables, views, roles, policies, and migration snapshots; repositories retain explicit SQL where ownership, joins, projections, and performance implications need to remain visible.

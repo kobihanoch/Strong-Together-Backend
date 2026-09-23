@@ -1,246 +1,132 @@
 # System Architecture
 
-![Strong Together Backend - Feature Modules and Infrastructure Access](./media/serverarch.png)
+> **Strong Together is a Clean Architecture and Hexagonal Architecture modular monolith.** Clean Architecture keeps dependencies pointing toward application behavior; Hexagonal Architecture places ports around that behavior and implements external concerns as adapters.
 
-Strong Together is a NestJS modular monolith backed by PostgreSQL, Redis, LocalStack/AWS, Socket.IO, Node workers, and a Python computer-vision worker.
+The backend combines a NestJS API, PostgreSQL, Redis, Socket.IO, Node workers, and a Python computer-vision worker. It remains a monolith because identity, workouts, social features, messaging, schedules, and authorization share transactions and user context. Slow or failure-prone work crosses explicit asynchronous boundaries.
 
-The diagram above is a combined **feature modules and infrastructure access** view. It intentionally mixes NestJS feature modules, shared request infrastructure, external resources, and worker runtimes so the main backend dependencies are visible in one place.
+## Dependency Model
 
-## Architectural Thesis
+```mermaid
+flowchart LR
+  http[HTTP / Socket inbound adapters]
+  presentation[Presentation<br/>controllers, validation, presenters]
+  application[Application core<br/>use cases, models, errors, ports]
+  domain[Domain<br/>entities and business rules]
+  outbound[Outbound adapters<br/>Postgres repositories, Redis caches,<br/>queues, storage, providers, events]
+  systems[(PostgreSQL / Redis / S3 / SQS<br/>Socket.IO / email / OAuth)]
 
-The primary API stays as a monolith because the domain is cohesive: identity, workouts, analytics, reminders, messaging, and media processing all share user context and database access rules. Instead of splitting prematurely into networked services, the code separates concerns inside Nest modules and moves expensive or side-effect-heavy work to asynchronous workers.
+  http --> presentation --> application --> domain
+  application -->|port| outbound --> systems
 
-This gives the system a pragmatic balance:
+  classDef core fill:#ecfdf5,stroke:#059669,color:#111827
+  classDef adapter fill:#e8f1ff,stroke:#2563eb,color:#111827
+  class application,domain core
+  class http,presentation,outbound,systems adapter
+```
 
-- Fast local reasoning through one NestJS application.
-- Strong dependency management through Nest modules and providers.
-- Real operational boundaries for CPU-heavy and event-driven work.
-- Shared security and RLS context across business flows.
+The application layer owns its ports. Infrastructure depends on those ports, never the reverse. Nest modules bind port tokens to concrete adapters and act as composition roots. See [Clean Architecture + Hexagonal Architecture Module Structure](./clean-architecture-module-structure.md) for the required feature layout.
+
+## Request Lifecycle
+
+```mermaid
+flowchart LR
+  request[HTTP request] --> middleware[Helmet, CORS, rate limit,<br/>request logger, bot/version checks]
+  middleware --> guards[DPoP, authentication,<br/>authorization]
+  guards --> validation[Zod validation]
+  validation --> transaction[RLS transaction]
+  transaction --> controller[Presentation controller]
+  controller --> usecase[Application use case]
+  usecase --> port[Application port]
+  port --> adapter[Infrastructure adapter]
+  adapter --> resource[(Postgres / Redis / provider)]
+  usecase --> response[Response]
+```
+
+`RlsTxInterceptor` wraps request work in `DBService.runWithRlsTx`. Unauthenticated flows start as the PostgreSQL `guest` role. Authenticated requests set `app.current_user_id` and use the `authenticated` role. Public authentication can promote the current transaction only after credentials or a signed token are verified.
+
+Expected feature failures are transport-neutral application errors. `GlobalExceptionFilter` maps shared error categories to HTTP statuses; application errors do not know about NestJS or HTTP.
+
+## Feature Slice
+
+Non-trivial modules use this shape:
+
+```text
+feature/
+  domain/                  # optional entities and rules
+  application/
+    errors/                # feature errors, categorized without HTTP knowledge
+    models/                # use-case and port data
+    ports/                 # repository/cache/queue/storage/provider contracts
+    use-cases/             # one focused operation per class
+  infrastructure/
+    *.repository.ts        # Postgres adapters
+    *.sql.ts               # explicit SQL
+    *.db-types.ts          # persistence-only types
+    ...                    # Redis, storage, queue, provider, event adapters
+  presentation/
+    *.controller.ts        # inbound HTTP adapter
+  *.module.ts              # dependency-injection composition root
+```
+
+This pattern is used across auth, users, workout planning and tracking, schedules, reminders, messages, aerobics, exercises, OAuth, push, social features, video analysis, and WebSocket ticketing. Larger capabilities are split into independently composed submodules.
 
 ## Runtime Components
 
-| Component                          | Responsibility                                                                                                                          |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| NestJS API                         | HTTP routes, auth, users, workout planning/tracking, analytics, messages, push triggers, presigned video upload URLs, Socket.IO hosting |
-| `@strong-together/shared`          | Drizzle-derived Zod schemas, inferred HTTP contracts/DTOs, and worker/event boundary schemas                                           |
-| PostgreSQL                         | Operational data, domain schemas, analytics views, token version state, RLS policies                                                    |
-| Redis                              | Cache, JTI replay protection, Redis Pub/Sub, Socket.IO adapter support, Bull queue backing store                                        |
-| Socket.IO                          | Authenticated user-room realtime delivery for messages and video-analysis results                                                       |
-| Node workers                       | Email and push notification background processing                                                                                       |
-| Python worker                      | SQS-driven video analysis using OpenCV/MediaPipe-style utilities                                                                        |
-| S3 / LocalStack / Supabase Storage | Video uploads, S3 event source for video jobs, profile image storage                                                                    |
-| SQS / LocalStack                   | Durable video-analysis handoff from S3 uploads to the Python worker                                                                     |
-| Maildev / Resend                   | Local email capture and production email sending abstraction                                                                            |
-| Expo Push                          | Push notification delivery                                                                                                              |
-| Sentry / Pino                      | Tracing, structured logging, error capture, request correlation                                                                         |
-
-## Global Request Layer
-
-All HTTP routes enter through the shared API boundary before controller logic.
-
-| Layer                        | Purpose                                                   | Resource access                   |
-| ---------------------------- | --------------------------------------------------------- | --------------------------------- |
-| `helmet()` / CORS            | Security headers and origin policy                        | HTTP response/request config      |
-| `GeneralRateLimitMiddleware` | Coarse route/client throttling                            | In-memory `Map`                   |
-| `RequestLoggerMiddleware`    | `x-request-id`, structured request logs, Sentry context   | Pino, Sentry                      |
-| `BotBlockerMiddleware`       | Scanner and suspicious-client filtering                   | Pino, Sentry bot marker           |
-| `CheckAppVersionMiddleware`  | Rejects unsupported mobile app versions                   | `appConfig.minAppVersion`         |
-| `DpopGuard`                  | Proof-of-possession request validation                    | Redis JTI key: `dpop:jti:*`       |
-| `AuthenticationGuard`        | Access token validation, token version check, user lookup | PostgreSQL, JWT                   |
-| `AuthorizationGuard`         | Role enforcement from `@Roles(...)` metadata              | Request user role                 |
-| `RateLimitGuard`             | Route-specific login/email/update throttling              | In-memory `Map`                   |
-| `ValidateRequestPipe`        | Shared Zod request contract validation                    | `@strong-together/shared` schemas |
-| `RlsTxInterceptor`           | Request-scoped DB transaction with RLS identity           | PostgreSQL                        |
-| `FileInterceptor`            | Profile image upload parsing                              | Multer memory config              |
-| `GlobalExceptionFilter`      | Normalized error responses and server error capture       | Pino, Sentry                      |
-
-`RlsTxInterceptor` calls `DBService.runWithRlsTx`. For authenticated requests, PostgreSQL receives:
-
-```sql
-select set_config('app.current_user_id', <user-id>, true);
-SET LOCAL ROLE authenticated;
-```
-
-This keeps application authorization and database authorization active together.
+| Component | Responsibility |
+| --- | --- |
+| NestJS API | HTTP presentation, guards, validation, use-case composition, Socket.IO hosting |
+| `@strong-together/shared` | Plain-Zod public request, response, and cross-process contracts; no database schemas or backend types |
+| PostgreSQL | Domain schemas, explicit repository SQL, views, RLS policies, token state, transactions |
+| Redis | Response caches, one-time token/JTI storage, Pub/Sub, Socket.IO scaling, Bull queue storage |
+| Node workers | Queue-driven email and push delivery |
+| Python worker | SQS-driven video analysis using OpenCV/MediaPipe utilities |
+| S3 / LocalStack / Supabase Storage | Video uploads/events and image storage adapters |
+| SQS / LocalStack | Durable video-analysis handoff |
+| Maildev / Resend / Expo | Email and push delivery providers |
+| Sentry / Pino | Tracing, error capture, structured operation logging, request correlation |
 
 ## Feature Modules
 
-Feature modules live under `src/modules`.
+| Module | Main responsibility | Principal outbound adapters |
+| --- | --- | --- |
+| `auth` | Login/refresh/logout, password reset, verification | Postgres, JWT, bcrypt, Redis tokens, queued email, events |
+| `user` | Registration, profile, push tokens, profile pictures, email change | Postgres, storage, Redis/JWT, queued email, events |
+| `workout` | Plans, completed workouts, history, statistics and PRs | Postgres repositories, Redis caches |
+| `workout-schedule` | Weekly split schedules and atomic replacement | Postgres repository, Redis cache |
+| `reminders` / `push` | Preferences and scheduled notification enqueueing | Postgres, Bull/Redis, Expo worker |
+| `messages` | Inbox mutations and realtime publication | Postgres, Socket.IO publisher |
+| `social` | Crews, requests, users, posts, comments, reactions, summary | Postgres, image storage, Socket.IO/message adapters |
+| `video-analysis` | Upload URL creation and analysis-result publication | S3, telemetry, Redis subscriber, Socket.IO |
+| `web-sockets` | Short-lived authenticated socket tickets | JWT ticket issuer |
+| `aerobics` / `exercises` | Cardio history and exercise catalog | Postgres, Redis where applicable |
+| `oauth` | Google and Apple sign-in | Provider verifiers, Postgres, registration/session events |
 
-| Module           | Main responsibility                                                      | Infrastructure access                                                       |
-| ---------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `auth`           | Session login/refresh/logout, password reset, account verification       | PostgreSQL, Redis JTI cache, Redis email queue, messages                    |
-| `user`           | Create user, update profile, push tokens, profile pictures, email change | PostgreSQL, Redis JTI cache, Redis email queue, Supabase/LocalStack storage |
-| `workout`        | Workout plan creation and workout tracking                               | PostgreSQL, Redis cache                                                     |
-| `workout-schedule` | Weekly split scheduling and complete schedule replacement              | PostgreSQL, RLS                                                             |
-| `reminders`      | Timezone-aware reminder preferences                                      | PostgreSQL                                                                  |
-| `messages`       | User inbox and system messages                                           | PostgreSQL, Socket.IO                                                       |
-| `video-analysis` | Presigned video upload URL and realtime result bridge                    | S3, Redis Pub/Sub, Socket.IO                                                |
-| `web-sockets`    | Authenticated Socket.IO ticket generation                                | JWT socket ticket signing                                                   |
-| `push`           | Scheduler-style push notification enqueue endpoints                      | PostgreSQL, Redis push queue                                                |
-| `aerobics`       | Cardio/aerobic tracking                                                  | PostgreSQL, Redis cache                                                     |
-| `oauth`          | Google and Apple sign-in                                                 | Provider token verification, PostgreSQL, messages                           |
-| `exercises`      | Exercise catalog                                                         | PostgreSQL                                                                  |
+## Persistence And Transactions
 
-Infrastructure modules live under `src/infrastructure` and provide reusable clients/adapters such as `DBModule`, `RedisModule`, `CacheModule`, `SocketIOModule`, `AWSModule`, `SupabaseModule`, queue modules, and `MailerModule`.
+Application use cases depend on repository abstractions such as `WorkoutPlanRepository`; concrete `Postgres*Repository` adapters own SQL, Drizzle-derived row types, and mapping. `DBService` supplies a `postgres` tagged-template client bound through `AsyncLocalStorage` to the active RLS transaction.
 
-The shared package lives under `packages/shared` but keeps a one-way dependency on backend-owned Drizzle tables. `drizzle-zod` generates database schemas; feature Zod schemas compose request/response/event shapes; `*.contracts.ts` and `*.dtos.ts` only infer TypeScript types. Controllers and the separate frontend consume the package, while physical PostgreSQL names remain snake_case and public boundary fields remain camelCase.
+External work that must not run before commit is registered through the application-owned `TransactionHooks` port. Its PostgreSQL adapter delegates to `DBService.afterCommit(...)`. This is appropriate for cache invalidation and other best-effort side effects; critical guaranteed delivery should use a transactional outbox.
 
-## Module Details
+## Events And Cross-Module Reactions
 
-### Auth
+Lifecycle reactions use application events instead of importing another feature's concrete service. Producers depend on a publisher port; infrastructure publishes the event; the consuming module owns its listener. User registration and first login use this pattern for email/message reactions while preserving module direction.
 
-`AuthModule` is split into session, password, and verification flows.
+## Asynchronous Boundaries
 
-- `SessionService` uses `SessionQueries` for login, refresh rotation, logout, and token-version bumping. A null `last_login` triggers the initial system message.
-- Public authentication runs as `guest`, which has no direct privileges or RLS policies on application tables. It can execute only the allow-listed `SECURITY DEFINER` functions in the `guest_api` schema. Once credentials or a signed token are verified, the request transaction is promoted to the authenticated user's RLS context.
-- `guest_api` routines use a fixed `search_path` and preserve the existing login, registration, verification, password, and OAuth behavior while replacing direct guest table access.
-- `PasswordService` uses PostgreSQL for user/password updates and Redis for one-time forgot-password JTI keys: `forgotpassword:jti:*`.
-- `PasswordEmailsService` generates the reset token and enqueues email jobs. It does not write cache keys.
-- `VerificationService` uses PostgreSQL for verification state and Redis for one-time verification JTI keys: `accountverify:jti:*`.
-- `VerificationEmailsService` generates verification tokens and enqueues email jobs.
-
-### User
-
-`UserModule` is split into create, push tokens, and update/profile flows.
-
-- `CreateUserService` creates the user in PostgreSQL, then calls `VerificationEmailsService`. Reminder settings are created only when the authenticated user explicitly saves them through `PUT /api/reminders`.
-- `PushTokensService` stores Expo push tokens in PostgreSQL.
-- `UpdateUserService` reads and updates profile data, stores one-time email-change JTI keys as `emailchange:jti:*`, and uses `SupabaseStorageService` for profile images.
-- `UpdateEmailsService` enqueues email-change confirmation emails.
-
-### Workout
-
-`WorkoutModule` is split into plan and tracking flows.
-
-- `WorkoutPlanService` reads/writes plans through `WorkoutPlanQueries` and caches plan payloads with `xt:workoutplan:v1:{userId}:{tz}`.
-- Updating a plan invalidates its plan, workout-history, and workout-statistics cache keys for the requested timezone.
-- `WorkoutTrackingService` reads/writes tracking data through `WorkoutTrackingQueries`; caches 45-day workout history, workout statistics, exercise history, and personal records independently; completing a workout invalidates those keys without generating a message.
-
-### Workout Schedules And Reminders
-
-- `WorkoutScheduleModule` exposes authenticated reads and atomic complete replacement through `GET` and `PUT /api/workout-schedules`. An empty `schedules` array clears all weekly assignments.
-- Schedule writes accept only active splits owned by the authenticated user's active plan.
-- `RemindersModule` stores whether reminders are enabled and the IANA timezone used to convert each local schedule time.
-- The JWT-protected push cron endpoint asks PostgreSQL for reminders due in the next 70 minutes and enqueues delayed Bull jobs with occurrence-based IDs to prevent duplicate sends during overlapping cron windows.
-
-### Messages
-
-`MessagesModule` handles user inbox reads/updates and lifecycle-generated messages such as the first-login welcome message.
-
-- `MessagesService` reads and mutates message rows through `MessagesQueries`.
-- `MessagesService.emitNewMessage` emits `new_message` through `SocketIOService`.
-- `SystemMessagesService` inserts system messages directly into PostgreSQL and then emits them through `MessagesService`.
-
-### Video Analysis
-
-`VideoAnalysisModule` creates presigned upload URLs and bridges worker results back to users.
-
-Flow:
-
-```text
-Mobile client
--> NestJS API presigned URL
--> direct S3 upload
--> S3 ObjectCreated event
--> SQS
--> Python worker
--> Redis Pub/Sub channel video-analysis:results
--> VideoAnalysisSubscriber
--> Socket.IO event video_analysis_results
--> Mobile client
+```mermaid
+flowchart LR
+  api[NestJS API] -->|email/push job| bull[(Bull on Redis)] --> node[Node workers] --> providers[Resend / Maildev / Expo]
+  api -->|presigned URL| client[Mobile client] --> s3[(S3)] --> sqs[(SQS)] --> python[Python CV worker]
+  python -->|result| pubsub[(Redis Pub/Sub)] --> subscriber[Nest subscriber] --> socket[Socket.IO user room]
 ```
 
-The current implementation delivers analysis results in realtime and does not persist video-analysis results to PostgreSQL.
+SQS remains the retry authority for video processing because its message is deleted only after successful processing and cleanup. Bull queues keep email and push provider latency outside HTTP requests. Redis Pub/Sub bridges Python results into authenticated Socket.IO delivery.
 
-### WebSockets
+## Dependency Rules
 
-`WebSocketsModule` generates short-lived signed socket tickets through `WebSocketsService`.
-
-`SocketIOService` is infrastructure. It attaches Socket.IO to `/socket.io`, validates the ticket, joins the socket to the authenticated user room, and emits user-targeted events. When enabled, the Socket.IO Redis adapter uses Redis pub/sub clients for multi-instance fanout.
-
-### Push
-
-`PushModule` exposes `POST /api/push-jobs/workout-reminders` for an external hourly scheduler. The route requires a Bearer JWT signed with `CRON_JWT_SECRET`. It finds scheduled workout reminders due within the next 70 minutes and adds delayed jobs to `{env}:pushNotificationsQueue`.
-
-Immediately before sending, the push worker rechecks the user's Expo token, reminder enablement, queued schedule and weekday, and active split/plan state. A delayed job is skipped when any of those conditions changed after enqueueing.
-
-### Aerobics
-
-`AerobicsService` reads and writes `tracking.aerobic_tracking` through `AerobicsQueries` and caches cardio history with:
-
-```text
-xt:aerobics:v1:{userId}:{days}:{tz}
-```
-
-### OAuth
-
-`OAuthModule` is split into Google and Apple flows.
-
-- Provider utilities verify the external ID token/JWKS.
-- Provider queries find, link, or create users and `identity.oauth_account` rows through the allow-listed `guest_api` functions.
-- `SessionQueries` bumps token versions and returns auth payload data.
-- First-login flows can call `SystemMessagesService`.
-
-### Exercises
-
-`ExercisesModule` reads the exercise catalog from `workout.exercises`. It has no Redis cache, queue, Socket.IO, or storage dependency today.
-
-## Redis Roles
-
-Redis is one shared infrastructure resource with several logical uses:
-
-| Use                                | Code path                                                                 |
-| ---------------------------------- | ------------------------------------------------------------------------- |
-| JSON response cache                | `CacheService` via `REDIS_CLIENT`                                         |
-| DPoP replay protection             | `DpopGuard` -> `CacheService.cacheStoreJti('dpop', ...)`                  |
-| Password reset one-time URLs       | `PasswordService` -> `forgotpassword:jti:*`                               |
-| Account verification one-time URLs | `VerificationService` -> `accountverify:jti:*`                            |
-| Email-change one-time URLs         | `UpdateUserService` -> `emailchange:jti:*`                                |
-| Video-analysis result delivery     | Python publisher -> `video-analysis:results` -> `VideoAnalysisSubscriber` |
-| Socket.IO scaling                  | `SocketIOService` Redis adapter clients                                   |
-| Email queue                        | Bull queue `{env}:emailsQueue`                                            |
-| Push queue                         | Bull queue `{env}:pushNotificationsQueue`                                 |
-
-The Bull queues use `redisConfig.url` directly. They are Redis-backed, but they are not created through `RedisModule`.
-
-## Background Workers
-
-Node workers are started from `workers/entry.ts` as a Nest application context.
-
-| Worker                   | Consumes                       | Produces / side effect                                                         |
-| ------------------------ | ------------------------------ | ------------------------------------------------------------------------------ |
-| Email worker             | `{env}:emailsQueue`            | Sends through Maildev in local/test or Resend in production-style environments |
-| Push notification worker | `{env}:pushNotificationsQueue` | Sends to Expo Push                                                             |
-
-Both workers use structured logs and capture worker exceptions through Sentry.
-
-## Python Video Worker
-
-The Python worker long-polls SQS for S3 upload events. For each valid S3 record, it:
-
-1. Reads object metadata for job/request/user/trace correlation.
-2. Downloads the source video from S3.
-3. Runs video analysis.
-4. Publishes the result to Redis channel `video-analysis:results`.
-5. Deletes the source video from S3.
-6. Deletes the SQS message after successful processing.
-
-SQS remains the retry authority because the message is deleted only after processing and cleanup succeed.
-
-## Data Access Pattern
-
-The project uses query classes and `postgres` tagged templates rather than hiding SQL behind a heavy ORM. That fits the schema because the database contains domain-specific views, RLS policies, indexes, and analytics queries that benefit from explicit SQL.
-
-`DBService` wraps the SQL client with `AsyncLocalStorage`, allowing injected SQL calls to automatically use the request-bound RLS transaction when present.
-
-## Async Boundaries
-
-The system uses asynchronous processing where latency or external side effects would make synchronous HTTP brittle:
-
-- Video analysis uses S3, SQS, Python processing, Redis Pub/Sub, and Socket.IO.
-- Emails and push notifications are handled by background workers.
-- Redis Pub/Sub decouples the Python worker from the connected WebSocket process.
-- Bull queues decouple HTTP enqueue flows from provider-side email and push delivery.
-
-The architecture prefers explicit boundaries around expensive work, retryable handoffs, and observability propagation across services.
+- Presentation may depend on application use cases and public transport contracts.
+- Application may depend on domain code, application models, and application-owned ports.
+- Domain code has no NestJS, HTTP, database, cache, queue, or provider dependencies.
+- Infrastructure implements ports and owns SQL rows, Redis values, SDK payloads, and mappings.
+- Shared public contracts use plain Zod and do not import Drizzle tables, database schemas, repositories, or internal application models.
+- Cross-module lifecycle reactions use events; synchronous capabilities cross boundaries through application ports.

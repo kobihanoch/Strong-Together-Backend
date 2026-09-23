@@ -1,12 +1,62 @@
 # Database Schemas And Flows
 
-The database is PostgreSQL-first and organized around domain schemas rather than a single overloaded `public` namespace. The active Drizzle migrations live in `src/infrastructure/db/schema/drizzle-migrations`, and seeds live in `src/infrastructure/db/schema/seeds`.
+The database is PostgreSQL-first and organized around domain schemas rather than a single overloaded `public` namespace. The active Drizzle migrations live in `src/infrastructure/db/schema/migrations`, and seeds live in `src/infrastructure/db/schema/seeds`.
 
 The ERDs are generated from the reviewed DBML sources under `docs/db-diagrams/source`. Run `npm run docs:db-diagrams` after a schema change and review both the DBML diff and rendered SVG. The Drizzle TypeScript schema and committed migrations remain authoritative.
 
-## Chen ERD
+## Main Database Architecture
 
-![Chen ERD](media/dberd.jpg)
+The former raster overview was stale. This Mermaid diagram is the maintained, readable high-level view; the detailed generated SVGs below remain useful for column-level inspection.
+
+```mermaid
+flowchart TB
+  client[Mobile client]
+  api[NestJS API]
+  rls[RLS request transaction<br/>guest or authenticated role]
+  guest[guest_api<br/>narrow SECURITY DEFINER auth functions]
+  cron[cron_api<br/>narrow reminder functions]
+
+  subgraph postgres[PostgreSQL domain schemas]
+    identity[identity<br/>users, OAuth accounts]
+    workout[workout<br/>exercises, plans, splits, prescribed sets]
+    tracking[tracking<br/>sessions, completed sets, aerobics, PR views]
+    schedules[schedules<br/>weekly workout assignments]
+    reminders[reminders<br/>notification preferences]
+    messages[messages<br/>user and system inbox]
+    social[social<br/>crews, memberships, posts, comments, reactions]
+  end
+
+  client --> api
+  api --> rls
+  rls --> identity
+  rls --> workout
+  rls --> tracking
+  rls --> schedules
+  rls --> reminders
+  rls --> messages
+  rls --> social
+  api --> guest --> identity
+  api --> cron
+  cron --> schedules
+  cron --> reminders
+  cron --> identity
+
+  identity --> workout
+  identity --> tracking
+  identity --> schedules
+  identity --> reminders
+  identity --> messages
+  identity --> social
+  workout --> tracking
+  workout --> schedules
+
+  classDef edge fill:#e8f1ff,stroke:#2563eb,color:#111827
+  classDef security fill:#fff4d6,stroke:#d97706,color:#111827
+  classDef schema fill:#ecfdf5,stroke:#059669,color:#111827
+  class client,api edge
+  class rls,guest,cron security
+  class identity,workout,tracking,schedules,reminders,messages,social schema
+```
 
 ## Schema Map
 
@@ -18,7 +68,9 @@ The ERDs are generated from the reviewed DBML sources under `docs/db-diagrams/so
 | `schedules` | `workout_schedule`                                                                      | Explicit weekday/time assignments for active workout splits                              |
 | `reminders` | `user_reminder_setting`                                                                 | Per-user reminder enablement and IANA timezone                                            |
 | `messages`  | `message`                                                                               | User/system messaging                                                                    |
+| `social`    | crews, memberships, participation requests, posts, placements, comments, reactions     | Social discovery, crew authorization, feeds, and interaction data                        |
 | `guest_api` | allow-listed `SECURITY DEFINER` functions                                               | Narrow database API for unauthenticated authentication and registration flows            |
+| `cron_api`  | allow-listed reminder lookup/revalidation functions                                     | Narrow database API for scheduled push processing                                        |
 
 ## Identity Schema
 
@@ -136,6 +188,10 @@ The `PUT /api/workout-schedules` operation is a complete replacement. Sending `{
 `messages.message` supports user and system messages.
 
 RLS allows participants to read/update/delete messages where they are sender or receiver. Insert policy also allows a known system sender ID, which supports automated application messages without giving every user broad write access.
+
+## Social Schema
+
+The `social` schema owns crews, memberships, participation requests, posts, crew placements, comments, reactions, and security-invoker feed views. Its RLS policies encode public/private crew visibility, membership state, leadership privileges, post visibility, and author-owned mutations. See [Social Module And Authorization](./social-module-and-authorization.md) for the table-level policy matrix and API flows.
 
 ## RLS Flow
 
