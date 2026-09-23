@@ -20,7 +20,7 @@ export class CrewRequestsSql {
    *
    * @returns All RLS-visible invitation rows ordered from newest to oldest.
    */
-  async queryListInvitations(): Promise<CrewParticipationRequestSqlRow[]> {
+  async listInvitations(): Promise<CrewParticipationRequestSqlRow[]> {
     return this.dbService.sql<CrewParticipationRequestSqlRow[]>`
       SELECT
         id,
@@ -48,7 +48,7 @@ export class CrewRequestsSql {
    * @param crewId - The UUID of the crew to authorize.
    * @returns `true` when the caller is the active crew leader.
    */
-  async queryIsCrewLeader(crewId: string): Promise<boolean> {
+  async isCrewLeader(crewId: string): Promise<boolean> {
     const [row] = await this.dbService.sql<{ allowed: boolean }[]>`
       SELECT
         social.is_crew_leader (${crewId}::UUID) AS allowed
@@ -62,7 +62,7 @@ export class CrewRequestsSql {
    * @param crewId - The UUID of the crew whose requests are listed.
    * @returns Pending RLS-visible join-request rows ordered from oldest to newest.
    */
-  async queryListPendingJoinRequests(crewId: string): Promise<CrewParticipationRequestSqlRow[]> {
+  async listPendingJoinRequests(crewId: string): Promise<CrewParticipationRequestSqlRow[]> {
     return this.dbService.sql<CrewParticipationRequestSqlRow[]>`
       SELECT
         id,
@@ -93,7 +93,7 @@ export class CrewRequestsSql {
    * @param participantUserId - The UUID of the invited participant.
    * @returns The inserted participation request, or an empty collection when RLS blocks insertion.
    */
-  async queryInviteUser(crewId: string, initiatorUserId: string, participantUserId: string): Promise<CrewParticipationRequestSqlRow[]> {
+  async inviteUser(crewId: string, initiatorUserId: string, participantUserId: string): Promise<CrewParticipationRequestSqlRow[]> {
     return this.dbService.sql<CrewParticipationRequestSqlRow[]>`
       INSERT INTO
         social.crew_participation_request (crew_id, initiator_user_id, participant_user_id, status)
@@ -127,7 +127,7 @@ export class CrewRequestsSql {
    * @param userId - The UUID used as both request initiator and participant.
    * @returns The inserted participation request, or an empty collection when no visible crew matches.
    */
-  async queryRequestToJoin(crewId: string, userId: string): Promise<CrewParticipationRequestSqlRow[]> {
+  async requestToJoin(crewId: string, userId: string): Promise<CrewParticipationRequestSqlRow[]> {
     return this.dbService.sql<CrewParticipationRequestSqlRow[]>`
       INSERT INTO
         social.crew_participation_request (crew_id, initiator_user_id, participant_user_id, status)
@@ -167,7 +167,7 @@ export class CrewRequestsSql {
    * @param status - The requested terminal status, either `accepted` or `declined`.
    * @returns The updated request, or an empty collection if it is unavailable or not pending.
    */
-  async queryUpdateStatus(requestId: string, status: 'accepted' | 'declined'): Promise<CrewParticipationRequestSqlRow[]> {
+  async updateStatus(requestId: string, status: 'accepted' | 'declined'): Promise<CrewParticipationRequestSqlRow[]> {
     return this.dbService.sql<CrewParticipationRequestSqlRow[]>`
       UPDATE social.crew_participation_request
       SET
@@ -200,7 +200,7 @@ export class CrewRequestsSql {
    * @param userId - The UUID of the user receiving active member membership.
    * @returns A promise that resolves after membership insertion.
    */
-  async queryCreateMembership(crewId: string, userId: string): Promise<void> {
+  async createMembership(crewId: string, userId: string): Promise<void> {
     await this.dbService.sql`
       INSERT INTO
         social.crew_membership (crew_id, user_id, status, role, joined_at)

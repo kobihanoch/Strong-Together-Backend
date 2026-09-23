@@ -7,24 +7,24 @@ import { CrewRequestsSql } from './crew-requests.sql';
 export class PostgresCrewRequestsRepository implements CrewRequestsRepository {
   public constructor(private readonly sql: CrewRequestsSql) {}
   public listInvitations(): Promise<CrewParticipationRequest[]> {
-    return this.sql.queryListInvitations();
+    return this.sql.listInvitations();
   }
   public isCrewLeader(crewId: string): Promise<boolean> {
-    return this.sql.queryIsCrewLeader(crewId);
+    return this.sql.isCrewLeader(crewId);
   }
   public listPending(crewId: string): Promise<CrewParticipationRequest[]> {
-    return this.sql.queryListPendingJoinRequests(crewId);
+    return this.sql.listPendingJoinRequests(crewId);
   }
   public async invite(crewId: string, initiatorUserId: string, participantUserId: string): Promise<CrewParticipationRequest | null> {
-    return (await this.sql.queryInviteUser(crewId, initiatorUserId, participantUserId))[0] ?? null;
+    return (await this.sql.inviteUser(crewId, initiatorUserId, participantUserId))[0] ?? null;
   }
   public async requestToJoin(crewId: string, userId: string): Promise<CrewParticipationRequest | null> {
-    return (await this.sql.queryRequestToJoin(crewId, userId))[0] ?? null;
+    return (await this.sql.requestToJoin(crewId, userId))[0] ?? null;
   }
   public async updateStatus(requestId: string, status: 'accepted' | 'declined'): Promise<CrewParticipationRequest | null> {
-    return (await this.sql.queryUpdateStatus(requestId, status))[0] ?? null;
+    return (await this.sql.updateStatus(requestId, status))[0] ?? null;
   }
   public createMembership(crewId: string, userId: string): Promise<void> {
-    return this.sql.queryCreateMembership(crewId, userId);
+    return this.sql.createMembership(crewId, userId);
   }
 }

@@ -26,7 +26,7 @@ export class WorkoutTrackingSql {
    * @param tz - The IANA time-zone name.
    * @returns The exercise tracking maps result.
    */
-  async queryGetExerciseTrackingMaps(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<WorkoutHistorySqlResult> {
+  async findWorkoutHistory(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<WorkoutHistorySqlResult> {
     const [{ data }] = await this.dbService.sql<WorkoutHistorySqlRow[]>`
       WITH
         bounds AS (
@@ -229,7 +229,7 @@ export class WorkoutTrackingSql {
    * @param tz - The IANA time-zone name used to calculate date boundaries.
    * @returns Exercise tracking grouped by exercise-to-split identifier.
    */
-  async queryGetExerciseHistory(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<ExerciseHistorySqlResult> {
+  async findExerciseHistory(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<ExerciseHistorySqlResult> {
     const [{ data }] = await this.dbService.sql<ExerciseHistorySqlRow[]>`
       WITH
         bounds AS (
@@ -374,7 +374,7 @@ export class WorkoutTrackingSql {
    * @param tz - The IANA time-zone name.
    * @returns The exercise tracking stats result.
    */
-  async queryGetExerciseTrackingStats(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<WorkoutStatisticsSqlResult> {
+  async findWorkoutStatistics(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<WorkoutStatisticsSqlResult> {
     const [{ data }] = await this.dbService.sql<WorkoutStatisticsSqlRow[]>`
       WITH
         bounds AS (
@@ -740,7 +740,7 @@ export class WorkoutTrackingSql {
    * @param tz - The IANA time-zone name used for local workout timestamps.
    * @returns All personal records keyed by exercise identifier.
    */
-  async queryGetAllPersonalRecords(userId: string, tz: string): Promise<PersonalRecordsSqlResult> {
+  async findPersonalRecords(userId: string, tz: string): Promise<PersonalRecordsSqlResult> {
     const [{ data }] = await this.dbService.sql<PersonalRecordsSqlRow[]>`
       SELECT
         JSONB_BUILD_OBJECT(
@@ -800,7 +800,7 @@ export class WorkoutTrackingSql {
    * @param workoutEndUtc - The workout end utc.
    * @returns The insert user finished workout result.
    */
-  async queryInsertUserFinishedWorkout(
+  async createWorkoutSession(
     userId: string,
     workoutArray: FinishedWorkoutEntry[],
     workoutStartUtc: string | null,

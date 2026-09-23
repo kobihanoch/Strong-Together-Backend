@@ -8,14 +8,14 @@ export class PostgresRemindersRepository implements RemindersRepository {
   constructor(private readonly sql: RemindersSql) {}
 
   findByUser(userId: string): Promise<ReminderSettings | null> {
-    return this.sql.queryGetReminderSettings(userId);
+    return this.sql.findSettings(userId);
   }
 
   upsertForUser(userId: string, settings: UpsertReminderSettingsInput): Promise<void> {
-    return this.sql.queryUpsertReminderSettings(userId, settings);
+    return this.sql.upsertSettings(userId, settings);
   }
 
   updateTimeZoneForUser(userId: string, settings: UpdateReminderTimeZoneInput): Promise<void> {
-    return this.sql.queryUpdateReminderTimeZone(userId, settings);
+    return this.sql.updateTimeZone(userId, settings);
   }
 }

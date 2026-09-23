@@ -14,7 +14,7 @@ export class PostsSql {
    * @param cursor - The preceding page's final publication timestamp and UUID.
    * @returns Visible post rows with like and comment counts, ordered from newest to oldest.
    */
-  queryVisiblePosts(limit: number, cursor?: { timestamp: string; id: string }): Promise<PostSqlRow[]> {
+  listVisible(limit: number, cursor?: { timestamp: string; id: string }): Promise<PostSqlRow[]> {
     return this.dbService.sql<PostSqlRow[]>`
       SELECT
         post.id,
@@ -52,7 +52,7 @@ export class PostsSql {
    * @param cursor - The preceding page's final publication timestamp and UUID.
    * @returns Crew post rows with like and comment counts, ordered from newest to oldest.
    */
-  queryCrewPosts(crewId: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<PostSqlRow[]> {
+  listForCrew(crewId: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<PostSqlRow[]> {
     return this.dbService.sql<PostSqlRow[]>`
       SELECT
         post.id,
@@ -95,7 +95,7 @@ export class PostsSql {
    * @param crewIds - The UUIDs of the crews receiving the post.
    * @returns The new post, or an empty array when any placement is unauthorized.
    */
-  async queryCreatePost(
+  async create(
     userId: string,
     content: string,
     visibility: 'crews_only' | 'public',
@@ -146,7 +146,7 @@ export class PostsSql {
    * @param content - The replacement textual content.
    * @returns The updated UUID, or an empty array when no post was authorized.
    */
-  queryUpdatePost(id: string, content: string): Promise<DeletedPostSqlRow[]> {
+  update(id: string, content: string): Promise<DeletedPostSqlRow[]> {
     return this.dbService.sql<DeletedPostSqlRow[]>`
       UPDATE social.post
       SET
@@ -165,7 +165,7 @@ export class PostsSql {
    * @param id - The UUID of the post to delete.
    * @returns The deleted UUID, or an empty array when no post was authorized.
    */
-  queryDeletePost(id: string): Promise<DeletedPostSqlRow[]> {
+  delete(id: string): Promise<DeletedPostSqlRow[]> {
     return this.dbService.sql<DeletedPostSqlRow[]>`
       DELETE FROM social.post
       WHERE

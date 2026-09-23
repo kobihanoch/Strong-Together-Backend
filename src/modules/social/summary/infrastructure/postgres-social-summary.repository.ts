@@ -9,7 +9,7 @@ export class PostgresSocialSummaryRepository implements SocialSummaryRepository 
   public constructor(private readonly sql: SocialSummarySql) {}
 
   public async get(): Promise<SocialSummary> {
-    const [summary] = await this.sql.query();
+    const [summary] = await this.sql.get();
     return summary;
   }
 }

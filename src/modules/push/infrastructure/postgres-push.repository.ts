@@ -8,10 +8,10 @@ export class PostgresPushRepository implements PushRepository {
   constructor(private readonly sql: PushSql) {}
 
   findDueWorkoutReminders(): Promise<DueWorkoutReminder[]> {
-    return this.sql.queryDueWorkoutReminders();
+    return this.sql.findDueWorkoutReminders();
   }
 
   findEligibleExpoPushToken(userId: string, workoutScheduleId: string, occurrenceDate: string): Promise<string | null> {
-    return this.sql.queryExpoPushToken(userId, workoutScheduleId, occurrenceDate);
+    return this.sql.findEligibleExpoPushToken(userId, workoutScheduleId, occurrenceDate);
   }
 }

@@ -28,7 +28,7 @@ export class CrewsSql {
    * @param search - Optional case-insensitive crew-name search text.
    * @returns Crew rows ordered from newest to oldest.
    */
-  async queryCrews(limit: number, cursor?: { timestamp: string; id: string }, search?: string): Promise<DiscoverableCrewSqlRow[]> {
+  async list(limit: number, cursor?: { timestamp: string; id: string }, search?: string): Promise<DiscoverableCrewSqlRow[]> {
     return this.dbService.sql<DiscoverableCrewSqlRow[]>`
       SELECT
         crew.id,
@@ -71,7 +71,7 @@ export class CrewsSql {
    * @param cursor - The preceding page's final creation timestamp and UUID.
    * @returns The caller's crews with participant counts and previews, newest first.
    */
-  async queryMyCrews(limit: number, cursor?: { timestamp: string; id: string }): Promise<DiscoverableCrewSqlRow[]> {
+  async listMine(limit: number, cursor?: { timestamp: string; id: string }): Promise<DiscoverableCrewSqlRow[]> {
     return this.dbService.sql<DiscoverableCrewSqlRow[]>`
       SELECT
         crew.id,
@@ -113,7 +113,7 @@ export class CrewsSql {
    * @param cursor - The preceding page's final role rank, join timestamp, and UUID.
    * @returns Authorized participant rows ordered by role and join date.
    */
-  async queryCrewParticipants(
+  async listParticipants(
     crewId: string,
     limit: number,
     cursor?: { timestamp: string; id: string; rank: number | undefined },
@@ -172,7 +172,7 @@ export class CrewsSql {
    * @param id - The UUID of the crew to retrieve.
    * @returns An array containing the matching crew, or an empty array.
    */
-  async queryCrew(id: string): Promise<CrewWithParticipantCountSqlRow[]> {
+  async findById(id: string): Promise<CrewWithParticipantCountSqlRow[]> {
     return this.dbService.sql<CrewWithParticipantCountSqlRow[]>`
       SELECT
         id,
@@ -199,7 +199,7 @@ export class CrewsSql {
    * @param privacy - Whether the crew is public or private.
    * @returns An array containing the newly created crew.
    */
-  async queryCreateCrew(userId: string, name: string, privacy: 'public' | 'private'): Promise<CrewSqlRow[]> {
+  async create(userId: string, name: string, privacy: 'public' | 'private'): Promise<CrewSqlRow[]> {
     const [created] = await this.dbService.sql<CrewSqlRow[]>`
       INSERT INTO
         social.crew (name, created_by, privacy)
@@ -239,7 +239,7 @@ export class CrewsSql {
    * @param privacy - The new crew privacy setting.
    * @returns An array containing the updated crew, or an empty array.
    */
-  async queryUpdateCrew(id: string, name: string, privacy: 'public' | 'private'): Promise<CrewSqlRow[]> {
+  async update(id: string, name: string, privacy: 'public' | 'private'): Promise<CrewSqlRow[]> {
     return this.dbService.sql<CrewSqlRow[]>`
       UPDATE social.crew
       SET
@@ -264,7 +264,7 @@ export class CrewsSql {
    * @param crewId - The crew UUID.
    * @returns The current picture path, or no row when the caller cannot update it.
    */
-  async queryCrewProfilePictureForUpdate(crewId: string): Promise<{ profilePicPath: string | null }[]> {
+  async findProfilePictureForUpdate(crewId: string): Promise<{ profilePicPath: string | null }[]> {
     return this.dbService.sql<{ profilePicPath: string | null }[]>`
       SELECT
         profile_pic_path AS "profilePicPath"
@@ -283,7 +283,7 @@ export class CrewsSql {
    * @param profilePicPath - The new storage path, or null when deleting it.
    * @returns The updated picture path.
    */
-  async queryUpdateCrewProfilePicture(crewId: string, profilePicPath: string | null): Promise<{ profilePicPath: string | null }[]> {
+  async updateProfilePicture(crewId: string, profilePicPath: string | null): Promise<{ profilePicPath: string | null }[]> {
     return this.dbService.sql<{ profilePicPath: string | null }[]>`
       UPDATE social.crew
       SET
@@ -304,7 +304,7 @@ export class CrewsSql {
    * @param crewId - The UUID of the crew the current user wants to leave.
    * @returns The leave result used by the service to select the HTTP outcome.
    */
-  async queryLeaveCrew(crewId: string): Promise<LeaveCrewResultSqlRow[]> {
+  async leave(crewId: string): Promise<LeaveCrewResultSqlRow[]> {
     // Get crew ID and lock row
     const [context] = await this.dbService.sql<LeaveCrewContextSqlRow[]>`
       SELECT
@@ -395,7 +395,7 @@ export class CrewsSql {
    * @param id - The UUID of the crew to delete.
    * @returns The deleted UUID when a row was removed, or an empty array.
    */
-  async queryDeleteCrew(id: string): Promise<DeletedCrewSqlRow[]> {
+  async delete(id: string): Promise<DeletedCrewSqlRow[]> {
     return this.dbService.sql<DeletedCrewSqlRow[]>`
       DELETE FROM social.crew
       WHERE

@@ -12,18 +12,18 @@ import { WorkoutTrackingSql } from './workout-tracking.sql';
 export class PostgresWorkoutTrackingRepository implements WorkoutTrackingRepository {
   constructor(private readonly sql: WorkoutTrackingSql) {}
   findWorkoutHistory(u: string, d: number, t: string): Promise<WorkoutHistory> {
-    return this.sql.queryGetExerciseTrackingMaps(u, d, t);
+    return this.sql.findWorkoutHistory(u, d, t);
   }
   findExerciseHistory(u: string, d: number, t: string): Promise<ExerciseHistory> {
-    return this.sql.queryGetExerciseHistory(u, d, t);
+    return this.sql.findExerciseHistory(u, d, t);
   }
   findStatistics(u: string, d: number, t: string): Promise<WorkoutStatistics> {
-    return this.sql.queryGetExerciseTrackingStats(u, d, t);
+    return this.sql.findWorkoutStatistics(u, d, t);
   }
   findPersonalRecords(u: string, t: string): Promise<PersonalRecords> {
-    return this.sql.queryGetAllPersonalRecords(u, t);
+    return this.sql.findPersonalRecords(u, t);
   }
   async saveCompletedWorkout(u: string, w: FinishedWorkoutEntry[], s: string | null, e: string | null): Promise<void> {
-    await this.sql.queryInsertUserFinishedWorkout(u, w, s, e);
+    await this.sql.createWorkoutSession(u, w, s, e);
   }
 }

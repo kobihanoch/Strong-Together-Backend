@@ -6,10 +6,10 @@ import { WorkoutPlanSql } from './workout-plan.sql';
 export class PostgresWorkoutPlanRepository implements WorkoutPlanRepository {
   constructor(private readonly sql: WorkoutPlanSql) {}
   async findActiveByUser(userId: string, timezone: string): Promise<WorkoutPlan | null> {
-    return (await this.sql.queryWholeUserWorkoutPlan(userId, timezone))[0] ?? null;
+    return (await this.sql.findActiveByUser(userId, timezone))[0] ?? null;
   }
   async replaceForUser(userId: string, splits: WorkoutSplitInput[]): Promise<ReplaceWorkoutPlanOutcome> {
-    const result = await this.sql.queryAddWorkout(userId, splits);
-    return typeof result === 'number' ? { kind: 'replaced' } : { kind: 'split-not-owned', splitId: result.invalidSplitId };
+    const result = await this.sql.replaceForUser(userId, splits);
+    return 'replaced' in result ? { kind: 'replaced' } : { kind: 'split-not-owned', splitId: result.invalidSplitId };
   }
 }

@@ -21,7 +21,7 @@ export class ReactionsSql {
    * @param cursor - The preceding page's final reaction timestamp and UUID.
    * @returns At most one extra row beyond the requested page size.
    */
-  public queryPostReactions(postId: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<ReactionSqlRow[]> {
+  public listForPost(postId: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<ReactionSqlRow[]> {
     return this.dbService.sql<ReactionSqlRow[]>`
       SELECT
         r.id,
@@ -56,7 +56,7 @@ export class ReactionsSql {
    * @param type - The selected reaction type.
    * @returns The written reaction identifier, or no row when the post is not visible.
    */
-  public queryReact(postId: string, userId: string, type: ReactToPostBody['type']): Promise<ReactionWriteSqlRow[]> {
+  public save(postId: string, userId: string, type: ReactToPostBody['type']): Promise<ReactionWriteSqlRow[]> {
     return this.dbService.sql<ReactionWriteSqlRow[]>`
       INSERT INTO
         social.reaction (post_id, user_id, type)
@@ -82,7 +82,7 @@ export class ReactionsSql {
    * @param userId - The authenticated user's UUID.
    * @returns The deleted reaction identifier, or no row when it does not exist.
    */
-  public queryDeleteReaction(postId: string, userId: string): Promise<ReactionWriteSqlRow[]> {
+  public delete(postId: string, userId: string): Promise<ReactionWriteSqlRow[]> {
     return this.dbService.sql<ReactionWriteSqlRow[]>`
       DELETE FROM social.reaction
       WHERE

@@ -7,7 +7,7 @@ import type { SocialSummarySqlRow } from './social-summary.db-types';
 export class SocialSummarySql {
   public constructor(private readonly dbService: DBService) {}
 
-  public query(): Promise<SocialSummarySqlRow[]> {
+  public get(): Promise<SocialSummarySqlRow[]> {
     return this.dbService.sql<SocialSummarySqlRow[]>`
       SELECT
         (

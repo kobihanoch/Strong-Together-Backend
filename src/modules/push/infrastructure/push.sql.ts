@@ -10,7 +10,7 @@ export class PushSql {
    * Retrieves eligible workout reminders due in the cron look-ahead window.
    * @returns The reminders that should be added to the push queue.
    */
-  async queryDueWorkoutReminders(): Promise<DueWorkoutReminderSqlRow[]> {
+  async findDueWorkoutReminders(): Promise<DueWorkoutReminderSqlRow[]> {
     return this.dbService.sql<DueWorkoutReminderSqlRow[]>`
       SELECT
         user_id AS "userId",
@@ -30,7 +30,7 @@ export class PushSql {
    * @param occurrenceDate - The queued local workout date.
    * @returns The current Expo token, or null when the delayed reminder is no longer eligible.
    */
-  async queryExpoPushToken(userId: string, workoutScheduleId: string, occurrenceDate: string): Promise<string | null> {
+  async findEligibleExpoPushToken(userId: string, workoutScheduleId: string, occurrenceDate: string): Promise<string | null> {
     const [row] = await this.dbService.sql<EligiblePushTokenSqlRow[]>`
       SELECT cron_api.valid_workout_reminder_token(
         ${userId}::UUID,

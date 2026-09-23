@@ -148,7 +148,7 @@ export class UpdateUserSql {
         id = ${userId}::UUID
     `;
   }
-  profilePicture(userId: string): Promise<UserProfilePictureSqlRow[]> {
+  findProfilePicture(userId: string): Promise<UserProfilePictureSqlRow[]> {
     return this.db.sql<UserProfilePictureSqlRow[]>`
       SELECT
         profile_pic_path AS "profilePicPath"

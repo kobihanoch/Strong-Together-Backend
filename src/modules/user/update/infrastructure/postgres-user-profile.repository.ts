@@ -38,7 +38,7 @@ export class PostgresUserProfileRepository implements UserProfileRepository {
     return this.sql.delete(userId);
   }
   async findProfilePicture(userId: string): Promise<string | null> {
-    return (await this.sql.profilePicture(userId))[0]?.profilePicPath ?? null;
+    return (await this.sql.findProfilePicture(userId))[0]?.profilePicPath ?? null;
   }
   updateProfilePicture(userId: string, path: string | null): Promise<void> {
     return this.sql.updateProfilePicture(userId, path);

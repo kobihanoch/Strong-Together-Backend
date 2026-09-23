@@ -15,7 +15,7 @@ export class RemindersSql {
    * @param userId - The authenticated user's identifier.
    * @returns The user's reminder settings, or null when none exist.
    */
-  async queryGetReminderSettings(userId: string): Promise<ReminderSettingsSqlRow | null> {
+  async findSettings(userId: string): Promise<ReminderSettingsSqlRow | null> {
     const [settings] = await this.dbService.sql<ReminderSettingsSqlRow[]>`
       SELECT
         id,
@@ -36,7 +36,7 @@ export class RemindersSql {
    * @param userId - The authenticated user's identifier.
    * @param settings - The validated reminder settings.
    */
-  async queryUpsertReminderSettings(userId: string, settings: UpsertReminderSettingsInput): Promise<void> {
+  async upsertSettings(userId: string, settings: UpsertReminderSettingsInput): Promise<void> {
     await this.dbService.sql`
       INSERT INTO
         reminders.user_reminder_setting (user_id, reminder_enabled, time_zone)
@@ -59,7 +59,7 @@ export class RemindersSql {
    * @param userId - The authenticated user's identifier.
    * @param settings - The validated reminder time-zone settings.
    */
-  async queryUpdateReminderTimeZone(userId: string, settings: UpdateReminderTimeZoneInput): Promise<void> {
+  async updateTimeZone(userId: string, settings: UpdateReminderTimeZoneInput): Promise<void> {
     await this.dbService.sql`
       UPDATE reminders.user_reminder_setting
       SET

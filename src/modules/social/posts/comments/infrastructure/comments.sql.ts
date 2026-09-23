@@ -20,7 +20,7 @@ export class CommentsSql {
    * @param cursor - The preceding page's final creation timestamp and UUID.
    * @returns At most one extra row beyond the requested page size.
    */
-  public queryPostComments(postId: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<CommentSqlRow[]> {
+  public listForPost(postId: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<CommentSqlRow[]> {
     return this.dbService.sql<CommentSqlRow[]>`
       SELECT
         c.id,
@@ -60,7 +60,7 @@ export class CommentsSql {
    * @param content - The validated comment text.
    * @returns The created comment identifier, or no row when the post is not visible.
    */
-  public queryAddComment(postId: string, userId: string, content: string): Promise<CommentWriteSqlRow[]> {
+  public add(postId: string, userId: string, content: string): Promise<CommentWriteSqlRow[]> {
     return this.dbService.sql<CommentWriteSqlRow[]>`
       INSERT INTO
         social.comment (post_id, user_id, content)
@@ -82,7 +82,7 @@ export class CommentsSql {
    * @param content - The validated replacement text.
    * @returns The updated comment identifier, or no row when it is unavailable.
    */
-  public queryEditComment(id: string, content: string): Promise<CommentWriteSqlRow[]> {
+  public edit(id: string, content: string): Promise<CommentWriteSqlRow[]> {
     return this.dbService.sql<CommentWriteSqlRow[]>`
       UPDATE social.comment
       SET
@@ -101,7 +101,7 @@ export class CommentsSql {
    * @param id - The comment UUID.
    * @returns The deleted comment identifier, or no row when it is unavailable.
    */
-  public queryDeleteComment(id: string): Promise<CommentWriteSqlRow[]> {
+  public delete(id: string): Promise<CommentWriteSqlRow[]> {
     return this.dbService.sql<CommentWriteSqlRow[]>`
       DELETE FROM social.comment
       WHERE

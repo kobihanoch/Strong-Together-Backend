@@ -22,7 +22,7 @@ export class WorkoutPlanSql {
    * @param tz - The IANA time-zone name.
    * @returns The whole user workout plan result.
    */
-  async queryWholeUserWorkoutPlan(userId: string, tz: string): Promise<WorkoutPlanSqlRow[]> {
+  async findActiveByUser(userId: string, tz: string): Promise<WorkoutPlanSqlRow[]> {
     return this.dbService.sql<WorkoutPlanSqlRow[]>`
       WITH
         ranked_workout_durations AS (
@@ -188,7 +188,7 @@ export class WorkoutPlanSql {
    * @param workoutData - The workout plan payload.
    * @returns The add workout result.
    */
-  async queryAddWorkout(userId: string, workoutData: WorkoutSplitInput[]): Promise<number | { invalidSplitId: number }> {
+  async replaceForUser(userId: string, workoutData: WorkoutSplitInput[]): Promise<{ replaced: true } | { invalidSplitId: number }> {
     const submittedExistingIds = workoutData.flatMap((split) => (split.id === undefined ? [] : [split.id]));
 
     if (submittedExistingIds.length > 0) {
@@ -258,7 +258,7 @@ export class WorkoutPlanSql {
     }
 
     await this.replaceWorkoutExercises(plan.id, savedSplits);
-    return plan.id;
+    return { replaced: true };
   }
 
   /**
