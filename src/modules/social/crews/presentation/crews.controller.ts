@@ -35,7 +35,7 @@ import {
   replaceCrewProfilePictureRequestSchema,
   updateCrewRequestSchema,
 } from '@strong-together/shared';
-import { CurrentLogger } from '../../../../common/decorators/current-logger.decorator';
+import { OperationLogger } from '../../../../common/application/ports/operation-logger.port';
 import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../../common/decorators/request-data.decorator';
 import { AuthenticationGuard } from '../../../../common/guards/authentication.guard';
@@ -44,7 +44,6 @@ import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { imageUploadOptions } from '../../../../common/interceptors/image-upload.config';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
-import type { AppLogger } from '../../../../infrastructure/logger';
 import { CreateCrewUseCase } from '../application/use-cases/create-crew.use-case';
 import { DeleteCrewProfilePictureUseCase } from '../application/use-cases/delete-crew-profile-picture.use-case';
 import { DeleteCrewUseCase } from '../application/use-cases/delete-crew.use-case';
@@ -88,6 +87,7 @@ export class CrewsController {
     private readonly deleteCrewPicture: DeleteCrewProfilePictureUseCase,
     private readonly leaveCrew: LeaveCrewUseCase,
     private readonly deleteCrew: DeleteCrewUseCase,
+    private readonly logger: OperationLogger,
   ) {}
 
   /**
@@ -225,7 +225,6 @@ export class CrewsController {
    * Access: Authenticated user
    * @param data - The validated crew ID.
    * @param file - The uploaded image file.
-   * @param requestLogger - Logger used if old-image cleanup fails.
    * @returns The stored image path and public URL.
    */
   @Put(':id/profile-picture')
@@ -233,10 +232,9 @@ export class CrewsController {
   async replaceProfilePicture(
     @RequestData(new ValidateRequestPipe(replaceCrewProfilePictureRequestSchema)) data: { params: ReplaceCrewProfilePictureParams },
     @UploadedFile() file: Express.Multer.File | undefined,
-    @CurrentLogger() requestLogger: AppLogger,
   ): Promise<ReplaceCrewProfilePictureResponse> {
     return this.replaceCrewPicture.execute(data.params.id, file, (error, oldPath) =>
-      requestLogger.warn({ err: error, crewId: data.params.id, oldPath }, 'Failed to delete old crew profile image'),
+      this.logger.warn({ err: error, crewId: data.params.id, oldPath }, 'Failed to delete old crew profile image'),
     );
   }
 

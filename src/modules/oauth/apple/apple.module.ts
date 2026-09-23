@@ -12,6 +12,10 @@ import { AppleController } from './presentation/apple.controller';
 @Module({
   imports: [AuthCoreModule, SessionModule, OAuthCoreModule],
   controllers: [AppleController],
-  providers: [{ provide: AppleIdentityVerifier, useClass: JoseAppleIdentityVerifier }, SignInWithAppleUseCase, RateLimitGuard],
+  providers: [
+    { provide: AppleIdentityVerifier, useClass: JoseAppleIdentityVerifier },
+    SignInWithAppleUseCase,
+    RateLimitGuard,
+  ],
 })
 export class AppleOAuthModule {}

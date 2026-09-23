@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import type { AuthRequestLogger, LoginResult } from '../../../core/application/models/auth.models';
+import { OperationLogger } from '../../../../../common/application/ports/operation-logger.port';
+import type { LoginResult } from '../../../core/application/models/auth.models';
 import { SessionBadRequestError, SessionUnauthorizedError } from '../errors/session.errors';
 import { AuthPolicy } from '../../../core/application/ports/auth-policy.port';
 import { AuthTokens } from '../../../core/application/ports/auth-tokens.port';
@@ -18,6 +19,7 @@ export class LoginUseCase {
     private readonly transaction: AuthenticationTransaction,
     private readonly policy: AuthPolicy,
     private readonly events: AuthenticationEvents,
+    private readonly logger: OperationLogger,
   ) {}
 
   /**
@@ -26,12 +28,11 @@ export class LoginUseCase {
    * @param identifier - The submitted username or email address.
    * @param password - The submitted plaintext password.
    * @param jkt - The optional DPoP key thumbprint.
-   * @param logger - The request-correlated authentication logger.
    * @returns The successful login payload.
    * @throws {SessionBadRequestError} When required DPoP binding is missing.
    * @throws {SessionUnauthorizedError} When credentials or verification state are invalid.
    */
-  async execute(identifier: string, password: string, jkt: string | undefined, logger: AuthRequestLogger): Promise<LoginResult> {
+  async execute(identifier: string, password: string, jkt: string | undefined): Promise<LoginResult> {
     if (this.policy.dpopEnabled && !jkt) throw new SessionBadRequestError('DPoP-Key-Binding header is missing.');
 
     const user = await this.sessions.findLoginUser(identifier);
@@ -47,7 +48,7 @@ export class LoginUseCase {
       try {
         await this.events.userFirstLogin(user.id, user.name!);
       } catch (error) {
-        logger.error({ err: error, event: 'auth.first_login_message_failed', userId: user.id }, 'Failed to send first-login message');
+        this.logger.error({ err: error, event: 'auth.first_login_message_failed', userId: user.id }, 'Failed to send first-login message');
       }
     }
 

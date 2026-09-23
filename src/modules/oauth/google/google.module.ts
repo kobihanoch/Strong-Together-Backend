@@ -12,6 +12,10 @@ import { GoogleController } from './presentation/google.controller';
 @Module({
   imports: [AuthCoreModule, SessionModule, OAuthCoreModule],
   controllers: [GoogleController],
-  providers: [{ provide: GoogleIdentityVerifier, useClass: JoseGoogleIdentityVerifier }, SignInWithGoogleUseCase, RateLimitGuard],
+  providers: [
+    { provide: GoogleIdentityVerifier, useClass: JoseGoogleIdentityVerifier },
+    SignInWithGoogleUseCase,
+    RateLimitGuard,
+  ],
 })
 export class GoogleOAuthModule {}

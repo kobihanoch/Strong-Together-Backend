@@ -2,7 +2,7 @@ import { Controller, Post, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import type { CreateVideoUploadUrlBody, CreateVideoUploadUrlResponse } from '@strong-together/shared';
 import { createVideoUploadUrlRequestSchema } from '@strong-together/shared';
-import { CurrentLogger } from '../../../common/decorators/current-logger.decorator';
+import { OperationLogger } from '../../../common/application/ports/operation-logger.port';
 import { CurrentRequestId } from '../../../common/decorators/current-request-id.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../common/decorators/request-data.decorator';
@@ -11,7 +11,6 @@ import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../common/types/express';
-import type { AppLogger } from '../../../infrastructure/logger';
 import { CreateVideoUploadUrlUseCase } from '../application/use-cases/create-video-upload-url.use-case';
 import { normalizeHeaderValue } from './video-analysis.utils';
 
@@ -27,7 +26,10 @@ import { normalizeHeaderValue } from './video-analysis.utils';
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class VideoAnalysisController {
-  constructor(private readonly createVideoUploadUrlUseCase: CreateVideoUploadUrlUseCase) {}
+  constructor(
+    private readonly createVideoUploadUrlUseCase: CreateVideoUploadUrlUseCase,
+    private readonly logger: OperationLogger,
+  ) {}
 
   /**
    * Generate a presigned upload URL for a video-analysis job.
@@ -42,7 +44,6 @@ export class VideoAnalysisController {
    * @param data - The validated request data.
    * @param user - The authenticated user.
    * @param requestId - The request id.
-   * @param requestLogger - The request-scoped logger.
    * @param req - The HTTP request.
    * @returns The response payload.
    */
@@ -52,7 +53,6 @@ export class VideoAnalysisController {
     data: { body: CreateVideoUploadUrlBody },
     @CurrentUser() user: AuthenticatedUser,
     @CurrentRequestId() requestId: string | undefined,
-    @CurrentLogger() requestLogger: AppLogger,
     @Req() req: Request,
   ): Promise<CreateVideoUploadUrlResponse> {
     const { exercise, fileType, jobId } = data.body;
@@ -68,7 +68,7 @@ export class VideoAnalysisController {
       sentryTrace,
       baggage,
     });
-    requestLogger.info(
+    this.logger.info(
       { event: 'video_analysis.upload_url_generated', fileKey, fileType, jobId, requestId, userId },
       'Generated presigned upload URL for video analysis',
     );

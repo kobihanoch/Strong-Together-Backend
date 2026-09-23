@@ -2,13 +2,11 @@ import { Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@ne
 import type { Response } from 'express';
 import type { LoginRequestBody, LoginResponse, LogoutResponse, RefreshTokenResponse } from '@strong-together/shared';
 import { loginRequestSchema } from '@strong-together/shared';
-import type { AppLogger } from '../../../../infrastructure/logger';
 import { LoginUseCase } from '../application/use-cases/login.use-case';
 import { LogoutUseCase } from '../application/use-cases/logout.use-case';
 import { RefreshSessionUseCase } from '../application/use-cases/refresh-session.use-case';
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { RateLimit, RateLimitGuard, loginIpRateLimit, loginRateLimit } from '../../../../common/guards/rate-limit.guard';
-import { CurrentLogger } from '../../../../common/decorators/current-logger.decorator';
 import { RequestData } from '../../../../common/decorators/request-data.decorator';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AppRequest } from '../../../../common/types/express';
@@ -37,7 +35,6 @@ export class SessionController {
    *
    * @param data - The validated request data.
    * @param req - The HTTP request.
-   * @param requestLogger - The request-scoped logger.
    * @param res - The HTTP response.
    * @returns The response payload.
    */
@@ -49,12 +46,11 @@ export class SessionController {
     @RequestData(new ValidateRequestPipe(loginRequestSchema))
     data: { body: LoginRequestBody },
     @Req() req: AppRequest,
-    @CurrentLogger() requestLogger: AppLogger,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResponse> {
     const { identifier, password } = data.body;
     const jkt = req.headers['dpop-key-binding'] as string | undefined;
-    const payload = await this.loginUseCase.execute(identifier, password, jkt, requestLogger);
+    const payload = await this.loginUseCase.execute(identifier, password, jkt);
 
     res.set('Cache-Control', 'no-store');
     return payload;

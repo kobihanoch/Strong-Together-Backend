@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { OperationLogger } from '../../../../../common/application/ports/operation-logger.port';
 import { AuthTokens } from '../../../../auth/core/application/ports/auth-tokens.port';
 import { AuthenticationTransaction } from '../../../../auth/core/application/ports/authentication-transaction.port';
 import { AuthenticationEvents } from '../../../../auth/session/application/ports/authentication-events.port';
 import { SessionRepository } from '../../../../auth/session/application/ports/session.repository';
-import type { OAuthLoginResult, OAuthRequestLogger } from '../../../core/application/models/oauth.models';
+import type { OAuthLoginResult } from '../../../core/application/models/oauth.models';
 import { OAuthRepository } from '../../../core/application/ports/oauth.repository';
 import { AppleOAuthUnauthorizedError, InvalidAppleOAuthError } from '../errors/apple-oauth.errors';
 import type { AppleOAuthInput } from '../models/apple-oauth.models';
@@ -19,6 +20,7 @@ export class SignInWithAppleUseCase {
     private readonly authTokens: AuthTokens,
     private readonly authenticationEvents: AuthenticationEvents,
     private readonly sessions: SessionRepository,
+    private readonly logger: OperationLogger,
   ) {}
 
   /**
@@ -26,12 +28,11 @@ export class SignInWithAppleUseCase {
    *
    * @param body - The validated request body.
    * @param jkt - The DPoP key thumbprint.
-   * @param requestLogger - The request-scoped logger.
    * @returns The issued application session.
    * @throws {InvalidAppleOAuthError} When required Apple identity input is missing.
    * @throws {AppleOAuthUnauthorizedError} When the linked user cannot start a session.
    */
-  async execute(body: AppleOAuthInput, jkt: string, requestLogger: OAuthRequestLogger): Promise<OAuthLoginResult> {
+  async execute(body: AppleOAuthInput, jkt: string): Promise<OAuthLoginResult> {
     const { idToken, rawNonce, name, email } = body || {};
 
     if (!idToken || typeof idToken !== 'string') {
@@ -78,7 +79,7 @@ export class SignInWithAppleUseCase {
       try {
         await this.authenticationEvents.userFirstLogin(userData.id, userData.name as string);
       } catch (e) {
-        requestLogger.error(
+        this.logger.error(
           { err: e, event: 'oauth.apple_first_login_message_failed', userId: userData.id },
           'Failed to send Apple OAuth first-login message',
         );

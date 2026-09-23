@@ -1,9 +1,3 @@
-/** Application logger operations shared by authentication use cases. */
-export interface AuthRequestLogger {
-  info(context: object, message: string): void;
-  error(context: object, message: string): void;
-}
-
 /** User data required to validate credentials. */
 export interface LoginUser {
   id: string;

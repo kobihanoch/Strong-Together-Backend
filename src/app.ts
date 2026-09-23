@@ -30,6 +30,7 @@ import { SocketIOModule } from './infrastructure/socket.io/socket.io.module';
 import { AWSModule } from './infrastructure/aws/aws.module';
 import { CacheModule } from './infrastructure/cache/cache.module';
 import { SocialModule } from './modules/social/social.module';
+import { LoggingModule } from './infrastructure/logging.module';
 
 let testAppPromise: Promise<NestExpressApplication> | null = null;
 
@@ -49,6 +50,7 @@ class AppController {
 @Module({
   imports: [
     EventEmitterModule.forRoot(),
+    LoggingModule,
     RedisModule,
     DBModule,
     SocketIOModule,

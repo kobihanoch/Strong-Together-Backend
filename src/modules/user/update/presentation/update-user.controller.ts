@@ -3,7 +3,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import type { DeleteProfilePictureBody, GetCurrentUserResponse, ReplaceProfilePictureResponse, UpdateCurrentUserBody } from '@strong-together/shared';
 import { deleteProfilePictureRequestSchema, updateCurrentUserRequestSchema } from '@strong-together/shared';
 import type { Response } from 'express';
-import { CurrentLogger } from '../../../../common/decorators/current-logger.decorator';
 import { CurrentRequestId } from '../../../../common/decorators/current-request-id.decorator';
 import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../../common/decorators/request-data.decorator';
@@ -14,7 +13,6 @@ import { RateLimit, RateLimitGuard, updateUserRateLimit, updateUserRateLimitDail
 import { imageUploadOptions } from '../../../../common/interceptors/image-upload.config';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
-import type { AppLogger } from '../../../../infrastructure/logger';
 import { ConfirmEmailChangeUseCase } from '../application/use-cases/confirm-email-change.use-case';
 import { DeleteProfilePictureUseCase } from '../application/use-cases/delete-profile-picture.use-case';
 import { DeleteUserUseCase } from '../application/use-cases/delete-user.use-case';
@@ -79,13 +77,12 @@ export class UpdateUserController {
    * API: GET /api/users/email-change
    * Access: Public
    * @param token - The signed email-change token.
-   * @param logger - The request-scoped logger.
    * @param res - The response used to render the result page.
    * @returns No response body from Nest; the response is sent directly.
    */
   @Get('email-change')
-  async updateSelfEmail(@Query('token') token: string | undefined, @CurrentLogger() logger: AppLogger, @Res() res: Response): Promise<void> {
-    const result = await this.confirmEmail.execute(token, logger);
+  async updateSelfEmail(@Query('token') token: string | undefined, @Res() res: Response): Promise<void> {
+    const result = await this.confirmEmail.execute(token);
     const html = result.statusCode === 200 ? generateEmailChangeSuccessHTML() : generateEmailChangeFailedHTML(result.reason);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.status(result.statusCode).type('html').set('Cache-Control', 'no-store').send(html);
@@ -112,7 +109,6 @@ export class UpdateUserController {
    * Access: Authenticated user
    * @param user - The authenticated request user.
    * @param file - The uploaded image file.
-   * @param logger - The request-scoped logger.
    * @param res - The response used to set the created status.
    * @returns The stored picture path and public URL.
    * @throws {ProfilePictureRequiredError} When no image is supplied.
@@ -124,10 +120,9 @@ export class UpdateUserController {
   async replaceProfilePicture(
     @CurrentUser() user: AuthenticatedUser,
     @UploadedFile() file: Express.Multer.File | undefined,
-    @CurrentLogger() logger: AppLogger,
     @Res({ passthrough: true }) res: Response,
   ): Promise<ReplaceProfilePictureResponse> {
-    const result = await this.replacePicture.execute(user.id, file, logger);
+    const result = await this.replacePicture.execute(user.id, file);
     res.status(201);
     return result;
   }

@@ -2,11 +2,9 @@ import { Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import type { AppleOAuthBody, OAuthLoginResponse } from '@strong-together/shared';
 import { appleOAuthRequestSchema } from '@strong-together/shared';
-import { CurrentLogger } from '../../../../common/decorators/current-logger.decorator';
 import { RequestData } from '../../../../common/decorators/request-data.decorator';
 import { RateLimit, RateLimitGuard, loginRateLimit } from '../../../../common/guards/rate-limit.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
-import type { AppLogger } from '../../../../infrastructure/logger';
 import { validateJkt } from '../../core/presentation/oauth-request.utils';
 import { SignInWithAppleUseCase } from '../application/use-cases/sign-in-with-apple.use-case';
 
@@ -33,7 +31,6 @@ export class AppleController {
    *
    * @param data - The validated request data.
    * @param req - The HTTP request.
-   * @param requestLogger - The request-scoped logger.
    * @param res - The HTTP response.
    * @returns The response payload.
    */
@@ -44,11 +41,10 @@ export class AppleController {
     @RequestData(new ValidateRequestPipe(appleOAuthRequestSchema))
     data: { body: AppleOAuthBody },
     @Req() req: Request,
-    @CurrentLogger() requestLogger: AppLogger,
     @Res({ passthrough: true }) res: Response,
   ): Promise<OAuthLoginResponse> {
     const jkt = validateJkt(req);
-    const payload = await this.signInWithAppleUseCase.execute(data.body, jkt, requestLogger);
+    const payload = await this.signInWithAppleUseCase.execute(data.body, jkt);
 
     res.set('Cache-Control', 'no-store');
     return payload;

@@ -34,11 +34,6 @@ export interface ProfilePictureResult {
   url: string;
   message: string;
 }
-/** Logger operations required by profile-management use cases. */
-export interface UserOperationLogger {
-  warn(context: object, message: string): void;
-  error(context: object, message: string): void;
-}
 /** Parsed email-change claims. */
 export interface EmailChangeClaims {
   jti: string;
