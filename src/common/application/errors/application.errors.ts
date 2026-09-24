@@ -20,3 +20,6 @@ export abstract class ApplicationUnauthorizedError extends ApplicationError {}
 
 /** Represents an expected failure caused by insufficient authorization. */
 export abstract class ApplicationForbiddenError extends ApplicationError {}
+
+/** Represents an expected failure caused by a temporarily unavailable dependency. */
+export abstract class ApplicationServiceUnavailableError extends ApplicationError {}

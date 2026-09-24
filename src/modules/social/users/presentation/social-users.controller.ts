@@ -2,6 +2,8 @@ import { Controller, Get, UseGuards } from '@nestjs/common';
 import type { GetSocialUserParams, GetSocialUserResponse, SearchSocialUsersQuery, SearchSocialUsersResponse } from '@strong-together/shared';
 import { getSocialUserRequestSchema, searchSocialUsersRequestSchema } from '@strong-together/shared';
 import { RequestData } from '../../../../common/decorators/request-data.decorator';
+import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../../../../common/types/express';
 import { AuthenticationGuard } from '../../../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
@@ -35,8 +37,9 @@ export class SocialUsersController {
   @Get()
   public search(
     @RequestData(new ValidateRequestPipe(searchSocialUsersRequestSchema)) data: { query: SearchSocialUsersQuery },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<SearchSocialUsersResponse> {
-    return this.searchSocialUsers.execute(data.query.search, data.query.limit, data.query.cursor);
+    return this.searchSocialUsers.execute(user.id, data.query.search, data.query.limit, data.query.cursor);
   }
 
   /**
@@ -56,7 +59,8 @@ export class SocialUsersController {
   @Get(':userId')
   public getUser(
     @RequestData(new ValidateRequestPipe(getSocialUserRequestSchema)) data: { params: GetSocialUserParams },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<GetSocialUserResponse> {
-    return this.getSocialUser.execute(data.params.userId);
+    return this.getSocialUser.execute(user.id, data.params.userId);
   }
 }

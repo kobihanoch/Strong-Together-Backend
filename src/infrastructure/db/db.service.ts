@@ -24,8 +24,10 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
   /**
    *  User flow SQL tag
    */
-  get sql(): postgres.Sql {
-    return this.als.getStore()?.tx ?? this.dbClient;
+  get sql(): postgres.TransactionSql {
+    const store = this.als.getStore();
+    if (!store) throw new Error('Database access must occur inside UnitOfWork.execute');
+    return store.tx;
   }
 
   /**
@@ -56,7 +58,9 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
    * @param fn - The fn.
    * @returns The run with rls tx result.
    */
-  async runWithRlsTx<T>(userId: string | undefined, fn: () => Promise<T>): Promise<T> {
+  async withRlsTransaction<T>(userId: string | undefined, operation: () => Promise<T>): Promise<T> {
+    if (this.als.getStore()) return operation();
+
     const afterCommit: Array<() => Promise<void>> = [];
     const result = await this.dbClient.begin(async (tx) => {
       if (!userId) {
@@ -65,7 +69,7 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
         await tx`select set_config('app.current_user_id', ${userId}, true)`;
         await tx`SET LOCAL ROLE authenticated`;
       }
-      return this.als.run({ tx, afterCommit }, fn);
+      return this.als.run({ tx, afterCommit }, operation);
     });
 
     await Promise.all(afterCommit.map((callback) => callback()));

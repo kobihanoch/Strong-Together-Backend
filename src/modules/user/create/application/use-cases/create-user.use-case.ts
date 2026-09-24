@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionHooks } from '../../../../../common/application/ports/transaction-hooks.port';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { UserAlreadyExistsError } from '../errors/create-user.errors';
 import type { CreateUserInput } from '../models/create-user.models';
 import { CreateUserRepository } from '../ports/create-user.repository';
@@ -10,10 +10,10 @@ import { UserRegistrationEvents } from '../ports/user-registration-events.port';
 @Injectable()
 export class CreateUserUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly repository: CreateUserRepository,
     private readonly passwordHasher: PasswordHasher,
     private readonly events: UserRegistrationEvents,
-    private readonly transactionHooks: TransactionHooks,
   ) {}
   /**
    * Creates a local account when its username and email are available.
@@ -24,9 +24,11 @@ export class CreateUserUseCase {
    * @throws {UserAlreadyExistsError} When the username or email is already used.
    */
   async execute(input: CreateUserInput, requestId?: string): Promise<void> {
-    if (await this.repository.exists(input.username, input.email)) throw new UserAlreadyExistsError();
-    const passwordHash = await this.passwordHasher.hash(input.password);
-    const created = await this.repository.create(input.username, input.fullName, input.email, input.gender, passwordHash);
-    this.transactionHooks.afterCommit(() => this.events.userRegistered(created.id, input.email, input.fullName, requestId));
+    return this.unitOfWork.execute(undefined, async () => {
+      if (await this.repository.exists(input.username, input.email)) throw new UserAlreadyExistsError();
+      const passwordHash = await this.passwordHasher.hash(input.password);
+      const created = await this.repository.create(input.username, input.fullName, input.email, input.gender, passwordHash);
+      this.unitOfWork.afterCommit(() => this.events.userRegistered(created.id, input.email, input.fullName, requestId));
+    });
   }
 }

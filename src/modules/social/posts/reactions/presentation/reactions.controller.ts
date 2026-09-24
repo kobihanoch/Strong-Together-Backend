@@ -57,8 +57,9 @@ export class ReactionsController {
       params: ListPostReactionsParams;
       query: ListPostReactionsQuery;
     },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListPostReactionsResponse> {
-    return this.listPostReactions.execute(data.params.postId, data.query.limit, data.query.cursor);
+    return this.listPostReactions.execute(user.id, data.params.postId, data.query.limit, data.query.cursor);
   }
 
   /**

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionHooks } from '../../../../common/application/ports/transaction-hooks.port';
+import { UnitOfWork } from '../../../../common/application/ports/unit-of-work.port';
 import type { AerobicEntryInput } from '../models/aerobics.models';
 import { AerobicsCache } from '../ports/aerobics-cache.port';
 import { AerobicsRepository } from '../ports/aerobics.repository';
@@ -8,9 +8,9 @@ import { AerobicsRepository } from '../ports/aerobics.repository';
 @Injectable()
 export class CreateAerobicEntryUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly repository: AerobicsRepository,
     private readonly cache: AerobicsCache,
-    private readonly transactionHooks: TransactionHooks,
   ) {}
 
   /**
@@ -21,7 +21,9 @@ export class CreateAerobicEntryUseCase {
    * @returns A promise that resolves after the entry is created.
    */
   async execute(userId: string, record: AerobicEntryInput): Promise<void> {
-    await this.repository.createForUser(userId, record);
-    this.transactionHooks.afterCommit(() => this.cache.invalidateUser(userId));
+    return this.unitOfWork.execute(userId, async () => {
+      await this.repository.createForUser(userId, record);
+      this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
+    });
   }
 }

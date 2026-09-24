@@ -27,3 +27,17 @@ export interface PushBatchResult {
   message: string;
   reminderCount: number;
 }
+
+/** Notification data accepted by a push-delivery provider. */
+export interface PushNotificationInput {
+  token: string;
+  title: string;
+  body: string;
+}
+
+/** Provider-level result of attempting to deliver one push notification. */
+export type SendPushNotificationOutcome =
+  { kind: 'sent'; ticketId: string | null } | { kind: 'permanent-failure'; reason: string } | { kind: 'temporarily-unavailable'; reason: string };
+
+/** Non-retryable result returned by the push-delivery use case. */
+export type SendPushNotificationResult = Exclude<SendPushNotificationOutcome, { kind: 'temporarily-unavailable' }>;

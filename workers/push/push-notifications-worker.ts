@@ -2,8 +2,8 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { createLogger } from '../../src/infrastructure/logger';
 import { PushNotificationsQueueService } from '../../src/infrastructure/queues/push-notifications/push-notifications-queue';
 import { captureWorkerException } from '../../src/infrastructure/sentry';
-import { PushRepository } from '../../src/modules/push/application/ports/push.repository';
-import { sendPushNotification } from '../../src/modules/push/infrastructure/expo-push.sender';
+import { FindEligiblePushTokenUseCase } from '../../src/modules/push/application/use-cases/find-eligible-push-token.use-case';
+import { SendPushNotificationUseCase } from '../../src/modules/push/application/use-cases/send-push-notification.use-case';
 
 const logger = createLogger('worker:push-notifications', {
   queue: 'pushNotificationsQueue',
@@ -13,7 +13,8 @@ const logger = createLogger('worker:push-notifications', {
 export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly pushNotificationsQueueService: PushNotificationsQueueService,
-    private readonly pushRepository: PushRepository,
+    private readonly findEligiblePushToken: FindEligiblePushTokenUseCase,
+    private readonly sendPushNotification: SendPushNotificationUseCase,
   ) {}
 
   async onModuleInit() {
@@ -49,14 +50,21 @@ export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDes
           }
 
           // Recheck the user's current settings and schedule after the job delay.
-          const token = await this.pushRepository.findEligibleExpoPushToken(userId, workoutScheduleId, occurrenceDate);
+          const token = await this.findEligiblePushToken.execute(userId, workoutScheduleId, occurrenceDate);
           if (!token) {
             jobLogger.info({ event: 'job.skipped_ineligible' }, 'Skipping ineligible workout reminder');
             return;
           }
 
-          await sendPushNotification(token, title, body);
+          const delivery = await this.sendPushNotification.execute({ token, title, body });
           const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+          if (delivery.kind === 'permanent-failure') {
+            jobLogger.warn(
+              { event: 'job.skipped_permanent_failure', durationMs: Number(durationMs.toFixed(2)), reason: delivery.reason },
+              'Push notification permanently rejected',
+            );
+            return;
+          }
           jobLogger.info({ event: 'job.succeeded', durationMs: Number(durationMs.toFixed(2)) }, 'Push notification sent');
         } catch (e) {
           if (e instanceof Error) {

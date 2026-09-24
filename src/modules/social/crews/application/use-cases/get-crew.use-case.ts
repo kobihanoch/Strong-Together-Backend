@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { CrewNotFoundError } from '../errors/crews.errors';
 import type { CrewWithParticipantCount } from '../models/crews.models';
 import { CrewsRepository } from '../ports/crews.repository';
@@ -6,7 +7,10 @@ import { CrewsRepository } from '../ports/crews.repository';
 /** Retrieves one visible crew. */
 @Injectable()
 export class GetCrewUseCase {
-  public constructor(private readonly repository: CrewsRepository) {}
+  public constructor(
+    private readonly unitOfWork: UnitOfWork,
+    private readonly repository: CrewsRepository,
+  ) {}
   /**
    * Executes the application operation.
    *
@@ -14,9 +18,11 @@ export class GetCrewUseCase {
    * @returns The visible crew.
    * @throws {CrewNotFoundError} When inaccessible or absent.
    */
-  public async execute(id: string): Promise<CrewWithParticipantCount> {
-    const crew = await this.repository.findById(id);
-    if (!crew) throw new CrewNotFoundError();
-    return crew;
+  public async execute(userId: string, id: string): Promise<CrewWithParticipantCount> {
+    return this.unitOfWork.execute(userId, async () => {
+      const crew = await this.repository.findById(id);
+      if (!crew) throw new CrewNotFoundError();
+      return crew;
+    });
   }
 }

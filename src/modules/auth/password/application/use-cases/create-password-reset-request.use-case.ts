@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionHooks } from '../../../../../common/application/ports/transaction-hooks.port';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { PasswordBadRequestError } from '../errors/password.errors';
 import { PasswordRepository } from '../ports/password.repository';
 import { PasswordResetEmailSender } from '../ports/password-reset-email-sender.port';
@@ -8,9 +8,9 @@ import { PasswordResetEmailSender } from '../ports/password-reset-email-sender.p
 @Injectable()
 export class CreatePasswordResetRequestUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly passwords: PasswordRepository,
     private readonly emailSender: PasswordResetEmailSender,
-    private readonly transactionHooks: TransactionHooks,
   ) {}
 
   /**
@@ -22,14 +22,16 @@ export class CreatePasswordResetRequestUseCase {
    * @throws {PasswordBadRequestError} When the identifier is empty.
    */
   async execute(identifier: string, requestId?: string): Promise<void> {
-    if (!identifier) throw new PasswordBadRequestError('Please fill username or email');
-    const user = await this.passwords.findResetRecipient(identifier);
-    if (!user) return;
+    return this.unitOfWork.execute(undefined, async () => {
+      if (!identifier) throw new PasswordBadRequestError('Please fill username or email');
+      const user = await this.passwords.findResetRecipient(identifier);
+      if (!user) return;
 
-    this.transactionHooks.afterCommit(() =>
-      this.emailSender.send(user.email, user.id, user.name ? user.name : user.username, {
-        ...(requestId ? { requestId } : {}),
-      }),
-    );
+      this.unitOfWork.afterCommit(() =>
+        this.emailSender.send(user.email, user.id, user.name ? user.name : user.username, {
+          ...(requestId ? { requestId } : {}),
+        }),
+      );
+    });
   }
 }

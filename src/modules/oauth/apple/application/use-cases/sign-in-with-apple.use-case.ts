@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { OperationLogger } from '../../../../../common/application/ports/operation-logger.port';
 import { AuthTokens } from '../../../../auth/core/application/ports/auth-tokens.port';
 import { AuthenticationTransaction } from '../../../../auth/core/application/ports/authentication-transaction.port';
@@ -14,6 +15,7 @@ import { AppleIdentityVerifier } from '../ports/apple-identity-verifier.port';
 @Injectable()
 export class SignInWithAppleUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly repository: OAuthRepository,
     private readonly identityVerifier: AppleIdentityVerifier,
     private readonly authenticationTransaction: AuthenticationTransaction,
@@ -34,68 +36,70 @@ export class SignInWithAppleUseCase {
    * @throws {Error} When verified Apple claims contain an invalid nonce.
    */
   async execute(body: AppleOAuthInput, jkt: string): Promise<OAuthLoginResult> {
-    const { idToken, rawNonce, name, email } = body || {};
+    return this.unitOfWork.execute(undefined, async () => {
+      const { idToken, rawNonce, name, email } = body || {};
 
-    if (!idToken || typeof idToken !== 'string') {
-      throw new InvalidAppleOAuthError('Missing or invalid Apple identityToken');
-    }
-    if (!rawNonce || typeof rawNonce !== 'string') {
-      throw new InvalidAppleOAuthError('Missing rawNonce');
-    }
+      if (!idToken || typeof idToken !== 'string') {
+        throw new InvalidAppleOAuthError('Missing or invalid Apple identityToken');
+      }
+      if (!rawNonce || typeof rawNonce !== 'string') {
+        throw new InvalidAppleOAuthError('Missing rawNonce');
+      }
 
-    const verification = await this.identityVerifier.verify(idToken, rawNonce, name);
-    if (verification.kind === 'invalid-nonce') throw new Error('Invalid nonce');
-    const { appleSub, email: tokenEmail, emailVerified, fullName: normalizedName } = verification.identity;
+      const verification = await this.identityVerifier.verify(idToken, rawNonce, name);
+      if (verification.kind === 'invalid-nonce') throw new Error('Invalid nonce');
+      const { appleSub, email: tokenEmail, emailVerified, fullName: normalizedName } = verification.identity;
 
-    const resolvedEmail = tokenEmail ?? email ?? null;
+      const resolvedEmail = tokenEmail ?? email ?? null;
 
-    let userId = await this.repository.findLinkedUser('apple', appleSub);
-    const userExistOnOAuthUsers = !!userId;
+      let userId = await this.repository.findLinkedUser('apple', appleSub);
+      const userExistOnOAuthUsers = !!userId;
 
-    if (!userExistOnOAuthUsers) {
-      let isLinked = false;
+      if (!userExistOnOAuthUsers) {
+        let isLinked = false;
 
-      if (emailVerified && resolvedEmail) {
-        const linkedId = await this.repository.linkByVerifiedEmail('apple', resolvedEmail, appleSub);
-        if (linkedId) {
-          userId = linkedId;
-          isLinked = true;
+        if (emailVerified && resolvedEmail) {
+          const linkedId = await this.repository.linkByVerifiedEmail('apple', resolvedEmail, appleSub);
+          if (linkedId) {
+            userId = linkedId;
+            isLinked = true;
+          }
+        }
+
+        if (!isLinked) {
+          const username = resolvedEmail?.split('@')[0].toLowerCase() || null;
+          const candidateFullName = normalizedName;
+
+          const newUserId = await this.repository.createUser('apple', username, resolvedEmail, candidateFullName, appleSub, resolvedEmail);
+          userId = newUserId;
         }
       }
 
-      if (!isLinked) {
-        const username = resolvedEmail?.split('@')[0].toLowerCase() || null;
-        const candidateFullName = normalizedName;
+      const finalUserId = userId as string;
+      const hasNeverLoggedIn = (await this.sessions.findLastLogin(finalUserId)) === null;
+      await this.authenticationTransaction.promoteToUser(finalUserId);
+      const { tokenVersion, userData } = await this.sessions.rotate(finalUserId);
+      if (!userData.isVerified) throw new AppleOAuthUnauthorizedError('A verification email is pending');
 
-        const newUserId = await this.repository.createUser('apple', username, resolvedEmail, candidateFullName, appleSub, resolvedEmail);
-        userId = newUserId;
+      if (hasNeverLoggedIn) {
+        try {
+          await this.authenticationEvents.userFirstLogin(userData.id, userData.name as string);
+        } catch (e) {
+          this.logger.error(
+            { err: e, event: 'oauth.apple_first_login_message_failed', userId: userData.id },
+            'Failed to send Apple OAuth first-login message',
+          );
+        }
       }
-    }
 
-    const finalUserId = userId as string;
-    const hasNeverLoggedIn = (await this.sessions.findLastLogin(finalUserId)) === null;
-    await this.authenticationTransaction.promoteToUser(finalUserId);
-    const { tokenVersion, userData } = await this.sessions.rotate(finalUserId);
-    if (!userData.isVerified) throw new AppleOAuthUnauthorizedError('A verification email is pending');
+      const { accessToken, refreshToken } = this.authTokens.issueSession(userData.id, userData.role, tokenVersion, jkt);
 
-    if (hasNeverLoggedIn) {
-      try {
-        await this.authenticationEvents.userFirstLogin(userData.id, userData.name as string);
-      } catch (e) {
-        this.logger.error(
-          { err: e, event: 'oauth.apple_first_login_message_failed', userId: userData.id },
-          'Failed to send Apple OAuth first-login message',
-        );
-      }
-    }
-
-    const { accessToken, refreshToken } = this.authTokens.issueSession(userData.id, userData.role, tokenVersion, jkt);
-
-    return {
-      message: 'Login successful',
-      user: userData.id,
-      accessToken,
-      refreshToken,
-    };
+      return {
+        message: 'Login successful',
+        user: userData.id,
+        accessToken,
+        refreshToken,
+      };
+    });
   }
 }

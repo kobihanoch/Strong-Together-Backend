@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../../common/application/ports/unit-of-work.port';
 import { CrewNotFoundError } from '../errors/crew-requests.errors';
 import { CrewRequestsRepository } from '../ports/crew-requests.repository';
 
@@ -6,7 +7,10 @@ import { CrewRequestsRepository } from '../ports/crew-requests.repository';
 
 @Injectable()
 export class InviteCrewUserUseCase {
-  public constructor(private readonly repository: CrewRequestsRepository) {}
+  public constructor(
+    private readonly unitOfWork: UnitOfWork,
+    private readonly repository: CrewRequestsRepository,
+  ) {}
   /**
    * Executes the application operation.
    *
@@ -17,6 +21,8 @@ export class InviteCrewUserUseCase {
    * @throws {CrewNotFoundError} When the crew is inaccessible.
    */
   public async execute(crewId: string, initiatorUserId: string, participantUserId: string): Promise<void> {
-    if (!(await this.repository.invite(crewId, initiatorUserId, participantUserId))) throw new CrewNotFoundError();
+    return this.unitOfWork.execute(initiatorUserId, async () => {
+      if (!(await this.repository.invite(crewId, initiatorUserId, participantUserId))) throw new CrewNotFoundError();
+    });
   }
 }

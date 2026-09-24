@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { MessageNotFoundError } from '../errors/messages.errors';
 import { MessagesRepository } from '../ports/messages.repository';
 
 /** Marks inbox messages as read for their receiving user. */
 @Injectable()
 export class MarkMessageAsReadUseCase {
-  constructor(private readonly repository: MessagesRepository) {}
+  constructor(
+    private readonly unitOfWork: UnitOfWork,
+    private readonly repository: MessagesRepository,
+  ) {}
 
   /**
    * Marks a message as read when it belongs to the user.
@@ -16,6 +20,8 @@ export class MarkMessageAsReadUseCase {
    * @throws {MessageNotFoundError} When the user cannot access the message.
    */
   async execute(messageId: string, userId: string): Promise<void> {
-    if (!(await this.repository.markAsRead(messageId, userId))) throw new MessageNotFoundError();
+    return this.unitOfWork.execute(userId, async () => {
+      if (!(await this.repository.markAsRead(messageId, userId))) throw new MessageNotFoundError();
+    });
   }
 }

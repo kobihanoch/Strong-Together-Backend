@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import type { EmailVerificationOutcome } from '../../../core/application/models/auth.models';
 import { VerificationBadRequestError } from '../errors/verification.errors';
 import { AuthTokens } from '../../../core/application/ports/auth-tokens.port';
@@ -10,6 +11,7 @@ import { VerificationRepository } from '../ports/verification.repository';
 @Injectable()
 export class VerifyEmailUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly verification: VerificationRepository,
     private readonly tokens: AuthTokens,
     private readonly oneTimeTokens: OneTimeTokenStore,
@@ -24,17 +26,19 @@ export class VerifyEmailUseCase {
    * @throws {VerificationBadRequestError} When the token is missing.
    */
   async execute(token: string | undefined): Promise<EmailVerificationOutcome> {
-    if (!token) throw new VerificationBadRequestError('Missing token');
-    const decoded = this.tokens.decodeVerification(token);
-    if (!decoded) return 'unauthorized';
-    if (decoded.iss !== 'strong-together' || decoded.typ !== 'email-verify' || !decoded.jti || !decoded.sub) return 'invalid';
+    return this.unitOfWork.execute(undefined, async () => {
+      if (!token) throw new VerificationBadRequestError('Missing token');
+      const decoded = this.tokens.decodeVerification(token);
+      if (!decoded) return 'unauthorized';
+      if (decoded.iss !== 'strong-together' || decoded.typ !== 'email-verify' || !decoded.jti || !decoded.sub) return 'invalid';
 
-    const ttlSeconds = Math.max(1, decoded.exp - Math.floor(Date.now() / 1000));
-    const claimed = await this.oneTimeTokens.claim('accountverify', decoded.jti, ttlSeconds);
-    if (!claimed) return 'unauthorized';
+      const ttlSeconds = Math.max(1, decoded.exp - Math.floor(Date.now() / 1000));
+      const claimed = await this.oneTimeTokens.claim('accountverify', decoded.jti, ttlSeconds);
+      if (!claimed) return 'unauthorized';
 
-    await this.transaction.promoteToUser(decoded.sub);
-    await this.verification.updateVerification(decoded.sub, true);
-    return 'verified';
+      await this.transaction.promoteToUser(decoded.sub);
+      await this.verification.updateVerification(decoded.sub, true);
+      return 'verified';
+    });
   }
 }

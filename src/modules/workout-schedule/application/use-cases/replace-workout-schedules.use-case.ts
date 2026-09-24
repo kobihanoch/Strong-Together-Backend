@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionHooks } from '../../../../common/application/ports/transaction-hooks.port';
+import { UnitOfWork } from '../../../../common/application/ports/unit-of-work.port';
 import { InvalidWorkoutScheduleSplitError } from '../errors/workout-schedule.errors';
 import type { WorkoutScheduleInput } from '../models/workout-schedule.models';
 import { WorkoutScheduleCache } from '../ports/workout-schedule-cache.port';
@@ -9,9 +9,9 @@ import { WorkoutScheduleRepository } from '../ports/workout-schedule.repository'
 @Injectable()
 export class ReplaceWorkoutSchedulesUseCase {
   public constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly repository: WorkoutScheduleRepository,
     private readonly cache: WorkoutScheduleCache,
-    private readonly transactionHooks: TransactionHooks,
   ) {}
 
   /**
@@ -23,11 +23,13 @@ export class ReplaceWorkoutSchedulesUseCase {
    * @throws {InvalidWorkoutScheduleSplitError} When any split is inactive or belongs to another plan.
    */
   public async execute(userId: string, schedules: WorkoutScheduleInput[]): Promise<void> {
-    const outcome = await this.repository.replaceForUser(userId, schedules);
-    if (outcome.kind === 'invalid-splits') {
-      throw new InvalidWorkoutScheduleSplitError();
-    }
+    return this.unitOfWork.execute(userId, async () => {
+      const outcome = await this.repository.replaceForUser(userId, schedules);
+      if (outcome.kind === 'invalid-splits') {
+        throw new InvalidWorkoutScheduleSplitError();
+      }
 
-    this.transactionHooks.afterCommit(() => this.cache.invalidateUser(userId));
+      this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
+    });
   }
 }

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../../common/application/ports/unit-of-work.port';
 import { CommentNotFoundError } from '../errors/comments.errors';
 import { CommentsRepository } from '../ports/comments.repository';
 
@@ -6,7 +7,10 @@ import { CommentsRepository } from '../ports/comments.repository';
 
 @Injectable()
 export class EditCommentUseCase {
-  public constructor(private readonly repository: CommentsRepository) {}
+  public constructor(
+    private readonly unitOfWork: UnitOfWork,
+    private readonly repository: CommentsRepository,
+  ) {}
   /**
    * Executes the application operation.
    *
@@ -15,8 +19,10 @@ export class EditCommentUseCase {
    * @returns Nothing after update.
    * @throws {CommentNotFoundError} When inaccessible or absent.
    */
-  public async execute(id: string, content: string): Promise<void> {
-    const outcome = await this.repository.edit(id, content);
-    if (outcome.kind === 'not-found') throw new CommentNotFoundError();
+  public async execute(userId: string, id: string, content: string): Promise<void> {
+    return this.unitOfWork.execute(userId, async () => {
+      const outcome = await this.repository.edit(id, content);
+      if (outcome.kind === 'not-found') throw new CommentNotFoundError();
+    });
   }
 }

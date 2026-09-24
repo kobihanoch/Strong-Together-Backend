@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../../common/application/ports/unit-of-work.port';
 import { decodeSocialCursor, encodeSocialCursor } from '../../../../core/application/cursor-pagination';
 import type { CommentsPage } from '../models/comments.models';
 import { CommentsRepository } from '../ports/comments.repository';
@@ -7,7 +8,10 @@ import { CommentsRepository } from '../ports/comments.repository';
 
 @Injectable()
 export class ListPostCommentsUseCase {
-  public constructor(private readonly repository: CommentsRepository) {}
+  public constructor(
+    private readonly unitOfWork: UnitOfWork,
+    private readonly repository: CommentsRepository,
+  ) {}
   /**
    * Executes the application operation.
    *
@@ -16,10 +20,12 @@ export class ListPostCommentsUseCase {
    * @param cursor - Previous cursor.
    * @returns A page of comments.
    */
-  public async execute(postId: string, limit: number, cursor?: string): Promise<CommentsPage> {
-    const rows = await this.repository.list(postId, limit, decodeSocialCursor(cursor));
-    const comments = rows.slice(0, limit);
-    const last = comments.at(-1);
-    return { comments, nextCursor: rows.length > limit && last ? encodeSocialCursor({ timestamp: last.createdAt, id: last.id }) : null };
+  public async execute(userId: string, postId: string, limit: number, cursor?: string): Promise<CommentsPage> {
+    return this.unitOfWork.execute(userId, async () => {
+      const rows = await this.repository.list(postId, limit, decodeSocialCursor(cursor));
+      const comments = rows.slice(0, limit);
+      const last = comments.at(-1);
+      return { comments, nextCursor: rows.length > limit && last ? encodeSocialCursor({ timestamp: last.createdAt, id: last.id }) : null };
+    });
   }
 }

@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionHooks } from '../../../../../common/application/ports/transaction-hooks.port';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { ProfilePictureStorage } from '../ports/profile-picture-storage.port';
 import { UserProfileRepository } from '../ports/user-profile.repository';
 /** Deletes a user's stored profile picture. */
 @Injectable()
 export class DeleteProfilePictureUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly repository: UserProfileRepository,
     private readonly storage: ProfilePictureStorage,
-    private readonly hooks: TransactionHooks,
   ) {}
   /**
    * Deletes a profile picture.
@@ -18,7 +18,9 @@ export class DeleteProfilePictureUseCase {
    * @returns Nothing.
    */
   async execute(userId: string, path: string): Promise<void> {
-    await this.repository.updateProfilePicture(userId, null);
-    this.hooks.afterCommit(() => this.storage.delete(path));
+    return this.unitOfWork.execute(userId, async () => {
+      await this.repository.updateProfilePicture(userId, null);
+      this.unitOfWork.afterCommit(() => this.storage.delete(path));
+    });
   }
 }

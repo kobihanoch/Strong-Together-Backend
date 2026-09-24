@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionHooks } from '../../../../../common/application/ports/transaction-hooks.port';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { VerificationEmailSender } from '../ports/verification-email-sender.port';
 import { VerificationRepository } from '../ports/verification.repository';
 
@@ -7,9 +7,9 @@ import { VerificationRepository } from '../ports/verification.repository';
 @Injectable()
 export class CreateVerificationEmailUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly verification: VerificationRepository,
     private readonly emailSender: VerificationEmailSender,
-    private readonly transactionHooks: TransactionHooks,
   ) {}
 
   /**
@@ -20,12 +20,14 @@ export class CreateVerificationEmailUseCase {
    * @returns A promise that resolves without revealing account existence.
    */
   async execute(email: string, requestId?: string): Promise<void> {
-    const user = await this.verification.findByEmail(email);
-    if (!user) return;
-    this.transactionHooks.afterCommit(() =>
-      this.emailSender.send(email, user.id, user.name ?? user.username, {
-        ...(requestId ? { requestId } : {}),
-      }),
-    );
+    return this.unitOfWork.execute(undefined, async () => {
+      const user = await this.verification.findByEmail(email);
+      if (!user) return;
+      this.unitOfWork.afterCommit(() =>
+        this.emailSender.send(email, user.id, user.name ?? user.username, {
+          ...(requestId ? { requestId } : {}),
+        }),
+      );
+    });
   }
 }

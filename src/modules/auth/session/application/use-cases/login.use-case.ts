@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { OperationLogger } from '../../../../../common/application/ports/operation-logger.port';
 import type { LoginResult } from '../../../core/application/models/auth.models';
 import { SessionBadRequestError, SessionUnauthorizedError } from '../errors/session.errors';
@@ -13,6 +14,7 @@ import { SessionRepository } from '../ports/session.repository';
 @Injectable()
 export class LoginUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly sessions: SessionRepository,
     private readonly passwordHasher: PasswordHasher,
     private readonly tokens: AuthTokens,
@@ -33,27 +35,29 @@ export class LoginUseCase {
    * @throws {SessionUnauthorizedError} When credentials or verification state are invalid.
    */
   async execute(identifier: string, password: string, jkt: string | undefined): Promise<LoginResult> {
-    if (this.policy.dpopEnabled && !jkt) throw new SessionBadRequestError('DPoP-Key-Binding header is missing.');
+    return this.unitOfWork.execute(undefined, async () => {
+      if (this.policy.dpopEnabled && !jkt) throw new SessionBadRequestError('DPoP-Key-Binding header is missing.');
 
-    const user = await this.sessions.findLoginUser(identifier);
-    if (!user) throw new SessionUnauthorizedError('Invalid credentials');
+      const user = await this.sessions.findLoginUser(identifier);
+      if (!user) throw new SessionUnauthorizedError('Invalid credentials');
 
-    const matches = await this.passwordHasher.compare(password, user.passwordHash!);
-    if (!matches) throw new SessionUnauthorizedError('Invalid credentials');
-    if (!user.isVerified) throw new SessionUnauthorizedError('A verification email is pending');
+      const matches = await this.passwordHasher.compare(password, user.passwordHash!);
+      if (!matches) throw new SessionUnauthorizedError('Invalid credentials');
+      if (!user.isVerified) throw new SessionUnauthorizedError('A verification email is pending');
 
-    await this.transaction.promoteToUser(user.id);
+      await this.transaction.promoteToUser(user.id);
 
-    if (user.lastLogin === null) {
-      try {
-        await this.events.userFirstLogin(user.id, user.name!);
-      } catch (error) {
-        this.logger.error({ err: error, event: 'auth.first_login_message_failed', userId: user.id }, 'Failed to send first-login message');
+      if (user.lastLogin === null) {
+        try {
+          await this.events.userFirstLogin(user.id, user.name!);
+        } catch (error) {
+          this.logger.error({ err: error, event: 'auth.first_login_message_failed', userId: user.id }, 'Failed to send first-login message');
+        }
       }
-    }
 
-    const { tokenVersion, userData } = await this.sessions.rotate(user.id);
-    const issued = this.tokens.issueSession(userData.id, userData.role, tokenVersion, jkt);
-    return { message: 'Login successful', user: userData.id, ...issued };
+      const { tokenVersion, userData } = await this.sessions.rotate(user.id);
+      const issued = this.tokens.issueSession(userData.id, userData.role, tokenVersion, jkt);
+      return { message: 'Login successful', user: userData.id, ...issued };
+    });
   }
 }

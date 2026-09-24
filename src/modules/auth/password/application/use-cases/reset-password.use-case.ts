@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { PasswordBadRequestError } from '../errors/password.errors';
 import { AuthTokens } from '../../../core/application/ports/auth-tokens.port';
 import { AuthenticationTransaction } from '../../../core/application/ports/authentication-transaction.port';
@@ -11,6 +12,7 @@ import { SessionRepository } from '../../../session/application/ports/session.re
 @Injectable()
 export class ResetPasswordUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly passwords: PasswordRepository,
     private readonly sessions: SessionRepository,
     private readonly passwordHasher: PasswordHasher,
@@ -28,18 +30,20 @@ export class ResetPasswordUseCase {
    * @throws {PasswordBadRequestError} When the token is missing, invalid, expired, or already used.
    */
   async execute(token: string | undefined, newPassword: string): Promise<void> {
-    if (!token) throw new PasswordBadRequestError('Missing token');
-    const decoded = this.tokens.decodePasswordReset(token);
-    if (!decoded || decoded.iss !== 'strong-together' || decoded.typ !== 'forgot-pass' || !decoded.jti || !decoded.sub) {
-      throw new PasswordBadRequestError('Verfication token is not valid');
-    }
+    return this.unitOfWork.execute(undefined, async () => {
+      if (!token) throw new PasswordBadRequestError('Missing token');
+      const decoded = this.tokens.decodePasswordReset(token);
+      if (!decoded || decoded.iss !== 'strong-together' || decoded.typ !== 'forgot-pass' || !decoded.jti || !decoded.sub) {
+        throw new PasswordBadRequestError('Verfication token is not valid');
+      }
 
-    const ttlSeconds = Math.max(1, decoded.exp - Math.floor(Date.now() / 1000));
-    const claimed = await this.oneTimeTokens.claim('forgotpassword', decoded.jti, ttlSeconds);
-    if (!claimed) throw new PasswordBadRequestError('URL already used or expired');
+      const ttlSeconds = Math.max(1, decoded.exp - Math.floor(Date.now() / 1000));
+      const claimed = await this.oneTimeTokens.claim('forgotpassword', decoded.jti, ttlSeconds);
+      if (!claimed) throw new PasswordBadRequestError('URL already used or expired');
 
-    const passwordHash = await this.passwordHasher.hash(newPassword);
-    await this.transaction.promoteToUser(decoded.sub);
-    await Promise.all([this.passwords.updatePassword(decoded.sub, passwordHash), this.sessions.rotate(decoded.sub)]);
+      const passwordHash = await this.passwordHasher.hash(newPassword);
+      await this.transaction.promoteToUser(decoded.sub);
+      await Promise.all([this.passwords.updatePassword(decoded.sub, passwordHash), this.sessions.rotate(decoded.sub)]);
+    });
   }
 }

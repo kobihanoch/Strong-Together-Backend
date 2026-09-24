@@ -93,8 +93,9 @@ export class CrewsController {
     data: {
       query: ListCrewsQuery;
     },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListCrewsResponse> {
-    return this.listCrews.execute(data.query.limit, data.query.cursor, data.query.search);
+    return this.listCrews.execute(user.id, data.query.limit, data.query.cursor, data.query.search);
   }
 
   /**
@@ -116,8 +117,9 @@ export class CrewsController {
     data: {
       query: ListMyCrewsQuery;
     },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListMyCrewsResponse> {
-    return this.listMyCrews.execute(data.query.limit, data.query.cursor);
+    return this.listMyCrews.execute(user.id, data.query.limit, data.query.cursor);
   }
 
   /**
@@ -142,8 +144,9 @@ export class CrewsController {
       params: ListCrewParticipantsParams;
       query: ListCrewParticipantsQuery;
     },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListCrewParticipantsResponse> {
-    return this.listCrewParticipants.execute(data.params.crewId, data.query.limit, data.query.cursor);
+    return this.listCrewParticipants.execute(user.id, data.params.crewId, data.query.limit, data.query.cursor);
   }
 
   /**
@@ -166,8 +169,9 @@ export class CrewsController {
     data: {
       params: GetCrewParams;
     },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<GetCrewResponse> {
-    return this.getCrew.execute(data.params.id);
+    return this.getCrew.execute(user.id, data.params.id);
   }
 
   /**
@@ -216,8 +220,9 @@ export class CrewsController {
       params: UpdateCrewParams;
       body: UpdateCrewBody;
     },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<UpdateCrewResponse> {
-    await this.updateCrew.execute(data.params.id, data.body);
+    await this.updateCrew.execute(user.id, data.params.id, data.body);
   }
 
   /**
@@ -239,8 +244,9 @@ export class CrewsController {
   async replaceProfilePicture(
     @RequestData(new ValidateRequestPipe(replaceCrewProfilePictureRequestSchema)) data: { params: ReplaceCrewProfilePictureParams },
     @UploadedFile() file: Express.Multer.File | undefined,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ReplaceCrewProfilePictureResponse> {
-    return this.replaceCrewPicture.execute(data.params.id, file, (error, oldPath) =>
+    return this.replaceCrewPicture.execute(user.id, data.params.id, file, (error, oldPath) =>
       this.logger.warn({ err: error, crewId: data.params.id, oldPath }, 'Failed to delete old crew profile image'),
     );
   }
@@ -263,8 +269,9 @@ export class CrewsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteProfilePicture(
     @RequestData(new ValidateRequestPipe(deleteCrewProfilePictureRequestSchema)) data: { params: DeleteCrewProfilePictureParams },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<DeleteCrewProfilePictureResponse> {
-    await this.deleteCrewPicture.execute(data.params.id);
+    await this.deleteCrewPicture.execute(user.id, data.params.id);
   }
 
   /**
@@ -291,8 +298,9 @@ export class CrewsController {
     data: {
       params: LeaveCrewParams;
     },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<LeaveCrewResponse> {
-    await this.leaveCrew.execute(data.params.id);
+    await this.leaveCrew.execute(user.id, data.params.id);
   }
 
   /**
@@ -316,7 +324,8 @@ export class CrewsController {
     data: {
       params: DeleteCrewParams;
     },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.deleteCrew.execute(data.params.id);
+    await this.deleteCrew.execute(user.id, data.params.id);
   }
 }

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../../common/application/ports/unit-of-work.port';
 import { decodeSocialCursor, encodeSocialCursor } from '../../../../core/application/cursor-pagination';
 import type { ReactionsPage } from '../models/reactions.models';
 import { ReactionsRepository } from '../ports/reactions.repository';
@@ -7,7 +8,10 @@ import { ReactionsRepository } from '../ports/reactions.repository';
 
 @Injectable()
 export class ListPostReactionsUseCase {
-  public constructor(private readonly repository: ReactionsRepository) {}
+  public constructor(
+    private readonly unitOfWork: UnitOfWork,
+    private readonly repository: ReactionsRepository,
+  ) {}
   /**
    * Executes the application operation.
    *
@@ -16,10 +20,12 @@ export class ListPostReactionsUseCase {
    * @param cursor - Previous cursor.
    * @returns A page of reactions.
    */
-  public async execute(postId: string, limit: number, cursor?: string): Promise<ReactionsPage> {
-    const rows = await this.repository.list(postId, limit, decodeSocialCursor(cursor));
-    const reactions = rows.slice(0, limit);
-    const last = reactions.at(-1);
-    return { reactions, nextCursor: rows.length > limit && last ? encodeSocialCursor({ timestamp: last.reactedAt, id: last.id }) : null };
+  public async execute(userId: string, postId: string, limit: number, cursor?: string): Promise<ReactionsPage> {
+    return this.unitOfWork.execute(userId, async () => {
+      const rows = await this.repository.list(postId, limit, decodeSocialCursor(cursor));
+      const reactions = rows.slice(0, limit);
+      const last = reactions.at(-1);
+      return { reactions, nextCursor: rows.length > limit && last ? encodeSocialCursor({ timestamp: last.reactedAt, id: last.id }) : null };
+    });
   }
 }

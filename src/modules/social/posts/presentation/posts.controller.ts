@@ -64,8 +64,9 @@ export class PostsController {
     data: {
       query: ListVisiblePostsQuery;
     },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListVisiblePostsResponse> {
-    return this.listVisiblePosts.execute(data.query.limit, data.query.cursor);
+    return this.listVisiblePosts.execute(user.id, data.query.limit, data.query.cursor);
   }
 
   /**
@@ -88,8 +89,9 @@ export class PostsController {
       params: ListCrewPostsParams;
       query: ListCrewPostsQuery;
     },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListCrewPostsResponse> {
-    return this.listCrewPosts.execute(data.params.crewId, data.query.limit, data.query.cursor);
+    return this.listCrewPosts.execute(user.id, data.params.crewId, data.query.limit, data.query.cursor);
   }
 
   /**
@@ -138,8 +140,9 @@ export class PostsController {
       params: UpdatePostParams;
       body: UpdatePostBody;
     },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<UpdatePostResponse> {
-    await this.updatePost.execute(data.params.id, data.body.content);
+    await this.updatePost.execute(user.id, data.params.id, data.body.content);
   }
 
   /**
@@ -163,7 +166,8 @@ export class PostsController {
     data: {
       params: DeletePostParams;
     },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.deletePost.execute(data.params.id);
+    await this.deletePost.execute(user.id, data.params.id);
   }
 }

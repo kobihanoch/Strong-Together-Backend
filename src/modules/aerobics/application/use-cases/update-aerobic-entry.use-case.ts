@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionHooks } from '../../../../common/application/ports/transaction-hooks.port';
+import { UnitOfWork } from '../../../../common/application/ports/unit-of-work.port';
 import { AerobicEntryNotFoundError } from '../errors/aerobic-entry-not-found.error';
 import type { AerobicEntryInput } from '../models/aerobics.models';
 import { AerobicsCache } from '../ports/aerobics-cache.port';
@@ -9,9 +9,9 @@ import { AerobicsRepository } from '../ports/aerobics.repository';
 @Injectable()
 export class UpdateAerobicEntryUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly repository: AerobicsRepository,
     private readonly cache: AerobicsCache,
-    private readonly transactionHooks: TransactionHooks,
   ) {}
 
   /**
@@ -24,8 +24,10 @@ export class UpdateAerobicEntryUseCase {
    * @throws {AerobicEntryNotFoundError} When the owned entry does not exist.
    */
   async execute(userId: string, id: number, record: AerobicEntryInput): Promise<void> {
-    const updatedId = await this.repository.updateForUser(userId, id, record);
-    if (updatedId === null) throw new AerobicEntryNotFoundError();
-    this.transactionHooks.afterCommit(() => this.cache.invalidateUser(userId));
+    return this.unitOfWork.execute(userId, async () => {
+      const updatedId = await this.repository.updateForUser(userId, id, record);
+      if (updatedId === null) throw new AerobicEntryNotFoundError();
+      this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
+    });
   }
 }

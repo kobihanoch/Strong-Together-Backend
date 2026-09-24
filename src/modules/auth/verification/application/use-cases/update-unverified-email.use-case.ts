@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionHooks } from '../../../../../common/application/ports/transaction-hooks.port';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { VerificationBadRequestError, VerificationConflictError, VerificationUnauthorizedError } from '../errors/verification.errors';
 import { AuthenticationTransaction } from '../../../core/application/ports/authentication-transaction.port';
 import { PasswordHasher } from '../../../core/application/ports/password-hasher.port';
@@ -10,11 +10,11 @@ import { VerificationRepository } from '../ports/verification.repository';
 @Injectable()
 export class UpdateUnverifiedEmailUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly verification: VerificationRepository,
     private readonly passwordHasher: PasswordHasher,
     private readonly emailSender: VerificationEmailSender,
     private readonly transaction: AuthenticationTransaction,
-    private readonly transactionHooks: TransactionHooks,
   ) {}
 
   /**
@@ -30,19 +30,21 @@ export class UpdateUnverifiedEmailUseCase {
    * @throws {VerificationConflictError} When the replacement email is already used.
    */
   async execute(username: string, password: string, newEmail: string, requestId?: string): Promise<void> {
-    const user = await this.verification.findByUsername(username);
-    if (!user) throw new VerificationUnauthorizedError('Invalid credentials');
-    const matches = await this.passwordHasher.compare(password, user.passwordHash!);
-    if (!matches) throw new VerificationUnauthorizedError('Invalid credentials');
-    if (user.isVerified) throw new VerificationBadRequestError('Account already verified');
-    if (await this.verification.emailExists(newEmail)) throw new VerificationConflictError('Email already in use');
+    return this.unitOfWork.execute(undefined, async () => {
+      const user = await this.verification.findByUsername(username);
+      if (!user) throw new VerificationUnauthorizedError('Invalid credentials');
+      const matches = await this.passwordHasher.compare(password, user.passwordHash!);
+      if (!matches) throw new VerificationUnauthorizedError('Invalid credentials');
+      if (user.isVerified) throw new VerificationBadRequestError('Account already verified');
+      if (await this.verification.emailExists(newEmail)) throw new VerificationConflictError('Email already in use');
 
-    await this.transaction.promoteToUser(user.id);
-    await this.verification.updateEmail(user.id, newEmail);
-    this.transactionHooks.afterCommit(() =>
-      this.emailSender.send(newEmail, user.id, user.name ? user.name : user.username, {
-        ...(requestId ? { requestId } : {}),
-      }),
-    );
+      await this.transaction.promoteToUser(user.id);
+      await this.verification.updateEmail(user.id, newEmail);
+      this.unitOfWork.afterCommit(() =>
+        this.emailSender.send(newEmail, user.id, user.name ? user.name : user.username, {
+          ...(requestId ? { requestId } : {}),
+        }),
+      );
+    });
   }
 }

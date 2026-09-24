@@ -4,6 +4,8 @@ import { AuthenticationGuard } from '../../../common/guards/authentication.guard
 import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { ListExercisesUseCase } from '../application/use-cases/list-exercises.use-case';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../../../common/types/express';
 
 /** E */
 @Controller('api/exercises')
@@ -24,7 +26,7 @@ export class ExercisesController {
    * @throws {ForbiddenException} When role authorization fails.
    */
   @Get()
-  async list(): Promise<ListExercisesResponse> {
-    return this.listExercises.execute();
+  async list(@CurrentUser() user: AuthenticatedUser): Promise<ListExercisesResponse> {
+    return this.listExercises.execute(user.id);
   }
 }

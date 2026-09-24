@@ -4,6 +4,8 @@ import { AuthenticationGuard } from '../../../../common/guards/authentication.gu
 import { AuthorizationGuard, Roles } from '../../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { GetSocialSummaryUseCase } from '../application/use-cases/get-social-summary.use-case';
+import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../../../../common/types/express';
 
 /** E */
 @Controller('api/social/summary')
@@ -24,7 +26,7 @@ export class SocialSummaryController {
    * @throws {ForbiddenException} When role authorization fails.
    */
   @Get()
-  public getSummary(): Promise<GetSocialSummaryResponse> {
-    return this.getSocialSummary.execute();
+  public getSummary(@CurrentUser() user: AuthenticatedUser): Promise<GetSocialSummaryResponse> {
+    return this.getSocialSummary.execute(user.id);
   }
 }

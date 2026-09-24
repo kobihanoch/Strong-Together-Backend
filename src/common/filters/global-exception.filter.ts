@@ -7,6 +7,7 @@ import {
   ApplicationConflictError,
   ApplicationForbiddenError,
   ApplicationNotFoundError,
+  ApplicationServiceUnavailableError,
   ApplicationUnauthorizedError,
   ApplicationValidationError,
 } from '../application/errors/application.errors';
@@ -58,6 +59,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     if (exception instanceof ApplicationConflictError) return HttpStatus.CONFLICT;
     if (exception instanceof ApplicationUnauthorizedError) return HttpStatus.UNAUTHORIZED;
     if (exception instanceof ApplicationForbiddenError) return HttpStatus.FORBIDDEN;
+    if (exception instanceof ApplicationServiceUnavailableError) return HttpStatus.SERVICE_UNAVAILABLE;
     return HttpStatus.INTERNAL_SERVER_ERROR;
   }
 

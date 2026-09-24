@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../../common/application/ports/unit-of-work.port';
 import { ReactionNotFoundError } from '../errors/reactions.errors';
 import { ReactionsRepository } from '../ports/reactions.repository';
 
@@ -6,7 +7,10 @@ import { ReactionsRepository } from '../ports/reactions.repository';
 
 @Injectable()
 export class DeleteReactionUseCase {
-  public constructor(private readonly repository: ReactionsRepository) {}
+  public constructor(
+    private readonly unitOfWork: UnitOfWork,
+    private readonly repository: ReactionsRepository,
+  ) {}
   /**
    * Executes the application operation.
    *
@@ -16,7 +20,9 @@ export class DeleteReactionUseCase {
    * @throws {ReactionNotFoundError} When no reaction exists.
    */
   public async execute(postId: string, userId: string): Promise<void> {
-    const outcome = await this.repository.delete(postId, userId);
-    if (outcome.kind === 'not-found') throw new ReactionNotFoundError();
+    return this.unitOfWork.execute(userId, async () => {
+      const outcome = await this.repository.delete(postId, userId);
+      if (outcome.kind === 'not-found') throw new ReactionNotFoundError();
+    });
   }
 }

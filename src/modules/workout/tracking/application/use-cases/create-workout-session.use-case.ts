@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionHooks } from '../../../../../common/application/ports/transaction-hooks.port';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { InvalidCompletedWorkoutError } from '../errors/workout-tracking.errors';
 import type { CreateWorkoutSessionCommand } from '../models/workout-tracking.models';
 import { WorkoutTrackingCache } from '../ports/workout-tracking-cache.port';
@@ -8,9 +8,9 @@ import { WorkoutTrackingRepository } from '../ports/workout-tracking.repository'
 @Injectable()
 export class CreateWorkoutSessionUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly repository: WorkoutTrackingRepository,
     private readonly cache: WorkoutTrackingCache,
-    private readonly hooks: TransactionHooks,
   ) {}
   /**
    * Persists a completed workout.
@@ -21,8 +21,10 @@ export class CreateWorkoutSessionUseCase {
    * @throws {InvalidCompletedWorkoutError} When no exercises are supplied.
    */
   async execute(userId: string, command: CreateWorkoutSessionCommand): Promise<void> {
-    if (!command.workout.length) throw new InvalidCompletedWorkoutError();
-    await this.repository.saveCompletedWorkout(userId, command.workout, command.workoutStartUtc || null, command.workoutEndUtc || null);
-    this.hooks.afterCommit(() => this.cache.invalidateUser(userId));
+    return this.unitOfWork.execute(userId, async () => {
+      if (!command.workout.length) throw new InvalidCompletedWorkoutError();
+      await this.repository.saveCompletedWorkout(userId, command.workout, command.workoutStartUtc || null, command.workoutEndUtc || null);
+      this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
+    });
   }
 }

@@ -105,8 +105,8 @@ export class CrewRequestsController {
    * @throws {ForbiddenException} When role authorization fails.
    */
   @Get('invitations')
-  async listInvitations(): Promise<ListCrewInvitationsResponse> {
-    return this.listCrewInvitations.execute();
+  async listInvitations(@CurrentUser() user: AuthenticatedUser): Promise<ListCrewInvitationsResponse> {
+    return this.listCrewInvitations.execute(user.id);
   }
 
   /**
@@ -128,8 +128,9 @@ export class CrewRequestsController {
     data: {
       params: ListPendingCrewJoinRequestsParams;
     },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListPendingCrewJoinRequestsResponse> {
-    return this.listPendingRequests.execute(data.params.crewId);
+    return this.listPendingRequests.execute(user.id, data.params.crewId);
   }
 
   /**
@@ -154,7 +155,8 @@ export class CrewRequestsController {
       params: UpdateCrewParticipationRequestStatusParams;
       body: UpdateCrewParticipationRequestStatusBody;
     },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<UpdateCrewParticipationRequestStatusResponse> {
-    await this.updateParticipationRequest.execute(data.params.requestId, data.body.status);
+    await this.updateParticipationRequest.execute(user.id, data.params.requestId, data.body.status);
   }
 }

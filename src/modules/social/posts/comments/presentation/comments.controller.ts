@@ -67,8 +67,9 @@ export class CommentsController {
       params: ListPostCommentsParams;
       query: ListPostCommentsQuery;
     },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListPostCommentsResponse> {
-    return this.listPostComments.execute(data.params.postId, data.query.limit, data.query.cursor);
+    return this.listPostComments.execute(user.id, data.params.postId, data.query.limit, data.query.cursor);
   }
 
   /**
@@ -111,8 +112,9 @@ export class CommentsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   public async editComment(
     @RequestData(new ValidateRequestPipe(editCommentRequestSchema)) data: { params: EditCommentParams; body: EditCommentBody },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<EditCommentResponse> {
-    await this.editPostComment.execute(data.params.id, data.body.content);
+    await this.editPostComment.execute(user.id, data.params.id, data.body.content);
   }
 
   /**
@@ -132,7 +134,8 @@ export class CommentsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   public async deleteComment(
     @RequestData(new ValidateRequestPipe(deleteCommentRequestSchema)) data: { params: DeleteCommentParams },
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<DeleteCommentResponse> {
-    await this.deletePostComment.execute(data.params.id);
+    await this.deletePostComment.execute(user.id, data.params.id);
   }
 }

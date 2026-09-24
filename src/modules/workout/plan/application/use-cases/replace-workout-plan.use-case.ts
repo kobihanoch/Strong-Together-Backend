@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionHooks } from '../../../../../common/application/ports/transaction-hooks.port';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { InvalidWorkoutSplitError } from '../errors/workout-plan.errors';
 import type { WorkoutSplitInput } from '../models/workout-plan.models';
 import { WorkoutPlanCache } from '../ports/workout-plan-cache.port';
@@ -8,9 +8,9 @@ import { WorkoutPlanRepository } from '../ports/workout-plan.repository';
 @Injectable()
 export class ReplaceWorkoutPlanUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly repository: WorkoutPlanRepository,
     private readonly cache: WorkoutPlanCache,
-    private readonly hooks: TransactionHooks,
   ) {}
   /**
    * Replaces the complete plan snapshot.
@@ -21,10 +21,12 @@ export class ReplaceWorkoutPlanUseCase {
    * @throws {InvalidWorkoutSplitError} When a submitted existing split is not owned by the plan.
    */
   async execute(userId: string, splits: WorkoutSplitInput[]): Promise<void> {
-    const outcome = await this.repository.replaceForUser(userId, splits);
-    if (outcome.kind === 'split-not-owned') {
-      throw new InvalidWorkoutSplitError(outcome.splitId);
-    }
-    this.hooks.afterCommit(() => this.cache.invalidateUser(userId));
+    return this.unitOfWork.execute(userId, async () => {
+      const outcome = await this.repository.replaceForUser(userId, splits);
+      if (outcome.kind === 'split-not-owned') {
+        throw new InvalidWorkoutSplitError(outcome.splitId);
+      }
+      this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
+    });
   }
 }

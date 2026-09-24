@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../../common/application/ports/unit-of-work.port';
 import { CrewRequestAccessDeniedError } from '../errors/crew-requests.errors';
 import type { PendingCrewJoinRequests } from '../models/crew-requests.models';
 import { CrewRequestsRepository } from '../ports/crew-requests.repository';
@@ -7,7 +8,10 @@ import { CrewRequestsRepository } from '../ports/crew-requests.repository';
 
 @Injectable()
 export class ListPendingCrewJoinRequestsUseCase {
-  public constructor(private readonly repository: CrewRequestsRepository) {}
+  public constructor(
+    private readonly unitOfWork: UnitOfWork,
+    private readonly repository: CrewRequestsRepository,
+  ) {}
   /**
    * Executes the application operation.
    *
@@ -15,8 +19,10 @@ export class ListPendingCrewJoinRequestsUseCase {
    * @returns Pending requests.
    * @throws {CrewRequestAccessDeniedError} When the caller is not its leader.
    */
-  public async execute(crewId: string): Promise<PendingCrewJoinRequests> {
-    if (!(await this.repository.isCrewLeader(crewId))) throw new CrewRequestAccessDeniedError();
-    return { requests: await this.repository.listPending(crewId) };
+  public async execute(userId: string, crewId: string): Promise<PendingCrewJoinRequests> {
+    return this.unitOfWork.execute(userId, async () => {
+      if (!(await this.repository.isCrewLeader(crewId))) throw new CrewRequestAccessDeniedError();
+      return { requests: await this.repository.listPending(crewId) };
+    });
   }
 }

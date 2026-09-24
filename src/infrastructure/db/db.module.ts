@@ -1,11 +1,11 @@
 import { Global, Module } from '@nestjs/common';
 import { DBService } from './db.service';
+import { UnitOfWork } from '../../common/application/ports/unit-of-work.port';
 import postgres from 'postgres';
 import { appConfig } from '../../config/app.config';
 import { databaseConfig } from '../../config/database.config';
 import { DB_CLIENT } from './db.tokens';
-import { TransactionHooks } from '../../common/application/ports/transaction-hooks.port';
-import { DbTransactionHooks } from './db-transaction-hooks';
+import { PostgresUnitOfWork } from './postgres-unit-of-work';
 
 @Global()
 @Module({
@@ -25,10 +25,10 @@ import { DbTransactionHooks } from './db-transaction-hooks';
     },
     DBService,
     {
-      provide: TransactionHooks,
-      useClass: DbTransactionHooks,
+      provide: UnitOfWork,
+      useClass: PostgresUnitOfWork,
     },
   ],
-  exports: [DBService, TransactionHooks],
+  exports: [DBService, UnitOfWork],
 })
 export class DBModule {}

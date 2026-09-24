@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { PostNotFoundError } from '../errors/posts.errors';
 import { PostsRepository } from '../ports/posts.repository';
 
@@ -6,7 +7,10 @@ import { PostsRepository } from '../ports/posts.repository';
 
 @Injectable()
 export class UpdatePostUseCase {
-  public constructor(private readonly repository: PostsRepository) {}
+  public constructor(
+    private readonly unitOfWork: UnitOfWork,
+    private readonly repository: PostsRepository,
+  ) {}
   /**
    * Executes the application operation.
    *
@@ -15,8 +19,10 @@ export class UpdatePostUseCase {
    * @returns Nothing after update.
    * @throws {PostNotFoundError} When inaccessible or absent.
    */
-  public async execute(id: string, content: string): Promise<void> {
-    const outcome = await this.repository.update(id, content);
-    if (outcome.kind === 'not-found') throw new PostNotFoundError();
+  public async execute(userId: string, id: string, content: string): Promise<void> {
+    return this.unitOfWork.execute(userId, async () => {
+      const outcome = await this.repository.update(id, content);
+      if (outcome.kind === 'not-found') throw new PostNotFoundError();
+    });
   }
 }

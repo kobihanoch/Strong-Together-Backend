@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionHooks } from '../../../../../common/application/ports/transaction-hooks.port';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import type { WorkoutPlanResult } from '../models/workout-plan.models';
 import { WorkoutPlanCache } from '../ports/workout-plan-cache.port';
 import { WorkoutPlanRepository } from '../ports/workout-plan.repository';
@@ -7,9 +7,9 @@ import { WorkoutPlanRepository } from '../ports/workout-plan.repository';
 @Injectable()
 export class GetWorkoutPlanUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly repository: WorkoutPlanRepository,
     private readonly cache: WorkoutPlanCache,
-    private readonly hooks: TransactionHooks,
   ) {}
 
   /**
@@ -21,13 +21,15 @@ export class GetWorkoutPlanUseCase {
    * @returns The plan payload and cache status.
    */
   async execute(userId: string, fromCache = true, timezone = 'Asia/Jerusalem'): Promise<{ payload: WorkoutPlanResult; cacheHit: boolean }> {
-    const cacheEntry = await this.cache.forUser(userId, timezone);
-    if (fromCache) {
-      const cached = await cacheEntry.get();
-      if (cached) return { payload: cached, cacheHit: true };
-    }
-    const payload = { workoutPlan: await this.repository.findActiveByUser(userId, timezone) };
-    this.hooks.afterCommit(() => cacheEntry.set(payload));
-    return { payload, cacheHit: false };
+    return this.unitOfWork.execute(userId, async () => {
+      const cacheEntry = await this.cache.forUser(userId, timezone);
+      if (fromCache) {
+        const cached = await cacheEntry.get();
+        if (cached) return { payload: cached, cacheHit: true };
+      }
+      const payload = { workoutPlan: await this.repository.findActiveByUser(userId, timezone) };
+      this.unitOfWork.afterCommit(() => cacheEntry.set(payload));
+      return { payload, cacheHit: false };
+    });
   }
 }

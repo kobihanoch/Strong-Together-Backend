@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../../common/application/ports/unit-of-work.port';
 import { PostNotFoundError } from '../errors/reactions.errors';
 import type { PostReaction } from '../models/reactions.models';
 import { ReactionsRepository } from '../ports/reactions.repository';
@@ -7,7 +8,10 @@ import { ReactionsRepository } from '../ports/reactions.repository';
 
 @Injectable()
 export class ReactToPostUseCase {
-  public constructor(private readonly repository: ReactionsRepository) {}
+  public constructor(
+    private readonly unitOfWork: UnitOfWork,
+    private readonly repository: ReactionsRepository,
+  ) {}
   /**
    * Executes the application operation.
    *
@@ -18,7 +22,9 @@ export class ReactToPostUseCase {
    * @throws {PostNotFoundError} When the post is inaccessible.
    */
   public async execute(postId: string, userId: string, type: PostReaction['type']): Promise<void> {
-    const outcome = await this.repository.save(postId, userId, type);
-    if (outcome.kind === 'post-not-found') throw new PostNotFoundError();
+    return this.unitOfWork.execute(userId, async () => {
+      const outcome = await this.repository.save(postId, userId, type);
+      if (outcome.kind === 'post-not-found') throw new PostNotFoundError();
+    });
   }
 }

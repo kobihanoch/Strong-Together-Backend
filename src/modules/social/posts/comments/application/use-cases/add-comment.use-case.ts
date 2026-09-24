@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../../common/application/ports/unit-of-work.port';
 import { PostNotFoundError } from '../errors/comments.errors';
 import { CommentsRepository } from '../ports/comments.repository';
 
@@ -6,7 +7,10 @@ import { CommentsRepository } from '../ports/comments.repository';
 
 @Injectable()
 export class AddCommentUseCase {
-  public constructor(private readonly repository: CommentsRepository) {}
+  public constructor(
+    private readonly unitOfWork: UnitOfWork,
+    private readonly repository: CommentsRepository,
+  ) {}
   /**
    * Executes the application operation.
    *
@@ -17,7 +21,9 @@ export class AddCommentUseCase {
    * @throws {PostNotFoundError} When the post is inaccessible.
    */
   public async execute(postId: string, userId: string, content: string): Promise<void> {
-    const outcome = await this.repository.add(postId, userId, content);
-    if (outcome.kind === 'post-not-found') throw new PostNotFoundError();
+    return this.unitOfWork.execute(userId, async () => {
+      const outcome = await this.repository.add(postId, userId, content);
+      if (outcome.kind === 'post-not-found') throw new PostNotFoundError();
+    });
   }
 }

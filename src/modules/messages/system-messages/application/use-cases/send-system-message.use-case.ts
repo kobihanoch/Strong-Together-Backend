@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionHooks } from '../../../../../common/application/ports/transaction-hooks.port';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { appConfig } from '../../../../../config/app.config';
 import type { DeliveredMessage } from '../models/system-messages.models';
 import { MessagePublisher } from '../ports/message-publisher.port';
@@ -9,9 +9,9 @@ import { SystemMessagesRepository } from '../ports/system-messages.repository';
 @Injectable()
 export class SendSystemMessageUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly repository: SystemMessagesRepository,
     private readonly publisher: MessagePublisher,
-    private readonly transactionHooks: TransactionHooks,
   ) {}
 
   /**
@@ -22,8 +22,10 @@ export class SendSystemMessageUseCase {
    * @returns The persisted delivery message.
    */
   async execute(receiverId: string, message: { header: string; text: string }): Promise<DeliveredMessage> {
-    const row = await this.repository.create(appConfig.systemUserId as string, receiverId, message.header, message.text);
-    this.transactionHooks.afterCommit(async () => this.publisher.publishToUser(receiverId, row));
-    return row;
+    return this.unitOfWork.execute(receiverId, async () => {
+      const row = await this.repository.create(appConfig.systemUserId as string, receiverId, message.header, message.text);
+      this.unitOfWork.afterCommit(async () => this.publisher.publishToUser(receiverId, row));
+      return row;
+    });
   }
 }

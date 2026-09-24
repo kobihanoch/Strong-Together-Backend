@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionHooks } from '../../../../../common/application/ports/transaction-hooks.port';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import type { PersonalRecords } from '../models/workout-tracking.models';
 import { WorkoutTrackingCache } from '../ports/workout-tracking-cache.port';
 import { WorkoutTrackingRepository } from '../ports/workout-tracking.repository';
@@ -7,9 +7,9 @@ import { WorkoutTrackingRepository } from '../ports/workout-tracking.repository'
 @Injectable()
 export class GetPersonalRecordsUseCase {
   constructor(
+    private readonly unitOfWork: UnitOfWork,
     private readonly repository: WorkoutTrackingRepository,
     private readonly cache: WorkoutTrackingCache,
-    private readonly hooks: TransactionHooks,
   ) {}
   /**
    * Retrieves personal records.
@@ -19,13 +19,15 @@ export class GetPersonalRecordsUseCase {
    * @param timezone - The IANA time-zone name.
    * @returns The use-case result.
    */ async execute(userId: string, fromCache = true, timezone: string): Promise<{ payload: PersonalRecords; cacheHit: boolean }> {
-    const cacheEntry = await this.cache.personalRecordsForUser(userId, timezone);
-    if (fromCache) {
-      const value = await cacheEntry.get();
-      if (value) return { payload: value, cacheHit: true };
-    }
-    const payload = await this.repository.findPersonalRecords(userId, timezone);
-    this.hooks.afterCommit(() => cacheEntry.set(payload));
-    return { payload, cacheHit: false };
+    return this.unitOfWork.execute(userId, async () => {
+      const cacheEntry = await this.cache.personalRecordsForUser(userId, timezone);
+      if (fromCache) {
+        const value = await cacheEntry.get();
+        if (value) return { payload: value, cacheHit: true };
+      }
+      const payload = await this.repository.findPersonalRecords(userId, timezone);
+      this.unitOfWork.afterCommit(() => cacheEntry.set(payload));
+      return { payload, cacheHit: false };
+    });
   }
 }

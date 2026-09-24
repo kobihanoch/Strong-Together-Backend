@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../../common/application/ports/unit-of-work.port';
 import { CrewNotFoundError } from '../errors/crew-requests.errors';
 import { CrewRequestsRepository } from '../ports/crew-requests.repository';
 
@@ -6,7 +7,10 @@ import { CrewRequestsRepository } from '../ports/crew-requests.repository';
 
 @Injectable()
 export class RequestToJoinCrewUseCase {
-  public constructor(private readonly repository: CrewRequestsRepository) {}
+  public constructor(
+    private readonly unitOfWork: UnitOfWork,
+    private readonly repository: CrewRequestsRepository,
+  ) {}
   /**
    * Executes the application operation.
    *
@@ -16,8 +20,10 @@ export class RequestToJoinCrewUseCase {
    * @throws {CrewNotFoundError} When the crew is inaccessible.
    */
   public async execute(crewId: string, userId: string): Promise<void> {
-    const request = await this.repository.requestToJoin(crewId, userId);
-    if (!request) throw new CrewNotFoundError();
-    if (request.status === 'accepted') await this.repository.createMembership(request.crewId, request.participantUserId);
+    return this.unitOfWork.execute(userId, async () => {
+      const request = await this.repository.requestToJoin(crewId, userId);
+      if (!request) throw new CrewNotFoundError();
+      if (request.status === 'accepted') await this.repository.createMembership(request.crewId, request.participantUserId);
+    });
   }
 }
