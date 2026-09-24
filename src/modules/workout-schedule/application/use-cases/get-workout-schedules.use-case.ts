@@ -20,11 +20,11 @@ export class GetWorkoutSchedulesUseCase {
    * @returns The user's entries ordered by weekday and start time.
    */
   public async execute(userId: string): Promise<WorkoutSchedules> {
-    return this.unitOfWork.execute(userId, async () => {
-      const cacheEntry = await this.cache.forUser(userId);
-      const cached = await cacheEntry.get();
-      if (cached) return cached;
+    const cacheEntry = await this.cache.forUser(userId);
+    const cached = await cacheEntry.get();
+    if (cached) return cached;
 
+    return this.unitOfWork.execute(userId, async () => {
       const schedules = { schedules: await this.repository.findByUser(userId) };
       this.unitOfWork.afterCommit(() => cacheEntry.set(schedules));
       return schedules;

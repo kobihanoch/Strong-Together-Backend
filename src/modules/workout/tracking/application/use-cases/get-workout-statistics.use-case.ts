@@ -19,13 +19,14 @@ export class GetWorkoutStatisticsUseCase {
    * @param fromCache - Whether cached data may be returned.
    * @param timezone - The IANA time-zone name.
    * @returns The use-case result.
-   */ async execute(userId: string, days = 45, fromCache = true, timezone: string): Promise<{ payload: WorkoutStatistics; cacheHit: boolean }> {
+  */ async execute(userId: string, days = 45, fromCache = true, timezone: string): Promise<{ payload: WorkoutStatistics; cacheHit: boolean }> {
+    const cacheEntry = await this.cache.workoutStatisticsForUser(userId, days, timezone);
+    if (fromCache) {
+      const value = await cacheEntry.get();
+      if (value) return { payload: value, cacheHit: true };
+    }
+
     return this.unitOfWork.execute(userId, async () => {
-      const cacheEntry = await this.cache.workoutStatisticsForUser(userId, days, timezone);
-      if (fromCache) {
-        const value = await cacheEntry.get();
-        if (value) return { payload: value, cacheHit: true };
-      }
       const payload = await this.repository.findStatistics(userId, days, timezone);
       this.unitOfWork.afterCommit(() => cacheEntry.set(payload));
       return { payload, cacheHit: false };

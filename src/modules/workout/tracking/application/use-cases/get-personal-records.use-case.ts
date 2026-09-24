@@ -18,13 +18,14 @@ export class GetPersonalRecordsUseCase {
    * @param fromCache - Whether cached data may be returned.
    * @param timezone - The IANA time-zone name.
    * @returns The use-case result.
-   */ async execute(userId: string, fromCache = true, timezone: string): Promise<{ payload: PersonalRecords; cacheHit: boolean }> {
+  */ async execute(userId: string, fromCache = true, timezone: string): Promise<{ payload: PersonalRecords; cacheHit: boolean }> {
+    const cacheEntry = await this.cache.personalRecordsForUser(userId, timezone);
+    if (fromCache) {
+      const value = await cacheEntry.get();
+      if (value) return { payload: value, cacheHit: true };
+    }
+
     return this.unitOfWork.execute(userId, async () => {
-      const cacheEntry = await this.cache.personalRecordsForUser(userId, timezone);
-      if (fromCache) {
-        const value = await cacheEntry.get();
-        if (value) return { payload: value, cacheHit: true };
-      }
       const payload = await this.repository.findPersonalRecords(userId, timezone);
       this.unitOfWork.afterCommit(() => cacheEntry.set(payload));
       return { payload, cacheHit: false };

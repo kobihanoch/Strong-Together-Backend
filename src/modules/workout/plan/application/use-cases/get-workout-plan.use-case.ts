@@ -21,12 +21,13 @@ export class GetWorkoutPlanUseCase {
    * @returns The plan payload and cache status.
    */
   async execute(userId: string, fromCache = true, timezone = 'Asia/Jerusalem'): Promise<{ payload: WorkoutPlanResult; cacheHit: boolean }> {
+    const cacheEntry = await this.cache.forUser(userId, timezone);
+    if (fromCache) {
+      const cached = await cacheEntry.get();
+      if (cached) return { payload: cached, cacheHit: true };
+    }
+
     return this.unitOfWork.execute(userId, async () => {
-      const cacheEntry = await this.cache.forUser(userId, timezone);
-      if (fromCache) {
-        const cached = await cacheEntry.get();
-        if (cached) return { payload: cached, cacheHit: true };
-      }
       const payload = { workoutPlan: await this.repository.findActiveByUser(userId, timezone) };
       this.unitOfWork.afterCommit(() => cacheEntry.set(payload));
       return { payload, cacheHit: false };

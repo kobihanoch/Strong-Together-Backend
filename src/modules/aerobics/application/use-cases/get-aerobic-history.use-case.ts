@@ -28,14 +28,13 @@ export class GetAerobicHistoryUseCase {
     fromCache: boolean = true,
     timezone: string = 'Asia/Jerusalem',
   ): Promise<{ payload: AerobicsHistory; cacheHit: boolean }> {
+    const cacheEntry = await this.cache.forUser(userId, days, timezone);
+    if (fromCache) {
+      const cached = await cacheEntry.get();
+      if (cached) return { payload: cached, cacheHit: true };
+    }
+
     return this.unitOfWork.execute(userId, async () => {
-      const cacheEntry = await this.cache.forUser(userId, days, timezone);
-
-      if (fromCache) {
-        const cached = await cacheEntry.get();
-        if (cached) return { payload: cached, cacheHit: true };
-      }
-
       const payload = await this.repository.findByUser(userId, days, timezone);
       this.unitOfWork.afterCommit(() => cacheEntry.set(payload));
       return { payload, cacheHit: false };
