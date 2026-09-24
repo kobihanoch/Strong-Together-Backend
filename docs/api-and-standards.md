@@ -6,19 +6,19 @@ This document summarizes the API style, validation approach, observability stand
 
 The API is organized under `/api` with domain-oriented route groups:
 
-| Domain | Route group | Responsibility |
-| --- | --- | --- |
-| Auth | `/api/auth` | Login, logout, refresh, verification, password reset |
-| Users | `/api/users` | Account creation, profile, profile picture, push token |
-| Workouts | `/api/workout-plan`, `/api/workout-*` | Plan reads/writes, schedules, and completed workout tracking |
-| Aerobics | `/api/aerobics` | Cardio history |
-| Exercises | `/api/exercises` | Exercise catalog |
-| Messages | `/api/messages` | Inbox, read state, deletion |
-| OAuth | `/api/oauth` | Google and Apple sign-in |
-| Push | `/api/push-jobs` | Scheduled push notification entrypoints |
-| Video analysis | `/api/video-analysis` | Presigned upload URL generation |
-| WebSockets | `/api/websocket-tickets` | Authenticated socket ticket generation |
-| Social | `/api/social` | Crews, participation requests, profiles, posts, comments, reactions, summary |
+| Domain         | Route group                           | Responsibility                                                               |
+| -------------- | ------------------------------------- | ---------------------------------------------------------------------------- |
+| Auth           | `/api/auth`                           | Login, logout, refresh, verification, password reset                         |
+| Users          | `/api/users`                          | Account creation, profile, profile picture, push token                       |
+| Workouts       | `/api/workout-plan`, `/api/workout-*` | Plan reads/writes, schedules, and completed workout tracking                 |
+| Aerobics       | `/api/aerobics`                       | Cardio history                                                               |
+| Exercises      | `/api/exercises`                      | Exercise catalog                                                             |
+| Messages       | `/api/messages`                       | Inbox, read state, deletion                                                  |
+| OAuth          | `/api/oauth`                          | Google and Apple sign-in                                                     |
+| Push           | `/api/push-jobs`                      | Scheduled push notification entrypoints                                      |
+| Video analysis | `/api/video-analysis`                 | Presigned upload URL generation                                              |
+| WebSockets     | `/api/websocket-tickets`              | Authenticated socket ticket generation                                       |
+| Social         | `/api/social`                         | Crews, participation requests, profiles, posts, comments, reactions, summary |
 
 The full route-level reference remains in [api-documentation.md](./api-documentation.md).
 
@@ -49,7 +49,6 @@ Protected user routes usually apply:
 
 ```ts
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
-@UseInterceptors(RlsTxInterceptor)
 @Roles('user')
 ```
 
@@ -58,7 +57,7 @@ That stack means:
 - DPoP validates the request proof.
 - Authentication validates JWT claims, DPoP token binding, token version, and verified user state.
 - Authorization validates route role metadata.
-- The authentication guard validates its database state in an authenticated RLS transaction, and the interceptor binds controller/service SQL to the authenticated user. Public auth requests remain `guest` until credentials or a signed token are verified.
+- Presentation passes the authenticated user ID to the use case. A database-backed use case opens its own RLS transaction through `UnitOfWork.execute(userId, operation)`. Public auth use cases pass `undefined`, remain `guest` until credentials or a signed token are verified, and can then promote the same transaction.
 
 ## Error Handling
 
@@ -75,15 +74,15 @@ Feature errors are transport-neutral and extend a shared application category su
 
 Common status codes:
 
-| Status | Meaning |
-| --- | --- |
-| `400` | Invalid request contract |
-| `401` | Missing/invalid token, failed DPoP proof, stale token version |
-| `403` | Authenticated user lacks required role |
-| `404` | Missing resource or intentionally hidden bot/scanner path |
-| `426` | Mobile app version is too old |
-| `429` | Rate limit exceeded |
-| `500` | Unexpected server failure |
+| Status | Meaning                                                       |
+| ------ | ------------------------------------------------------------- |
+| `400`  | Invalid request contract                                      |
+| `401`  | Missing/invalid token, failed DPoP proof, stale token version |
+| `403`  | Authenticated user lacks required role                        |
+| `404`  | Missing resource or intentionally hidden bot/scanner path     |
+| `426`  | Mobile app version is too old                                 |
+| `429`  | Rate limit exceeded                                           |
+| `500`  | Unexpected server failure                                     |
 
 The filter logs exceptions with request, path, status, and user context where available.
 

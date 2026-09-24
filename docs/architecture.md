@@ -33,16 +33,16 @@ flowchart LR
   request[HTTP request] --> middleware[Helmet, CORS, rate limit,<br/>request logger, bot/version checks]
   middleware --> guards[DPoP, authentication,<br/>authorization]
   guards --> validation[Zod validation]
-  validation --> transaction[RLS transaction]
-  transaction --> controller[Presentation controller]
+  validation --> controller[Presentation controller]
   controller --> usecase[Application use case]
+  usecase --> transaction[UnitOfWork<br/>RLS transaction]
   usecase --> port[Application port]
   port --> adapter[Infrastructure adapter]
   adapter --> resource[(Postgres / Redis / provider)]
   usecase --> response[Response]
 ```
 
-`RlsTxInterceptor` wraps request work in `DBService.runWithRlsTx`. Unauthenticated flows start as the PostgreSQL `guest` role. Authenticated requests set `app.current_user_id` and use the `authenticated` role. Public authentication can promote the current transaction only after credentials or a signed token are verified.
+Database-backed use cases own their transaction through the application `UnitOfWork` port. Presentation passes the authenticated user ID into the use case; guest operations pass no user ID. `PostgresUnitOfWork` delegates to `DBService.withRlsTransaction`, which sets `app.current_user_id` and the `authenticated` role, or starts with the PostgreSQL `guest` role. Public authentication can promote the active transaction only after credentials or a signed token are verified.
 
 Expected feature failures are transport-neutral application errors. `GlobalExceptionFilter` maps shared error categories to HTTP statuses; application errors do not know about NestJS or HTTP.
 
@@ -72,40 +72,40 @@ This pattern is used across auth, users, workout planning and tracking, schedule
 
 ## Runtime Components
 
-| Component | Responsibility |
-| --- | --- |
-| NestJS API | HTTP presentation, guards, validation, use-case composition, Socket.IO hosting |
-| `@strong-together/shared` | Plain-Zod public request, response, and cross-process contracts; no database schemas or backend types |
-| PostgreSQL | Domain schemas, explicit repository SQL, views, RLS policies, token state, transactions |
-| Redis | Response caches, one-time token/JTI storage, Pub/Sub, Socket.IO scaling, Bull queue storage |
-| Node workers | Queue-driven email and push delivery |
-| Python worker | SQS-driven video analysis using OpenCV/MediaPipe utilities |
-| S3 / LocalStack / Supabase Storage | Video uploads/events and image storage adapters |
-| SQS / LocalStack | Durable video-analysis handoff |
-| Maildev / Resend / Expo | Email and push delivery providers |
-| Sentry / Pino | Tracing, error capture, structured operation logging, request correlation |
+| Component                          | Responsibility                                                                                        |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| NestJS API                         | HTTP presentation, guards, validation, use-case composition, Socket.IO hosting                        |
+| `@strong-together/shared`          | Plain-Zod public request, response, and cross-process contracts; no database schemas or backend types |
+| PostgreSQL                         | Domain schemas, explicit repository SQL, views, RLS policies, token state, transactions               |
+| Redis                              | Response caches, one-time token/JTI storage, Pub/Sub, Socket.IO scaling, Bull queue storage           |
+| Node workers                       | Queue-driven email and push delivery                                                                  |
+| Python worker                      | SQS-driven video analysis using OpenCV/MediaPipe utilities                                            |
+| S3 / LocalStack / Supabase Storage | Video uploads/events and image storage adapters                                                       |
+| SQS / LocalStack                   | Durable video-analysis handoff                                                                        |
+| Maildev / Resend / Expo            | Email and push delivery providers                                                                     |
+| Sentry / Pino                      | Tracing, error capture, structured operation logging, request correlation                             |
 
 ## Feature Modules
 
-| Module | Main responsibility | Principal outbound adapters |
-| --- | --- | --- |
-| `auth` | Login/refresh/logout, password reset, verification | Postgres, JWT, bcrypt, Redis tokens, queued email, events |
-| `user` | Registration, profile, push tokens, profile pictures, email change | Postgres, storage, Redis/JWT, queued email, events |
-| `workout` | Plans, completed workouts, history, statistics and PRs | Postgres repositories, Redis caches |
-| `workout-schedule` | Weekly split schedules and atomic replacement | Postgres repository, Redis cache |
-| `reminders` / `push` | Preferences and scheduled notification enqueueing | Postgres, Bull/Redis, Expo worker |
-| `messages` | Inbox mutations and realtime publication | Postgres, Socket.IO publisher |
-| `social` | Crews, requests, users, posts, comments, reactions, summary | Postgres, image storage, Socket.IO/message adapters |
-| `video-analysis` | Upload URL creation and analysis-result publication | S3, telemetry, Redis subscriber, Socket.IO |
-| `web-sockets` | Short-lived authenticated socket tickets | JWT ticket issuer |
-| `aerobics` / `exercises` | Cardio history and exercise catalog | Postgres, Redis where applicable |
-| `oauth` | Google and Apple sign-in | Provider verifiers, Postgres, registration/session events |
+| Module                   | Main responsibility                                                | Principal outbound adapters                               |
+| ------------------------ | ------------------------------------------------------------------ | --------------------------------------------------------- |
+| `auth`                   | Login/refresh/logout, password reset, verification                 | Postgres, JWT, bcrypt, Redis tokens, queued email, events |
+| `user`                   | Registration, profile, push tokens, profile pictures, email change | Postgres, storage, Redis/JWT, queued email, events        |
+| `workout`                | Plans, completed workouts, history, statistics and PRs             | Postgres repositories, Redis caches                       |
+| `workout-schedule`       | Weekly split schedules and atomic replacement                      | Postgres repository, Redis cache                          |
+| `reminders` / `push`     | Preferences and scheduled notification enqueueing                  | Postgres, Bull/Redis, Expo worker                         |
+| `messages`               | Inbox mutations and realtime publication                           | Postgres, Socket.IO publisher                             |
+| `social`                 | Crews, requests, users, posts, comments, reactions, summary        | Postgres, image storage, Socket.IO/message adapters       |
+| `video-analysis`         | Upload URL creation and analysis-result publication                | S3, telemetry, Redis subscriber, Socket.IO                |
+| `web-sockets`            | Short-lived authenticated socket tickets                           | JWT ticket issuer                                         |
+| `aerobics` / `exercises` | Cardio history and exercise catalog                                | Postgres, Redis where applicable                          |
+| `oauth`                  | Google and Apple sign-in                                           | Provider verifiers, Postgres, registration/session events |
 
 ## Persistence And Transactions
 
-Application use cases depend on repository abstractions such as `WorkoutPlanRepository`; concrete `Postgres*Repository` adapters own SQL, Drizzle-derived row types, and mapping. `DBService` supplies a `postgres` tagged-template client bound through `AsyncLocalStorage` to the active RLS transaction.
+Application use cases depend on repository abstractions such as `WorkoutPlanRepository`; concrete `Postgres*Repository` adapters own SQL, Drizzle-derived row types, and mapping. Transactional use cases call `UnitOfWork.execute(userId, operation)` and register best-effort post-commit work through `UnitOfWork.afterCommit(...)`.
 
-External work that must not run before commit is registered through the application-owned `TransactionHooks` port. Its PostgreSQL adapter delegates to `DBService.afterCommit(...)`. This is appropriate for cache invalidation and other best-effort side effects; critical guaranteed delivery should use a transactional outbox.
+`PostgresUnitOfWork` is the infrastructure adapter for this application port. It delegates transaction and callback handling to `DBService`, which binds its `postgres` tagged-template client to the active transaction through `AsyncLocalStorage`. Nested use cases reuse that active transaction. `DBService.sql` rejects access outside a unit of work, preventing accidental non-RLS queries. After-commit hooks are appropriate for cache invalidation and other best-effort side effects; critical guaranteed delivery should use a transactional outbox.
 
 ## Events And Cross-Module Reactions
 

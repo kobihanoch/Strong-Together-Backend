@@ -8,7 +8,7 @@ The video-analysis system is designed around direct upload, asynchronous process
 
 1. The mobile client calls `POST /api/video-analysis/upload-urls`.
 2. `VideoAnalysisController` validates the request with `getPresignedUrlS3Request` from `@strong-together/shared`.
-3. `DpopGuard`, `AuthenticationGuard`, `AuthorizationGuard`, and `RlsTxInterceptor` protect the route.
+3. `DpopGuard`, `AuthenticationGuard`, and `AuthorizationGuard` protect the route; database-backed use cases own any required RLS transaction through `UnitOfWork`.
 4. `CreateVideoUploadUrlUseCase` creates a file key using `exercise`, `userId`, and timestamp through the `VideoStorage` port.
 5. The API generates a presigned S3 upload URL and attaches metadata:
    - `job_id`

@@ -6,14 +6,14 @@ Security in Strong Together is layered across the HTTP edge, token lifecycle, ro
 
 Global middleware is registered in `src/app.ts` and applies to all routes.
 
-| Layer | Purpose | Why it matters |
-| --- | --- | --- |
-| `GeneralRateLimitMiddleware` | In-memory route/client throttling | Reduces brute-force and noisy client abuse before controller code runs |
-| `RequestLoggerMiddleware` | Request IDs, structured logs, Sentry context | Makes incident investigation possible across API and async flows |
-| `BotBlockerMiddleware` | Blocks missing user agents, scanner paths, suspicious accept headers, and known automation clients | Reduces exposure to commodity internet scanning |
-| `CheckAppVersionMiddleware` | Enforces `x-app-version` for non-exempt routes | Allows the backend to retire unsafe or incompatible client versions |
-| `helmet()` | Security headers | Hardens common browser-facing attack surfaces |
-| CORS configuration | Restricts origin/methods/headers | Limits browser-based cross-origin access to intended clients |
+| Layer                        | Purpose                                                                                            | Why it matters                                                         |
+| ---------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `GeneralRateLimitMiddleware` | In-memory route/client throttling                                                                  | Reduces brute-force and noisy client abuse before controller code runs |
+| `RequestLoggerMiddleware`    | Request IDs, structured logs, Sentry context                                                       | Makes incident investigation possible across API and async flows       |
+| `BotBlockerMiddleware`       | Blocks missing user agents, scanner paths, suspicious accept headers, and known automation clients | Reduces exposure to commodity internet scanning                        |
+| `CheckAppVersionMiddleware`  | Enforces `x-app-version` for non-exempt routes                                                     | Allows the backend to retire unsafe or incompatible client versions    |
+| `helmet()`                   | Security headers                                                                                   | Hardens common browser-facing attack surfaces                          |
+| CORS configuration           | Restricts origin/methods/headers                                                                   | Limits browser-based cross-origin access to intended clients           |
 
 The edge policy is intentionally conservative. The mobile app is the primary client, so missing app-version headers and browser-like scanner traffic are treated as suspicious except for explicit public callback/health routes.
 
@@ -70,7 +70,7 @@ This matters for security because controllers do not trust TypeScript types at r
 
 ## Database-Level Security
 
-The database contains domain schemas and row-level security policies. Authenticated requests are wrapped by `RlsTxInterceptor`, which calls `DBService.runWithRlsTx`.
+The database contains domain schemas and row-level security policies. Each database-backed use case owns its transaction through the application `UnitOfWork` port. The `PostgresUnitOfWork` adapter delegates to `DBService.withRlsTransaction`.
 
 For authenticated users, the transaction sets:
 
@@ -105,6 +105,8 @@ Unauthenticated requests start a transaction with `SET LOCAL ROLE guest`. The `g
 The functions in `guest_api` are `SECURITY DEFINER` routines with a fixed `search_path = pg_catalog`. They implement the existing login, registration, verification lookup, and OAuth lookup/link/create operations without exposing general SQL access to application tables.
 
 After the application verifies a password, OAuth identity token, refresh token, or signed email token, `DBService.promoteCurrentRlsTxToAuthenticated()` sets `app.current_user_id` and changes the same transaction to `authenticated`. Subsequent writes are then subject to the authenticated user's RLS policies.
+
+Presentation passes the authenticated user ID into the use case; it does not open the transaction. `DBService.sql` is available only while `UnitOfWork.execute(...)` is active, and nested use cases reuse that transaction. This makes a missing application transaction fail immediately instead of silently running through the root database connection.
 
 This is a least-privilege boundary, not a replacement for HTTP validation and rate limiting. Login-related functions still accept caller-provided identifiers, and password comparison remains in Node using bcrypt.
 

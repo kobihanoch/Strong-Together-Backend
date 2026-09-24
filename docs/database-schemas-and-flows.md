@@ -12,7 +12,7 @@ The former raster overview was stale. This Mermaid diagram is the maintained, re
 flowchart TB
   client[Mobile client]
   api[NestJS API]
-  rls[RLS request transaction<br/>guest or authenticated role]
+  rls[Use-case-owned RLS transaction<br/>guest or authenticated role]
   guest[guest_api<br/>narrow SECURITY DEFINER auth functions]
   cron[cron_api<br/>narrow reminder functions]
 
@@ -66,9 +66,9 @@ flowchart TB
 | `workout`   | `exercise`, `workout_plan`, `workout_split`, `exercise_to_workout_split`, `workout_set` | Exercise catalog and planned workout structure                                           |
 | `tracking`  | `workout_summary`, `exercise_tracking`, `tracking_set`, `aerobic_tracking`              | Completed workout sessions, set-level strength data, aerobic history                     |
 | `schedules` | `workout_schedule`                                                                      | Explicit weekday/time assignments for active workout splits                              |
-| `reminders` | `user_reminder_setting`                                                                 | Per-user reminder enablement and IANA timezone                                            |
+| `reminders` | `user_reminder_setting`                                                                 | Per-user reminder enablement and IANA timezone                                           |
 | `messages`  | `message`                                                                               | User/system messaging                                                                    |
-| `social`    | crews, memberships, participation requests, posts, placements, comments, reactions     | Social discovery, crew authorization, feeds, and interaction data                        |
+| `social`    | crews, memberships, participation requests, posts, placements, comments, reactions      | Social discovery, crew authorization, feeds, and interaction data                        |
 | `guest_api` | allow-listed `SECURITY DEFINER` functions                                               | Narrow database API for unauthenticated authentication and registration flows            |
 | `cron_api`  | allow-listed reminder lookup/revalidation functions                                     | Narrow database API for scheduled push processing                                        |
 
@@ -91,7 +91,7 @@ Important flows:
 
 The schema is protected by RLS so authenticated users can read/update/delete only their own profile, with specific exceptions such as message sender visibility.
 
-Guest never receives direct access to `identity` tables. Public auth code calls the allow-listed functions in `guest_api`; after credentials or a signed token are verified, the request transaction is promoted to the authenticated user's RLS context.
+Guest never receives direct access to `identity` tables. Public auth code calls the allow-listed functions in `guest_api`; after credentials or a signed token are verified, the active unit-of-work transaction is promoted to the authenticated user's RLS context.
 
 ## Workout Schema
 
@@ -198,16 +198,19 @@ The `social` schema owns crews, memberships, participation requests, posts, crew
 Unauthenticated auth flow:
 
 ```text
-HTTP request -> RlsTxInterceptor -> guest transaction -> guest_api function
-             -> credential/token verification -> authenticated transaction context
+HTTP request -> controller -> auth use case -> UnitOfWork.execute(undefined, operation)
+             -> guest transaction -> guest_api function -> credential/token verification
+             -> authenticated transaction context
 ```
 
 `guest` has no application-table grants and no guest RLS policies. `guest_api` functions are the only database entry points available before authentication.
 
-Authenticated controller routes use `RlsTxInterceptor`:
+Authenticated controllers pass the current user ID into the application use case:
 
 ```text
-HTTP request -> AuthenticationGuard -> req.user.id -> RlsTxInterceptor -> DB transaction
+HTTP request -> AuthenticationGuard -> controller passes req.user.id -> use case
+             -> UnitOfWork.execute(userId, operation) -> PostgresUnitOfWork
+             -> DBService.withRlsTransaction -> DB transaction
 ```
 
 Inside the transaction:
@@ -221,6 +224,8 @@ SET
 ```
 
 Queries then execute against PostgreSQL policies that call `identity.current_user_id()` or related helpers. The application and database agree on the same current user.
+
+Repositories obtain `DBService.sql` from `AsyncLocalStorage`, so every repository called by the use case shares the same transaction. Nested use cases reuse the active transaction rather than opening another one. `DBService.sql` throws when no unit of work is active. Work registered with `UnitOfWork.afterCommit(...)` runs only after a successful commit.
 
 ## Migration Lifecycle
 

@@ -269,7 +269,7 @@ Name ports by the capability the application needs, without technology names:
 application/ports/
   workout-plan.repository.ts  -> WorkoutPlanRepository
   workout-plan-cache.port.ts  -> WorkoutPlanCache
-  transaction-hooks.port.ts   -> TransactionHooks
+  unit-of-work.port.ts        -> UnitOfWork
   email-sender.port.ts        -> EmailSender
   object-storage.port.ts      -> ObjectStorage
   event-publisher.port.ts     -> EventPublisher
@@ -287,7 +287,7 @@ Name infrastructure adapters by their technology or mechanism:
 ```text
 PostgresWorkoutPlanRepository
 RedisWorkoutPlanCache
-DbTransactionHooks
+PostgresUnitOfWork
 ResendEmailSender
 S3ObjectStorage
 BullNotificationQueue
@@ -299,11 +299,11 @@ UuidIdGenerator
 
 Preserve the application port's business role as the adapter class suffix and add the delivery mechanism as a prefix. Do not switch between synonyms such as `Publisher`, `Emitter`, `Broadcaster`, `Notifier`, or `Sender` for the same port role.
 
-| External mechanism | Application port type | Infrastructure adapter type | File name | Wrapped dependency field and type |
-| --- | --- | --- | --- | --- |
-| Socket delivery | `<Capability>Publisher` | `Socket<Capability>Publisher` | `socket-<capability>.publisher.ts` | `publisher: SocketIOService` |
+| External mechanism                         | Application port type   | Infrastructure adapter type   | File name                          | Wrapped dependency field and type                   |
+| ------------------------------------------ | ----------------------- | ----------------------------- | ---------------------------------- | --------------------------------------------------- |
+| Socket delivery                            | `<Capability>Publisher` | `Socket<Capability>Publisher` | `socket-<capability>.publisher.ts` | `publisher: SocketIOService`                        |
 | Queue-backed delivery for a publisher port | `<Capability>Publisher` | `Queued<Capability>Publisher` | `queued-<capability>.publisher.ts` | `<capability>Producer: <Capability>ProducerService` |
-| Queue-backed email sending | `<Purpose>EmailSender` | `Queued<Purpose>EmailSender` | `queued-<purpose>-email.sender.ts` | `emailsProducer: EmailsProducerService` |
+| Queue-backed email sending                 | `<Purpose>EmailSender`  | `Queued<Purpose>EmailSender`  | `queued-<purpose>-email.sender.ts` | `emailsProducer: EmailsProducerService`             |
 
 Concrete examples:
 
@@ -332,12 +332,16 @@ Register each adapter in the Nest module:
 
 ```ts
 {
-  provide: TransactionHooks,
-  useClass: DbTransactionHooks,
+  provide: UnitOfWork,
+  useClass: PostgresUnitOfWork,
 }
 ```
 
-Create a port only when application/domain code needs the capability. Raw SQL helpers, `DBService`, Redis clients, SDK clients, configuration loaders, and other details used entirely inside infrastructure do not need their own application ports. Critical post-commit delivery should eventually use a transactional outbox; `TransactionHooks.afterCommit(...)` is intended for cache operations and other best-effort side effects.
+Database-backed use cases own their transaction by calling `UnitOfWork.execute(userId, operation)`. Presentation supplies the authenticated user ID; public authentication use cases pass `undefined` to start with the guest role. Use `UnitOfWork.afterCommit(...)` inside the operation for cache updates, queue publication, storage cleanup, and other best-effort work that must not happen before commit. Nested use cases reuse the active transaction.
+
+`PostgresUnitOfWork` delegates to the infrastructure-only `DBService`, which owns PostgreSQL, RLS setup, `AsyncLocalStorage`, and the transaction-scoped SQL tag. Repository SQL must use `DBService.sql`; it throws outside an active unit of work. Critical guaranteed delivery should eventually use a transactional outbox rather than an after-commit callback.
+
+Create a port only when application/domain code needs the capability. Raw SQL helpers, `DBService`, Redis clients, SDK clients, configuration loaders, and other details used entirely inside infrastructure do not need their own application ports.
 
 ### Cache Ports and Keys
 
