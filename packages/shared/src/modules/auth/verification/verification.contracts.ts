@@ -1,12 +1,12 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, QueryOf } from '../../../common';
 
-const usernameSchema = z.string();
-const emailSchema = z.string().trim().email('Invalid email');
+const usernameSchema = z.string().trim().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/, 'Invalid username');
+const emailSchema = z.string().trim().max(254).email('Invalid email');
 
 // Verify user account
 
-export const verifyEmailRequestSchema = z.object({ query: z.object({ token: z.string().optional() }) });
+export const verifyEmailRequestSchema = z.object({ query: z.object({ token: z.string().min(1).max(16_384).optional() }) });
 
 export const verifyEmailContract = { request: verifyEmailRequestSchema } satisfies Contract;
 
@@ -22,7 +22,7 @@ export const createVerificationEmailContract = { request: createVerificationEmai
 export const updateUnverifiedAccountEmailRequestSchema = z.object({
   body: z.object({
     username: usernameSchema,
-    password: z.string(),
+    password: z.string().min(1).max(128),
     newEmail: emailSchema,
   }),
 });

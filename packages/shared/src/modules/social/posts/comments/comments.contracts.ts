@@ -13,7 +13,7 @@ export const listPostCommentsRequestSchema = z.object({
   params: postParamsSchema,
   query: z.object({
     limit: z.coerce.number().int().min(1).max(100).default(20),
-    cursor: z.string().min(1).optional(),
+    cursor: z.string().min(1).max(2_048).optional(),
   }),
 });
 

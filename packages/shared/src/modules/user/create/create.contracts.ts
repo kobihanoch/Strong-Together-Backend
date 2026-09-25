@@ -6,6 +6,7 @@ import type { BodyOf, Contract, ResponseOf } from '../../../common';
 const usernameSchema = z
   .string()
   .trim()
+  .min(1, 'Full name is required')
   .min(3, 'Username must be at least 3 characters')
   .max(15, 'Username must be at most 15 characters')
   .regex(/^[a-zA-Z0-9_]+$/, 'Username may contain letters, numbers, and underscore only');
@@ -18,8 +19,8 @@ export const createUserRequestSchema = z.object({
   body: z.object({
     username: usernameSchema,
     fullName: z.preprocess((value) => (value == null || (typeof value === 'string' && value.trim() === '') ? 'User' : value), fullNameSchema),
-    email: z.string().trim().toLowerCase().email('Invalid email format'),
-    password: z.string().min(8, 'Password must be at least 8 characters long'),
+    email: z.string().trim().toLowerCase().max(254).email('Invalid email format'),
+    password: z.string().min(8, 'Password must be at least 8 characters long').max(128, 'Password must be at most 128 characters long'),
     gender: z.preprocess((value) => (value === '' || value == null ? 'Unknown' : value), z.enum(['Male', 'Female', 'Other', 'Unknown'])),
   }),
 });

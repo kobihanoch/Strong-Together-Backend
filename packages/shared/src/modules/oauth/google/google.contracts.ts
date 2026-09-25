@@ -3,7 +3,7 @@ import type { BodyOf, Contract } from '../../../common';
 
 // Sign in with Google
 
-export const googleOAuthRequestSchema = z.object({ body: z.object({ idToken: z.string().optional() }) });
+export const googleOAuthRequestSchema = z.object({ body: z.object({ idToken: z.string().min(1).max(20_000).optional() }) });
 
 export const googleOAuthContract = { request: googleOAuthRequestSchema } satisfies Contract;
 

@@ -4,7 +4,7 @@ import { z } from 'zod/v4';
 export const serializedDateSchema = z.string();
 
 /** Valid IANA timezone identifier accepted at API boundaries. */
-export const timezoneSchema = z.string().refine(
+export const timezoneSchema = z.string().trim().min(1).max(100).refine(
   (timeZone) => {
     try {
       new Intl.DateTimeFormat('en-US', { timeZone }).format();

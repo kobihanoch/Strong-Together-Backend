@@ -1,5 +1,5 @@
 import { z } from 'zod/v4';
-import { serializedDateSchema, type BodyOf, type Contract, type ResponseOf } from '../../../common';
+import { serializedDateSchema, type BodyOf, type Contract, type QueryOf, type ResponseOf } from '../../../common';
 
 const authenticatedUserForUpdateSchema = z.object({
   username: z
@@ -16,8 +16,8 @@ const authenticatedUserForUpdateSchema = z.object({
     .max(20, 'Full name is too long')
     .regex(/^[a-zA-Z\s]+$/, 'Full name may contain letters and spaces only')
     .optional(),
-  email: z.string().trim().toLowerCase().email('Invalid email format').optional(),
-});
+  email: z.string().trim().toLowerCase().max(254).email('Invalid email format').optional(),
+}).refine((input) => Object.values(input).some((value) => value !== undefined), { message: 'At least one profile field must be provided' });
 
 const userDataSchema = z.object({
   id: z.string().uuid(),
@@ -49,6 +49,13 @@ export const updateCurrentUserContract = {
   response: updateCurrentUserResponseSchema,
 } satisfies Contract;
 
+// Confirm pending email change
+
+export const confirmEmailChangeRequestSchema = z.object({
+  query: z.object({ token: z.string().min(1).max(16_384).optional() }),
+});
+export const confirmEmailChangeContract = { request: confirmEmailChangeRequestSchema } satisfies Contract;
+
 // Wrap user data
 
 export const userDataResponseSchema = z.object({ userData: userDataSchema });
@@ -63,7 +70,7 @@ export const getCurrentUserContract = {
 
 // Delete profile picture
 
-export const deleteProfilePictureRequestSchema = z.object({ body: z.object({ profilePicPath: z.string() }) });
+export const deleteProfilePictureRequestSchema = z.object({ body: z.object({ profilePicPath: z.string().trim().min(1).max(2_048) }) });
 export const deleteProfilePictureContract = { request: deleteProfilePictureRequestSchema } satisfies Contract;
 
 // Set profile picture
@@ -81,6 +88,8 @@ export const replaceProfilePictureContract = {
 export type UpdateCurrentUserBody = BodyOf<typeof updateCurrentUserContract>;
 /** Represents the update current user response value. */
 export type UpdateCurrentUserResponse = ResponseOf<typeof updateCurrentUserContract>;
+/** Represents the confirm email change query value. */
+export type ConfirmEmailChangeQuery = QueryOf<typeof confirmEmailChangeContract>;
 /** Represents the user data response value. */
 export type UserDataResponse = ResponseOf<typeof userDataContract>;
 /** Represents the get current user response value. */

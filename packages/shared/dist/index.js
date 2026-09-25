@@ -4,7 +4,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 // src/common/transport.schemas.ts
 import { z } from "zod/v4";
 var serializedDateSchema = z.string();
-var timezoneSchema = z.string().refine((timeZone) => {
+var timezoneSchema = z.string().trim().min(1).max(100).refine((timeZone) => {
   try {
     new Intl.DateTimeFormat("en-US", {
       timeZone
@@ -20,9 +20,11 @@ var timezoneSchema = z.string().refine((timeZone) => {
 // src/modules/aerobics/aerobics.contracts.ts
 import { z as z2 } from "zod/v4";
 var aerobicEntrySchema = z2.object({
-  durationMins: z2.number(),
-  durationSec: z2.number(),
-  type: z2.string()
+  durationMins: z2.number().int().min(0).max(10080),
+  durationSec: z2.number().int().min(0).max(59),
+  type: z2.string().trim().min(1).max(50)
+}).refine((entry) => entry.durationMins > 0 || entry.durationSec > 0, {
+  message: "Aerobic duration must be greater than zero"
 });
 var aerobicsDailyRecordSchema = z2.object({
   id: z2.number(),
@@ -96,7 +98,7 @@ var deleteAerobicEntryContract = {
 import { z as z3 } from "zod/v4";
 var createPasswordResetRequestSchema = z3.object({
   body: z3.object({
-    identifier: z3.string()
+    identifier: z3.string().trim().min(1).max(254)
   })
 });
 var createPasswordResetRequestContract = {
@@ -104,10 +106,10 @@ var createPasswordResetRequestContract = {
 };
 var resetPasswordRequestSchema = z3.object({
   body: z3.object({
-    newPassword: z3.string().min(8, "Password must be at least 8 characters long")
+    newPassword: z3.string().min(8, "Password must be at least 8 characters long").max(128, "Password must be at most 128 characters long")
   }),
   query: z3.object({
-    token: z3.string().optional()
+    token: z3.string().min(1).max(16384).optional()
   })
 });
 var resetPasswordResponseSchema = z3.void();
@@ -121,10 +123,10 @@ import { z as z4 } from "zod/v4";
 var userIdSchema = z4.string().uuid();
 var loginRequestSchema = z4.object({
   body: z4.object({
-    identifier: z4.string().min(3).refine((value) => z4.string().email().safeParse(value).success || /^[a-zA-Z0-9_]{3,20}$/.test(value), {
+    identifier: z4.string().trim().min(3).max(254).refine((value) => z4.string().email().safeParse(value).success || /^[a-zA-Z0-9_]{3,20}$/.test(value), {
       message: "Must be a valid email or username"
     }),
-    password: z4.string().min(1, "Username and password are required")
+    password: z4.string().min(1, "Username and password are required").max(128)
   })
 });
 var loginResponseSchema = z4.object({
@@ -155,11 +157,11 @@ var logoutContract = {
 
 // src/modules/auth/verification/verification.contracts.ts
 import { z as z5 } from "zod/v4";
-var usernameSchema = z5.string();
-var emailSchema = z5.string().trim().email("Invalid email");
+var usernameSchema = z5.string().trim().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/, "Invalid username");
+var emailSchema = z5.string().trim().max(254).email("Invalid email");
 var verifyEmailRequestSchema = z5.object({
   query: z5.object({
-    token: z5.string().optional()
+    token: z5.string().min(1).max(16384).optional()
   })
 });
 var verifyEmailContract = {
@@ -176,7 +178,7 @@ var createVerificationEmailContract = {
 var updateUnverifiedAccountEmailRequestSchema = z5.object({
   body: z5.object({
     username: usernameSchema,
-    password: z5.string(),
+    password: z5.string().min(1).max(128),
     newEmail: emailSchema
   })
 });
@@ -249,17 +251,17 @@ var deleteMessageContract = {
 // src/modules/oauth/apple/apple.contracts.ts
 import { z as z8 } from "zod/v4";
 var appleNameInputSchema = z8.object({
-  givenName: z8.string().nullable(),
-  familyName: z8.string().nullable()
+  givenName: z8.string().trim().min(1).max(100).nullable(),
+  familyName: z8.string().trim().min(1).max(100).nullable()
 });
 var appleOAuthRequestSchema = z8.object({
   body: z8.object({
     idToken: z8.string({
       error: "Missing or invalid Apple identityToken"
-    }),
-    rawNonce: z8.string(),
+    }).min(1).max(2e4),
+    rawNonce: z8.string().min(1).max(1024),
     name: appleNameInputSchema.optional(),
-    email: z8.email().nullable()
+    email: z8.email().max(254).nullable()
   })
 });
 var appleOAuthContract = {
@@ -270,7 +272,7 @@ var appleOAuthContract = {
 import { z as z9 } from "zod/v4";
 var googleOAuthRequestSchema = z9.object({
   body: z9.object({
-    idToken: z9.string().optional()
+    idToken: z9.string().min(1).max(2e4).optional()
   })
 });
 var googleOAuthContract = {
@@ -328,14 +330,14 @@ var updateReminderTimeZoneContract = {
 
 // src/modules/user/create/create.contracts.ts
 import { z as z12 } from "zod/v4";
-var usernameSchema2 = z12.string().trim().min(3, "Username must be at least 3 characters").max(15, "Username must be at most 15 characters").regex(/^[a-zA-Z0-9_]+$/, "Username may contain letters, numbers, and underscore only");
+var usernameSchema2 = z12.string().trim().min(1, "Full name is required").min(3, "Username must be at least 3 characters").max(15, "Username must be at most 15 characters").regex(/^[a-zA-Z0-9_]+$/, "Username may contain letters, numbers, and underscore only");
 var fullNameSchema = z12.string().trim().max(20, "Full name is too long").regex(/^[a-zA-Z\s]+$/, "Full name may contain letters and spaces only");
 var createUserRequestSchema = z12.object({
   body: z12.object({
     username: usernameSchema2,
     fullName: z12.preprocess((value) => value == null || typeof value === "string" && value.trim() === "" ? "User" : value, fullNameSchema),
-    email: z12.string().trim().toLowerCase().email("Invalid email format"),
-    password: z12.string().min(8, "Password must be at least 8 characters long"),
+    email: z12.string().trim().toLowerCase().max(254).email("Invalid email format"),
+    password: z12.string().min(8, "Password must be at least 8 characters long").max(128, "Password must be at most 128 characters long"),
     gender: z12.preprocess((value) => value === "" || value == null ? "Unknown" : value, z12.enum([
       "Male",
       "Female",
@@ -363,7 +365,7 @@ var createUserContract = {
 import { z as z13 } from "zod/v4";
 var replacePushTokenRequestSchema = z13.object({
   body: z13.object({
-    token: z13.string()
+    token: z13.string().trim().min(1).max(4096)
   })
 });
 var replacePushTokenContract = {
@@ -375,7 +377,9 @@ import { z as z14 } from "zod/v4";
 var authenticatedUserForUpdateSchema = z14.object({
   username: z14.string().trim().min(3, "Username must be at least 3 characters").max(15, "Username must be at most 15 characters").regex(/^[a-zA-Z0-9_]+$/, "Username may contain letters, numbers, and underscore only").optional(),
   fullName: z14.string().trim().min(1, "Full name is required").max(20, "Full name is too long").regex(/^[a-zA-Z\s]+$/, "Full name may contain letters and spaces only").optional(),
-  email: z14.string().trim().toLowerCase().email("Invalid email format").optional()
+  email: z14.string().trim().toLowerCase().max(254).email("Invalid email format").optional()
+}).refine((input) => Object.values(input).some((value) => value !== void 0), {
+  message: "At least one profile field must be provided"
 });
 var userDataSchema = z14.object({
   id: z14.string().uuid(),
@@ -402,6 +406,14 @@ var updateCurrentUserContract = {
   request: updateCurrentUserRequestSchema,
   response: updateCurrentUserResponseSchema
 };
+var confirmEmailChangeRequestSchema = z14.object({
+  query: z14.object({
+    token: z14.string().min(1).max(16384).optional()
+  })
+});
+var confirmEmailChangeContract = {
+  request: confirmEmailChangeRequestSchema
+};
 var userDataResponseSchema = z14.object({
   userData: userDataSchema
 });
@@ -414,7 +426,7 @@ var getCurrentUserContract = {
 };
 var deleteProfilePictureRequestSchema = z14.object({
   body: z14.object({
-    profilePicPath: z14.string()
+    profilePicPath: z14.string().trim().min(1).max(2048)
   })
 });
 var deleteProfilePictureContract = {
@@ -433,9 +445,13 @@ var replaceProfilePictureContract = {
 import { z as z15 } from "zod/v4";
 var createVideoUploadUrlRequestSchema = z15.object({
   body: z15.object({
-    exercise: z15.string(),
-    fileType: z15.string(),
-    jobId: z15.string()
+    exercise: z15.string().trim().min(1).max(100).regex(/^[a-zA-Z0-9_-]+$/, "Invalid exercise name"),
+    fileType: z15.enum([
+      "video/mp4",
+      "video/quicktime",
+      "video/webm"
+    ]),
+    jobId: z15.string().trim().min(1).max(128)
   })
 });
 var createVideoUploadUrlResponseSchema = z15.object({
@@ -499,7 +515,7 @@ var analyzeVideoResultPayloadDtoSchema = /* @__PURE__ */ __name((resultSchema) =
 import { z as z16 } from "zod/v4";
 var createWebSocketTicketRequestSchema = z16.object({
   body: z16.object({
-    username: z16.string()
+    username: z16.string().trim().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/, "Invalid username")
   })
 });
 var createWebSocketTicketResponseSchema = z16.object({
@@ -515,25 +531,75 @@ import { z as z18 } from "zod/v4";
 
 // src/modules/workout/plan/plan.dtos.ts
 import { z as z17 } from "zod/v4";
-var idSchema = z17.number().int();
+var idSchema = z17.number().int().positive();
 var uuidSchema = z17.string().uuid();
 var textSchema = z17.string();
 var booleanSchema = z17.boolean();
-var numberSchema = z17.number();
+var numberSchema = z17.number().finite();
+var orderIndexSchema = z17.number().int().nonnegative();
+var repetitionsSchema = z17.number().int().min(1).max(1e4);
 var workoutExerciseInputQueryDtoSchema = z17.object({
   exerciseId: idSchema,
-  sets: z17.array(numberSchema),
-  orderIndex: numberSchema
+  sets: z17.array(repetitionsSchema).min(1, "Each exercise must include at least one set").max(100, "An exercise cannot include more than 100 sets"),
+  orderIndex: orderIndexSchema
 });
 var workoutSplitInputBaseQueryDtoSchema = z17.object({
-  name: textSchema.min(1, "Split name is required"),
-  orderIndex: z17.number().int().nonnegative(),
-  exercises: z17.array(workoutExerciseInputQueryDtoSchema).min(1, "Each split must include at least one exercise")
+  name: textSchema.trim().min(1, "Split name is required").max(100, "Split name must be at most 100 characters"),
+  orderIndex: orderIndexSchema,
+  exercises: z17.array(workoutExerciseInputQueryDtoSchema).min(1, "Each split must include at least one exercise").max(100, "A split cannot include more than 100 exercises").superRefine((exercises, context) => {
+    const exerciseIds = /* @__PURE__ */ new Set();
+    const orderIndexes = /* @__PURE__ */ new Set();
+    exercises.forEach((exercise, index) => {
+      if (exerciseIds.has(exercise.exerciseId)) context.addIssue({
+        code: "custom",
+        path: [
+          index,
+          "exerciseId"
+        ],
+        message: "Exercise IDs must be unique within a split"
+      });
+      if (orderIndexes.has(exercise.orderIndex)) context.addIssue({
+        code: "custom",
+        path: [
+          index,
+          "orderIndex"
+        ],
+        message: "Exercise order indexes must be unique within a split"
+      });
+      exerciseIds.add(exercise.exerciseId);
+      orderIndexes.add(exercise.orderIndex);
+    });
+  })
 });
 var saveWorkoutSplitInputQueryDtoSchema = workoutSplitInputBaseQueryDtoSchema.extend({
   id: idSchema.optional()
 });
-var saveWorkoutSplitPayloadQueryDtoSchema = z17.array(saveWorkoutSplitInputQueryDtoSchema).min(1, "Workout must include at least one split");
+var saveWorkoutSplitPayloadQueryDtoSchema = z17.array(saveWorkoutSplitInputQueryDtoSchema).min(1, "Workout must include at least one split").max(20, "A workout cannot include more than 20 splits").superRefine((splits, context) => {
+  const ids = /* @__PURE__ */ new Set();
+  const orderIndexes = /* @__PURE__ */ new Set();
+  splits.forEach((split, index) => {
+    if (split.id !== void 0) {
+      if (ids.has(split.id)) context.addIssue({
+        code: "custom",
+        path: [
+          index,
+          "id"
+        ],
+        message: "Workout split IDs must be unique"
+      });
+      ids.add(split.id);
+    }
+    if (orderIndexes.has(split.orderIndex)) context.addIssue({
+      code: "custom",
+      path: [
+        index,
+        "orderIndex"
+      ],
+      message: "Workout split order indexes must be unique"
+    });
+    orderIndexes.add(split.orderIndex);
+  });
+});
 var exerciseInPlanQueryDtoSchema = z17.object({
   exerciseToSplitId: idSchema,
   exerciseId: idSchema,
@@ -584,7 +650,7 @@ var getWorkoutPlanContract = {
 var replaceWorkoutPlanRequestSchema = z18.object({
   body: z18.object({
     workoutData: saveWorkoutSplitPayloadQueryDtoSchema,
-    workoutName: z18.string().optional(),
+    workoutName: z18.string().trim().min(1).max(100).optional(),
     tz: timezoneSchema
   })
 });
@@ -642,25 +708,38 @@ var workoutSplitDbSchema = {
   }
 };
 var trackedSetQueryDtoSchema = z19.object({
-  reps: trackingSetDbSchema.shape.reps,
-  weight: trackingSetDbSchema.shape.weight,
-  setIndex: trackingSetDbSchema.shape.setIndex
+  reps: trackingSetDbSchema.shape.reps.int().min(1).max(1e4),
+  weight: trackingSetDbSchema.shape.weight.finite().nonnegative().max(1e5),
+  setIndex: trackingSetDbSchema.shape.setIndex.int().nonnegative()
 });
 var finishedWorkoutEntryBaseQueryDtoSchema = z19.object({
-  trackedSets: z19.array(trackedSetQueryDtoSchema),
-  notes: exerciseTrackingDbSchema.shape.notes.optional()
+  trackedSets: z19.array(trackedSetQueryDtoSchema).min(1, "Each exercise must include at least one tracked set").max(100, "An exercise cannot include more than 100 tracked sets").superRefine((sets, context) => {
+    const indexes = /* @__PURE__ */ new Set();
+    sets.forEach((set, index) => {
+      if (indexes.has(set.setIndex)) context.addIssue({
+        code: "custom",
+        path: [
+          index,
+          "setIndex"
+        ],
+        message: "Set indexes must be unique"
+      });
+      indexes.add(set.setIndex);
+    });
+  }),
+  notes: z19.string().trim().max(2e3).nullable().optional()
 });
 var finishedWorkoutEntryQueryDtoSchema = z19.discriminatedUnion("isExerciseAssignedToSplit", [
   finishedWorkoutEntryBaseQueryDtoSchema.extend({
     isExerciseAssignedToSplit: z19.literal(true),
-    exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId.unwrap(),
+    exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId.unwrap().positive(),
     // Accepted temporarily for clients using the previous redundant payload.
-    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.optional()
+    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap().positive().optional()
   }),
   finishedWorkoutEntryBaseQueryDtoSchema.extend({
     isExerciseAssignedToSplit: z19.literal(false),
     exerciseToSplitId: z19.null().optional(),
-    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap()
+    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap().positive()
   })
 ]);
 var exerciseMetadataQueryDtoSchema = z19.object({
@@ -813,10 +892,21 @@ var getWorkoutStatisticsContract = {
 };
 var createWorkoutSessionRequestSchema = z20.object({
   body: z20.object({
-    workout: z20.array(finishedWorkoutEntryQueryDtoSchema),
+    workout: z20.array(finishedWorkoutEntryQueryDtoSchema).min(1, "Workout must include at least one exercise").max(200),
     tz: timezoneSchema.optional(),
-    workoutStartUtc: z20.string().datetime("workoutStartUtc must be a valid ISO datetime"),
-    workoutEndUtc: z20.string().datetime("workoutEndUtc must be a valid ISO datetime").optional().nullable()
+    workoutStartUtc: z20.string().datetime({
+      offset: true,
+      message: "workoutStartUtc must be a valid ISO datetime"
+    }),
+    workoutEndUtc: z20.string().datetime({
+      offset: true,
+      message: "workoutEndUtc must be a valid ISO datetime"
+    }).optional().nullable()
+  }).refine((body) => !body.workoutEndUtc || Date.parse(body.workoutEndUtc) >= Date.parse(body.workoutStartUtc), {
+    path: [
+      "workoutEndUtc"
+    ],
+    message: "workoutEndUtc must not be earlier than workoutStartUtc"
   })
 });
 var createWorkoutSessionResponseSchema = z20.void();
@@ -838,7 +928,7 @@ var getPersonalRecordsContract = {
 // src/modules/workout-schedule/workout-schedule.contracts.ts
 import { z as z21 } from "zod/v4";
 var workoutScheduleInputSchema = z21.object({
-  workoutSplitId: z21.number().int(),
+  workoutSplitId: z21.number().int().positive(),
   dayOfWeek: z21.number().int().min(0).max(6),
   startTime: z21.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/)
 });
@@ -857,7 +947,7 @@ var getWorkoutSchedulesContract = {
 };
 var replaceWorkoutSchedulesRequestSchema = z21.object({
   body: z21.object({
-    schedules: z21.array(workoutScheduleInputSchema).superRefine((schedules, context) => {
+    schedules: z21.array(workoutScheduleInputSchema).max(140, "A weekly schedule cannot contain more than 140 entries").superRefine((schedules, context) => {
       const keys = /* @__PURE__ */ new Set();
       for (const schedule of schedules) {
         const key = `${schedule.workoutSplitId}:${schedule.dayOfWeek}`;
@@ -931,11 +1021,13 @@ var crewParticipantSchema = z22.object({
 var crewIdParamsSchema = z23.object({
   id: z23.string().uuid()
 });
+var crewNameSchema = z23.string().trim().min(1, "Crew name is required").max(100, "Crew name must be at most 100 characters");
+var cursorSchema = z23.string().min(1).max(2048).optional();
 var listCrewsRequestSchema = z23.object({
   query: z23.object({
     search: z23.string().trim().min(1).max(50).optional(),
     limit: z23.coerce.number().int().min(1).max(100).default(20),
-    cursor: z23.string().min(1).optional()
+    cursor: cursorSchema
   })
 });
 var listCrewsResponseSchema = z23.object({
@@ -949,7 +1041,7 @@ var listCrewsContract = {
 var listMyCrewsRequestSchema = z23.object({
   query: z23.object({
     limit: z23.coerce.number().int().min(1).max(100).default(20),
-    cursor: z23.string().min(1).optional()
+    cursor: cursorSchema
   })
 });
 var listMyCrewsResponseSchema = listCrewsResponseSchema;
@@ -963,7 +1055,7 @@ var listCrewParticipantsRequestSchema = z23.object({
   }),
   query: z23.object({
     limit: z23.coerce.number().int().min(1).max(100).default(20),
-    cursor: z23.string().min(1).optional()
+    cursor: cursorSchema
   })
 });
 var listCrewParticipantsResponseSchema = z23.object({
@@ -984,7 +1076,7 @@ var getCrewContract = {
 };
 var createCrewRequestSchema = z23.object({
   body: z23.object({
-    name: z23.string(),
+    name: crewNameSchema,
     privacy: z23.enum([
       "public",
       "private"
@@ -999,7 +1091,7 @@ var createCrewContract = {
 var updateCrewRequestSchema = z23.object({
   params: crewIdParamsSchema,
   body: z23.object({
-    name: z23.string(),
+    name: crewNameSchema,
     privacy: z23.enum([
       "public",
       "private"
@@ -1158,9 +1250,10 @@ var postSchema = z26.object({
 var postIdParamsSchema = z27.object({
   id: z27.string().uuid()
 });
+var postContentSchema = z27.string().trim().min(1, "Post content is required").max(5e3, "Post content must be at most 5000 characters");
 var postPaginationSchema = z27.object({
   limit: z27.coerce.number().int().min(1).max(100).default(20),
-  cursor: z27.string().min(1).optional()
+  cursor: z27.string().min(1).max(2048).optional()
 });
 var listVisiblePostsRequestSchema = z27.object({
   query: postPaginationSchema
@@ -1188,12 +1281,12 @@ var listCrewPostsContract = {
   response: listCrewPostsResponseSchema
 };
 var createPostBodySchema = z27.object({
-  content: z27.string(),
+  content: postContentSchema,
   visibility: z27.enum([
     "crews_only",
     "public"
   ]),
-  crewIds: z27.array(z27.uuid()).default([]),
+  crewIds: z27.array(z27.uuid()).max(100, "A post cannot target more than 100 crews").default([]),
   workoutSummaryId: z27.string().uuid().nullable().optional()
 }).superRefine((body, context) => {
   if (body.visibility === "crews_only" && body.crewIds.length === 0) {
@@ -1226,7 +1319,7 @@ var createPostContract = {
 var updatePostRequestSchema = z27.object({
   params: postIdParamsSchema,
   body: z27.object({
-    content: z27.string()
+    content: postContentSchema
   })
 });
 var updatePostResponseSchema = z27.void();
@@ -1272,7 +1365,7 @@ var listPostCommentsRequestSchema = z29.object({
   params: postParamsSchema,
   query: z29.object({
     limit: z29.coerce.number().int().min(1).max(100).default(20),
-    cursor: z29.string().min(1).optional()
+    cursor: z29.string().min(1).max(2048).optional()
   })
 });
 var listPostCommentsResponseSchema = z29.object({
@@ -1339,7 +1432,7 @@ var listPostReactionsRequestSchema = z31.object({
   params: postParamsSchema2,
   query: z31.object({
     limit: z31.coerce.number().int().min(1).max(100).default(20),
-    cursor: z31.string().min(1).optional()
+    cursor: z31.string().min(1).max(2048).optional()
   })
 });
 var listPostReactionsResponseSchema = z31.object({
@@ -1408,7 +1501,7 @@ var searchSocialUsersRequestSchema = z34.object({
   query: z34.object({
     search: z34.string().trim().min(1).max(50),
     limit: z34.coerce.number().int().min(1).max(100).default(20),
-    cursor: z34.string().min(1).optional()
+    cursor: z34.string().min(1).max(2048).optional()
   })
 });
 var searchSocialUsersResponseSchema = z34.object({
@@ -1439,6 +1532,8 @@ export {
   analyzeVideoResultPayloadDtoSchema,
   appleOAuthContract,
   appleOAuthRequestSchema,
+  confirmEmailChangeContract,
+  confirmEmailChangeRequestSchema,
   createAerobicEntryContract,
   createAerobicEntryRequestSchema,
   createAerobicEntryResponseSchema,

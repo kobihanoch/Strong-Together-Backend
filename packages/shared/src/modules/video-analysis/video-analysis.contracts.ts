@@ -4,7 +4,11 @@ import type { BodyOf, Contract, ResponseOf } from '../../common';
 // Get presigned S3 upload URL
 
 export const createVideoUploadUrlRequestSchema = z.object({
-  body: z.object({ exercise: z.string(), fileType: z.string(), jobId: z.string() }),
+  body: z.object({
+    exercise: z.string().trim().min(1).max(100).regex(/^[a-zA-Z0-9_-]+$/, 'Invalid exercise name'),
+    fileType: z.enum(['video/mp4', 'video/quicktime', 'video/webm']),
+    jobId: z.string().trim().min(1).max(128),
+  }),
 });
 export const createVideoUploadUrlResponseSchema = z.object({
   uploadUrl: z.string(),

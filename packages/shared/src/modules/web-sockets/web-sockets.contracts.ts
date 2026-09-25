@@ -3,7 +3,9 @@ import type { BodyOf, Contract, ResponseOf } from '../../common';
 
 // Generate WebSocket ticket
 
-export const createWebSocketTicketRequestSchema = z.object({ body: z.object({ username: z.string() }) });
+export const createWebSocketTicketRequestSchema = z.object({
+  body: z.object({ username: z.string().trim().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/, 'Invalid username') }),
+});
 export const createWebSocketTicketResponseSchema = z.object({ ticket: z.string() });
 
 export const createWebSocketTicketContract = {

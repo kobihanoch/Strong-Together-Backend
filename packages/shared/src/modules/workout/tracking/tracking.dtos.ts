@@ -17,27 +17,37 @@ const workoutSplitDbSchema = { shape: { id: z.number().int(), name: z.string(), 
 
 /** Finished exercise entry consumed by the workout-insertion query. */
 const trackedSetQueryDtoSchema = z.object({
-  reps: trackingSetDbSchema.shape.reps,
-  weight: trackingSetDbSchema.shape.weight,
-  setIndex: trackingSetDbSchema.shape.setIndex,
+  reps: trackingSetDbSchema.shape.reps.int().min(1).max(10_000),
+  weight: trackingSetDbSchema.shape.weight.finite().nonnegative().max(100_000),
+  setIndex: trackingSetDbSchema.shape.setIndex.int().nonnegative(),
 });
 
 const finishedWorkoutEntryBaseQueryDtoSchema = z.object({
-  trackedSets: z.array(trackedSetQueryDtoSchema),
-  notes: exerciseTrackingDbSchema.shape.notes.optional(),
+  trackedSets: z
+    .array(trackedSetQueryDtoSchema)
+    .min(1, 'Each exercise must include at least one tracked set')
+    .max(100, 'An exercise cannot include more than 100 tracked sets')
+    .superRefine((sets, context) => {
+      const indexes = new Set<number>();
+      sets.forEach((set, index) => {
+        if (indexes.has(set.setIndex)) context.addIssue({ code: 'custom', path: [index, 'setIndex'], message: 'Set indexes must be unique' });
+        indexes.add(set.setIndex);
+      });
+    }),
+  notes: z.string().trim().max(2_000).nullable().optional(),
 });
 
 export const finishedWorkoutEntryQueryDtoSchema = z.discriminatedUnion('isExerciseAssignedToSplit', [
   finishedWorkoutEntryBaseQueryDtoSchema.extend({
     isExerciseAssignedToSplit: z.literal(true),
-    exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId.unwrap(),
+    exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId.unwrap().positive(),
     // Accepted temporarily for clients using the previous redundant payload.
-    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.optional(),
+    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap().positive().optional(),
   }),
   finishedWorkoutEntryBaseQueryDtoSchema.extend({
     isExerciseAssignedToSplit: z.literal(false),
     exerciseToSplitId: z.null().optional(),
-    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap(),
+    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap().positive(),
   }),
 ]);
 

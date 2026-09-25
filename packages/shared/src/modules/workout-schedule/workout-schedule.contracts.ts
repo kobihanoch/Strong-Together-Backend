@@ -3,7 +3,7 @@ import type { BodyOf, Contract, ResponseOf } from '../../common';
 import { serializedDateSchema } from '../../common';
 
 const workoutScheduleInputSchema = z.object({
-  workoutSplitId: z.number().int(),
+  workoutSplitId: z.number().int().positive(),
   dayOfWeek: z.number().int().min(0).max(6),
   startTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
 });
@@ -26,7 +26,7 @@ export const getWorkoutSchedulesContract = {
 
 export const replaceWorkoutSchedulesRequestSchema = z.object({
   body: z.object({
-    schedules: z.array(workoutScheduleInputSchema).superRefine((schedules, context) => {
+    schedules: z.array(workoutScheduleInputSchema).max(140, 'A weekly schedule cannot contain more than 140 entries').superRefine((schedules, context) => {
       const keys = new Set<string>();
       for (const schedule of schedules) {
         const key = `${schedule.workoutSplitId}:${schedule.dayOfWeek}`;

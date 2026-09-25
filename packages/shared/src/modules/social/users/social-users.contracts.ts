@@ -7,7 +7,7 @@ export const searchSocialUsersRequestSchema = z.object({
   query: z.object({
     search: z.string().trim().min(1).max(50),
     limit: z.coerce.number().int().min(1).max(100).default(20),
-    cursor: z.string().min(1).optional(),
+    cursor: z.string().min(1).max(2_048).optional(),
   }),
 });
 

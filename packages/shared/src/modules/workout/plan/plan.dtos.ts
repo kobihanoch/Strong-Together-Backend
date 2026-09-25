@@ -1,22 +1,39 @@
 import { z } from 'zod/v4';
 import { serializedDateSchema } from '../../../common';
-const idSchema = z.number().int();
+const idSchema = z.number().int().positive();
 const uuidSchema = z.string().uuid();
 const textSchema = z.string();
 const booleanSchema = z.boolean();
-const numberSchema = z.number();
+const numberSchema = z.number().finite();
+const orderIndexSchema = z.number().int().nonnegative();
+const repetitionsSchema = z.number().int().min(1).max(10_000);
 
 /** Exercise input stored while adding a workout plan. */
 export const workoutExerciseInputQueryDtoSchema = z.object({
   exerciseId: idSchema,
-  sets: z.array(numberSchema),
-  orderIndex: numberSchema,
+  sets: z.array(repetitionsSchema).min(1, 'Each exercise must include at least one set').max(100, 'An exercise cannot include more than 100 sets'),
+  orderIndex: orderIndexSchema,
 });
 
 const workoutSplitInputBaseQueryDtoSchema = z.object({
-  name: textSchema.min(1, 'Split name is required'),
-  orderIndex: z.number().int().nonnegative(),
-  exercises: z.array(workoutExerciseInputQueryDtoSchema).min(1, 'Each split must include at least one exercise'),
+  name: textSchema.trim().min(1, 'Split name is required').max(100, 'Split name must be at most 100 characters'),
+  orderIndex: orderIndexSchema,
+  exercises: z
+    .array(workoutExerciseInputQueryDtoSchema)
+    .min(1, 'Each split must include at least one exercise')
+    .max(100, 'A split cannot include more than 100 exercises')
+    .superRefine((exercises, context) => {
+      const exerciseIds = new Set<number>();
+      const orderIndexes = new Set<number>();
+      exercises.forEach((exercise, index) => {
+        if (exerciseIds.has(exercise.exerciseId))
+          context.addIssue({ code: 'custom', path: [index, 'exerciseId'], message: 'Exercise IDs must be unique within a split' });
+        if (orderIndexes.has(exercise.orderIndex))
+          context.addIssue({ code: 'custom', path: [index, 'orderIndex'], message: 'Exercise order indexes must be unique within a split' });
+        exerciseIds.add(exercise.exerciseId);
+        orderIndexes.add(exercise.orderIndex);
+      });
+    }),
 });
 
 /** Split input used while saving a plan. An omitted ID creates a new split. */
@@ -24,7 +41,23 @@ export const saveWorkoutSplitInputQueryDtoSchema = workoutSplitInputBaseQueryDto
   id: idSchema.optional(),
 });
 
-export const saveWorkoutSplitPayloadQueryDtoSchema = z.array(saveWorkoutSplitInputQueryDtoSchema).min(1, 'Workout must include at least one split');
+export const saveWorkoutSplitPayloadQueryDtoSchema = z
+  .array(saveWorkoutSplitInputQueryDtoSchema)
+  .min(1, 'Workout must include at least one split')
+  .max(20, 'A workout cannot include more than 20 splits')
+  .superRefine((splits, context) => {
+    const ids = new Set<number>();
+    const orderIndexes = new Set<number>();
+    splits.forEach((split, index) => {
+      if (split.id !== undefined) {
+        if (ids.has(split.id)) context.addIssue({ code: 'custom', path: [index, 'id'], message: 'Workout split IDs must be unique' });
+        ids.add(split.id);
+      }
+      if (orderIndexes.has(split.orderIndex))
+        context.addIssue({ code: 'custom', path: [index, 'orderIndex'], message: 'Workout split order indexes must be unique' });
+      orderIndexes.add(split.orderIndex);
+    });
+  });
 
 /** Exercise assignment included in a complete workout-plan query. */
 export const exerciseInPlanQueryDtoSchema = z.object({

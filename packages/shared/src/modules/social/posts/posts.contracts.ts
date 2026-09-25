@@ -3,10 +3,11 @@ import type { BodyOf, Contract, ParamsOf, QueryOf, ResponseOf } from '../../../c
 import { postSchema } from './posts.schemas';
 
 const postIdParamsSchema = z.object({ id: z.string().uuid() });
+const postContentSchema = z.string().trim().min(1, 'Post content is required').max(5_000, 'Post content must be at most 5000 characters');
 
 const postPaginationSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  cursor: z.string().min(1).optional(),
+  cursor: z.string().min(1).max(2_048).optional(),
 });
 
 // List visible posts
@@ -59,9 +60,9 @@ export type ListCrewPostsResponse = ResponseOf<typeof listCrewPostsContract>;
 
 const createPostBodySchema = z
   .object({
-    content: z.string(),
+    content: postContentSchema,
     visibility: z.enum(['crews_only', 'public']),
-    crewIds: z.array(z.uuid()).default([]),
+    crewIds: z.array(z.uuid()).max(100, 'A post cannot target more than 100 crews').default([]),
     workoutSummaryId: z.string().uuid().nullable().optional(),
   })
   .superRefine((body, context) => {
@@ -96,7 +97,7 @@ export type CreatePostResponse = ResponseOf<typeof createPostContract>;
 // Update post
 
 /** Validates the route parameters and body used to update a post. */
-export const updatePostRequestSchema = z.object({ params: postIdParamsSchema, body: z.object({ content: z.string() }) });
+export const updatePostRequestSchema = z.object({ params: postIdParamsSchema, body: z.object({ content: postContentSchema }) });
 
 /** Validates the empty response returned after updating a post. */
 export const updatePostResponseSchema = z.void();

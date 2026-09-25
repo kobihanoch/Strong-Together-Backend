@@ -9,11 +9,13 @@ export const loginRequestSchema = z.object({
   body: z.object({
     identifier: z
       .string()
+      .trim()
       .min(3)
+      .max(254)
       .refine((value) => z.string().email().safeParse(value).success || /^[a-zA-Z0-9_]{3,20}$/.test(value), {
         message: 'Must be a valid email or username',
       }),
-    password: z.string().min(1, 'Username and password are required'),
+    password: z.string().min(1, 'Username and password are required').max(128),
   }),
 });
 export const loginResponseSchema = z.object({

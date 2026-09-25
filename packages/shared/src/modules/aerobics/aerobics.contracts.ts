@@ -1,11 +1,13 @@
 import { z } from 'zod/v4';
 import { serializedDateSchema, timezoneSchema, type BodyOf, type Contract, type ParamsOf, type QueryOf, type ResponseOf } from '../../common';
 
-const aerobicEntrySchema = z.object({
-  durationMins: z.number(),
-  durationSec: z.number(),
-  type: z.string(),
-});
+const aerobicEntrySchema = z
+  .object({
+    durationMins: z.number().int().min(0).max(10_080),
+    durationSec: z.number().int().min(0).max(59),
+    type: z.string().trim().min(1).max(50),
+  })
+  .refine((entry) => entry.durationMins > 0 || entry.durationSec > 0, { message: 'Aerobic duration must be greater than zero' });
 
 const aerobicsDailyRecordSchema = z.object({
   id: z.number(),

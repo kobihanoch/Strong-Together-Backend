@@ -19,7 +19,7 @@ export const getWorkoutPlanContract = {
 export const replaceWorkoutPlanRequestSchema = z.object({
   body: z.object({
     workoutData: saveWorkoutSplitPayloadQueryDtoSchema,
-    workoutName: z.string().optional(),
+    workoutName: z.string().trim().min(1).max(100).optional(),
     tz: timezoneSchema,
   }),
 });

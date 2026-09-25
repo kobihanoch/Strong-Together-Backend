@@ -1,7 +1,7 @@
-import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Put, Query, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Put, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { DeleteProfilePictureBody, GetCurrentUserResponse, ReplaceProfilePictureResponse, UpdateCurrentUserBody } from '@strong-together/shared';
-import { deleteProfilePictureRequestSchema, updateCurrentUserRequestSchema } from '@strong-together/shared';
+import type { ConfirmEmailChangeQuery, DeleteProfilePictureBody, GetCurrentUserResponse, ReplaceProfilePictureResponse, UpdateCurrentUserBody } from '@strong-together/shared';
+import { confirmEmailChangeRequestSchema, deleteProfilePictureRequestSchema, updateCurrentUserRequestSchema } from '@strong-together/shared';
 import type { Response } from 'express';
 import { CurrentRequestId } from '../../../../common/decorators/current-request-id.decorator';
 import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
@@ -107,8 +107,11 @@ export class UpdateUserController {
    * @returns No response body from Nest; the response is sent directly.
    */
   @Get('email-change')
-  async updateSelfEmail(@Query('token') token: string | undefined, @Res() res: Response): Promise<void> {
-    const result = await this.confirmEmail.execute(token);
+  async updateSelfEmail(
+    @RequestData(new ValidateRequestPipe(confirmEmailChangeRequestSchema)) data: { query: ConfirmEmailChangeQuery },
+    @Res() res: Response,
+  ): Promise<void> {
+    const result = await this.confirmEmail.execute(data.query.token);
     const html = result.kind === 'confirmed' ? generateEmailChangeSuccessHTML() : generateEmailChangeFailedHTML(result.reason);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.status(emailChangeStatus[result.kind]).type('html').set('Cache-Control', 'no-store').send(html);

@@ -34,12 +34,17 @@ export const getWorkoutStatisticsContract = {
 // Finish user workout
 
 export const createWorkoutSessionRequestSchema = z.object({
-  body: z.object({
-    workout: z.array(finishedWorkoutEntryQueryDtoSchema),
-    tz: timezoneSchema.optional(),
-    workoutStartUtc: z.string().datetime('workoutStartUtc must be a valid ISO datetime'),
-    workoutEndUtc: z.string().datetime('workoutEndUtc must be a valid ISO datetime').optional().nullable(),
-  }),
+  body: z
+    .object({
+      workout: z.array(finishedWorkoutEntryQueryDtoSchema).min(1, 'Workout must include at least one exercise').max(200),
+      tz: timezoneSchema.optional(),
+      workoutStartUtc: z.string().datetime({ offset: true, message: 'workoutStartUtc must be a valid ISO datetime' }),
+      workoutEndUtc: z.string().datetime({ offset: true, message: 'workoutEndUtc must be a valid ISO datetime' }).optional().nullable(),
+    })
+    .refine((body) => !body.workoutEndUtc || Date.parse(body.workoutEndUtc) >= Date.parse(body.workoutStartUtc), {
+      path: ['workoutEndUtc'],
+      message: 'workoutEndUtc must not be earlier than workoutStartUtc',
+    }),
 });
 export const createWorkoutSessionResponseSchema = z.void();
 export const createWorkoutSessionContract = {
