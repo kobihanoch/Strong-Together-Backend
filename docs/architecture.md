@@ -51,10 +51,6 @@ flowchart LR
   query --> response
 ```
 
-![HTTP Request Lifecycle — Canva diagram](./media/request-lifecycle-canva.png)
-
-[Edit the HTTP Request Lifecycle diagram in Canva](https://canva.link/6rve2a2873jpriu)
-
 Database-backed use cases own their transaction through the application `UnitOfWork` port. Commands use `execute`, while queries use `executeReadOnly`, which PostgreSQL enforces with `SET TRANSACTION READ ONLY`. Presentation passes the authenticated user ID into the use case; guest operations pass no user ID. `PostgresUnitOfWork` delegates to `DBService`, which sets `app.current_user_id` and the `authenticated` role, or starts with the PostgreSQL `guest` role. Public authentication can promote the active transaction only after credentials or a signed token are verified.
 
 Expected feature failures are transport-neutral application errors. `GlobalExceptionFilter` maps shared error categories to HTTP statuses; application errors do not know about NestJS or HTTP.
