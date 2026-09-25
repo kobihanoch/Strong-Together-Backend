@@ -3,6 +3,7 @@ import dns from 'dns';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import postgres from 'postgres';
 import { createLogger } from '../../capabilities/observability/logger';
+import { captureWorkerException } from '../../capabilities/observability/sentry';
 import { DB_CLIENT } from './db.tokens';
 
 /** Describes the dbstore shape. */
@@ -81,12 +82,7 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
     return this.withTransaction(userId, 'read-only', operation);
   }
 
-  private async withTransaction<T>(
-    userId: string | undefined,
-    mode: DBStore['mode'],
-    operation: () => Promise<T>,
-  ): Promise<T> {
-
+  private async withTransaction<T>(userId: string | undefined, mode: DBStore['mode'], operation: () => Promise<T>): Promise<T> {
     const afterCommit: Array<() => Promise<void>> = [];
     const result = await this.dbClient.begin(async (tx) => {
       if (mode === 'read-only') await tx`SET TRANSACTION READ ONLY`;
@@ -99,7 +95,14 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
       return this.als.run({ tx, mode, afterCommit }, operation);
     });
 
-    await Promise.all(afterCommit.map((callback) => callback()));
+    const outcomes = await Promise.allSettled(afterCommit.map((callback) => callback()));
+    outcomes.forEach((outcome, callbackIndex) => {
+      if (outcome.status === 'fulfilled') return;
+
+      this.logger.error({ err: outcome.reason, event: 'db.after_commit_failed', callbackIndex }, 'After-commit operation failed');
+      captureWorkerException(outcome.reason, { event: 'db.after_commit_failed', callbackIndex, userId });
+    });
+
     return result as T;
   }
 
