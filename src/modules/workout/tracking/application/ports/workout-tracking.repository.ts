@@ -1,5 +1,5 @@
-import type { FinishedWorkoutEntry } from '../models/workout-tracking.models';
+import type { CompletedWorkoutSession } from '../../domain/entities/completed-workout-session';
 /** Provides workout-tracking persistence operations. */
 export abstract class WorkoutTrackingRepository {
-  abstract saveCompletedWorkout(userId: string, workout: FinishedWorkoutEntry[], start: string | null, end: string | null): Promise<void>;
+  abstract saveCompletedWorkout(userId: string, session: CompletedWorkoutSession): Promise<void>;
 }
