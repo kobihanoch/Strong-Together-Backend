@@ -8,7 +8,7 @@ import { VerificationRepository } from '../ports/verification.repository';
 export class CreateVerificationEmailUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly verification: VerificationRepository,
+    private readonly repository: VerificationRepository,
     private readonly emailSender: VerificationEmailSender,
   ) {}
 
@@ -21,7 +21,7 @@ export class CreateVerificationEmailUseCase {
    */
   async execute(email: string, requestId?: string): Promise<void> {
     return this.unitOfWork.execute(undefined, async () => {
-      const user = await this.verification.findByEmail(email);
+      const user = await this.repository.findByEmail(email);
       if (!user) return;
       this.unitOfWork.afterCommit(() =>
         this.emailSender.send(email, user.id, user.name ?? user.username, {

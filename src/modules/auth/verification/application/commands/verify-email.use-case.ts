@@ -12,7 +12,7 @@ import { VerificationRepository } from '../ports/verification.repository';
 export class VerifyEmailUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly verification: VerificationRepository,
+    private readonly repository: VerificationRepository,
     private readonly tokens: AuthTokens,
     private readonly oneTimeTokens: OneTimeTokenStore,
     private readonly transaction: AuthenticationTransaction,
@@ -37,7 +37,7 @@ export class VerifyEmailUseCase {
       if (!claimed) return 'unauthorized';
 
       await this.transaction.promoteToUser(decoded.sub);
-      await this.verification.updateVerification(decoded.sub, true);
+      await this.repository.updateVerification(decoded.sub, true);
       return 'verified';
     });
   }

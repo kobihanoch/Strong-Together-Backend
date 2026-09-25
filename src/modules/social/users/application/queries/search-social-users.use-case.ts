@@ -9,7 +9,7 @@ import { SocialUsersQueries } from '../ports/social-users.queries';
 export class SearchSocialUsersUseCase {
   public constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: SocialUsersQueries,
+    private readonly query: SocialUsersQueries,
   ) {}
 
   /**
@@ -22,7 +22,7 @@ export class SearchSocialUsersUseCase {
    */
   public async execute(userId: string, search: string, limit: number, cursor?: string): Promise<SocialUsersSearchResult> {
     return this.unitOfWork.execute(userId, async () => {
-      const rows = await this.repository.search(search, limit, decodeSocialCursor(cursor));
+      const rows = await this.query.search(search, limit, decodeSocialCursor(cursor));
       const users = rows.slice(0, limit);
       const last = users.at(-1);
 

@@ -9,14 +9,14 @@ import { CrewRequestsQueries } from '../ports/crew-requests.queries';
 export class ListCrewInvitationsUseCase {
   public constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: CrewRequestsQueries,
+    private readonly query: CrewRequestsQueries,
   ) {}
   /**
    * @returns All visible invitations.
    */
   public async execute(userId: string): Promise<CrewInvitations> {
     return this.unitOfWork.execute(userId, async () => {
-      return { invitations: await this.repository.listInvitations() };
+      return { invitations: await this.query.listInvitations() };
     });
   }
 }

@@ -12,7 +12,7 @@ import { SessionRepository } from '../ports/session.repository';
 export class RefreshSessionUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly sessions: SessionRepository,
+    private readonly repository: SessionRepository,
     private readonly tokens: AuthTokens,
     private readonly transaction: AuthenticationTransaction,
     private readonly policy: AuthPolicy,
@@ -39,7 +39,7 @@ export class RefreshSessionUseCase {
       }
 
       await this.transaction.promoteToUser(decoded.id);
-      const session = await this.sessions.rotateIfVersion(decoded.id, decoded.tokenVer);
+      const session = await this.repository.rotateIfVersion(decoded.id, decoded.tokenVer);
       if (!session) throw new SessionUnauthorizedError('New login required');
       if (!session.userData.isVerified) throw new SessionUnauthorizedError('A verification email is pending');
 

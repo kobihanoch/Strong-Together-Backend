@@ -9,7 +9,7 @@ import { SocialUsersQueries } from '../ports/social-users.queries';
 export class GetSocialUserUseCase {
   public constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: SocialUsersQueries,
+    private readonly query: SocialUsersQueries,
   ) {}
 
   /**
@@ -22,7 +22,7 @@ export class GetSocialUserUseCase {
    */
   public async execute(requestingUserId: string, targetUserId: string): Promise<SocialUserProfile> {
     return this.unitOfWork.execute(requestingUserId, async () => {
-      const user = await this.repository.findById(targetUserId);
+      const user = await this.query.findById(targetUserId);
       if (!user) throw new SocialUserNotFoundError();
       return user;
     });

@@ -8,7 +8,7 @@ import { WorkoutPlanQueries } from '../ports/workout-plan.queries';
 export class GetWorkoutPlanUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: WorkoutPlanQueries,
+    private readonly query: WorkoutPlanQueries,
     private readonly cache: WorkoutPlanCache,
   ) {}
 
@@ -28,7 +28,7 @@ export class GetWorkoutPlanUseCase {
     }
 
     return this.unitOfWork.execute(userId, async () => {
-      const payload = { workoutPlan: await this.repository.findActiveByUser(userId, timezone) };
+      const payload = { workoutPlan: await this.query.findActiveByUser(userId, timezone) };
       this.unitOfWork.afterCommit(() => cacheEntry.set(payload));
       return { payload, cacheHit: false };
     });

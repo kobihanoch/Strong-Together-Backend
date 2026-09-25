@@ -7,7 +7,7 @@ import { VerificationQueries } from '../ports/verification.queries';
 export class GetVerificationStatusUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly verification: VerificationQueries,
+    private readonly query: VerificationQueries,
   ) {}
 
   /**
@@ -18,7 +18,7 @@ export class GetVerificationStatusUseCase {
    */
   async execute(username: string): Promise<{ isVerified: boolean }> {
     return this.unitOfWork.execute(undefined, async () => {
-      return { isVerified: await this.verification.getVerificationStatus(username) };
+      return { isVerified: await this.query.getVerificationStatus(username) };
     });
   }
 }

@@ -8,7 +8,7 @@ import { ExercisesQueries } from '../ports/exercises.queries';
 export class ListExercisesUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: ExercisesQueries,
+    private readonly query: ExercisesQueries,
   ) {}
 
   /**
@@ -18,7 +18,7 @@ export class ListExercisesUseCase {
    */
   async execute(userId: string): Promise<ExerciseCatalogue> {
     return this.unitOfWork.execute(userId, async () => {
-      return this.repository.findCatalogue();
+      return this.query.findCatalogue();
     });
   }
 }

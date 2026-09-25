@@ -9,7 +9,7 @@ import { AerobicsQueries } from '../ports/aerobics.queries';
 export class GetAerobicHistoryUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: AerobicsQueries,
+    private readonly query: AerobicsQueries,
     private readonly cache: AerobicsCache,
   ) {}
 
@@ -35,7 +35,7 @@ export class GetAerobicHistoryUseCase {
     }
 
     return this.unitOfWork.execute(userId, async () => {
-      const payload = await this.repository.findByUser(userId, days, timezone);
+      const payload = await this.query.findByUser(userId, days, timezone);
       this.unitOfWork.afterCommit(() => cacheEntry.set(payload));
       return { payload, cacheHit: false };
     });

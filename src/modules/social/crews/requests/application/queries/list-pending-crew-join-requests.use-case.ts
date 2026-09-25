@@ -10,7 +10,7 @@ import { CrewRequestsQueries } from '../ports/crew-requests.queries';
 export class ListPendingCrewJoinRequestsUseCase {
   public constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: CrewRequestsQueries,
+    private readonly query: CrewRequestsQueries,
   ) {}
   /**
    * Executes the application operation.
@@ -21,8 +21,8 @@ export class ListPendingCrewJoinRequestsUseCase {
    */
   public async execute(userId: string, crewId: string): Promise<PendingCrewJoinRequests> {
     return this.unitOfWork.execute(userId, async () => {
-      if (!(await this.repository.isCrewLeader(crewId))) throw new CrewRequestAccessDeniedError();
-      return { requests: await this.repository.listPending(crewId) };
+      if (!(await this.query.isCrewLeader(crewId))) throw new CrewRequestAccessDeniedError();
+      return { requests: await this.query.listPending(crewId) };
     });
   }
 }

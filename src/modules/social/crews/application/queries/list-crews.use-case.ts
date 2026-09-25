@@ -9,7 +9,7 @@ import { CrewsQueries } from '../ports/crews.queries';
 export class ListCrewsUseCase {
   public constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: CrewsQueries,
+    private readonly query: CrewsQueries,
   ) {}
   /**
    * Executes the application operation.
@@ -21,7 +21,7 @@ export class ListCrewsUseCase {
    */
   public async execute(userId: string, limit: number, cursor?: string, search?: string): Promise<CrewsPage> {
     return this.unitOfWork.execute(userId, async () => {
-      const rows = await this.repository.list(limit, decodeSocialCursor(cursor), search);
+      const rows = await this.query.list(limit, decodeSocialCursor(cursor), search);
       const crews = rows.slice(0, limit);
       const last = crews.at(-1);
       return { crews, nextCursor: rows.length > limit && last ? encodeSocialCursor({ timestamp: last.createdAt, id: last.id }) : null };

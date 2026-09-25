@@ -8,7 +8,7 @@ import { SocialSummaryQueries } from '../ports/social-summary.queries';
 export class GetSocialSummaryUseCase {
   public constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: SocialSummaryQueries,
+    private readonly query: SocialSummaryQueries,
   ) {}
 
   /**
@@ -18,7 +18,7 @@ export class GetSocialSummaryUseCase {
    */
   public execute(userId: string): Promise<SocialSummary> {
     return this.unitOfWork.execute(userId, async () => {
-      return this.repository.get();
+      return this.query.get();
     });
   }
 }

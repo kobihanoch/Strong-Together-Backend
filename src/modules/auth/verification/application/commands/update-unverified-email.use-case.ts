@@ -11,7 +11,7 @@ import { VerificationRepository } from '../ports/verification.repository';
 export class UpdateUnverifiedEmailUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly verification: VerificationRepository,
+    private readonly repository: VerificationRepository,
     private readonly passwordHasher: PasswordHasher,
     private readonly emailSender: VerificationEmailSender,
     private readonly transaction: AuthenticationTransaction,
@@ -31,15 +31,15 @@ export class UpdateUnverifiedEmailUseCase {
    */
   async execute(username: string, password: string, newEmail: string, requestId?: string): Promise<void> {
     return this.unitOfWork.execute(undefined, async () => {
-      const user = await this.verification.findByUsername(username);
+      const user = await this.repository.findByUsername(username);
       if (!user) throw new VerificationUnauthorizedError('Invalid credentials');
       const matches = await this.passwordHasher.compare(password, user.passwordHash!);
       if (!matches) throw new VerificationUnauthorizedError('Invalid credentials');
       if (user.isVerified) throw new VerificationBadRequestError('Account already verified');
-      if (await this.verification.emailExists(newEmail)) throw new VerificationConflictError('Email already in use');
+      if (await this.repository.emailExists(newEmail)) throw new VerificationConflictError('Email already in use');
 
       await this.transaction.promoteToUser(user.id);
-      await this.verification.updateEmail(user.id, newEmail);
+      await this.repository.updateEmail(user.id, newEmail);
       this.unitOfWork.afterCommit(() =>
         this.emailSender.send(newEmail, user.id, user.name ? user.name : user.username, {
           ...(requestId ? { requestId } : {}),

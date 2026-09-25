@@ -9,7 +9,7 @@ import { CrewsQueries } from '../ports/crews.queries';
 export class GetCrewUseCase {
   public constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: CrewsQueries,
+    private readonly query: CrewsQueries,
   ) {}
   /**
    * Executes the application operation.
@@ -20,7 +20,7 @@ export class GetCrewUseCase {
    */
   public async execute(userId: string, id: string): Promise<CrewWithParticipantCount> {
     return this.unitOfWork.execute(userId, async () => {
-      const crew = await this.repository.findById(id);
+      const crew = await this.query.findById(id);
       if (!crew) throw new CrewNotFoundError();
       return crew;
     });

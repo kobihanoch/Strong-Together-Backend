@@ -8,7 +8,7 @@ import { UserProfileQueries } from '../ports/user-profile.queries';
 export class GetCurrentUserUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: UserProfileQueries,
+    private readonly query: UserProfileQueries,
   ) {}
   /**
    * Retrieves a user profile.
@@ -19,7 +19,7 @@ export class GetCurrentUserUseCase {
    */
   async execute(userId: string): Promise<UserProfile> {
     return this.unitOfWork.execute(userId, async () => {
-      const user = await this.repository.find(userId);
+      const user = await this.query.find(userId);
       if (!user) throw new UserNotFoundError();
       return user;
     });

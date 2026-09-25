@@ -9,7 +9,7 @@ import { PasswordResetEmailSender } from '../ports/password-reset-email-sender.p
 export class CreatePasswordResetRequestUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly passwords: PasswordRepository,
+    private readonly repository: PasswordRepository,
     private readonly emailSender: PasswordResetEmailSender,
   ) {}
 
@@ -24,7 +24,7 @@ export class CreatePasswordResetRequestUseCase {
   async execute(identifier: string, requestId?: string): Promise<void> {
     return this.unitOfWork.execute(undefined, async () => {
       if (!identifier) throw new PasswordBadRequestError('Please fill username or email');
-      const user = await this.passwords.findResetRecipient(identifier);
+      const user = await this.repository.findResetRecipient(identifier);
       if (!user) return;
 
       this.unitOfWork.afterCommit(() =>

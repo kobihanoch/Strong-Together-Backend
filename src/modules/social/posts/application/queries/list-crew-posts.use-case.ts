@@ -10,7 +10,7 @@ import { PostsQueries } from '../ports/posts.queries';
 export class ListCrewPostsUseCase {
   public constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: PostsQueries,
+    private readonly query: PostsQueries,
   ) {}
   /**
    * Executes the application operation.
@@ -22,7 +22,7 @@ export class ListCrewPostsUseCase {
    */
   public async execute(userId: string, crewId: string, limit: number, cursor?: string): Promise<PostsPage> {
     return this.unitOfWork.execute(userId, async () => {
-      const rows = await this.repository.listForCrew(crewId, limit, decodeSocialCursor(cursor));
+      const rows = await this.query.listForCrew(crewId, limit, decodeSocialCursor(cursor));
       const posts = rows.slice(0, limit);
       const last = posts.at(-1);
       return { posts, nextCursor: rows.length > limit && last ? encodeSocialCursor({ timestamp: last.publishedAt, id: last.id }) : null };

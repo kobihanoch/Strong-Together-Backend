@@ -8,7 +8,7 @@ import { MessagesQueries } from '../ports/messages.queries';
 export class ListMessagesUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: MessagesQueries,
+    private readonly query: MessagesQueries,
   ) {}
 
   /**
@@ -20,7 +20,7 @@ export class ListMessagesUseCase {
    */
   async execute(userId: string, timezone: string): Promise<MessageInbox> {
     return this.unitOfWork.execute(userId, async () => {
-      return { messages: await this.repository.findByUser(userId, timezone) };
+      return { messages: await this.query.findByUser(userId, timezone) };
     });
   }
 }

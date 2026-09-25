@@ -8,7 +8,7 @@ import { RemindersQueries } from '../ports/reminders.queries';
 export class GetReminderSettingsUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: RemindersQueries,
+    private readonly query: RemindersQueries,
   ) {}
 
   /**
@@ -19,7 +19,7 @@ export class GetReminderSettingsUseCase {
    */
   async execute(userId: string): Promise<ReminderSettingsResult> {
     return this.unitOfWork.execute(userId, async () => {
-      return { reminderSettings: await this.repository.findByUser(userId) };
+      return { reminderSettings: await this.query.findByUser(userId) };
     });
   }
 }

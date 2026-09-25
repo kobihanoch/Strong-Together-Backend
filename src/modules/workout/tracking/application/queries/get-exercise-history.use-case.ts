@@ -8,7 +8,7 @@ import { WorkoutTrackingQueries } from '../ports/workout-tracking.queries';
 export class GetExerciseHistoryUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: WorkoutTrackingQueries,
+    private readonly query: WorkoutTrackingQueries,
     private readonly cache: WorkoutTrackingCache,
   ) {}
   /**
@@ -28,7 +28,7 @@ export class GetExerciseHistoryUseCase {
     }
 
     return this.unitOfWork.execute(userId, async () => {
-      const payload = await this.repository.findExerciseHistory(userId, days, timezone);
+      const payload = await this.query.findExerciseHistory(userId, days, timezone);
       this.unitOfWork.afterCommit(() => cacheEntry.set(payload));
       return { payload, cacheHit: false };
     });

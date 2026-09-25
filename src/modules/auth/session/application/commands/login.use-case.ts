@@ -15,7 +15,7 @@ import { SessionRepository } from '../ports/session.repository';
 export class LoginUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly sessions: SessionRepository,
+    private readonly repository: SessionRepository,
     private readonly passwordHasher: PasswordHasher,
     private readonly tokens: AuthTokens,
     private readonly transaction: AuthenticationTransaction,
@@ -38,7 +38,7 @@ export class LoginUseCase {
     return this.unitOfWork.execute(undefined, async () => {
       if (this.policy.dpopEnabled && !jkt) throw new SessionBadRequestError('DPoP-Key-Binding header is missing.');
 
-      const user = await this.sessions.findLoginUser(identifier);
+      const user = await this.repository.findLoginUser(identifier);
       if (!user) throw new SessionUnauthorizedError('Invalid credentials');
 
       const matches = await this.passwordHasher.compare(password, user.passwordHash!);
@@ -55,7 +55,7 @@ export class LoginUseCase {
         }
       }
 
-      const { tokenVersion, userData } = await this.sessions.rotate(user.id);
+      const { tokenVersion, userData } = await this.repository.rotate(user.id);
       const issued = this.tokens.issueSession(userData.id, userData.role, tokenVersion, jkt);
       return { message: 'Login successful', user: userData.id, ...issued };
     });

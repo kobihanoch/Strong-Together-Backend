@@ -9,7 +9,7 @@ import { WorkoutReminderQueue } from '../ports/workout-reminder-queue.port';
 export class EnqueueDueWorkoutRemindersUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: PushQueries,
+    private readonly query: PushQueries,
     private readonly queue: WorkoutReminderQueue,
   ) {}
 
@@ -21,7 +21,7 @@ export class EnqueueDueWorkoutRemindersUseCase {
    */
   async execute(requestId?: string): Promise<PushBatchResult> {
     return this.unitOfWork.execute(undefined, async () => {
-      const reminders = await this.repository.findDueWorkoutReminders();
+      const reminders = await this.query.findDueWorkoutReminders();
       const now = Date.now();
 
       this.unitOfWork.afterCommit(() =>

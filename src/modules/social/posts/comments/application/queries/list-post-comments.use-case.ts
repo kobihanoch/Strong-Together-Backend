@@ -10,7 +10,7 @@ import { CommentsQueries } from '../ports/comments.queries';
 export class ListPostCommentsUseCase {
   public constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: CommentsQueries,
+    private readonly query: CommentsQueries,
   ) {}
   /**
    * Executes the application operation.
@@ -22,7 +22,7 @@ export class ListPostCommentsUseCase {
    */
   public async execute(userId: string, postId: string, limit: number, cursor?: string): Promise<CommentsPage> {
     return this.unitOfWork.execute(userId, async () => {
-      const rows = await this.repository.list(postId, limit, decodeSocialCursor(cursor));
+      const rows = await this.query.list(postId, limit, decodeSocialCursor(cursor));
       const comments = rows.slice(0, limit);
       const last = comments.at(-1);
       return { comments, nextCursor: rows.length > limit && last ? encodeSocialCursor({ timestamp: last.createdAt, id: last.id }) : null };

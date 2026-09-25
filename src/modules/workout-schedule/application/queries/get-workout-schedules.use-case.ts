@@ -9,7 +9,7 @@ import { WorkoutScheduleQueries } from '../ports/workout-schedule.queries';
 export class GetWorkoutSchedulesUseCase {
   public constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: WorkoutScheduleQueries,
+    private readonly query: WorkoutScheduleQueries,
     private readonly cache: WorkoutScheduleCache,
   ) {}
 
@@ -25,7 +25,7 @@ export class GetWorkoutSchedulesUseCase {
     if (cached) return cached;
 
     return this.unitOfWork.execute(userId, async () => {
-      const schedules = { schedules: await this.repository.findByUser(userId) };
+      const schedules = { schedules: await this.query.findByUser(userId) };
       this.unitOfWork.afterCommit(() => cacheEntry.set(schedules));
       return schedules;
     });

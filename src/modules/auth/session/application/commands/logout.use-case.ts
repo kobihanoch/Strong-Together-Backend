@@ -11,7 +11,7 @@ import { SessionRepository } from '../ports/session.repository';
 export class LogoutUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly sessions: SessionRepository,
+    private readonly repository: SessionRepository,
     private readonly tokens: AuthTokens,
     private readonly transaction: AuthenticationTransaction,
     private readonly policy: AuthPolicy,
@@ -36,7 +36,7 @@ export class LogoutUseCase {
       }
 
       await this.transaction.promoteToUser(decoded.id);
-      await this.sessions.logout(decoded.id);
+      await this.repository.logout(decoded.id);
     });
   }
 }
