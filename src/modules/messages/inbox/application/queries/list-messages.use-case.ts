@@ -19,7 +19,7 @@ export class ListMessagesUseCase {
    * @returns The user's messages.
    */
   async execute(userId: string, timezone: string): Promise<MessageInbox> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       return { messages: await this.query.findByUser(userId, timezone) };
     });
   }

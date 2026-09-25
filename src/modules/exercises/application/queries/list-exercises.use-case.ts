@@ -17,7 +17,7 @@ export class ListExercisesUseCase {
    * @returns The complete grouped exercise catalogue.
    */
   async execute(userId: string): Promise<ExerciseCatalogue> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       return this.query.findCatalogue();
     });
   }

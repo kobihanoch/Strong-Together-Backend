@@ -20,7 +20,7 @@ export class ListVisiblePostsUseCase {
    * @returns A page of visible posts.
    */
   public async execute(userId: string, limit: number, cursor?: string): Promise<PostsPage> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       const rows = await this.query.listVisible(limit, decodeSocialCursor(cursor));
       const posts = rows.slice(0, limit);
       const last = posts.at(-1);

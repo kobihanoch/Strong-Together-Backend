@@ -20,7 +20,7 @@ export class EnqueueDueWorkoutRemindersUseCase {
    * @returns The number of reminders scheduled for delivery.
    */
   async execute(requestId?: string): Promise<PushBatchResult> {
-    return this.unitOfWork.execute(undefined, async () => {
+    return this.unitOfWork.executeReadOnly(undefined, async () => {
       const reminders = await this.query.findDueWorkoutReminders();
       const now = Date.now();
 

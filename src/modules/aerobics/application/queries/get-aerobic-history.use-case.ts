@@ -34,7 +34,7 @@ export class GetAerobicHistoryUseCase {
       if (cached) return { payload: cached, cacheHit: true };
     }
 
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       const payload = await this.query.findByUser(userId, days, timezone);
       this.unitOfWork.afterCommit(() => cacheEntry.set(payload));
       return { payload, cacheHit: false };

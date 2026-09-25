@@ -24,7 +24,7 @@ export class GetWorkoutSchedulesUseCase {
     const cached = await cacheEntry.get();
     if (cached) return cached;
 
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       const schedules = { schedules: await this.query.findByUser(userId) };
       this.unitOfWork.afterCommit(() => cacheEntry.set(schedules));
       return schedules;

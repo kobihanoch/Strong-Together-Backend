@@ -8,6 +8,7 @@ import { DB_CLIENT } from './db.tokens';
 /** Describes the dbstore shape. */
 interface DBStore {
   tx: postgres.TransactionSql;
+  mode: 'read-only' | 'read-write';
   afterCommit: Array<() => Promise<void>>;
 }
 
@@ -26,7 +27,7 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
    */
   get sql(): postgres.TransactionSql {
     const store = this.als.getStore();
-    if (!store) throw new Error('Database access must occur inside UnitOfWork.execute');
+    if (!store) throw new Error('Database access must occur inside a UnitOfWork transaction');
     return store.tx;
   }
 
@@ -59,17 +60,43 @@ export class DBService implements OnModuleDestroy, OnModuleInit {
    * @returns The run with rls tx result.
    */
   async withRlsTransaction<T>(userId: string | undefined, operation: () => Promise<T>): Promise<T> {
+    const store = this.als.getStore();
+    if (store) {
+      if (store.mode === 'read-only') throw new Error('Cannot execute a read-write operation inside a read-only transaction');
+      return operation();
+    }
+
+    return this.withTransaction(userId, 'read-write', operation);
+  }
+
+  /**
+   * Runs an operation inside a read-only RLS transaction.
+   * @param userId - The user identifier.
+   * @param operation - The operation to execute.
+   * @returns The operation result.
+   */
+  async withReadOnlyRlsTransaction<T>(userId: string | undefined, operation: () => Promise<T>): Promise<T> {
     if (this.als.getStore()) return operation();
+
+    return this.withTransaction(userId, 'read-only', operation);
+  }
+
+  private async withTransaction<T>(
+    userId: string | undefined,
+    mode: DBStore['mode'],
+    operation: () => Promise<T>,
+  ): Promise<T> {
 
     const afterCommit: Array<() => Promise<void>> = [];
     const result = await this.dbClient.begin(async (tx) => {
+      if (mode === 'read-only') await tx`SET TRANSACTION READ ONLY`;
       if (!userId) {
         await tx`SET LOCAL ROLE guest`;
       } else {
         await tx`select set_config('app.current_user_id', ${userId}, true)`;
         await tx`SET LOCAL ROLE authenticated`;
       }
-      return this.als.run({ tx, afterCommit }, operation);
+      return this.als.run({ tx, mode, afterCommit }, operation);
     });
 
     await Promise.all(afterCommit.map((callback) => callback()));

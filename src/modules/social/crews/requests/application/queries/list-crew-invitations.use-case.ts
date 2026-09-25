@@ -15,7 +15,7 @@ export class ListCrewInvitationsUseCase {
    * @returns All visible invitations.
    */
   public async execute(userId: string): Promise<CrewInvitations> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       return { invitations: await this.query.listInvitations() };
     });
   }

@@ -20,7 +20,7 @@ export class ListCrewParticipantsUseCase {
    * @returns A participant page.
    */
   public async execute(userId: string, crewId: string, limit: number, cursor?: string): Promise<CrewParticipantsPage> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       const decoded = decodeSocialCursor(cursor);
       const rows = await this.query.listParticipants(
         crewId,

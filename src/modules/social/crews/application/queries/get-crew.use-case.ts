@@ -19,7 +19,7 @@ export class GetCrewUseCase {
    * @throws {CrewNotFoundError} When inaccessible or absent.
    */
   public async execute(userId: string, id: string): Promise<CrewWithParticipantCount> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       const crew = await this.query.findById(id);
       if (!crew) throw new CrewNotFoundError();
       return crew;

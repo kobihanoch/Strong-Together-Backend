@@ -17,7 +17,7 @@ export class GetVerificationStatusUseCase {
    * @returns The public verification-state payload.
    */
   async execute(username: string): Promise<{ isVerified: boolean }> {
-    return this.unitOfWork.execute(undefined, async () => {
+    return this.unitOfWork.executeReadOnly(undefined, async () => {
       return { isVerified: await this.query.getVerificationStatus(username) };
     });
   }

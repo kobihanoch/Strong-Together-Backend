@@ -17,7 +17,7 @@ export class GetSocialSummaryUseCase {
    * @returns The current user's social summary.
    */
   public execute(userId: string): Promise<SocialSummary> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       return this.query.get();
     });
   }

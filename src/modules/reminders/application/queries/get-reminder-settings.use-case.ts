@@ -18,7 +18,7 @@ export class GetReminderSettingsUseCase {
    * @returns The settings result, containing `null` when none exist.
    */
   async execute(userId: string): Promise<ReminderSettingsResult> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       return { reminderSettings: await this.query.findByUser(userId) };
     });
   }

@@ -20,7 +20,7 @@ export class ListCrewsUseCase {
    * @returns A page of visible crews.
    */
   public async execute(userId: string, limit: number, cursor?: string, search?: string): Promise<CrewsPage> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       const rows = await this.query.list(limit, decodeSocialCursor(cursor), search);
       const crews = rows.slice(0, limit);
       const last = crews.at(-1);

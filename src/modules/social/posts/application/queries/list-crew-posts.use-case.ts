@@ -21,7 +21,7 @@ export class ListCrewPostsUseCase {
    * @returns A page of crew posts.
    */
   public async execute(userId: string, crewId: string, limit: number, cursor?: string): Promise<PostsPage> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       const rows = await this.query.listForCrew(crewId, limit, decodeSocialCursor(cursor));
       const posts = rows.slice(0, limit);
       const last = posts.at(-1);

@@ -57,7 +57,7 @@ That stack means:
 - DPoP validates the request proof.
 - Authentication validates JWT claims, DPoP token binding, token version, and verified user state.
 - Authorization validates route role metadata.
-- Presentation passes the authenticated user ID to the use case. A database-backed use case opens its own RLS transaction through `UnitOfWork.execute(userId, operation)`. Public auth use cases pass `undefined`, remain `guest` until credentials or a signed token are verified, and can then promote the same transaction.
+- Presentation passes the authenticated user ID to the use case. Database-backed commands open an RLS transaction through `UnitOfWork.execute(userId, operation)`; queries use the PostgreSQL-enforced read-only `UnitOfWork.executeReadOnly(userId, operation)`. Public auth use cases pass `undefined`, remain `guest` until credentials or a signed token are verified, and can then promote the same transaction.
 
 ## Error Handling
 

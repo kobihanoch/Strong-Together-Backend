@@ -42,7 +42,7 @@ flowchart LR
   usecase --> response[Response]
 ```
 
-Database-backed use cases own their transaction through the application `UnitOfWork` port. Presentation passes the authenticated user ID into the use case; guest operations pass no user ID. `PostgresUnitOfWork` delegates to `DBService.withRlsTransaction`, which sets `app.current_user_id` and the `authenticated` role, or starts with the PostgreSQL `guest` role. Public authentication can promote the active transaction only after credentials or a signed token are verified.
+Database-backed use cases own their transaction through the application `UnitOfWork` port. Commands use `execute`, while queries use `executeReadOnly`, which PostgreSQL enforces with `SET TRANSACTION READ ONLY`. Presentation passes the authenticated user ID into the use case; guest operations pass no user ID. `PostgresUnitOfWork` delegates to `DBService`, which sets `app.current_user_id` and the `authenticated` role, or starts with the PostgreSQL `guest` role. Public authentication can promote the active transaction only after credentials or a signed token are verified.
 
 Expected feature failures are transport-neutral application errors. `GlobalExceptionFilter` maps shared error categories to HTTP statuses; application errors do not know about NestJS or HTTP.
 
@@ -103,7 +103,7 @@ This pattern is used across auth, users, workout planning and tracking, schedule
 
 ## Persistence And Transactions
 
-Application use cases depend on repository abstractions such as `WorkoutPlanRepository`; concrete `Postgres*Repository` adapters own SQL, Drizzle-derived row types, and mapping. Transactional use cases call `UnitOfWork.execute(userId, operation)` and register best-effort post-commit work through `UnitOfWork.afterCommit(...)`.
+Application use cases depend on repository abstractions such as `WorkoutPlanRepository`; concrete `Postgres*Repository` adapters own SQL, Drizzle-derived row types, and mapping. Commands call `UnitOfWork.execute(userId, operation)`, queries call `UnitOfWork.executeReadOnly(userId, operation)`, and best-effort post-commit work is registered through `UnitOfWork.afterCommit(...)`.
 
 `PostgresUnitOfWork` is the infrastructure adapter for this application port. It delegates transaction and callback handling to `DBService`, which binds its `postgres` tagged-template client to the active transaction through `AsyncLocalStorage`. Nested use cases reuse that active transaction. `DBService.sql` rejects access outside a unit of work, preventing accidental non-RLS queries. After-commit hooks are appropriate for cache invalidation and other best-effort side effects; critical guaranteed delivery should use a transactional outbox.
 

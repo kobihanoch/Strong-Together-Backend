@@ -20,7 +20,7 @@ export class ListPendingCrewJoinRequestsUseCase {
    * @throws {CrewRequestAccessDeniedError} When the caller is not its leader.
    */
   public async execute(userId: string, crewId: string): Promise<PendingCrewJoinRequests> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       if (!(await this.query.isCrewLeader(crewId))) throw new CrewRequestAccessDeniedError();
       return { requests: await this.query.listPending(crewId) };
     });

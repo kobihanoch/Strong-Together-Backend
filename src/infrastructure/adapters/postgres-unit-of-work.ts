@@ -11,6 +11,10 @@ export class PostgresUnitOfWork implements UnitOfWork {
     return this.database.withRlsTransaction(userId, operation);
   }
 
+  public executeReadOnly<T>(userId: string | undefined, operation: () => Promise<T>): Promise<T> {
+    return this.database.withReadOnlyRlsTransaction(userId, operation);
+  }
+
   public afterCommit(operation: () => Promise<void>): void {
     this.database.afterCommit(operation);
   }

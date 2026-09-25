@@ -21,7 +21,7 @@ export class GetSocialUserUseCase {
    * @throws {SocialUserNotFoundError} When the user does not exist.
    */
   public async execute(requestingUserId: string, targetUserId: string): Promise<SocialUserProfile> {
-    return this.unitOfWork.execute(requestingUserId, async () => {
+    return this.unitOfWork.executeReadOnly(requestingUserId, async () => {
       const user = await this.query.findById(targetUserId);
       if (!user) throw new SocialUserNotFoundError();
       return user;

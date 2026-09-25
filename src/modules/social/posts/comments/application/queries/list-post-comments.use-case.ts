@@ -21,7 +21,7 @@ export class ListPostCommentsUseCase {
    * @returns A page of comments.
    */
   public async execute(userId: string, postId: string, limit: number, cursor?: string): Promise<CommentsPage> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       const rows = await this.query.list(postId, limit, decodeSocialCursor(cursor));
       const comments = rows.slice(0, limit);
       const last = comments.at(-1);

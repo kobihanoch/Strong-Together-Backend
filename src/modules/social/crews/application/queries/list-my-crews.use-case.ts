@@ -19,7 +19,7 @@ export class ListMyCrewsUseCase {
    * @returns A page of joined crews.
    */
   public async execute(userId: string, limit: number, cursor?: string): Promise<CrewsPage> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       const rows = await this.query.listMine(limit, decodeSocialCursor(cursor));
       const crews = rows.slice(0, limit);
       const last = crews.at(-1);

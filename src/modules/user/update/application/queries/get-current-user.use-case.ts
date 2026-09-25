@@ -18,7 +18,7 @@ export class GetCurrentUserUseCase {
    * @throws {UserNotFoundError} When the user is absent.
    */
   async execute(userId: string): Promise<UserProfile> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       const user = await this.query.find(userId);
       if (!user) throw new UserNotFoundError();
       return user;

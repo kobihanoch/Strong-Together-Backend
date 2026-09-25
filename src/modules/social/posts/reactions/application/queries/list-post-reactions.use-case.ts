@@ -21,7 +21,7 @@ export class ListPostReactionsUseCase {
    * @returns A page of reactions.
    */
   public async execute(userId: string, postId: string, limit: number, cursor?: string): Promise<ReactionsPage> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       const rows = await this.query.list(postId, limit, decodeSocialCursor(cursor));
       const reactions = rows.slice(0, limit);
       const last = reactions.at(-1);

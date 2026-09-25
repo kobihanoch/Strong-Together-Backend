@@ -21,7 +21,7 @@ export class SearchSocialUsersUseCase {
    * @returns The matching profiles and an optional continuation cursor.
    */
   public async execute(userId: string, search: string, limit: number, cursor?: string): Promise<SocialUsersSearchResult> {
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       const rows = await this.query.search(search, limit, decodeSocialCursor(cursor));
       const users = rows.slice(0, limit);
       const last = users.at(-1);

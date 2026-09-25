@@ -25,7 +25,7 @@ export class GetPersonalRecordsUseCase {
       if (value) return { payload: value, cacheHit: true };
     }
 
-    return this.unitOfWork.execute(userId, async () => {
+    return this.unitOfWork.executeReadOnly(userId, async () => {
       const payload = await this.query.findPersonalRecords(userId, timezone);
       this.unitOfWork.afterCommit(() => cacheEntry.set(payload));
       return { payload, cacheHit: false };
