@@ -58,6 +58,10 @@ flowchart TB
   class identity,workout,tracking,schedules,reminders,messages,social schema
 ```
 
+![PostgreSQL Domain Schemas and RLS Flow — Canva diagram](./media/postgresql-domain-schemas-canva.png)
+
+[Edit the PostgreSQL Domain Schemas diagram in Canva](https://canva.link/jvn72g85p4lcytr)
+
 ## Schema Map
 
 | Schema      | Main objects                                                                            | Responsibility                                                                           |

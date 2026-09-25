@@ -24,6 +24,10 @@ flowchart LR
   class http,presentation,outbound,systems adapter
 ```
 
+![Dependency Model — Canva diagram](./media/dependency-model-canva.png)
+
+[Edit the Dependency Model diagram in Canva](https://canva.link/bcs24w6bv9eej5j)
+
 The application layer owns its ports. Infrastructure depends on those ports, never the reverse. Nest modules bind port tokens to concrete adapters and act as composition roots. See [Clean Architecture + Hexagonal Architecture Module Structure](./clean-architecture-module-structure.md) for the required feature layout.
 
 ## Request Lifecycle
@@ -46,6 +50,10 @@ flowchart LR
   command --> response[Response]
   query --> response
 ```
+
+![HTTP Request Lifecycle — Canva diagram](./media/request-lifecycle-canva.png)
+
+[Edit the HTTP Request Lifecycle diagram in Canva](https://canva.link/6rve2a2873jpriu)
 
 Database-backed use cases own their transaction through the application `UnitOfWork` port. Commands use `execute`, while queries use `executeReadOnly`, which PostgreSQL enforces with `SET TRANSACTION READ ONLY`. Presentation passes the authenticated user ID into the use case; guest operations pass no user ID. `PostgresUnitOfWork` delegates to `DBService`, which sets `app.current_user_id` and the `authenticated` role, or starts with the PostgreSQL `guest` role. Public authentication can promote the active transaction only after credentials or a signed token are verified.
 
@@ -127,6 +135,10 @@ flowchart LR
   api -->|presigned URL| client[Mobile client] --> s3[(S3)] --> sqs[(SQS)] --> python[Python CV worker]
   python -->|result| pubsub[(Redis Pub/Sub)] --> subscriber[Nest subscriber] --> socket[Socket.IO user room]
 ```
+
+![Asynchronous Boundaries — Canva diagram](./media/asynchronous-boundaries-canva.png)
+
+[Edit the Asynchronous Boundaries diagram in Canva](https://canva.link/z04iey1f6vhcgeq)
 
 SQS remains the retry authority for video processing because its message is deleted only after successful processing and cleanup. Bull queues keep email and push provider latency outside HTTP requests. Redis Pub/Sub bridges Python results into authenticated Socket.IO delivery.
 

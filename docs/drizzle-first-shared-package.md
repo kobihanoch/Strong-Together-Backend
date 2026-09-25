@@ -27,6 +27,10 @@ flowchart LR
   class app,repo,drizzle core
 ```
 
+![Database-Isolated Shared Contract Package — Canva diagram](./media/shared-package-dependencies-canva.png)
+
+[Edit the Shared Package Dependency diagram in Canva](https://canva.link/dqbuguul7x2pydz)
+
 There is no dependency from `packages/shared` to Drizzle, backend entities, application models, repositories, SQL types, or infrastructure. The backend and frontend may both consume shared contracts; physical database design remains private to the backend.
 
 ## Package Contents
