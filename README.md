@@ -21,9 +21,9 @@
 ![Pino](https://img.shields.io/badge/Pino-FFD43B?style=for-the-badge&logo=javascript&logoColor=black)
 ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)
 
-Backend for **Strong Together**, a **fitness and health platform** with **authentication**, **workout planning**, **progress tracking**, **realtime messaging**, **push notifications**, and **asynchronous exercise video analysis**. The system combines a **NestJS modular monolith**, **PostgreSQL RLS**, **Redis-backed realtime infrastructure**, **S3/SQS event pipelines**, and a **Python computer-vision worker** into a **locally reproducible backend platform**.
+**Strong Together is a backend built with Clean Architecture, Hexagonal Architecture, and pragmatic CQRS.** It powers a fitness and health platform with authentication, workout planning, progress tracking, realtime messaging, push notifications, and asynchronous exercise video analysis. The system combines a **NestJS modular monolith**, **PostgreSQL RLS**, **Redis-backed realtime infrastructure**, **S3/SQS event pipelines**, and a **Python computer-vision worker** into a locally reproducible backend platform.
 
-> **This backend is built around Clean Architecture and Hexagonal Architecture.** Feature modules isolate application use cases from HTTP, PostgreSQL, Redis, queues, storage, and provider SDKs through application-owned ports and infrastructure adapters. Dependencies point inward; NestJS modules are the composition roots.
+Feature modules isolate application use cases from HTTP, PostgreSQL, Redis, queues, storage, and provider SDKs through application-owned ports and infrastructure adapters. Commands use repositories and read-write transactions; queries use dedicated query ports and PostgreSQL-enforced read-only transactions. Dependencies point inward, and NestJS modules are the composition roots.
 
 - Backend repository: [Strong-Together-Backend](https://github.com/kobihanoch/Strong-Together-Backend)
 - Frontend repository: [Strong-Together-App](https://github.com/kobihanoch/Strong-Together-App)
@@ -31,6 +31,7 @@ Backend for **Strong Together**, a **fitness and health platform** with **authen
 ## Key Highlights
 
 - **Clean + Hexagonal Architecture:** Controllers call focused use cases; use cases depend on transport-neutral models and ports; PostgreSQL repositories, Redis caches, queues, storage, event publishers, and provider clients are replaceable adapters.
+- **Pragmatic CQRS:** Command and query use cases, ports, persistence implementations, SQL folders, and transaction modes are separated without adding a command bus, event sourcing, or separate databases.
 - **Repository-owned persistence:** SQL and Drizzle-derived database types stay in infrastructure repositories rather than leaking into controllers, use cases, domain code, or the shared client contract package.
 - **Version 5 scheduling:** Users can replace or clear a weekly workout schedule, configure timezone-aware reminders, and receive deduplicated delayed push notifications from a JWT-protected cron trigger.
 - **Richer workout insights:** Separate 45-day history, exercise-history, statistics, and personal-record endpoints expose ordered workouts, next-split guidance, estimated durations, and estimated one-rep max values.
@@ -222,6 +223,8 @@ npm run test:websockets
 
 **Clean Architecture + Hexagonal Architecture inside the monolith:** Each feature exposes inbound HTTP adapters in `presentation`, coordinates behavior in application use cases, declares outbound ports beside those use cases, and implements the ports in `infrastructure`. This keeps business workflows independent of Nest controllers, PostgreSQL, Redis, queues, storage providers, and transport details.
 
+**Pragmatic CQRS without framework ceremony:** Commands and queries have separate use cases, application ports, Postgres adapters, SQL folders, and transaction modes. They intentionally share the same PostgreSQL database and do not require a command bus or event sourcing.
+
 **Async pipelines for media processing:** **Video uploads** are sent directly to **S3**, then processed from **SQS** by **Python**. This avoids routing **large files** through the **API** and isolates **CPU-heavy OpenCV/MediaPipe work** from normal request traffic.
 
 **RLS-backed security:** **Authorization** is enforced in both **application code** and the **database**. **Nest guards** validate **identity** and **roles**, while **PostgreSQL RLS** protects **user-owned rows** even when queries cross complex **domain schemas**. Unauthenticated database access is limited to allow-listed `SECURITY DEFINER` functions in `guest_api`; the guest role has no direct application-table grants or guest RLS policies.
@@ -253,8 +256,13 @@ src/
   index.ts                       HTTP bootstrap and shutdown lifecycle
   common/                        Guards, middleware, pipes, filters, decorators, test helpers
   config/                        Runtime configuration modules
-  infrastructure/                DB, Redis, queues, AWS, cache, Socket.IO, mailer, Sentry
+  infrastructure/
+    connections/                 Low-level PostgreSQL, Redis, and AWS clients
+    capabilities/                Cache, queues, realtime, mailer, storage, observability
+    persistence/schema/          Drizzle schema, migrations, and seeds
+    adapters/                    Cross-cutting application-port implementations
   modules/                       Clean/hexagonal feature slices: application, infrastructure, presentation
+packages/shared/                 Plain-Zod public and cross-process contracts
 workers/                         Node background workers for email and push jobs
 pythonService/                   SQS-driven video-analysis service
 scripts/                         LocalStack and DB automation
@@ -263,22 +271,22 @@ docs/                            Architecture, security, testing, DB, and operat
 
 ## Documentation
 
-| Document                                                                             | What it covers                                                                 |
-| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| [System Architecture](./docs/architecture.md)                                        | NestJS modules, runtime components, request lifecycle, async boundaries        |
-| [Clean Architecture Module Structure](./docs/clean-architecture-module-structure.md) | Required Clean/Hexagonal layers, ports, adapters, errors, and dependency rules |
-| [Security Deep Dive](./docs/security-deep-dive.md)                                   | Middleware, DPoP, token versioning, authorization, validation, RLS             |
-| [Video Analysis Pipeline](./docs/video-analysis-pipeline.md)                         | S3, SQS, Python worker, Redis Pub/Sub, Socket.IO delivery                      |
-| [WebSocket Realtime](./docs/websocket-realtime.md)                                   | Socket.IO ticketing, Redis adapter, per-user rooms, targeted events            |
-| [Environment Example](./docs/environment-example.md)                                 | Placeholder-only environment templates and secret-handling notes               |
-| [API Documentation](./docs/api-documentation.md)                                     | Route index, request conventions, response shapes, operational route notes     |
-| [Testing Policy](./docs/testing-policy.md)                                           | Test types, isolation, database reset strategy, when to add tests              |
-| [API And Engineering Standards](./docs/api-and-standards.md)                         | Contract standards, auth standards, error model, observability, caching        |
-| [Database-Isolated Shared Contracts](./docs/drizzle-first-shared-package.md)         | Plain-Zod public contracts and separation from backend persistence             |
-| [Database Schemas And Flows](./docs/database-schemas-and-flows.md)                   | Domain schemas, RLS flow, migration lifecycle                                  |
-| [Migrations And DB Pipeline](./docs/migrations-and-db-pipeline.md)                   | Drizzle workflow, dev/test/prod database lifecycle                             |
-| [Docker Compose Environments](./docs/docker-compose-environments.md)                 | Development and test Compose stacks                                            |
-| [Scripts Usage](./docs/scripts-usage.md)                                             | Practical command guide for development, tests, and migrations                 |
+| Document                                                                             | What it covers                                                                              |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| [System Architecture](./docs/architecture.md)                                        | NestJS modules, runtime components, request lifecycle, async boundaries                     |
+| [Project And Module Folder Structure](./docs/clean-architecture-module-structure.md) | Repository map, Clean/Hexagonal layers, CQRS folders, ports, adapters, and dependency rules |
+| [Security Deep Dive](./docs/security-deep-dive.md)                                   | Middleware, DPoP, token versioning, authorization, validation, RLS                          |
+| [Video Analysis Pipeline](./docs/video-analysis-pipeline.md)                         | S3, SQS, Python worker, Redis Pub/Sub, Socket.IO delivery                                   |
+| [WebSocket Realtime](./docs/websocket-realtime.md)                                   | Socket.IO ticketing, Redis adapter, per-user rooms, targeted events                         |
+| [Environment Example](./docs/environment-example.md)                                 | Placeholder-only environment templates and secret-handling notes                            |
+| [API Documentation](./docs/api-documentation.md)                                     | Route index, request conventions, response shapes, operational route notes                  |
+| [Testing Policy](./docs/testing-policy.md)                                           | Test types, isolation, database reset strategy, when to add tests                           |
+| [API And Engineering Standards](./docs/api-and-standards.md)                         | Contract standards, auth standards, error model, observability, caching                     |
+| [Database-Isolated Shared Contracts](./docs/drizzle-first-shared-package.md)         | Plain-Zod public contracts and separation from backend persistence                          |
+| [Database Schemas And Flows](./docs/database-schemas-and-flows.md)                   | Domain schemas, RLS flow, migration lifecycle                                               |
+| [Migrations And DB Pipeline](./docs/migrations-and-db-pipeline.md)                   | Drizzle workflow, dev/test/prod database lifecycle                                          |
+| [Docker Compose Environments](./docs/docker-compose-environments.md)                 | Development and test Compose stacks                                                         |
+| [Scripts Usage](./docs/scripts-usage.md)                                             | Practical command guide for development, tests, and migrations                              |
 
 ## Current Tradeoffs
 
@@ -288,4 +296,4 @@ docs/                            Architecture, security, testing, DB, and operat
 
 ## What This Demonstrates
 
-This project demonstrates **Clean Architecture**, **Hexagonal Architecture**, **secure backend design**, **typed API contracts**, **event-driven processing**, **local infrastructure automation**, **database ownership modeling**, **realtime delivery**, **observability**, and **integration testing** across **real service boundaries**.
+This project demonstrates **Clean Architecture**, **Hexagonal Architecture**, **CQRS**, **secure backend design**, **typed API contracts**, **event-driven processing**, **local infrastructure automation**, **database ownership modeling**, **realtime delivery**, **observability**, and **integration testing** across **real service boundaries**.

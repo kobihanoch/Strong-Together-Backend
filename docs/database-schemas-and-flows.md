@@ -225,7 +225,7 @@ SET
 
 Queries then execute against PostgreSQL policies that call `identity.current_user_id()` or related helpers. The application and database agree on the same current user.
 
-Repositories obtain `DBService.sql` from `AsyncLocalStorage`, so every repository called by the use case shares the same transaction. Nested use cases reuse the active transaction rather than opening another one. `DBService.sql` throws when no unit of work is active. Work registered with `UnitOfWork.afterCommit(...)` runs only after a successful commit.
+Repositories obtain `DBService.sql` from `AsyncLocalStorage`, so every repository called by the use case shares the same transaction. Nested use cases reuse the active transaction rather than opening another one. `DBService.sql` throws when no unit of work is active. Work registered with `UnitOfWork.afterCommit(...)` runs only after a successful commit; failures are logged and captured server-side without replacing the committed result with an HTTP error.
 
 ## Migration Lifecycle
 

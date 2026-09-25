@@ -1,6 +1,38 @@
-# Clean Architecture + Hexagonal Architecture Module Structure
+# Project And Module Folder Structure
 
-> **This is the required architecture for non-trivial backend features: Clean Architecture defines the inward dependency rule, while Hexagonal Architecture defines application-owned ports and replaceable inbound/outbound adapters.**
+> **This is the required architecture for non-trivial backend features: Clean Architecture defines the inward dependency rule, Hexagonal Architecture defines application-owned ports and replaceable inbound/outbound adapters, and pragmatic CQRS separates command and query paths.**
+
+## Repository Structure
+
+```text
+src/
+  common/                         Cross-cutting application ports, errors, HTTP concerns, and test helpers
+  config/                         Environment-backed runtime configuration
+  infrastructure/
+    connections/                  Low-level external-system clients and connection lifecycles
+      postgres/                   PostgreSQL client, RLS transaction context, and Nest module
+      redis/                      Redis clients and Socket.IO adapter connection
+      aws/                        AWS SDK clients and tokens
+    capabilities/                 Reusable infrastructure services built on connections
+      cache/                      Generic Redis cache capability
+      queues/                     Email and push Bull queues/producers
+      realtime/                   Socket.IO hosting and publication
+      mailer/                     Email provider capability
+      storage/                    Shared storage provider implementations
+      observability/              Pino logging and Sentry integration
+    persistence/schema/           Drizzle definitions, migrations, and seeds
+    adapters/                     Cross-cutting application-port adapters such as UnitOfWork
+  modules/                        Business capability slices
+packages/shared/                  Plain-Zod contracts shared across process boundaries
+workers/                          Email and push queue consumers
+pythonService/                    SQS-driven video-analysis process
+scripts/                          Database, diagram, and LocalStack automation
+docs/                             Architecture and operational documentation
+```
+
+`connections/` owns low-level connectivity. `capabilities/` owns reusable behavior built on those connections. Feature-specific adapters remain inside their feature under `src/modules/<feature>/infrastructure`; they are not moved into the root infrastructure folder.
+
+## Feature Structure
 
 Use these layers for non-trivial features. The goal is dependency separation, not creating every possible abstraction.
 
@@ -17,12 +49,19 @@ feature/
     ports/
       feature.repository.ts
       dependency.port.ts
-    use-cases/
+    commands/
       action.use-case.ts
+    queries/
+      get-feature.use-case.ts
   infrastructure/
-    postgres-feature.repository.ts
-    feature.db-types.ts
-    feature.sql.ts
+    persistence/
+      postgres-feature.repository.ts
+      postgres-feature.queries.ts
+      feature.db-types.ts
+      reads/
+        find-feature.sql.ts
+      writes/
+        save-feature.sql.ts
   presentation/
     feature.controller.ts
   feature.module.ts
@@ -33,7 +72,9 @@ This layout is required for refactored features. Do not place application models
 ## Responsibilities
 
 - `domain/`: Entities and business rules. Add value objects, domain services, and events only when the feature needs them. It must not depend on NestJS, HTTP, PostgreSQL, Drizzle, Redis, or queues.
-- `application/`: Use-case classes and ports such as repository, cache, queue, and storage abstractions. It may depend on the domain, but not on concrete infrastructure.
+- `application/commands/`: State-changing use cases. Commands depend on repository ports and execute in read-write units of work.
+- `application/queries/`: Read use cases. Queries depend on query ports and execute in PostgreSQL-enforced read-only units of work.
+- `application/ports/`: Repository, query, cache, queue, storage, and provider abstractions owned by the application.
 - `infrastructure/`: PostgreSQL repositories, raw SQL, Drizzle-derived row types, Redis implementations, queues, storage, and mappings to domain/application types.
 - `presentation/`: Controllers, request validation, authentication decorators, HTTP error mapping, and optional response presenters.
 - `feature.module.ts`: The composition root that connects application ports to infrastructure implementations.
@@ -56,7 +97,8 @@ feature/
       errors/
       models/
       ports/
-      use-cases/
+      commands/
+      queries/
     infrastructure/
     presentation/
     capability-a.module.ts
@@ -337,7 +379,9 @@ Register each adapter in the Nest module:
 }
 ```
 
-Database-backed use cases own their transaction by calling `UnitOfWork.execute(userId, operation)`. Presentation supplies the authenticated user ID; public authentication use cases pass `undefined` to start with the guest role. Use `UnitOfWork.afterCommit(...)` inside the operation for cache updates, queue publication, storage cleanup, and other best-effort work that must not happen before commit. Nested use cases reuse the active transaction.
+Database-backed commands own their read-write transaction by calling `UnitOfWork.execute(userId, operation)`. Query use cases call `UnitOfWork.executeReadOnly(userId, operation)`, which PostgreSQL enforces with `SET TRANSACTION READ ONLY`. Presentation supplies the authenticated user ID; public authentication use cases pass `undefined` to start with the guest role. Nested use cases reuse the active transaction.
+
+Use `UnitOfWork.afterCommit(...)` inside the operation for cache updates, queue publication, storage cleanup, and other best-effort work that must not happen before commit. Callbacks run concurrently after a successful commit. The unit of work waits for all callbacks, logs and captures every rejection, and returns the committed operation result without converting a side-effect failure into an HTTP error.
 
 `PostgresUnitOfWork` delegates to the infrastructure-only `DBService`, which owns PostgreSQL, RLS setup, `AsyncLocalStorage`, and the transaction-scoped SQL tag. Repository SQL must use `DBService.sql`; it throws outside an active unit of work. Critical guaranteed delivery should eventually use a transactional outbox rather than an after-commit callback.
 

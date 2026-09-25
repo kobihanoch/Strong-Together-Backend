@@ -1,6 +1,6 @@
 # System Architecture
 
-> **Strong Together is a Clean Architecture and Hexagonal Architecture modular monolith.** Clean Architecture keeps dependencies pointing toward application behavior; Hexagonal Architecture places ports around that behavior and implements external concerns as adapters.
+> **Strong Together is a Clean Architecture, Hexagonal Architecture, and pragmatic CQRS modular monolith.** Clean Architecture keeps dependencies pointing toward application behavior; Hexagonal Architecture places ports around that behavior and implements external concerns as adapters; CQRS separates command and query use cases, ports, SQL, and transaction modes.
 
 The backend combines a NestJS API, PostgreSQL, Redis, Socket.IO, Node workers, and a Python computer-vision worker. It remains a monolith because identity, workouts, social features, messaging, schedules, and authorization share transactions and user context. Slow or failure-prone work crosses explicit asynchronous boundaries.
 
@@ -34,12 +34,17 @@ flowchart LR
   middleware --> guards[DPoP, authentication,<br/>authorization]
   guards --> validation[Zod validation]
   validation --> controller[Presentation controller]
-  controller --> usecase[Application use case]
-  usecase --> transaction[UnitOfWork<br/>RLS transaction]
-  usecase --> port[Application port]
+  controller --> command[Command use case]
+  controller --> query[Query use case]
+  command --> writeTx[UnitOfWork.execute<br/>read-write RLS transaction]
+  query --> readTx[UnitOfWork.executeReadOnly<br/>read-only RLS transaction]
+  command --> port[Repository / outbound port]
+  query --> queryPort[Query port]
   port --> adapter[Infrastructure adapter]
+  queryPort --> adapter
   adapter --> resource[(Postgres / Redis / provider)]
-  usecase --> response[Response]
+  command --> response[Response]
+  query --> response
 ```
 
 Database-backed use cases own their transaction through the application `UnitOfWork` port. Commands use `execute`, while queries use `executeReadOnly`, which PostgreSQL enforces with `SET TRANSACTION READ ONLY`. Presentation passes the authenticated user ID into the use case; guest operations pass no user ID. `PostgresUnitOfWork` delegates to `DBService`, which sets `app.current_user_id` and the `authenticated` role, or starts with the PostgreSQL `guest` role. Public authentication can promote the active transaction only after credentials or a signed token are verified.
@@ -57,7 +62,8 @@ feature/
     errors/                # feature errors, categorized without HTTP knowledge
     models/                # use-case and port data
     ports/                 # repository/cache/queue/storage/provider contracts
-    use-cases/             # one focused operation per class
+    commands/             # state-changing use cases
+    queries/              # read use cases
   infrastructure/
     *.repository.ts        # Postgres adapters
     *.sql.ts               # explicit SQL
@@ -103,9 +109,11 @@ This pattern is used across auth, users, workout planning and tracking, schedule
 
 ## Persistence And Transactions
 
-Application use cases depend on repository abstractions such as `WorkoutPlanRepository`; concrete `Postgres*Repository` adapters own SQL, Drizzle-derived row types, and mapping. Commands call `UnitOfWork.execute(userId, operation)`, queries call `UnitOfWork.executeReadOnly(userId, operation)`, and best-effort post-commit work is registered through `UnitOfWork.afterCommit(...)`.
+Application use cases depend on repository abstractions such as `WorkoutPlanRepository` and read abstractions such as `WorkoutPlanQueries`; concrete `Postgres*Repository` and `Postgres*Queries` adapters own SQL, Drizzle-derived row types, and mapping. Commands call `UnitOfWork.execute(userId, operation)`, queries call `UnitOfWork.executeReadOnly(userId, operation)`, and best-effort post-commit work is registered through `UnitOfWork.afterCommit(...)`.
 
-`PostgresUnitOfWork` is the infrastructure adapter for this application port. It delegates transaction and callback handling to `DBService`, which binds its `postgres` tagged-template client to the active transaction through `AsyncLocalStorage`. Nested use cases reuse that active transaction. `DBService.sql` rejects access outside a unit of work, preventing accidental non-RLS queries. After-commit hooks are appropriate for cache invalidation and other best-effort side effects; critical guaranteed delivery should use a transactional outbox.
+`PostgresUnitOfWork` is the infrastructure adapter for this application port. It delegates transaction and callback handling to `DBService`, which binds its `postgres` tagged-template client to the active transaction through `AsyncLocalStorage`. Nested use cases reuse that active transaction. `DBService.sql` rejects access outside a unit of work, preventing accidental non-RLS queries.
+
+After a successful commit, registered callbacks run concurrently and are awaited with `Promise.allSettled`. Rejections are logged through Pino and captured by Sentry, but they do not replace the committed application result with an HTTP error. This is appropriate for best-effort cache and delivery side effects; critical guaranteed delivery should use a transactional outbox.
 
 ## Events And Cross-Module Reactions
 

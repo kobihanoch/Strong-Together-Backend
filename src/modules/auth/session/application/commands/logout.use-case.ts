@@ -28,6 +28,7 @@ export class LogoutUseCase {
   async execute(refreshToken: string | null | undefined, dpopJkt?: string): Promise<void> {
     return this.unitOfWork.execute(undefined, async () => {
       if (!refreshToken) throw new SessionUnauthorizedError('No refresh token provided');
+
       const decoded = this.tokens.decodeRefresh(refreshToken, true);
       if (!decoded) throw new SessionUnauthorizedError('Invalid refresh token');
 
