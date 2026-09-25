@@ -3,7 +3,7 @@ import type { ListExercisesResponse } from '@strong-together/shared';
 import { AuthenticationGuard } from '../../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
-import { ListExercisesUseCase } from '../application/use-cases/list-exercises.use-case';
+import { ListExercisesUseCase } from '../application/queries/list-exercises.use-case';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../common/types/express';
 

@@ -22,9 +22,9 @@ The initial rule set should cover existing architectural intent without introduc
 
 Implemented in the typed `eslint.config.ts`. The dedicated `lint:architecture` script runs in CI before the test suite and currently passes for the repository.
 
-### 2. Split oversized SQL classes
+### 2. Split oversized SQL classes - Completed
 
-Split these infrastructure classes by cohesive query or command:
+These infrastructure classes were split into cohesive queries and commands:
 
 - `src/modules/workout/tracking/infrastructure/workout-tracking.sql.ts`
 - `src/modules/workout/plan/infrastructure/workout-plan.sql.ts`
@@ -49,7 +49,7 @@ Suggested workout-tracking split:
 
 The exact split should follow the existing methods rather than force every SQL statement into its own class.
 
-### 3. Remove the HTTP-contract dependency from reactions infrastructure
+### 3. Remove the HTTP-contract dependency from reactions infrastructure - Completed
 
 `reactions.sql.ts` must not use `ReactToPostBody` from `@strong-together/shared`.
 
@@ -194,7 +194,4 @@ The recommended first candidate is reminder scheduling because it is determinist
 
 ## Remaining Execution Order
 
-For the remaining approved work, use this order:
-
-1. Fix the reactions infrastructure type dependency.
-2. Split the three oversized SQL classes one module at a time, verifying existing tests after each module.
+There is no remaining approved implementation work in this plan.

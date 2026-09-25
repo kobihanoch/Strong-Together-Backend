@@ -26,11 +26,11 @@ import { AuthorizationGuard, Roles } from '../../../../common/guards/authorizati
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
-import { CreatePostUseCase } from '../application/use-cases/create-post.use-case';
-import { DeletePostUseCase } from '../application/use-cases/delete-post.use-case';
-import { ListCrewPostsUseCase } from '../application/use-cases/list-crew-posts.use-case';
-import { ListVisiblePostsUseCase } from '../application/use-cases/list-visible-posts.use-case';
-import { UpdatePostUseCase } from '../application/use-cases/update-post.use-case';
+import { CreatePostUseCase } from '../application/commands/create-post.use-case';
+import { DeletePostUseCase } from '../application/commands/delete-post.use-case';
+import { ListCrewPostsUseCase } from '../application/queries/list-crew-posts.use-case';
+import { ListVisiblePostsUseCase } from '../application/queries/list-visible-posts.use-case';
+import { UpdatePostUseCase } from '../application/commands/update-post.use-case';
 
 /** Exposes authenticated CRUD endpoints for social posts. */
 @Controller('api/social/posts')

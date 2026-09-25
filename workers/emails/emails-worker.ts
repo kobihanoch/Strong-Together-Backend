@@ -59,10 +59,7 @@ export class EmailsWorkerService implements OnModuleInit, OnModuleDestroy {
               queue: 'emailsQueue',
             });
             const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
-            jobLogger.error(
-              { err: e, event: 'job.failed', durationMs: Number(durationMs.toFixed(2)), sentryEventId },
-              'Failed to send email',
-            );
+            jobLogger.error({ err: e, event: 'job.failed', durationMs: Number(durationMs.toFixed(2)), sentryEventId }, 'Failed to send email');
           }
           throw e;
         }

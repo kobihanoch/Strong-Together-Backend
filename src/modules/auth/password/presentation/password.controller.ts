@@ -1,8 +1,8 @@
 import { Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import type { ResetPasswordBody, ResetPasswordQuery, CreatePasswordResetRequestBody } from '@strong-together/shared';
 import { resetPasswordRequestSchema, createPasswordResetRequestSchema } from '@strong-together/shared';
-import { CreatePasswordResetRequestUseCase } from '../application/use-cases/create-password-reset-request.use-case';
-import { ResetPasswordUseCase } from '../application/use-cases/reset-password.use-case';
+import { CreatePasswordResetRequestUseCase } from '../application/commands/create-password-reset-request.use-case';
+import { ResetPasswordUseCase } from '../application/commands/reset-password.use-case';
 import { RateLimit, RateLimitGuard, resetPasswordEmailRateLimit, resetPasswordEmailRateLimitDaily } from '../../../../common/guards/rate-limit.guard';
 import { RequestData } from '../../../../common/decorators/request-data.decorator';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';

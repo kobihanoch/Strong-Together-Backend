@@ -9,7 +9,7 @@ import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../common/types/express';
-import { CreateWebSocketTicketUseCase } from '../application/use-cases/create-web-socket-ticket.use-case';
+import { CreateWebSocketTicketUseCase } from '../application/commands/create-web-socket-ticket.use-case';
 
 /** WebSocket helper routes for authenticated users. */
 @Controller('api/websocket-tickets')

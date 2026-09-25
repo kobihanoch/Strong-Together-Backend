@@ -2,9 +2,9 @@ import { Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@ne
 import type { Response } from 'express';
 import type { LoginRequestBody, LoginResponse, LogoutResponse, RefreshTokenResponse } from '@strong-together/shared';
 import { loginRequestSchema } from '@strong-together/shared';
-import { LoginUseCase } from '../application/use-cases/login.use-case';
-import { LogoutUseCase } from '../application/use-cases/logout.use-case';
-import { RefreshSessionUseCase } from '../application/use-cases/refresh-session.use-case';
+import { LoginUseCase } from '../application/commands/login.use-case';
+import { LogoutUseCase } from '../application/commands/logout.use-case';
+import { RefreshSessionUseCase } from '../application/commands/refresh-session.use-case';
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { RateLimit, RateLimitGuard, loginIpRateLimit, loginRateLimit } from '../../../../common/guards/rate-limit.guard';
 import { RequestData } from '../../../../common/decorators/request-data.decorator';

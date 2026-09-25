@@ -18,10 +18,10 @@ import {
   getAerobicHistoryRequestSchema,
   updateAerobicEntryRequestSchema,
 } from '@strong-together/shared';
-import { CreateAerobicEntryUseCase } from '../application/use-cases/create-aerobic-entry.use-case';
-import { DeleteAerobicEntryUseCase } from '../application/use-cases/delete-aerobic-entry.use-case';
-import { GetAerobicHistoryUseCase } from '../application/use-cases/get-aerobic-history.use-case';
-import { UpdateAerobicEntryUseCase } from '../application/use-cases/update-aerobic-entry.use-case';
+import { CreateAerobicEntryUseCase } from '../application/commands/create-aerobic-entry.use-case';
+import { DeleteAerobicEntryUseCase } from '../application/commands/delete-aerobic-entry.use-case';
+import { GetAerobicHistoryUseCase } from '../application/queries/get-aerobic-history.use-case';
+import { UpdateAerobicEntryUseCase } from '../application/commands/update-aerobic-entry.use-case';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { AuthenticationGuard } from '../../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.guard';

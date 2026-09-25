@@ -2,8 +2,8 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { createLogger } from '../../src/infrastructure/logger';
 import { PushNotificationsQueueService } from '../../src/infrastructure/queues/push-notifications/push-notifications-queue';
 import { captureWorkerException } from '../../src/infrastructure/sentry';
-import { FindEligiblePushTokenUseCase } from '../../src/modules/push/application/use-cases/find-eligible-push-token.use-case';
-import { SendPushNotificationUseCase } from '../../src/modules/push/application/use-cases/send-push-notification.use-case';
+import { FindEligiblePushTokenUseCase } from '../../src/modules/push/application/queries/find-eligible-push-token.use-case';
+import { SendPushNotificationUseCase } from '../../src/modules/push/application/commands/send-push-notification.use-case';
 
 const logger = createLogger('worker:push-notifications', {
   queue: 'pushNotificationsQueue',

@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { PushNotificationsModule } from '../../src/infrastructure/queues/push-notifications/push-notifications.module';
 import { PushNotificationsWorkerService } from './push-notifications-worker';
 import { DBModule } from '../../src/infrastructure/db/db.module';
-import { PushRepository } from '../../src/modules/push/application/ports/push.repository';
-import { PostgresPushRepository } from '../../src/modules/push/infrastructure/postgres-push.repository';
-import { PushSql } from '../../src/modules/push/infrastructure/push.sql';
-import { FindEligiblePushTokenUseCase } from '../../src/modules/push/application/use-cases/find-eligible-push-token.use-case';
-import { SendPushNotificationUseCase } from '../../src/modules/push/application/use-cases/send-push-notification.use-case';
+import { PushQueries } from '../../src/modules/push/application/ports/push.queries';
+import { PostgresPushQueries } from '../../src/modules/push/infrastructure/persistence/postgres-push.queries';
+import { FindDueWorkoutRemindersSql } from '../../src/modules/push/infrastructure/persistence/reads/find-due-workout-reminders.sql';
+import { FindEligibleExpoPushTokenSql } from '../../src/modules/push/infrastructure/persistence/reads/find-eligible-expo-push-token.sql';
+import { FindEligiblePushTokenUseCase } from '../../src/modules/push/application/queries/find-eligible-push-token.use-case';
+import { SendPushNotificationUseCase } from '../../src/modules/push/application/commands/send-push-notification.use-case';
 import { PushNotificationSender } from '../../src/modules/push/application/ports/push-notification-sender.port';
 import { ExpoPushNotificationSender } from '../../src/modules/push/infrastructure/expo-push-notification.sender';
 
@@ -16,10 +17,11 @@ import { ExpoPushNotificationSender } from '../../src/modules/push/infrastructur
     PushNotificationsWorkerService,
     FindEligiblePushTokenUseCase,
     SendPushNotificationUseCase,
-    PushSql,
+    FindDueWorkoutRemindersSql,
+    FindEligibleExpoPushTokenSql,
     {
-      provide: PushRepository,
-      useClass: PostgresPushRepository,
+      provide: PushQueries,
+      useClass: PostgresPushQueries,
     },
     {
       provide: PushNotificationSender,

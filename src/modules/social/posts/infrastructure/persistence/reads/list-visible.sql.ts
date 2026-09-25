@@ -1,0 +1,46 @@
+import { Injectable } from '@nestjs/common';
+import { DBService } from '../../../../../../infrastructure/db/db.service';
+import type { PostSqlRow } from '../posts.db-types';
+
+/** Executes post persistence operations inside the request's RLS transaction. */
+
+@Injectable()
+export class ListVisibleSql {
+  constructor(private readonly dbService: DBService) {}
+  /**
+   * Retrieves each post visible to the authenticated user exactly once.
+   *
+   * @param limit - The maximum number of posts to return.
+   * @param cursor - The preceding page's final publication timestamp and UUID.
+   * @returns Visible post rows with like and comment counts, ordered from newest to oldest.
+   */
+  listVisible(limit: number, cursor?: { timestamp: string; id: string }): Promise<PostSqlRow[]> {
+    return this.dbService.sql<PostSqlRow[]>`
+      SELECT
+        post.id,
+        post.author_user_id AS "authorUserId",
+        post.workout_summary_id AS "workoutSummaryId",
+        post.content,
+        post.visibility,
+        post.published_at AS "publishedAt",
+        post.updated_at AS "updatedAt",
+        post.username,
+        post.full_name AS "fullName",
+        post.profile_pic_path AS "profilePicPath",
+        post.interactions
+      FROM
+        social.v_post_expanded post
+      WHERE
+        ${cursor?.timestamp ?? null}::TIMESTAMPTZ IS NULL
+        OR (DATE_TRUNC('milliseconds', post.published_at), post.id) < (
+          ${cursor?.timestamp ?? null}::TIMESTAMPTZ,
+          ${cursor?.id ?? null}::UUID
+        )
+      ORDER BY
+        DATE_TRUNC('milliseconds', post.published_at) DESC,
+        post.id DESC
+      LIMIT
+        ${limit + 1}
+    `;
+  }
+}

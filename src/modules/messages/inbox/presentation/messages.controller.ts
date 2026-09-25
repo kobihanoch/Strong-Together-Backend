@@ -8,9 +8,9 @@ import { AuthorizationGuard, Roles } from '../../../../common/guards/authorizati
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
-import { DeleteMessageUseCase } from '../application/use-cases/delete-message.use-case';
-import { ListMessagesUseCase } from '../application/use-cases/list-messages.use-case';
-import { MarkMessageAsReadUseCase } from '../application/use-cases/mark-message-as-read.use-case';
+import { DeleteMessageUseCase } from '../application/commands/delete-message.use-case';
+import { ListMessagesUseCase } from '../application/queries/list-messages.use-case';
+import { MarkMessageAsReadUseCase } from '../application/commands/mark-message-as-read.use-case';
 
 /** E */
 @Controller('api/messages')

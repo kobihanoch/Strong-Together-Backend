@@ -7,5 +7,4 @@ export abstract class VerificationRepository {
   abstract emailExists(email: string): Promise<boolean>;
   abstract updateVerification(userId: string, verified: boolean): Promise<void>;
   abstract updateEmail(userId: string, email: string): Promise<void>;
-  abstract getVerificationStatus(username: string): Promise<boolean>;
 }

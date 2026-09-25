@@ -4,7 +4,7 @@ import { createUserRequestSchema } from '@strong-together/shared';
 import { CurrentRequestId } from '../../../../common/decorators/current-request-id.decorator';
 import { RequestData } from '../../../../common/decorators/request-data.decorator';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
-import { CreateUserUseCase } from '../application/use-cases/create-user.use-case';
+import { CreateUserUseCase } from '../application/commands/create-user.use-case';
 
 /** E */
 @Controller('api/users')

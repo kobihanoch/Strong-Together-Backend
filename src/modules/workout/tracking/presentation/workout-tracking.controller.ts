@@ -23,11 +23,11 @@ import { AuthorizationGuard, Roles } from '../../../../common/guards/authorizati
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
-import { CreateWorkoutSessionUseCase } from '../application/use-cases/create-workout-session.use-case';
-import { GetExerciseHistoryUseCase } from '../application/use-cases/get-exercise-history.use-case';
-import { GetPersonalRecordsUseCase } from '../application/use-cases/get-personal-records.use-case';
-import { GetWorkoutHistoryUseCase } from '../application/use-cases/get-workout-history.use-case';
-import { GetWorkoutStatisticsUseCase } from '../application/use-cases/get-workout-statistics.use-case';
+import { CreateWorkoutSessionUseCase } from '../application/commands/create-workout-session.use-case';
+import { GetExerciseHistoryUseCase } from '../application/queries/get-exercise-history.use-case';
+import { GetPersonalRecordsUseCase } from '../application/queries/get-personal-records.use-case';
+import { GetWorkoutHistoryUseCase } from '../application/queries/get-workout-history.use-case';
+import { GetWorkoutStatisticsUseCase } from '../application/queries/get-workout-statistics.use-case';
 /** E */
 @Controller('api')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)

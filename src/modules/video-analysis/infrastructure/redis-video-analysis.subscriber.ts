@@ -11,7 +11,7 @@ import { RedisClientType } from 'redis';
 import { appConfig } from '../../../config/app.config';
 import { createLogger } from '../../../infrastructure/logger';
 import { REDIS_SUBSCRIBER } from '../../../infrastructure/redis/redis.tokens';
-import { PublishVideoAnalysisResultUseCase } from '../application/use-cases/publish-video-analysis-result.use-case';
+import { PublishVideoAnalysisResultUseCase } from '../application/commands/publish-video-analysis-result.use-case';
 
 @Injectable()
 export class RedisVideoAnalysisSubscriber implements OnModuleInit {

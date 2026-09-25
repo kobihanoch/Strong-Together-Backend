@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { PushNotificationsModule } from '../../infrastructure/queues/push-notifications/push-notifications.module';
-import { PushRepository } from './application/ports/push.repository';
+import { PushQueries } from './application/ports/push.queries';
 import { WorkoutReminderQueue } from './application/ports/workout-reminder-queue.port';
-import { EnqueueDueWorkoutRemindersUseCase } from './application/use-cases/enqueue-due-workout-reminders.use-case';
-import { PostgresPushRepository } from './infrastructure/postgres-push.repository';
-import { PushSql } from './infrastructure/push.sql';
+import { EnqueueDueWorkoutRemindersUseCase } from './application/commands/enqueue-due-workout-reminders.use-case';
+import { PostgresPushQueries } from './infrastructure/persistence/postgres-push.queries';
+import { FindDueWorkoutRemindersSql } from './infrastructure/persistence/reads/find-due-workout-reminders.sql';
+import { FindEligibleExpoPushTokenSql } from './infrastructure/persistence/reads/find-eligible-expo-push-token.sql';
 import { BullWorkoutReminderQueue } from './infrastructure/bull-workout-reminder.queue';
 import { PushController } from './presentation/push.controller';
 
@@ -12,10 +13,11 @@ import { PushController } from './presentation/push.controller';
   imports: [PushNotificationsModule],
   controllers: [PushController],
   providers: [
-    PushSql,
+    FindDueWorkoutRemindersSql,
+    FindEligibleExpoPushTokenSql,
     {
-      provide: PushRepository,
-      useClass: PostgresPushRepository,
+      provide: PushQueries,
+      useClass: PostgresPushQueries,
     },
     {
       provide: WorkoutReminderQueue,

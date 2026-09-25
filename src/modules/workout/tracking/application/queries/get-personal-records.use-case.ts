@@ -1,0 +1,34 @@
+import { Injectable } from '@nestjs/common';
+import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
+import type { PersonalRecords } from '../models/workout-tracking.models';
+import { WorkoutTrackingCache } from '../ports/workout-tracking-cache.port';
+import { WorkoutTrackingQueries } from '../ports/workout-tracking.queries';
+/** Retrieves cached personal records. */
+@Injectable()
+export class GetPersonalRecordsUseCase {
+  constructor(
+    private readonly unitOfWork: UnitOfWork,
+    private readonly repository: WorkoutTrackingQueries,
+    private readonly cache: WorkoutTrackingCache,
+  ) {}
+  /**
+   * Retrieves personal records.
+   *
+   * @param userId - The user identifier.
+   * @param fromCache - Whether cached data may be returned.
+   * @param timezone - The IANA time-zone name.
+   * @returns The use-case result.
+   */ async execute(userId: string, fromCache = true, timezone: string): Promise<{ payload: PersonalRecords; cacheHit: boolean }> {
+    const cacheEntry = await this.cache.personalRecordsForUser(userId, timezone);
+    if (fromCache) {
+      const value = await cacheEntry.get();
+      if (value) return { payload: value, cacheHit: true };
+    }
+
+    return this.unitOfWork.execute(userId, async () => {
+      const payload = await this.repository.findPersonalRecords(userId, timezone);
+      this.unitOfWork.afterCommit(() => cacheEntry.set(payload));
+      return { payload, cacheHit: false };
+    });
+  }
+}

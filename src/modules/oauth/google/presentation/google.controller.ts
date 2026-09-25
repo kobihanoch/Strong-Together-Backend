@@ -6,7 +6,7 @@ import { RequestData } from '../../../../common/decorators/request-data.decorato
 import { RateLimit, RateLimitGuard, loginRateLimit } from '../../../../common/guards/rate-limit.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import { validateJkt } from '../../core/presentation/oauth-request.utils';
-import { SignInWithGoogleUseCase } from '../application/use-cases/sign-in-with-google.use-case';
+import { SignInWithGoogleUseCase } from '../application/commands/sign-in-with-google.use-case';
 
 /** OAuth routes for Google sign-in. */
 @Controller('api/oauth')

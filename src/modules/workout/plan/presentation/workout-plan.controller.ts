@@ -9,8 +9,8 @@ import { AuthorizationGuard, Roles } from '../../../../common/guards/authorizati
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
-import { GetWorkoutPlanUseCase } from '../application/use-cases/get-workout-plan.use-case';
-import { ReplaceWorkoutPlanUseCase } from '../application/use-cases/replace-workout-plan.use-case';
+import { GetWorkoutPlanUseCase } from '../application/queries/get-workout-plan.use-case';
+import { ReplaceWorkoutPlanUseCase } from '../application/commands/replace-workout-plan.use-case';
 
 /** E */
 @Controller('api/workout-plan')

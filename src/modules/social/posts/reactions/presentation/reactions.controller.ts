@@ -17,9 +17,9 @@ import { AuthorizationGuard, Roles } from '../../../../../common/guards/authoriz
 import { DpopGuard } from '../../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../../common/types/express';
-import { DeleteReactionUseCase } from '../application/use-cases/delete-reaction.use-case';
-import { ListPostReactionsUseCase } from '../application/use-cases/list-post-reactions.use-case';
-import { ReactToPostUseCase } from '../application/use-cases/react-to-post.use-case';
+import { DeleteReactionUseCase } from '../application/commands/delete-reaction.use-case';
+import { ListPostReactionsUseCase } from '../application/queries/list-post-reactions.use-case';
+import { ReactToPostUseCase } from '../application/commands/react-to-post.use-case';
 
 /** Exposes authenticated reaction writes for social posts. */
 @Controller('api/social/posts')

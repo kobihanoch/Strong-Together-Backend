@@ -49,10 +49,7 @@ export type CrewImageUpload = { originalname: string; mimetype: string; buffer: 
 
 /** Outcome of atomically leaving a crew under its leadership rules. */
 export type LeaveCrewOutcome =
-  | { kind: 'member-left' }
-  | { kind: 'leadership-transferred'; successorId: string }
-  | { kind: 'crew-deleted' }
-  | { kind: 'not-member' };
+  { kind: 'member-left' } | { kind: 'leadership-transferred'; successorId: string } | { kind: 'crew-deleted' } | { kind: 'not-member' };
 
 /** Outcome of updating a crew visible to its leader. */
 export type UpdateCrewOutcome = { kind: 'updated' } | { kind: 'not-found' };

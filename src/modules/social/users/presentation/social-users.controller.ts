@@ -8,8 +8,8 @@ import { AuthenticationGuard } from '../../../../common/guards/authentication.gu
 import { AuthorizationGuard, Roles } from '../../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
-import { GetSocialUserUseCase } from '../application/use-cases/get-social-user.use-case';
-import { SearchSocialUsersUseCase } from '../application/use-cases/search-social-users.use-case';
+import { GetSocialUserUseCase } from '../application/queries/get-social-user.use-case';
+import { SearchSocialUsersUseCase } from '../application/queries/search-social-users.use-case';
 
 /** E */
 @Controller('api/social/users')

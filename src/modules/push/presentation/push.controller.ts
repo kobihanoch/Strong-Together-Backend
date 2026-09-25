@@ -4,7 +4,7 @@ import { extractBearerToken } from '../../../common/authentication/authenticatio
 import { CurrentRequestId } from '../../../common/decorators/current-request-id.decorator';
 import { authConfig } from '../../../config/auth.config';
 import type { PushBatchResult } from '../application/models/push.models';
-import { EnqueueDueWorkoutRemindersUseCase } from '../application/use-cases/enqueue-due-workout-reminders.use-case';
+import { EnqueueDueWorkoutRemindersUseCase } from '../application/commands/enqueue-due-workout-reminders.use-case';
 
 /** Push-notification trigger routes. */
 @Controller('api/push-jobs')

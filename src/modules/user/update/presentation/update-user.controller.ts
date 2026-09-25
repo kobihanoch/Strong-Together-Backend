@@ -14,12 +14,12 @@ import { imageUploadOptions } from '../../../../common/interceptors/image-upload
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
 import type { EmailChangeOutcome } from '../application/models/update-user.models';
-import { ConfirmEmailChangeUseCase } from '../application/use-cases/confirm-email-change.use-case';
-import { DeleteProfilePictureUseCase } from '../application/use-cases/delete-profile-picture.use-case';
-import { DeleteUserUseCase } from '../application/use-cases/delete-user.use-case';
-import { GetCurrentUserUseCase } from '../application/use-cases/get-current-user.use-case';
-import { ReplaceProfilePictureUseCase } from '../application/use-cases/replace-profile-picture.use-case';
-import { UpdateCurrentUserUseCase } from '../application/use-cases/update-current-user.use-case';
+import { ConfirmEmailChangeUseCase } from '../application/commands/confirm-email-change.use-case';
+import { DeleteProfilePictureUseCase } from '../application/commands/delete-profile-picture.use-case';
+import { DeleteUserUseCase } from '../application/commands/delete-user.use-case';
+import { GetCurrentUserUseCase } from '../application/queries/get-current-user.use-case';
+import { ReplaceProfilePictureUseCase } from '../application/commands/replace-profile-picture.use-case';
+import { UpdateCurrentUserUseCase } from '../application/commands/update-current-user.use-case';
 import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from './update-user.views';
 
 const emailChangeStatus: Record<EmailChangeOutcome['kind'], HttpStatus> = {

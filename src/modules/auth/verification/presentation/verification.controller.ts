@@ -12,10 +12,10 @@ import {
   createVerificationEmailRequestSchema,
   verifyEmailRequestSchema,
 } from '@strong-together/shared';
-import { CreateVerificationEmailUseCase } from '../application/use-cases/create-verification-email.use-case';
-import { GetVerificationStatusUseCase } from '../application/use-cases/get-verification-status.use-case';
-import { UpdateUnverifiedEmailUseCase } from '../application/use-cases/update-unverified-email.use-case';
-import { VerifyEmailUseCase } from '../application/use-cases/verify-email.use-case';
+import { CreateVerificationEmailUseCase } from '../application/commands/create-verification-email.use-case';
+import { GetVerificationStatusUseCase } from '../application/queries/get-verification-status.use-case';
+import { UpdateUnverifiedEmailUseCase } from '../application/commands/update-unverified-email.use-case';
+import { VerifyEmailUseCase } from '../application/commands/verify-email.use-case';
 import { generateVerificationFailedHTML, generateVerifiedHTML } from './verification.views';
 import {
   RateLimit,

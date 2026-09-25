@@ -39,10 +39,7 @@ describe('MessagesController', () => {
   it('GET /api/messages returns a persisted system message', async () => {
     const user = await messageUser('messages_flow');
     const messageId = await insertSystemMessage(user.userId);
-    const messages = await request(app.getHttpServer())
-      .get('/api/messages')
-      .query({ tz: 'Asia/Jerusalem' })
-      .set(authHeaders(user.accessToken));
+    const messages = await request(app.getHttpServer()).get('/api/messages').query({ tz: 'Asia/Jerusalem' }).set(authHeaders(user.accessToken));
 
     expectSchema(listMessagesResponseSchema, messages.body);
     expect(messages.body.messages[0].id).toBe(messageId);

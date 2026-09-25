@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { AuthenticationGuard } from '../../../common/guards/authentication.guard';
 import { AuthorizationGuard } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
-import { SocialUsersRepository } from './application/ports/social-users.repository';
-import { GetSocialUserUseCase } from './application/use-cases/get-social-user.use-case';
-import { SearchSocialUsersUseCase } from './application/use-cases/search-social-users.use-case';
-import { PostgresSocialUsersRepository } from './infrastructure/postgres-social-users.repository';
-import { SocialUsersSql } from './infrastructure/social-users.sql';
+import { SocialUsersQueries } from './application/ports/social-users.queries';
+import { GetSocialUserUseCase } from './application/queries/get-social-user.use-case';
+import { SearchSocialUsersUseCase } from './application/queries/search-social-users.use-case';
+import { PostgresSocialUsersQueries } from './infrastructure/persistence/postgres-social-users.queries';
+import { FindByIdSql } from './infrastructure/persistence/reads/find-by-id.sql';
+import { SearchSql } from './infrastructure/persistence/reads/search.sql';
 import { SocialUsersController } from './presentation/social-users.controller';
 
 @Module({
@@ -14,8 +15,9 @@ import { SocialUsersController } from './presentation/social-users.controller';
   providers: [
     GetSocialUserUseCase,
     SearchSocialUsersUseCase,
-    SocialUsersSql,
-    { provide: SocialUsersRepository, useClass: PostgresSocialUsersRepository },
+    FindByIdSql,
+    SearchSql,
+    { provide: SocialUsersQueries, useClass: PostgresSocialUsersQueries },
     DpopGuard,
     AuthenticationGuard,
     AuthorizationGuard,

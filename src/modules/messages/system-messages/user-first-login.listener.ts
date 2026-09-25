@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { USER_FIRST_LOGIN_EVENT, UserFirstLoginEvent } from '../../../common/application/events/user-first-login.event';
-import { SendWelcomeSystemMessageUseCase } from './application/use-cases/send-welcome-system-message.use-case';
+import { SendWelcomeSystemMessageUseCase } from './application/commands/send-welcome-system-message.use-case';
 
 /** Handles first-login events by creating the user's welcome system message. */
 @Injectable()

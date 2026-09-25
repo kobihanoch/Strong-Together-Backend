@@ -8,9 +8,9 @@ import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../common/types/express';
-import { GetReminderSettingsUseCase } from '../application/use-cases/get-reminder-settings.use-case';
-import { UpdateReminderTimeZoneUseCase } from '../application/use-cases/update-reminder-time-zone.use-case';
-import { UpsertReminderSettingsUseCase } from '../application/use-cases/upsert-reminder-settings.use-case';
+import { GetReminderSettingsUseCase } from '../application/queries/get-reminder-settings.use-case';
+import { UpdateReminderTimeZoneUseCase } from '../application/commands/update-reminder-time-zone.use-case';
+import { UpsertReminderSettingsUseCase } from '../application/commands/upsert-reminder-settings.use-case';
 
 /** Reminder-settings routes for authenticated users. */
 @Controller('api/reminders')

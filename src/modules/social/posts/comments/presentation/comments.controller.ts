@@ -25,10 +25,10 @@ import { AuthorizationGuard, Roles } from '../../../../../common/guards/authoriz
 import { DpopGuard } from '../../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../../common/types/express';
-import { AddCommentUseCase } from '../application/use-cases/add-comment.use-case';
-import { DeleteCommentUseCase } from '../application/use-cases/delete-comment.use-case';
-import { EditCommentUseCase } from '../application/use-cases/edit-comment.use-case';
-import { ListPostCommentsUseCase } from '../application/use-cases/list-post-comments.use-case';
+import { AddCommentUseCase } from '../application/commands/add-comment.use-case';
+import { DeleteCommentUseCase } from '../application/commands/delete-comment.use-case';
+import { EditCommentUseCase } from '../application/commands/edit-comment.use-case';
+import { ListPostCommentsUseCase } from '../application/queries/list-post-comments.use-case';
 
 /** Exposes authenticated comment writes for social posts. */
 @Controller('api/social/posts')

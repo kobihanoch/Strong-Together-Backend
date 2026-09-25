@@ -44,16 +44,16 @@ import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { imageUploadOptions } from '../../../../common/interceptors/image-upload.config';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
-import { CreateCrewUseCase } from '../application/use-cases/create-crew.use-case';
-import { DeleteCrewProfilePictureUseCase } from '../application/use-cases/delete-crew-profile-picture.use-case';
-import { DeleteCrewUseCase } from '../application/use-cases/delete-crew.use-case';
-import { GetCrewUseCase } from '../application/use-cases/get-crew.use-case';
-import { LeaveCrewUseCase } from '../application/use-cases/leave-crew.use-case';
-import { ListCrewParticipantsUseCase } from '../application/use-cases/list-crew-participants.use-case';
-import { ListCrewsUseCase } from '../application/use-cases/list-crews.use-case';
-import { ListMyCrewsUseCase } from '../application/use-cases/list-my-crews.use-case';
-import { ReplaceCrewProfilePictureUseCase } from '../application/use-cases/replace-crew-profile-picture.use-case';
-import { UpdateCrewUseCase } from '../application/use-cases/update-crew.use-case';
+import { CreateCrewUseCase } from '../application/commands/create-crew.use-case';
+import { DeleteCrewProfilePictureUseCase } from '../application/commands/delete-crew-profile-picture.use-case';
+import { DeleteCrewUseCase } from '../application/commands/delete-crew.use-case';
+import { GetCrewUseCase } from '../application/queries/get-crew.use-case';
+import { LeaveCrewUseCase } from '../application/commands/leave-crew.use-case';
+import { ListCrewParticipantsUseCase } from '../application/queries/list-crew-participants.use-case';
+import { ListCrewsUseCase } from '../application/queries/list-crews.use-case';
+import { ListMyCrewsUseCase } from '../application/queries/list-my-crews.use-case';
+import { ReplaceCrewProfilePictureUseCase } from '../application/commands/replace-crew-profile-picture.use-case';
+import { UpdateCrewUseCase } from '../application/commands/update-crew.use-case';
 
 /** Exposes authenticated CRUD endpoints for crews. */
 @Controller('api/social/crews')

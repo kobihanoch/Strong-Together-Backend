@@ -8,8 +8,8 @@ import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../common/types/express';
-import { GetWorkoutSchedulesUseCase } from '../application/use-cases/get-workout-schedules.use-case';
-import { ReplaceWorkoutSchedulesUseCase } from '../application/use-cases/replace-workout-schedules.use-case';
+import { GetWorkoutSchedulesUseCase } from '../application/queries/get-workout-schedules.use-case';
+import { ReplaceWorkoutSchedulesUseCase } from '../application/commands/replace-workout-schedules.use-case';
 
 /** E */
 @Controller('api/workout-schedules')

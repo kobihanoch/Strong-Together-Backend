@@ -25,11 +25,11 @@ import { AuthorizationGuard, Roles } from '../../../../../common/guards/authoriz
 import { DpopGuard } from '../../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../../common/types/express';
-import { InviteCrewUserUseCase } from '../application/use-cases/invite-crew-user.use-case';
-import { ListCrewInvitationsUseCase } from '../application/use-cases/list-crew-invitations.use-case';
-import { ListPendingCrewJoinRequestsUseCase } from '../application/use-cases/list-pending-crew-join-requests.use-case';
-import { RequestToJoinCrewUseCase } from '../application/use-cases/request-to-join-crew.use-case';
-import { UpdateCrewParticipationRequestUseCase } from '../application/use-cases/update-crew-participation-request.use-case';
+import { InviteCrewUserUseCase } from '../application/commands/invite-crew-user.use-case';
+import { ListCrewInvitationsUseCase } from '../application/queries/list-crew-invitations.use-case';
+import { ListPendingCrewJoinRequestsUseCase } from '../application/queries/list-pending-crew-join-requests.use-case';
+import { RequestToJoinCrewUseCase } from '../application/commands/request-to-join-crew.use-case';
+import { UpdateCrewParticipationRequestUseCase } from '../application/commands/update-crew-participation-request.use-case';
 
 /** Exposes authenticated endpoints for creating and resolving crew participation requests. */
 @Controller('api/social/crews')

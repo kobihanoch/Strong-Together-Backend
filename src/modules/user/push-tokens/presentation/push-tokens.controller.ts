@@ -8,7 +8,7 @@ import { AuthorizationGuard, Roles } from '../../../../common/guards/authorizati
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
-import { ReplacePushTokenUseCase } from '../application/use-cases/replace-push-token.use-case';
+import { ReplacePushTokenUseCase } from '../application/commands/replace-push-token.use-case';
 
 /** E */
 @Controller('api/users')

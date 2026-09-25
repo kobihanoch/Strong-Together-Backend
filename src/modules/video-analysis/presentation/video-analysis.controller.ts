@@ -11,7 +11,7 @@ import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../common/types/express';
-import { CreateVideoUploadUrlUseCase } from '../application/use-cases/create-video-upload-url.use-case';
+import { CreateVideoUploadUrlUseCase } from '../application/commands/create-video-upload-url.use-case';
 import { normalizeHeaderValue } from './video-analysis.utils';
 
 /** Video-analysis routes for authenticated users. */
