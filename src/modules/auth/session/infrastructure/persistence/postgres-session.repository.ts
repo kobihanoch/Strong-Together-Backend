@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { LogoutSql } from './writes/logout.sql';
 import { ClearPushTokenSql } from './writes/clear-push-token.sql';
-import { FindTokenVersionSql } from './writes/find-token-version.sql';
+import { FindTokenVersionSql } from './reads/find-token-version.sql';
 import { RotateIfVersionSql } from './writes/rotate-if-version.sql';
 import { RotateSql } from './writes/rotate.sql';
-import { FindLastLoginSql } from './writes/find-last-login.sql';
-import { FindLoginUserSql } from './writes/find-login-user.sql';
+import { FindLastLoginSql } from './reads/find-last-login.sql';
+import { FindLoginUserSql } from './reads/find-login-user.sql';
 import type { LoginUser, RotatedSession } from '../../../core/application/models/auth.models';
 import { SessionRepository } from '../../application/ports/session.repository';
 

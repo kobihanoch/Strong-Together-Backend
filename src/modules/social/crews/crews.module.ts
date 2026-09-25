@@ -21,7 +21,7 @@ import { ListParticipantsSql } from './infrastructure/persistence/reads/list-par
 import { ListSql } from './infrastructure/persistence/reads/list.sql';
 import { CreateSql } from './infrastructure/persistence/writes/create.sql';
 import { DeleteSql } from './infrastructure/persistence/writes/delete.sql';
-import { FindProfilePictureForUpdateSql } from './infrastructure/persistence/writes/find-profile-picture-for-update.sql';
+import { FindProfilePictureForUpdateSql } from './infrastructure/persistence/reads/find-profile-picture-for-update.sql';
 import { LeaveSql } from './infrastructure/persistence/writes/leave.sql';
 import { UpdateProfilePictureSql } from './infrastructure/persistence/writes/update-profile-picture.sql';
 import { UpdateSql } from './infrastructure/persistence/writes/update.sql';

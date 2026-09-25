@@ -5,7 +5,7 @@ import { UserRegistrationEvents } from './application/ports/user-registration-ev
 import { CreateUserUseCase } from './application/commands/create-user.use-case';
 import { BcryptPasswordHasher } from './infrastructure/bcrypt-password.hasher';
 import { CreateSql } from './infrastructure/persistence/writes/create.sql';
-import { ExistsSql } from './infrastructure/persistence/writes/exists.sql';
+import { ExistsSql } from './infrastructure/persistence/reads/exists.sql';
 import { PostgresCreateUserRepository } from './infrastructure/persistence/postgres-create-user.repository';
 import { NestUserRegistrationEvents } from './infrastructure/nest-user-registration.events';
 import { CreateUserController } from './presentation/create-user.controller';

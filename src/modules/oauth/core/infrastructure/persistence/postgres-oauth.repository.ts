@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserSql } from './writes/create-user.sql';
 import { LinkByVerifiedEmailSql } from './writes/link-by-verified-email.sql';
-import { FindLinkedUserSql } from './writes/find-linked-user.sql';
+import { FindLinkedUserSql } from './reads/find-linked-user.sql';
 import type { OAuthProvider } from '../../application/models/oauth.models';
 import { OAuthRepository } from '../../application/ports/oauth.repository';
 

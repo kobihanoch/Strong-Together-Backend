@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DeleteSql } from './writes/delete.sql';
 import { LeaveSql } from './writes/leave.sql';
 import { UpdateProfilePictureSql } from './writes/update-profile-picture.sql';
-import { FindProfilePictureForUpdateSql } from './writes/find-profile-picture-for-update.sql';
+import { FindProfilePictureForUpdateSql } from './reads/find-profile-picture-for-update.sql';
 import { UpdateSql } from './writes/update.sql';
 import { CreateSql } from './writes/create.sql';
 import type { Crew, DeleteCrewOutcome, LeaveCrewOutcome, UpdateCrewOutcome } from '../../application/models/crews.models';

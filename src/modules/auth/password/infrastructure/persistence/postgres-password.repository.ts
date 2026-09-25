@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UpdatePasswordSql } from './writes/update-password.sql';
-import { FindResetRecipientSql } from './writes/find-reset-recipient.sql';
+import { FindResetRecipientSql } from './reads/find-reset-recipient.sql';
 import type { AuthEmailRecipient } from '../../../core/application/models/auth.models';
 import { PasswordRepository } from '../../application/ports/password.repository';
 

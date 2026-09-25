@@ -10,9 +10,9 @@ import { RefreshSessionUseCase } from './application/commands/refresh-session.us
 import { NestAuthenticationEvents } from './infrastructure/nest-authentication-events';
 import { PostgresSessionRepository } from './infrastructure/persistence/postgres-session.repository';
 import { ClearPushTokenSql } from './infrastructure/persistence/writes/clear-push-token.sql';
-import { FindLastLoginSql } from './infrastructure/persistence/writes/find-last-login.sql';
-import { FindLoginUserSql } from './infrastructure/persistence/writes/find-login-user.sql';
-import { FindTokenVersionSql } from './infrastructure/persistence/writes/find-token-version.sql';
+import { FindLastLoginSql } from './infrastructure/persistence/reads/find-last-login.sql';
+import { FindLoginUserSql } from './infrastructure/persistence/reads/find-login-user.sql';
+import { FindTokenVersionSql } from './infrastructure/persistence/reads/find-token-version.sql';
 import { LogoutSql } from './infrastructure/persistence/writes/logout.sql';
 import { RotateIfVersionSql } from './infrastructure/persistence/writes/rotate-if-version.sql';
 import { RotateSql } from './infrastructure/persistence/writes/rotate.sql';

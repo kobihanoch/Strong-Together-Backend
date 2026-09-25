@@ -11,9 +11,9 @@ import { VerifyEmailUseCase } from './application/commands/verify-email.use-case
 import { PostgresVerificationRepository } from './infrastructure/persistence/postgres-verification.repository';
 import { QueuedVerificationEmailSender } from './infrastructure/queued-verification-email.sender';
 import { GetVerificationStatusSql } from './infrastructure/persistence/reads/get-verification-status.sql';
-import { EmailExistsSql } from './infrastructure/persistence/writes/email-exists.sql';
-import { FindByEmailSql } from './infrastructure/persistence/writes/find-by-email.sql';
-import { FindByUsernameSql } from './infrastructure/persistence/writes/find-by-username.sql';
+import { EmailExistsSql } from './infrastructure/persistence/reads/email-exists.sql';
+import { FindByEmailSql } from './infrastructure/persistence/reads/find-by-email.sql';
+import { FindByUsernameSql } from './infrastructure/persistence/reads/find-by-username.sql';
 import { UpdateEmailSql } from './infrastructure/persistence/writes/update-email.sql';
 import { UpdateVerificationSql } from './infrastructure/persistence/writes/update-verification.sql';
 import { VerificationController } from './presentation/verification.controller';

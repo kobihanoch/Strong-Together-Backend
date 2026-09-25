@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UpdateProfilePictureSql } from './writes/update-profile-picture.sql';
-import { FindProfilePictureSql } from './writes/find-profile-picture.sql';
+import { FindProfilePictureSql } from './reads/find-profile-picture.sql';
 import { DeleteSql } from './writes/delete.sql';
 import { UpdateEmailSql } from './writes/update-email.sql';
 import { UpdateSql } from './writes/update.sql';

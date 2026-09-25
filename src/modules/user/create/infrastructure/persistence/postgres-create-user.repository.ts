@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateSql } from './writes/create.sql';
-import { ExistsSql } from './writes/exists.sql';
+import { ExistsSql } from './reads/exists.sql';
 import type { CreatedUser } from '../../application/models/create-user.models';
 import { CreateUserRepository } from '../../application/ports/create-user.repository';
 

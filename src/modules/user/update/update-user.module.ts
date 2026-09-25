@@ -21,7 +21,7 @@ import { QueuedUpdateEmailSender } from './infrastructure/queued-update-email.se
 import { SupabaseProfilePictureStorage } from './infrastructure/supabase-profile-picture.storage';
 import { FindSql } from './infrastructure/persistence/reads/find.sql';
 import { DeleteSql } from './infrastructure/persistence/writes/delete.sql';
-import { FindProfilePictureSql } from './infrastructure/persistence/writes/find-profile-picture.sql';
+import { FindProfilePictureSql } from './infrastructure/persistence/reads/find-profile-picture.sql';
 import { UpdateEmailSql } from './infrastructure/persistence/writes/update-email.sql';
 import { UpdateProfilePictureSql } from './infrastructure/persistence/writes/update-profile-picture.sql';
 import { UpdateSql } from './infrastructure/persistence/writes/update.sql';

@@ -7,7 +7,7 @@ import { PasswordRepository } from './application/ports/password.repository';
 import { PasswordResetEmailSender } from './application/ports/password-reset-email-sender.port';
 import { CreatePasswordResetRequestUseCase } from './application/commands/create-password-reset-request.use-case';
 import { ResetPasswordUseCase } from './application/commands/reset-password.use-case';
-import { FindResetRecipientSql } from './infrastructure/persistence/writes/find-reset-recipient.sql';
+import { FindResetRecipientSql } from './infrastructure/persistence/reads/find-reset-recipient.sql';
 import { UpdatePasswordSql } from './infrastructure/persistence/writes/update-password.sql';
 import { PostgresPasswordRepository } from './infrastructure/persistence/postgres-password.repository';
 import { QueuedPasswordResetEmailSender } from './infrastructure/queued-password-reset-email.sender';
