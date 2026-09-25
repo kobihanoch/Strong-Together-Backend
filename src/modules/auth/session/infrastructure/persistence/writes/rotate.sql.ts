@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DBService } from '../../../../../../infrastructure/db/db.service';
+import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
 import type { RotatedSession } from '../../../../core/application/models/auth.models';
 import type { RotatedSessionSqlRow } from '../session.db-types';
 

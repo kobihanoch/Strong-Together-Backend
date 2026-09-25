@@ -1,8 +1,8 @@
-import { exercise } from '../../../../../infrastructure/db/schema/drizzle/workout/exercises/table';
-import { exerciseToWorkoutSplit } from '../../../../../infrastructure/db/schema/drizzle/workout/exercisetoworkoutsplit/table';
-import { workoutPlan } from '../../../../../infrastructure/db/schema/drizzle/workout/workout_plan/table';
-import { workoutSet } from '../../../../../infrastructure/db/schema/drizzle/workout/workout_set/table';
-import { workoutSplit } from '../../../../../infrastructure/db/schema/drizzle/workout/workout_split/table';
+import { exercise } from '../../../../../infrastructure/persistence/schema/drizzle/workout/exercises/table';
+import { exerciseToWorkoutSplit } from '../../../../../infrastructure/persistence/schema/drizzle/workout/exercisetoworkoutsplit/table';
+import { workoutPlan } from '../../../../../infrastructure/persistence/schema/drizzle/workout/workout_plan/table';
+import { workoutSet } from '../../../../../infrastructure/persistence/schema/drizzle/workout/workout_set/table';
+import { workoutSplit } from '../../../../../infrastructure/persistence/schema/drizzle/workout/workout_split/table';
 
 /** Represents the plan db row value. */
 type PlanDbRow = typeof workoutPlan.$inferSelect;

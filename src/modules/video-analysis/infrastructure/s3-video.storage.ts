@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { S3Service } from '../../../infrastructure/aws/s3/s3.service';
+import { S3Service } from '../../../infrastructure/connections/aws/s3/s3.service';
 import { VideoStorage } from '../application/ports/video-storage.port';
 
 /** S3-backed storage for video-analysis uploads. */

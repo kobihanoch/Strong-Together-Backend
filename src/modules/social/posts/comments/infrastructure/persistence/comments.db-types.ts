@@ -1,4 +1,4 @@
-import { comment } from '../../../../../../infrastructure/db/schema/drizzle/social/comment/table';
+import { comment } from '../../../../../../infrastructure/persistence/schema/drizzle/social/comment/table';
 
 /** Represents the comment db row value. */
 type CommentDbRow = typeof comment.$inferSelect;

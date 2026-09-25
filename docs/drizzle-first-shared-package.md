@@ -54,7 +54,7 @@ Legacy `*.dtos.ts` and the former `database/` schema layer have been removed. In
 | Use-case command, result, or repository-facing read model | `application/models/*.models.ts` |
 | Repository/cache/queue/storage abstraction | `application/ports/*` |
 | SQL row, insert/update shape, provider payload | `infrastructure/*.db-types.ts` or adapter-local type |
-| Drizzle table/view definition | `src/infrastructure/db/schema/drizzle` |
+| Drizzle table/view definition | `src/infrastructure/persistence/schema/drizzle` |
 
 ## Development Flow
 

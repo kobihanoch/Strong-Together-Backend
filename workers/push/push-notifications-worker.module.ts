@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { PushNotificationsModule } from '../../src/infrastructure/queues/push-notifications/push-notifications.module';
+import { PushNotificationsModule } from '../../src/infrastructure/capabilities/queues/push-notifications/push-notifications.module';
 import { PushNotificationsWorkerService } from './push-notifications-worker';
-import { DBModule } from '../../src/infrastructure/db/db.module';
+import { DBModule } from '../../src/infrastructure/connections/postgres/db.module';
 import { PushQueries } from '../../src/modules/push/application/ports/push.queries';
 import { PostgresPushQueries } from '../../src/modules/push/infrastructure/persistence/postgres-push.queries';
 import { FindDueWorkoutRemindersSql } from '../../src/modules/push/infrastructure/persistence/reads/find-due-workout-reminders.sql';

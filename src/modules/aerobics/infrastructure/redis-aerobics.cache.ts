@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { redisConfig } from '../../../config/redis.config';
-import { CacheService } from '../../../infrastructure/cache/cache.service';
+import { CacheService } from '../../../infrastructure/capabilities/cache/cache.service';
 import type { AerobicsHistory } from '../application/models/aerobics.models';
 import { AerobicsCache, type AerobicsCacheEntry } from '../application/ports/aerobics-cache.port';
 

@@ -6,9 +6,9 @@ This project uses a repo-owned PostgreSQL migration flow built around Drizzle.
 
 The database pipeline is based on committed files inside the repo:
 
-- Drizzle schema: [`src/infrastructure/db/schema/drizzle`](../src/infrastructure/db/schema/drizzle)
-- Active migrations: [`src/infrastructure/db/schema/migrations`](../src/infrastructure/db/schema/migrations)
-- Seeds: [`src/infrastructure/db/schema/seeds`](../src/infrastructure/db/schema/seeds)
+- Drizzle schema: [`src/infrastructure/persistence/schema/drizzle`](../src/infrastructure/persistence/schema/drizzle)
+- Active migrations: [`src/infrastructure/persistence/schema/migrations`](../src/infrastructure/persistence/schema/migrations)
+- Seeds: [`src/infrastructure/persistence/schema/seeds`](../src/infrastructure/persistence/schema/seeds)
 
 The Drizzle `0000_baseline.sql` migration is the consolidated starting point. The same directory contains every active migration through the current schema; new changes must be generated with Drizzle.
 

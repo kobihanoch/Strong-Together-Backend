@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import jwt from 'jsonwebtoken';
 import { authConfig } from '../../../../config/auth.config';
-import { CacheService } from '../../../../infrastructure/cache/cache.service';
+import { CacheService } from '../../../../infrastructure/capabilities/cache/cache.service';
 import type { EmailChangeClaims } from '../application/models/update-user.models';
 import { EmailChangeTokens } from '../application/ports/email-change-tokens.port';
 /** JWT and cache adapter for one-time email-change tokens. */

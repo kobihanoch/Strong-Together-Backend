@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DBService } from '../../../../../../infrastructure/db/db.service';
+import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
 import type { WorkoutExerciseInput, WorkoutSplitInput } from '../../../application/models/workout-plan.models';
 import type { ExerciseAssignmentIdSqlRow, ExistingExercisesSqlRow, WorkoutPlanIdSqlRow, WorkoutSplitIdSqlRow } from '../workout-plan.db-types';
 

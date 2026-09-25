@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthenticationGuard } from '../../../common/guards/authentication.guard';
 import { AuthorizationGuard } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
-import { SupabaseModule } from '../../../infrastructure/supabase/supabase.module';
+import { SupabaseModule } from '../../../infrastructure/capabilities/storage/supabase/supabase.module';
 import { CrewImageStorage } from './application/ports/crew-image-storage.port';
 import { CrewsRepository } from './application/ports/crews.repository';
 import { CreateCrewUseCase } from './application/commands/create-crew.use-case';

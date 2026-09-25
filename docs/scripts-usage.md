@@ -128,14 +128,14 @@ npm run test:env:down
 ### Create a migration
 
 1. Start the Drizzle dev database.
-2. Change the TypeScript schema under `src/infrastructure/db/schema/drizzle`.
+2. Change the TypeScript schema under `src/infrastructure/persistence/schema/drizzle`.
 3. Generate the Drizzle diff:
 
 ```bash
 npm run db:migrate:diff -- add_feature_name
 ```
 
-4. Review the generated SQL in `src/infrastructure/db/schema/migrations`.
+4. Review the generated SQL in `src/infrastructure/persistence/schema/migrations`.
 
 Drizzle Kit generates table and policy diffs, but it does not fully model PostgreSQL routines and detailed privilege boundaries. When a change includes `SECURITY DEFINER` functions or role grants, add and review those statements in the generated migration. Grant function execution explicitly and keep runtime roles without direct table access unless the documented RLS model requires it.
 5. Apply locally:

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthenticationGuard } from '../../common/guards/authentication.guard';
 import { AuthorizationGuard } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
-import { AWSModule } from '../../infrastructure/aws/aws.module';
+import { AWSModule } from '../../infrastructure/connections/aws/aws.module';
 import { VideoAnalysisPublisher } from './application/ports/video-analysis-publisher.port';
 import { VideoAnalysisTelemetry } from './application/ports/video-analysis-telemetry.port';
 import { VideoStorage } from './application/ports/video-storage.port';

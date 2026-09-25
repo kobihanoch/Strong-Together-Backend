@@ -1,8 +1,8 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { createLogger } from '../../src/infrastructure/logger';
-import { MailerService } from '../../src/infrastructure/mailer/mailer.service';
-import { EmailsQueueService } from '../../src/infrastructure/queues/emails/emails-queue';
-import { captureWorkerException } from '../../src/infrastructure/sentry';
+import { createLogger } from '../../src/infrastructure/capabilities/observability/logger';
+import { MailerService } from '../../src/infrastructure/capabilities/mailer/mailer.service';
+import { EmailsQueueService } from '../../src/infrastructure/capabilities/queues/emails/emails-queue';
+import { captureWorkerException } from '../../src/infrastructure/capabilities/observability/sentry';
 
 const logger = createLogger('worker:emails', {
   queue: 'emailsQueue',

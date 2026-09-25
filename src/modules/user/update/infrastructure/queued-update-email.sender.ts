@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { generateJti } from '../../../../common/authentication/authentication.utils';
 import { appConfig } from '../../../../config/app.config';
 import { authConfig } from '../../../../config/auth.config';
-import { EmailsProducerService } from '../../../../infrastructure/queues/emails/emails-producer';
+import { EmailsProducerService } from '../../../../infrastructure/capabilities/queues/emails/emails-producer';
 import { UpdateEmailSender } from '../application/ports/update-email-sender.port';
 import { generateConfirmEmailChange } from './update-email.templates';
 

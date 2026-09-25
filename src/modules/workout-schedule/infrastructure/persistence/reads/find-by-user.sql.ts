@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DBService } from '../../../../../infrastructure/db/db.service';
+import { DBService } from '../../../../../infrastructure/connections/postgres/db.service';
 import type { WorkoutScheduleSqlRow } from '../workout-schedule.db-types';
 
 /** Executes workout-schedule SQL inside the active RLS transaction. */

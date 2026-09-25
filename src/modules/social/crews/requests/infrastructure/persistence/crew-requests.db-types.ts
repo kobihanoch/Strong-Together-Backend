@@ -1,4 +1,4 @@
-import { crewParticipationRequest } from '../../../../../../infrastructure/db/schema/drizzle/social/crew_participation_request/table';
+import { crewParticipationRequest } from '../../../../../../infrastructure/persistence/schema/drizzle/social/crew_participation_request/table';
 
 /** Represents the crew participation request db row value. */
 type CrewParticipationRequestDbRow = typeof crewParticipationRequest.$inferSelect;

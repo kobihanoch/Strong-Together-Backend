@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { redisConfig } from '../../../config/redis.config';
-import { CacheService } from '../../../infrastructure/cache/cache.service';
+import { CacheService } from '../../../infrastructure/capabilities/cache/cache.service';
 import type { WorkoutSchedules } from '../application/models/workout-schedule.models';
 import { WorkoutScheduleCache, type WorkoutScheduleCacheEntry } from '../application/ports/workout-schedule-cache.port';
 

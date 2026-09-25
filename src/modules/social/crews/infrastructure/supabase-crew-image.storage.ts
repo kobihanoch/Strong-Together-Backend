@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { supabaseConfig } from '../../../../config/storage.config';
-import { SupabaseStorageService } from '../../../../infrastructure/supabase/storage/supabase-storage.service';
+import { SupabaseStorageService } from '../../../../infrastructure/capabilities/storage/supabase/storage/supabase-storage.service';
 import { CrewImageStorage, type StoredCrewImage } from '../application/ports/crew-image-storage.port';
 
 /** Supabase-backed storage adapter for crew profile images. */

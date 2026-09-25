@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { SocketIOService } from '../../../../infrastructure/socket.io/socket.io.service';
+import { SocketIOService } from '../../../../infrastructure/capabilities/realtime/socket.io.service';
 import type { DeliveredMessage } from '../application/models/system-messages.models';
 import { MessagePublisher } from '../application/ports/message-publisher.port';
 

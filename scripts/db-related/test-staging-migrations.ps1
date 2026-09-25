@@ -60,9 +60,9 @@ if ($LASTEXITCODE) { throw 'Staging restore failed' }
 
 # The restored production snapshot is the state represented by 0000_baseline.
 # Record only that migration so Drizzle starts execution at 0001.
-$baseline = (Get-Content 'src/infrastructure/db/schema/migrations/meta/_journal.json' -Raw | ConvertFrom-Json).entries | Where-Object { $_.idx -eq 0 }
+$baseline = (Get-Content 'src/infrastructure/persistence/schema/migrations/meta/_journal.json' -Raw | ConvertFrom-Json).entries | Where-Object { $_.idx -eq 0 }
 if (!$baseline) { throw 'Migration journal has no baseline (idx 0)' }
-$baselineHash = (Get-FileHash 'src/infrastructure/db/schema/migrations/0000_baseline.sql' -Algorithm SHA256).Hash.ToLowerInvariant()
+$baselineHash = (Get-FileHash 'src/infrastructure/persistence/schema/migrations/0000_baseline.sql' -Algorithm SHA256).Hash.ToLowerInvariant()
 $baselineSql = @"
 CREATE SCHEMA IF NOT EXISTS drizzle;
 CREATE TABLE IF NOT EXISTS drizzle.__drizzle_migrations (

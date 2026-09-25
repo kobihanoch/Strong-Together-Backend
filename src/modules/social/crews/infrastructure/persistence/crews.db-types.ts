@@ -1,6 +1,6 @@
-import { crew } from '../../../../../infrastructure/db/schema/drizzle/social/crew/table';
-import { crewMembership } from '../../../../../infrastructure/db/schema/drizzle/social/crew_membership/table';
-import { crewExpandedView } from '../../../../../infrastructure/db/schema/drizzle/social/crew/views/crew-expanded.view';
+import { crew } from '../../../../../infrastructure/persistence/schema/drizzle/social/crew/table';
+import { crewMembership } from '../../../../../infrastructure/persistence/schema/drizzle/social/crew_membership/table';
+import { crewExpandedView } from '../../../../../infrastructure/persistence/schema/drizzle/social/crew/views/crew-expanded.view';
 
 /** Represents the crew db row value. */
 type CrewDbRow = typeof crew.$inferSelect;

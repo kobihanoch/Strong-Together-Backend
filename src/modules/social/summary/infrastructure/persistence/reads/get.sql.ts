@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DBService } from '../../../../../../infrastructure/db/db.service';
+import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
 import type { SocialSummarySqlRow } from '../social-summary.db-types';
 
 /** Executes the authenticated social-summary SQL projection. */

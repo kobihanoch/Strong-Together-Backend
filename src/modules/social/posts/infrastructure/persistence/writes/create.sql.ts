@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DBService } from '../../../../../../infrastructure/db/db.service';
+import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
 import type { PostWriteSqlRow } from '../posts.db-types';
 
 /** Executes post persistence operations inside the request's RLS transaction. */

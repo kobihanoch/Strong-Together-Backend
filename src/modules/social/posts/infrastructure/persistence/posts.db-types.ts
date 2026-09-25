@@ -1,5 +1,5 @@
-import { post } from '../../../../../infrastructure/db/schema/drizzle/social/post/table';
-import { postExpandedView } from '../../../../../infrastructure/db/schema/drizzle/social/post/views/post-expanded.view';
+import { post } from '../../../../../infrastructure/persistence/schema/drizzle/social/post/table';
+import { postExpandedView } from '../../../../../infrastructure/persistence/schema/drizzle/social/post/views/post-expanded.view';
 
 /** Represents the post db row value. */
 type PostDbRow = typeof post.$inferSelect;

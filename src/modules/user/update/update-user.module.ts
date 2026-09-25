@@ -3,8 +3,8 @@ import { AuthenticationGuard } from '../../../common/guards/authentication.guard
 import { AuthorizationGuard } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { RateLimitGuard } from '../../../common/guards/rate-limit.guard';
-import { EmailsModule } from '../../../infrastructure/queues/emails/emails.module';
-import { SupabaseModule } from '../../../infrastructure/supabase/supabase.module';
+import { EmailsModule } from '../../../infrastructure/capabilities/queues/emails/emails.module';
+import { SupabaseModule } from '../../../infrastructure/capabilities/storage/supabase/supabase.module';
 import { EmailChangeTokens } from './application/ports/email-change-tokens.port';
 import { ProfilePictureStorage } from './application/ports/profile-picture-storage.port';
 import { UpdateEmailSender } from './application/ports/update-email-sender.port';

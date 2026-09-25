@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PushNotificationsProducerService } from '../../../infrastructure/queues/push-notifications/push-notifications-producer';
+import { PushNotificationsProducerService } from '../../../infrastructure/capabilities/queues/push-notifications/push-notifications-producer';
 import type { NotificationPayload } from '../application/models/push.models';
 import { WorkoutReminderQueue } from '../application/ports/workout-reminder-queue.port';
 

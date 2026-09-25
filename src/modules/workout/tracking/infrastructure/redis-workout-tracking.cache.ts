@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { redisConfig } from '../../../../config/redis.config';
-import { CacheService } from '../../../../infrastructure/cache/cache.service';
+import { CacheService } from '../../../../infrastructure/capabilities/cache/cache.service';
 import type { ExerciseHistory, PersonalRecords, WorkoutHistory, WorkoutStatistics } from '../application/models/workout-tracking.models';
 import { WorkoutTrackingCache, type WorkoutTrackingCacheEntry } from '../application/ports/workout-tracking-cache.port';
 

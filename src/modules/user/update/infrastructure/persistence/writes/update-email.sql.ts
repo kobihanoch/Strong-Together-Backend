@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import postgres from 'postgres';
-import { DBService } from '../../../../../../infrastructure/db/db.service';
+import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
 /** Executes user profile SQL operations. */
 
 @Injectable()

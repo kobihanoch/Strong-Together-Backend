@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { RateLimitGuard } from '../../../common/guards/rate-limit.guard';
-import { EmailsModule } from '../../../infrastructure/queues/emails/emails.module';
+import { EmailsModule } from '../../../infrastructure/capabilities/queues/emails/emails.module';
 import { AuthCoreModule } from '../core/auth-core.module';
 import { VerificationEmailSender } from './application/ports/verification-email-sender.port';
 import { VerificationRepository } from './application/ports/verification.repository';

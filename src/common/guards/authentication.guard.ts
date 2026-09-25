@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { appConfig } from '../../config/app.config';
-import { applySentryRequestContext } from '../../infrastructure/sentry';
+import { applySentryRequestContext } from '../../infrastructure/capabilities/observability/sentry';
 import { decodeAccessToken, getAccessToken } from '../authentication/authentication.utils';
 import type { AppRequest } from '../types/express';
 

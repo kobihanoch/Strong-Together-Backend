@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PushNotificationsModule } from '../../infrastructure/queues/push-notifications/push-notifications.module';
+import { PushNotificationsModule } from '../../infrastructure/capabilities/queues/push-notifications/push-notifications.module';
 import { PushQueries } from './application/ports/push.queries';
 import { WorkoutReminderQueue } from './application/ports/workout-reminder-queue.port';
 import { EnqueueDueWorkoutRemindersUseCase } from './application/commands/enqueue-due-workout-reminders.use-case';

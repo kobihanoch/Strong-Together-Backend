@@ -1,7 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import type { Response } from 'express';
-import { createLogger } from '../../infrastructure/logger';
-import { captureHttpException } from '../../infrastructure/sentry';
+import { createLogger } from '../../infrastructure/capabilities/observability/logger';
+import { captureHttpException } from '../../infrastructure/capabilities/observability/sentry';
 import type { AppRequest } from '../types/express';
 import {
   ApplicationConflictError,

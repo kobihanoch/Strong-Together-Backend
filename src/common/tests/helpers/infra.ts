@@ -12,7 +12,7 @@ import { createClient } from 'redis';
 import { redisConfig } from '../../../config/redis.config';
 import { emailConfig } from '../../../config/email.config';
 import { awsConfig } from '../../../config/storage.config';
-import { MailerService } from '../../../infrastructure/mailer/mailer.service';
+import { MailerService } from '../../../infrastructure/capabilities/mailer/mailer.service';
 
 const emailQueue = new Bull('test:emailsQueue', redisConfig.url);
 const pushQueue = new Bull('test:pushNotificationsQueue', redisConfig.url);

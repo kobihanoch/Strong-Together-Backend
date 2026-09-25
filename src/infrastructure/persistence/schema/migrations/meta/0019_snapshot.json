@@ -1,0 +1,2372 @@
+{
+  "id": "d84f485e-0532-4498-a260-4d4f5f566b0e",
+  "prevId": "52c59bcb-e9a0-4630-ae7a-63c1bfa789cc",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "identity.oauth_account": {
+      "name": "oauth_account",
+      "schema": "identity",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_user_id": {
+          "name": "provider_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_email": {
+          "name": "provider_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "linked_at": {
+          "name": "linked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "missing_fields": {
+          "name": "missing_fields",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "oauth_account_user_id_fkey": {
+          "name": "oauth_account_user_id_fkey",
+          "tableFrom": "oauth_account",
+          "tableTo": "user",
+          "schemaTo": "identity",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "oauth_account_pkey": {
+          "name": "oauth_account_pkey",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "oauth_account_provider_user_unique": {
+          "name": "oauth_account_provider_user_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "provider",
+            "provider_user_id"
+          ]
+        }
+      },
+      "policies": {
+        "Enable read access for auth users on oauth_account": {
+          "name": "Enable read access for auth users on oauth_account",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"identity\".\"oauth_account\".\"user_id\""
+        },
+        "Enable insert for auth users on oauth_account": {
+          "name": "Enable insert for auth users on oauth_account",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "\"identity\".\"current_user_id\"() = \"identity\".\"oauth_account\".\"user_id\""
+        },
+        "Enable update for auth users on oauth_account": {
+          "name": "Enable update for auth users on oauth_account",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"identity\".\"oauth_account\".\"user_id\"",
+          "withCheck": "\"identity\".\"current_user_id\"() = \"identity\".\"oauth_account\".\"user_id\""
+        },
+        "Enable delete for auth users on oauth_account": {
+          "name": "Enable delete for auth users on oauth_account",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"identity\".\"oauth_account\".\"user_id\""
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "identity.user": {
+      "name": "user",
+      "schema": "identity",
+      "columns": {
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gender": {
+          "name": "gender",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Unknown'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "profile_pic_path": {
+          "name": "profile_pic_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "push_token": {
+          "name": "push_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'User'"
+        },
+        "token_version": {
+          "name": "token_version",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "is_verified": {
+          "name": "is_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "auth_provider": {
+          "name": "auth_provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'app'"
+        },
+        "last_login": {
+          "name": "last_login",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "user_email_ci_unique": {
+          "name": "user_email_ci_unique",
+          "columns": [
+            {
+              "expression": "lower(trim(both from \"email\"))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "user_username_ci_unique": {
+          "name": "user_username_ci_unique",
+          "columns": [
+            {
+              "expression": "lower(trim(both from \"username\"))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "user_pkey": {
+          "name": "user_pkey",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "Enable read access for auth users on own profile": {
+          "name": "Enable read access for auth users on own profile",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"identity\".\"user\".\"id\""
+        },
+        "Allow user to view senders in their messages": {
+          "name": "Allow user to view senders in their messages",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from \"messages\".\"message\" m where m.\"sender_id\" = \"identity\".\"user\".\"id\" and m.\"receiver_id\" = \"identity\".\"current_user_id\"())"
+        },
+        "Enable insert for auth users on own profile": {
+          "name": "Enable insert for auth users on own profile",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "\"identity\".\"current_user_id\"() = \"identity\".\"user\".\"id\""
+        },
+        "Enable insert for public users on own profile": {
+          "name": "Enable insert for public users on own profile",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "public"
+          ],
+          "withCheck": "\"identity\".\"current_user_id\"() = \"identity\".\"user\".\"id\""
+        },
+        "Enable update for auth users on own profile": {
+          "name": "Enable update for auth users on own profile",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"identity\".\"user\".\"id\"",
+          "withCheck": "\"identity\".\"current_user_id\"() = \"identity\".\"user\".\"id\""
+        },
+        "Enable delete for auth users on own profile": {
+          "name": "Enable delete for auth users on own profile",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"identity\".\"user\".\"id\""
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "messages.message": {
+      "name": "message",
+      "schema": "messages",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "sender_id": {
+          "name": "sender_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "\"identity\".\"current_user_id\"()"
+        },
+        "receiver_id": {
+          "name": "receiver_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "\"identity\".\"current_user_id\"()"
+        },
+        "subject": {
+          "name": "subject",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Subject'"
+        },
+        "msg": {
+          "name": "msg",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Hello World'"
+        },
+        "sent_at": {
+          "name": "sent_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "is_read": {
+          "name": "is_read",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {
+        "message_receiver_id_idx": {
+          "name": "message_receiver_id_idx",
+          "columns": [
+            {
+              "expression": "receiver_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "message_sender_id_fkey": {
+          "name": "message_sender_id_fkey",
+          "tableFrom": "message",
+          "tableTo": "user",
+          "schemaTo": "identity",
+          "columnsFrom": [
+            "sender_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "message_receiver_id_fkey": {
+          "name": "message_receiver_id_fkey",
+          "tableFrom": "message",
+          "tableTo": "user",
+          "schemaTo": "identity",
+          "columnsFrom": [
+            "receiver_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "message_pkey": {
+          "name": "message_pkey",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "Enable read access for auth users on message": {
+          "name": "Enable read access for auth users on message",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"messages\".\"message\".\"sender_id\" or \"identity\".\"current_user_id\"() = \"messages\".\"message\".\"receiver_id\""
+        },
+        "Enable insert for auth users on message": {
+          "name": "Enable insert for auth users on message",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "\"identity\".\"current_user_id\"() = \"messages\".\"message\".\"sender_id\" or \"messages\".\"message\".\"sender_id\" = '8dedd0e0-8c25-4c84-a05b-4ae5f5c48f3a'::uuid"
+        },
+        "Enable update for auth users on message": {
+          "name": "Enable update for auth users on message",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"messages\".\"message\".\"sender_id\" or \"identity\".\"current_user_id\"() = \"messages\".\"message\".\"receiver_id\"",
+          "withCheck": "\"identity\".\"current_user_id\"() = \"messages\".\"message\".\"sender_id\" or \"identity\".\"current_user_id\"() = \"messages\".\"message\".\"receiver_id\""
+        },
+        "Enable delete for auth users on message": {
+          "name": "Enable delete for auth users on message",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"messages\".\"message\".\"sender_id\" or \"identity\".\"current_user_id\"() = \"messages\".\"message\".\"receiver_id\""
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "reminders.user_reminder_setting": {
+      "name": "user_reminder_setting",
+      "schema": "reminders",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workout_reminders_enabled": {
+          "name": "workout_reminders_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "reminder_offset_minutes": {
+          "name": "reminder_offset_minutes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 60
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'''UTC''::text'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_reminder_setting_user_id_fkey": {
+          "name": "user_reminder_setting_user_id_fkey",
+          "tableFrom": "user_reminder_setting",
+          "tableTo": "user",
+          "schemaTo": "identity",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_reminder_setting_pkey": {
+          "name": "user_reminder_setting_pkey",
+          "columns": [
+            "user_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "auth can SELECT own reminder settings": {
+          "name": "auth can SELECT own reminder settings",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"reminders\".\"user_reminder_setting\".\"user_id\""
+        },
+        "auth can INSERT own reminder settings": {
+          "name": "auth can INSERT own reminder settings",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "\"identity\".\"current_user_id\"() = \"reminders\".\"user_reminder_setting\".\"user_id\""
+        },
+        "auth can UPDATE own reminder settings": {
+          "name": "auth can UPDATE own reminder settings",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"reminders\".\"user_reminder_setting\".\"user_id\"",
+          "withCheck": "\"identity\".\"current_user_id\"() = \"reminders\".\"user_reminder_setting\".\"user_id\""
+        },
+        "Allow authenticated users to update their own reminder settings": {
+          "name": "Allow authenticated users to update their own reminder settings",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"reminders\".\"user_reminder_setting\".\"user_id\""
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "reminders.user_split_information": {
+      "name": "user_split_information",
+      "schema": "reminders",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "user_split_information_id_seq",
+            "schema": "reminders",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workout_split_id": {
+          "name": "workout_split_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estimated_time_utc": {
+          "name": "estimated_time_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "confidence": {
+          "name": "confidence",
+          "type": "numeric(3, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'1.00'"
+        },
+        "last_computed_at": {
+          "name": "last_computed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "preferred_weekday": {
+          "name": "preferred_weekday",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "user_split_information_confidence_idx": {
+          "name": "user_split_information_confidence_idx",
+          "columns": [
+            {
+              "expression": "preferred_weekday",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "confidence",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"reminders\".\"user_split_information\".\"confidence\" >= 0.60",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "user_split_information_user_weekday_idx": {
+          "name": "user_split_information_user_weekday_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "preferred_weekday",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"reminders\".\"user_split_information\".\"preferred_weekday\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "user_split_information_user_id_fkey": {
+          "name": "user_split_information_user_id_fkey",
+          "tableFrom": "user_split_information",
+          "tableTo": "user",
+          "schemaTo": "identity",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "user_split_information_workout_split_id_fkey": {
+          "name": "user_split_information_workout_split_id_fkey",
+          "tableFrom": "user_split_information",
+          "tableTo": "workout_split",
+          "schemaTo": "workout",
+          "columnsFrom": [
+            "workout_split_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_split_information_pkey": {
+          "name": "user_split_information_pkey",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "user_split_information_user_id_workout_split_id_key": {
+          "name": "user_split_information_user_id_workout_split_id_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "workout_split_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "tracking.aerobic_tracking": {
+      "name": "aerobic_tracking",
+      "schema": "tracking",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "aerobic_tracking_id_seq",
+            "schema": "tracking",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duration_sec": {
+          "name": "duration_sec",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "workout_time_utc": {
+          "name": "workout_time_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "aerobic_tracking_user_id_workout_time_utc_idx": {
+          "name": "aerobic_tracking_user_id_workout_time_utc_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "workout_time_utc",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "aerobic_tracking_user_id_fkey": {
+          "name": "aerobic_tracking_user_id_fkey",
+          "tableFrom": "aerobic_tracking",
+          "tableTo": "user",
+          "schemaTo": "identity",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "aerobic_tracking_pkey": {
+          "name": "aerobic_tracking_pkey",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "Enable read access for auth users on aerobic_tracking": {
+          "name": "Enable read access for auth users on aerobic_tracking",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"tracking\".\"aerobic_tracking\".\"user_id\""
+        },
+        "Enable insert for auth users on aerobic_tracking": {
+          "name": "Enable insert for auth users on aerobic_tracking",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "\"identity\".\"current_user_id\"() = \"tracking\".\"aerobic_tracking\".\"user_id\""
+        },
+        "Enable update for auth users on aerobic_tracking": {
+          "name": "Enable update for auth users on aerobic_tracking",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"tracking\".\"aerobic_tracking\".\"user_id\"",
+          "withCheck": "\"identity\".\"current_user_id\"() = \"tracking\".\"aerobic_tracking\".\"user_id\""
+        },
+        "Enable delete for auth users on aerobic_tracking": {
+          "name": "Enable delete for auth users on aerobic_tracking",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"tracking\".\"aerobic_tracking\".\"user_id\""
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "tracking.exercise_tracking": {
+      "name": "exercise_tracking",
+      "schema": "tracking",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "exercise_tracking_id_seq",
+            "schema": "tracking",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "workout_summary_id": {
+          "name": "workout_summary_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "exercise_to_split_id": {
+          "name": "exercise_to_split_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exercise_id": {
+          "name": "exercise_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "exercise_tracking_workout_summary_id_idx": {
+          "name": "exercise_tracking_workout_summary_id_idx",
+          "columns": [
+            {
+              "expression": "workout_summary_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "exercise_tracking_exercise_to_split_id_fkey": {
+          "name": "exercise_tracking_exercise_to_split_id_fkey",
+          "tableFrom": "exercise_tracking",
+          "tableTo": "exercise_to_workout_split",
+          "schemaTo": "workout",
+          "columnsFrom": [
+            "exercise_to_split_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "exercise_tracking_exercise_id_fkey": {
+          "name": "exercise_tracking_exercise_id_fkey",
+          "tableFrom": "exercise_tracking",
+          "tableTo": "exercise",
+          "schemaTo": "workout",
+          "columnsFrom": [
+            "exercise_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "exercise_tracking_workout_summary_id_fkey": {
+          "name": "exercise_tracking_workout_summary_id_fkey",
+          "tableFrom": "exercise_tracking",
+          "tableTo": "workout_summary",
+          "schemaTo": "tracking",
+          "columnsFrom": [
+            "workout_summary_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "exercise_tracking_pkey": {
+          "name": "exercise_tracking_pkey",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "exercise_tracking_select_by_summary_owner": {
+          "name": "exercise_tracking_select_by_summary_owner",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from \"tracking\".\"workout_summary\" ws where ws.\"id\" = \"tracking\".\"exercise_tracking\".\"workout_summary_id\" and ws.\"user_id\" = \"identity\".\"current_user_id\"())"
+        },
+        "exercise_tracking_insert_by_summary_owner": {
+          "name": "exercise_tracking_insert_by_summary_owner",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "exists (select 1 from \"tracking\".\"workout_summary\" ws where ws.\"id\" = \"tracking\".\"exercise_tracking\".\"workout_summary_id\" and ws.\"user_id\" = \"identity\".\"current_user_id\"())"
+        },
+        "exercise_tracking_update_by_summary_owner": {
+          "name": "exercise_tracking_update_by_summary_owner",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from \"tracking\".\"workout_summary\" ws where ws.\"id\" = \"tracking\".\"exercise_tracking\".\"workout_summary_id\" and ws.\"user_id\" = \"identity\".\"current_user_id\"())",
+          "withCheck": "exists (select 1 from \"tracking\".\"workout_summary\" ws where ws.\"id\" = \"tracking\".\"exercise_tracking\".\"workout_summary_id\" and ws.\"user_id\" = \"identity\".\"current_user_id\"())"
+        },
+        "exercise_tracking_delete_by_summary_owner": {
+          "name": "exercise_tracking_delete_by_summary_owner",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from \"tracking\".\"workout_summary\" ws where ws.\"id\" = \"tracking\".\"exercise_tracking\".\"workout_summary_id\" and ws.\"user_id\" = \"identity\".\"current_user_id\"())"
+        }
+      },
+      "checkConstraints": {
+        "exercise_tracking_xor_check": {
+          "name": "exercise_tracking_xor_check",
+          "value": "num_nonnulls(\"tracking\".\"exercise_tracking\".\"exercise_to_split_id\", \"tracking\".\"exercise_tracking\".\"exercise_id\") = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "tracking.tracking_set": {
+      "name": "tracking_set",
+      "schema": "tracking",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "exercise_tracking_id": {
+          "name": "exercise_tracking_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "set_index": {
+          "name": "set_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reps": {
+          "name": "reps",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "weight": {
+          "name": "weight",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "tracking_set_exercise_tracking_id_idx": {
+          "name": "tracking_set_exercise_tracking_id_idx",
+          "columns": [
+            {
+              "expression": "exercise_tracking_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tracking_set_exercise_tracking_id_fkey": {
+          "name": "tracking_set_exercise_tracking_id_fkey",
+          "tableFrom": "tracking_set",
+          "tableTo": "exercise_tracking",
+          "schemaTo": "tracking",
+          "columnsFrom": [
+            "exercise_tracking_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "tracking_set_pkey": {
+          "name": "tracking_set_pkey",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "tracking_set_exercise_index_unique": {
+          "name": "tracking_set_exercise_index_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "exercise_tracking_id",
+            "set_index"
+          ]
+        }
+      },
+      "policies": {
+        "Enable read access for auth users on tracking_set": {
+          "name": "Enable read access for auth users on tracking_set",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n    select 1\n    from \"tracking\".\"exercise_tracking\" et\n    join \"tracking\".\"workout_summary\" ws on ws.\"id\" = et.\"workout_summary_id\"\n    where et.\"id\" = \"tracking\".\"tracking_set\".\"exercise_tracking_id\"\n      and ws.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
+        },
+        "Enable insert for auth users on tracking_set": {
+          "name": "Enable insert for auth users on tracking_set",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "exists (\n    select 1\n    from \"tracking\".\"exercise_tracking\" et\n    join \"tracking\".\"workout_summary\" ws on ws.\"id\" = et.\"workout_summary_id\"\n    where et.\"id\" = \"tracking\".\"tracking_set\".\"exercise_tracking_id\"\n      and ws.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
+        },
+        "Enable update for auth users on tracking_set": {
+          "name": "Enable update for auth users on tracking_set",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n    select 1\n    from \"tracking\".\"exercise_tracking\" et\n    join \"tracking\".\"workout_summary\" ws on ws.\"id\" = et.\"workout_summary_id\"\n    where et.\"id\" = \"tracking\".\"tracking_set\".\"exercise_tracking_id\"\n      and ws.\"user_id\" = \"identity\".\"current_user_id\"()\n  )",
+          "withCheck": "exists (\n    select 1\n    from \"tracking\".\"exercise_tracking\" et\n    join \"tracking\".\"workout_summary\" ws on ws.\"id\" = et.\"workout_summary_id\"\n    where et.\"id\" = \"tracking\".\"tracking_set\".\"exercise_tracking_id\"\n      and ws.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
+        },
+        "Enable delete for auth users on tracking_set": {
+          "name": "Enable delete for auth users on tracking_set",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n    select 1\n    from \"tracking\".\"exercise_tracking\" et\n    join \"tracking\".\"workout_summary\" ws on ws.\"id\" = et.\"workout_summary_id\"\n    where et.\"id\" = \"tracking\".\"tracking_set\".\"exercise_tracking_id\"\n      and ws.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "tracking.workout_summary": {
+      "name": "workout_summary",
+      "schema": "tracking",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workout_split_id": {
+          "name": "workout_split_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workout_start_utc": {
+          "name": "workout_start_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "workout_end_utc": {
+          "name": "workout_end_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "workout_summary_start_date_idx": {
+          "name": "workout_summary_start_date_idx",
+          "columns": [
+            {
+              "expression": "((\"workout_start_utc\" at time zone 'UTC')::date)",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "workout_summary_user_start_utc_idx": {
+          "name": "workout_summary_user_start_utc_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "workout_start_utc",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "workout_summary_user_id_fkey": {
+          "name": "workout_summary_user_id_fkey",
+          "tableFrom": "workout_summary",
+          "tableTo": "user",
+          "schemaTo": "identity",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "workout_summary_workout_split_id_fkey": {
+          "name": "workout_summary_workout_split_id_fkey",
+          "tableFrom": "workout_summary",
+          "tableTo": "workout_split",
+          "schemaTo": "workout",
+          "columnsFrom": [
+            "workout_split_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "workout_summary_pkey": {
+          "name": "workout_summary_pkey",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "users can read their workout summaries": {
+          "name": "users can read their workout summaries",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"tracking\".\"workout_summary\".\"user_id\" = \"identity\".\"current_user_id\"()"
+        },
+        "users can insert their workout summaries": {
+          "name": "users can insert their workout summaries",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "\"tracking\".\"workout_summary\".\"user_id\" = \"identity\".\"current_user_id\"()"
+        },
+        "users can update their workout summaries": {
+          "name": "users can update their workout summaries",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"tracking\".\"workout_summary\".\"user_id\" = \"identity\".\"current_user_id\"()",
+          "withCheck": "\"tracking\".\"workout_summary\".\"user_id\" = \"identity\".\"current_user_id\"()"
+        },
+        "users can delete their workout summaries": {
+          "name": "users can delete their workout summaries",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"tracking\".\"workout_summary\".\"user_id\" = \"identity\".\"current_user_id\"()"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "workout.exercise": {
+      "name": "exercise",
+      "schema": "workout",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "exercise_id_seq",
+            "schema": "workout",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_muscle": {
+          "name": "target_muscle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "specific_target_muscle": {
+          "name": "specific_target_muscle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "exercise_name_unique": {
+          "name": "exercise_name_unique",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "exercise_pkey": {
+          "name": "exercise_pkey",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "Allow all authenticated users to read exercise": {
+          "name": "Allow all authenticated users to read exercise",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "true"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "workout.exercise_to_workout_split": {
+      "name": "exercise_to_workout_split",
+      "schema": "workout",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "exercise_to_workout_split_id_seq",
+            "schema": "workout",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "workout_split_id": {
+          "name": "workout_split_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "exercise_id": {
+          "name": "exercise_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "order_index": {
+          "name": "order_index",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        }
+      },
+      "indexes": {
+        "exercise_to_workout_split_active_idx": {
+          "name": "exercise_to_workout_split_active_idx",
+          "columns": [
+            {
+              "expression": "workout_split_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "order_index",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"workout\".\"exercise_to_workout_split\".\"is_active\" = true",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "exercise_to_workout_split_workout_split_id_order_index_idx": {
+          "name": "exercise_to_workout_split_workout_split_id_order_index_idx",
+          "columns": [
+            {
+              "expression": "workout_split_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "order_index",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "exercise_to_workout_split_exercise_id_fkey": {
+          "name": "exercise_to_workout_split_exercise_id_fkey",
+          "tableFrom": "exercise_to_workout_split",
+          "tableTo": "exercise",
+          "schemaTo": "workout",
+          "columnsFrom": [
+            "exercise_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "exercise_to_workout_split_workout_split_id_fkey": {
+          "name": "exercise_to_workout_split_workout_split_id_fkey",
+          "tableFrom": "exercise_to_workout_split",
+          "tableTo": "workout_split",
+          "schemaTo": "workout",
+          "columnsFrom": [
+            "workout_split_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "exercise_to_workout_split_pkey": {
+          "name": "exercise_to_workout_split_pkey",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "uq_exercise_to_workout_split_workout_split_exercise": {
+          "name": "uq_exercise_to_workout_split_workout_split_exercise",
+          "nullsNotDistinct": false,
+          "columns": [
+            "workout_split_id",
+            "exercise_id"
+          ]
+        }
+      },
+      "policies": {
+        "Enable read access for auth users on exercise_to_workout_split": {
+          "name": "Enable read access for auth users on exercise_to_workout_split",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp join \"workout\".\"workout_split\" ws on ws.\"workout_id\" = wp.\"id\" where ws.\"id\" = \"workout\".\"exercise_to_workout_split\".\"workout_split_id\")"
+        },
+        "Enable insert for auth users on exercise_to_workout_split": {
+          "name": "Enable insert for auth users on exercise_to_workout_split",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp join \"workout\".\"workout_split\" ws on ws.\"workout_id\" = wp.\"id\" where ws.\"id\" = \"workout\".\"exercise_to_workout_split\".\"workout_split_id\")"
+        },
+        "Enable update for auth users on exercise_to_workout_split": {
+          "name": "Enable update for auth users on exercise_to_workout_split",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp join \"workout\".\"workout_split\" ws on ws.\"workout_id\" = wp.\"id\" where ws.\"id\" = \"workout\".\"exercise_to_workout_split\".\"workout_split_id\")",
+          "withCheck": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp join \"workout\".\"workout_split\" ws on ws.\"workout_id\" = wp.\"id\" where ws.\"id\" = \"workout\".\"exercise_to_workout_split\".\"workout_split_id\")"
+        },
+        "Enable delete for auth users on exercise_to_workout_split": {
+          "name": "Enable delete for auth users on exercise_to_workout_split",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from \"workout\".\"workout_split\" ws join \"workout\".\"workout_plan\" wp on wp.\"id\" = ws.\"workout_id\" where ws.\"id\" = \"workout\".\"exercise_to_workout_split\".\"workout_split_id\" and wp.\"user_id\" = \"identity\".\"current_user_id\"())"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "workout.workout_plan": {
+      "name": "workout_plan",
+      "schema": "workout",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "workout_plan_id_seq",
+            "schema": "workout",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "uq_workout_plan_active_user": {
+          "name": "uq_workout_plan_active_user",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"workout\".\"workout_plan\".\"is_active\"",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "workout_plan_user_id_fkey": {
+          "name": "workout_plan_user_id_fkey",
+          "tableFrom": "workout_plan",
+          "tableTo": "user",
+          "schemaTo": "identity",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "workout_plan_pkey": {
+          "name": "workout_plan_pkey",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "Enable read access for auth users on workout_plan": {
+          "name": "Enable read access for auth users on workout_plan",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"workout\".\"workout_plan\".\"user_id\""
+        },
+        "Enable insert for auth users on workout_plan": {
+          "name": "Enable insert for auth users on workout_plan",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "\"identity\".\"current_user_id\"() = \"workout\".\"workout_plan\".\"user_id\""
+        },
+        "Enable update for auth users on workout_plan": {
+          "name": "Enable update for auth users on workout_plan",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"workout\".\"workout_plan\".\"user_id\"",
+          "withCheck": "\"identity\".\"current_user_id\"() = \"workout\".\"workout_plan\".\"user_id\""
+        },
+        "Enable delete for auth users on workout_plan": {
+          "name": "Enable delete for auth users on workout_plan",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = \"workout\".\"workout_plan\".\"user_id\""
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "workout.workout_set": {
+      "name": "workout_set",
+      "schema": "workout",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "exercise_to_split_id": {
+          "name": "exercise_to_split_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "order_index": {
+          "name": "order_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reps": {
+          "name": "reps",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "workout_set_exercise_to_split_id_idx": {
+          "name": "workout_set_exercise_to_split_id_idx",
+          "columns": [
+            {
+              "expression": "exercise_to_split_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "workout_set_exercise_to_split_id_fkey": {
+          "name": "workout_set_exercise_to_split_id_fkey",
+          "tableFrom": "workout_set",
+          "tableTo": "exercise_to_workout_split",
+          "schemaTo": "workout",
+          "columnsFrom": [
+            "exercise_to_split_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "workout_set_pkey": {
+          "name": "workout_set_pkey",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "workout_set_exercise_order_unique": {
+          "name": "workout_set_exercise_order_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "exercise_to_split_id",
+            "order_index"
+          ]
+        }
+      },
+      "policies": {
+        "Enable read access for auth users on workout_set": {
+          "name": "Enable read access for auth users on workout_set",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n    select 1\n    from \"workout\".\"exercise_to_workout_split\" ets\n    join \"workout\".\"workout_split\" ws on ws.\"id\" = ets.\"workout_split_id\"\n    join \"workout\".\"workout_plan\" wp on wp.\"id\" = ws.\"workout_id\"\n    where ets.\"id\" = \"workout\".\"workout_set\".\"exercise_to_split_id\"\n      and wp.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
+        },
+        "Enable insert for auth users on workout_set": {
+          "name": "Enable insert for auth users on workout_set",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "exists (\n    select 1\n    from \"workout\".\"exercise_to_workout_split\" ets\n    join \"workout\".\"workout_split\" ws on ws.\"id\" = ets.\"workout_split_id\"\n    join \"workout\".\"workout_plan\" wp on wp.\"id\" = ws.\"workout_id\"\n    where ets.\"id\" = \"workout\".\"workout_set\".\"exercise_to_split_id\"\n      and wp.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
+        },
+        "Enable update for auth users on workout_set": {
+          "name": "Enable update for auth users on workout_set",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n    select 1\n    from \"workout\".\"exercise_to_workout_split\" ets\n    join \"workout\".\"workout_split\" ws on ws.\"id\" = ets.\"workout_split_id\"\n    join \"workout\".\"workout_plan\" wp on wp.\"id\" = ws.\"workout_id\"\n    where ets.\"id\" = \"workout\".\"workout_set\".\"exercise_to_split_id\"\n      and wp.\"user_id\" = \"identity\".\"current_user_id\"()\n  )",
+          "withCheck": "exists (\n    select 1\n    from \"workout\".\"exercise_to_workout_split\" ets\n    join \"workout\".\"workout_split\" ws on ws.\"id\" = ets.\"workout_split_id\"\n    join \"workout\".\"workout_plan\" wp on wp.\"id\" = ws.\"workout_id\"\n    where ets.\"id\" = \"workout\".\"workout_set\".\"exercise_to_split_id\"\n      and wp.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
+        },
+        "Enable delete for auth users on workout_set": {
+          "name": "Enable delete for auth users on workout_set",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (\n    select 1\n    from \"workout\".\"exercise_to_workout_split\" ets\n    join \"workout\".\"workout_split\" ws on ws.\"id\" = ets.\"workout_split_id\"\n    join \"workout\".\"workout_plan\" wp on wp.\"id\" = ws.\"workout_id\"\n    where ets.\"id\" = \"workout\".\"workout_set\".\"exercise_to_split_id\"\n      and wp.\"user_id\" = \"identity\".\"current_user_id\"()\n  )"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "workout.workout_split": {
+      "name": "workout_split",
+      "schema": "workout",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "workout_split_id_seq",
+            "schema": "workout",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "workout_id": {
+          "name": "workout_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "order_index": {
+          "name": "order_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        }
+      },
+      "indexes": {
+        "uq_active_workout_split_order_index": {
+          "name": "uq_active_workout_split_order_index",
+          "columns": [
+            {
+              "expression": "workout_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "order_index",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"workout\".\"workout_split\".\"is_active\" = TRUE",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "workout_split_workout_id_idx": {
+          "name": "workout_split_workout_id_idx",
+          "columns": [
+            {
+              "expression": "workout_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "workout_split_workout_id_fkey": {
+          "name": "workout_split_workout_id_fkey",
+          "tableFrom": "workout_split",
+          "tableTo": "workout_plan",
+          "schemaTo": "workout",
+          "columnsFrom": [
+            "workout_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "workout_split_pkey": {
+          "name": "workout_split_pkey",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {
+        "Enable read access for auth users on workout_split": {
+          "name": "Enable read access for auth users on workout_split",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp where wp.\"id\" = \"workout\".\"workout_split\".\"workout_id\")"
+        },
+        "Enable insert for auth users on workout_split": {
+          "name": "Enable insert for auth users on workout_split",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp where wp.\"id\" = \"workout\".\"workout_split\".\"workout_id\")"
+        },
+        "Enable update for auth users on workout_split": {
+          "name": "Enable update for auth users on workout_split",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp where wp.\"id\" = \"workout\".\"workout_split\".\"workout_id\")",
+          "withCheck": "\"identity\".\"current_user_id\"() = (select wp.\"user_id\" from \"workout\".\"workout_plan\" wp where wp.\"id\" = \"workout\".\"workout_split\".\"workout_id\")"
+        },
+        "Enable delete for auth users on workout_split": {
+          "name": "Enable delete for auth users on workout_split",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "exists (select 1 from \"workout\".\"workout_plan\" wp where wp.\"id\" = \"workout\".\"workout_split\".\"workout_id\" and wp.\"user_id\" = \"identity\".\"current_user_id\"())"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "identity.Auth Providers": {
+      "name": "Auth Providers",
+      "schema": "identity",
+      "values": [
+        "apple",
+        "google",
+        "app"
+      ]
+    }
+  },
+  "schemas": {
+    "analytics": "analytics",
+    "auth": "auth",
+    "identity": "identity",
+    "messages": "messages",
+    "reminders": "reminders",
+    "tracking": "tracking",
+    "workout": "workout"
+  },
+  "sequences": {},
+  "roles": {
+    "anon": {
+      "name": "anon",
+      "createDb": false,
+      "createRole": false,
+      "inherit": true
+    },
+    "app_runtime_user": {
+      "name": "app_runtime_user",
+      "createDb": false,
+      "createRole": false,
+      "inherit": false
+    },
+    "app_user": {
+      "name": "app_user",
+      "createDb": false,
+      "createRole": false,
+      "inherit": true
+    },
+    "authenticated": {
+      "name": "authenticated",
+      "createDb": false,
+      "createRole": false,
+      "inherit": true
+    },
+    "guest": {
+      "name": "guest",
+      "createDb": false,
+      "createRole": false,
+      "inherit": true
+    },
+    "service_role": {
+      "name": "service_role",
+      "createDb": false,
+      "createRole": false,
+      "inherit": true
+    }
+  },
+  "policies": {},
+  "views": {
+    "analytics.v_exercise_tracking_set_expanded": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exercise_to_split_id": {
+          "name": "exercise_to_split_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "weight": {
+          "name": "weight",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reps": {
+          "name": "reps",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "order_index": {
+          "name": "order_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "set_index": {
+          "name": "set_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exercise_id": {
+          "name": "exercise_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "workout_split_id": {
+          "name": "workout_split_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "split_name": {
+          "name": "split_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exercise": {
+          "name": "exercise",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_muscle": {
+          "name": "target_muscle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "specific_target_muscle": {
+          "name": "specific_target_muscle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "workout_summary_id": {
+          "name": "workout_summary_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "workout_start_utc": {
+          "name": "workout_start_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "workout_end_utc": {
+          "name": "workout_end_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_assigned_to_split": {
+          "name": "is_assigned_to_split",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "definition": "\n    SELECT\n      et.id,\n      et.exercise_to_split_id,\n      tracking_set.weight AS weight,\n      tracking_set.reps AS reps,\n      ews.order_index AS order_index,\n      tracking_set.set_index AS set_index,\n      COALESCE(ews.exercise_id, et.exercise_id) AS exercise_id,\n      wsumm.workout_split_id,\n      ws.name AS split_name,\n      ex.name AS exercise,\n      ex.target_muscle AS target_muscle,\n      ex.specific_target_muscle AS specific_target_muscle,\n      et.notes,\n      et.workout_summary_id,\n      wsumm.workout_start_utc,\n      wsumm.workout_end_utc,\n      CASE\n        WHEN et.exercise_to_split_id IS NOT NULL THEN TRUE\n        WHEN et.exercise_id IS NOT NULL THEN FALSE\n      END AS is_assigned_to_split\n    FROM\n      tracking.exercise_tracking et\n      LEFT JOIN tracking.workout_summary wsumm ON wsumm.id = et.workout_summary_id\n      LEFT JOIN workout.exercise_to_workout_split ews ON ews.id = et.exercise_to_split_id\n      LEFT JOIN workout.workout_split ws ON ws.id = wsumm.workout_split_id\n      LEFT JOIN workout.exercise ex ON ex.id = COALESCE(ews.exercise_id, et.exercise_id)\n      LEFT JOIN tracking.tracking_set tracking_set ON tracking_set.exercise_tracking_id = et.id\n  ",
+      "name": "v_exercise_tracking_set_expanded",
+      "schema": "analytics",
+      "isExisting": false,
+      "with": {
+        "securityInvoker": true
+      },
+      "materialized": false
+    },
+    "analytics.v_prs": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exercise_to_split_id": {
+          "name": "exercise_to_split_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exercise_id": {
+          "name": "exercise_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exercise": {
+          "name": "exercise",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "set_index": {
+          "name": "set_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "weight": {
+          "name": "weight",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reps": {
+          "name": "reps",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "workout_summary_id": {
+          "name": "workout_summary_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "workout_start_utc": {
+          "name": "workout_start_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "workout_end_utc": {
+          "name": "workout_end_utc",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "definition": "\n    SELECT DISTINCT\n      ON (et.exercise_id) et.id,\n      et.exercise_to_split_id,\n      et.exercise_id,\n      et.exercise,\n      et.set_index,\n      et.weight,\n      et.reps,\n      et.workout_summary_id,\n      et.workout_start_utc,\n      et.workout_end_utc\n    FROM\n      analytics.v_exercise_tracking_set_expanded et\n    ORDER BY\n      et.exercise_id,\n      et.weight DESC,\n      et.reps DESC,\n      et.workout_start_utc DESC,\n      et.id DESC\n  ",
+      "name": "v_prs",
+      "schema": "analytics",
+      "isExisting": false,
+      "with": {
+        "securityInvoker": true
+      },
+      "materialized": false
+    },
+    "workout.v_exercise_to_workout_split_set_expanded": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "workout_split_id": {
+          "name": "workout_split_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "workout_id": {
+          "name": "workout_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exercise_id": {
+          "name": "exercise_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exercise": {
+          "name": "exercise",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "workout_split": {
+          "name": "workout_split",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reps": {
+          "name": "reps",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "order_index": {
+          "name": "order_index",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "set_index": {
+          "name": "set_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "definition": "\n    SELECT\n      ews.id,\n      ews.workout_split_id,\n      ws.workout_id,\n      ews.exercise_id,\n      ex.name AS exercise,\n      ws.name AS workout_split,\n      workout_set.reps AS reps,\n      workout_set.order_index AS set_index,\n      ews.order_index,\n      ews.created_at,\n      ews.is_active\n    FROM\n      workout.exercise_to_workout_split ews\n      JOIN workout.workout_split ws ON ws.id = ews.workout_split_id\n      JOIN workout.exercise ex ON ex.id = ews.exercise_id\n      LEFT JOIN workout.workout_set workout_set ON workout_set.exercise_to_split_id = ews.id\n    GROUP BY\n      ews.id,\n      ews.workout_split_id,\n      ws.workout_id,\n      ews.exercise_id,\n      ex.name,\n      ws.name,\n      workout_set.reps,\n      workout_set.order_index,\n      ews.order_index,\n      ews.created_at,\n      ews.is_active\n  ",
+      "name": "v_exercise_to_workout_split_set_expanded",
+      "schema": "workout",
+      "isExisting": false,
+      "with": {
+        "securityInvoker": true
+      },
+      "materialized": false
+    }
+  },
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

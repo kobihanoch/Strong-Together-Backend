@@ -16,7 +16,7 @@ const client = postgres(databaseUrl, {
 
 try {
   await migrate(drizzle(client), {
-    migrationsFolder: 'src/infrastructure/db/schema/migrations',
+    migrationsFolder: 'src/infrastructure/persistence/schema/migrations',
     migrationsSchema: 'drizzle',
     migrationsTable: '__drizzle_migrations',
   });

@@ -1,5 +1,5 @@
-import { user } from '../../../../infrastructure/db/schema/drizzle/identity/user/table';
-import { workoutSchedule } from '../../../../infrastructure/db/schema/drizzle/schedules/workout_schedule/table';
+import { user } from '../../../../infrastructure/persistence/schema/drizzle/identity/user/table';
+import { workoutSchedule } from '../../../../infrastructure/persistence/schema/drizzle/schedules/workout_schedule/table';
 
 /** Represents the user db row value. */
 type UserDbRow = typeof user.$inferSelect;

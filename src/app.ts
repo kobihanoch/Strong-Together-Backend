@@ -22,14 +22,14 @@ import { CheckAppVersionMiddleware } from './common/middlewares/check-app-versio
 import { GeneralRateLimitMiddleware } from './common/middlewares/general-rate-limit.middleware';
 import { RequestLoggerMiddleware } from './common/middlewares/request-logger.middleware';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-import { setupSentryErrorHandler } from './infrastructure/sentry';
-import { RedisModule } from './infrastructure/redis/redis.module';
-import { DBModule } from './infrastructure/db/db.module';
-import { SocketIOModule } from './infrastructure/socket.io/socket.io.module';
-import { AWSModule } from './infrastructure/aws/aws.module';
-import { CacheModule } from './infrastructure/cache/cache.module';
+import { setupSentryErrorHandler } from './infrastructure/capabilities/observability/sentry';
+import { RedisModule } from './infrastructure/connections/redis/redis.module';
+import { DBModule } from './infrastructure/connections/postgres/db.module';
+import { SocketIOModule } from './infrastructure/capabilities/realtime/socket.io.module';
+import { AWSModule } from './infrastructure/connections/aws/aws.module';
+import { CacheModule } from './infrastructure/capabilities/cache/cache.module';
 import { SocialModule } from './modules/social/social.module';
-import { LoggingModule } from './infrastructure/logging.module';
+import { LoggingModule } from './infrastructure/capabilities/observability/logging.module';
 
 let testAppPromise: Promise<NestExpressApplication> | null = null;
 

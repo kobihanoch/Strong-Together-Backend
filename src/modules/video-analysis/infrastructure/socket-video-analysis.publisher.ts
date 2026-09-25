@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { AnalyzeVideoResultPayloadDto, SquatRepetitionDto } from '@strong-together/shared';
-import { SocketIOService } from '../../../infrastructure/socket.io/socket.io.service';
+import { SocketIOService } from '../../../infrastructure/capabilities/realtime/socket.io.service';
 import type { VideoAnalysisResult } from '../application/models/video-analysis.models';
 import { VideoAnalysisPublisher } from '../application/ports/video-analysis-publisher.port';
 

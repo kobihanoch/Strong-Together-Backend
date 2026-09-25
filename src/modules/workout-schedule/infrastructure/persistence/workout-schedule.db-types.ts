@@ -1,4 +1,4 @@
-import { workoutSchedule } from '../../../../infrastructure/db/schema/drizzle/schedules/workout_schedule/table';
+import { workoutSchedule } from '../../../../infrastructure/persistence/schema/drizzle/schedules/workout_schedule/table';
 
 /** Represents the workout schedule db row value. */
 type WorkoutScheduleDbRow = typeof workoutSchedule.$inferSelect;

@@ -1,4 +1,4 @@
-import { user } from '../../../../../infrastructure/db/schema/drizzle/identity/user/table';
+import { user } from '../../../../../infrastructure/persistence/schema/drizzle/identity/user/table';
 /** Represents the user db row value. */
 type UserDbRow = typeof user.$inferSelect;
 /** Describes the user profile sql data shape. */

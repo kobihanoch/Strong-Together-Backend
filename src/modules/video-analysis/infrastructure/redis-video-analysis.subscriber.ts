@@ -9,8 +9,8 @@ import {
 } from '@strong-together/shared';
 import { RedisClientType } from 'redis';
 import { appConfig } from '../../../config/app.config';
-import { createLogger } from '../../../infrastructure/logger';
-import { REDIS_SUBSCRIBER } from '../../../infrastructure/redis/redis.tokens';
+import { createLogger } from '../../../infrastructure/capabilities/observability/logger';
+import { REDIS_SUBSCRIBER } from '../../../infrastructure/connections/redis/redis.tokens';
 import { PublishVideoAnalysisResultUseCase } from '../application/commands/publish-video-analysis-result.use-case';
 
 @Injectable()

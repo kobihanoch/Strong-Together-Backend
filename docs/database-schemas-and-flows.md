@@ -1,6 +1,6 @@
 # Database Schemas And Flows
 
-The database is PostgreSQL-first and organized around domain schemas rather than a single overloaded `public` namespace. The active Drizzle migrations live in `src/infrastructure/db/schema/migrations`, and seeds live in `src/infrastructure/db/schema/seeds`.
+The database is PostgreSQL-first and organized around domain schemas rather than a single overloaded `public` namespace. The active Drizzle migrations live in `src/infrastructure/persistence/schema/migrations`, and seeds live in `src/infrastructure/persistence/schema/seeds`.
 
 The ERDs are generated from the reviewed DBML sources under `docs/db-diagrams/source`. Run `npm run docs:db-diagrams` after a schema change and review both the DBML diff and rendered SVG. The Drizzle TypeScript schema and committed migrations remain authoritative.
 

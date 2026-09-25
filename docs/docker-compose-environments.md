@@ -89,7 +89,7 @@ Both Compose files use the shared Docker network:
 That keeps the service naming stable for local orchestration.
 
 Development and test each have exactly one PostgreSQL service. Both schemas are
-built exclusively from `src/infrastructure/db/schema/migrations`.
+built exclusively from `src/infrastructure/persistence/schema/migrations`.
 
 In TEST, database setup uses the administrator `DRIZZLE_DATABASE_URL`, while the Nest application connects through `DATABASE_URL` as `app_runtime_user`. This preserves a clean rebuild path without allowing the application tests to bypass grants or RLS as a superuser.
 

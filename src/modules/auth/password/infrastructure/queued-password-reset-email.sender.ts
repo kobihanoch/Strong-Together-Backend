@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import jwt from 'jsonwebtoken';
 import { generateJti } from '../../../../common/authentication/authentication.utils';
 import { authConfig } from '../../../../config/auth.config';
-import { EmailsProducerService } from '../../../../infrastructure/queues/emails/emails-producer';
+import { EmailsProducerService } from '../../../../infrastructure/capabilities/queues/emails/emails-producer';
 import type { AuthEmailContext } from '../../core/application/models/auth.models';
 import { PasswordResetEmailSender } from '../application/ports/password-reset-email-sender.port';
 import { generateForgotPasswordEmail } from './password-reset-email.templates';

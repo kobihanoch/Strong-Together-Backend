@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import mime from 'mime';
 import path from 'path';
 import { supabaseConfig } from '../../../../config/storage.config';
-import { SupabaseStorageService } from '../../../../infrastructure/supabase/storage/supabase-storage.service';
+import { SupabaseStorageService } from '../../../../infrastructure/capabilities/storage/supabase/storage/supabase-storage.service';
 import type { ProfilePictureFile } from '../application/models/update-user.models';
 import { ProfilePictureStorage } from '../application/ports/profile-picture-storage.port';
 /** Supabase adapter for user profile pictures. */

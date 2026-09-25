@@ -1,7 +1,7 @@
 import { Injectable, NestMiddleware, NotFoundException } from '@nestjs/common';
 import { NextFunction, Response } from 'express';
-import { createLogger } from '../../infrastructure/logger';
-import { markSentryBotBlocked } from '../../infrastructure/sentry';
+import { createLogger } from '../../infrastructure/capabilities/observability/logger';
+import { markSentryBotBlocked } from '../../infrastructure/capabilities/observability/sentry';
 import type { AppRequest } from '../types/express';
 
 @Injectable()

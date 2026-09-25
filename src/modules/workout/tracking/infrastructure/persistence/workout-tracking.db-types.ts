@@ -1,8 +1,8 @@
-import { exerciseTracking } from '../../../../../infrastructure/db/schema/drizzle/tracking/exercise_tracking/table';
-import { workoutSummary } from '../../../../../infrastructure/db/schema/drizzle/tracking/workout_summary/table';
-import { exercise } from '../../../../../infrastructure/db/schema/drizzle/workout/exercises/table';
-import { exerciseToWorkoutSplit } from '../../../../../infrastructure/db/schema/drizzle/workout/exercisetoworkoutsplit/table';
-import { workoutSplit } from '../../../../../infrastructure/db/schema/drizzle/workout/workout_split/table';
+import { exerciseTracking } from '../../../../../infrastructure/persistence/schema/drizzle/tracking/exercise_tracking/table';
+import { workoutSummary } from '../../../../../infrastructure/persistence/schema/drizzle/tracking/workout_summary/table';
+import { exercise } from '../../../../../infrastructure/persistence/schema/drizzle/workout/exercises/table';
+import { exerciseToWorkoutSplit } from '../../../../../infrastructure/persistence/schema/drizzle/workout/exercisetoworkoutsplit/table';
+import { workoutSplit } from '../../../../../infrastructure/persistence/schema/drizzle/workout/workout_split/table';
 
 /** Represents the tracking db row value. */
 type TrackingDbRow = typeof exerciseTracking.$inferSelect;

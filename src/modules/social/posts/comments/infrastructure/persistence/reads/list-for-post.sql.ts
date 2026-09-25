@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DBService } from '../../../../../../../infrastructure/db/db.service';
+import { DBService } from '../../../../../../../infrastructure/connections/postgres/db.service';
 import type { CommentSqlRow } from '../comments.db-types';
 
 /** Executes comment writes inside the current request's RLS transaction. */

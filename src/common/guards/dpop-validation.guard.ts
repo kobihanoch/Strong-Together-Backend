@@ -1,8 +1,8 @@
 import { BadRequestException, CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as jose from 'jose';
 import { appConfig } from '../../config/app.config';
-import { CacheService } from '../../infrastructure/cache/cache.service';
-import { createLogger } from '../../infrastructure/logger';
+import { CacheService } from '../../infrastructure/capabilities/cache/cache.service';
+import { createLogger } from '../../infrastructure/capabilities/observability/logger';
 import type { AppRequest } from '../types/express';
 
 const DPOP_EXPIRATION_SECONDS = 60;

@@ -1,4 +1,4 @@
-import { aerobicTracking } from '../../../../infrastructure/db/schema/drizzle/tracking/aerobic_tracking/table';
+import { aerobicTracking } from '../../../../infrastructure/persistence/schema/drizzle/tracking/aerobic_tracking/table';
 
 /** Represents the aerobic tracking db row value. */
 type AerobicTrackingDbRow = typeof aerobicTracking.$inferSelect;

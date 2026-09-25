@@ -1,4 +1,4 @@
-import { userReminderSetting } from '../../../../infrastructure/db/schema/drizzle/reminders/user_reminder_setting/table';
+import { userReminderSetting } from '../../../../infrastructure/persistence/schema/drizzle/reminders/user_reminder_setting/table';
 
 /** Represents the reminder settings db row value. */
 type ReminderSettingsDbRow = typeof userReminderSetting.$inferSelect;

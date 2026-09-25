@@ -1,4 +1,4 @@
-import { reaction } from '../../../../../../infrastructure/db/schema/drizzle/social/reaction/table';
+import { reaction } from '../../../../../../infrastructure/persistence/schema/drizzle/social/reaction/table';
 
 /** Represents the reaction db row value. */
 type ReactionDbRow = typeof reaction.$inferSelect;
