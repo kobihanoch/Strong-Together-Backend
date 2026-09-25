@@ -13,3 +13,6 @@ export interface InboxMessage {
 export interface MessageInbox {
   messages: InboxMessage[];
 }
+
+export type MarkMessageAsReadOutcome = { kind: 'marked-read'; messageId: string } | { kind: 'not-found' };
+export type DeleteMessageOutcome = { kind: 'deleted'; messageId: string } | { kind: 'not-found' };

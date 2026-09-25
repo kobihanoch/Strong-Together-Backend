@@ -11,7 +11,7 @@ export class GetVerificationStatusSql {
    * @param username - The username value.
    * @returns The query result.
    */
-  async getVerificationStatus(username: string): Promise<boolean> {
+  async getVerificationStatus(username: string) {
     const [row] = await this.dbService.sql<VerificationStatusSqlRow[]>`
       SELECT
         guest_api.verification_state (${username}) AS is_verified

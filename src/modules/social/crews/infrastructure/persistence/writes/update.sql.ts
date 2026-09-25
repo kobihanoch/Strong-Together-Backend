@@ -19,8 +19,8 @@ export class UpdateSql {
    * @param privacy - The new crew privacy setting.
    * @returns An array containing the updated crew, or an empty array.
    */
-  async update(id: string, name: string, privacy: 'public' | 'private'): Promise<CrewSqlRow[]> {
-    return this.dbService.sql<CrewSqlRow[]>`
+  async update(id: string, name: string, privacy: 'public' | 'private') {
+    const rows = await this.dbService.sql<CrewSqlRow[]>`
       UPDATE social.crew
       SET
         name = ${name},
@@ -36,5 +36,6 @@ export class UpdateSql {
         created_at AS "createdAt",
         updated_at AS "updatedAt"
     `;
+    return rows.length > 0 ? { kind: 'updated' as const } : { kind: 'not-found' as const };
   }
 }

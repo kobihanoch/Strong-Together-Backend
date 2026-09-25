@@ -22,8 +22,8 @@ export class RequestToJoinSql {
    * @param userId - The UUID used as both request initiator and participant.
    * @returns The inserted participation request, or an empty collection when no visible crew matches.
    */
-  async requestToJoin(crewId: string, userId: string): Promise<CrewParticipationRequestSqlRow[]> {
-    return this.dbService.sql<CrewParticipationRequestSqlRow[]>`
+  async requestToJoin(crewId: string, userId: string) {
+    const [request] = await this.dbService.sql<CrewParticipationRequestSqlRow[]>`
       INSERT INTO
         social.crew_participation_request (crew_id, initiator_user_id, participant_user_id, status)
       SELECT
@@ -48,5 +48,6 @@ export class RequestToJoinSql {
         updated_at AS "updatedAt",
         responded_at AS "respondedAt"
     `;
+    return request ? { kind: 'requested' as const, request } : { kind: 'crew-not-found' as const };
   }
 }

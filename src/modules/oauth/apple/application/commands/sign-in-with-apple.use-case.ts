@@ -59,9 +59,9 @@ export class SignInWithAppleUseCase {
         let isLinked = false;
 
         if (emailVerified && resolvedEmail) {
-          const linkedId = await this.repository.linkByVerifiedEmail('apple', resolvedEmail, appleSub);
-          if (linkedId) {
-            userId = linkedId;
+          const linkOutcome = await this.repository.linkByVerifiedEmail('apple', resolvedEmail, appleSub);
+          if (linkOutcome.kind === 'linked') {
+            userId = linkOutcome.userId;
             isLinked = true;
           }
         }

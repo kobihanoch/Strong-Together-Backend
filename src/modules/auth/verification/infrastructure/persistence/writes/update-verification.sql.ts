@@ -11,7 +11,7 @@ export class UpdateVerificationSql {
    * @param state - The verification state to store.
    * @returns A promise that resolves when the operation completes.
    */
-  async updateVerification(userId: string, state: boolean): Promise<void> {
+  async updateVerification(userId: string, state: boolean) {
     await this.dbService.sql`
       UPDATE identity.user AS users
       SET

@@ -19,7 +19,7 @@ export class ListSql {
    * @param search - Optional case-insensitive crew-name search text.
    * @returns Crew rows ordered from newest to oldest.
    */
-  async list(limit: number, cursor?: { timestamp: string; id: string }, search?: string): Promise<DiscoverableCrewSqlRow[]> {
+  async list(limit: number, cursor?: { timestamp: string; id: string }, search?: string) {
     return this.dbService.sql<DiscoverableCrewSqlRow[]>`
       SELECT
         crew.id,

@@ -25,8 +25,8 @@ export class UpdateAerobicEntryUseCase {
    */
   async execute(userId: string, id: number, record: AerobicEntryInput): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const updatedId = await this.repository.updateForUser(userId, id, record);
-      if (updatedId === null) throw new AerobicEntryNotFoundError();
+      const outcome = await this.repository.updateForUser(userId, id, record);
+      if (outcome.kind === 'not-found') throw new AerobicEntryNotFoundError();
       this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
     });
   }

@@ -12,7 +12,7 @@ export class UpdateProfilePictureSql {
    * @param path - The path value.
    * @returns A promise that resolves when the operation completes.
    */
-  async updateProfilePicture(userId: string, path: string | null): Promise<void> {
+  async updateProfilePicture(userId: string, path: string | null) {
     await this.db.sql`
       UPDATE identity.user
       SET

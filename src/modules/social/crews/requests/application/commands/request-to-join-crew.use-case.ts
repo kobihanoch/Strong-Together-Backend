@@ -21,9 +21,9 @@ export class RequestToJoinCrewUseCase {
    */
   public async execute(crewId: string, userId: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const request = await this.repository.requestToJoin(crewId, userId);
-      if (!request) throw new CrewNotFoundError();
-      if (request.status === 'accepted') await this.repository.createMembership(request.crewId, request.participantUserId);
+      const outcome = await this.repository.requestToJoin(crewId, userId);
+      if (outcome.kind === 'crew-not-found') throw new CrewNotFoundError();
+      if (outcome.request.status === 'accepted') await this.repository.createMembership(outcome.request.crewId, outcome.request.participantUserId);
     });
   }
 }

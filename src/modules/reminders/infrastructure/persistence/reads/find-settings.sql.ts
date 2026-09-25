@@ -15,7 +15,7 @@ export class FindSettingsSql {
    * @param userId - The authenticated user's identifier.
    * @returns The user's reminder settings, or null when none exist.
    */
-  async findSettings(userId: string): Promise<ReminderSettingsSqlRow | null> {
+  async findSettings(userId: string) {
     const [settings] = await this.dbService.sql<ReminderSettingsSqlRow[]>`
       SELECT
         id,

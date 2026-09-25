@@ -50,9 +50,9 @@ export class SignInWithGoogleUseCase {
         let isLinked = false;
         this.logger.info({ event: 'oauth.google_link_attempt_started', emailVerified }, 'Google OAuth user not found, trying to link');
         if (emailVerified) {
-          const userIdFromLink = email ? await this.repository.linkByVerifiedEmail('google', email, googleSub) : null;
-          if (userIdFromLink) {
-            userId = userIdFromLink;
+          const linkOutcome = email ? await this.repository.linkByVerifiedEmail('google', email, googleSub) : { kind: 'no-match' as const };
+          if (linkOutcome.kind === 'linked') {
+            userId = linkOutcome.userId;
             isLinked = true;
             this.logger.info({ event: 'oauth.google_link_succeeded', userId }, 'Google OAuth user linked successfully');
           }

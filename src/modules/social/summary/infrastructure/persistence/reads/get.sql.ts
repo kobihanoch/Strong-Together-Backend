@@ -12,7 +12,7 @@ export class GetSql {
    *
    * @returns The query result.
    */
-  public get(): Promise<SocialSummarySqlRow[]> {
+  public get() {
     return this.dbService.sql<SocialSummarySqlRow[]>`
       SELECT
         (

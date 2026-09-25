@@ -15,6 +15,25 @@ type ExerciseDbRow = typeof exercise.$inferSelect;
 /** Represents the set db row value. */
 type SetDbRow = typeof workoutSet.$inferSelect;
 
+/** Exercise input accepted by workout-plan persistence. */
+export interface WorkoutExerciseSqlInput {
+  exerciseId: ExerciseDbRow['id'];
+  sets: SetDbRow['reps'][];
+  orderIndex: AssignmentDbRow['orderIndex'];
+}
+
+/** Split input accepted by workout-plan persistence. */
+export interface WorkoutSplitSqlInput {
+  id?: SplitDbRow['id'] | undefined;
+  name: SplitDbRow['name'];
+  orderIndex: SplitDbRow['orderIndex'];
+  exercises: WorkoutExerciseSqlInput[];
+}
+
+/** Existing split input accepted by workout-plan persistence. */
+export type ExistingWorkoutSplitSqlInput = WorkoutSplitSqlInput & { id: SplitDbRow['id'] };
+
+
 /** Describes the workout plan exercise sql row shape. */
 export interface WorkoutPlanExerciseSqlRow {
   exerciseToSplitId: AssignmentDbRow['id'];

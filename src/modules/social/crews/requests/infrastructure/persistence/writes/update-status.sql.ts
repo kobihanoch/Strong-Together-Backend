@@ -22,8 +22,8 @@ export class UpdateStatusSql {
    * @param status - The requested terminal status, either `accepted` or `declined`.
    * @returns The updated request, or an empty collection if it is unavailable or not pending.
    */
-  async updateStatus(requestId: string, status: 'accepted' | 'declined'): Promise<CrewParticipationRequestSqlRow[]> {
-    return this.dbService.sql<CrewParticipationRequestSqlRow[]>`
+  async updateStatus(requestId: string, status: 'accepted' | 'declined') {
+    const [request] = await this.dbService.sql<CrewParticipationRequestSqlRow[]>`
       UPDATE social.crew_participation_request
       SET
         status = ${status}::social."Crew Participation Request Status",
@@ -42,5 +42,6 @@ export class UpdateStatusSql {
         updated_at AS "updatedAt",
         responded_at AS "respondedAt"
     `;
+    return request ? { kind: 'updated' as const, request } : { kind: 'not-found' as const };
   }
 }

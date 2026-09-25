@@ -18,7 +18,7 @@ export class ListMineSql {
    * @param cursor - The preceding page's final creation timestamp and UUID.
    * @returns The caller's crews with participant counts and previews, newest first.
    */
-  async listMine(limit: number, cursor?: { timestamp: string; id: string }): Promise<DiscoverableCrewSqlRow[]> {
+  async listMine(limit: number, cursor?: { timestamp: string; id: string }) {
     return this.dbService.sql<DiscoverableCrewSqlRow[]>`
       SELECT
         crew.id,

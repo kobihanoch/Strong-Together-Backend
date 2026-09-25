@@ -13,7 +13,7 @@ export class ExistsSql {
    * @param email - The normalized email address.
    * @returns The query result.
    */
-  async exists(username: string, email: string): Promise<boolean> {
+  async exists(username: string, email: string) {
     const [row] = await this.db.sql<UserExistsSqlRow[]>`
       SELECT
         guest_api.user_exists (

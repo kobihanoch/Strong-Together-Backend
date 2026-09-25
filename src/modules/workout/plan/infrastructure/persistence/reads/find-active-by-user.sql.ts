@@ -15,7 +15,7 @@ export class FindActiveByUserSql {
    * @param tz - The IANA time-zone name.
    * @returns The whole user workout plan result.
    */
-  async findActiveByUser(userId: string, tz: string): Promise<WorkoutPlanSqlRow[]> {
+  async findActiveByUser(userId: string, tz: string) {
     return this.dbService.sql<WorkoutPlanSqlRow[]>`
       WITH
         ranked_workout_durations AS (

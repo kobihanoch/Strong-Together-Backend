@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
-import type { OAuthProvider } from '../../../application/models/oauth.models';
 import type { OAuthLookupSqlRow } from '../oauth.db-types';
 
 /** Raw SQL operations shared by OAuth providers. */
@@ -15,7 +14,7 @@ export class FindLinkedUserSql {
    * @param providerUserId - The provider user id value.
    * @returns The query result.
    */
-  async findLinkedUser(provider: OAuthProvider, providerUserId: string): Promise<string | null> {
+  async findLinkedUser(provider: 'apple' | 'google', providerUserId: string) {
     const [row] = await this.dbService.sql<OAuthLookupSqlRow[]>`
       SELECT
         guest_api.oauth_lookup (

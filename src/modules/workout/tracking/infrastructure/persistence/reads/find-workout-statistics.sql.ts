@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
-import type { WorkoutStatisticsSqlResult, WorkoutStatisticsSqlRow } from '../workout-tracking.db-types';
+import type { WorkoutStatisticsSqlRow } from '../workout-tracking.db-types';
 
 @Injectable()
 export class FindWorkoutStatisticsSql {
@@ -13,7 +13,7 @@ export class FindWorkoutStatisticsSql {
    * @param tz - The IANA time-zone name.
    * @returns The exercise tracking stats result.
    */
-  async findWorkoutStatistics(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem'): Promise<WorkoutStatisticsSqlResult> {
+  async findWorkoutStatistics(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem') {
     const [{ data }] = await this.dbService.sql<WorkoutStatisticsSqlRow[]>`
       WITH
         bounds AS (

@@ -21,7 +21,8 @@ export class MarkMessageAsReadUseCase {
    */
   async execute(messageId: string, userId: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      if (!(await this.repository.markAsRead(messageId, userId))) throw new MessageNotFoundError();
+      const outcome = await this.repository.markAsRead(messageId, userId);
+      if (outcome.kind === 'not-found') throw new MessageNotFoundError();
     });
   }
 }

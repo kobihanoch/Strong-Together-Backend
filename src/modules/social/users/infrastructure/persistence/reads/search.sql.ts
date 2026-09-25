@@ -15,7 +15,7 @@ export class SearchSql {
    * @param cursor - The preceding page cursor.
    * @returns The query result.
    */
-  public search(search: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<SocialUserSearchSqlRow[]> {
+  public search(search: string, limit: number, cursor?: { timestamp: string; id: string }) {
     return this.dbService.sql<SocialUserSearchSqlRow[]>`
       SELECT
         *

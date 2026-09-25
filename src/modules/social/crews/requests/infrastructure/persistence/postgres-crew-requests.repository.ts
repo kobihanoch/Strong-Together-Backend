@@ -3,7 +3,7 @@ import { CreateMembershipSql } from './writes/create-membership.sql';
 import { UpdateStatusSql } from './writes/update-status.sql';
 import { RequestToJoinSql } from './writes/request-to-join.sql';
 import { InviteUserSql } from './writes/invite-user.sql';
-import type { CrewParticipationRequest } from '../../application/models/crew-requests.models';
+import type { InviteCrewUserOutcome, RequestToJoinCrewOutcome, UpdateCrewParticipationRequestOutcome } from '../../application/models/crew-requests.models';
 import { CrewRequestsRepository } from '../../application/ports/crew-requests.repository';
 /** PostgreSQL implementation of crew participation-request persistence. */
 
@@ -16,14 +16,14 @@ export class PostgresCrewRequestsRepository implements CrewRequestsRepository {
     private readonly updateStatusSql: UpdateStatusSql,
     private readonly createMembershipSql: CreateMembershipSql,
   ) {}
-  public async invite(crewId: string, initiatorUserId: string, participantUserId: string): Promise<CrewParticipationRequest | null> {
-    return (await this.inviteUserSql.inviteUser(crewId, initiatorUserId, participantUserId))[0] ?? null;
+  public invite(crewId: string, initiatorUserId: string, participantUserId: string): Promise<InviteCrewUserOutcome> {
+    return this.inviteUserSql.inviteUser(crewId, initiatorUserId, participantUserId);
   }
-  public async requestToJoin(crewId: string, userId: string): Promise<CrewParticipationRequest | null> {
-    return (await this.requestToJoinSql.requestToJoin(crewId, userId))[0] ?? null;
+  public requestToJoin(crewId: string, userId: string): Promise<RequestToJoinCrewOutcome> {
+    return this.requestToJoinSql.requestToJoin(crewId, userId);
   }
-  public async updateStatus(requestId: string, status: 'accepted' | 'declined'): Promise<CrewParticipationRequest | null> {
-    return (await this.updateStatusSql.updateStatus(requestId, status))[0] ?? null;
+  public updateStatus(requestId: string, status: 'accepted' | 'declined'): Promise<UpdateCrewParticipationRequestOutcome> {
+    return this.updateStatusSql.updateStatus(requestId, status);
   }
   public createMembership(crewId: string, userId: string): Promise<void> {
     return this.createMembershipSql.createMembership(crewId, userId);

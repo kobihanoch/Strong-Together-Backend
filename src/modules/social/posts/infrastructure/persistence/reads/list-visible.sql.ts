@@ -14,7 +14,7 @@ export class ListVisibleSql {
    * @param cursor - The preceding page's final publication timestamp and UUID.
    * @returns Visible post rows with like and comment counts, ordered from newest to oldest.
    */
-  listVisible(limit: number, cursor?: { timestamp: string; id: string }): Promise<PostSqlRow[]> {
+  listVisible(limit: number, cursor?: { timestamp: string; id: string }) {
     return this.dbService.sql<PostSqlRow[]>`
       SELECT
         post.id,

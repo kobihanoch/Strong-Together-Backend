@@ -19,6 +19,7 @@ export interface VerificationRecipientSqlRow {
   userData: Pick<UserDbRow, 'id' | 'name' | 'username'> | null;
 }
 
+
 /** SQL row returned by the email-existence function. */
 export interface EmailExistsSqlRow {
   id: UserDbRow['id'] | null;

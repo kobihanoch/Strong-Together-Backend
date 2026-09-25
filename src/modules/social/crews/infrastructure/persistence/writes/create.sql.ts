@@ -21,7 +21,7 @@ export class CreateSql {
    * @param privacy - Whether the crew is public or private.
    * @returns An array containing the newly created crew.
    */
-  async create(userId: string, name: string, privacy: 'public' | 'private'): Promise<CrewSqlRow[]> {
+  async create(userId: string, name: string, privacy: 'public' | 'private') {
     const [created] = await this.dbService.sql<CrewSqlRow[]>`
       INSERT INTO
         social.crew (name, created_by, privacy)

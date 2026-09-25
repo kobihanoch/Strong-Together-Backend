@@ -11,7 +11,7 @@ export class EmailExistsSql {
    * @param email - The normalized email address.
    * @returns The query result.
    */
-  async emailExists(email: string): Promise<boolean> {
+  async emailExists(email: string) {
     const [row] = await this.dbService.sql<EmailExistsSqlRow[]>`
       SELECT
         guest_api.user_exists (NULL, ${email}) AS id

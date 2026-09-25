@@ -12,7 +12,7 @@ export class ReplaceSql {
    * @param token - The token value.
    * @returns A promise that resolves when the operation completes.
    */
-  async replace(userId: string, token: string): Promise<void> {
+  async replace(userId: string, token: string) {
     await this.db.sql`
       UPDATE identity.user
       SET

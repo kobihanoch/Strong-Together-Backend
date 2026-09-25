@@ -10,7 +10,7 @@ export class ClearPushTokenSql {
    * @param userId - The user identifier.
    * @returns A promise that resolves when the operation completes.
    */
-  async clearPushToken(userId: string): Promise<void> {
+  async clearPushToken(userId: string) {
     await this.dbService.sql`
       UPDATE identity.user
       SET

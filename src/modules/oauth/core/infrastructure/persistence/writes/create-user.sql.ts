@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
-import type { OAuthProvider } from '../../../application/models/oauth.models';
 import type { OAuthCreatedUserSqlRow } from '../oauth.db-types';
 
 /** Raw SQL operations shared by OAuth providers. */
@@ -20,13 +19,13 @@ export class CreateUserSql {
    * @returns The query result.
    */
   async createUser(
-    provider: OAuthProvider,
+    provider: 'apple' | 'google',
     candidateUsername: string | null,
     email: string | null,
     fullName: string,
     providerUserId: string,
     providerEmail: string | null,
-  ): Promise<string> {
+  ) {
     const [row] = await this.dbService.sql<OAuthCreatedUserSqlRow[]>`
       SELECT
         guest_api.oauth_create_user (

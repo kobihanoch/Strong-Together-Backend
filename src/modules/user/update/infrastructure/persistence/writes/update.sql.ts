@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import postgres from 'postgres';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
-import type { UpdateUserInput } from '../../../application/models/update-user.models';
 import type { UserProfileSqlRow } from '../update-user.db-types';
 /** Executes user profile SQL operations. */
 
@@ -15,7 +14,10 @@ export class UpdateSql {
    * @param input - The input value.
    * @returns The query result.
    */
-  async update(userId: string, input: UpdateUserInput): Promise<UserProfileSqlRow[]> {
+  async update(
+    userId: string,
+    input: { username?: string | undefined; fullName?: string | undefined; email?: string | undefined },
+  ) {
     if (input.email) {
       try {
         await this.db.sql`SAVEPOINT email_probe`;
@@ -37,7 +39,7 @@ export class UpdateSql {
         if (error instanceof postgres.PostgresError && error.code !== '25P01') throw error;
       }
     }
-    return this.db.sql<UserProfileSqlRow[]>`
+    const [row] = await this.db.sql<UserProfileSqlRow[]>`
       UPDATE identity.user AS users
       SET
         username = COALESCE(${input.username ?? null}, username),
@@ -78,5 +80,6 @@ export class UpdateSql {
           users.last_login
         ) AS "userData"
     `;
+    return row ? { kind: 'updated' as const, profile: row.userData } : { kind: 'not-found' as const };
   }
 }

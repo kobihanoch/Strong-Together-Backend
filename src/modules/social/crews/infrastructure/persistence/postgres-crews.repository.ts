@@ -25,7 +25,7 @@ export class PostgresCrewsRepository implements CrewsRepository {
     return (await this.createSql.create(userId, input.name, input.privacy))[0];
   }
   public async update(id: string, input: { name: string; privacy: 'public' | 'private' }): Promise<UpdateCrewOutcome> {
-    return (await this.updateSql.update(id, input.name, input.privacy)).length > 0 ? { kind: 'updated' } : { kind: 'not-found' };
+    return this.updateSql.update(id, input.name, input.privacy);
   }
   public async getProfilePictureForUpdate(crewId: string): Promise<string | null | undefined> {
     return (await this.findProfilePictureForUpdateSql.findProfilePictureForUpdate(crewId))[0]?.profilePicPath;
@@ -34,15 +34,9 @@ export class PostgresCrewsRepository implements CrewsRepository {
     await this.updateProfilePictureSql.updateProfilePicture(crewId, path);
   }
   public async leave(crewId: string): Promise<LeaveCrewOutcome> {
-    const outcome = (await this.leaveSql.leave(crewId))[0];
-    if (!outcome || outcome.result === 'not_member') return { kind: 'not-member' };
-    if (outcome.result === 'crew_deleted') return { kind: 'crew-deleted' };
-    if (outcome.result === 'leadership_transferred') {
-      return { kind: 'leadership-transferred', successorId: outcome.successorId! };
-    }
-    return { kind: 'member-left' };
+    return this.leaveSql.leave(crewId);
   }
   public async delete(id: string): Promise<DeleteCrewOutcome> {
-    return (await this.deleteSql.delete(id)).length > 0 ? { kind: 'deleted' } : { kind: 'not-found' };
+    return this.deleteSql.delete(id);
   }
 }

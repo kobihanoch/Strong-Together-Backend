@@ -13,7 +13,7 @@ export class UpdateEmailSql {
    * @param email - The normalized email address.
    * @returns A promise that resolves when the operation completes.
    */
-  async updateEmail(userId: string, email: string): Promise<void> {
+  async updateEmail(userId: string, email: string) {
     await this.db.promoteCurrentRlsTxToAuthenticated(userId);
     try {
       await this.db.sql`SAVEPOINT email_change`;

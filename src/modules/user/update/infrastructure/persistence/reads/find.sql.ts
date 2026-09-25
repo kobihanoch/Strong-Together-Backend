@@ -12,7 +12,7 @@ export class FindSql {
    * @param userId - The user identifier.
    * @returns The query result.
    */
-  find(userId: string): Promise<UserProfileSqlRow[]> {
+  find(userId: string) {
     return this.db.sql<UserProfileSqlRow[]>`
       SELECT
         JSONB_BUILD_OBJECT(

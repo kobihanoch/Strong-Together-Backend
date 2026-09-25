@@ -12,7 +12,7 @@ export class FindProfilePictureSql {
    * @param userId - The user identifier.
    * @returns The query result.
    */
-  findProfilePicture(userId: string): Promise<UserProfilePictureSqlRow[]> {
+  findProfilePicture(userId: string) {
     return this.db.sql<UserProfilePictureSqlRow[]>`
       SELECT
         profile_pic_path AS "profilePicPath"

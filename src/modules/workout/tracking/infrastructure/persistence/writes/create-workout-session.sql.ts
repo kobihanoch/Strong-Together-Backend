@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
-import type { FinishedWorkoutEntry } from '../../../application/models/workout-tracking.models';
-import type { ExerciseTrackingIdSqlRow, WorkoutSplitLookupSqlRow, WorkoutSummaryIdSqlRow } from '../workout-tracking.db-types';
+import type { ExerciseTrackingIdSqlRow, FinishedWorkoutSqlInput, WorkoutSplitLookupSqlRow, WorkoutSummaryIdSqlRow } from '../workout-tracking.db-types';
 
 @Injectable()
 export class CreateWorkoutSessionSql {
@@ -17,10 +16,10 @@ export class CreateWorkoutSessionSql {
    */
   async createWorkoutSession(
     userId: string,
-    workoutArray: FinishedWorkoutEntry[],
+    workoutArray: FinishedWorkoutSqlInput[],
     workoutStartUtc: string | null,
     workoutEndUtc: string | null,
-  ): Promise<string> {
+  ) {
     // Resolve the workout split that owns the exercises in the finished workout.
     const firstAssignedExercise = workoutArray.find((exercise) => exercise.isExerciseAssignedToSplit);
     const [{ workoutSplitId }] = await this.dbService.sql<WorkoutSplitLookupSqlRow[]>`

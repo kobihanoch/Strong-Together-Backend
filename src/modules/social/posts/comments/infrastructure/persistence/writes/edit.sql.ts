@@ -19,8 +19,8 @@ export class EditSql {
    * @param content - The validated replacement text.
    * @returns The updated comment identifier, or no row when it is unavailable.
    */
-  public edit(id: string, content: string): Promise<CommentWriteSqlRow[]> {
-    return this.dbService.sql<CommentWriteSqlRow[]>`
+  public async edit(id: string, content: string) {
+    const rows = await this.dbService.sql<CommentWriteSqlRow[]>`
       UPDATE social.comment
       SET
         content = ${content},
@@ -30,5 +30,6 @@ export class EditSql {
       RETURNING
         id
     `;
+    return rows.length > 0 ? { kind: 'updated' as const } : { kind: 'not-found' as const };
   }
 }

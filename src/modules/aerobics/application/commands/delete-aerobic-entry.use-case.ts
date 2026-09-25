@@ -23,8 +23,8 @@ export class DeleteAerobicEntryUseCase {
    */
   async execute(userId: string, id: number): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const deletedId = await this.repository.deleteForUser(userId, id);
-      if (deletedId === null) throw new AerobicEntryNotFoundError();
+      const outcome = await this.repository.deleteForUser(userId, id);
+      if (outcome.kind === 'not-found') throw new AerobicEntryNotFoundError();
       this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
     });
   }

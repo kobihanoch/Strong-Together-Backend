@@ -16,7 +16,7 @@ export class CreateSql {
    * @param passwordHash - The password hash value.
    * @returns The query result.
    */
-  async create(username: string, fullName: string, email: string, gender: string, passwordHash: string): Promise<CreatedUserSqlRow> {
+  async create(username: string, fullName: string, email: string, gender: string, passwordHash: string) {
     const [row] = await this.db.sql<CreatedUserSqlRow[]>`
       SELECT
         guest_api.create_app_user (

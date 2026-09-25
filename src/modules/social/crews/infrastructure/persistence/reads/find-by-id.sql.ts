@@ -17,7 +17,7 @@ export class FindByIdSql {
    * @param id - The UUID of the crew to retrieve.
    * @returns An array containing the matching crew, or an empty array.
    */
-  async findById(id: string): Promise<CrewWithParticipantCountSqlRow[]> {
+  async findById(id: string) {
     return this.dbService.sql<CrewWithParticipantCountSqlRow[]>`
       SELECT
         id,

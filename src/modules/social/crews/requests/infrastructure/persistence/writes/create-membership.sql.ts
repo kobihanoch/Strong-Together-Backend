@@ -21,7 +21,7 @@ export class CreateMembershipSql {
    * @param userId - The UUID of the user receiving active member membership.
    * @returns A promise that resolves after membership insertion.
    */
-  async createMembership(crewId: string, userId: string): Promise<void> {
+  async createMembership(crewId: string, userId: string) {
     await this.dbService.sql`
       INSERT INTO
         social.crew_membership (crew_id, user_id, status, role, joined_at)

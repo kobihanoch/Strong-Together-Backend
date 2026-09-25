@@ -11,7 +11,7 @@ export class FindLastLoginSql {
    * @param userId - The user identifier.
    * @returns The last login result.
    */
-  async findLastLogin(userId: string): Promise<Date | null> {
+  async findLastLogin(userId: string) {
     const [user] = await this.dbService.sql<LastLoginSqlRow[]>`
       SELECT
         guest_api.last_login (${userId}::UUID) AS "lastLogin"

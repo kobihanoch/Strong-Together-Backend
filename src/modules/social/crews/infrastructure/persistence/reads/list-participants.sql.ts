@@ -25,7 +25,7 @@ export class ListParticipantsSql {
     crewId: string,
     limit: number,
     cursor?: { timestamp: string; id: string; rank: number | undefined },
-  ): Promise<CrewParticipantSqlRow[]> {
+  ) {
     return this.dbService.sql<CrewParticipantSqlRow[]>`
       SELECT
         cm.id,

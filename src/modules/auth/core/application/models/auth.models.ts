@@ -35,6 +35,9 @@ export interface RotatedSession {
   userData: SessionUserData;
 }
 
+/** Outcome of compare-and-swap session rotation. */
+export type RotateSessionOutcome = { kind: 'rotated'; session: RotatedSession } | { kind: 'version-mismatch' };
+
 /** Claims accepted from a refresh token. */
 export interface RefreshTokenPayload {
   id: string;

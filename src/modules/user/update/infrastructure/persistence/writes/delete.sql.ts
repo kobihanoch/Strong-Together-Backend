@@ -11,7 +11,7 @@ export class DeleteSql {
    * @param userId - The user identifier.
    * @returns A promise that resolves when the operation completes.
    */
-  async delete(userId: string): Promise<void> {
+  async delete(userId: string) {
     await this.db.sql`
       DELETE FROM identity.user
       WHERE

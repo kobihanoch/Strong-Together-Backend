@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
-import type { RotatedSession } from '../../../../core/application/models/auth.models';
 import type { RotatedSessionSqlRow } from '../session.db-types';
 
 @Injectable()
@@ -12,7 +11,7 @@ export class RotateSql {
    * @param userId - The user identifier.
    * @returns The bump token version and get self result.
    */
-  async rotate(userId: string): Promise<RotatedSession> {
+  async rotate(userId: string) {
     const [session] = await this.dbService.sql<RotatedSessionSqlRow[]>`
       UPDATE identity.user AS users
       SET

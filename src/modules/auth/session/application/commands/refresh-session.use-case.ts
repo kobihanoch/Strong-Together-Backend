@@ -39,8 +39,9 @@ export class RefreshSessionUseCase {
       }
 
       await this.transaction.promoteToUser(decoded.id);
-      const session = await this.repository.rotateIfVersion(decoded.id, decoded.tokenVer);
-      if (!session) throw new SessionUnauthorizedError('New login required');
+      const rotation = await this.repository.rotateIfVersion(decoded.id, decoded.tokenVer);
+      if (rotation.kind === 'version-mismatch') throw new SessionUnauthorizedError('New login required');
+      const { session } = rotation;
       if (!session.userData.isVerified) throw new SessionUnauthorizedError('A verification email is pending');
 
       const issued = this.tokens.issueSession(session.userData.id, session.userData.role, session.tokenVersion, dpopJkt ?? undefined);

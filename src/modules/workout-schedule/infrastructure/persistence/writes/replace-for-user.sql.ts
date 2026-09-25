@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../infrastructure/connections/postgres/db.service';
-import type { WorkoutScheduleInput } from '../../../application/models/workout-schedule.models';
 import type { ActiveWorkoutSplitCountSqlRow } from '../workout-schedule.db-types';
 
 /** Executes workout-schedule SQL inside the active RLS transaction. */
@@ -15,7 +14,10 @@ export class ReplaceForUserSql {
    * @param schedules - The schedules value.
    * @returns The query result.
    */
-  public async replaceForUser(userId: string, schedules: WorkoutScheduleInput[]): Promise<boolean> {
+  public async replaceForUser(
+    userId: string,
+    schedules: Array<{ workoutSplitId: number; dayOfWeek: number; startTime: string }>,
+  ) {
     const splitIds = [...new Set(schedules.map((schedule) => schedule.workoutSplitId))];
 
     if (splitIds.length > 0) {
@@ -32,7 +34,7 @@ export class ReplaceForUserSql {
           AND split.is_active = TRUE
       `;
 
-      if (count !== splitIds.length) return false;
+      if (count !== splitIds.length) return { kind: 'invalid-splits' as const };
     }
 
     await this.dbService.sql`
@@ -55,6 +57,6 @@ export class ReplaceForUserSql {
       `;
     }
 
-    return true;
+    return { kind: 'replaced' as const };
   }
 }

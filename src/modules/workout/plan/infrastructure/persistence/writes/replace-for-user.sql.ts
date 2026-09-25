@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
-import type { WorkoutExerciseInput, WorkoutSplitInput } from '../../../application/models/workout-plan.models';
-import type { ExerciseAssignmentIdSqlRow, ExistingExercisesSqlRow, WorkoutPlanIdSqlRow, WorkoutSplitIdSqlRow } from '../workout-plan.db-types';
-
-/** Represents the existing workout split input value. */
-type ExistingWorkoutSplitInput = WorkoutSplitInput & { id: number };
+import type {
+  ExerciseAssignmentIdSqlRow,
+  ExistingExercisesSqlRow,
+  ExistingWorkoutSplitSqlInput,
+  WorkoutExerciseSqlInput,
+  WorkoutPlanIdSqlRow,
+  WorkoutSplitIdSqlRow,
+  WorkoutSplitSqlInput,
+} from '../workout-plan.db-types';
 
 @Injectable()
 export class ReplaceForUserSql {
@@ -18,7 +22,7 @@ export class ReplaceForUserSql {
    * @param workoutData - The workout plan payload.
    * @returns The add workout result.
    */
-  async replaceForUser(userId: string, workoutData: WorkoutSplitInput[]): Promise<{ replaced: true } | { invalidSplitId: number }> {
+  async replaceForUser(userId: string, workoutData: WorkoutSplitSqlInput[]) {
     const submittedExistingIds = workoutData.flatMap((split) => (split.id === undefined ? [] : [split.id]));
 
     if (submittedExistingIds.length > 0) {
@@ -97,7 +101,7 @@ export class ReplaceForUserSql {
    * @param split - The workout split to persist.
    * @returns The insert workout split result.
    */
-  private async insertWorkoutSplit(planId: number, split: WorkoutSplitInput): Promise<number> {
+  private async insertWorkoutSplit(planId: number, split: WorkoutSplitSqlInput) {
     // A split without an ID is new and receives a stable database identity.
     const [{ id }] = await this.dbService.sql<WorkoutSplitIdSqlRow[]>`
       INSERT INTO
@@ -122,7 +126,7 @@ export class ReplaceForUserSql {
    * @returns The update workout split result.
    * @throws {Error} When the locked split cannot be updated.
    */
-  private async updateWorkoutSplit(planId: number, split: ExistingWorkoutSplitInput): Promise<number> {
+  private async updateWorkoutSplit(planId: number, split: ExistingWorkoutSplitSqlInput) {
     // Preserve the split identity when it is renamed, reordered, or reactivated.
     const [updated] = await this.dbService.sql<WorkoutSplitIdSqlRow[]>`
       UPDATE workout.workout_split
@@ -153,7 +157,7 @@ export class ReplaceForUserSql {
    * @param splits - The workout splits to process.
    * @returns A promise that resolves when the operation completes.
    */
-  private async replaceWorkoutExercises(planId: number, splits: Array<{ id: number; exercises: WorkoutExerciseInput[] }>): Promise<void> {
+  private async replaceWorkoutExercises(planId: number, splits: Array<{ id: number; exercises: WorkoutExerciseSqlInput[] }>) {
     const changedSplitIds: number[] = [];
     for (const split of splits) {
       const [{ exercises }] = await this.dbService.sql<ExistingExercisesSqlRow[]>`
@@ -198,7 +202,7 @@ export class ReplaceForUserSql {
           AND assignment.is_active = TRUE
       `;
 
-      const normalizeExercises = (items: WorkoutExerciseInput[]) =>
+      const normalizeExercises = (items: WorkoutExerciseSqlInput[]) =>
         items
           .map((exercise) => ({
             exerciseId: Number(exercise.exerciseId),

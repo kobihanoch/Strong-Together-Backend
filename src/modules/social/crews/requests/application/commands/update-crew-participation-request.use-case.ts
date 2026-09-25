@@ -21,9 +21,9 @@ export class UpdateCrewParticipationRequestUseCase {
    */
   public async execute(userId: string, requestId: string, status: 'accepted' | 'declined'): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const updated = await this.repository.updateStatus(requestId, status);
-      if (!updated) throw new ParticipationRequestNotFoundError();
-      if (updated.status === 'accepted') await this.repository.createMembership(updated.crewId, updated.participantUserId);
+      const outcome = await this.repository.updateStatus(requestId, status);
+      if (outcome.kind === 'not-found') throw new ParticipationRequestNotFoundError();
+      if (outcome.request.status === 'accepted') await this.repository.createMembership(outcome.request.crewId, outcome.request.participantUserId);
     });
   }
 }

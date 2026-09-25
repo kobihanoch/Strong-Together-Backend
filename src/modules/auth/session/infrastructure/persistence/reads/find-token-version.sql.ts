@@ -11,7 +11,7 @@ export class FindTokenVersionSql {
    * @param userId - The user identifier.
    * @returns The current token version result.
    */
-  async findTokenVersion(userId: string): Promise<number | null> {
+  async findTokenVersion(userId: string) {
     const [row] = await this.dbService.sql<TokenVersionSqlRow[]>`
       SELECT
         token_version AS "tokenVersion"

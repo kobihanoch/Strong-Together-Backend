@@ -1,5 +1,6 @@
 import { exerciseTracking } from '../../../../../infrastructure/persistence/schema/drizzle/tracking/exercise_tracking/table';
 import { workoutSummary } from '../../../../../infrastructure/persistence/schema/drizzle/tracking/workout_summary/table';
+import { trackingSet } from '../../../../../infrastructure/persistence/schema/drizzle/tracking/tracking_set/table';
 import { exercise } from '../../../../../infrastructure/persistence/schema/drizzle/workout/exercises/table';
 import { exerciseToWorkoutSplit } from '../../../../../infrastructure/persistence/schema/drizzle/workout/exercisetoworkoutsplit/table';
 import { workoutSplit } from '../../../../../infrastructure/persistence/schema/drizzle/workout/workout_split/table';
@@ -14,6 +15,27 @@ type AssignmentDbRow = typeof exerciseToWorkoutSplit.$inferSelect;
 type ExerciseDbRow = typeof exercise.$inferSelect;
 /** Represents the split db row value. */
 type SplitDbRow = typeof workoutSplit.$inferSelect;
+type TrackingSetDbRow = typeof trackingSet.$inferSelect;
+
+/** Completed set accepted by workout-session SQL. */
+type FinishedTrackingSetSqlInput = Pick<TrackingSetDbRow, 'reps' | 'weight' | 'setIndex'>;
+
+/** Completed exercise accepted by workout-session SQL. */
+export type FinishedWorkoutSqlInput =
+  | {
+      trackedSets: FinishedTrackingSetSqlInput[];
+      notes?: TrackingDbRow['notes'] | undefined;
+      isExerciseAssignedToSplit: true;
+      exerciseToSplitId: AssignmentDbRow['id'];
+      exerciseId?: ExerciseDbRow['id'] | null | undefined;
+    }
+  | {
+      trackedSets: FinishedTrackingSetSqlInput[];
+      notes?: TrackingDbRow['notes'] | undefined;
+      isExerciseAssignedToSplit: false;
+      exerciseToSplitId?: null | undefined;
+      exerciseId: ExerciseDbRow['id'];
+    };
 /** Describes the tracking set sql value shape. */
 interface TrackingSetSqlValue {
   reps: number;
@@ -76,14 +98,6 @@ export interface WorkoutStatisticsSqlRow {
 export interface PersonalRecordsSqlRow {
   data: { prs: Record<string, PersonalRecordSqlValue> };
 }
-/** Represents the workout history sql result value. */
-export type WorkoutHistorySqlResult = WorkoutHistorySqlRow['data'];
-/** Represents the exercise history sql result value. */
-export type ExerciseHistorySqlResult = ExerciseHistorySqlRow['data'];
-/** Represents the workout statistics sql result value. */
-export type WorkoutStatisticsSqlResult = WorkoutStatisticsSqlRow['data'];
-/** Represents the personal records sql result value. */
-export type PersonalRecordsSqlResult = PersonalRecordsSqlRow['data'];
 /** Describes the workout split lookup sql row shape. */
 export interface WorkoutSplitLookupSqlRow {
   workoutSplitId: AssignmentDbRow['workoutSplitId'];

@@ -10,6 +10,6 @@ import { WorkoutScheduleRepository } from '../../application/ports/workout-sched
 export class PostgresWorkoutScheduleRepository implements WorkoutScheduleRepository {
   public constructor(private readonly replaceForUserSql: ReplaceForUserSql) {}
   public async replaceForUser(userId: string, schedules: WorkoutScheduleInput[]): Promise<ReplaceWorkoutSchedulesOutcome> {
-    return (await this.replaceForUserSql.replaceForUser(userId, schedules)) ? { kind: 'replaced' } : { kind: 'invalid-splits' };
+    return this.replaceForUserSql.replaceForUser(userId, schedules);
   }
 }

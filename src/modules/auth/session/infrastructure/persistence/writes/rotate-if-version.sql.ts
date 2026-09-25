@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
-import type { RotatedSession } from '../../../../core/application/models/auth.models';
 import type { RotatedSessionSqlRow } from '../session.db-types';
 
 @Injectable()
@@ -13,7 +12,7 @@ export class RotateIfVersionSql {
    * @param prevTokenVer - The expected current token version.
    * @returns The bump token version and get self data cas result.
    */
-  async rotateIfVersion(userId: string, prevTokenVer: number): Promise<RotatedSession | null> {
+  async rotateIfVersion(userId: string, prevTokenVer: number) {
     const [session] = await this.dbService.sql<RotatedSessionSqlRow[]>`
       UPDATE identity.user AS users
       SET
@@ -57,6 +56,6 @@ export class RotateIfVersionSql {
           users.last_login
         ) AS "userData"
     `;
-    return session ?? null;
+    return session ? { kind: 'rotated' as const, session } : { kind: 'version-mismatch' as const };
   }
 }

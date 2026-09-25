@@ -23,7 +23,7 @@ export class CreateSql {
     visibility: 'crews_only' | 'public',
     crewIds: string[],
     workoutSummaryId?: string | null,
-  ): Promise<PostWriteSqlRow[]> {
+  ) {
     const [post] = await this.dbService.sql<PostWriteSqlRow[]>`
       INSERT INTO
         social.post (author_user_id, workout_summary_id, content, visibility)

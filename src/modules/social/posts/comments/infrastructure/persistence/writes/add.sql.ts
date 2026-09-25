@@ -20,8 +20,8 @@ export class AddSql {
    * @param content - The validated comment text.
    * @returns The created comment identifier, or no row when the post is not visible.
    */
-  public add(postId: string, userId: string, content: string): Promise<CommentWriteSqlRow[]> {
-    return this.dbService.sql<CommentWriteSqlRow[]>`
+  public async add(postId: string, userId: string, content: string) {
+    const rows = await this.dbService.sql<CommentWriteSqlRow[]>`
       INSERT INTO
         social.comment (post_id, user_id, content)
       VALUES
@@ -33,5 +33,6 @@ export class AddSql {
       RETURNING
         id
     `;
+    return rows.length > 0 ? { kind: 'added' as const } : { kind: 'post-not-found' as const };
   }
 }

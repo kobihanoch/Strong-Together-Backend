@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../infrastructure/connections/postgres/db.service';
-import type { AerobicsHistorySqlData, AerobicsHistorySqlRow } from '../aerobics.db-types';
+import type { AerobicsHistorySqlRow } from '../aerobics.db-types';
 
 @Injectable()
 export class FindByUserSql {
@@ -13,7 +13,7 @@ export class FindByUserSql {
    * @param tz - The IANA time-zone name.
    * @returns The user aerobics for ndays result.
    */
-  async findByUser(userId: string, days: number, tz: string = 'Asia/Jerusalem'): Promise<AerobicsHistorySqlData> {
+  async findByUser(userId: string, days: number, tz: string = 'Asia/Jerusalem') {
     const [obj] = await this.dbService.sql<AerobicsHistorySqlRow[]>`
       /* Normalize parameters (default tz to UTC if empty) */
       WITH

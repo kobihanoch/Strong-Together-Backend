@@ -10,7 +10,7 @@ export class LogoutSql {
    * @param userId - The user identifier.
    * @returns A promise that resolves when the operation completes.
    */
-  async logout(userId: string): Promise<void> {
+  async logout(userId: string) {
     await this.dbService.sql`
       UPDATE identity.user
       SET

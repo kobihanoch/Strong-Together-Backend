@@ -9,3 +9,6 @@ export type CrewParticipationRequestSqlRow = Omit<CrewParticipationRequestDbRow,
   updatedAt: string;
   respondedAt: string | null;
 };
+
+/** SQL projection returned by the crew-leader authorization query. */
+export type CrewLeaderAuthorizationSqlRow = { allowed: boolean };

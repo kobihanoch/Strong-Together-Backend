@@ -19,8 +19,8 @@ export class DeleteSql {
    * @param userId - The authenticated user's UUID.
    * @returns The deleted reaction identifier, or no row when it does not exist.
    */
-  public delete(postId: string, userId: string): Promise<ReactionWriteSqlRow[]> {
-    return this.dbService.sql<ReactionWriteSqlRow[]>`
+  public async delete(postId: string, userId: string) {
+    const rows = await this.dbService.sql<ReactionWriteSqlRow[]>`
       DELETE FROM social.reaction
       WHERE
         post_id = ${postId}::UUID
@@ -28,5 +28,6 @@ export class DeleteSql {
       RETURNING
         id
     `;
+    return rows.length > 0 ? { kind: 'deleted' as const } : { kind: 'not-found' as const };
   }
 }

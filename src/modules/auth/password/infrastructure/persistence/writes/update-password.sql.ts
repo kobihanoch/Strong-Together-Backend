@@ -11,7 +11,7 @@ export class UpdatePasswordSql {
    * @param passwordHash - The replacement password hash.
    * @returns A promise that resolves when the operation completes.
    */
-  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+  async updatePassword(userId: string, passwordHash: string) {
     await this.dbService.sql`
       UPDATE identity.user
       SET

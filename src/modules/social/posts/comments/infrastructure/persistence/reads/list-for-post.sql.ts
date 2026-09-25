@@ -20,7 +20,7 @@ export class ListForPostSql {
    * @param cursor - The preceding page's final creation timestamp and UUID.
    * @returns At most one extra row beyond the requested page size.
    */
-  public listForPost(postId: string, limit: number, cursor?: { timestamp: string; id: string }): Promise<CommentSqlRow[]> {
+  public listForPost(postId: string, limit: number, cursor?: { timestamp: string; id: string }) {
     return this.dbService.sql<CommentSqlRow[]>`
       SELECT
         c.id,

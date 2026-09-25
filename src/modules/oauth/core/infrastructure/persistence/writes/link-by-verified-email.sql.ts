@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
-import type { OAuthProvider } from '../../../application/models/oauth.models';
 import type { OAuthLinkSqlRow } from '../oauth.db-types';
 
 /** Raw SQL operations shared by OAuth providers. */
@@ -16,7 +15,7 @@ export class LinkByVerifiedEmailSql {
    * @param providerUserId - The provider user id value.
    * @returns The query result.
    */
-  async linkByVerifiedEmail(provider: OAuthProvider, email: string, providerUserId: string): Promise<string | null> {
+  async linkByVerifiedEmail(provider: 'apple' | 'google', email: string, providerUserId: string) {
     const [row] = await this.dbService.sql<OAuthLinkSqlRow[]>`
       SELECT
         guest_api.oauth_link_by_email (
@@ -25,6 +24,6 @@ export class LinkByVerifiedEmailSql {
           ${providerUserId}
         ) AS user_id
     `;
-    return row?.user_id ?? null;
+    return row?.user_id ? { kind: 'linked' as const, userId: row.user_id } : { kind: 'no-match' as const };
   }
 }

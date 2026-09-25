@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DeleteForUserSql } from './writes/delete-for-user.sql';
 import { UpdateForUserSql } from './writes/update-for-user.sql';
 import { CreateForUserSql } from './writes/create-for-user.sql';
-import type { AerobicEntryInput } from '../../application/models/aerobics.models';
+import type { AerobicEntryInput, DeleteAerobicEntryOutcome, UpdateAerobicEntryOutcome } from '../../application/models/aerobics.models';
 import { AerobicsRepository } from '../../application/ports/aerobics.repository';
 
 /** PostgreSQL write adapter. */
@@ -16,10 +16,10 @@ export class PostgresAerobicsRepository implements AerobicsRepository {
   createForUser(userId: string, record: AerobicEntryInput): Promise<void> {
     return this.createForUserSql.createForUser(userId, record);
   }
-  updateForUser(userId: string, id: number, record: AerobicEntryInput): Promise<number | null> {
+  updateForUser(userId: string, id: number, record: AerobicEntryInput): Promise<UpdateAerobicEntryOutcome> {
     return this.updateForUserSql.updateForUser(userId, id, record);
   }
-  deleteForUser(userId: string, id: number): Promise<number | null> {
+  deleteForUser(userId: string, id: number): Promise<DeleteAerobicEntryOutcome> {
     return this.deleteForUserSql.deleteForUser(userId, id);
   }
 }

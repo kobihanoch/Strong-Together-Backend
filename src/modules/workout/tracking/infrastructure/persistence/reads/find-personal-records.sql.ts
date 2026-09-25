@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
-import type { PersonalRecordsSqlResult, PersonalRecordsSqlRow } from '../workout-tracking.db-types';
+import type { PersonalRecordsSqlRow } from '../workout-tracking.db-types';
 
 @Injectable()
 export class FindPersonalRecordsSql {
@@ -16,7 +16,7 @@ export class FindPersonalRecordsSql {
    * @param tz - The IANA time-zone name used for local workout timestamps.
    * @returns All personal records keyed by exercise identifier.
    */
-  async findPersonalRecords(userId: string, tz: string): Promise<PersonalRecordsSqlResult> {
+  async findPersonalRecords(userId: string, tz: string) {
     const [{ data }] = await this.dbService.sql<PersonalRecordsSqlRow[]>`
       SELECT
         JSONB_BUILD_OBJECT(

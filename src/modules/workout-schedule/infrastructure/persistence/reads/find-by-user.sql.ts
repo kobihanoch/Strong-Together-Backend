@@ -13,7 +13,7 @@ export class FindByUserSql {
    * @param userId - The user identifier.
    * @returns The query result.
    */
-  public findByUser(userId: string): Promise<WorkoutScheduleSqlRow[]> {
+  public findByUser(userId: string) {
     return this.dbService.sql<WorkoutScheduleSqlRow[]>`
       SELECT
         schedule.id,

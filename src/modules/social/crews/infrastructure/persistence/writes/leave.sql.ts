@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
-import type { CrewSuccessorSqlRow, LeaveCrewContextSqlRow, LeaveCrewResultSqlRow } from '../crews.db-types';
+import type { CrewSuccessorSqlRow, LeaveCrewContextSqlRow } from '../crews.db-types';
 
 /**
  * Executes crew persistence operations inside the request's RLS transaction.
@@ -19,7 +19,7 @@ export class LeaveSql {
    * @param crewId - The UUID of the crew the current user wants to leave.
    * @returns The leave result used by the service to select the HTTP outcome.
    */
-  async leave(crewId: string): Promise<LeaveCrewResultSqlRow[]> {
+  async leave(crewId: string) {
     // Get crew ID and lock row
     const [context] = await this.dbService.sql<LeaveCrewContextSqlRow[]>`
       SELECT
@@ -35,7 +35,7 @@ export class LeaveSql {
         cm
     `;
 
-    if (!context) return [{ result: 'not_member' }];
+    if (!context) return { kind: 'not-member' as const };
 
     if (context.isLeader) {
       const [successor] = await this.dbService.sql<CrewSuccessorSqlRow[]>`
@@ -67,7 +67,7 @@ export class LeaveSql {
           WHERE
             c.id = ${crewId}::UUID
         `;
-        return [{ result: 'crew_deleted' }];
+        return { kind: 'crew-deleted' as const };
       }
 
       await this.dbService.sql`
@@ -88,7 +88,7 @@ export class LeaveSql {
           id = ${context.membershipId}::UUID
       `;
 
-      return [{ result: 'leadership_transferred', successorId: successor.userId }];
+      return { kind: 'leadership-transferred' as const, successorId: successor.userId };
     }
 
     await this.dbService.sql`
@@ -101,6 +101,6 @@ export class LeaveSql {
         id = ${context.membershipId}::UUID
     `;
 
-    return [{ result: 'member_left' }];
+    return { kind: 'member-left' as const };
   }
 }

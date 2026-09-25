@@ -6,7 +6,7 @@ import { RotateIfVersionSql } from './writes/rotate-if-version.sql';
 import { RotateSql } from './writes/rotate.sql';
 import { FindLastLoginSql } from './reads/find-last-login.sql';
 import { FindLoginUserSql } from './reads/find-login-user.sql';
-import type { LoginUser, RotatedSession } from '../../../core/application/models/auth.models';
+import type { LoginUser, RotatedSession, RotateSessionOutcome } from '../../../core/application/models/auth.models';
 import { SessionRepository } from '../../application/ports/session.repository';
 
 /** PostgreSQL session repository. */
@@ -34,7 +34,7 @@ export class PostgresSessionRepository implements SessionRepository {
     return this.rotateSql.rotate(userId);
   }
 
-  rotateIfVersion(userId: string, previousTokenVersion: number): Promise<RotatedSession | null> {
+  rotateIfVersion(userId: string, previousTokenVersion: number): Promise<RotateSessionOutcome> {
     return this.rotateIfVersionSql.rotateIfVersion(userId, previousTokenVersion);
   }
 

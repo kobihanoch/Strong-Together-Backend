@@ -17,13 +17,14 @@ export class DeleteSql {
    * @param id - The UUID of the crew to delete.
    * @returns The deleted UUID when a row was removed, or an empty array.
    */
-  async delete(id: string): Promise<DeletedCrewSqlRow[]> {
-    return this.dbService.sql<DeletedCrewSqlRow[]>`
+  async delete(id: string) {
+    const rows = await this.dbService.sql<DeletedCrewSqlRow[]>`
       DELETE FROM social.crew
       WHERE
         id = ${id}::UUID
       RETURNING
         id
     `;
+    return rows.length > 0 ? { kind: 'deleted' as const } : { kind: 'not-found' as const };
   }
 }

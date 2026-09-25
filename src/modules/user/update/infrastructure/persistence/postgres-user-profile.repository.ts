@@ -27,8 +27,7 @@ export class PostgresUserProfileRepository implements UserProfileRepository {
   }
   async update(userId: string, input: UpdateUserInput): Promise<UpdateUserProfileOutcome> {
     try {
-      const profile = (await this.updateSql.update(userId, input))[0]?.userData;
-      return profile ? { kind: 'updated', profile } : { kind: 'not-found' };
+      return await this.updateSql.update(userId, input);
     } catch (error) {
       if (error instanceof postgres.PostgresError && error.code === '23505') return { kind: 'conflict' };
       throw error;

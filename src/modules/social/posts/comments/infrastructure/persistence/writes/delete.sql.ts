@@ -18,13 +18,14 @@ export class DeleteSql {
    * @param id - The comment UUID.
    * @returns The deleted comment identifier, or no row when it is unavailable.
    */
-  public delete(id: string): Promise<CommentWriteSqlRow[]> {
-    return this.dbService.sql<CommentWriteSqlRow[]>`
+  public async delete(id: string) {
+    const rows = await this.dbService.sql<CommentWriteSqlRow[]>`
       DELETE FROM social.comment
       WHERE
         id = ${id}::UUID
       RETURNING
         id
     `;
+    return rows.length > 0 ? { kind: 'deleted' as const } : { kind: 'not-found' as const };
   }
 }

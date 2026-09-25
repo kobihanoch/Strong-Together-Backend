@@ -20,7 +20,7 @@ export class ListInvitationsSql {
    *
    * @returns All RLS-visible invitation rows ordered from newest to oldest.
    */
-  async listInvitations(): Promise<CrewParticipationRequestSqlRow[]> {
+  async listInvitations() {
     return this.dbService.sql<CrewParticipationRequestSqlRow[]>`
       SELECT
         id,

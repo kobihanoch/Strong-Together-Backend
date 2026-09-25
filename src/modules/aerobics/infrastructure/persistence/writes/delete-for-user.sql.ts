@@ -12,7 +12,7 @@ export class DeleteForUserSql {
    * @param id - The aerobic entry identifier.
    * @returns The deleted entry identifier, or `null` when it was not found.
    */
-  async deleteForUser(userId: string, id: number): Promise<number | null> {
+  async deleteForUser(userId: string, id: number) {
     const [row] = await this.dbService.sql<AerobicMutationSqlRow[]>`
       DELETE FROM tracking.aerobic_tracking
       WHERE
@@ -21,6 +21,6 @@ export class DeleteForUserSql {
       RETURNING
         id
     `;
-    return row?.id ?? null;
+    return row ? { kind: 'deleted' as const, id: row.id } : { kind: 'not-found' as const };
   }
 }

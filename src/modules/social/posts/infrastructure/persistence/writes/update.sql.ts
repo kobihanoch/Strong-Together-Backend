@@ -14,8 +14,8 @@ export class UpdateSql {
    * @param content - The replacement textual content.
    * @returns The updated UUID, or an empty array when no post was authorized.
    */
-  update(id: string, content: string): Promise<DeletedPostSqlRow[]> {
-    return this.dbService.sql<DeletedPostSqlRow[]>`
+  async update(id: string, content: string) {
+    const rows = await this.dbService.sql<DeletedPostSqlRow[]>`
       UPDATE social.post
       SET
         content = ${content},
@@ -25,5 +25,6 @@ export class UpdateSql {
       RETURNING
         id
     `;
+    return rows.length > 0 ? { kind: 'updated' as const } : { kind: 'not-found' as const };
   }
 }

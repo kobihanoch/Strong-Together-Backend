@@ -42,6 +42,7 @@ export interface RotatedSessionSqlRow {
   };
 }
 
+
 /** SQL row returned by token-version lookup. */
 export interface TokenVersionSqlRow {
   tokenVersion: UserDbRow['tokenVersion'];

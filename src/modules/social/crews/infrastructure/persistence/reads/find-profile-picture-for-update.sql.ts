@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
+import type { CrewProfilePictureSqlRow } from '../crews.db-types';
 
 /**
  * Executes crew persistence operations inside the request's RLS transaction.
@@ -16,8 +17,8 @@ export class FindProfilePictureForUpdateSql {
    * @param crewId - The crew UUID.
    * @returns The current picture path, or no row when the caller cannot update it.
    */
-  async findProfilePictureForUpdate(crewId: string): Promise<{ profilePicPath: string | null }[]> {
-    return this.dbService.sql<{ profilePicPath: string | null }[]>`
+  async findProfilePictureForUpdate(crewId: string) {
+    return this.dbService.sql<CrewProfilePictureSqlRow[]>`
       SELECT
         profile_pic_path AS "profilePicPath"
       FROM

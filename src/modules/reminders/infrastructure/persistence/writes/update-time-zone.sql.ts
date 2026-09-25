@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../infrastructure/connections/postgres/db.service';
-import type { UpdateReminderTimeZoneInput } from '../../../application/models/reminders.models';
 
 /**
  * Database operations for authenticated users' reminder settings.
@@ -16,7 +15,7 @@ export class UpdateTimeZoneSql {
    * @param settings - The validated reminder time-zone settings.
    * @returns A promise that resolves when the operation completes.
    */
-  async updateTimeZone(userId: string, settings: UpdateReminderTimeZoneInput): Promise<void> {
+  async updateTimeZone(userId: string, settings: { timeZone: string }) {
     await this.dbService.sql`
       UPDATE reminders.user_reminder_setting
       SET

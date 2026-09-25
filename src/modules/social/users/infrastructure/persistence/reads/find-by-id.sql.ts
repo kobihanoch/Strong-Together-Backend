@@ -13,7 +13,7 @@ export class FindByIdSql {
    * @param userId - The user identifier.
    * @returns The query result.
    */
-  public findById(userId: string): Promise<SocialUserProfileSqlRow[]> {
+  public findById(userId: string) {
     return this.dbService.sql<SocialUserProfileSqlRow[]>`
       SELECT
         p."userId",

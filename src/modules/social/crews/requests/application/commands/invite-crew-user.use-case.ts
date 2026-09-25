@@ -22,7 +22,8 @@ export class InviteCrewUserUseCase {
    */
   public async execute(crewId: string, initiatorUserId: string, participantUserId: string): Promise<void> {
     return this.unitOfWork.execute(initiatorUserId, async () => {
-      if (!(await this.repository.invite(crewId, initiatorUserId, participantUserId))) throw new CrewNotFoundError();
+      const outcome = await this.repository.invite(crewId, initiatorUserId, participantUserId);
+      if (outcome.kind === 'crew-not-found') throw new CrewNotFoundError();
     });
   }
 }

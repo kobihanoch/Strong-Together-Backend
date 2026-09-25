@@ -21,7 +21,7 @@ export class ListPendingJoinRequestsSql {
    * @param crewId - The UUID of the crew whose requests are listed.
    * @returns Pending RLS-visible join-request rows ordered from oldest to newest.
    */
-  async listPendingJoinRequests(crewId: string): Promise<CrewParticipationRequestSqlRow[]> {
+  async listPendingJoinRequests(crewId: string) {
     return this.dbService.sql<CrewParticipationRequestSqlRow[]>`
       SELECT
         id,

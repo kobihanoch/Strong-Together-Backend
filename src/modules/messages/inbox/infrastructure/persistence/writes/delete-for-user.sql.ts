@@ -14,8 +14,8 @@ export class DeleteForUserSql {
    * @param userId - The user identifier.
    * @returns The query result.
    */
-  deleteForUser(messageId: string, userId: string): Promise<MessageMutationSqlRow[]> {
-    return this.dbService.sql<MessageMutationSqlRow[]>`
+  async deleteForUser(messageId: string, userId: string) {
+    const [row] = await this.dbService.sql<MessageMutationSqlRow[]>`
       DELETE FROM messages.message
       WHERE
         id = ${messageId}::UUID
@@ -26,5 +26,6 @@ export class DeleteForUserSql {
       RETURNING
         id
     `;
+    return row ? { kind: 'deleted' as const, messageId: row.id } : { kind: 'not-found' as const };
   }
 }

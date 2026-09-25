@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../infrastructure/connections/postgres/db.service';
-import type { AerobicEntryInput } from '../../../application/models/aerobics.models';
 import type { AerobicMutationSqlRow } from '../aerobics.db-types';
 
 @Injectable()
@@ -14,7 +13,7 @@ export class UpdateForUserSql {
    * @param record - The replacement aerobic entry values.
    * @returns The updated entry identifier, or `null` when it was not found.
    */
-  async updateForUser(userId: string, id: number, record: AerobicEntryInput): Promise<number | null> {
+  async updateForUser(userId: string, id: number, record: { durationMins: number; durationSec: number; type: string }) {
     const { durationMins, durationSec, type } = record;
     const [row] = await this.dbService.sql<AerobicMutationSqlRow[]>`
       UPDATE tracking.aerobic_tracking
@@ -27,6 +26,6 @@ export class UpdateForUserSql {
       RETURNING
         id
     `;
-    return row?.id ?? null;
+    return row ? { kind: 'updated' as const, id: row.id } : { kind: 'not-found' as const };
   }
 }

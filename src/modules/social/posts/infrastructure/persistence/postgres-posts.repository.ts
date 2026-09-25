@@ -18,9 +18,9 @@ export class PostgresPostsRepository implements PostsRepository {
     await this.createSql.create(userId, input.content, input.visibility, input.crewIds, input.workoutSummaryId);
   }
   public async update(id: string, content: string): Promise<UpdatePostOutcome> {
-    return (await this.updateSql.update(id, content)).length > 0 ? { kind: 'updated' } : { kind: 'not-found' };
+    return this.updateSql.update(id, content);
   }
   public async delete(id: string): Promise<DeletePostOutcome> {
-    return (await this.deleteSql.delete(id)).length > 0 ? { kind: 'deleted' } : { kind: 'not-found' };
+    return this.deleteSql.delete(id);
   }
 }

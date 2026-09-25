@@ -13,7 +13,7 @@ export class FindEligibleExpoPushTokenSql {
    * @param occurrenceDate - The queued local workout date.
    * @returns The current Expo token, or null when the delayed reminder is no longer eligible.
    */
-  async findEligibleExpoPushToken(userId: string, workoutScheduleId: string, occurrenceDate: string): Promise<string | null> {
+  async findEligibleExpoPushToken(userId: string, workoutScheduleId: string, occurrenceDate: string) {
     const [row] = await this.dbService.sql<EligiblePushTokenSqlRow[]>`
       SELECT
         cron_api.valid_workout_reminder_token (

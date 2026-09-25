@@ -20,8 +20,8 @@ export class SaveSql {
    * @param type - The selected reaction type.
    * @returns The written reaction identifier, or no row when the post is not visible.
    */
-  public save(postId: string, userId: string, type: ReactionDbType): Promise<ReactionWriteSqlRow[]> {
-    return this.dbService.sql<ReactionWriteSqlRow[]>`
+  public async save(postId: string, userId: string, type: ReactionDbType) {
+    const rows = await this.dbService.sql<ReactionWriteSqlRow[]>`
       INSERT INTO
         social.reaction (post_id, user_id, type)
       VALUES
@@ -37,5 +37,6 @@ export class SaveSql {
       RETURNING
         id
     `;
+    return rows.length > 0 ? { kind: 'saved' as const } : { kind: 'post-not-found' as const };
   }
 }

@@ -16,7 +16,7 @@ export class CreateSql {
    * @param message - The message value.
    * @returns The query result.
    */
-  create(senderId: string, receiverId: string, subject: string, message: string): Promise<DeliveredMessageSqlRow[]> {
+  create(senderId: string, receiverId: string, subject: string, message: string) {
     return this.dbService.sql<DeliveredMessageSqlRow[]>`
       WITH
         inserted AS (

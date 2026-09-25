@@ -21,7 +21,8 @@ export class DeleteMessageUseCase {
    */
   async execute(messageId: string, userId: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      if (!(await this.repository.deleteForUser(messageId, userId))) throw new MessageNotFoundError();
+      const outcome = await this.repository.deleteForUser(messageId, userId);
+      if (outcome.kind === 'not-found') throw new MessageNotFoundError();
     });
   }
 }

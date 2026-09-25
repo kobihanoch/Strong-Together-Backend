@@ -10,7 +10,7 @@ export class FindDueWorkoutRemindersSql {
    *
    * @returns The reminders that should be added to the push queue.
    */
-  async findDueWorkoutReminders(): Promise<DueWorkoutReminderSqlRow[]> {
+  async findDueWorkoutReminders() {
     return this.dbService.sql<DueWorkoutReminderSqlRow[]>`
       SELECT
         user_id AS "userId",

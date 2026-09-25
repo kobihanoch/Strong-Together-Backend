@@ -5,6 +5,12 @@ export interface AerobicEntryInput {
   type: string;
 }
 
+/** Outcome of updating an aerobic entry owned by a user. */
+export type UpdateAerobicEntryOutcome = { kind: 'updated'; id: number } | { kind: 'not-found' };
+
+/** Outcome of deleting an aerobic entry owned by a user. */
+export type DeleteAerobicEntryOutcome = { kind: 'deleted'; id: number } | { kind: 'not-found' };
+
 /** An aerobic entry grouped into a local calendar day. */
 export interface AerobicsDailyRecord {
   id: number;

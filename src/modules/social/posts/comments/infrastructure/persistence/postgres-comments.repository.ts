@@ -15,12 +15,12 @@ export class PostgresCommentsRepository implements CommentsRepository {
     private readonly deleteSql: DeleteSql,
   ) {}
   public async add(postId: string, userId: string, content: string): Promise<AddCommentOutcome> {
-    return (await this.addSql.add(postId, userId, content)).length > 0 ? { kind: 'added' } : { kind: 'post-not-found' };
+    return this.addSql.add(postId, userId, content);
   }
   public async edit(id: string, content: string): Promise<EditCommentOutcome> {
-    return (await this.editSql.edit(id, content)).length > 0 ? { kind: 'updated' } : { kind: 'not-found' };
+    return this.editSql.edit(id, content);
   }
   public async delete(id: string): Promise<DeleteCommentOutcome> {
-    return (await this.deleteSql.delete(id)).length > 0 ? { kind: 'deleted' } : { kind: 'not-found' };
+    return this.deleteSql.delete(id);
   }
 }

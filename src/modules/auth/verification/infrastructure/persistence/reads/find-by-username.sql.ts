@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
-import type { LoginUser } from '../../../../core/application/models/auth.models';
 import type { VerificationUserSqlRow } from '../verification.db-types';
 
 @Injectable()
@@ -12,7 +11,7 @@ export class FindByUsernameSql {
    * @param username - The username.
    * @returns The user by username result.
    */
-  async findByUsername(username: string): Promise<LoginUser | null> {
+  async findByUsername(username: string) {
     const [row] = await this.dbService.sql<VerificationUserSqlRow[]>`
       SELECT
         guest_api.find_user_by_username (${username}) AS "userData"

@@ -14,7 +14,7 @@ export class FindByUserSql {
    * @param timezone - The IANA time-zone name.
    * @returns The query result.
    */
-  findByUser(userId: string, timezone: string): Promise<InboxMessageSqlRow[]> {
+  findByUser(userId: string, timezone: string) {
     return this.dbService.sql<InboxMessageSqlRow[]>`
       SELECT
         m.id,

@@ -14,8 +14,8 @@ export class MarkAsReadSql {
    * @param userId - The user identifier.
    * @returns The query result.
    */
-  markAsRead(messageId: string, userId: string): Promise<MessageMutationSqlRow[]> {
-    return this.dbService.sql<MessageMutationSqlRow[]>`
+  async markAsRead(messageId: string, userId: string) {
+    const [row] = await this.dbService.sql<MessageMutationSqlRow[]>`
       UPDATE messages.message
       SET
         is_read = TRUE
@@ -25,5 +25,6 @@ export class MarkAsReadSql {
       RETURNING
         id
     `;
+    return row ? { kind: 'marked-read' as const, messageId: row.id } : { kind: 'not-found' as const };
   }
 }

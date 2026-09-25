@@ -23,8 +23,8 @@ export class InviteUserSql {
    * @param participantUserId - The UUID of the invited participant.
    * @returns The inserted participation request, or an empty collection when RLS blocks insertion.
    */
-  async inviteUser(crewId: string, initiatorUserId: string, participantUserId: string): Promise<CrewParticipationRequestSqlRow[]> {
-    return this.dbService.sql<CrewParticipationRequestSqlRow[]>`
+  async inviteUser(crewId: string, initiatorUserId: string, participantUserId: string) {
+    const [request] = await this.dbService.sql<CrewParticipationRequestSqlRow[]>`
       INSERT INTO
         social.crew_participation_request (crew_id, initiator_user_id, participant_user_id, status)
       VALUES
@@ -44,5 +44,6 @@ export class InviteUserSql {
         updated_at AS "updatedAt",
         responded_at AS "respondedAt"
     `;
+    return request ? { kind: 'invited' as const, request } : { kind: 'crew-not-found' as const };
   }
 }
