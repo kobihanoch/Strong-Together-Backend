@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import type { ReactToPostBody } from '@strong-together/shared';
 import { DBService } from '../../../../../infrastructure/db/db.service';
-import type { ReactionSqlRow, ReactionWriteSqlRow } from './reactions.db-types';
+import type { ReactionDbType, ReactionSqlRow, ReactionWriteSqlRow } from './reactions.db-types';
 
 /** Executes reaction writes inside the current request's RLS transaction. */
 @Injectable()
@@ -56,7 +55,7 @@ export class ReactionsSql {
    * @param type - The selected reaction type.
    * @returns The written reaction identifier, or no row when the post is not visible.
    */
-  public save(postId: string, userId: string, type: ReactToPostBody['type']): Promise<ReactionWriteSqlRow[]> {
+  public save(postId: string, userId: string, type: ReactionDbType): Promise<ReactionWriteSqlRow[]> {
     return this.dbService.sql<ReactionWriteSqlRow[]>`
       INSERT INTO
         social.reaction (post_id, user_id, type)
