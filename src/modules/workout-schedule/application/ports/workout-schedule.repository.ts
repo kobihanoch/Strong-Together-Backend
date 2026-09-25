@@ -1,4 +1,5 @@
-import type { ReplaceWorkoutSchedulesOutcome, WorkoutScheduleInput } from '../models/workout-schedule.models';
+import type { WeeklyWorkoutSchedule } from '../../domain/entities/weekly-workout-schedule';
+import type { ReplaceWorkoutSchedulesOutcome } from '../models/workout-schedule.models';
 
 /** Persistence operations required by workout-schedule use cases. */
 export abstract class WorkoutScheduleRepository {
@@ -9,5 +10,5 @@ export abstract class WorkoutScheduleRepository {
    *
    * @returns The replacement outcome.
    */
-  public abstract replaceForUser(userId: string, schedules: WorkoutScheduleInput[]): Promise<ReplaceWorkoutSchedulesOutcome>;
+  public abstract replaceForUser(userId: string, schedule: WeeklyWorkoutSchedule): Promise<ReplaceWorkoutSchedulesOutcome>;
 }

@@ -19,7 +19,7 @@ export class ReplaceForUserSql {
    * Adds workout.
    *
    * @param userId - The user identifier.
-   * @param workoutData - The workout plan payload.
+   * @param workoutData - Persistence-ready workout plan values.
    * @returns The add workout result.
    */
   async replaceForUser(userId: string, workoutData: WorkoutSplitSqlInput[]) {

@@ -3,6 +3,9 @@ import { workoutSchedule } from '../../../../infrastructure/persistence/schema/d
 /** Represents the workout schedule db row value. */
 type WorkoutScheduleDbRow = typeof workoutSchedule.$inferSelect;
 
+/** Primitive schedule values accepted by workout-schedule persistence. */
+export type WorkoutScheduleSqlInput = Pick<WorkoutScheduleDbRow, 'workoutSplitId' | 'dayOfWeek' | 'startTime'>;
+
 /** Serialized schedule row returned by workout-schedule SQL. */
 export type WorkoutScheduleSqlRow = Omit<WorkoutScheduleDbRow, 'createdAt' | 'updatedAt'> & {
   createdAt: string;

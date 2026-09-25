@@ -4,6 +4,7 @@ import { InvalidWorkoutSplitError } from '../errors/workout-plan.errors';
 import type { WorkoutSplitInput } from '../models/workout-plan.models';
 import { WorkoutPlanCache } from '../ports/workout-plan-cache.port';
 import { WorkoutPlanRepository } from '../ports/workout-plan.repository';
+import { WorkoutPlanReplacement } from '../../domain/entities/workout-plan-replacement';
 /** Replaces a user's active workout plan. */
 @Injectable()
 export class ReplaceWorkoutPlanUseCase {
@@ -22,7 +23,8 @@ export class ReplaceWorkoutPlanUseCase {
    */
   async execute(userId: string, splits: WorkoutSplitInput[]): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const outcome = await this.repository.replaceForUser(userId, splits);
+      const plan = WorkoutPlanReplacement.create(splits);
+      const outcome = await this.repository.replaceForUser(userId, plan);
       if (outcome.kind === 'split-not-owned') {
         throw new InvalidWorkoutSplitError(outcome.splitId);
       }

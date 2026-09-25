@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../infrastructure/connections/postgres/db.service';
-import type { ActiveWorkoutSplitCountSqlRow } from '../workout-schedule.db-types';
+import type { ActiveWorkoutSplitCountSqlRow, WorkoutScheduleSqlInput } from '../workout-schedule.db-types';
 
 /** Executes workout-schedule SQL inside the active RLS transaction. */
 
@@ -11,13 +11,10 @@ export class ReplaceForUserSql {
    * Executes the replace for user SQL operation.
    *
    * @param userId - The user identifier.
-   * @param schedules - The schedules value.
+   * @param schedules - Persistence-ready schedule values.
    * @returns The query result.
    */
-  public async replaceForUser(
-    userId: string,
-    schedules: Array<{ workoutSplitId: number; dayOfWeek: number; startTime: string }>,
-  ) {
+  public async replaceForUser(userId: string, schedules: WorkoutScheduleSqlInput[]) {
     const splitIds = [...new Set(schedules.map((schedule) => schedule.workoutSplitId))];
 
     if (splitIds.length > 0) {

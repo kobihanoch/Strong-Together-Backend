@@ -4,6 +4,7 @@ import { InvalidWorkoutScheduleSplitError } from '../errors/workout-schedule.err
 import type { WorkoutScheduleInput } from '../models/workout-schedule.models';
 import { WorkoutScheduleCache } from '../ports/workout-schedule-cache.port';
 import { WorkoutScheduleRepository } from '../ports/workout-schedule.repository';
+import { WeeklyWorkoutSchedule } from '../../domain/entities/weekly-workout-schedule';
 
 /** Replaces a user's complete weekly workout schedule. */
 @Injectable()
@@ -24,7 +25,8 @@ export class ReplaceWorkoutSchedulesUseCase {
    */
   public async execute(userId: string, schedules: WorkoutScheduleInput[]): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const outcome = await this.repository.replaceForUser(userId, schedules);
+      const schedule = WeeklyWorkoutSchedule.create(schedules);
+      const outcome = await this.repository.replaceForUser(userId, schedule);
       if (outcome.kind === 'invalid-splits') {
         throw new InvalidWorkoutScheduleSplitError();
       }
