@@ -5,8 +5,9 @@ export class SplitName {
   /** Creates a trimmed split name within the supported length. */
   public static create(value: string): SplitName {
     const name = value.trim();
-    if (name.length === 0) throw new Error('Split name is required');
-    if (name.length > 100) throw new Error('Split name must be at most 100 characters');
+    if (name.length === 0) throw new InvalidSplitNameError();
+    if (name.length > 100) throw new SplitNameTooLongError();
     return new SplitName(name);
   }
 }
+import { InvalidSplitNameError, SplitNameTooLongError } from '../errors/workout-plan.errors';

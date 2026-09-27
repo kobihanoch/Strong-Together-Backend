@@ -1,6 +1,6 @@
-import type { WorkoutPlanReplacement } from '../../domain/entities/workout-plan-replacement';
-import type { ReplaceWorkoutPlanOutcome } from '../models/workout-plan.models';
+import type { WorkoutPlan } from '../../domain/entities/workout-plan';
 /** Provides persistence operations for active workout plans. */
 export abstract class WorkoutPlanRepository {
-  abstract replaceForUser(userId: string, plan: WorkoutPlanReplacement): Promise<ReplaceWorkoutPlanOutcome>;
+  abstract findForUpdate(userId: string): Promise<WorkoutPlan | undefined>;
+  abstract save(userId: string, plan: WorkoutPlan): Promise<void>;
 }

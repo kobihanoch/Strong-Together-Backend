@@ -9,7 +9,10 @@ import { ReplaceWorkoutPlanUseCase } from './application/commands/replace-workou
 import { PostgresWorkoutPlanRepository } from './infrastructure/persistence/postgres-workout-plan.repository';
 import { RedisWorkoutPlanCache } from './infrastructure/redis-workout-plan.cache';
 import { FindActiveByUserSql } from './infrastructure/persistence/reads/find-active-by-user.sql';
-import { ReplaceForUserSql } from './infrastructure/persistence/writes/replace-for-user.sql';
+import { FindForUpdateSql } from './infrastructure/persistence/reads/find-for-update.sql';
+import { SavePlanSql } from './infrastructure/persistence/writes/save-plan.sql';
+import { SavePlannedExercisesSql } from './infrastructure/persistence/writes/save-planned-exercises.sql';
+import { SaveSplitsSql } from './infrastructure/persistence/writes/save-splits.sql';
 import { WorkoutPlanController } from './presentation/workout-plan.controller';
 import { WorkoutPlanQueries } from './application/ports/workout-plan.queries';
 import { PostgresWorkoutPlanQueries } from './infrastructure/persistence/postgres-workout-plan.queries';
@@ -19,7 +22,10 @@ import { PostgresWorkoutPlanQueries } from './infrastructure/persistence/postgre
   providers: [
     { provide: WorkoutPlanQueries, useClass: PostgresWorkoutPlanQueries },
     FindActiveByUserSql,
-    ReplaceForUserSql,
+    FindForUpdateSql,
+    SavePlanSql,
+    SaveSplitsSql,
+    SavePlannedExercisesSql,
     { provide: WorkoutPlanRepository, useClass: PostgresWorkoutPlanRepository },
     { provide: WorkoutPlanCache, useClass: RedisWorkoutPlanCache },
     GetWorkoutPlanUseCase,

@@ -4,7 +4,8 @@ export class OrderIndex {
 
   /** Creates an order index when the supplied value is a non-negative integer. */
   public static create(value: number): OrderIndex {
-    if (!Number.isInteger(value) || value < 0) throw new Error('Order index must be a non-negative integer');
+    if (!Number.isInteger(value) || value < 0) throw new InvalidWorkoutOrderError();
     return new OrderIndex(value);
   }
 }
+import { InvalidWorkoutOrderError } from '../errors/workout-plan.errors';

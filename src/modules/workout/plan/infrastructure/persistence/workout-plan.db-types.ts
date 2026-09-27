@@ -28,10 +28,35 @@ export interface WorkoutSplitSqlInput {
   name: SplitDbRow['name'];
   orderIndex: SplitDbRow['orderIndex'];
   exercises: WorkoutExerciseSqlInput[];
+  isActive: boolean;
+  hasChanges: boolean;
 }
 
-/** Existing split input accepted by workout-plan persistence. */
-export type ExistingWorkoutSplitSqlInput = WorkoutSplitSqlInput & { id: SplitDbRow['id'] };
+/** Active split with the database identity required by exercise persistence. */
+export type PersistedWorkoutSplitSqlInput = WorkoutSplitSqlInput & { id: SplitDbRow['id'] };
+
+export interface WorkoutPlanStateSqlRow {
+  planId: PlanDbRow['id'];
+  splitId: SplitDbRow['id'] | null;
+  name: SplitDbRow['name'] | null;
+  splitOrderIndex: SplitDbRow['orderIndex'] | null;
+  splitIsActive: SplitDbRow['isActive'] | null;
+  exerciseId: ExerciseDbRow['id'] | null;
+  exerciseOrderIndex: AssignmentDbRow['orderIndex'] | null;
+  exerciseIsActive: AssignmentDbRow['isActive'] | null;
+  sets: SetDbRow['reps'][];
+}
+
+export interface SavedWorkoutSplitSqlRow {
+  id: SplitDbRow['id'];
+  orderIndex: SplitDbRow['orderIndex'];
+}
+
+export interface SavedExerciseSqlRow {
+  id: AssignmentDbRow['id'];
+  splitId: SplitDbRow['id'];
+  exerciseId: ExerciseDbRow['id'];
+}
 
 
 /** Describes the workout plan exercise sql row shape. */
@@ -66,14 +91,4 @@ export interface WorkoutPlanSqlRow {
   isActive: PlanDbRow['isActive'];
   updatedAt: string;
   workoutSplits: WorkoutPlanSplitSqlRow[] | null;
-}
-/** Represents the workout plan id sql row value. */
-export type WorkoutPlanIdSqlRow = Pick<PlanDbRow, 'id'>;
-/** Represents the workout split id sql row value. */
-export type WorkoutSplitIdSqlRow = Pick<SplitDbRow, 'id'>;
-/** Represents the exercise assignment id sql row value. */
-export type ExerciseAssignmentIdSqlRow = Pick<AssignmentDbRow, 'id'>;
-/** Describes the existing exercises sql row shape. */
-export interface ExistingExercisesSqlRow {
-  exercises: Array<{ exerciseId: ExerciseDbRow['id']; orderIndex: AssignmentDbRow['orderIndex']; sets: SetDbRow['reps'][] }>;
 }
