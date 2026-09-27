@@ -1,32 +1,28 @@
 import { Injectable } from '@nestjs/common';
-import { CreateMembershipSql } from './writes/create-membership.sql';
-import { UpdateStatusSql } from './writes/update-status.sql';
-import { RequestToJoinSql } from './writes/request-to-join.sql';
-import { InviteUserSql } from './writes/invite-user.sql';
-import type { InviteCrewUserOutcome, RequestToJoinCrewOutcome, UpdateCrewParticipationRequestOutcome } from '../../application/models/crew-requests.models';
+import { SaveSql } from './writes/save.sql';
+import { CreateParticipationRequestSql } from './writes/create.sql';
+import { FindParticipationRequestByIdForUpdateSql } from './reads/find-by-id-for-update.sql';
 import { CrewRequestsRepository } from '../../application/ports/crew-requests.repository';
-import type { ParticipationRequestResolution } from '../../domain/entities/participation-request-resolution';
+import { ParticipationRequest } from '../../domain/entities/participation-request';
 /** PostgreSQL implementation of crew participation-request persistence. */
 
 /** PostgreSQL write adapter. */
 @Injectable()
 export class PostgresCrewRequestsRepository implements CrewRequestsRepository {
   public constructor(
-    private readonly inviteUserSql: InviteUserSql,
-    private readonly requestToJoinSql: RequestToJoinSql,
-    private readonly updateStatusSql: UpdateStatusSql,
-    private readonly createMembershipSql: CreateMembershipSql,
+    private readonly createSql: CreateParticipationRequestSql,
+    private readonly findByIdForUpdateSql: FindParticipationRequestByIdForUpdateSql,
+    private readonly saveSql: SaveSql,
   ) {}
-  public invite(crewId: string, initiatorUserId: string, participantUserId: string): Promise<InviteCrewUserOutcome> {
-    return this.inviteUserSql.inviteUser(crewId, initiatorUserId, participantUserId);
+  public async create(request: ParticipationRequest): Promise<ParticipationRequest | undefined> {
+    const created = await this.createSql.create(request);
+    return created ? ParticipationRequest.restore(created) : undefined;
   }
-  public requestToJoin(crewId: string, userId: string): Promise<RequestToJoinCrewOutcome> {
-    return this.requestToJoinSql.requestToJoin(crewId, userId);
+  public async findByIdForUpdate(requestId: string): Promise<ParticipationRequest | undefined> {
+    const request = await this.findByIdForUpdateSql.findByIdForUpdate(requestId);
+    return request ? ParticipationRequest.restore(request) : undefined;
   }
-  public updateStatus(requestId: string, resolution: ParticipationRequestResolution): Promise<UpdateCrewParticipationRequestOutcome> {
-    return this.updateStatusSql.updateStatus(requestId, resolution.status.value);
-  }
-  public createMembership(crewId: string, userId: string): Promise<void> {
-    return this.createMembershipSql.createMembership(crewId, userId);
+  public save(request: ParticipationRequest): Promise<boolean> {
+    return this.saveSql.save(request);
   }
 }

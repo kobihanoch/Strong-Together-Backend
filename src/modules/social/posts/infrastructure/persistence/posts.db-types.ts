@@ -25,5 +25,10 @@ export type PostWriteSqlRow = Omit<PostDbRow, 'publishedAt' | 'updatedAt'> & {
   updatedAt: string;
 };
 
+/** Post aggregate state loaded for mutation. */
+export type PostForUpdateSqlRow = Pick<PostDbRow, 'id' | 'authorUserId' | 'workoutSummaryId' | 'content' | 'visibility'> & {
+  crewIds: string[];
+};
+
 /** Represents the deleted post sql row value. */
 export type DeletedPostSqlRow = Pick<PostDbRow, 'id'>;

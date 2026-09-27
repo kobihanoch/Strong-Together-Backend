@@ -37,6 +37,6 @@ export class SaveSql {
       RETURNING
         id
     `;
-    return rows.length > 0 ? { kind: 'saved' as const } : { kind: 'post-not-found' as const };
+    return rows.length > 0;
   }
 }

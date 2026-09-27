@@ -13,9 +13,3 @@ export type CrewParticipationRequest = {
 export type CrewInvitations = { invitations: CrewParticipationRequest[] };
 /** Pending requests for a managed crew. */
 export type PendingCrewJoinRequests = { requests: CrewParticipationRequest[] };
-
-export type InviteCrewUserOutcome = { kind: 'invited'; request: CrewParticipationRequest } | { kind: 'crew-not-found' };
-export type RequestToJoinCrewOutcome = { kind: 'requested'; request: CrewParticipationRequest } | { kind: 'crew-not-found' };
-export type UpdateCrewParticipationRequestOutcome =
-  | { kind: 'updated'; request: CrewParticipationRequest }
-  | { kind: 'not-found' };

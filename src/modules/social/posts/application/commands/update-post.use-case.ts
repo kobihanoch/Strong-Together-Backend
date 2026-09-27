@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { PostNotFoundError } from '../errors/posts.errors';
 import { PostsRepository } from '../ports/posts.repository';
-import { PostContent } from '../../domain/value-objects/post-content';
 
 /** Updates a post owned by the caller. */
 
@@ -22,8 +21,10 @@ export class UpdatePostUseCase {
    */
   public async execute(userId: string, id: string, content: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const outcome = await this.repository.update(id, new PostContent(content));
-      if (outcome.kind === 'not-found') throw new PostNotFoundError();
+      const post = await this.repository.findByIdForUpdate(id);
+      if (!post) throw new PostNotFoundError();
+      post.edit(content);
+      if (!(await this.repository.save(post))) throw new PostNotFoundError();
     });
   }
 }

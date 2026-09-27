@@ -14,3 +14,5 @@ export type CommentSqlRow = Omit<CommentDbRow, 'createdAt' | 'updatedAt'> & {
 
 /** Represents the comment write sql row value. */
 export type CommentWriteSqlRow = Pick<CommentDbRow, 'id'>;
+/** Comment aggregate state loaded for mutation. */
+export type CommentForUpdateSqlRow = Pick<CommentDbRow, 'id' | 'postId' | 'content'> & { authorUserId: CommentDbRow['userId'] };

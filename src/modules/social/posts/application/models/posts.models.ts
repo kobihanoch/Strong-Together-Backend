@@ -21,7 +21,3 @@ export type CreatePostInput = {
   crewIds: string[];
   workoutSummaryId?: string | null | undefined;
 };
-/** Outcome of updating a post visible to its owner. */
-export type UpdatePostOutcome = { kind: 'updated' } | { kind: 'not-found' };
-/** Outcome of deleting a post visible to its owner. */
-export type DeletePostOutcome = { kind: 'deleted' } | { kind: 'not-found' };

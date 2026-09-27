@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import type { CrewInput } from '../models/crews.models';
 import { CrewsRepository } from '../ports/crews.repository';
-import { CrewDetails } from '../../domain/entities/crew-details';
+import { Crew } from '../../domain/entities/crew';
 
 /** Creates a crew led by its creator. */
 @Injectable()
@@ -20,7 +20,7 @@ export class CreateCrewUseCase {
    */
   public async execute(userId: string, input: CrewInput): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      await this.repository.create(userId, new CrewDetails(input));
+      await this.repository.create(Crew.create({ createdBy: userId, ...input }));
     });
   }
 }

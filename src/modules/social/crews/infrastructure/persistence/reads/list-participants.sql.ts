@@ -21,11 +21,7 @@ export class ListParticipantsSql {
    * @param cursor - The preceding page's final role rank, join timestamp, and UUID.
    * @returns Authorized participant rows ordered by role and join date.
    */
-  async listParticipants(
-    crewId: string,
-    limit: number,
-    cursor?: { timestamp: string; id: string; rank: number | undefined },
-  ) {
+  async listParticipants(crewId: string, limit: number, cursor?: { timestamp: string; id: string; rank: number | undefined }) {
     return this.dbService.sql<CrewParticipantSqlRow[]>`
       SELECT
         cm.id,

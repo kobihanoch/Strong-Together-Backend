@@ -11,10 +11,10 @@ import { UpdateCrewParticipationRequestUseCase } from './application/commands/up
 import { IsCrewLeaderSql } from './infrastructure/persistence/reads/is-crew-leader.sql';
 import { ListInvitationsSql } from './infrastructure/persistence/reads/list-invitations.sql';
 import { ListPendingJoinRequestsSql } from './infrastructure/persistence/reads/list-pending-join-requests.sql';
-import { CreateMembershipSql } from './infrastructure/persistence/writes/create-membership.sql';
-import { InviteUserSql } from './infrastructure/persistence/writes/invite-user.sql';
-import { RequestToJoinSql } from './infrastructure/persistence/writes/request-to-join.sql';
-import { UpdateStatusSql } from './infrastructure/persistence/writes/update-status.sql';
+import { CreateParticipationRequestSql } from './infrastructure/persistence/writes/create.sql';
+import { SaveSql } from './infrastructure/persistence/writes/save.sql';
+import { FindParticipationRequestByIdForUpdateSql } from './infrastructure/persistence/reads/find-by-id-for-update.sql';
+import { FindCrewPrivacySql } from './infrastructure/persistence/reads/find-crew-privacy.sql';
 import { PostgresCrewRequestsRepository } from './infrastructure/persistence/postgres-crew-requests.repository';
 import { CrewRequestsController } from './presentation/crew-requests.controller';
 import { CrewRequestsQueries } from './application/ports/crew-requests.queries';
@@ -32,10 +32,10 @@ import { PostgresCrewRequestsQueries } from './infrastructure/persistence/postgr
     IsCrewLeaderSql,
     ListInvitationsSql,
     ListPendingJoinRequestsSql,
-    CreateMembershipSql,
-    InviteUserSql,
-    RequestToJoinSql,
-    UpdateStatusSql,
+    CreateParticipationRequestSql,
+    FindParticipationRequestByIdForUpdateSql,
+    FindCrewPrivacySql,
+    SaveSql,
     { provide: CrewRequestsRepository, useClass: PostgresCrewRequestsRepository },
     DpopGuard,
     AuthenticationGuard,

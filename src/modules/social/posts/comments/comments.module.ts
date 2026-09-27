@@ -8,13 +8,14 @@ import { DeleteCommentUseCase } from './application/commands/delete-comment.use-
 import { EditCommentUseCase } from './application/commands/edit-comment.use-case';
 import { ListPostCommentsUseCase } from './application/queries/list-post-comments.use-case';
 import { ListForPostSql } from './infrastructure/persistence/reads/list-for-post.sql';
-import { AddSql } from './infrastructure/persistence/writes/add.sql';
+import { CreateSql } from './infrastructure/persistence/writes/create.sql';
 import { DeleteSql } from './infrastructure/persistence/writes/delete.sql';
-import { EditSql } from './infrastructure/persistence/writes/edit.sql';
+import { SaveSql } from './infrastructure/persistence/writes/save.sql';
 import { PostgresCommentsRepository } from './infrastructure/persistence/postgres-comments.repository';
 import { CommentsController } from './presentation/comments.controller';
 import { CommentsQueries } from './application/ports/comments.queries';
 import { PostgresCommentsQueries } from './infrastructure/persistence/postgres-comments.queries';
+import { FindCommentByIdForUpdateSql } from './infrastructure/persistence/reads/find-by-id-for-update.sql';
 
 @Module({
   controllers: [CommentsController],
@@ -25,9 +26,10 @@ import { PostgresCommentsQueries } from './infrastructure/persistence/postgres-c
     EditCommentUseCase,
     DeleteCommentUseCase,
     ListForPostSql,
-    AddSql,
+    CreateSql,
     DeleteSql,
-    EditSql,
+    SaveSql,
+    FindCommentByIdForUpdateSql,
     { provide: CommentsRepository, useClass: PostgresCommentsRepository },
     DpopGuard,
     AuthenticationGuard,

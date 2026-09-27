@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../../../../common/application/ports/unit-of-work.port';
 import { ParticipationRequestNotFoundError } from '../errors/crew-requests.errors';
 import { CrewRequestsRepository } from '../ports/crew-requests.repository';
-import { ParticipationRequestResolution } from '../../domain/entities/participation-request-resolution';
 
 /** Resolves a pending crew participation request. */
 
@@ -22,9 +21,12 @@ export class UpdateCrewParticipationRequestUseCase {
    */
   public async execute(userId: string, requestId: string, status: 'accepted' | 'declined'): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const outcome = await this.repository.updateStatus(requestId, new ParticipationRequestResolution(status));
-      if (outcome.kind === 'not-found') throw new ParticipationRequestNotFoundError();
-      if (outcome.request.status === 'accepted') await this.repository.createMembership(outcome.request.crewId, outcome.request.participantUserId);
+      const request = await this.repository.findByIdForUpdate(requestId);
+      if (!request) throw new ParticipationRequestNotFoundError();
+
+      if (status === 'accepted') request.accept();
+      else request.decline();
+      if (!(await this.repository.save(request))) throw new ParticipationRequestNotFoundError();
     });
   }
 }

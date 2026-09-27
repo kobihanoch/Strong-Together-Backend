@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../../../../common/application/ports/unit-of-work.port';
 import { CommentNotFoundError } from '../errors/comments.errors';
 import { CommentsRepository } from '../ports/comments.repository';
-import { CommentContent } from '../../domain/value-objects/comment-content';
 
 /** Edits a comment owned by the caller. */
 
@@ -22,8 +21,10 @@ export class EditCommentUseCase {
    */
   public async execute(userId: string, id: string, content: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const outcome = await this.repository.edit(id, new CommentContent(content));
-      if (outcome.kind === 'not-found') throw new CommentNotFoundError();
+      const comment = await this.repository.findByIdForUpdate(id);
+      if (!comment) throw new CommentNotFoundError();
+      comment.edit(content);
+      if (!(await this.repository.save(comment))) throw new CommentNotFoundError();
     });
   }
 }

@@ -5,7 +5,7 @@ import type { CommentWriteSqlRow } from '../comments.db-types';
 /** Executes comment writes inside the current request's RLS transaction. */
 
 @Injectable()
-export class EditSql {
+export class SaveSql {
   /**
    * Creates the comment query repository.
    *
@@ -19,7 +19,7 @@ export class EditSql {
    * @param content - The validated replacement text.
    * @returns The updated comment identifier, or no row when it is unavailable.
    */
-  public async edit(id: string, content: string) {
+  public async save(id: string, content: string) {
     const rows = await this.dbService.sql<CommentWriteSqlRow[]>`
       UPDATE social.comment
       SET
@@ -30,6 +30,6 @@ export class EditSql {
       RETURNING
         id
     `;
-    return rows.length > 0 ? { kind: 'updated' as const } : { kind: 'not-found' as const };
+    return rows.length > 0;
   }
 }

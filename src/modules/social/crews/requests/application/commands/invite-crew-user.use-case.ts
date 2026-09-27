@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../../../../common/application/ports/unit-of-work.port';
 import { CrewNotFoundError } from '../errors/crew-requests.errors';
 import { CrewRequestsRepository } from '../ports/crew-requests.repository';
+import { ParticipationRequest } from '../../domain/entities/participation-request';
 
 /** Invites a user to a crew. */
 
@@ -22,8 +23,8 @@ export class InviteCrewUserUseCase {
    */
   public async execute(crewId: string, initiatorUserId: string, participantUserId: string): Promise<void> {
     return this.unitOfWork.execute(initiatorUserId, async () => {
-      const outcome = await this.repository.invite(crewId, initiatorUserId, participantUserId);
-      if (outcome.kind === 'crew-not-found') throw new CrewNotFoundError();
+      const invitation = ParticipationRequest.invite(crewId, initiatorUserId, participantUserId);
+      if (!(await this.repository.create(invitation))) throw new CrewNotFoundError();
     });
   }
 }

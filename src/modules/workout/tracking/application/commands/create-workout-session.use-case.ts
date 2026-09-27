@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
-import { InvalidCompletedWorkoutError } from '../errors/workout-tracking.errors';
 import type { CreateWorkoutSessionCommand } from '../models/workout-tracking.models';
 import { WorkoutTrackingCache } from '../ports/workout-tracking-cache.port';
 import { WorkoutTrackingRepository } from '../ports/workout-tracking.repository';
@@ -23,7 +22,6 @@ export class CreateWorkoutSessionUseCase {
    */
   async execute(userId: string, command: CreateWorkoutSessionCommand): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      if (!command.workout.length) throw new InvalidCompletedWorkoutError();
       const session = new CompletedWorkoutSession(command);
       await this.repository.saveCompletedWorkout(userId, session);
       this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));

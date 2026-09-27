@@ -19,8 +19,13 @@ export class LeaveCrewUseCase {
    */
   public async execute(userId: string, crewId: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const outcome = await this.repository.leave(crewId);
-      if (outcome.kind === 'not-member') throw new ActiveCrewMembershipNotFoundError();
+      const crew = await this.repository.findByIdForUpdate(crewId);
+      if (!crew) throw new ActiveCrewMembershipNotFoundError();
+
+      const participants = await this.repository.findActiveParticipantsForUpdate(crewId);
+      const changedParticipants = crew.leave(userId, participants);
+      if (!(await this.repository.save(crew))) throw new ActiveCrewMembershipNotFoundError();
+      await this.repository.saveParticipants(changedParticipants);
     });
   }
 }

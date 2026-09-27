@@ -3,7 +3,6 @@ import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work
 import { CrewNotFoundError } from '../errors/crews.errors';
 import type { CrewInput } from '../models/crews.models';
 import { CrewsRepository } from '../ports/crews.repository';
-import { CrewDetails } from '../../domain/entities/crew-details';
 
 /** Updates a manageable crew. */
 @Injectable()
@@ -22,8 +21,10 @@ export class UpdateCrewUseCase {
    */
   public async execute(userId: string, id: string, input: CrewInput): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const outcome = await this.repository.update(id, new CrewDetails(input));
-      if (outcome.kind === 'not-found') throw new CrewNotFoundError();
+      const crew = await this.repository.findByIdForUpdate(id);
+      if (!crew) throw new CrewNotFoundError();
+      crew.updateDetails(input);
+      if (!(await this.repository.save(crew))) throw new CrewNotFoundError();
     });
   }
 }

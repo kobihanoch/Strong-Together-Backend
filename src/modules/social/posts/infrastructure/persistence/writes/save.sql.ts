@@ -5,7 +5,7 @@ import type { DeletedPostSqlRow } from '../posts.db-types';
 /** Executes post persistence operations inside the request's RLS transaction. */
 
 @Injectable()
-export class UpdateSql {
+export class SaveSql {
   constructor(private readonly dbService: DBService) {}
   /**
    * Updates content only when the current user authored the post.
@@ -14,7 +14,7 @@ export class UpdateSql {
    * @param content - The replacement textual content.
    * @returns The updated UUID, or an empty array when no post was authorized.
    */
-  async update(id: string, content: string) {
+  async save(id: string, content: string) {
     const rows = await this.dbService.sql<DeletedPostSqlRow[]>`
       UPDATE social.post
       SET
@@ -25,6 +25,6 @@ export class UpdateSql {
       RETURNING
         id
     `;
-    return rows.length > 0 ? { kind: 'updated' as const } : { kind: 'not-found' as const };
+    return rows.length > 0;
   }
 }

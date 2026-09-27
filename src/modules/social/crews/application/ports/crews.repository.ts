@@ -1,12 +1,14 @@
-import type { Crew, DeleteCrewOutcome, LeaveCrewOutcome, UpdateCrewOutcome } from '../models/crews.models';
-import type { CrewDetails } from '../../domain/entities/crew-details';
+import type { Crew as CrewEntity } from '../../domain/entities/crew';
+import type { CrewParticipant } from '../../domain/entities/crew-participant';
 
 /** Persistence operations required by crew use cases. */
 export abstract class CrewsRepository {
-  public abstract create(userId: string, details: CrewDetails): Promise<Crew>;
-  public abstract update(id: string, details: CrewDetails): Promise<UpdateCrewOutcome>;
+  public abstract create(crew: CrewEntity): Promise<CrewEntity>;
   public abstract getProfilePictureForUpdate(crewId: string): Promise<string | null | undefined>;
   public abstract updateProfilePicture(crewId: string, path: string | null): Promise<void>;
-  public abstract leave(crewId: string): Promise<LeaveCrewOutcome>;
-  public abstract delete(id: string): Promise<DeleteCrewOutcome>;
+  public abstract findByIdForUpdate(crewId: string): Promise<CrewEntity | undefined>;
+  public abstract findActiveParticipantsForUpdate(crewId: string): Promise<CrewParticipant[]>;
+  public abstract save(crew: CrewEntity): Promise<boolean>;
+  public abstract saveParticipants(participants: CrewParticipant[]): Promise<void>;
+  public abstract delete(id: string): Promise<boolean>;
 }

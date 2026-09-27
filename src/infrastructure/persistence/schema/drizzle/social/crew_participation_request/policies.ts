@@ -27,7 +27,13 @@ export function crewParticipationRequestPolicies(t: {
   const canRespond = drizzleSql`
     (
       ${joinRequest}
-      AND ${activeLeader}
+      AND (
+        ${activeLeader}
+        OR (
+          ${initiatedByUser}
+          AND ${isCrewPublic(t.crewId)}
+        )
+      )
     )
     OR (
       ${invitation}
@@ -41,23 +47,14 @@ export function crewParticipationRequestPolicies(t: {
       to: authenticatedRole,
       using: canAccess,
     }),
-    // Users may join public crews immediately or create pending requests for private crews.
+    // Users create pending join requests; public crews may accept them immediately afterward.
     pgPolicy('Allow users to request to join crews', {
       for: 'insert',
       to: authenticatedRole,
       withCheck: drizzleSql`
         ${initiatedByUser}
         AND ${joinRequest}
-        AND (
-          (
-            ${isCrewPublic(t.crewId)}
-            AND ${t.status} = 'accepted'
-          )
-          OR (
-            NOT ${isCrewPublic(t.crewId)}
-            AND ${t.status} = 'pending'
-          )
-        )
+        AND ${t.status} = 'pending'
       `,
     }),
     // Active leaders may create pending invitations for other users.

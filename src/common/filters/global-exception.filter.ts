@@ -11,6 +11,7 @@ import {
   ApplicationUnauthorizedError,
   ApplicationValidationError,
 } from '../application/errors/application.errors';
+import { DomainConflictError, DomainNotFoundError, DomainValidationError } from '../domain/errors/domain.errors';
 
 const logger = createLogger('filter:error-handler');
 
@@ -54,9 +55,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   }
 
   private getApplicationErrorStatus(exception: unknown): HttpStatus {
-    if (exception instanceof ApplicationNotFoundError) return HttpStatus.NOT_FOUND;
-    if (exception instanceof ApplicationValidationError) return HttpStatus.BAD_REQUEST;
-    if (exception instanceof ApplicationConflictError) return HttpStatus.CONFLICT;
+    if (exception instanceof ApplicationNotFoundError || exception instanceof DomainNotFoundError) return HttpStatus.NOT_FOUND;
+    if (exception instanceof ApplicationValidationError || exception instanceof DomainValidationError) return HttpStatus.BAD_REQUEST;
+    if (exception instanceof ApplicationConflictError || exception instanceof DomainConflictError) return HttpStatus.CONFLICT;
     if (exception instanceof ApplicationUnauthorizedError) return HttpStatus.UNAUTHORIZED;
     if (exception instanceof ApplicationForbiddenError) return HttpStatus.FORBIDDEN;
     if (exception instanceof ApplicationServiceUnavailableError) return HttpStatus.SERVICE_UNAVAILABLE;

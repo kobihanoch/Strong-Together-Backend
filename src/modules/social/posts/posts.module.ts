@@ -13,10 +13,11 @@ import { ListForCrewSql } from './infrastructure/persistence/reads/list-for-crew
 import { ListVisibleSql } from './infrastructure/persistence/reads/list-visible.sql';
 import { CreateSql } from './infrastructure/persistence/writes/create.sql';
 import { DeleteSql } from './infrastructure/persistence/writes/delete.sql';
-import { UpdateSql } from './infrastructure/persistence/writes/update.sql';
+import { SaveSql } from './infrastructure/persistence/writes/save.sql';
 import { PostsController } from './presentation/posts.controller';
 import { PostsQueries } from './application/ports/posts.queries';
 import { PostgresPostsQueries } from './infrastructure/persistence/postgres-posts.queries';
+import { FindPostByIdForUpdateSql } from './infrastructure/persistence/reads/find-by-id-for-update.sql';
 
 @Module({
   controllers: [PostsController],
@@ -31,7 +32,8 @@ import { PostgresPostsQueries } from './infrastructure/persistence/postgres-post
     ListVisibleSql,
     CreateSql,
     DeleteSql,
-    UpdateSql,
+    SaveSql,
+    FindPostByIdForUpdateSql,
     { provide: PostsRepository, useClass: PostgresPostsRepository },
     DpopGuard,
     AuthenticationGuard,

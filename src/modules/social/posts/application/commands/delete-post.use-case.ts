@@ -20,8 +20,7 @@ export class DeletePostUseCase {
    */
   public async execute(userId: string, id: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const outcome = await this.repository.delete(id);
-      if (outcome.kind === 'not-found') throw new PostNotFoundError();
+      if (!(await this.repository.delete(id))) throw new PostNotFoundError();
     });
   }
 }

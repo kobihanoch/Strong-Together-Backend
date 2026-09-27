@@ -1,9 +1,8 @@
-import type { SocialPostDraft } from '../../domain/entities/social-post-draft';
-import type { PostContent } from '../../domain/value-objects/post-content';
-import type { DeletePostOutcome, UpdatePostOutcome } from '../models/posts.models';
+import type { Post } from '../../domain/entities/post';
 /** Persistence operations required by post use cases. */
 export abstract class PostsRepository {
-  public abstract create(userId: string, draft: SocialPostDraft): Promise<void>;
-  public abstract update(id: string, content: PostContent): Promise<UpdatePostOutcome>;
-  public abstract delete(id: string): Promise<DeletePostOutcome>;
+  public abstract create(post: Post): Promise<Post>;
+  public abstract findByIdForUpdate(id: string): Promise<Post | undefined>;
+  public abstract save(post: Post): Promise<boolean>;
+  public abstract delete(id: string): Promise<boolean>;
 }

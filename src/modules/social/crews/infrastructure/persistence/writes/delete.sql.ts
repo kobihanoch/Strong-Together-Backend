@@ -25,6 +25,6 @@ export class DeleteSql {
       RETURNING
         id
     `;
-    return rows.length > 0 ? { kind: 'deleted' as const } : { kind: 'not-found' as const };
+    return rows.length > 0;
   }
 }

@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { DeleteSql } from './writes/delete.sql';
 import { SaveSql } from './writes/save.sql';
-import type { DeleteReactionOutcome, SaveReactionOutcome } from '../../application/models/reactions.models';
 import { ReactionsRepository } from '../../application/ports/reactions.repository';
-import type { PostReactionSelection } from '../../domain/entities/post-reaction-selection';
+import type { PostReaction } from '../../domain/entities/post-reaction';
 /** PostgreSQL implementation of reaction persistence. */
 
 /** PostgreSQL write adapter. */
@@ -13,10 +12,10 @@ export class PostgresReactionsRepository implements ReactionsRepository {
     private readonly saveSql: SaveSql,
     private readonly deleteSql: DeleteSql,
   ) {}
-  public async save(postId: string, userId: string, reaction: PostReactionSelection): Promise<SaveReactionOutcome> {
-    return this.saveSql.save(postId, userId, reaction.type.value);
+  public save(reaction: PostReaction): Promise<boolean> {
+    return this.saveSql.save(reaction.postId, reaction.userId, reaction.type.value);
   }
-  public async delete(postId: string, userId: string): Promise<DeleteReactionOutcome> {
+  public async delete(postId: string, userId: string): Promise<boolean> {
     return this.deleteSql.delete(postId, userId);
   }
 }

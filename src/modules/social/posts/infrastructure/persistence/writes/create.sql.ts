@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
 import type { PostWriteSqlRow } from '../posts.db-types';
+import type { Post } from '../../../domain/entities/post';
 
 /** Executes post persistence operations inside the request's RLS transaction. */
 
@@ -17,22 +18,16 @@ export class CreateSql {
    * @param workoutSummaryId - The workout summary id value.
    * @returns The new post, or an empty array when any placement is unauthorized.
    */
-  async create(
-    userId: string,
-    content: string,
-    visibility: 'crews_only' | 'public',
-    crewIds: string[],
-    workoutSummaryId?: string | null,
-  ) {
-    const [post] = await this.dbService.sql<PostWriteSqlRow[]>`
+  async create(post: Post) {
+    const [created] = await this.dbService.sql<PostWriteSqlRow[]>`
       INSERT INTO
         social.post (author_user_id, workout_summary_id, content, visibility)
       VALUES
         (
-          ${userId}::UUID,
-          ${workoutSummaryId ?? null}::UUID,
-          ${content},
-          ${visibility}::social."Post Visibility"
+          ${post.authorUserId}::UUID,
+          ${post.workoutSummaryId ?? null}::UUID,
+          ${post.content.value},
+          ${post.visibility.value}::social."Post Visibility"
         )
       RETURNING
         id,
@@ -44,20 +39,20 @@ export class CreateSql {
         updated_at AS "updatedAt"
     `;
 
-    if (crewIds.length > 0) {
+    if (post.crewIds.length > 0) {
       await this.dbService.sql`
         INSERT INTO
           social.crew_shared_post (crew_id, post_id)
         SELECT DISTINCT
           requested_crew.id,
-          ${post.id}::UUID
+          ${created.id}::UUID
         FROM
-          UNNEST(${crewIds}::UUID[]) AS requested_crew (id)
+          UNNEST(${post.crewIds}::UUID[]) AS requested_crew (id)
         RETURNING
           id
       `;
     }
 
-    return [post];
+    return created;
   }
 }

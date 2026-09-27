@@ -20,8 +20,7 @@ export class DeleteCommentUseCase {
    */
   public async execute(userId: string, id: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const outcome = await this.repository.delete(id);
-      if (outcome.kind === 'not-found') throw new CommentNotFoundError();
+      if (!(await this.repository.delete(id))) throw new CommentNotFoundError();
     });
   }
 }

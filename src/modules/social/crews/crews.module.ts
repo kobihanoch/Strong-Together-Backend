@@ -22,9 +22,11 @@ import { ListSql } from './infrastructure/persistence/reads/list.sql';
 import { CreateSql } from './infrastructure/persistence/writes/create.sql';
 import { DeleteSql } from './infrastructure/persistence/writes/delete.sql';
 import { FindProfilePictureForUpdateSql } from './infrastructure/persistence/reads/find-profile-picture-for-update.sql';
-import { LeaveSql } from './infrastructure/persistence/writes/leave.sql';
+import { SaveSql } from './infrastructure/persistence/writes/save.sql';
+import { SaveParticipantsSql } from './infrastructure/persistence/writes/save-participants.sql';
+import { FindCrewByIdForUpdateSql } from './infrastructure/persistence/reads/find-by-id-for-update.sql';
+import { FindActiveParticipantsForUpdateSql } from './infrastructure/persistence/reads/find-active-participants-for-update.sql';
 import { UpdateProfilePictureSql } from './infrastructure/persistence/writes/update-profile-picture.sql';
-import { UpdateSql } from './infrastructure/persistence/writes/update.sql';
 import { PostgresCrewsRepository } from './infrastructure/persistence/postgres-crews.repository';
 import { SupabaseCrewImageStorage } from './infrastructure/supabase-crew-image.storage';
 import { CrewsController } from './presentation/crews.controller';
@@ -60,11 +62,13 @@ import { PostgresCrewsQueries } from './infrastructure/persistence/postgres-crew
 
     FindProfilePictureForUpdateSql,
 
-    LeaveSql,
+    FindCrewByIdForUpdateSql,
+    FindActiveParticipantsForUpdateSql,
+    SaveSql,
+    SaveParticipantsSql,
 
     UpdateProfilePictureSql,
 
-    UpdateSql,
     { provide: CrewsRepository, useClass: PostgresCrewsRepository },
     { provide: CrewImageStorage, useClass: SupabaseCrewImageStorage },
     DpopGuard,

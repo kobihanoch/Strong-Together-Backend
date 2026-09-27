@@ -49,6 +49,9 @@ export type LeaveCrewResultSqlRow = {
   successorId?: string;
 };
 /** Represents the leave crew context sql row value. */
-export type LeaveCrewContextSqlRow = { membershipId: string; isLeader: boolean };
-/** Represents the crew successor sql row value. */
-export type CrewSuccessorSqlRow = { membershipId: string; userId: string };
+export type LeaveCrewContextSqlRow = {
+  membershipId: string;
+  userId: string;
+  role: 'leader' | 'admin' | 'member';
+  joinedAt: string;
+};

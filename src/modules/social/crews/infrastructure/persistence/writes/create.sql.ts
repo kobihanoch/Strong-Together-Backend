@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
 import type { CrewSqlRow } from '../crews.db-types';
+import type { Crew } from '../../../domain/entities/crew';
 
 /**
  * Executes crew persistence operations inside the request's RLS transaction.
@@ -21,15 +22,15 @@ export class CreateSql {
    * @param privacy - Whether the crew is public or private.
    * @returns An array containing the newly created crew.
    */
-  async create(userId: string, name: string, privacy: 'public' | 'private') {
+  async create(crew: Crew) {
     const [created] = await this.dbService.sql<CrewSqlRow[]>`
       INSERT INTO
         social.crew (name, created_by, privacy)
       VALUES
         (
-          ${name},
-          ${userId}::UUID,
-          ${privacy}::social."Crew Privacy"
+          ${crew.name.value},
+          ${crew.createdBy}::UUID,
+          ${crew.privacy.value}::social."Crew Privacy"
         )
       RETURNING
         id,
@@ -45,7 +46,7 @@ export class CreateSql {
       VALUES
         (
           ${created.id}::UUID,
-          ${userId}::UUID,
+          ${crew.createdBy}::UUID,
           'leader',
           NOW()
         )
