@@ -41,3 +41,9 @@ export interface AerobicsHistorySqlRow {
 
 /** SQL row returned after updating or deleting an aerobic entry. */
 export type AerobicMutationSqlRow = Pick<typeof aerobicTracking.$inferSelect, 'id'>;
+
+/** Persisted aerobic entry state used to restore the domain entity. */
+export interface AerobicEntrySqlRow extends Pick<AerobicTrackingDbRow, 'id' | 'type'> {
+  durationMins: number;
+  durationSec: number;
+}

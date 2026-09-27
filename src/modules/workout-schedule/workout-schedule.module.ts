@@ -9,7 +9,7 @@ import { ReplaceWorkoutSchedulesUseCase } from './application/commands/replace-w
 import { PostgresWorkoutScheduleRepository } from './infrastructure/persistence/postgres-workout-schedule.repository';
 import { RedisWorkoutScheduleCache } from './infrastructure/redis-workout-schedule.cache';
 import { FindByUserSql } from './infrastructure/persistence/reads/find-by-user.sql';
-import { ReplaceForUserSql } from './infrastructure/persistence/writes/replace-for-user.sql';
+import { SaveSql } from './infrastructure/persistence/writes/save.sql';
 import { WorkoutScheduleController } from './presentation/workout-schedule.controller';
 import { WorkoutScheduleQueries } from './application/ports/workout-schedule.queries';
 import { PostgresWorkoutScheduleQueries } from './infrastructure/persistence/postgres-workout-schedule.queries';
@@ -21,7 +21,7 @@ import { PostgresWorkoutScheduleQueries } from './infrastructure/persistence/pos
     GetWorkoutSchedulesUseCase,
     ReplaceWorkoutSchedulesUseCase,
     FindByUserSql,
-    ReplaceForUserSql,
+    SaveSql,
     {
       provide: WorkoutScheduleRepository,
       useClass: PostgresWorkoutScheduleRepository,

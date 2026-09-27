@@ -6,7 +6,7 @@ import { AerobicsRepository } from '../ports/aerobics.repository';
 
 /** Deletes an owned aerobic entry. */
 @Injectable()
-export class DeleteAerobicEntryUseCase {
+export class DeleteAerobicActivityUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
     private readonly repository: AerobicsRepository,
@@ -23,8 +23,7 @@ export class DeleteAerobicEntryUseCase {
    */
   async execute(userId: string, id: number): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const outcome = await this.repository.deleteForUser(userId, id);
-      if (outcome.kind === 'not-found') throw new AerobicEntryNotFoundError();
+      if (!(await this.repository.delete(userId, id))) throw new AerobicEntryNotFoundError();
       this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
     });
   }

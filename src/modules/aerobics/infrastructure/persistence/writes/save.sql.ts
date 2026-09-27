@@ -3,7 +3,7 @@ import { DBService } from '../../../../../infrastructure/connections/postgres/db
 import type { AerobicEntrySqlInput, AerobicMutationSqlRow } from '../aerobics.db-types';
 
 @Injectable()
-export class UpdateForUserSql {
+export class SaveSql {
   constructor(private readonly dbService: DBService) {}
   /**
    * Updates an aerobic entry owned by the authenticated user.
@@ -13,7 +13,7 @@ export class UpdateForUserSql {
    * @param record - The replacement aerobic entry values.
    * @returns The updated entry identifier, or `null` when it was not found.
    */
-  async updateForUser(userId: string, id: number, record: AerobicEntrySqlInput) {
+  async save(userId: string, id: number, record: AerobicEntrySqlInput) {
     const { durationMins, durationSec, type } = record;
     const [row] = await this.dbService.sql<AerobicMutationSqlRow[]>`
       UPDATE tracking.aerobic_tracking
@@ -26,6 +26,6 @@ export class UpdateForUserSql {
       RETURNING
         id
     `;
-    return row ? { kind: 'updated' as const, id: row.id } : { kind: 'not-found' as const };
+    return row !== undefined;
   }
 }

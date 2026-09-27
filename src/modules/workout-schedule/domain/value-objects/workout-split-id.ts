@@ -4,7 +4,8 @@ export class WorkoutSplitId {
 
   /** Creates a positive workout-split identifier. */
   public static create(value: number): WorkoutSplitId {
-    if (!Number.isInteger(value) || value <= 0) throw new Error('Workout split ID must be a positive integer');
+    if (!Number.isInteger(value) || value <= 0) throw new InvalidWorkoutScheduleSplitIdError();
     return new WorkoutSplitId(value);
   }
 }
+import { InvalidWorkoutScheduleSplitIdError } from '../errors/workout-schedule.errors';

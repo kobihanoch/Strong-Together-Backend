@@ -6,7 +6,8 @@ export class LocalStartTime {
 
   /** Creates a 24-hour local time in HH:mm format. */
   public static create(value: string): LocalStartTime {
-    if (!LOCAL_START_TIME_PATTERN.test(value)) throw new Error('Start time must use 24-hour HH:mm format');
+    if (!LOCAL_START_TIME_PATTERN.test(value)) throw new InvalidWorkoutScheduleStartTimeError();
     return new LocalStartTime(value);
   }
 }
+import { InvalidWorkoutScheduleStartTimeError } from '../errors/workout-schedule.errors';

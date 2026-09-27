@@ -3,7 +3,7 @@ import { DBService } from '../../../../../infrastructure/connections/postgres/db
 import type { AerobicEntrySqlInput } from '../aerobics.db-types';
 
 @Injectable()
-export class CreateForUserSql {
+export class CreateSql {
   constructor(private readonly dbService: DBService) {}
   /**
    * Adds aerobic tracking.
@@ -12,9 +12,9 @@ export class CreateForUserSql {
    * @param record - The aerobic tracking record.
    * @returns A promise that resolves when the operation completes.
    */
-  async createForUser(userId: string, record: AerobicEntrySqlInput) {
+  async create(userId: string, record: AerobicEntrySqlInput) {
     const { durationMins, durationSec, type } = record;
-    await this.dbService.sql`
+    const [created] = await this.dbService.sql<{ id: number }[]>`
       INSERT INTO
         tracking.aerobic_tracking (user_id, type, duration_sec)
       VALUES
@@ -23,6 +23,9 @@ export class CreateForUserSql {
           ${type},
           ${durationMins * 60 + durationSec}
         )
+      RETURNING
+        id
     `;
+    return created;
   }
 }

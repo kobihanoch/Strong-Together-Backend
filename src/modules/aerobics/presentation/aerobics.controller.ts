@@ -18,10 +18,10 @@ import {
   getAerobicHistoryRequestSchema,
   updateAerobicEntryRequestSchema,
 } from '@strong-together/shared';
-import { CreateAerobicEntryUseCase } from '../application/commands/create-aerobic-entry.use-case';
-import { DeleteAerobicEntryUseCase } from '../application/commands/delete-aerobic-entry.use-case';
+import { CreateAerobicActivityUseCase } from '../application/commands/create-aerobic-activity.use-case';
+import { DeleteAerobicActivityUseCase } from '../application/commands/delete-aerobic-activity.use-case';
 import { GetAerobicHistoryUseCase } from '../application/queries/get-aerobic-history.use-case';
-import { UpdateAerobicEntryUseCase } from '../application/commands/update-aerobic-entry.use-case';
+import { UpdateAerobicActivityUseCase } from '../application/commands/update-aerobic-activity.use-case';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { AuthenticationGuard } from '../../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.guard';
@@ -36,9 +36,9 @@ import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe
 export class AerobicsController {
   constructor(
     private readonly getAerobicHistoryUseCase: GetAerobicHistoryUseCase,
-    private readonly createAerobicEntryUseCase: CreateAerobicEntryUseCase,
-    private readonly updateAerobicEntryUseCase: UpdateAerobicEntryUseCase,
-    private readonly deleteAerobicEntryUseCase: DeleteAerobicEntryUseCase,
+    private readonly createAerobicActivityUseCase: CreateAerobicActivityUseCase,
+    private readonly updateAerobicActivityUseCase: UpdateAerobicActivityUseCase,
+    private readonly deleteAerobicActivityUseCase: DeleteAerobicActivityUseCase,
   ) {}
 
   /**
@@ -100,7 +100,7 @@ export class AerobicsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.createAerobicEntryUseCase.execute(user.id, data.body.record);
+    await this.createAerobicActivityUseCase.execute(user.id, data.body.record);
   }
 
   /**
@@ -130,7 +130,7 @@ export class AerobicsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.updateAerobicEntryUseCase.execute(user.id, data.params.id, data.body.record);
+    await this.updateAerobicActivityUseCase.execute(user.id, data.params.id, data.body.record);
   }
 
   /**
@@ -159,6 +159,6 @@ export class AerobicsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.deleteAerobicEntryUseCase.execute(user.id, data.params.id);
+    await this.deleteAerobicActivityUseCase.execute(user.id, data.params.id);
   }
 }

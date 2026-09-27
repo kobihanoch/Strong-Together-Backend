@@ -4,11 +4,10 @@ import { AerobicEntryNotFoundError } from '../errors/aerobic-entry-not-found.err
 import type { AerobicEntryInput } from '../models/aerobics.models';
 import { AerobicsCache } from '../ports/aerobics-cache.port';
 import { AerobicsRepository } from '../ports/aerobics.repository';
-import { AerobicEntry } from '../../domain/entities/aerobic-entry';
 
 /** Replaces an owned aerobic entry. */
 @Injectable()
-export class UpdateAerobicEntryUseCase {
+export class UpdateAerobicActivityUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
     private readonly repository: AerobicsRepository,
@@ -26,8 +25,10 @@ export class UpdateAerobicEntryUseCase {
    */
   async execute(userId: string, id: number, record: AerobicEntryInput): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const outcome = await this.repository.updateForUser(userId, id, new AerobicEntry(record));
-      if (outcome.kind === 'not-found') throw new AerobicEntryNotFoundError();
+      const activity = await this.repository.findByIdForUpdate(userId, id);
+      if (!activity) throw new AerobicEntryNotFoundError();
+      activity.update(record);
+      if (!(await this.repository.save(userId, activity))) throw new AerobicEntryNotFoundError();
       this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
     });
   }

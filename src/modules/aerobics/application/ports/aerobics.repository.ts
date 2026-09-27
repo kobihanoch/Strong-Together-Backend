@@ -1,9 +1,9 @@
-import type { AerobicEntry } from '../../domain/entities/aerobic-entry';
-import type { DeleteAerobicEntryOutcome, UpdateAerobicEntryOutcome } from '../models/aerobics.models';
+import type { AerobicActivity } from '../../domain/entities/aerobic-activity';
 
 /** Persistence operations required by aerobics use cases. */
 export abstract class AerobicsRepository {
-  abstract createForUser(userId: string, entry: AerobicEntry): Promise<void>;
-  abstract updateForUser(userId: string, id: number, entry: AerobicEntry): Promise<UpdateAerobicEntryOutcome>;
-  abstract deleteForUser(userId: string, id: number): Promise<DeleteAerobicEntryOutcome>;
+  abstract create(userId: string, activity: AerobicActivity): Promise<AerobicActivity>;
+  abstract findByIdForUpdate(userId: string, id: number): Promise<AerobicActivity | undefined>;
+  abstract save(userId: string, activity: AerobicActivity): Promise<boolean>;
+  abstract delete(userId: string, id: number): Promise<boolean>;
 }

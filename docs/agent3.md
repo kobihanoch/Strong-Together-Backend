@@ -18,6 +18,10 @@ Apply the rules incrementally. Preserve external contracts and existing behavior
 ## Domain Modeling
 
 - Give each domain concept one authoritative class. Do not create parallel classes for the same concept merely because creation, editing, or persistence uses different subsets of data.
+- Name entities after the singular, unambiguous domain concept in the ubiquitous language, such as `WorkoutSchedule`, `ScheduledWorkout`, or `AerobicActivity`.
+- Let the aggregate root own the primary concept name. Give child entities a specific behavioral noun instead of competing for the same name.
+- Avoid persistence or workflow suffixes such as `Entry`, `Record`, `Details`, `Draft`, `Selection`, `Replacement`, or `Process` unless that word has genuine domain meaning.
+- Internal domain naming may improve independently while public DTO, route, and schema names remain unchanged for API compatibility.
 - Create an entity when a concept has identity, lifecycle, state transitions, or cross-field invariants.
 - Use value objects for validated scalar concepts and small cohesive values.
 - Do not introduce an entity or process object that only renames a value, forwards calls, or duplicates application orchestration.

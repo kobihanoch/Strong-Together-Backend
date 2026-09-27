@@ -4,8 +4,9 @@ export class AerobicActivityType {
 
   public constructor(value: string) {
     const normalized = value.trim();
-    if (normalized.length === 0) throw new Error('Aerobic activity type is required');
-    if (normalized.length > 50) throw new Error('Aerobic activity type must be at most 50 characters');
+    if (normalized.length === 0) throw new AerobicActivityTypeRequiredError();
+    if (normalized.length > 50) throw new AerobicActivityTypeTooLongError();
     this.value = normalized;
   }
 }
+import { AerobicActivityTypeRequiredError, AerobicActivityTypeTooLongError } from '../errors/aerobics.errors';
