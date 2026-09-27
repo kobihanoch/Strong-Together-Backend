@@ -3,6 +3,7 @@ import { UnitOfWork } from '../../../../common/application/ports/unit-of-work.po
 import type { AerobicEntryInput } from '../models/aerobics.models';
 import { AerobicsCache } from '../ports/aerobics-cache.port';
 import { AerobicsRepository } from '../ports/aerobics.repository';
+import { AerobicEntry } from '../../domain/entities/aerobic-entry';
 
 /** Creates an aerobic entry and invalidates the user's cached history. */
 @Injectable()
@@ -22,7 +23,7 @@ export class CreateAerobicEntryUseCase {
    */
   async execute(userId: string, record: AerobicEntryInput): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      await this.repository.createForUser(userId, record);
+      await this.repository.createForUser(userId, new AerobicEntry(record));
       this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
     });
   }

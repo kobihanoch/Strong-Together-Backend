@@ -3,6 +3,13 @@ import { aerobicTracking } from '../../../../infrastructure/persistence/schema/d
 /** Represents the aerobic tracking db row value. */
 type AerobicTrackingDbRow = typeof aerobicTracking.$inferSelect;
 
+/** Primitive aerobic values accepted by write SQL. */
+export interface AerobicEntrySqlInput {
+  durationMins: number;
+  durationSec: number;
+  type: AerobicTrackingDbRow['type'];
+}
+
 /** Direct and calculated aerobic fields embedded in daily SQL aggregates. */
 export interface AerobicsDailySqlRecord extends Pick<AerobicTrackingDbRow, 'id' | 'type'> {
   durationSec: number;

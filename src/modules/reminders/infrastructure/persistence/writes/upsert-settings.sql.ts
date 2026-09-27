@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../infrastructure/connections/postgres/db.service';
+import type { ReminderSettingsSqlInput } from '../reminders.db-types';
 
 /**
  * Database operations for authenticated users' reminder settings.
@@ -15,7 +16,7 @@ export class UpsertSettingsSql {
    * @param settings - The validated reminder settings.
    * @returns A promise that resolves when the operation completes.
    */
-  async upsertSettings(userId: string, settings: { reminderEnabled: boolean; timeZone: string }) {
+  async upsertSettings(userId: string, settings: ReminderSettingsSqlInput) {
     await this.dbService.sql`
       INSERT INTO
         reminders.user_reminder_setting (user_id, reminder_enabled, time_zone)

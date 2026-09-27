@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../../common/application/ports/unit-of-work.port';
 import type { UpsertReminderSettingsInput } from '../models/reminders.models';
 import { RemindersRepository } from '../ports/reminders.repository';
+import { ReminderSettingsPreference } from '../../domain/entities/reminder-settings';
 
 /** Creates or replaces a user's reminder settings. */
 @Injectable()
@@ -20,7 +21,7 @@ export class UpsertReminderSettingsUseCase {
    */
   async execute(userId: string, settings: UpsertReminderSettingsInput): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      await this.repository.upsertForUser(userId, settings);
+      await this.repository.upsertForUser(userId, new ReminderSettingsPreference(settings));
     });
   }
 }

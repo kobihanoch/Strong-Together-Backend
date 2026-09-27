@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../infrastructure/connections/postgres/db.service';
+import type { AerobicEntrySqlInput } from '../aerobics.db-types';
 
 @Injectable()
 export class CreateForUserSql {
@@ -11,7 +12,7 @@ export class CreateForUserSql {
    * @param record - The aerobic tracking record.
    * @returns A promise that resolves when the operation completes.
    */
-  async createForUser(userId: string, record: { durationMins: number; durationSec: number; type: string }) {
+  async createForUser(userId: string, record: AerobicEntrySqlInput) {
     const { durationMins, durationSec, type } = record;
     await this.dbService.sql`
       INSERT INTO
