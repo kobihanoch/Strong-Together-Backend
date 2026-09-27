@@ -5,6 +5,7 @@ import type { CreateUserInput } from '../models/create-user.models';
 import { CreateUserRepository } from '../ports/create-user.repository';
 import { PasswordHasher } from '../ports/password-hasher.port';
 import { UserRegistrationEvents } from '../ports/user-registration-events.port';
+import { UserRegistration } from '../../domain/entities/user-registration';
 
 /** Registers local users and schedules their initial verification email. */
 @Injectable()
@@ -25,10 +26,11 @@ export class CreateUserUseCase {
    */
   async execute(input: CreateUserInput, requestId?: string): Promise<void> {
     return this.unitOfWork.execute(undefined, async () => {
-      if (await this.repository.exists(input.username, input.email)) throw new UserAlreadyExistsError();
-      const passwordHash = await this.passwordHasher.hash(input.password);
-      const created = await this.repository.create(input.username, input.fullName, input.email, input.gender, passwordHash);
-      this.unitOfWork.afterCommit(() => this.events.userRegistered(created.id, input.email, input.fullName, requestId));
+      const registration = new UserRegistration(input);
+      if (await this.repository.exists(registration)) throw new UserAlreadyExistsError();
+      const passwordHash = await this.passwordHasher.hash(registration.password.value);
+      const created = await this.repository.create(registration, passwordHash);
+      this.unitOfWork.afterCommit(() => this.events.userRegistered(created.id, registration.email.value, registration.fullName, requestId));
     });
   }
 }

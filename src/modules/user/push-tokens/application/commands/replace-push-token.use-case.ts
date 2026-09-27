@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { PushTokensRepository } from '../ports/push-tokens.repository';
+import { DevicePushToken } from '../../domain/value-objects/device-push-token';
 /** Replaces the push-notification token associated with a user. */
 @Injectable()
 export class ReplacePushTokenUseCase {
@@ -17,7 +18,7 @@ export class ReplacePushTokenUseCase {
    */
   async execute(userId: string, token: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      await this.repository.replace(userId, token);
+      await this.repository.replace(userId, new DevicePushToken(token));
     });
   }
 }

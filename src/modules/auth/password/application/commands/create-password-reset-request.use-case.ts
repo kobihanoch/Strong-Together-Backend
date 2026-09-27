@@ -3,6 +3,7 @@ import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work
 import { PasswordBadRequestError } from '../errors/password.errors';
 import { PasswordRepository } from '../ports/password.repository';
 import { PasswordResetEmailSender } from '../ports/password-reset-email-sender.port';
+import { PasswordResetRequest } from '../../domain/entities/password-reset-request';
 
 /** Requests a password-reset email without revealing account existence. */
 @Injectable()
@@ -24,7 +25,8 @@ export class CreatePasswordResetRequestUseCase {
   async execute(identifier: string, requestId?: string): Promise<void> {
     return this.unitOfWork.execute(undefined, async () => {
       if (!identifier) throw new PasswordBadRequestError('Please fill username or email');
-      const user = await this.repository.findResetRecipient(identifier);
+      const request = new PasswordResetRequest(identifier);
+      const user = await this.repository.findResetRecipient(request);
       if (!user) return;
 
       this.unitOfWork.afterCommit(() =>

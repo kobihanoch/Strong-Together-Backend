@@ -1,15 +1,11 @@
-import type { LinkOAuthAccountOutcome, OAuthProvider } from '../models/oauth.models';
+import type { OAuthAccountCandidate } from '../../domain/entities/oauth-account-candidate';
+import type { OAuthAccountLink } from '../../domain/entities/oauth-account-link';
+import type { OAuthProviderIdentity } from '../../domain/value-objects/oauth-provider-identity';
+import type { LinkOAuthAccountOutcome } from '../models/oauth.models';
 
 /** Persistence operations shared by OAuth providers. */
 export abstract class OAuthRepository {
-  abstract findLinkedUser(provider: OAuthProvider, providerUserId: string): Promise<string | null>;
-  abstract linkByVerifiedEmail(provider: OAuthProvider, email: string, providerUserId: string): Promise<LinkOAuthAccountOutcome>;
-  abstract createUser(
-    provider: OAuthProvider,
-    candidateUsername: string | null,
-    email: string | null,
-    fullName: string,
-    providerUserId: string,
-    providerEmail: string | null,
-  ): Promise<string>;
+  abstract findLinkedUser(identity: OAuthProviderIdentity): Promise<string | null>;
+  abstract linkByVerifiedEmail(link: OAuthAccountLink): Promise<LinkOAuthAccountOutcome>;
+  abstract createUser(candidate: OAuthAccountCandidate): Promise<string>;
 }

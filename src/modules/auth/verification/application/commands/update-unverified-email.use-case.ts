@@ -5,6 +5,7 @@ import { AuthenticationTransaction } from '../../../core/application/ports/authe
 import { PasswordHasher } from '../../../core/application/ports/password-hasher.port';
 import { VerificationEmailSender } from '../ports/verification-email-sender.port';
 import { VerificationRepository } from '../ports/verification.repository';
+import { UnverifiedEmailChange } from '../../domain/entities/unverified-email-change';
 
 /** Changes an unverified account email and requests its verification. */
 @Injectable()
@@ -31,17 +32,18 @@ export class UpdateUnverifiedEmailUseCase {
    */
   async execute(username: string, password: string, newEmail: string, requestId?: string): Promise<void> {
     return this.unitOfWork.execute(undefined, async () => {
-      const user = await this.repository.findByUsername(username);
+      const change = new UnverifiedEmailChange(username, password, newEmail);
+      const user = await this.repository.findByUsername(change.username);
       if (!user) throw new VerificationUnauthorizedError('Invalid credentials');
-      const matches = await this.passwordHasher.compare(password, user.passwordHash!);
+      const matches = await this.passwordHasher.compare(change.password, user.passwordHash!);
       if (!matches) throw new VerificationUnauthorizedError('Invalid credentials');
       if (user.isVerified) throw new VerificationBadRequestError('Account already verified');
-      if (await this.repository.emailExists(newEmail)) throw new VerificationConflictError('Email already in use');
+      if (await this.repository.emailExists(change.newEmail)) throw new VerificationConflictError('Email already in use');
 
       await this.transaction.promoteToUser(user.id);
-      await this.repository.updateEmail(user.id, newEmail);
+      await this.repository.updateEmail(user.id, change.newEmail);
       this.unitOfWork.afterCommit(() =>
-        this.emailSender.send(newEmail, user.id, user.name ? user.name : user.username, {
+        this.emailSender.send(change.newEmail.value, user.id, user.name ? user.name : user.username, {
           ...(requestId ? { requestId } : {}),
         }),
       );

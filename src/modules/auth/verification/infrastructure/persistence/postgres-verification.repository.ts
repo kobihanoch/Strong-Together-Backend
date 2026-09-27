@@ -6,6 +6,7 @@ import { FindByUsernameSql } from './reads/find-by-username.sql';
 import { FindByEmailSql } from './reads/find-by-email.sql';
 import type { AuthEmailRecipient, LoginUser } from '../../../core/application/models/auth.models';
 import { VerificationRepository } from '../../application/ports/verification.repository';
+import type { VerificationEmail } from '../../domain/value-objects/verification-email';
 
 /** PostgreSQL account-verification repository. */
 
@@ -19,19 +20,19 @@ export class PostgresVerificationRepository implements VerificationRepository {
     private readonly updateVerificationSql: UpdateVerificationSql,
     private readonly updateEmailSql: UpdateEmailSql,
   ) {}
-  findByEmail(email: string): Promise<AuthEmailRecipient | null> {
-    return this.findByEmailSql.findByEmail(email);
+  findByEmail(email: VerificationEmail): Promise<AuthEmailRecipient | null> {
+    return this.findByEmailSql.findByEmail(email.value);
   }
   findByUsername(username: string): Promise<LoginUser | null> {
     return this.findByUsernameSql.findByUsername(username);
   }
-  emailExists(email: string): Promise<boolean> {
-    return this.emailExistsSql.emailExists(email);
+  emailExists(email: VerificationEmail): Promise<boolean> {
+    return this.emailExistsSql.emailExists(email.value);
   }
   updateVerification(userId: string, verified: boolean): Promise<void> {
     return this.updateVerificationSql.updateVerification(userId, verified);
   }
-  updateEmail(userId: string, email: string): Promise<void> {
-    return this.updateEmailSql.updateEmail(userId, email);
+  updateEmail(userId: string, email: VerificationEmail): Promise<void> {
+    return this.updateEmailSql.updateEmail(userId, email.value);
   }
 }

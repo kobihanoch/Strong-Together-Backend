@@ -7,6 +7,7 @@ import { OneTimeTokenStore } from '../../../core/application/ports/one-time-toke
 import { PasswordHasher } from '../../../core/application/ports/password-hasher.port';
 import { PasswordRepository } from '../ports/password.repository';
 import { SessionRepository } from '../../../session/application/ports/session.repository';
+import { NewPassword } from '../../domain/value-objects/new-password';
 
 /** Resets a password using a single-use reset token. */
 @Injectable()
@@ -41,7 +42,7 @@ export class ResetPasswordUseCase {
       const claimed = await this.oneTimeTokens.claim('forgotpassword', decoded.jti, ttlSeconds);
       if (!claimed) throw new PasswordBadRequestError('URL already used or expired');
 
-      const passwordHash = await this.passwordHasher.hash(newPassword);
+      const passwordHash = await this.passwordHasher.hash(new NewPassword(newPassword).value);
       await this.transaction.promoteToUser(decoded.sub);
       await Promise.all([this.passwords.updatePassword(decoded.sub, passwordHash), this.sessions.rotate(decoded.sub)]);
     });

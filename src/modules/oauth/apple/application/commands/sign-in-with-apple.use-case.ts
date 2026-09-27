@@ -10,6 +10,9 @@ import { OAuthRepository } from '../../../core/application/ports/oauth.repositor
 import { AppleOAuthUnauthorizedError, InvalidAppleOAuthError } from '../errors/apple-oauth.errors';
 import type { AppleOAuthInput } from '../models/apple-oauth.models';
 import { AppleIdentityVerifier } from '../ports/apple-identity-verifier.port';
+import { OAuthAccountCandidate } from '../../../core/domain/entities/oauth-account-candidate';
+import { OAuthAccountLink } from '../../../core/domain/entities/oauth-account-link';
+import { OAuthProviderIdentity } from '../../../core/domain/value-objects/oauth-provider-identity';
 
 /** Authenticates or registers a user with Apple OAuth. */
 @Injectable()
@@ -51,15 +54,16 @@ export class SignInWithAppleUseCase {
       const { appleSub, email: tokenEmail, emailVerified, fullName: normalizedName } = verification.identity;
 
       const resolvedEmail = tokenEmail ?? email ?? null;
+      const identity = new OAuthProviderIdentity('apple', appleSub);
 
-      let userId = await this.repository.findLinkedUser('apple', appleSub);
+      let userId = await this.repository.findLinkedUser(identity);
       const userExistOnOAuthUsers = !!userId;
 
       if (!userExistOnOAuthUsers) {
         let isLinked = false;
 
         if (emailVerified && resolvedEmail) {
-          const linkOutcome = await this.repository.linkByVerifiedEmail('apple', resolvedEmail, appleSub);
+          const linkOutcome = await this.repository.linkByVerifiedEmail(new OAuthAccountLink(identity, resolvedEmail));
           if (linkOutcome.kind === 'linked') {
             userId = linkOutcome.userId;
             isLinked = true;
@@ -70,7 +74,9 @@ export class SignInWithAppleUseCase {
           const username = resolvedEmail?.split('@')[0].toLowerCase() || null;
           const candidateFullName = normalizedName;
 
-          const newUserId = await this.repository.createUser('apple', username, resolvedEmail, candidateFullName, appleSub, resolvedEmail);
+          const newUserId = await this.repository.createUser(
+            new OAuthAccountCandidate(identity, username, resolvedEmail, candidateFullName, resolvedEmail),
+          );
           userId = newUserId;
         }
       }

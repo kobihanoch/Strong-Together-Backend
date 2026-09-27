@@ -4,6 +4,7 @@ import { OperationLogger } from '../../../../../common/application/ports/operati
 import type { EmailChangeOutcome } from '../models/update-user.models';
 import { EmailChangeTokens } from '../ports/email-change-tokens.port';
 import { UserProfileRepository } from '../ports/user-profile.repository';
+import { ProfileEmail } from '../../domain/value-objects/profile-email';
 /** Confirms a one-time user email-address change. */
 @Injectable()
 export class ConfirmEmailChangeUseCase {
@@ -28,7 +29,7 @@ export class ConfirmEmailChangeUseCase {
         return { kind: 'malformed-token', reason: 'Malformed token' };
       if (!(await this.tokens.consume(claims.jti, claims.exp))) return { kind: 'token-already-used', reason: 'URL already used or expired' };
       try {
-        const outcome = await this.repository.updateEmail(claims.sub, claims.newEmail.trim().toLowerCase());
+        const outcome = await this.repository.updateEmail(claims.sub, new ProfileEmail(claims.newEmail));
         if (outcome.kind === 'conflict') {
           this.logger.warn({ event: 'user.email_change_conflict', userId: claims.sub }, 'Email already in use');
           return { kind: 'email-in-use', reason: 'Email already in use' };

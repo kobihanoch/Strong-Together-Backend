@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { VerificationEmailSender } from '../ports/verification-email-sender.port';
 import { VerificationRepository } from '../ports/verification.repository';
+import { VerificationEmail } from '../../domain/value-objects/verification-email';
 
 /** Requests account verification without revealing account existence. */
 @Injectable()
@@ -21,10 +22,11 @@ export class CreateVerificationEmailUseCase {
    */
   async execute(email: string, requestId?: string): Promise<void> {
     return this.unitOfWork.execute(undefined, async () => {
-      const user = await this.repository.findByEmail(email);
+      const verificationEmail = new VerificationEmail(email);
+      const user = await this.repository.findByEmail(verificationEmail);
       if (!user) return;
       this.unitOfWork.afterCommit(() =>
-        this.emailSender.send(email, user.id, user.name ?? user.username, {
+        this.emailSender.send(verificationEmail.value, user.id, user.name ?? user.username, {
           ...(requestId ? { requestId } : {}),
         }),
       );

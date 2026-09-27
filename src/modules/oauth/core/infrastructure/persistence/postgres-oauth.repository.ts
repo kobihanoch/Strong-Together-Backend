@@ -2,8 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserSql } from './writes/create-user.sql';
 import { LinkByVerifiedEmailSql } from './writes/link-by-verified-email.sql';
 import { FindLinkedUserSql } from './reads/find-linked-user.sql';
-import type { LinkOAuthAccountOutcome, OAuthProvider } from '../../application/models/oauth.models';
+import type { LinkOAuthAccountOutcome } from '../../application/models/oauth.models';
 import { OAuthRepository } from '../../application/ports/oauth.repository';
+import type { OAuthAccountCandidate } from '../../domain/entities/oauth-account-candidate';
+import type { OAuthAccountLink } from '../../domain/entities/oauth-account-link';
+import type { OAuthProviderIdentity } from '../../domain/value-objects/oauth-provider-identity';
 
 /** PostgreSQL adapter for OAuth account lookup, linking, and creation. */
 @Injectable()
@@ -14,22 +17,22 @@ export class PostgresOAuthRepository implements OAuthRepository {
     private readonly createUserSql: CreateUserSql,
   ) {}
 
-  findLinkedUser(provider: OAuthProvider, providerUserId: string): Promise<string | null> {
-    return this.findLinkedUserSql.findLinkedUser(provider, providerUserId);
+  findLinkedUser(identity: OAuthProviderIdentity): Promise<string | null> {
+    return this.findLinkedUserSql.findLinkedUser(identity.provider, identity.providerUserId);
   }
 
-  linkByVerifiedEmail(provider: OAuthProvider, email: string, providerUserId: string): Promise<LinkOAuthAccountOutcome> {
-    return this.linkByVerifiedEmailSql.linkByVerifiedEmail(provider, email, providerUserId);
+  linkByVerifiedEmail(link: OAuthAccountLink): Promise<LinkOAuthAccountOutcome> {
+    return this.linkByVerifiedEmailSql.linkByVerifiedEmail(link.identity.provider, link.email, link.identity.providerUserId);
   }
 
-  createUser(
-    provider: OAuthProvider,
-    candidateUsername: string | null,
-    email: string | null,
-    fullName: string,
-    providerUserId: string,
-    providerEmail: string | null,
-  ): Promise<string> {
-    return this.createUserSql.createUser(provider, candidateUsername, email, fullName, providerUserId, providerEmail);
+  createUser(candidate: OAuthAccountCandidate): Promise<string> {
+    return this.createUserSql.createUser(
+      candidate.identity.provider,
+      candidate.candidateUsername,
+      candidate.email,
+      candidate.fullName,
+      candidate.identity.providerUserId,
+      candidate.providerEmail,
+    );
   }
 }

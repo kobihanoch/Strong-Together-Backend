@@ -9,6 +9,7 @@ import { AuthenticationTransaction } from '../../../core/application/ports/authe
 import { PasswordHasher } from '../../../core/application/ports/password-hasher.port';
 import { AuthenticationEvents } from '../ports/authentication-events.port';
 import { SessionRepository } from '../ports/session.repository';
+import { LoginCredentials } from '../../domain/entities/login-credentials';
 
 /** Authenticates credentials and starts a session. */
 @Injectable()
@@ -37,11 +38,11 @@ export class LoginUseCase {
   async execute(identifier: string, password: string, jkt: string | undefined): Promise<LoginResult> {
     return this.unitOfWork.execute(undefined, async () => {
       if (this.policy.dpopEnabled && !jkt) throw new SessionBadRequestError('DPoP-Key-Binding header is missing.');
-
-      const user = await this.repository.findLoginUser(identifier);
+      const credentials = new LoginCredentials(identifier, password);
+      const user = await this.repository.findLoginUser(credentials.identifier);
       if (!user) throw new SessionUnauthorizedError('Invalid credentials');
 
-      const matches = await this.passwordHasher.compare(password, user.passwordHash!);
+      const matches = await this.passwordHasher.compare(credentials.password, user.passwordHash!);
       if (!matches) throw new SessionUnauthorizedError('Invalid credentials');
       if (!user.isVerified) throw new SessionUnauthorizedError('A verification email is pending');
 

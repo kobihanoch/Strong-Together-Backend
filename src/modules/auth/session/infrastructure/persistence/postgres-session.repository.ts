@@ -8,6 +8,7 @@ import { FindLastLoginSql } from './reads/find-last-login.sql';
 import { FindLoginUserSql } from './reads/find-login-user.sql';
 import type { LoginUser, RotatedSession, RotateSessionOutcome } from '../../../core/application/models/auth.models';
 import { SessionRepository } from '../../application/ports/session.repository';
+import type { LoginIdentifier } from '../../domain/value-objects/login-identifier';
 
 /** PostgreSQL session repository. */
 @Injectable()
@@ -22,8 +23,8 @@ export class PostgresSessionRepository implements SessionRepository {
     private readonly logoutSql: LogoutSql,
   ) {}
 
-  findLoginUser(identifier: string): Promise<LoginUser | null> {
-    return this.findLoginUserSql.findLoginUser(identifier);
+  findLoginUser(identifier: LoginIdentifier): Promise<LoginUser | null> {
+    return this.findLoginUserSql.findLoginUser(identifier.value);
   }
 
   findLastLogin(userId: string): Promise<Date | null> {

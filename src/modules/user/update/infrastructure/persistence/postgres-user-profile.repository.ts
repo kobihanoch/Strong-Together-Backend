@@ -6,8 +6,10 @@ import { UpdateEmailSql } from './writes/update-email.sql';
 import { UpdateSql } from './writes/update.sql';
 import { FindSql } from './reads/find.sql';
 import postgres from 'postgres';
-import type { UpdateUserEmailOutcome, UpdateUserInput, UpdateUserProfileOutcome, UserProfile } from '../../application/models/update-user.models';
+import type { UpdateUserEmailOutcome, UpdateUserProfileOutcome, UserProfile } from '../../application/models/update-user.models';
 import { UserProfileRepository } from '../../application/ports/user-profile.repository';
+import type { UserProfileChanges } from '../../domain/entities/user-profile-changes';
+import type { ProfileEmail } from '../../domain/value-objects/profile-email';
 
 /** PostgreSQL adapter for user profile persistence. */
 
@@ -25,17 +27,21 @@ export class PostgresUserProfileRepository implements UserProfileRepository {
   async find(userId: string): Promise<UserProfile | null> {
     return (await this.findSql.find(userId))[0]?.userData ?? null;
   }
-  async update(userId: string, input: UpdateUserInput): Promise<UpdateUserProfileOutcome> {
+  async update(userId: string, changes: UserProfileChanges): Promise<UpdateUserProfileOutcome> {
     try {
-      return await this.updateSql.update(userId, input);
+      return await this.updateSql.update(userId, {
+        username: changes.username,
+        fullName: changes.fullName,
+        email: changes.email?.value,
+      });
     } catch (error) {
       if (error instanceof postgres.PostgresError && error.code === '23505') return { kind: 'conflict' };
       throw error;
     }
   }
-  async updateEmail(userId: string, email: string): Promise<UpdateUserEmailOutcome> {
+  async updateEmail(userId: string, email: ProfileEmail): Promise<UpdateUserEmailOutcome> {
     try {
-      await this.updateEmailSql.updateEmail(userId, email);
+      await this.updateEmailSql.updateEmail(userId, email.value);
       return { kind: 'updated' };
     } catch (error) {
       if (error instanceof postgres.PostgresError && error.code === '23505') return { kind: 'conflict' };
