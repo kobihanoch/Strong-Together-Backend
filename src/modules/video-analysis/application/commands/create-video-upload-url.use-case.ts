@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { CreateVideoUploadInput, VideoUploadResult } from '../models/video-analysis.models';
 import { VideoAnalysisTelemetry } from '../ports/video-analysis-telemetry.port';
 import { VideoStorage } from '../ports/video-storage.port';
+import { VideoUploadRequest } from '../../domain/entities/video-upload-request';
 
 /** Creates direct upload URLs for video-analysis jobs. */
 @Injectable()
@@ -18,17 +19,18 @@ export class CreateVideoUploadUrlUseCase {
    * @returns The upload response and generated object key.
    */
   async execute(input: CreateVideoUploadInput): Promise<VideoUploadResult> {
-    const fileKey = `${input.exercise}_${input.userId}_${Date.now()}`;
-    const requestId = input.requestId || '';
-    this.telemetry.recordUpload(input, fileKey);
+    const request = new VideoUploadRequest(input);
+    const fileKey = request.fileKey(Date.now());
+    const requestId = request.requestId || '';
+    this.telemetry.recordUpload(request, fileKey);
 
-    const uploadUrl = await this.storage.createUploadUrl(fileKey, input.fileType, {
-      sentry_trace: input.sentryTrace,
-      baggage: input.baggage,
-      job_id: input.jobId || 'unknown',
+    const uploadUrl = await this.storage.createUploadUrl(fileKey, request.fileType, {
+      sentry_trace: request.sentryTrace,
+      baggage: request.baggage,
+      job_id: request.jobId || 'unknown',
       request_id: requestId,
-      user_id: input.userId,
-      exercise: input.exercise,
+      user_id: request.userId,
+      exercise: request.exercise.value,
     });
 
     return { payload: { uploadUrl, fileKey, requestId }, fileKey };

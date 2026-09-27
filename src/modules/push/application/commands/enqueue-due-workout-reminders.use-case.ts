@@ -3,6 +3,7 @@ import { UnitOfWork } from '../../../../common/application/ports/unit-of-work.po
 import type { PushBatchResult } from '../models/push.models';
 import { PushQueries } from '../ports/push.queries';
 import { WorkoutReminderQueue } from '../ports/workout-reminder-queue.port';
+import { WorkoutReminderNotification } from '../../domain/entities/workout-reminder-notification';
 
 /** Schedules push jobs for workout reminders due in the cron window. */
 @Injectable()
@@ -26,17 +27,7 @@ export class EnqueueDueWorkoutRemindersUseCase {
 
       this.unitOfWork.afterCommit(() =>
         this.queue.enqueue(
-          reminders.map((reminder) => ({
-            userId: reminder.userId,
-            workoutScheduleId: reminder.workoutScheduleId,
-            occurrenceDate: reminder.occurrenceDate,
-            reminderAt: reminder.reminderAt.toISOString(),
-            title: `Hello, ${reminder.firstName}!`,
-            body: `Your ${reminder.splitName} workout starts soon.`,
-            delay: Math.max(0, reminder.reminderAt.getTime() - now),
-            expiresAt: 0,
-            ...(requestId ? { requestId } : {}),
-          })),
+          reminders.map((reminder) => new WorkoutReminderNotification(reminder, now, requestId)),
         ),
       );
 

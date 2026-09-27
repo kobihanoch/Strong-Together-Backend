@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PushDeliveryTemporarilyUnavailableError } from '../errors/push.errors';
 import type { PushNotificationInput, SendPushNotificationResult } from '../models/push.models';
 import { PushNotificationSender } from '../ports/push-notification-sender.port';
+import { PushNotification } from '../../domain/entities/push-notification';
 
 /** Delivers one push notification and translates retryable provider outcomes. */
 @Injectable()
@@ -16,7 +17,7 @@ export class SendPushNotificationUseCase {
    * @throws {PushDeliveryTemporarilyUnavailableError} When delivery should be retried.
    */
   public async execute(input: PushNotificationInput): Promise<SendPushNotificationResult> {
-    const outcome = await this.sender.send(input);
+    const outcome = await this.sender.send(new PushNotification(input.token, input.title, input.body));
     if (outcome.kind === 'temporarily-unavailable') {
       throw new PushDeliveryTemporarilyUnavailableError(outcome.reason);
     }

@@ -1,6 +1,6 @@
-import type { NotificationPayload } from '../models/push.models';
+import type { WorkoutReminderNotification } from '../../domain/entities/workout-reminder-notification';
 
 /** Enqueues delayed workout-reminder notifications. */
 export abstract class WorkoutReminderQueue {
-  abstract enqueue(notifications: NotificationPayload[]): Promise<void>;
+  abstract enqueue(notifications: WorkoutReminderNotification[]): Promise<void>;
 }

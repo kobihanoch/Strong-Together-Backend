@@ -1,20 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
-import type { PushNotificationInput, SendPushNotificationOutcome } from '../application/models/push.models';
+import type { SendPushNotificationOutcome } from '../application/models/push.models';
 import { PushNotificationSender } from '../application/ports/push-notification-sender.port';
+import type { PushNotification } from '../domain/entities/push-notification';
 
 /** Sends individual notifications through the Expo push API. */
 @Injectable()
 export class ExpoPushNotificationSender implements PushNotificationSender {
-  public async send(input: PushNotificationInput): Promise<SendPushNotificationOutcome> {
-    if (!input.token || typeof input.token !== 'string' || input.token.length < 10) {
+  public async send(notification: PushNotification): Promise<SendPushNotificationOutcome> {
+    if (!notification.token || typeof notification.token !== 'string' || notification.token.length < 10) {
       return { kind: 'permanent-failure', reason: 'Invalid token' };
     }
 
     try {
       const response = await axios.post(
         'https://exp.host/--/api/v2/push/send',
-        { to: input.token, sound: 'default', title: input.title, body: input.body },
+        { to: notification.token, sound: 'default', title: notification.message.title, body: notification.message.body },
         {
           headers: {
             Accept: 'application/json',

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { VideoAnalysisResult } from '../models/video-analysis.models';
 import { VideoAnalysisPublisher } from '../ports/video-analysis-publisher.port';
+import { VideoAnalysisResultEvent } from '../../domain/entities/video-analysis-result-event';
 
 /** Publishes a worker result to the owning user. */
 @Injectable()
@@ -14,6 +15,6 @@ export class PublishVideoAnalysisResultUseCase {
    * @returns Nothing.
    */
   execute(result: VideoAnalysisResult): void {
-    this.publisher.publish(result.userId, result);
+    this.publisher.publish(new VideoAnalysisResultEvent(result));
   }
 }
