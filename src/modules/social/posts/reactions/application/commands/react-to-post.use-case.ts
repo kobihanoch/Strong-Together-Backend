@@ -3,6 +3,7 @@ import { UnitOfWork } from '../../../../../../common/application/ports/unit-of-w
 import { PostNotFoundError } from '../errors/reactions.errors';
 import type { PostReaction } from '../models/reactions.models';
 import { ReactionsRepository } from '../ports/reactions.repository';
+import { PostReactionSelection } from '../../domain/entities/post-reaction-selection';
 
 /** Creates or replaces a user's post reaction. */
 
@@ -23,7 +24,7 @@ export class ReactToPostUseCase {
    */
   public async execute(postId: string, userId: string, type: PostReaction['type']): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const outcome = await this.repository.save(postId, userId, type);
+      const outcome = await this.repository.save(postId, userId, new PostReactionSelection(type));
       if (outcome.kind === 'post-not-found') throw new PostNotFoundError();
     });
   }

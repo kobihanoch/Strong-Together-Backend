@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../../../../common/application/ports/unit-of-work.port';
 import { PostNotFoundError } from '../errors/comments.errors';
 import { CommentsRepository } from '../ports/comments.repository';
+import { PostCommentDraft } from '../../domain/entities/post-comment-draft';
 
 /** Adds a comment to a visible post. */
 
@@ -22,7 +23,7 @@ export class AddCommentUseCase {
    */
   public async execute(postId: string, userId: string, content: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const outcome = await this.repository.add(postId, userId, content);
+      const outcome = await this.repository.add(postId, userId, new PostCommentDraft(content));
       if (outcome.kind === 'post-not-found') throw new PostNotFoundError();
     });
   }

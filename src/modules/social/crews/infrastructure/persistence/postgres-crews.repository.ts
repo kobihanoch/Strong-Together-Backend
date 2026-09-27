@@ -7,6 +7,7 @@ import { UpdateSql } from './writes/update.sql';
 import { CreateSql } from './writes/create.sql';
 import type { Crew, DeleteCrewOutcome, LeaveCrewOutcome, UpdateCrewOutcome } from '../../application/models/crews.models';
 import { CrewsRepository } from '../../application/ports/crews.repository';
+import type { CrewDetails } from '../../domain/entities/crew-details';
 
 /** PostgreSQL implementation of crew persistence. */
 
@@ -21,11 +22,11 @@ export class PostgresCrewsRepository implements CrewsRepository {
     private readonly leaveSql: LeaveSql,
     private readonly deleteSql: DeleteSql,
   ) {}
-  public async create(userId: string, input: { name: string; privacy: 'public' | 'private' }): Promise<Crew> {
-    return (await this.createSql.create(userId, input.name, input.privacy))[0];
+  public async create(userId: string, details: CrewDetails): Promise<Crew> {
+    return (await this.createSql.create(userId, details.name.value, details.privacy.value))[0];
   }
-  public async update(id: string, input: { name: string; privacy: 'public' | 'private' }): Promise<UpdateCrewOutcome> {
-    return this.updateSql.update(id, input.name, input.privacy);
+  public async update(id: string, details: CrewDetails): Promise<UpdateCrewOutcome> {
+    return this.updateSql.update(id, details.name.value, details.privacy.value);
   }
   public async getProfilePictureForUpdate(crewId: string): Promise<string | null | undefined> {
     return (await this.findProfilePictureForUpdateSql.findProfilePictureForUpdate(crewId))[0]?.profilePicPath;

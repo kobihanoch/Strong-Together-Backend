@@ -3,6 +3,7 @@ import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work
 import { CrewTargetRequiredError } from '../errors/posts.errors';
 import type { CreatePostInput } from '../models/posts.models';
 import { PostsRepository } from '../ports/posts.repository';
+import { SocialPostDraft } from '../../domain/entities/social-post-draft';
 
 /** Creates a social post. */
 
@@ -23,7 +24,7 @@ export class CreatePostUseCase {
   public async execute(userId: string, input: CreatePostInput): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
       if (input.visibility === 'crews_only' && input.crewIds.length === 0) throw new CrewTargetRequiredError();
-      await this.repository.create(userId, input);
+      await this.repository.create(userId, new SocialPostDraft(input));
     });
   }
 }

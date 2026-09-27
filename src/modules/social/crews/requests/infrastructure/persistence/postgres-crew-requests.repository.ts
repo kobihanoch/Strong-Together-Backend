@@ -5,6 +5,7 @@ import { RequestToJoinSql } from './writes/request-to-join.sql';
 import { InviteUserSql } from './writes/invite-user.sql';
 import type { InviteCrewUserOutcome, RequestToJoinCrewOutcome, UpdateCrewParticipationRequestOutcome } from '../../application/models/crew-requests.models';
 import { CrewRequestsRepository } from '../../application/ports/crew-requests.repository';
+import type { ParticipationRequestResolution } from '../../domain/entities/participation-request-resolution';
 /** PostgreSQL implementation of crew participation-request persistence. */
 
 /** PostgreSQL write adapter. */
@@ -22,8 +23,8 @@ export class PostgresCrewRequestsRepository implements CrewRequestsRepository {
   public requestToJoin(crewId: string, userId: string): Promise<RequestToJoinCrewOutcome> {
     return this.requestToJoinSql.requestToJoin(crewId, userId);
   }
-  public updateStatus(requestId: string, status: 'accepted' | 'declined'): Promise<UpdateCrewParticipationRequestOutcome> {
-    return this.updateStatusSql.updateStatus(requestId, status);
+  public updateStatus(requestId: string, resolution: ParticipationRequestResolution): Promise<UpdateCrewParticipationRequestOutcome> {
+    return this.updateStatusSql.updateStatus(requestId, resolution.status.value);
   }
   public createMembership(crewId: string, userId: string): Promise<void> {
     return this.createMembershipSql.createMembership(crewId, userId);
