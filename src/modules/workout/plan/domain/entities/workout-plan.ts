@@ -33,7 +33,7 @@ export class WorkoutPlan {
     this.ensureSubmittedSplitIdsBelongToPlan(submittedSplits, persistedSplitsById);
 
     // Step 3: splits omitted from the submission are no longer part of the active plan.
-    const submittedSplitIds = new Set(submittedSplits.flatMap((split) => split.id === undefined ? [] : [split.id]));
+    const submittedSplitIds = new Set(submittedSplits.flatMap((split) => (split.id === undefined ? [] : [split.id])));
     const removedSplits = this.splits
       .filter((split) => split.id !== undefined && !submittedSplitIds.has(split.id))
       .map((split) => split.deactivate());
@@ -49,13 +49,10 @@ export class WorkoutPlan {
   }
 
   private indexPersistedSplitsById(): Map<number, WorkoutSplit> {
-    return new Map(this.splits.flatMap((split) => split.id === undefined ? [] : [[split.id, split] as const]));
+    return new Map(this.splits.flatMap((split) => (split.id === undefined ? [] : [[split.id, split] as const])));
   }
 
-  private ensureSubmittedSplitIdsBelongToPlan(
-    submittedSplits: WorkoutSplitValues[],
-    persistedSplitsById: Map<number, WorkoutSplit>,
-  ): void {
+  private ensureSubmittedSplitIdsBelongToPlan(submittedSplits: WorkoutSplitValues[], persistedSplitsById: Map<number, WorkoutSplit>): void {
     for (const submittedSplit of submittedSplits) {
       if (submittedSplit.id !== undefined && !persistedSplitsById.has(submittedSplit.id)) {
         throw new WorkoutSplitNotInPlanError(submittedSplit.id);

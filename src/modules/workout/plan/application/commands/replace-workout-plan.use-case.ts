@@ -6,6 +6,7 @@ import { WorkoutPlanCache } from '../ports/workout-plan-cache.port';
 import { WorkoutPlanRepository } from '../ports/workout-plan.repository';
 import { WorkoutPlan } from '../../domain/entities/workout-plan';
 import { WorkoutSplitNotInPlanError } from '../../domain/errors/workout-plan.errors';
+
 /** Replaces a user's active workout plan. */
 @Injectable()
 export class ReplaceWorkoutPlanUseCase {
