@@ -153,7 +153,7 @@ export class WorkoutTrackingController {
    * @param data - Completed workout data.
    * @param user - Authenticated user.
    * @returns No body.
-   * @throws {InvalidCompletedWorkoutError} When no exercises are supplied.
+   * @throws {WorkoutSessionRequiresExerciseError} When no exercises are supplied.
    * @throws {BadRequestException} When request validation fails.
    * @throws {UnauthorizedException} When authentication fails.
    * @throws {ForbiddenException} When role authorization fails.

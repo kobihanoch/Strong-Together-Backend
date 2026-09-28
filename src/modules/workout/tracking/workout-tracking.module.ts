@@ -15,7 +15,7 @@ import { FindExerciseHistorySql } from './infrastructure/persistence/reads/find-
 import { FindPersonalRecordsSql } from './infrastructure/persistence/reads/find-personal-records.sql';
 import { FindWorkoutHistorySql } from './infrastructure/persistence/reads/find-workout-history.sql';
 import { FindWorkoutStatisticsSql } from './infrastructure/persistence/reads/find-workout-statistics.sql';
-import { CreateWorkoutSessionSql } from './infrastructure/persistence/writes/create-workout-session.sql';
+import { CreateSql } from './infrastructure/persistence/writes/create.sql';
 import { WorkoutTrackingController } from './presentation/workout-tracking.controller';
 import { WorkoutTrackingQueries } from './application/ports/workout-tracking.queries';
 import { PostgresWorkoutTrackingQueries } from './infrastructure/persistence/postgres-workout-tracking.queries';
@@ -28,7 +28,7 @@ import { PostgresWorkoutTrackingQueries } from './infrastructure/persistence/pos
     FindPersonalRecordsSql,
     FindWorkoutHistorySql,
     FindWorkoutStatisticsSql,
-    CreateWorkoutSessionSql,
+    CreateSql,
     { provide: WorkoutTrackingRepository, useClass: PostgresWorkoutTrackingRepository },
     { provide: WorkoutTrackingCache, useClass: RedisWorkoutTrackingCache },
     GetWorkoutHistoryUseCase,

@@ -5,18 +5,23 @@ export class WorkoutPeriod {
   public readonly startUtc: string;
   public readonly endUtc: string | null;
 
-  public constructor(startUtc: string, endUtc?: string | null) {
-    if (!WorkoutPeriod.isValidTimestamp(startUtc)) throw new Error('Workout start must be a valid ISO datetime');
+  private constructor(startUtc: string, endUtc?: string | null) {
+    if (!WorkoutPeriod.isValidTimestamp(startUtc)) throw new InvalidWorkoutStartError();
     if (endUtc !== undefined && endUtc !== null && !WorkoutPeriod.isValidTimestamp(endUtc)) {
-      throw new Error('Workout end must be a valid ISO datetime');
+      throw new InvalidWorkoutEndError();
     }
-    if (endUtc && Date.parse(endUtc) < Date.parse(startUtc)) throw new Error('Workout end must not be earlier than workout start');
+    if (endUtc && Date.parse(endUtc) < Date.parse(startUtc)) throw new WorkoutEndBeforeStartError();
 
     this.startUtc = startUtc;
     this.endUtc = endUtc || null;
+  }
+
+  public static create(startUtc: string, endUtc?: string | null): WorkoutPeriod {
+    return new WorkoutPeriod(startUtc, endUtc);
   }
 
   private static isValidTimestamp(value: string): boolean {
     return ISO_DATETIME_WITH_OFFSET.test(value) && Number.isFinite(Date.parse(value));
   }
 }
+import { InvalidWorkoutEndError, InvalidWorkoutStartError, WorkoutEndBeforeStartError } from '../errors/workout-tracking.errors';

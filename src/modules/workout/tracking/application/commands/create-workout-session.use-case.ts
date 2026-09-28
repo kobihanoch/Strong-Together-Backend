@@ -3,7 +3,7 @@ import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work
 import type { CreateWorkoutSessionCommand } from '../models/workout-tracking.models';
 import { WorkoutTrackingCache } from '../ports/workout-tracking-cache.port';
 import { WorkoutTrackingRepository } from '../ports/workout-tracking.repository';
-import { CompletedWorkoutSession } from '../../domain/entities/completed-workout-session';
+import { WorkoutSession } from '../../domain/entities/workout-session';
 /** Persists completed workout sessions. */
 @Injectable()
 export class CreateWorkoutSessionUseCase {
@@ -18,12 +18,12 @@ export class CreateWorkoutSessionUseCase {
    * @param userId - User identifier.
    * @param command - Completed workout values.
    * @returns Nothing.
-   * @throws {InvalidCompletedWorkoutError} When no exercises are supplied.
+   * @throws {WorkoutSessionRequiresExerciseError} When no exercises are supplied.
    */
   async execute(userId: string, command: CreateWorkoutSessionCommand): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const session = new CompletedWorkoutSession(command);
-      await this.repository.saveCompletedWorkout(userId, session);
+      const session = WorkoutSession.create(command);
+      await this.repository.create(userId, session);
       this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
     });
   }

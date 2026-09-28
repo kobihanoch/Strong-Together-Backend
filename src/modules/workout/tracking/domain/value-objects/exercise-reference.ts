@@ -9,21 +9,26 @@ export class ExerciseReference {
   public readonly exerciseToSplitId: number | null;
   public readonly exerciseId: number | null;
 
-  public constructor(values: ExerciseReferenceValues) {
+  private constructor(values: ExerciseReferenceValues) {
     if (values.isExerciseAssignedToSplit) {
       if (!Number.isInteger(values.exerciseToSplitId) || values.exerciseToSplitId <= 0) {
-        throw new Error('Exercise-to-split ID must be a positive integer');
+        throw new InvalidExerciseAssignmentIdError();
       }
       if (values.exerciseId !== undefined && values.exerciseId !== null && (!Number.isInteger(values.exerciseId) || values.exerciseId <= 0)) {
-        throw new Error('Exercise ID must be a positive integer');
+        throw new InvalidTrackedExerciseIdError();
       }
       this.exerciseToSplitId = values.exerciseToSplitId;
       this.exerciseId = values.exerciseId ?? null;
     } else {
-      if (!Number.isInteger(values.exerciseId) || values.exerciseId <= 0) throw new Error('Exercise ID must be a positive integer');
+      if (!Number.isInteger(values.exerciseId) || values.exerciseId <= 0) throw new InvalidTrackedExerciseIdError();
       this.exerciseToSplitId = null;
       this.exerciseId = values.exerciseId;
     }
     this.isExerciseAssignedToSplit = values.isExerciseAssignedToSplit;
   }
+
+  public static create(values: ExerciseReferenceValues): ExerciseReference {
+    return new ExerciseReference(values);
+  }
 }
+import { InvalidExerciseAssignmentIdError, InvalidTrackedExerciseIdError } from '../errors/workout-tracking.errors';

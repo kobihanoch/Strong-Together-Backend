@@ -1,5 +1,11 @@
 import { ExerciseReference, type ExerciseReferenceValues } from '../value-objects/exercise-reference';
 import { TrackedSet } from '../value-objects/tracked-set';
+import {
+  DuplicateTrackedSetIndexError,
+  TooManyTrackedSetsError,
+  TrackedExerciseRequiresSetError,
+  TrackingNotesTooLongError,
+} from '../errors/workout-tracking.errors';
 
 /** Primitive values used to construct a tracked exercise. */
 export type TrackedExerciseValues = ExerciseReferenceValues & {
@@ -13,21 +19,25 @@ export class TrackedExercise {
   public readonly trackedSets: TrackedSet[];
   public readonly notes: string | null | undefined;
 
-  public constructor(values: TrackedExerciseValues) {
-    if (values.trackedSets.length === 0) throw new Error('Each exercise must include at least one tracked set');
-    if (values.trackedSets.length > 100) throw new Error('An exercise cannot include more than 100 tracked sets');
+  private constructor(values: TrackedExerciseValues) {
+    if (values.trackedSets.length === 0) throw new TrackedExerciseRequiresSetError();
+    if (values.trackedSets.length > 100) throw new TooManyTrackedSetsError();
 
     const setIndexes = new Set<number>();
     for (const set of values.trackedSets) {
-      if (setIndexes.has(set.setIndex)) throw new Error('Set indexes must be unique');
+      if (setIndexes.has(set.setIndex)) throw new DuplicateTrackedSetIndexError();
       setIndexes.add(set.setIndex);
     }
 
     const notes = values.notes?.trim();
-    if (notes !== undefined && notes !== null && notes.length > 2_000) throw new Error('Notes must be at most 2000 characters');
+    if (notes !== undefined && notes !== null && notes.length > 2_000) throw new TrackingNotesTooLongError();
 
-    this.reference = new ExerciseReference(values);
-    this.trackedSets = values.trackedSets.map((set) => new TrackedSet(set.reps, set.weight, set.setIndex));
+    this.reference = ExerciseReference.create(values);
+    this.trackedSets = values.trackedSets.map((set) => TrackedSet.create(set.reps, set.weight, set.setIndex));
     this.notes = notes;
+  }
+
+  public static create(values: TrackedExerciseValues): TrackedExercise {
+    return new TrackedExercise(values);
   }
 }

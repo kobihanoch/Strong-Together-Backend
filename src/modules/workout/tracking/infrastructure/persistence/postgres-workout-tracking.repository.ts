@@ -1,15 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { CreateWorkoutSessionSql } from './writes/create-workout-session.sql';
+import { CreateSql } from './writes/create.sql';
 import { WorkoutTrackingRepository } from '../../application/ports/workout-tracking.repository';
-import type { CompletedWorkoutSession } from '../../domain/entities/completed-workout-session';
+import { WorkoutSession, type WorkoutSessionValues } from '../../domain/entities/workout-session';
 import type { FinishedWorkoutSqlInput } from './workout-tracking.db-types';
 /** PostgreSQL adapter for workout tracking. */
 
 /** PostgreSQL write adapter. */
 @Injectable()
 export class PostgresWorkoutTrackingRepository implements WorkoutTrackingRepository {
-  public constructor(private readonly createWorkoutSessionSql: CreateWorkoutSessionSql) {}
-  async saveCompletedWorkout(userId: string, session: CompletedWorkoutSession): Promise<void> {
+  public constructor(private readonly createSql: CreateSql) {}
+
+  async create(userId: string, session: WorkoutSession): Promise<WorkoutSession> {
     const workout: FinishedWorkoutSqlInput[] = session.exercises.map((exercise) => {
       const values = {
         trackedSets: exercise.trackedSets.map((set) => ({ reps: set.reps, weight: set.weight, setIndex: set.setIndex })),
@@ -31,6 +32,12 @@ export class PostgresWorkoutTrackingRepository implements WorkoutTrackingReposit
           };
     });
 
-    await this.createWorkoutSessionSql.createWorkoutSession(userId, workout, session.period.startUtc, session.period.endUtc);
+    const id = await this.createSql.execute(userId, session.firstAssignedExerciseId, workout, session.period.startUtc, session.period.endUtc);
+    const values: WorkoutSessionValues = {
+      workout,
+      workoutStartUtc: session.period.startUtc,
+      workoutEndUtc: session.period.endUtc,
+    };
+    return WorkoutSession.restore(id, values);
   }
 }
