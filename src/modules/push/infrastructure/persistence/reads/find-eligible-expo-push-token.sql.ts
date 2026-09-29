@@ -11,7 +11,7 @@ export class FindEligibleExpoPushTokenSql {
    * @param userId - The reminder owner's identifier.
    * @param workoutScheduleId - The queued schedule identifier.
    * @param occurrenceDate - The queued local workout date.
-   * @returns The current Expo token, or null when the delayed reminder is no longer eligible.
+   * @returns The current Expo token, or undefined when the delayed reminder is no longer eligible.
    */
   async findEligibleExpoPushToken(userId: string, workoutScheduleId: string, occurrenceDate: string) {
     const [row] = await this.dbService.sql<EligiblePushTokenSqlRow[]>`
@@ -23,6 +23,6 @@ export class FindEligibleExpoPushTokenSql {
         ) AS "pushToken"
     `;
 
-    return row?.pushToken ?? null;
+    return row?.pushToken ?? undefined;
   }
 }

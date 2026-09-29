@@ -19,7 +19,7 @@ export class CreateVideoUploadUrlUseCase {
    * @returns The upload response and generated object key.
    */
   async execute(input: CreateVideoUploadInput): Promise<VideoUploadResult> {
-    const request = new VideoUploadRequest(input);
+    const request = VideoUploadRequest.create(input);
     const fileKey = request.fileKey(Date.now());
     const requestId = request.requestId || '';
     this.telemetry.recordUpload(request, fileKey);

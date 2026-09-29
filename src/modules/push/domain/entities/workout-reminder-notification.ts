@@ -20,7 +20,7 @@ export class WorkoutReminderNotification {
   public readonly delay: number;
   public readonly requestId?: string | undefined;
 
-  public constructor(reminder: DueWorkoutReminderValues, now: number, requestId?: string) {
+  private constructor(reminder: DueWorkoutReminderValues, now: number, requestId?: string) {
     this.userId = reminder.userId;
     this.workoutScheduleId = reminder.workoutScheduleId;
     this.occurrenceDate = reminder.occurrenceDate;
@@ -30,4 +30,7 @@ export class WorkoutReminderNotification {
     this.requestId = requestId;
   }
 
+  static create(reminder: DueWorkoutReminderValues, now: number, requestId?: string): WorkoutReminderNotification {
+    return new WorkoutReminderNotification(reminder, now, requestId);
+  }
 }

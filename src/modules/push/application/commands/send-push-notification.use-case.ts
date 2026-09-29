@@ -17,7 +17,7 @@ export class SendPushNotificationUseCase {
    * @throws {PushDeliveryTemporarilyUnavailableError} When delivery should be retried.
    */
   public async execute(input: PushNotificationInput): Promise<SendPushNotificationResult> {
-    const outcome = await this.sender.send(new PushNotification(input.token, input.title, input.body));
+    const outcome = await this.sender.send(PushNotification.create(input.token, input.title, input.body));
     if (outcome.kind === 'temporarily-unavailable') {
       throw new PushDeliveryTemporarilyUnavailableError(outcome.reason);
     }

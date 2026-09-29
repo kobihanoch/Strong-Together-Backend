@@ -14,7 +14,7 @@ export class PostgresPushQueries implements PushQueries {
   findDueWorkoutReminders(): Promise<DueWorkoutReminder[]> {
     return this.findDueWorkoutRemindersSql.findDueWorkoutReminders();
   }
-  findEligibleExpoPushToken(userId: string, workoutScheduleId: string, occurrenceDate: string): Promise<string | null> {
+  findEligibleExpoPushToken(userId: string, workoutScheduleId: string, occurrenceDate: string): Promise<string | undefined> {
     return this.findEligibleExpoPushTokenSql.findEligibleExpoPushToken(userId, workoutScheduleId, occurrenceDate);
   }
 }

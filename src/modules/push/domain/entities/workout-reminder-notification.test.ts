@@ -12,7 +12,7 @@ const reminder = {
 
 describe('WorkoutReminderNotification', () => {
   it('builds the existing message and delay for a future reminder', () => {
-    const notification = new WorkoutReminderNotification(reminder, Date.parse('2026-09-28T09:55:00Z'), 'request-id');
+    const notification = WorkoutReminderNotification.create(reminder, Date.parse('2026-09-28T09:55:00Z'), 'request-id');
     expect(notification.message.title).toBe('Hello, Jane!');
     expect(notification.message.body).toBe('Your Push workout starts soon.');
     expect(notification.delay).toBe(300_000);
@@ -20,6 +20,6 @@ describe('WorkoutReminderNotification', () => {
   });
 
   it('uses zero delay when the reminder time has passed', () => {
-    expect(new WorkoutReminderNotification(reminder, Date.parse('2026-09-28T10:01:00Z')).delay).toBe(0);
+    expect(WorkoutReminderNotification.create(reminder, Date.parse('2026-09-28T10:01:00Z')).delay).toBe(0);
   });
 });

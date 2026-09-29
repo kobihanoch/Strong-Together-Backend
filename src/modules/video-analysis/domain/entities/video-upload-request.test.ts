@@ -13,25 +13,25 @@ const upload = {
 
 describe('VideoUploadRequest', () => {
   it('normalizes input and creates the existing object-key format', () => {
-    const request = new VideoUploadRequest(upload);
+    const request = VideoUploadRequest.create(upload);
     expect(request.exercise.value).toBe('barbell_squat');
     expect(request.fileType.value).toBe('video/mp4');
     expect(request.fileKey(123)).toBe('barbell_squat_user-1_123');
   });
 
   it('enforces exercise, file type, and job identity rules', () => {
-    expect(() => new VideoUploadRequest({ ...upload, exercise: 'invalid exercise' })).toThrow('Invalid exercise name');
-    expect(() => new VideoUploadRequest({ ...upload, fileType: 'image/png' })).toThrow('Unsupported video file type');
-    expect(() => new VideoUploadRequest({ ...upload, jobId: ' ' })).toThrow('Invalid video-analysis job ID');
+    expect(() => VideoUploadRequest.create({ ...upload, exercise: 'invalid exercise' })).toThrow('Invalid exercise name');
+    expect(() => VideoUploadRequest.create({ ...upload, fileType: 'image/png' })).toThrow('Unsupported video file type');
+    expect(() => VideoUploadRequest.create({ ...upload, jobId: ' ' })).toThrow('Invalid video-analysis job ID');
   });
 });
 
 describe('VideoAnalysisResultEvent', () => {
   it('preserves completed and failed result variants', () => {
-    const completed = new VideoAnalysisResultEvent({
+    const completed = VideoAnalysisResultEvent.create({
       jobId: 'job-1', userId: 'user-1', exercise: 'squat', status: 'completed', result: [], error: null,
     });
-    const failed = new VideoAnalysisResultEvent({
+    const failed = VideoAnalysisResultEvent.create({
       jobId: 'job-1', userId: 'user-1', exercise: 'squat', status: 'failed', result: null, error: 'failed',
     });
     expect(completed.payload.status).toBe('completed');

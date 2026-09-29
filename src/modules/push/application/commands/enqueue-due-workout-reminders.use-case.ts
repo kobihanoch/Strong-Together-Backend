@@ -27,7 +27,7 @@ export class EnqueueDueWorkoutRemindersUseCase {
 
       this.unitOfWork.afterCommit(() =>
         this.queue.enqueue(
-          reminders.map((reminder) => new WorkoutReminderNotification(reminder, now, requestId)),
+          reminders.map((reminder) => WorkoutReminderNotification.create(reminder, now, requestId)),
         ),
       );
 

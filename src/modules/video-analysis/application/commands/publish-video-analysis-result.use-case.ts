@@ -15,6 +15,6 @@ export class PublishVideoAnalysisResultUseCase {
    * @returns Nothing.
    */
   execute(result: VideoAnalysisResult): void {
-    this.publisher.publish(new VideoAnalysisResultEvent(result));
+    this.publisher.publish(VideoAnalysisResultEvent.create(result));
   }
 }

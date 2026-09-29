@@ -11,7 +11,7 @@ export class FindEligiblePushTokenUseCase {
   ) {}
 
   /** Retrieves an eligible token inside the target user's RLS transaction. */
-  execute(userId: string, workoutScheduleId: string, occurrenceDate: string): Promise<string | null> {
+  execute(userId: string, workoutScheduleId: string, occurrenceDate: string): Promise<string | undefined> {
     return this.unitOfWork.executeReadOnly(userId, () => this.query.findEligibleExpoPushToken(userId, workoutScheduleId, occurrenceDate));
   }
 }
