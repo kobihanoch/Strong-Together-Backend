@@ -24,6 +24,6 @@ export class LinkByVerifiedEmailSql {
           ${providerUserId}
         ) AS user_id
     `;
-    return row?.user_id ? { kind: 'linked' as const, userId: row.user_id } : { kind: 'no-match' as const };
+    return row?.user_id ?? undefined;
   }
 }

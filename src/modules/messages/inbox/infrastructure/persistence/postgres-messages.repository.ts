@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { DeleteForUserSql } from './writes/delete-for-user.sql';
-import { MarkAsReadSql } from './writes/mark-as-read.sql';
+import { DeleteSql } from './writes/delete.sql';
+import { SaveSql } from './writes/save.sql';
+import { FindByIdForUpdateSql } from './reads/find-by-id-for-update.sql';
 import { MessagesRepository } from '../../application/ports/messages.repository';
-import type { DeleteMessageOutcome, MarkMessageAsReadOutcome } from '../../application/models/messages.models';
+import { Message } from '../../domain/entities/message';
 
 /** PostgreSQL adapter for message inbox persistence. */
 
@@ -10,13 +11,14 @@ import type { DeleteMessageOutcome, MarkMessageAsReadOutcome } from '../../appli
 @Injectable()
 export class PostgresMessagesRepository implements MessagesRepository {
   public constructor(
-    private readonly markAsReadSql: MarkAsReadSql,
-    private readonly deleteForUserSql: DeleteForUserSql,
+    private readonly findByIdForUpdateSql: FindByIdForUpdateSql,
+    private readonly saveSql: SaveSql,
+    private readonly deleteSql: DeleteSql,
   ) {}
-  async markAsRead(messageId: string, userId: string): Promise<MarkMessageAsReadOutcome> {
-    return this.markAsReadSql.markAsRead(messageId, userId);
+  async findByIdForUpdate(messageId: string): Promise<Message | undefined> {
+    const row = await this.findByIdForUpdateSql.findByIdForUpdate(messageId);
+    return row ? Message.restore(row) : undefined;
   }
-  async deleteForUser(messageId: string, userId: string): Promise<DeleteMessageOutcome> {
-    return this.deleteForUserSql.deleteForUser(messageId, userId);
-  }
+  save(message: Message): Promise<void> { return this.saveSql.save(message.id, message.isRead); }
+  delete(message: Message): Promise<void> { return this.deleteSql.delete(message.id); }
 }

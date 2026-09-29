@@ -10,9 +10,7 @@ import { OAuthRepository } from '../../../core/application/ports/oauth.repositor
 import { AppleOAuthUnauthorizedError, InvalidAppleOAuthError } from '../errors/apple-oauth.errors';
 import type { AppleOAuthInput } from '../models/apple-oauth.models';
 import { AppleIdentityVerifier } from '../ports/apple-identity-verifier.port';
-import { OAuthAccountCandidate } from '../../../core/domain/entities/oauth-account-candidate';
-import { OAuthAccountLink } from '../../../core/domain/entities/oauth-account-link';
-import { OAuthProviderIdentity } from '../../../core/domain/value-objects/oauth-provider-identity';
+import { OAuthAccount } from '../../../core/domain/entities/oauth-account';
 
 /** Authenticates or registers a user with Apple OAuth. */
 @Injectable()
@@ -50,34 +48,31 @@ export class SignInWithAppleUseCase {
       }
 
       const verification = await this.identityVerifier.verify(idToken, rawNonce, name);
-      if (verification.kind === 'invalid-nonce') throw new Error('Invalid nonce');
+      if (verification.kind === 'invalid-nonce') throw new InvalidAppleOAuthError('Invalid nonce');
       const { appleSub, email: tokenEmail, emailVerified, fullName: normalizedName } = verification.identity;
 
       const resolvedEmail = tokenEmail ?? email ?? null;
-      const identity = new OAuthProviderIdentity('apple', appleSub);
+      const account = OAuthAccount.create({
+        provider: 'apple', providerUserId: appleSub, email: resolvedEmail, emailVerified, fullName: normalizedName,
+      });
 
-      let userId = await this.repository.findLinkedUser(identity);
+      let userId = await this.repository.findLinkedUser(account.identity);
       const userExistOnOAuthUsers = !!userId;
 
       if (!userExistOnOAuthUsers) {
         let isLinked = false;
 
-        if (emailVerified && resolvedEmail) {
-          const linkOutcome = await this.repository.linkByVerifiedEmail(new OAuthAccountLink(identity, resolvedEmail));
-          if (linkOutcome.kind === 'linked') {
-            userId = linkOutcome.userId;
+        if (account.verifiedEmail) {
+          const linkedAccount = await this.repository.linkByVerifiedEmail(account);
+          if (linkedAccount?.localUserId) {
+            userId = linkedAccount.localUserId;
             isLinked = true;
           }
         }
 
         if (!isLinked) {
-          const username = resolvedEmail?.split('@')[0].toLowerCase() || null;
-          const candidateFullName = normalizedName;
-
-          const newUserId = await this.repository.createUser(
-            new OAuthAccountCandidate(identity, username, resolvedEmail, candidateFullName, resolvedEmail),
-          );
-          userId = newUserId;
+          const createdAccount = await this.repository.create(account);
+          userId = createdAccount.localUserId;
         }
       }
 

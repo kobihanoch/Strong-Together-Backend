@@ -1,7 +1,8 @@
-import type { DeleteMessageOutcome, MarkMessageAsReadOutcome } from '../models/messages.models';
+import type { Message } from '../../domain/entities/message';
 
 /** Provides persistence-independent inbox operations. */
 export abstract class MessagesRepository {
-  abstract markAsRead(messageId: string, userId: string): Promise<MarkMessageAsReadOutcome>;
-  abstract deleteForUser(messageId: string, userId: string): Promise<DeleteMessageOutcome>;
+  abstract findByIdForUpdate(messageId: string): Promise<Message | undefined>;
+  abstract save(message: Message): Promise<void>;
+  abstract delete(message: Message): Promise<void>;
 }

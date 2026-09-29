@@ -22,6 +22,6 @@ export class FindLinkedUserSql {
           ${providerUserId}
         ) AS oauth_data
     `;
-    return row?.oauth_data?.user_id ?? null;
+    return row?.oauth_data?.user_id ?? undefined;
   }
 }

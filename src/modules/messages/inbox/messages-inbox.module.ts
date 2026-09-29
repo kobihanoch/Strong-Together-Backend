@@ -7,8 +7,9 @@ import { DeleteMessageUseCase } from './application/commands/delete-message.use-
 import { ListMessagesUseCase } from './application/queries/list-messages.use-case';
 import { MarkMessageAsReadUseCase } from './application/commands/mark-message-as-read.use-case';
 import { FindByUserSql } from './infrastructure/persistence/reads/find-by-user.sql';
-import { DeleteForUserSql } from './infrastructure/persistence/writes/delete-for-user.sql';
-import { MarkAsReadSql } from './infrastructure/persistence/writes/mark-as-read.sql';
+import { DeleteSql } from './infrastructure/persistence/writes/delete.sql';
+import { SaveSql } from './infrastructure/persistence/writes/save.sql';
+import { FindByIdForUpdateSql } from './infrastructure/persistence/reads/find-by-id-for-update.sql';
 import { PostgresMessagesRepository } from './infrastructure/persistence/postgres-messages.repository';
 import { MessagesController } from './presentation/messages.controller';
 import { MessagesQueries } from './application/ports/messages.queries';
@@ -20,8 +21,9 @@ import { PostgresMessagesQueries } from './infrastructure/persistence/postgres-m
   providers: [
     { provide: MessagesQueries, useClass: PostgresMessagesQueries },
     FindByUserSql,
-    DeleteForUserSql,
-    MarkAsReadSql,
+    FindByIdForUpdateSql,
+    SaveSql,
+    DeleteSql,
     { provide: MessagesRepository, useClass: PostgresMessagesRepository },
     ListMessagesUseCase,
     MarkMessageAsReadUseCase,

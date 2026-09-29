@@ -2,10 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserSql } from './writes/create-user.sql';
 import { LinkByVerifiedEmailSql } from './writes/link-by-verified-email.sql';
 import { FindLinkedUserSql } from './reads/find-linked-user.sql';
-import type { LinkOAuthAccountOutcome } from '../../application/models/oauth.models';
 import { OAuthRepository } from '../../application/ports/oauth.repository';
-import type { OAuthAccountCandidate } from '../../domain/entities/oauth-account-candidate';
-import type { OAuthAccountLink } from '../../domain/entities/oauth-account-link';
+import type { OAuthAccount } from '../../domain/entities/oauth-account';
 import type { OAuthProviderIdentity } from '../../domain/value-objects/oauth-provider-identity';
 
 /** PostgreSQL adapter for OAuth account lookup, linking, and creation. */
@@ -17,22 +15,25 @@ export class PostgresOAuthRepository implements OAuthRepository {
     private readonly createUserSql: CreateUserSql,
   ) {}
 
-  findLinkedUser(identity: OAuthProviderIdentity): Promise<string | null> {
+  findLinkedUser(identity: OAuthProviderIdentity): Promise<string | undefined> {
     return this.findLinkedUserSql.findLinkedUser(identity.provider, identity.providerUserId);
   }
 
-  linkByVerifiedEmail(link: OAuthAccountLink): Promise<LinkOAuthAccountOutcome> {
-    return this.linkByVerifiedEmailSql.linkByVerifiedEmail(link.identity.provider, link.email, link.identity.providerUserId);
+  async linkByVerifiedEmail(account: OAuthAccount): Promise<OAuthAccount | undefined> {
+    if (!account.verifiedEmail) return undefined;
+    const userId = await this.linkByVerifiedEmailSql.linkByVerifiedEmail(account.identity.provider, account.verifiedEmail, account.identity.providerUserId);
+    return userId ? account.linkToLocalUser(userId) : undefined;
   }
 
-  createUser(candidate: OAuthAccountCandidate): Promise<string> {
-    return this.createUserSql.createUser(
-      candidate.identity.provider,
-      candidate.candidateUsername,
-      candidate.email,
-      candidate.fullName,
-      candidate.identity.providerUserId,
-      candidate.providerEmail,
+  async create(account: OAuthAccount): Promise<OAuthAccount> {
+    const userId = await this.createUserSql.createUser(
+      account.identity.provider,
+      account.candidateUsername,
+      account.email,
+      account.fullName,
+      account.identity.providerUserId,
+      account.email,
     );
+    return account.linkToLocalUser(userId);
   }
 }

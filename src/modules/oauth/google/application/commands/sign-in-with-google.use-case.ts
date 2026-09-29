@@ -10,9 +10,7 @@ import { OAuthRepository } from '../../../core/application/ports/oauth.repositor
 import { GoogleOAuthUnauthorizedError, InvalidGoogleOAuthError } from '../errors/google-oauth.errors';
 import type { GoogleOAuthInput } from '../models/google-oauth.models';
 import { GoogleIdentityVerifier } from '../ports/google-identity-verifier.port';
-import { OAuthAccountCandidate } from '../../../core/domain/entities/oauth-account-candidate';
-import { OAuthAccountLink } from '../../../core/domain/entities/oauth-account-link';
-import { OAuthProviderIdentity } from '../../../core/domain/value-objects/oauth-provider-identity';
+import { OAuthAccount } from '../../../core/domain/entities/oauth-account';
 
 /** Authenticates or registers a user with Google OAuth. */
 @Injectable()
@@ -45,18 +43,18 @@ export class SignInWithGoogleUseCase {
       const verification = await this.identityVerifier.verify(idToken);
       if (verification.kind === 'invalid-audience') throw new InvalidGoogleOAuthError('Invalid audience for Google ID token');
       const { googleSub, email, emailVerified, fullName } = verification.identity;
-      const identity = new OAuthProviderIdentity('google', googleSub);
+      const account = OAuthAccount.create({ provider: 'google', providerUserId: googleSub, email, emailVerified, fullName });
 
-      let userId = await this.repository.findLinkedUser(identity);
+      let userId = await this.repository.findLinkedUser(account.identity);
       const userExistOnOAuthUsers = !!userId;
 
       if (!userExistOnOAuthUsers) {
         let isLinked = false;
         this.logger.info({ event: 'oauth.google_link_attempt_started', emailVerified }, 'Google OAuth user not found, trying to link');
-        if (emailVerified) {
-          const linkOutcome = email ? await this.repository.linkByVerifiedEmail(new OAuthAccountLink(identity, email)) : { kind: 'no-match' as const };
-          if (linkOutcome.kind === 'linked') {
-            userId = linkOutcome.userId;
+        if (account.verifiedEmail) {
+          const linkedAccount = await this.repository.linkByVerifiedEmail(account);
+          if (linkedAccount?.localUserId) {
+            userId = linkedAccount.localUserId;
             isLinked = true;
             this.logger.info({ event: 'oauth.google_link_succeeded', userId }, 'Google OAuth user linked successfully');
           }
@@ -64,10 +62,8 @@ export class SignInWithGoogleUseCase {
 
         if (!isLinked) {
           this.logger.info({ event: 'oauth.google_registration_started' }, 'Google OAuth link failed, creating a new user');
-          const username = email?.split('@')[0].toLowerCase() || null;
-
-          const userIdFromRegister = await this.repository.createUser(new OAuthAccountCandidate(identity, username, email, fullName, email));
-          userId = userIdFromRegister;
+          const createdAccount = await this.repository.create(account);
+          userId = createdAccount.localUserId;
 
           this.logger.info({ event: 'oauth.google_registration_completed', userId }, 'Google OAuth user created');
         }

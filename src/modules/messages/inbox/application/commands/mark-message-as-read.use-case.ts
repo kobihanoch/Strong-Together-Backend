@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
-import { MessageNotFoundError } from '../errors/messages.errors';
+import { MessageNotFoundError } from '../../domain/errors/message.errors';
 import { MessagesRepository } from '../ports/messages.repository';
 
 /** Marks inbox messages as read for their receiving user. */
@@ -21,8 +21,10 @@ export class MarkMessageAsReadUseCase {
    */
   async execute(messageId: string, userId: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const outcome = await this.repository.markAsRead(messageId, userId);
-      if (outcome.kind === 'not-found') throw new MessageNotFoundError();
+      const message = await this.repository.findByIdForUpdate(messageId);
+      if (!message) throw new MessageNotFoundError();
+      message.markAsRead(userId);
+      await this.repository.save(message);
     });
   }
 }

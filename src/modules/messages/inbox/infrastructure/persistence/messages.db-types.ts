@@ -13,5 +13,5 @@ export type InboxMessageSqlRow = Pick<MessageDbRow, 'id' | 'subject' | 'msg' | '
   senderProfilePicPath: UserDbRow['profilePicPath'];
 };
 
-/** SQL projection returned by message mutations. */
-export type MessageMutationSqlRow = Pick<MessageDbRow, 'id'>;
+/** Complete message state needed by command behavior. */
+export type MessageDomainSqlRow = Pick<MessageDbRow, 'id' | 'senderId' | 'receiverId' | 'isRead'>;

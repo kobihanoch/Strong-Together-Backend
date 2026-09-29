@@ -6,9 +6,10 @@ export class OAuthProviderIdentity {
   public readonly provider: SupportedOAuthProvider;
   public readonly providerUserId: string;
   public constructor(provider: SupportedOAuthProvider, providerUserId: string) {
-    if (provider !== 'apple' && provider !== 'google') throw new Error('OAuth provider is not supported');
-    if (providerUserId.length === 0) throw new Error('OAuth provider user ID is required');
+    if (provider !== 'apple' && provider !== 'google') throw new UnsupportedOAuthProviderError();
+    if (providerUserId.length === 0) throw new OAuthProviderUserIdRequiredError();
     this.provider = provider;
     this.providerUserId = providerUserId;
   }
 }
+import { OAuthProviderUserIdRequiredError, UnsupportedOAuthProviderError } from '../errors/oauth-account.errors';
