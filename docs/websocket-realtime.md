@@ -33,7 +33,7 @@ The route is protected by:
 - **`@Roles('user')`**
 - **`ValidateRequestPipe(generateTicketRequest)`**
 
-`WebSocketsService` signs a JWT ticket with:
+`CreateWebSocketTicketUseCase` requests a signed JWT through the `WebSocketTicketIssuer` port. `JwtWebSocketTicketIssuer` implements that port with:
 
 - `id`: authenticated user id
 - `username`: client-provided username
@@ -87,7 +87,7 @@ The socket then joins a room named by the authenticated `userId`.
 
 ## User-Targeted Events
 
-The realtime layer avoids broadcasting sensitive data. Application services emit to a specific authenticated user room:
+The realtime layer avoids broadcasting sensitive data. Application use cases publish through application-owned ports; Socket.IO infrastructure adapters emit to a specific authenticated user room:
 
 ```ts
 this.socketIOService.emitToUser(userId, eventName, payload);
@@ -97,8 +97,8 @@ Current user-targeted events include:
 
 | Event | Producer | Purpose |
 | --- | --- | --- |
-| `new_message` | `MessagesService` | Delivers new user/system message payloads |
-| `video_analysis_results` | `VideoAnalysisService` | Delivers completed or failed video-analysis results |
+| `new_message` | `SocketMessagePublisher` | Delivers new user/system message payloads |
+| `video_analysis_results` | `SocketVideoAnalysisPublisher` | Delivers completed or failed video-analysis results |
 
 This design keeps realtime delivery aligned with the backend authorization model: events are addressed to a user, not broadcast globally.
 

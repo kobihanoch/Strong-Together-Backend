@@ -1,5 +1,4 @@
 export * from './common';
-export * from './database';
 export * from './modules/aerobics';
 export * from './modules/auth';
 export * from './modules/exercises';

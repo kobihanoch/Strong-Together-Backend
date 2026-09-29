@@ -1,9 +1,10 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, ParamsOf, QueryOf, ResponseOf } from '../../../common';
-import { crewDbSchema } from '../../../database';
-import { crewParticipantQueryDtoSchema, crewWithParticipantCountQueryDtoSchema, discoverableCrewQueryDtoSchema } from './crews.dtos';
+import { crewParticipantSchema, crewWithParticipantCountSchema, discoverableCrewSchema } from './crews.schemas';
 
-const crewIdParamsSchema = z.object({ id: crewDbSchema.shape.id });
+const crewIdParamsSchema = z.object({ id: z.string().uuid() });
+const crewNameSchema = z.string().trim().min(1, 'Crew name is required').max(100, 'Crew name must be at most 100 characters');
+const cursorSchema = z.string().min(1).max(2_048).optional();
 
 // List crews
 
@@ -12,12 +13,12 @@ export const listCrewsRequestSchema = z.object({
   query: z.object({
     search: z.string().trim().min(1).max(50).optional(),
     limit: z.coerce.number().int().min(1).max(100).default(20),
-    cursor: z.string().min(1).optional(),
+    cursor: cursorSchema,
   }),
 });
 
 /** Validates the collection returned by the list-crews endpoint. */
-export const listCrewsResponseSchema = z.object({ crews: z.array(discoverableCrewQueryDtoSchema), nextCursor: z.string().nullable() });
+export const listCrewsResponseSchema = z.object({ crews: z.array(discoverableCrewSchema), nextCursor: z.string().nullable() });
 
 /** Defines the request and response contract for listing visible crews. */
 export const listCrewsContract = { request: listCrewsRequestSchema, response: listCrewsResponseSchema } satisfies Contract;
@@ -34,7 +35,7 @@ export type ListCrewsResponse = ResponseOf<typeof listCrewsContract>;
 export const listMyCrewsRequestSchema = z.object({
   query: z.object({
     limit: z.coerce.number().int().min(1).max(100).default(20),
-    cursor: z.string().min(1).optional(),
+    cursor: cursorSchema,
   }),
 });
 
@@ -54,16 +55,16 @@ export type ListMyCrewsResponse = ResponseOf<typeof listMyCrewsContract>;
 
 /** Validates the crew identifier and pagination for listing participants. */
 export const listCrewParticipantsRequestSchema = z.object({
-  params: z.object({ crewId: crewDbSchema.shape.id }),
+  params: z.object({ crewId: z.string().uuid() }),
   query: z.object({
     limit: z.coerce.number().int().min(1).max(100).default(20),
-    cursor: z.string().min(1).optional(),
+    cursor: cursorSchema,
   }),
 });
 
 /** Validates the participant collection returned by the endpoint. */
 export const listCrewParticipantsResponseSchema = z.object({
-  participants: z.array(crewParticipantQueryDtoSchema),
+  participants: z.array(crewParticipantSchema),
   nextCursor: z.string().nullable(),
 });
 
@@ -88,7 +89,7 @@ export type ListCrewParticipantsResponse = ResponseOf<typeof listCrewParticipant
 export const getCrewRequestSchema = z.object({ params: crewIdParamsSchema });
 
 /** Validates the crew returned by the get-crew endpoint. */
-export const getCrewResponseSchema = crewWithParticipantCountQueryDtoSchema;
+export const getCrewResponseSchema = crewWithParticipantCountSchema;
 
 /** Defines the request and response contract for retrieving one crew. */
 export const getCrewContract = { request: getCrewRequestSchema, response: getCrewResponseSchema } satisfies Contract;
@@ -103,7 +104,7 @@ export type GetCrewResponse = ResponseOf<typeof getCrewContract>;
 
 /** Validates the body used to create a crew. */
 export const createCrewRequestSchema = z.object({
-  body: z.object({ name: crewDbSchema.shape.name, privacy: crewDbSchema.shape.privacy }),
+  body: z.object({ name: crewNameSchema, privacy: z.enum(['public', 'private']) }),
 });
 
 /** Validates the empty response returned after crew creation. */
@@ -123,7 +124,7 @@ export type CreateCrewResponse = ResponseOf<typeof createCrewContract>;
 /** Validates the route parameters and body used to update a crew. */
 export const updateCrewRequestSchema = z.object({
   params: crewIdParamsSchema,
-  body: z.object({ name: crewDbSchema.shape.name, privacy: crewDbSchema.shape.privacy }),
+  body: z.object({ name: crewNameSchema, privacy: z.enum(['public', 'private']) }),
 });
 
 /** Validates the empty response returned after updating a crew. */

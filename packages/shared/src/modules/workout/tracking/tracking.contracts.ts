@@ -34,12 +34,17 @@ export const getWorkoutStatisticsContract = {
 // Finish user workout
 
 export const createWorkoutSessionRequestSchema = z.object({
-  body: z.object({
-    workout: z.array(finishedWorkoutEntryQueryDtoSchema),
-    tz: timezoneSchema.optional(),
-    workoutStartUtc: z.string().datetime('workoutStartUtc must be a valid ISO datetime'),
-    workoutEndUtc: z.string().datetime('workoutEndUtc must be a valid ISO datetime').optional().nullable(),
-  }),
+  body: z
+    .object({
+      workout: z.array(finishedWorkoutEntryQueryDtoSchema).min(1, 'Workout must include at least one exercise').max(200),
+      tz: timezoneSchema.optional(),
+      workoutStartUtc: z.string().datetime({ offset: true, message: 'workoutStartUtc must be a valid ISO datetime' }),
+      workoutEndUtc: z.string().datetime({ offset: true, message: 'workoutEndUtc must be a valid ISO datetime' }).optional().nullable(),
+    })
+    .refine((body) => !body.workoutEndUtc || Date.parse(body.workoutEndUtc) >= Date.parse(body.workoutStartUtc), {
+      path: ['workoutEndUtc'],
+      message: 'workoutEndUtc must not be earlier than workoutStartUtc',
+    }),
 });
 export const createWorkoutSessionResponseSchema = z.void();
 export const createWorkoutSessionContract = {
@@ -54,12 +59,21 @@ export const getPersonalRecordsContract = {
   response: getPersonalRecordsResponseSchema,
 } satisfies Contract;
 
+/** Represents the get workout history query value. */
 export type GetWorkoutHistoryQuery = QueryOf<typeof getWorkoutHistoryContract>;
+/** Represents the get exercise history query value. */
 export type GetExerciseHistoryQuery = QueryOf<typeof getExerciseHistoryContract>;
+/** Represents the get personal records query value. */
 export type GetPersonalRecordsQuery = QueryOf<typeof getPersonalRecordsContract>;
+/** Represents the get workout history response value. */
 export type GetWorkoutHistoryResponse = ResponseOf<typeof getWorkoutHistoryContract>;
+/** Represents the get exercise history response value. */
 export type GetExerciseHistoryResponse = ResponseOf<typeof getExerciseHistoryContract>;
+/** Represents the get workout statistics response value. */
 export type GetWorkoutStatisticsResponse = ResponseOf<typeof getWorkoutStatisticsContract>;
+/** Represents the get personal records response value. */
 export type GetPersonalRecordsResponse = ResponseOf<typeof getPersonalRecordsContract>;
+/** Represents the create workout session body value. */
 export type CreateWorkoutSessionBody = BodyOf<typeof createWorkoutSessionContract>;
+/** Represents the create workout session response value. */
 export type CreateWorkoutSessionResponse = ResponseOf<typeof createWorkoutSessionContract>;

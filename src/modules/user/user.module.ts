@@ -1,38 +1,11 @@
 import { Module } from '@nestjs/common';
-import { AuthenticationGuard } from '../../common/guards/authentication.guard';
-import { AuthorizationGuard } from '../../common/guards/authorization.guard';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard';
-import { RateLimitGuard } from '../../common/guards/rate-limit.guard';
-import { EmailsModule } from '../../infrastructure/queues/emails/emails.module';
-import { AuthModule } from '../auth/auth.module';
-import { CreateUserController } from './create/create.controller';
-import { CreateUserQueries } from './create/create.queries';
-import { CreateUserService } from './create/create.service';
-import { PushTokensController } from './push-tokens/push-tokens.controller';
-import { PushTokensQueries } from './push-tokens/push-tokens.queries';
-import { PushTokensService } from './push-tokens/push-tokens.service';
-import { UpdateEmailsService } from './update/update-emails/update-emails.service';
-import { UpdateUserController } from './update/update.controller';
-import { UpdateUserQueries } from './update/update.queries';
-import { UpdateUserService } from './update/update.service';
-import { SupabaseModule } from '../../infrastructure/supabase/supabase.module';
+import { CreateUserModule } from './create/create-user.module';
+import { PushTokensModule } from './push-tokens/push-tokens.module';
+import { UpdateUserModule } from './update/update-user.module';
 
 @Module({
-  imports: [EmailsModule, AuthModule /* For verification mails */, SupabaseModule /* For profile pics updating */],
-  controllers: [CreateUserController, PushTokensController, UpdateUserController],
-  providers: [
-    CreateUserQueries,
-    CreateUserService,
-    PushTokensQueries,
-    PushTokensService,
-    UpdateUserQueries,
-    UpdateUserService,
-    DpopGuard,
-    AuthenticationGuard,
-    AuthorizationGuard,
-    RateLimitGuard,
-    UpdateEmailsService,
-  ],
-  exports: [UpdateUserService],
+  imports: [CreateUserModule, PushTokensModule, UpdateUserModule],
+  exports: [CreateUserModule, PushTokensModule, UpdateUserModule],
 })
+/** Composes and re-exports the independent user capabilities. */
 export class UserModule {}

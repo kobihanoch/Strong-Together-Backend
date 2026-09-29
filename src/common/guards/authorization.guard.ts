@@ -1,14 +1,8 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-  Injectable,
-  SetMetadata,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable, SetMetadata, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { AppRequest } from '../types/express';
 
+/** Represents the role value. */
 type Role = 'user' | 'admin';
 
 export const ROLES_KEY = 'roles';
@@ -19,10 +13,7 @@ export class AuthorizationGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const allowedRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const allowedRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [context.getHandler(), context.getClass()]);
 
     const req = context.switchToHttp().getRequest<AppRequest>();
     const userRole = req.user?.role?.toLowerCase();

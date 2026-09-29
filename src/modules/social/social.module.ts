@@ -1,60 +1,15 @@
 import { Module } from '@nestjs/common';
-import { SupabaseModule } from '../../infrastructure/supabase/supabase.module';
-import { AuthenticationGuard } from '../../common/guards/authentication.guard';
-import { AuthorizationGuard } from '../../common/guards/authorization.guard';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard';
-import { CrewsController } from './crews/crews.controller';
-import { CrewsQueries } from './crews/crews.queries';
-import { CrewsService } from './crews/crews.service';
-import { CrewRequestsController } from './crews/requests/crew-requests.controller';
-import { CrewRequestsQueries } from './crews/requests/crew-requests.queries';
-import { CrewRequestsService } from './crews/requests/crew-requests.service';
-import { PostsController } from './posts/posts.controller';
-import { PostsQueries } from './posts/posts.queries';
-import { PostsService } from './posts/posts.service';
-import { CommentsController } from './posts/comments/comments.controller';
-import { CommentsQueries } from './posts/comments/comments.queries';
-import { CommentsService } from './posts/comments/comments.service';
-import { ReactionsController } from './posts/reactions/reactions.controller';
-import { ReactionsQueries } from './posts/reactions/reactions.queries';
-import { ReactionsService } from './posts/reactions/reactions.service';
-import { SocialUsersController } from './users/social-users.controller';
-import { SocialUsersQueries } from './users/social-users.queries';
-import { SocialUsersService } from './users/social-users.service';
-import { SocialSummaryController } from './summary/social-summary.controller';
-import { SocialSummaryQueries } from './summary/social-summary.queries';
-import { SocialSummaryService } from './summary/social-summary.service';
+import { CrewsModule } from './crews/crews.module';
+import { CrewRequestsModule } from './crews/requests/crew-requests.module';
+import { CommentsModule } from './posts/comments/comments.module';
+import { PostsModule } from './posts/posts.module';
+import { ReactionsModule } from './posts/reactions/reactions.module';
+import { SocialSummaryModule } from './summary/social-summary.module';
+import { SocialUsersModule } from './users/social-users.module';
 
 @Module({
-  imports: [SupabaseModule],
-  controllers: [
-    CrewRequestsController,
-    CrewsController,
-    PostsController,
-    ReactionsController,
-    CommentsController,
-    SocialUsersController,
-    SocialSummaryController,
-  ],
-  providers: [
-    CrewsQueries,
-    CrewsService,
-    CrewRequestsQueries,
-    CrewRequestsService,
-    PostsQueries,
-    PostsService,
-    CommentsQueries,
-    CommentsService,
-    ReactionsQueries,
-    ReactionsService,
-    SocialUsersQueries,
-    SocialUsersService,
-    SocialSummaryQueries,
-    SocialSummaryService,
-    DpopGuard,
-    AuthenticationGuard,
-    AuthorizationGuard,
-  ],
-  exports: [CrewsService, PostsService, ReactionsService, CommentsService],
+  imports: [CrewRequestsModule, CrewsModule, PostsModule, CommentsModule, ReactionsModule, SocialUsersModule, SocialSummaryModule],
+  exports: [CrewRequestsModule, CrewsModule, PostsModule, CommentsModule, ReactionsModule, SocialUsersModule, SocialSummaryModule],
 })
+/** Composes and re-exports the independently usable social capabilities. */
 export class SocialModule {}

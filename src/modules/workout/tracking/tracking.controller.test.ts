@@ -13,7 +13,11 @@ import { expectSchema } from '../../../common/tests/helpers/assert-schema';
 import { getExerciseToWorkoutSplitId, getExerciseTrackingCountForUser, getWorkoutSummaryCount } from '../../../common/tests/helpers/db';
 import { deleteRedisKeysByPattern, getUserCacheGeneration, getVersionedRedisKey } from '../../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../../common/tests/helpers/users';
-import { buildExerciseHistoryKeyStable, buildPersonalRecordsKeyStable, buildWorkoutHistoryKeyStable } from './tracking.cache';
+import {
+  buildExerciseHistoryKeyStable,
+  buildPersonalRecordsKeyStable,
+  buildWorkoutHistoryKeyStable,
+} from './infrastructure/redis-workout-tracking.cache';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 const users = new Set<string>();
@@ -152,7 +156,7 @@ describe('WorkoutTrackingController', () => {
         ],
       });
 
-    expect(finishResponse.status).toBe(204);
+    expect(finishResponse.status, JSON.stringify(finishResponse.body)).toBe(204);
     const updatedStatsResponse = await request(app.getHttpServer())
       .get('/api/workout-statistics')
       .query({ tz: 'Asia/Jerusalem' })
@@ -186,7 +190,7 @@ describe('WorkoutTrackingController', () => {
         ],
       });
 
-    expect(response.status).toBe(204);
+    expect(response.status, JSON.stringify(response.body)).toBe(204);
     expect(response.text).toBe('');
     expect(await getWorkoutSummaryCount(user.userId)).toBe(1);
     expect(await getExerciseTrackingCountForUser(user.userId)).toBe(1);
@@ -230,7 +234,7 @@ describe('WorkoutTrackingController', () => {
             },
           ],
         });
-      expect(response.status).toBe(204);
+      expect(response.status, JSON.stringify(response.body)).toBe(204);
     }
 
     const response = await request(app.getHttpServer())
@@ -261,7 +265,7 @@ describe('WorkoutTrackingController', () => {
     });
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Not a valid workout');
+    expect(response.body.message).toBe('Workout must include at least one exercise');
     expect(await getWorkoutSummaryCount(user.userId)).toBe(0);
   });
 

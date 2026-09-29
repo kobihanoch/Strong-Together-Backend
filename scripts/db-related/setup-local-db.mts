@@ -15,8 +15,8 @@ const composeService = isTest ? 'postgres_test' : 'postgres_drizzle_dev';
 const hostPort = isTest ? 5433 : 5435;
 
 const localDbComposeFile = isTest ? 'docker-compose.test.yml' : 'docker-compose.development.yml';
-const migrationsDir = 'src/infrastructure/db/schema/migrations';
-const seedsDir = 'src/infrastructure/db/schema/seeds';
+const migrationsDir = 'src/infrastructure/persistence/schema/migrations';
+const seedsDir = 'src/infrastructure/persistence/schema/seeds';
 
 async function run(): Promise<void> {
   try {

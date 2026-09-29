@@ -1,15 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AuthenticationGuard } from '../../common/guards/authentication.guard';
-import { AuthorizationGuard } from '../../common/guards/authorization.guard';
-import { DpopGuard } from '../../common/guards/dpop-validation.guard';
-import { MessagesController } from './messages.controller';
-import { MessagesQueries } from './messages.queries';
-import { MessagesService } from './messages.service';
-import { SystemMessagesService } from './system-messages/system-messages.service';
+import { MessagesInboxModule } from './inbox/messages-inbox.module';
+import { SystemMessagesModule } from './system-messages/system-messages.module';
 
+/** Composes and re-exports the independent message capabilities. */
 @Module({
-  controllers: [MessagesController],
-  providers: [MessagesQueries, MessagesService, SystemMessagesService, DpopGuard, AuthenticationGuard, AuthorizationGuard],
-  exports: [MessagesService, SystemMessagesService],
+  imports: [MessagesInboxModule, SystemMessagesModule],
+  exports: [MessagesInboxModule, SystemMessagesModule],
 })
 export class MessagesModule {}

@@ -10,12 +10,12 @@ if (!process.env.PROD_DATABASE_URL) {
 export default defineConfig({
   dialect: 'postgresql',
   schema: [
-    './src/infrastructure/db/schema/drizzle/schemas.ts',
-    './src/infrastructure/db/schema/drizzle/roles.ts',
-    './src/infrastructure/db/schema/drizzle/**/table.ts',
-    './src/infrastructure/db/schema/drizzle/**/*.view.ts',
+    './src/infrastructure/persistence/schema/drizzle/schemas.ts',
+    './src/infrastructure/persistence/schema/drizzle/roles.ts',
+    './src/infrastructure/persistence/schema/drizzle/**/table.ts',
+    './src/infrastructure/persistence/schema/drizzle/**/*.view.ts',
   ],
-  out: './src/infrastructure/db/schema/migrations',
+  out: './src/infrastructure/persistence/schema/migrations',
   dbCredentials: {
     url: process.env.PROD_DATABASE_URL,
   },

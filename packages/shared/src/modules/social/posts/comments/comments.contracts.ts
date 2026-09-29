@@ -1,11 +1,10 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, ParamsOf, QueryOf, ResponseOf } from '../../../../common';
-import { commentDbSchema, postDbSchema } from '../../../../database';
-import { commentQueryDtoSchema } from './comments.dtos';
+import { commentSchema } from './comments.schemas';
 
-const postParamsSchema = z.object({ postId: postDbSchema.shape.id });
-const commentParamsSchema = z.object({ id: commentDbSchema.shape.id });
-const commentContentSchema = commentDbSchema.shape.content.trim().min(1).max(2000);
+const postParamsSchema = z.object({ postId: z.string().uuid() });
+const commentParamsSchema = z.object({ id: z.string().uuid() });
+const commentContentSchema = z.string().trim().min(1).max(2000);
 
 // List post comments
 
@@ -14,13 +13,13 @@ export const listPostCommentsRequestSchema = z.object({
   params: postParamsSchema,
   query: z.object({
     limit: z.coerce.number().int().min(1).max(100).default(20),
-    cursor: z.string().min(1).optional(),
+    cursor: z.string().min(1).max(2_048).optional(),
   }),
 });
 
 /** Validates a page of comments and its continuation cursor. */
 export const listPostCommentsResponseSchema = z.object({
-  comments: z.array(commentQueryDtoSchema),
+  comments: z.array(commentSchema),
   nextCursor: z.string().nullable(),
 });
 

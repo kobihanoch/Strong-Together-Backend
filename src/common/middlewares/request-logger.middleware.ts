@@ -1,7 +1,7 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import type { NextFunction, Response } from 'express';
-import { createLogger, createRequestId } from '../../infrastructure/logger';
-import { applySentryRequestContext } from '../../infrastructure/sentry';
+import { createLogger, createRequestId } from '../../infrastructure/capabilities/observability/logger';
+import { applySentryRequestContext } from '../../infrastructure/capabilities/observability/sentry';
 import type { AppRequest } from '../types/express';
 
 @Injectable()

@@ -1,13 +1,12 @@
 import { z } from 'zod/v4';
 import type { Contract, ResponseOf } from '../../../common';
-import { userDbSchema } from '../../../database';
 
 /** Validates the public profile fields shown in the social summary. */
 export const socialSummaryParticipantPreviewSchema = z.object({
-  userId: userDbSchema.shape.id,
-  username: userDbSchema.shape.username,
-  fullName: userDbSchema.shape.name,
-  profilePicPath: userDbSchema.shape.profilePicPath,
+  userId: z.string().uuid(),
+  username: z.string(),
+  fullName: z.string(),
+  profilePicPath: z.string().nullable(),
 });
 
 /** Validates the authenticated user's social summary. */

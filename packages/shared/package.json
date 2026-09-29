@@ -1,6 +1,6 @@
 {
   "name": "@strong-together/shared",
-  "version": "3.24.0",
+  "version": "3.25.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -21,8 +21,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "drizzle-orm": "^0.45.2",
-    "drizzle-zod": "^0.8.3",
     "zod": "^3.25.76"
   },
   "devDependencies": {

@@ -1,12 +1,62 @@
 # Database Schemas And Flows
 
-The database is PostgreSQL-first and organized around domain schemas rather than a single overloaded `public` namespace. The active Drizzle migrations live in `src/infrastructure/db/schema/drizzle-migrations`, and seeds live in `src/infrastructure/db/schema/seeds`.
+The database is PostgreSQL-first and organized around domain schemas rather than a single overloaded `public` namespace. The active Drizzle migrations live in `src/infrastructure/persistence/schema/migrations`, and seeds live in `src/infrastructure/persistence/schema/seeds`.
 
 The ERDs are generated from the reviewed DBML sources under `docs/db-diagrams/source`. Run `npm run docs:db-diagrams` after a schema change and review both the DBML diff and rendered SVG. The Drizzle TypeScript schema and committed migrations remain authoritative.
 
-## Chen ERD
+## Main Database Architecture
 
-![Chen ERD](media/dberd.jpg)
+The former raster overview was stale. This Mermaid diagram is the maintained, readable high-level view; the detailed generated SVGs below remain useful for column-level inspection.
+
+```mermaid
+flowchart TB
+  client[Mobile client]
+  api[NestJS API]
+  rls[Use-case-owned RLS transaction<br/>guest or authenticated role]
+  guest[guest_api<br/>narrow SECURITY DEFINER auth functions]
+  cron[cron_api<br/>narrow reminder functions]
+
+  subgraph postgres[PostgreSQL domain schemas]
+    identity[identity<br/>users, OAuth accounts]
+    workout[workout<br/>exercises, plans, splits, prescribed sets]
+    tracking[tracking<br/>sessions, completed sets, aerobics, PR views]
+    schedules[schedules<br/>weekly workout assignments]
+    reminders[reminders<br/>notification preferences]
+    messages[messages<br/>user and system inbox]
+    social[social<br/>crews, memberships, posts, comments, reactions]
+  end
+
+  client --> api
+  api --> rls
+  rls --> identity
+  rls --> workout
+  rls --> tracking
+  rls --> schedules
+  rls --> reminders
+  rls --> messages
+  rls --> social
+  api --> guest --> identity
+  api --> cron
+  cron --> schedules
+  cron --> reminders
+  cron --> identity
+
+  identity --> workout
+  identity --> tracking
+  identity --> schedules
+  identity --> reminders
+  identity --> messages
+  identity --> social
+  workout --> tracking
+  workout --> schedules
+
+  classDef edge fill:#e8f1ff,stroke:#2563eb,color:#111827
+  classDef security fill:#fff4d6,stroke:#d97706,color:#111827
+  classDef schema fill:#ecfdf5,stroke:#059669,color:#111827
+  class client,api edge
+  class rls,guest,cron security
+  class identity,workout,tracking,schedules,reminders,messages,social schema
+```
 
 ## Schema Map
 
@@ -16,9 +66,11 @@ The ERDs are generated from the reviewed DBML sources under `docs/db-diagrams/so
 | `workout`   | `exercise`, `workout_plan`, `workout_split`, `exercise_to_workout_split`, `workout_set` | Exercise catalog and planned workout structure                                           |
 | `tracking`  | `workout_summary`, `exercise_tracking`, `tracking_set`, `aerobic_tracking`              | Completed workout sessions, set-level strength data, aerobic history                     |
 | `schedules` | `workout_schedule`                                                                      | Explicit weekday/time assignments for active workout splits                              |
-| `reminders` | `user_reminder_setting`                                                                 | Per-user reminder enablement and IANA timezone                                            |
+| `reminders` | `user_reminder_setting`                                                                 | Per-user reminder enablement and IANA timezone                                           |
 | `messages`  | `message`                                                                               | User/system messaging                                                                    |
+| `social`    | crews, memberships, participation requests, posts, placements, comments, reactions      | Social discovery, crew authorization, feeds, and interaction data                        |
 | `guest_api` | allow-listed `SECURITY DEFINER` functions                                               | Narrow database API for unauthenticated authentication and registration flows            |
+| `cron_api`  | allow-listed reminder lookup/revalidation functions                                     | Narrow database API for scheduled push processing                                        |
 
 ## Identity Schema
 
@@ -39,7 +91,7 @@ Important flows:
 
 The schema is protected by RLS so authenticated users can read/update/delete only their own profile, with specific exceptions such as message sender visibility.
 
-Guest never receives direct access to `identity` tables. Public auth code calls the allow-listed functions in `guest_api`; after credentials or a signed token are verified, the request transaction is promoted to the authenticated user's RLS context.
+Guest never receives direct access to `identity` tables. Public auth code calls the allow-listed functions in `guest_api`; after credentials or a signed token are verified, the active unit-of-work transaction is promoted to the authenticated user's RLS context.
 
 ## Workout Schema
 
@@ -137,21 +189,28 @@ The `PUT /api/workout-schedules` operation is a complete replacement. Sending `{
 
 RLS allows participants to read/update/delete messages where they are sender or receiver. Insert policy also allows a known system sender ID, which supports automated application messages without giving every user broad write access.
 
+## Social Schema
+
+The `social` schema owns crews, memberships, participation requests, posts, crew placements, comments, reactions, and security-invoker feed views. Its RLS policies encode public/private crew visibility, membership state, leadership privileges, post visibility, and author-owned mutations. See [Social Module And Authorization](./social-module-and-authorization.md) for the table-level policy matrix and API flows.
+
 ## RLS Flow
 
 Unauthenticated auth flow:
 
 ```text
-HTTP request -> RlsTxInterceptor -> guest transaction -> guest_api function
-             -> credential/token verification -> authenticated transaction context
+HTTP request -> controller -> auth use case -> UnitOfWork.execute(undefined, operation)
+             -> guest transaction -> guest_api function -> credential/token verification
+             -> authenticated transaction context
 ```
 
 `guest` has no application-table grants and no guest RLS policies. `guest_api` functions are the only database entry points available before authentication.
 
-Authenticated controller routes use `RlsTxInterceptor`:
+Authenticated controllers pass the current user ID into the application use case:
 
 ```text
-HTTP request -> AuthenticationGuard -> req.user.id -> RlsTxInterceptor -> DB transaction
+HTTP request -> AuthenticationGuard -> controller passes req.user.id -> use case
+             -> UnitOfWork.execute(userId, operation) -> PostgresUnitOfWork
+             -> DBService.withRlsTransaction -> DB transaction
 ```
 
 Inside the transaction:
@@ -165,6 +224,8 @@ SET
 ```
 
 Queries then execute against PostgreSQL policies that call `identity.current_user_id()` or related helpers. The application and database agree on the same current user.
+
+Repositories obtain `DBService.sql` from `AsyncLocalStorage`, so every repository called by the use case shares the same transaction. Nested use cases reuse the active transaction rather than opening another one. `DBService.sql` throws when no unit of work is active. Work registered with `UnitOfWork.afterCommit(...)` runs only after a successful commit; failures are logged and captured server-side without replacing the committed result with an HTTP error.
 
 ## Migration Lifecycle
 
