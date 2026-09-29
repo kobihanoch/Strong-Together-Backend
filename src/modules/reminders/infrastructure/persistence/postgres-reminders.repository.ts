@@ -12,13 +12,13 @@ export class PostgresRemindersRepository implements RemindersRepository {
     private readonly saveSql: SaveSql,
   ) {}
 
-  async findByUserForUpdate(userId: string): Promise<ReminderSettings | undefined> {
-    const row = await this.findByUserForUpdateSql.findByUserForUpdate(userId);
+  async findByUserForUpdate(): Promise<ReminderSettings | undefined> {
+    const row = await this.findByUserForUpdateSql.findByUserForUpdate();
     return row ? ReminderSettings.restore(row.userId, row) : undefined;
   }
 
   save(settings: ReminderSettings): Promise<void> {
-    return this.saveSql.save(settings.userId, {
+    return this.saveSql.save({
       reminderEnabled: settings.reminderEnabled,
       timeZone: settings.timeZone.value,
     });

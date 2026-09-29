@@ -8,18 +8,17 @@ export class CreateSql {
   /**
    * Adds aerobic tracking.
    *
-   * @param userId - The user identifier.
    * @param record - The aerobic tracking record.
    * @returns A promise that resolves when the operation completes.
    */
-  async create(userId: string, record: AerobicEntrySqlInput) {
+  async create(record: AerobicEntrySqlInput) {
     const { durationMins, durationSec, type } = record;
     const [created] = await this.dbService.sql<{ id: number }[]>`
       INSERT INTO
         tracking.aerobic_tracking (user_id, type, duration_sec)
       VALUES
         (
-          ${userId}::UUID,
+          identity.current_user_id (),
           ${type},
           ${durationMins * 60 + durationSec}
         )

@@ -16,16 +16,16 @@ export class PostgresWorkoutTrackingQueries implements WorkoutTrackingQueries {
     private readonly findWorkoutStatisticsSql: FindWorkoutStatisticsSql,
     private readonly findPersonalRecordsSql: FindPersonalRecordsSql,
   ) {}
-  findWorkoutHistory(u: string, d: number, t: string): Promise<WorkoutHistory> {
-    return this.findWorkoutHistorySql.findWorkoutHistory(u, d, t);
+  findWorkoutHistory(days: number, timezone: string): Promise<WorkoutHistory> {
+    return this.findWorkoutHistorySql.findWorkoutHistory(days, timezone);
   }
-  findExerciseHistory(u: string, d: number, t: string): Promise<ExerciseHistory> {
-    return this.findExerciseHistorySql.findExerciseHistory(u, d, t);
+  findExerciseHistory(days: number, timezone: string): Promise<ExerciseHistory> {
+    return this.findExerciseHistorySql.findExerciseHistory(days, timezone);
   }
-  findStatistics(u: string, d: number, t: string): Promise<WorkoutStatistics> {
-    return this.findWorkoutStatisticsSql.findWorkoutStatistics(u, d, t);
+  findStatistics(days: number, timezone: string): Promise<WorkoutStatistics> {
+    return this.findWorkoutStatisticsSql.findWorkoutStatistics(days, timezone);
   }
-  findPersonalRecords(u: string, t: string): Promise<PersonalRecords> {
-    return this.findPersonalRecordsSql.findPersonalRecords(u, t);
+  findPersonalRecords(timezone: string): Promise<PersonalRecords> {
+    return this.findPersonalRecordsSql.findPersonalRecords(timezone);
   }
 }

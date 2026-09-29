@@ -12,12 +12,11 @@ export class FindExerciseHistorySql {
    * wrapper, include the timezone-adjusted local start time, and are ordered
    * by workout time descending.
    *
-   * @param userId - The user identifier.
    * @param days - The number of recent calendar days to include.
    * @param tz - The IANA time-zone name used to calculate date boundaries.
    * @returns Exercise tracking grouped by exercise-to-split identifier.
    */
-  async findExerciseHistory(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem') {
+  async findExerciseHistory(days: number = 45, tz: string = 'Asia/Jerusalem') {
     const [{ data }] = await this.dbService.sql<ExerciseHistorySqlRow[]>`
       WITH
         bounds AS (
@@ -85,7 +84,7 @@ export class FindExerciseHistorySql {
             tracking.v_exercise_tracking_set_expanded et
             JOIN tracking.workout_summary wsum ON wsum.id = et.workout_summary_id
           WHERE
-            wsum.user_id = ${userId}::UUID
+            wsum.user_id = identity.current_user_id ()
             AND et.exercise_to_split_id IS NOT NULL
             AND wsum.workout_start_utc >= (
               SELECT

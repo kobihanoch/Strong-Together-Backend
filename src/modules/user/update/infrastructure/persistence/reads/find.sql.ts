@@ -9,10 +9,9 @@ export class FindSql {
   /**
    * Executes the find SQL operation.
    *
-   * @param userId - The user identifier.
    * @returns The query result.
    */
-  find(userId: string) {
+  find() {
     return this.db.sql<UserProfileSqlRow[]>`
       SELECT
         JSONB_BUILD_OBJECT(
@@ -50,7 +49,7 @@ export class FindSql {
       FROM
         identity.user AS users
       WHERE
-        id = ${userId}::UUID
+        id = identity.current_user_id ()
     `;
   }
 }

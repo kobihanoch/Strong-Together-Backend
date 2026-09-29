@@ -19,7 +19,7 @@ export class GetReminderSettingsUseCase {
    */
   async execute(userId: string): Promise<ReminderSettingsResult> {
     return this.unitOfWork.executeReadOnly(userId, async () => {
-      return { reminderSettings: (await this.query.findByUser(userId)) ?? null };
+      return { reminderSettings: (await this.query.findByUser()) ?? null };
     });
   }
 }

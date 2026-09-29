@@ -26,7 +26,7 @@ export class ReplaceWorkoutSchedulesUseCase {
   public async execute(userId: string, schedules: WorkoutScheduleInput[]): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
       const schedule = WorkoutSchedule.create(schedules);
-      if (!(await this.repository.save(userId, schedule))) throw new InvalidWorkoutScheduleSplitError();
+      if (!(await this.repository.save(schedule))) throw new InvalidWorkoutScheduleSplitError();
 
       this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
     });

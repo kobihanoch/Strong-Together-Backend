@@ -13,9 +13,9 @@ export class PostgresReactionsRepository implements ReactionsRepository {
     private readonly deleteSql: DeleteSql,
   ) {}
   public save(reaction: PostReaction): Promise<boolean> {
-    return this.saveSql.save(reaction.postId, reaction.userId, reaction.type.value);
+    return this.saveSql.save(reaction.postId, reaction.type.value);
   }
-  public async delete(postId: string, userId: string): Promise<boolean> {
-    return this.deleteSql.delete(postId, userId);
+  public async delete(postId: string): Promise<boolean> {
+    return this.deleteSql.delete(postId);
   }
 }

@@ -28,7 +28,7 @@ export class GetWorkoutPlanUseCase {
     }
 
     return this.unitOfWork.executeReadOnly(userId, async () => {
-      const payload = { workoutPlan: await this.query.findActiveByUser(userId, timezone) };
+      const payload = { workoutPlan: await this.query.findActiveByUser(timezone) };
       this.unitOfWork.afterCommit(() => cacheEntry.set(payload));
       return { payload, cacheHit: false };
     });

@@ -8,18 +8,17 @@ export class FindByUserSql {
   /**
    * Retrieves user aerobics for ndays.
    *
-   * @param userId - The user identifier.
    * @param days - The days.
    * @param tz - The IANA time-zone name.
    * @returns The user aerobics for ndays result.
    */
-  async findByUser(userId: string, days: number, tz: string = 'Asia/Jerusalem') {
+  async findByUser(days: number, tz: string = 'Asia/Jerusalem') {
     const [obj] = await this.dbService.sql<AerobicsHistorySqlRow[]>`
       /* Normalize parameters (default tz to UTC if empty) */
       WITH
         params AS (
           SELECT
-            ${userId}::UUID AS user_id,
+            identity.current_user_id () AS user_id,
             ${days}::INT AS days,
             COALESCE(NULLIF(${tz}, ''), 'UTC') AS tz
         ),

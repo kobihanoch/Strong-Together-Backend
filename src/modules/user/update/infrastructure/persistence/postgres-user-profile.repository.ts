@@ -25,13 +25,13 @@ export class PostgresUserProfileRepository implements UserProfileRepository {
     private readonly findProfilePictureSql: FindProfilePictureSql,
     private readonly updateProfilePictureSql: UpdateProfilePictureSql,
   ) {}
-  async findByIdForUpdate(userId: string): Promise<UserProfile | undefined> {
-    const row = await this.findByIdForUpdateSql.findByIdForUpdate(userId);
+  async findByIdForUpdate(): Promise<UserProfile | undefined> {
+    const row = await this.findByIdForUpdateSql.findByIdForUpdate();
     return row ? UserProfile.restore({ id: row.id, username: row.username, fullName: row.name, email: row.email, profilePicturePath: row.profilePicturePath }) : undefined;
   }
   async save(profile: UserProfile): Promise<void> {
     try {
-      await this.saveSql.save(profile.id, {
+      await this.saveSql.save({
         username: profile.username,
         fullName: profile.fullName,
         ...(profile.pendingEmail ? { pendingEmail: profile.pendingEmail.value } : {}),
@@ -50,13 +50,13 @@ export class PostgresUserProfileRepository implements UserProfileRepository {
       throw error;
     }
   }
-  delete(userId: string): Promise<void> {
-    return this.deleteSql.delete(userId);
+  delete(): Promise<void> {
+    return this.deleteSql.delete();
   }
-  async findProfilePicture(userId: string): Promise<string | null> {
-    return (await this.findProfilePictureSql.findProfilePicture(userId))[0]?.profilePicPath ?? null;
+  async findProfilePicture(): Promise<string | null> {
+    return (await this.findProfilePictureSql.findProfilePicture())[0]?.profilePicPath ?? null;
   }
-  updateProfilePicture(userId: string, path: string | null): Promise<void> {
-    return this.updateProfilePictureSql.updateProfilePicture(userId, path);
+  updateProfilePicture(path: string | null): Promise<void> {
+    return this.updateProfilePictureSql.updateProfilePicture(path);
   }
 }

@@ -13,7 +13,6 @@ export class CreateSql {
   constructor(private readonly dbService: DBService) {}
 
   async execute(
-    userId: string,
     firstAssignedExerciseId: number | undefined,
     workout: FinishedWorkoutSqlInput[],
     startUtc: string,
@@ -43,7 +42,7 @@ export class CreateSql {
         )
       VALUES
         (
-          ${userId}::UUID,
+          identity.current_user_id (),
           ${startUtc}::TIMESTAMPTZ,
           ${endUtc}::TIMESTAMPTZ,
           ${split.workoutSplitId}::BIGINT

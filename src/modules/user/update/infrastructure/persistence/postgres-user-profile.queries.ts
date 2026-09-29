@@ -9,7 +9,7 @@ import { UserProfileQueries } from '../../application/ports/user-profile.queries
 @Injectable()
 export class PostgresUserProfileQueries implements UserProfileQueries {
   public constructor(private readonly findSql: FindSql) {}
-  async find(userId: string): Promise<UserProfile | null> {
-    return (await this.findSql.find(userId))[0]?.userData ?? null;
+  async find(): Promise<UserProfile | null> {
+    return (await this.findSql.find())[0]?.userData ?? null;
   }
 }

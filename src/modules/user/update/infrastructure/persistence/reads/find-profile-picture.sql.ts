@@ -9,17 +9,16 @@ export class FindProfilePictureSql {
   /**
    * Executes the find profile picture SQL operation.
    *
-   * @param userId - The user identifier.
    * @returns The query result.
    */
-  findProfilePicture(userId: string) {
+  findProfilePicture() {
     return this.db.sql<UserProfilePictureSqlRow[]>`
       SELECT
         profile_pic_path AS "profilePicPath"
       FROM
         identity.user
       WHERE
-        id = ${userId}::UUID
+        id = identity.current_user_id ()
       LIMIT
         1
     `;

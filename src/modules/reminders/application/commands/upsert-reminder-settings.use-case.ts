@@ -21,7 +21,7 @@ export class UpsertReminderSettingsUseCase {
    */
   async execute(userId: string, settings: UpsertReminderSettingsInput): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const current = await this.repository.findByUserForUpdate(userId);
+      const current = await this.repository.findByUserForUpdate();
       if (current) current.replace(settings);
       await this.repository.save(current ?? ReminderSettings.create(userId, settings));
     });

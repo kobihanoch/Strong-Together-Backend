@@ -19,7 +19,7 @@ export class GetCurrentUserUseCase {
    */
   async execute(userId: string): Promise<UserProfile> {
     return this.unitOfWork.executeReadOnly(userId, async () => {
-      const user = await this.query.find(userId);
+      const user = await this.query.find();
       if (!user) throw new UserNotFoundError();
       return user;
     });

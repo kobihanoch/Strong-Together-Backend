@@ -9,5 +9,5 @@ export abstract class WorkoutScheduleRepository {
    *
    * @returns The replacement outcome.
    */
-  public abstract save(userId: string, schedule: WorkoutSchedule): Promise<boolean>;
+  public abstract save(schedule: WorkoutSchedule): Promise<boolean>;
 }

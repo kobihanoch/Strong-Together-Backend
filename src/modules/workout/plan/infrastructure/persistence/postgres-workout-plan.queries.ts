@@ -8,7 +8,7 @@ import { WorkoutPlanQueries } from '../../application/ports/workout-plan.queries
 @Injectable()
 export class PostgresWorkoutPlanQueries implements WorkoutPlanQueries {
   public constructor(private readonly findActiveByUserSql: FindActiveByUserSql) {}
-  async findActiveByUser(userId: string, timezone: string): Promise<WorkoutPlan | null> {
-    return (await this.findActiveByUserSql.findActiveByUser(userId, timezone))[0] ?? null;
+  async findActiveByUser(timezone: string): Promise<WorkoutPlan | null> {
+    return (await this.findActiveByUserSql.findActiveByUser(timezone))[0] ?? null;
   }
 }

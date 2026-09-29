@@ -25,7 +25,7 @@ export class UpdateCurrentUserUseCase {
    */
   async execute(userId: string, input: UpdateUserInput, requestId?: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const profile = await this.repository.findByIdForUpdate(userId);
+      const profile = await this.repository.findByIdForUpdate();
       if (!profile) throw new UserNotFoundError();
       profile.changeDetails(input);
       await this.repository.save(profile);

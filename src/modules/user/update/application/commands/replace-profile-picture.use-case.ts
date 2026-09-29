@@ -25,9 +25,9 @@ export class ReplaceProfilePictureUseCase {
   async execute(userId: string, file: ProfilePictureFile | undefined): Promise<ProfilePictureResult> {
     return this.unitOfWork.execute(userId, async () => {
       if (!file) throw new ProfilePictureRequiredError();
-      const oldPath = await this.repository.findProfilePicture(userId);
+      const oldPath = await this.repository.findProfilePicture();
       const uploaded = await this.storage.upload(userId, file);
-      await this.repository.updateProfilePicture(userId, uploaded.path);
+      await this.repository.updateProfilePicture(uploaded.path);
       if (oldPath && oldPath !== uploaded.path)
         this.unitOfWork.afterCommit(async () => {
           void this.storage

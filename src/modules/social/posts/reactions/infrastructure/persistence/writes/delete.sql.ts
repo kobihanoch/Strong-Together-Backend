@@ -16,15 +16,14 @@ export class DeleteSql {
    * Deletes the caller's reaction from a post.
    *
    * @param postId - The post UUID.
-   * @param userId - The authenticated user's UUID.
    * @returns The deleted reaction identifier, or no row when it does not exist.
    */
-  public async delete(postId: string, userId: string) {
+  public async delete(postId: string) {
     const rows = await this.dbService.sql<ReactionWriteSqlRow[]>`
       DELETE FROM social.reaction
       WHERE
         post_id = ${postId}::UUID
-        AND user_id = ${userId}::UUID
+        AND user_id = identity.current_user_id ()
       RETURNING
         id
     `;

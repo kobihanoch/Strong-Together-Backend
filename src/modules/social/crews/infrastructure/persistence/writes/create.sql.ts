@@ -17,7 +17,6 @@ export class CreateSql {
    * Both statements run in the same request transaction, so either both
    * operations succeed or the complete creation flow is rolled back.
    *
-   * @param userId - The UUID of the user creating and leading the crew.
    * @param name - The crew name.
    * @param privacy - Whether the crew is public or private.
    * @returns An array containing the newly created crew.
@@ -29,7 +28,7 @@ export class CreateSql {
       VALUES
         (
           ${crew.name.value},
-          ${crew.createdBy}::UUID,
+          identity.current_user_id (),
           ${crew.privacy.value}::social."Crew Privacy"
         )
       RETURNING
@@ -46,7 +45,7 @@ export class CreateSql {
       VALUES
         (
           ${created.id}::UUID,
-          ${crew.createdBy}::UUID,
+          identity.current_user_id (),
           'leader',
           NOW()
         )

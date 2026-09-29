@@ -9,7 +9,7 @@ import { WorkoutScheduleQueries } from '../../application/ports/workout-schedule
 @Injectable()
 export class PostgresWorkoutScheduleQueries implements WorkoutScheduleQueries {
   public constructor(private readonly findByUserSql: FindByUserSql) {}
-  public findByUser(userId: string): Promise<WorkoutSchedule[]> {
-    return this.findByUserSql.findByUser(userId);
+  public findByUser(): Promise<WorkoutSchedule[]> {
+    return this.findByUserSql.findByUser();
   }
 }

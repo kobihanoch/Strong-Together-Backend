@@ -25,10 +25,10 @@ export class UpdateAerobicActivityUseCase {
    */
   async execute(userId: string, id: number, record: AerobicEntryInput): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const activity = await this.repository.findByIdForUpdate(userId, id);
+      const activity = await this.repository.findByIdForUpdate(id);
       if (!activity) throw new AerobicEntryNotFoundError();
       activity.update(record);
-      if (!(await this.repository.save(userId, activity))) throw new AerobicEntryNotFoundError();
+      if (!(await this.repository.save(activity))) throw new AerobicEntryNotFoundError();
       this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
     });
   }

@@ -2,5 +2,5 @@ import type { DevicePushToken } from '../../domain/value-objects/device-push-tok
 
 /** Persists push-notification tokens for users. */
 export abstract class PushTokensRepository {
-  abstract replace(userId: string, token: DevicePushToken): Promise<void>;
+  abstract replace(token: DevicePushToken): Promise<void>;
 }

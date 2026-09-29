@@ -12,10 +12,9 @@ export class FindSettingsSql {
   /**
    * Retrieves reminder settings owned by a user.
    *
-   * @param userId - The authenticated user's identifier.
    * @returns The user's reminder settings, or undefined when none exist.
    */
-  async findSettings(userId: string) {
+  async findSettings() {
     const [settings] = await this.dbService.sql<ReminderSettingsSqlRow[]>`
       SELECT
         id,
@@ -27,7 +26,7 @@ export class FindSettingsSql {
       FROM
         reminders.user_reminder_setting
       WHERE
-        user_id = ${userId}::UUID
+        user_id = identity.current_user_id ()
     `;
 
     return settings;

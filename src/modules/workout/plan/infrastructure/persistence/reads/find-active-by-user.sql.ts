@@ -11,11 +11,10 @@ export class FindActiveByUserSql {
   /**
    * Whole user workout plan.
    *
-   * @param userId - The user identifier.
    * @param tz - The IANA time-zone name.
    * @returns The whole user workout plan result.
    */
-  async findActiveByUser(userId: string, tz: string) {
+  async findActiveByUser(tz: string) {
     return this.dbService.sql<WorkoutPlanSqlRow[]>`
       WITH
         ranked_workout_durations AS (
@@ -36,7 +35,7 @@ export class FindActiveByUserSql {
             tracking.workout_summary summaries
             JOIN workout.workout_split duration_split ON duration_split.id = summaries.workout_split_id
           WHERE
-            summaries.user_id = ${userId}::UUID
+            summaries.user_id = identity.current_user_id ()
             AND summaries.workout_start_utc >= duration_split.updated_at
             AND summaries.workout_end_utc > summaries.workout_start_utc
             AND summaries.workout_end_utc - summaries.workout_start_utc <= INTERVAL '4 hours'
@@ -167,7 +166,7 @@ export class FindActiveByUserSql {
       FROM
         workout.workout_plan AS workoutplans
       WHERE
-        workoutplans.user_id = ${userId}::UUID
+        workoutplans.user_id = identity.current_user_id ()
         AND workoutplans.is_active = TRUE
       LIMIT
         1;

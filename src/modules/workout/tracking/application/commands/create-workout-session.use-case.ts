@@ -23,7 +23,7 @@ export class CreateWorkoutSessionUseCase {
   async execute(userId: string, command: CreateWorkoutSessionCommand): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
       const session = WorkoutSession.create(command);
-      await this.repository.create(userId, session);
+      await this.repository.create(session);
       this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
     });
   }

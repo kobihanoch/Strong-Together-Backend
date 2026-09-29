@@ -12,11 +12,10 @@ export class FindPersonalRecordsSql {
    * `tracking.v_prs` for an exercise. Each result is stored under its
    * exercise identifier.
    *
-   * @param userId - The authenticated user's identifier.
    * @param tz - The IANA time-zone name used for local workout timestamps.
    * @returns All personal records keyed by exercise identifier.
    */
-  async findPersonalRecords(userId: string, tz: string) {
+  async findPersonalRecords(tz: string) {
     const [{ data }] = await this.dbService.sql<PersonalRecordsSqlRow[]>`
       SELECT
         JSONB_BUILD_OBJECT(
@@ -61,7 +60,7 @@ export class FindPersonalRecordsSql {
         tracking.v_prs p
         JOIN tracking.workout_summary wsum ON wsum.id = p.workout_summary_id
       WHERE
-        wsum.user_id = ${userId}::UUID
+        wsum.user_id = identity.current_user_id ()
         AND p.exercise_id IS NOT NULL
     `;
 

@@ -16,18 +16,17 @@ export class CreateSql {
    * Adds a comment to a post visible to the caller.
    *
    * @param postId - The post UUID.
-   * @param userId - The authenticated user's UUID.
    * @param content - The validated comment text.
    * @returns The created comment identifier, or no row when the post is not visible.
    */
-  public async create(postId: string, userId: string, content: string) {
+  public async create(postId: string, content: string) {
     const rows = await this.dbService.sql<CommentWriteSqlRow[]>`
       INSERT INTO
         social.comment (post_id, user_id, content)
       VALUES
         (
           ${postId}::UUID,
-          ${userId}::UUID,
+          identity.current_user_id (),
           ${content}
         )
       RETURNING

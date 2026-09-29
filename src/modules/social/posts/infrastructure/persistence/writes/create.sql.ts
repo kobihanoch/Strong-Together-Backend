@@ -11,7 +11,6 @@ export class CreateSql {
   /**
    * Creates a post and places it in every requested crew.
    *
-   * @param userId - The UUID of the authenticated post author.
    * @param content - The textual content of the post.
    * @param visibility - Whether everyone or only eligible crew participants can see the post.
    * @param crewIds - The UUIDs of the crews receiving the post.
@@ -24,7 +23,7 @@ export class CreateSql {
         social.post (author_user_id, workout_summary_id, content, visibility)
       VALUES
         (
-          ${post.authorUserId}::UUID,
+          identity.current_user_id (),
           ${post.workoutSummaryId ?? null}::UUID,
           ${post.content.value},
           ${post.visibility.value}::social."Post Visibility"

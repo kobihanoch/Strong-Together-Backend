@@ -8,12 +8,11 @@ export class FindWorkoutStatisticsSql {
   /**
    * Retrieves exercise tracking stats.
    *
-   * @param userId - The user identifier.
    * @param days - The days.
    * @param tz - The IANA time-zone name.
    * @returns The exercise tracking stats result.
    */
-  async findWorkoutStatistics(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem') {
+  async findWorkoutStatistics(days: number = 45, tz: string = 'Asia/Jerusalem') {
     const [{ data }] = await this.dbService.sql<WorkoutStatisticsSqlRow[]>`
       WITH
         bounds AS (
@@ -35,7 +34,7 @@ export class FindWorkoutStatisticsSql {
             tracking.workout_summary wsum
             JOIN workout.workout_split ws ON ws.id = wsum.workout_split_id
           WHERE
-            wsum.user_id = ${userId}::UUID
+            wsum.user_id = identity.current_user_id ()
         ),
         bounded_workout_summaries AS (
           SELECT
@@ -72,7 +71,7 @@ export class FindWorkoutStatisticsSql {
             workout.workout_split ws
             JOIN workout.workout_plan wp ON ws.workout_id = wp.id
           WHERE
-            wp.user_id = ${userId}::UUID
+            wp.user_id = identity.current_user_id ()
             AND wp.is_active = TRUE
             AND ws.is_active = TRUE
         ),
@@ -84,7 +83,7 @@ export class FindWorkoutStatisticsSql {
             JOIN workout.workout_split ws ON ws.id = schedule.workout_split_id
             JOIN workout.workout_plan wp ON wp.id = ws.workout_id
           WHERE
-            schedule.user_id = ${userId}::UUID
+            schedule.user_id = identity.current_user_id ()
             AND wp.user_id = schedule.user_id
             AND wp.is_active = TRUE
             AND ws.is_active = TRUE
@@ -157,7 +156,7 @@ export class FindWorkoutStatisticsSql {
             tracking.workout_summary latest_summary
             JOIN workout.workout_split latest_split ON latest_split.id = latest_summary.workout_split_id
           WHERE
-            latest_summary.user_id = ${userId}::UUID
+            latest_summary.user_id = identity.current_user_id ()
           ORDER BY
             latest_summary.workout_start_utc DESC,
             latest_summary.id DESC
@@ -174,7 +173,7 @@ export class FindWorkoutStatisticsSql {
             workout.workout_split ws
             JOIN workout.workout_plan wp ON wp.id = ws.workout_id
           WHERE
-            wp.user_id = ${userId}::UUID
+            wp.user_id = identity.current_user_id ()
             AND wp.is_active = TRUE
             AND ws.is_active = TRUE
           ORDER BY

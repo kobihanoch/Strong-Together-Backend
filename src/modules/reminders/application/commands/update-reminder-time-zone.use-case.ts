@@ -20,7 +20,7 @@ export class UpdateReminderTimeZoneUseCase {
    */
   async execute(userId: string, settings: UpdateReminderTimeZoneInput): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const current = await this.repository.findByUserForUpdate(userId);
+      const current = await this.repository.findByUserForUpdate();
       if (!current) return;
       current.changeTimeZone(settings.timeZone);
       await this.repository.save(current);

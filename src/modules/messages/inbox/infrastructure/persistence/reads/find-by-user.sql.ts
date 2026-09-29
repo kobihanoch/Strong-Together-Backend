@@ -10,11 +10,10 @@ export class FindByUserSql {
   /**
    * Executes the find by user SQL operation.
    *
-   * @param userId - The user identifier.
    * @param timezone - The IANA time-zone name.
    * @returns The query result.
    */
-  findByUser(userId: string, timezone: string) {
+  findByUser(timezone: string) {
     return this.dbService.sql<InboxMessageSqlRow[]>`
       SELECT
         m.id,
@@ -28,7 +27,7 @@ export class FindByUserSql {
         messages.message m
         INNER JOIN identity.user u ON u.id = m.sender_id
       WHERE
-        m.receiver_id = ${userId}::UUID
+        m.receiver_id = identity.current_user_id ()
       ORDER BY
         m.sent_at DESC
     `;

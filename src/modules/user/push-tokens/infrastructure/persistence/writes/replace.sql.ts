@@ -8,17 +8,16 @@ export class ReplaceSql {
   /**
    * Executes the replace SQL operation.
    *
-   * @param userId - The user identifier.
    * @param token - The token value.
    * @returns A promise that resolves when the operation completes.
    */
-  async replace(userId: string, token: string) {
+  async replace(token: string) {
     await this.db.sql`
       UPDATE identity.user
       SET
         push_token = ${token}
       WHERE
-        id = ${userId}::UUID
+        id = identity.current_user_id ()
     `;
   }
 }

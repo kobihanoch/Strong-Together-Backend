@@ -8,12 +8,11 @@ export class FindWorkoutHistorySql {
   /**
    * Retrieves exercise tracking maps.
    *
-   * @param userId - The user identifier.
    * @param days - The days.
    * @param tz - The IANA time-zone name.
    * @returns The exercise tracking maps result.
    */
-  async findWorkoutHistory(userId: string, days: number = 45, tz: string = 'Asia/Jerusalem') {
+  async findWorkoutHistory(days: number = 45, tz: string = 'Asia/Jerusalem') {
     const [{ data }] = await this.dbService.sql<WorkoutHistorySqlRow[]>`
       WITH
         bounds AS (
@@ -40,7 +39,7 @@ export class FindWorkoutHistorySql {
             tracking.workout_summary wsum
             JOIN workout.workout_split ws ON ws.id = wsum.workout_split_id
           WHERE
-            wsum.user_id = ${userId}::UUID
+            wsum.user_id = identity.current_user_id ()
         ),
         bounded_workout_summaries AS (
           SELECT

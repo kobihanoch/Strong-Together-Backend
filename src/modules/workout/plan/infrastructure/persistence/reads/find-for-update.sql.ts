@@ -7,12 +7,12 @@ import type { WorkoutPlanStateSqlRow } from '../workout-plan.db-types';
 export class FindForUpdateSql {
   constructor(private readonly dbService: DBService) {}
 
-  async execute(userId: string): Promise<WorkoutPlanStateSqlRow[]> {
+  async execute(): Promise<WorkoutPlanStateSqlRow[]> {
     // Lock the active plan first. This serializes replacements for the same user.
     const plans = await this.dbService.sql<Array<{ id: number }>>`
       SELECT id::INT
       FROM workout.workout_plan
-      WHERE user_id = ${userId}::UUID AND is_active = TRUE
+      WHERE user_id = identity.current_user_id () AND is_active = TRUE
       FOR UPDATE
     `;
     const plan = plans[0];

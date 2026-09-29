@@ -6,7 +6,7 @@ import type { DevicePushToken } from '../../domain/value-objects/device-push-tok
 @Injectable()
 export class PostgresPushTokensRepository implements PushTokensRepository {
   public constructor(private readonly replaceSql: ReplaceSql) {}
-  replace(userId: string, token: DevicePushToken): Promise<void> {
-    return this.replaceSql.replace(userId, token.value);
+  replace(token: DevicePushToken): Promise<void> {
+    return this.replaceSql.replace(token.value);
   }
 }

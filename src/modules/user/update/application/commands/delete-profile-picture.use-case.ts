@@ -19,7 +19,7 @@ export class DeleteProfilePictureUseCase {
    */
   async execute(userId: string, path: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      await this.repository.updateProfilePicture(userId, null);
+      await this.repository.updateProfilePicture(null);
       this.unitOfWork.afterCommit(() => this.storage.delete(path));
     });
   }

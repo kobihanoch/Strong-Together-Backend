@@ -7,7 +7,7 @@ import { AerobicsQueries } from '../../application/ports/aerobics.queries';
 @Injectable()
 export class PostgresAerobicsQueries implements AerobicsQueries {
   public constructor(private readonly findByUserSql: FindByUserSql) {}
-  findByUser(userId: string, days: number, timezone: string): Promise<AerobicsHistory> {
-    return this.findByUserSql.findByUser(userId, days, timezone);
+  findByUser(days: number, timezone: string): Promise<AerobicsHistory> {
+    return this.findByUserSql.findByUser(days, timezone);
   }
 }

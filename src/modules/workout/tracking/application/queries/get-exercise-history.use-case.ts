@@ -28,7 +28,7 @@ export class GetExerciseHistoryUseCase {
     }
 
     return this.unitOfWork.executeReadOnly(userId, async () => {
-      const payload = await this.query.findExerciseHistory(userId, days, timezone);
+      const payload = await this.query.findExerciseHistory(days, timezone);
       this.unitOfWork.afterCommit(() => cacheEntry.set(payload));
       return { payload, cacheHit: false };
     });

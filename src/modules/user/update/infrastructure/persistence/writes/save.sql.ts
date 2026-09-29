@@ -6,7 +6,7 @@ import { DBService } from '../../../../../../infrastructure/connections/postgres
 export class SaveSql {
   constructor(private readonly db: DBService) {}
 
-  async save(userId: string, values: { username: string; fullName: string; pendingEmail?: string }): Promise<void> {
+  async save(values: { username: string; fullName: string; pendingEmail?: string }): Promise<void> {
     // Probe the unique email constraint without committing the unconfirmed address.
     if (values.pendingEmail) {
       try {
@@ -17,7 +17,7 @@ export class SaveSql {
             SET
               email = ${values.pendingEmail}
             WHERE
-              id = ${userId}::UUID
+              id = identity.current_user_id ()
           `;
           await this.db.sql`ROLLBACK TO SAVEPOINT email_probe`;
         } catch (error) {
@@ -34,7 +34,7 @@ export class SaveSql {
         username = ${values.username},
         name = ${values.fullName}
       WHERE
-        id = ${userId}::UUID
+        id = identity.current_user_id ()
     `;
   }
 }

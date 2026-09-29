@@ -8,17 +8,16 @@ export class UpdateProfilePictureSql {
   /**
    * Executes the update profile picture SQL operation.
    *
-   * @param userId - The user identifier.
    * @param path - The path value.
    * @returns A promise that resolves when the operation completes.
    */
-  async updateProfilePicture(userId: string, path: string | null) {
+  async updateProfilePicture(path: string | null) {
     await this.db.sql`
       UPDATE identity.user
       SET
         profile_pic_path = ${path}
       WHERE
-        id = ${userId}::UUID
+        id = identity.current_user_id ()
     `;
   }
 }

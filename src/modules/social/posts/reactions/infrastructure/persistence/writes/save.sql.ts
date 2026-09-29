@@ -16,18 +16,17 @@ export class SaveSql {
    * Creates or changes the caller's single reaction to a visible post.
    *
    * @param postId - The post UUID.
-   * @param userId - The authenticated user's UUID.
    * @param type - The selected reaction type.
    * @returns The written reaction identifier, or no row when the post is not visible.
    */
-  public async save(postId: string, userId: string, type: ReactionDbType) {
+  public async save(postId: string, type: ReactionDbType) {
     const rows = await this.dbService.sql<ReactionWriteSqlRow[]>`
       INSERT INTO
         social.reaction (post_id, user_id, type)
       VALUES
         (
           ${postId}::UUID,
-          ${userId}::UUID,
+          identity.current_user_id (),
           ${type}::social."Reaction Type"
         )
       ON CONFLICT (post_id, user_id) DO UPDATE

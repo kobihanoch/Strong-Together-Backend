@@ -10,7 +10,7 @@ import type { FinishedWorkoutSqlInput } from './workout-tracking.db-types';
 export class PostgresWorkoutTrackingRepository implements WorkoutTrackingRepository {
   public constructor(private readonly createSql: CreateSql) {}
 
-  async create(userId: string, session: WorkoutSession): Promise<WorkoutSession> {
+  async create(session: WorkoutSession): Promise<WorkoutSession> {
     const workout: FinishedWorkoutSqlInput[] = session.exercises.map((exercise) => {
       const values = {
         trackedSets: exercise.trackedSets.map((set) => ({ reps: set.reps, weight: set.weight, setIndex: set.setIndex })),
@@ -32,7 +32,7 @@ export class PostgresWorkoutTrackingRepository implements WorkoutTrackingReposit
           };
     });
 
-    const id = await this.createSql.execute(userId, session.firstAssignedExerciseId, workout, session.period.startUtc, session.period.endUtc);
+    const id = await this.createSql.execute(session.firstAssignedExerciseId, workout, session.period.startUtc, session.period.endUtc);
     const values: WorkoutSessionValues = {
       workout,
       workoutStartUtc: session.period.startUtc,

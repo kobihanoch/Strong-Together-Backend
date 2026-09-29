@@ -10,11 +10,10 @@ export class SaveSql {
   /**
    * Executes the replace for user SQL operation.
    *
-   * @param userId - The user identifier.
    * @param schedules - Persistence-ready schedule values.
    * @returns The query result.
    */
-  public async save(userId: string, schedules: WorkoutScheduleSqlInput[]): Promise<boolean> {
+  public async save(schedules: WorkoutScheduleSqlInput[]): Promise<boolean> {
     const splitIds = [...new Set(schedules.map((schedule) => schedule.workoutSplitId))];
 
     if (splitIds.length > 0) {
@@ -26,7 +25,7 @@ export class SaveSql {
           JOIN workout.workout_plan plan ON plan.id = split.workout_id
         WHERE
           split.id = ANY (${splitIds}::BIGINT[])
-          AND plan.user_id = ${userId}::UUID
+          AND plan.user_id = identity.current_user_id ()
           AND plan.is_active = TRUE
           AND split.is_active = TRUE
       `;
@@ -37,7 +36,7 @@ export class SaveSql {
     await this.dbService.sql`
       DELETE FROM schedules.workout_schedule
       WHERE
-        user_id = ${userId}::UUID
+        user_id = identity.current_user_id ()
     `;
 
     if (schedules.length > 0) {
@@ -49,7 +48,7 @@ export class SaveSql {
         INSERT INTO
           schedules.workout_schedule (user_id, workout_split_id, day_of_week, start_time)
         SELECT
-          ${userId}::UUID,
+          identity.current_user_id (),
           entries.workout_split_id,
           entries.day_of_week,
           entries.start_time::TIME(0)

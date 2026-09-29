@@ -2,8 +2,8 @@ import type { ExerciseHistory, PersonalRecords, WorkoutHistory, WorkoutStatistic
 
 /** Read operations required by application queries. */
 export abstract class WorkoutTrackingQueries {
-  abstract findWorkoutHistory(userId: string, days: number, timezone: string): Promise<WorkoutHistory>;
-  abstract findExerciseHistory(userId: string, days: number, timezone: string): Promise<ExerciseHistory>;
-  abstract findStatistics(userId: string, days: number, timezone: string): Promise<WorkoutStatistics>;
-  abstract findPersonalRecords(userId: string, timezone: string): Promise<PersonalRecords>;
+  abstract findWorkoutHistory(days: number, timezone: string): Promise<WorkoutHistory>;
+  abstract findExerciseHistory(days: number, timezone: string): Promise<ExerciseHistory>;
+  abstract findStatistics(days: number, timezone: string): Promise<WorkoutStatistics>;
+  abstract findPersonalRecords(timezone: string): Promise<PersonalRecords>;
 }

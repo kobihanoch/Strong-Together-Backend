@@ -8,14 +8,13 @@ export class DeleteSql {
   /**
    * Executes the delete SQL operation.
    *
-   * @param userId - The user identifier.
    * @returns A promise that resolves when the operation completes.
    */
-  async delete(userId: string) {
+  async delete() {
     await this.db.sql`
       DELETE FROM identity.user
       WHERE
-        id = ${userId}::UUID
+        id = identity.current_user_id ()
     `;
   }
 }

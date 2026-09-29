@@ -23,7 +23,7 @@ export class CreateAerobicActivityUseCase {
    */
   async execute(userId: string, record: AerobicEntryInput): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      await this.repository.create(userId, AerobicActivity.create(record));
+      await this.repository.create(AerobicActivity.create(record));
       this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
     });
   }

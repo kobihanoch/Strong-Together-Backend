@@ -18,8 +18,8 @@ export class PostgresWorkoutPlanRepository implements WorkoutPlanRepository {
     private readonly savePlannedExercisesSql: SavePlannedExercisesSql,
   ) {}
 
-  async findForUpdate(userId: string): Promise<WorkoutPlan | undefined> {
-    const rows = await this.findForUpdateSql.execute(userId);
+  async findForUpdate(): Promise<WorkoutPlan | undefined> {
+    const rows = await this.findForUpdateSql.execute();
     const first = rows[0];
     if (!first) return undefined;
 
@@ -62,7 +62,7 @@ export class PostgresWorkoutPlanRepository implements WorkoutPlanRepository {
     return WorkoutPlan.restore(first.planId, splits);
   }
 
-  async save(userId: string, plan: WorkoutPlan): Promise<void> {
+  async save(plan: WorkoutPlan): Promise<void> {
     // Convert domain values to primitives only at the persistence boundary.
     // SQL receives the active/inactive and changed/unchanged decisions; it does not make them.
     const splits = plan.splits.map((split) => ({
@@ -77,7 +77,7 @@ export class PostgresWorkoutPlanRepository implements WorkoutPlanRepository {
       isActive: split.isActive,
       hasChanges: split.hasChanges,
     }));
-    const planId = await this.savePlanSql.execute(userId, plan.id);
+    const planId = await this.savePlanSql.execute(plan.id);
     const persistedSplits = await this.saveSplitsSql.execute(planId, splits);
     await this.savePlannedExercisesSql.execute(planId, persistedSplits);
   }

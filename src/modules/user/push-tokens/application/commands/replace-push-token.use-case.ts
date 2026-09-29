@@ -18,7 +18,7 @@ export class ReplacePushTokenUseCase {
    */
   async execute(userId: string, token: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      await this.repository.replace(userId, new DevicePushToken(token));
+      await this.repository.replace(new DevicePushToken(token));
     });
   }
 }

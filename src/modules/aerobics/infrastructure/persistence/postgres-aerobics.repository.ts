@@ -16,20 +16,20 @@ export class PostgresAerobicsRepository implements AerobicsRepository {
     private readonly saveSql: SaveSql,
     private readonly deleteSql: DeleteSql,
   ) {}
-  async create(userId: string, activity: AerobicActivity): Promise<AerobicActivity> {
-    const created = await this.createSql.create(userId, this.toSqlInput(activity));
+  async create(activity: AerobicActivity): Promise<AerobicActivity> {
+    const created = await this.createSql.create(this.toSqlInput(activity));
     return AerobicActivity.restore({ id: created.id, ...this.toSqlInput(activity) });
   }
-  async findByIdForUpdate(userId: string, id: number): Promise<AerobicActivity | undefined> {
-    const activity = await this.findByIdForUpdateSql.findByIdForUpdate(userId, id);
+  async findByIdForUpdate(id: number): Promise<AerobicActivity | undefined> {
+    const activity = await this.findByIdForUpdateSql.findByIdForUpdate(id);
     return activity ? AerobicActivity.restore(activity) : undefined;
   }
-  save(userId: string, activity: AerobicActivity): Promise<boolean> {
+  save(activity: AerobicActivity): Promise<boolean> {
     if (activity.id === undefined) throw new Error('Cannot save an aerobic activity without an ID');
-    return this.saveSql.save(userId, activity.id, this.toSqlInput(activity));
+    return this.saveSql.save(activity.id, this.toSqlInput(activity));
   }
-  delete(userId: string, id: number): Promise<boolean> {
-    return this.deleteSql.delete(userId, id);
+  delete(id: number): Promise<boolean> {
+    return this.deleteSql.delete(id);
   }
 
   private toSqlInput(activity: AerobicActivity): AerobicEntrySqlInput {

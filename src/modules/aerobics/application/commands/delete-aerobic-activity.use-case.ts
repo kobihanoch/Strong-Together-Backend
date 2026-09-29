@@ -23,7 +23,7 @@ export class DeleteAerobicActivityUseCase {
    */
   async execute(userId: string, id: number): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      if (!(await this.repository.delete(userId, id))) throw new AerobicEntryNotFoundError();
+      if (!(await this.repository.delete(id))) throw new AerobicEntryNotFoundError();
       this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
     });
   }

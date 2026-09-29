@@ -26,7 +26,7 @@ export class ReplaceWorkoutPlanUseCase {
   async execute(userId: string, splits: WorkoutSplitInput[]): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
       // Lock and restore the current plan so the domain makes decisions from stable state.
-      const plan = await this.repository.findForUpdate(userId);
+      const plan = await this.repository.findForUpdate();
 
       if (plan) {
         try {
@@ -47,7 +47,7 @@ export class ReplaceWorkoutPlanUseCase {
       const workoutPlan = plan ?? WorkoutPlan.create(splits);
 
       // Persist the complete decided state in this same transaction, then invalidate cache only after commit.
-      await this.repository.save(userId, workoutPlan);
+      await this.repository.save(workoutPlan);
       this.unitOfWork.afterCommit(() => this.cache.invalidateUser(userId));
     });
   }

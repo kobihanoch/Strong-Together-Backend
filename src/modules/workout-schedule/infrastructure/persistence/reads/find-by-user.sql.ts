@@ -10,10 +10,9 @@ export class FindByUserSql {
   /**
    * Executes the find by user SQL operation.
    *
-   * @param userId - The user identifier.
    * @returns The query result.
    */
-  public findByUser(userId: string) {
+  public findByUser() {
     return this.dbService.sql<WorkoutScheduleSqlRow[]>`
       SELECT
         schedule.id,
@@ -28,7 +27,7 @@ export class FindByUserSql {
         JOIN workout.workout_split split ON split.id = schedule.workout_split_id
         JOIN workout.workout_plan plan ON plan.id = split.workout_id
       WHERE
-        schedule.user_id = ${userId}::UUID
+        schedule.user_id = identity.current_user_id ()
         AND plan.user_id = schedule.user_id
         AND plan.is_active = TRUE
         AND split.is_active = TRUE

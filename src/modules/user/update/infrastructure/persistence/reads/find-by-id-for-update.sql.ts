@@ -6,7 +6,7 @@ import type { UserProfileDomainSqlRow } from '../update-user.db-types';
 export class FindByIdForUpdateSql {
   constructor(private readonly db: DBService) {}
 
-  async findByIdForUpdate(userId: string): Promise<UserProfileDomainSqlRow | undefined> {
+  async findByIdForUpdate(): Promise<UserProfileDomainSqlRow | undefined> {
     const [row] = await this.db.sql<UserProfileDomainSqlRow[]>`
       SELECT
         id,
@@ -17,7 +17,7 @@ export class FindByIdForUpdateSql {
       FROM
         identity.user
       WHERE
-        id = ${userId}::UUID
+        id = identity.current_user_id ()
       FOR UPDATE
     `;
     return row;

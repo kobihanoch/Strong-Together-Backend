@@ -17,7 +17,7 @@ export class PostgresCommentsRepository implements CommentsRepository {
     private readonly findByIdForUpdateSql: FindCommentByIdForUpdateSql,
   ) {}
   public async create(comment: PostComment): Promise<PostComment | undefined> {
-    const created = await this.createSql.create(comment.postId, comment.authorUserId, comment.content.value);
+    const created = await this.createSql.create(comment.postId, comment.content.value);
     return created
       ? PostComment.restore({ id: created.id, postId: comment.postId, authorUserId: comment.authorUserId, content: comment.content.value })
       : undefined;

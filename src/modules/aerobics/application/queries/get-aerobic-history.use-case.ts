@@ -35,7 +35,7 @@ export class GetAerobicHistoryUseCase {
     }
 
     return this.unitOfWork.executeReadOnly(userId, async () => {
-      const payload = await this.query.findByUser(userId, days, timezone);
+      const payload = await this.query.findByUser(days, timezone);
       this.unitOfWork.afterCommit(() => cacheEntry.set(payload));
       return { payload, cacheHit: false };
     });

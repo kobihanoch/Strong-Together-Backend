@@ -8,12 +8,11 @@ export class SaveSql {
   /**
    * Updates an aerobic entry owned by the authenticated user.
    *
-   * @param userId - The authenticated user's identifier.
    * @param id - The aerobic entry identifier.
    * @param record - The replacement aerobic entry values.
    * @returns The updated entry identifier, or `null` when it was not found.
    */
-  async save(userId: string, id: number, record: AerobicEntrySqlInput) {
+  async save(id: number, record: AerobicEntrySqlInput) {
     const { durationMins, durationSec, type } = record;
     const [row] = await this.dbService.sql<AerobicMutationSqlRow[]>`
       UPDATE tracking.aerobic_tracking
@@ -22,7 +21,7 @@ export class SaveSql {
         duration_sec = ${durationMins * 60 + durationSec}
       WHERE
         id = ${id}::BIGINT
-        AND user_id = ${userId}::UUID
+        AND user_id = identity.current_user_id ()
       RETURNING
         id
     `;

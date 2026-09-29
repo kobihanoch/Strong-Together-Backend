@@ -21,7 +21,7 @@ export class DeleteReactionUseCase {
    */
   public async execute(postId: string, userId: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      if (!(await this.repository.delete(postId, userId))) throw new ReactionNotFoundError();
+      if (!(await this.repository.delete(postId))) throw new ReactionNotFoundError();
     });
   }
 }
