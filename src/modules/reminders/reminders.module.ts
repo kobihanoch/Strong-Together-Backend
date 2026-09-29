@@ -8,8 +8,8 @@ import { UpdateReminderTimeZoneUseCase } from './application/commands/update-rem
 import { UpsertReminderSettingsUseCase } from './application/commands/upsert-reminder-settings.use-case';
 import { PostgresRemindersRepository } from './infrastructure/persistence/postgres-reminders.repository';
 import { FindSettingsSql } from './infrastructure/persistence/reads/find-settings.sql';
-import { UpdateTimeZoneSql } from './infrastructure/persistence/writes/update-time-zone.sql';
-import { UpsertSettingsSql } from './infrastructure/persistence/writes/upsert-settings.sql';
+import { FindByUserForUpdateSql } from './infrastructure/persistence/reads/find-by-user-for-update.sql';
+import { SaveSql } from './infrastructure/persistence/writes/save.sql';
 import { RemindersController } from './presentation/reminders.controller';
 import { RemindersQueries } from './application/ports/reminders.queries';
 import { PostgresRemindersQueries } from './infrastructure/persistence/postgres-reminders.queries';
@@ -22,8 +22,8 @@ import { PostgresRemindersQueries } from './infrastructure/persistence/postgres-
     UpsertReminderSettingsUseCase,
     UpdateReminderTimeZoneUseCase,
     FindSettingsSql,
-    UpdateTimeZoneSql,
-    UpsertSettingsSql,
+    FindByUserForUpdateSql,
+    SaveSql,
     {
       provide: RemindersRepository,
       useClass: PostgresRemindersRepository,

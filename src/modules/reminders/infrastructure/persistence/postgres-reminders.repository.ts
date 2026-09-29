@@ -1,24 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { UpdateTimeZoneSql } from './writes/update-time-zone.sql';
-import { UpsertSettingsSql } from './writes/upsert-settings.sql';
+import { FindByUserForUpdateSql } from './reads/find-by-user-for-update.sql';
+import { SaveSql } from './writes/save.sql';
 import { RemindersRepository } from '../../application/ports/reminders.repository';
-import type { ReminderSettingsPreference } from '../../domain/entities/reminder-settings';
-import type { ReminderTimeZone } from '../../domain/value-objects/reminder-time-zone';
+import { ReminderSettings } from '../../domain/entities/reminder-settings';
 
 /** PostgreSQL write adapter. */
 @Injectable()
 export class PostgresRemindersRepository implements RemindersRepository {
   public constructor(
-    private readonly upsertSettingsSql: UpsertSettingsSql,
-    private readonly updateTimeZoneSql: UpdateTimeZoneSql,
+    private readonly findByUserForUpdateSql: FindByUserForUpdateSql,
+    private readonly saveSql: SaveSql,
   ) {}
-  upsertForUser(userId: string, settings: ReminderSettingsPreference): Promise<void> {
-    return this.upsertSettingsSql.upsertSettings(userId, {
+
+  async findByUserForUpdate(userId: string): Promise<ReminderSettings | undefined> {
+    const row = await this.findByUserForUpdateSql.findByUserForUpdate(userId);
+    return row ? ReminderSettings.restore(row.userId, row) : undefined;
+  }
+
+  save(settings: ReminderSettings): Promise<void> {
+    return this.saveSql.save(settings.userId, {
       reminderEnabled: settings.reminderEnabled,
       timeZone: settings.timeZone.value,
     });
-  }
-  updateTimeZoneForUser(userId: string, timeZone: ReminderTimeZone): Promise<void> {
-    return this.updateTimeZoneSql.updateTimeZone(userId, { timeZone: timeZone.value });
   }
 }

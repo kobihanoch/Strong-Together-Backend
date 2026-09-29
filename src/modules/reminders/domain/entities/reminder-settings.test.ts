@@ -1,19 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { ReminderSettingsPreference } from './reminder-settings';
+import { ReminderSettings } from './reminder-settings';
 import { ReminderTimeZone } from '../value-objects/reminder-time-zone';
 
-describe('ReminderSettingsPreference', () => {
+describe('ReminderSettings', () => {
   it('creates settings and normalizes the time zone', () => {
-    const settings = new ReminderSettingsPreference({ reminderEnabled: true, timeZone: ' Asia/Jerusalem ' });
+    const settings = ReminderSettings.create('user-id', { reminderEnabled: true, timeZone: ' Asia/Jerusalem ' });
 
     expect(settings.reminderEnabled).toBe(true);
     expect(settings.timeZone.value).toBe('Asia/Jerusalem');
   });
 
   it('requires a boolean enabled state', () => {
-    expect(() => new ReminderSettingsPreference({ reminderEnabled: 'yes' as unknown as boolean, timeZone: 'UTC' })).toThrow(
+    expect(() => ReminderSettings.create('user-id', { reminderEnabled: 'yes' as unknown as boolean, timeZone: 'UTC' })).toThrow(
       'Reminder enabled must be a boolean',
     );
+  });
+
+  it('replaces settings and changes only the time zone when requested', () => {
+    const settings = ReminderSettings.restore('user-id', { reminderEnabled: false, timeZone: 'UTC' });
+    settings.replace({ reminderEnabled: true, timeZone: 'Asia/Jerusalem' });
+    settings.changeTimeZone('America/New_York');
+    expect(settings.reminderEnabled).toBe(true);
+    expect(settings.timeZone.value).toBe('America/New_York');
   });
 });
 

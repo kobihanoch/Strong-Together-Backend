@@ -6,11 +6,11 @@ type ReminderSettingsDbRow = typeof userReminderSetting.$inferSelect;
 /** Primitive reminder settings accepted by write SQL. */
 export type ReminderSettingsSqlInput = Pick<ReminderSettingsDbRow, 'reminderEnabled' | 'timeZone'>;
 
-/** Primitive reminder time-zone update accepted by write SQL. */
-export type ReminderTimeZoneSqlInput = Pick<ReminderSettingsDbRow, 'timeZone'>;
-
 /** Serialized reminder-settings row returned by raw SQL. */
 export type ReminderSettingsSqlRow = Omit<ReminderSettingsDbRow, 'createdAt' | 'updatedAt'> & {
   createdAt: string;
   updatedAt: string;
 };
+
+/** Complete domain state loaded for a reminder-settings mutation. */
+export type ReminderSettingsDomainSqlRow = Pick<ReminderSettingsDbRow, 'userId' | 'reminderEnabled' | 'timeZone'>;

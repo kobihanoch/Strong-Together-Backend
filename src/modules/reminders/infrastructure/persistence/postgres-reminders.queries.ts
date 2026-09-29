@@ -7,7 +7,7 @@ import { RemindersQueries } from '../../application/ports/reminders.queries';
 @Injectable()
 export class PostgresRemindersQueries implements RemindersQueries {
   public constructor(private readonly findSettingsSql: FindSettingsSql) {}
-  findByUser(userId: string): Promise<ReminderSettings | null> {
+  findByUser(userId: string): Promise<ReminderSettings | undefined> {
     return this.findSettingsSql.findSettings(userId);
   }
 }

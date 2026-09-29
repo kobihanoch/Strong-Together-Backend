@@ -5,7 +5,7 @@ export class ReminderTimeZone {
   public constructor(value: string) {
     const normalized = value.trim();
     if (normalized.length === 0 || normalized.length > 100 || !ReminderTimeZone.isSupported(normalized)) {
-      throw new Error('Time zone must be a valid IANA time zone');
+      throw new InvalidReminderTimeZoneError();
     }
     this.value = normalized;
   }
@@ -19,3 +19,4 @@ export class ReminderTimeZone {
     }
   }
 }
+import { InvalidReminderTimeZoneError } from '../errors/reminder-settings.errors';
