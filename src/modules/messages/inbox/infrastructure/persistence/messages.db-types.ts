@@ -14,4 +14,4 @@ export type InboxMessageSqlRow = Pick<MessageDbRow, 'id' | 'subject' | 'msg' | '
 };
 
 /** Complete message state needed by command behavior. */
-export type MessageDomainSqlRow = Pick<MessageDbRow, 'id' | 'senderId' | 'receiverId' | 'isRead'>;
+export type MessageDomainSqlRow = Pick<MessageDbRow, 'id' | 'senderId' | 'receiverId' | 'subject' | 'msg' | 'sentAt' | 'isRead'>;

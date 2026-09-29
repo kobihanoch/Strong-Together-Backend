@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DBService } from '../../../../../../infrastructure/connections/postgres/db.service';
-import type { DeliveredMessageSqlRow } from '../system-messages.db-types';
+import type { CreatedSystemMessageSqlRow } from '../system-messages.db-types';
 
 /** Executes system-message persistence queries. */
 
@@ -16,37 +16,27 @@ export class CreateSql {
    * @param message - The message value.
    * @returns The query result.
    */
-  create(senderId: string, receiverId: string, subject: string, message: string) {
-    return this.dbService.sql<DeliveredMessageSqlRow[]>`
-      WITH
-        inserted AS (
-          INSERT INTO
-            messages.message (sender_id, receiver_id, subject, msg)
-          VALUES
-            (
-              ${senderId}::UUID,
-              ${receiverId}::UUID,
-              ${subject},
-              ${message}
-            )
-          RETURNING
-            *
+  async create(senderId: string, receiverId: string, subject: string, message: string): Promise<CreatedSystemMessageSqlRow> {
+    const [created] = await this.dbService.sql<CreatedSystemMessageSqlRow[]>`
+      INSERT INTO
+        messages.message (sender_id, receiver_id, subject, msg)
+      VALUES
+        (
+          ${senderId}::UUID,
+          ${receiverId}::UUID,
+          ${subject},
+          ${message}
         )
-      SELECT
-        inserted.id,
-        inserted.sender_id AS "senderId",
-        inserted.receiver_id AS "receiverId",
-        inserted.subject,
-        inserted.msg,
-        inserted.sent_at AS "sentAt",
-        inserted.is_read AS "isRead",
-        u.username AS "senderUsername",
-        u.name AS "senderFullName",
-        u.profile_pic_path AS "senderProfilePicPath",
-        u.gender AS "senderGender"
-      FROM
-        inserted
-        LEFT JOIN identity.user u ON u.id = inserted.sender_id
+      RETURNING
+        id,
+        sender_id AS "senderId",
+        receiver_id AS "receiverId",
+        subject,
+        msg,
+        sent_at AS "sentAt",
+        is_read AS "isRead"
     `;
+    if (!created) throw new Error('System message was not persisted');
+    return created;
   }
 }

@@ -1,4 +1,4 @@
-import type { Message } from '../../domain/entities/message';
+import type { Message } from '../../../domain/entities/message';
 
 /** Provides persistence-independent inbox operations. */
 export abstract class MessagesRepository {

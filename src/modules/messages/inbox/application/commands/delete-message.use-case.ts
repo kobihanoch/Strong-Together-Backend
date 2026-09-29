@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
-import { MessageNotFoundError } from '../../domain/errors/message.errors';
+import { MessageNotFoundError } from '../../../domain/errors/message.errors';
 import { MessagesRepository } from '../ports/messages.repository';
 
 /** Deletes messages visible to a requesting user. */

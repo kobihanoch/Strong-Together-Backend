@@ -4,6 +4,8 @@ import { appConfig } from '../../../../../config/app.config';
 import type { DeliveredMessage } from '../models/system-messages.models';
 import { MessagePublisher } from '../ports/message-publisher.port';
 import { SystemMessagesRepository } from '../ports/system-messages.repository';
+import { SystemMessagesQueries } from '../ports/system-messages.queries';
+import { Message } from '../../../domain/entities/message';
 
 /** Persists system messages and schedules their real-time delivery. */
 @Injectable()
@@ -11,6 +13,7 @@ export class SendSystemMessageUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
     private readonly repository: SystemMessagesRepository,
+    private readonly queries: SystemMessagesQueries,
     private readonly publisher: MessagePublisher,
   ) {}
 
@@ -23,9 +26,19 @@ export class SendSystemMessageUseCase {
    */
   async execute(receiverId: string, message: { header: string; text: string }): Promise<DeliveredMessage> {
     return this.unitOfWork.execute(receiverId, async () => {
-      const row = await this.repository.create(appConfig.systemUserId as string, receiverId, message.header, message.text);
-      this.unitOfWork.afterCommit(async () => this.publisher.publishToUser(receiverId, row));
-      return row;
+      const created = await this.repository.create(
+        Message.create({
+          senderId: appConfig.systemUserId as string,
+          receiverId,
+          subject: message.header,
+          body: message.text,
+        }),
+      );
+      if (!created.id) throw new Error('Created system message is missing an ID');
+      const delivered = await this.queries.findDeliveredById(created.id);
+      if (!delivered) throw new Error('Created system message projection was not found');
+      this.unitOfWork.afterCommit(async () => this.publisher.publishToUser(receiverId, delivered));
+      return delivered;
     });
   }
 }

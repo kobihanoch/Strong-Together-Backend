@@ -13,3 +13,6 @@ export type DeliveredMessageSqlRow = Pick<MessageDbRow, 'id' | 'senderId' | 'rec
   senderProfilePicPath: UserDbRow['profilePicPath'];
   senderGender: UserDbRow['gender'] | null;
 };
+
+/** Persisted state returned when a system message is created. */
+export type CreatedSystemMessageSqlRow = Pick<MessageDbRow, 'id' | 'senderId' | 'receiverId' | 'subject' | 'msg' | 'sentAt' | 'isRead'>;

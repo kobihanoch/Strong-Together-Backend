@@ -11,6 +11,9 @@ export class FindByIdForUpdateSql {
         id,
         sender_id AS "senderId",
         receiver_id AS "receiverId",
+        subject,
+        msg,
+        sent_at AS "sentAt",
         is_read AS "isRead"
       FROM
         messages.message
