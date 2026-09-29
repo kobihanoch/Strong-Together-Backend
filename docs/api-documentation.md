@@ -9,7 +9,7 @@ It is intended to answer four things for every route:
 3. the complete request structure
 4. the complete response structure
 
-The request and response shapes below are aligned with the backend workspace package `@strong-together/shared@2.0.0`.
+The request and response shapes below are aligned with the backend workspace package `@strong-together/shared@3.25.0`.
 
 All TypeScript-visible request and response fields use `camelCase`. PostgreSQL column names remain `snake_case` and are translated by query aliases/JSON builders. Stored profile-picture object keys use `profilePicPath` (or `senderProfilePicPath` on message sender projections); an actual public URL remains `url`.
 
@@ -85,52 +85,82 @@ This file focuses on success contracts. Route-specific non-JSON behavior is call
 
 ## Endpoint Index
 
-| Method   | Path                                 | Access               | Summary                                             |
-| -------- | ------------------------------------ | -------------------- | --------------------------------------------------- |
-| `GET`    | `/`                                  | Public               | Liveness text                                       |
-| `GET`    | `/health`                            | Public               | Health check                                        |
-| `POST`   | `/api/auth/login`                    | Public               | Credential login                                    |
-| `POST`   | `/api/auth/logout`                   | Refresh token + DPoP | Logout current session and unregister push delivery |
-| `POST`   | `/api/auth/refresh`                  | Public               | Rotate token pair                                   |
-| `POST`   | `/api/auth/password-reset-requests`  | Public               | Send reset email                                    |
-| `POST`   | `/api/auth/password-resets`          | Public               | Reset password from token; returns 204              |
-| `GET`    | `/api/auth/email-verification`       | Public               | Complete verification callback                      |
-| `POST`   | `/api/auth/verification-emails`      | Public               | Send verification email                             |
-| `PATCH`  | `/api/auth/unverified-account/email` | Public               | Change email for unverified account                 |
-| `GET`    | `/api/auth/verification-status`      | Public               | Check verification state by username                |
-| `POST`   | `/api/users`                         | Public               | Create user account                                 |
-| `GET`    | `/api/users/me`                      | User                 | Get current user profile                            |
-| `PATCH`  | `/api/users/me`                      | User                 | Update current user profile; returns 204            |
-| `GET`    | `/api/users/email-change`            | Public               | Complete email-change callback                      |
-| `DELETE` | `/api/users/me`                      | User                 | Delete current user                                 |
-| `PUT`    | `/api/users/me/profile-picture`      | User                 | Upload profile image                                |
-| `DELETE` | `/api/users/me/profile-picture`      | User                 | Delete profile image                                |
-| `PUT`    | `/api/users/me/push-token`           | User                 | Save push token                                     |
-| `GET`    | `/api/workout-plan`                  | User                 | Get active workout plan                             |
-| `PUT`    | `/api/workout-plan`                  | User                 | Create or update workout plan; returns 204          |
-| `GET`    | `/api/workout-history`               | User                 | Get workout tracking snapshot                       |
-| `GET`    | `/api/exercise-history`              | User                 | Get tracking grouped by exercise assignment         |
-| `GET`    | `/api/workout-statistics`            | User                 | Get workout tracking statistics                     |
-| `GET`    | `/api/personal-records`              | User                 | Get all current exercise personal records           |
-| `POST`   | `/api/workout-sessions`              | User                 | Persist completed workout                           |
-| `GET`    | `/api/workout-schedules`             | User                 | Get the weekly workout schedule                     |
-| `PUT`    | `/api/workout-schedules`             | User                 | Atomically replace the weekly schedule; returns 204 |
-| `GET`    | `/api/aerobics`                      | User                 | Get aerobics history                                |
-| `POST`   | `/api/aerobics`                      | User                 | Add aerobics record                                 |
-| `PUT`    | `/api/aerobics/:id`                  | User                 | Replace aerobics record; returns 204                |
-| `DELETE` | `/api/aerobics/:id`                  | User                 | Delete aerobics record; returns 204                 |
-| `GET`    | `/api/exercises`                     | User                 | Get exercise catalog                                |
-| `GET`    | `/api/messages`                      | User                 | Get inbox                                           |
-| `PATCH`  | `/api/messages/:id/read`             | User                 | Mark message as read; returns 204                   |
-| `DELETE` | `/api/messages/:id`                  | User                 | Delete message                                      |
-| `POST`   | `/api/oauth/apple`                   | Public               | Apple OAuth login                                   |
-| `POST`   | `/api/oauth/google`                  | Public               | Google OAuth login                                  |
-| `GET`    | `/api/reminders`                     | User                 | Get reminder settings                               |
-| `PUT`    | `/api/reminders`                     | User                 | Create or replace reminder settings; returns 204    |
-| `PATCH`  | `/api/reminders/time-zone`           | User                 | Update only the reminder time zone; returns 204     |
-| `POST`   | `/api/push-jobs/workout-reminders`   | Cron JWT             | Enqueue due workout reminders                       |
-| `POST`   | `/api/video-analysis/upload-urls`    | User                 | Generate direct-upload URL                          |
-| `POST`   | `/api/websocket-tickets`             | User                 | Generate websocket ticket                           |
+| Method   | Path                                                  | Access               | Summary                                             |
+| -------- | ----------------------------------------------------- | -------------------- | --------------------------------------------------- |
+| `GET`    | `/`                                                   | Public               | Liveness text                                       |
+| `GET`    | `/health`                                             | Public               | Health check                                        |
+| `POST`   | `/api/auth/login`                                     | Public               | Credential login                                    |
+| `POST`   | `/api/auth/logout`                                    | Refresh token + DPoP | Logout current session and unregister push delivery |
+| `POST`   | `/api/auth/refresh`                                   | Public               | Rotate token pair                                   |
+| `POST`   | `/api/auth/password-reset-requests`                   | Public               | Send reset email                                    |
+| `POST`   | `/api/auth/password-resets`                           | Public               | Reset password from token; returns 204              |
+| `GET`    | `/api/auth/email-verification`                        | Public               | Complete verification callback                      |
+| `POST`   | `/api/auth/verification-emails`                       | Public               | Send verification email                             |
+| `PATCH`  | `/api/auth/unverified-account/email`                  | Public               | Change email for unverified account                 |
+| `GET`    | `/api/auth/verification-status`                       | Public               | Check verification state by username                |
+| `POST`   | `/api/users`                                          | Public               | Create user account                                 |
+| `GET`    | `/api/users/me`                                       | User                 | Get current user profile                            |
+| `PATCH`  | `/api/users/me`                                       | User                 | Update current user profile; returns 204            |
+| `GET`    | `/api/users/email-change`                             | Public               | Complete email-change callback                      |
+| `DELETE` | `/api/users/me`                                       | User                 | Delete current user                                 |
+| `PUT`    | `/api/users/me/profile-picture`                       | User                 | Upload profile image                                |
+| `DELETE` | `/api/users/me/profile-picture`                       | User                 | Delete profile image                                |
+| `PUT`    | `/api/users/me/push-token`                            | User                 | Save push token                                     |
+| `GET`    | `/api/workout-plan`                                   | User                 | Get active workout plan                             |
+| `PUT`    | `/api/workout-plan`                                   | User                 | Create or update workout plan; returns 204          |
+| `GET`    | `/api/workout-history`                                | User                 | Get workout tracking snapshot                       |
+| `GET`    | `/api/exercise-history`                               | User                 | Get tracking grouped by exercise assignment         |
+| `GET`    | `/api/workout-statistics`                             | User                 | Get workout tracking statistics                     |
+| `GET`    | `/api/personal-records`                               | User                 | Get all current exercise personal records           |
+| `POST`   | `/api/workout-sessions`                               | User                 | Persist completed workout                           |
+| `GET`    | `/api/workout-schedules`                              | User                 | Get the weekly workout schedule                     |
+| `PUT`    | `/api/workout-schedules`                              | User                 | Atomically replace the weekly schedule; returns 204 |
+| `GET`    | `/api/aerobics`                                       | User                 | Get aerobics history                                |
+| `POST`   | `/api/aerobics`                                       | User                 | Add aerobics record                                 |
+| `PUT`    | `/api/aerobics/:id`                                   | User                 | Replace aerobics record; returns 204                |
+| `DELETE` | `/api/aerobics/:id`                                   | User                 | Delete aerobics record; returns 204                 |
+| `GET`    | `/api/exercises`                                      | User                 | Get exercise catalog                                |
+| `GET`    | `/api/messages`                                       | User                 | Get inbox                                           |
+| `PATCH`  | `/api/messages/:id/read`                              | User                 | Mark message as read; returns 204                   |
+| `DELETE` | `/api/messages/:id`                                   | User                 | Delete message                                      |
+| `POST`   | `/api/oauth/apple`                                    | Public               | Apple OAuth login                                   |
+| `POST`   | `/api/oauth/google`                                   | Public               | Google OAuth login                                  |
+| `GET`    | `/api/reminders`                                      | User                 | Get reminder settings                               |
+| `PUT`    | `/api/reminders`                                      | User                 | Create or replace reminder settings; returns 204    |
+| `PATCH`  | `/api/reminders/time-zone`                            | User                 | Update only the reminder time zone; returns 204     |
+| `POST`   | `/api/push-jobs/workout-reminders`                    | Cron JWT             | Enqueue due workout reminders                       |
+| `POST`   | `/api/video-analysis/upload-urls`                     | User                 | Generate direct-upload URL                          |
+| `POST`   | `/api/websocket-tickets`                              | User                 | Generate websocket ticket                           |
+| `GET`    | `/api/social/users`                                   | User                 | Search public user profiles                         |
+| `GET`    | `/api/social/users/:userId`                           | User                 | Get one public social profile                       |
+| `GET`    | `/api/social/summary`                                 | User                 | Get crew count and co-member previews               |
+| `GET`    | `/api/social/crews`                                   | User                 | Discover crews                                      |
+| `GET`    | `/api/social/crews/mine`                              | User                 | List the caller's crews                             |
+| `GET`    | `/api/social/crews/:id`                               | User                 | Get a crew                                          |
+| `POST`   | `/api/social/crews`                                   | User                 | Create a crew                                       |
+| `PATCH`  | `/api/social/crews/:id`                               | User                 | Update a crew                                       |
+| `DELETE` | `/api/social/crews/:id`                               | User                 | Delete a crew                                       |
+| `GET`    | `/api/social/posts`                                   | User                 | List visible posts                                  |
+| `POST`   | `/api/social/posts`                                   | User                 | Create a post                                       |
+| `PATCH`  | `/api/social/posts/:id`                               | User                 | Update a post                                       |
+| `DELETE` | `/api/social/posts/:id`                               | User                 | Delete a post                                       |
+| `GET`    | `/api/social/crews/:crewId/participants`              | User                 | List visible crew participants                      |
+| `PUT`    | `/api/social/crews/:id/profile-picture`               | User                 | Replace a crew image                                |
+| `DELETE` | `/api/social/crews/:id/profile-picture`               | User                 | Delete a crew image                                 |
+| `POST`   | `/api/social/crews/:id/leave`                         | User                 | Leave a crew, transferring leadership if needed     |
+| `POST`   | `/api/social/crews/:crewId/invitations`               | User                 | Invite a user to a crew                             |
+| `POST`   | `/api/social/crews/:crewId/join-requests`             | User                 | Join or request to join a crew                      |
+| `GET`    | `/api/social/crews/invitations`                       | User                 | List the caller's invitations                       |
+| `GET`    | `/api/social/crews/:crewId/join-requests`             | User                 | List pending requests for a crew                    |
+| `PATCH`  | `/api/social/crews/participation-requests/:requestId` | User                 | Accept or decline a participation request           |
+| `GET`    | `/api/social/posts/crew/:crewId`                      | User                 | List posts visible in a crew                        |
+| `GET`    | `/api/social/posts/:postId/comments`                  | User                 | List comments on a visible post                     |
+| `POST`   | `/api/social/posts/:postId/comments`                  | User                 | Add a comment                                       |
+| `PATCH`  | `/api/social/posts/comments/:id`                      | User                 | Edit the caller's comment                           |
+| `DELETE` | `/api/social/posts/comments/:id`                      | User                 | Delete the caller's comment                         |
+| `GET`    | `/api/social/posts/:postId/reactions`                 | User                 | List reactions on a visible post                    |
+| `POST`   | `/api/social/posts/:postId/reactions`                 | User                 | Add or replace the caller's reaction                |
+| `DELETE` | `/api/social/posts/:postId/reactions`                 | User                 | Remove the caller's reaction                        |
 
 ## Core Routes
 
@@ -877,6 +907,22 @@ Notes:
 
 - Returns `X-Cache: HIT` or `X-Cache: MISS`
 
+### `GET /api/exercise-history`
+
+Returns the authenticated user's 45-day history grouped by exercise assignment. The optional `tz` query selects the IANA timezone used for local timestamps and defaults to `Asia/Jerusalem`.
+
+Notes:
+
+- Returns `X-Cache: HIT` or `X-Cache: MISS`
+
+### `GET /api/personal-records`
+
+Returns all current exercise personal records, keyed by exercise ID. Each record includes its source workout time and the supported estimated one-rep-max calculation. The optional `tz` query defaults to `Asia/Jerusalem`.
+
+Notes:
+
+- Returns `X-Cache: HIT` or `X-Cache: MISS`
+
 ### `POST /api/workout-sessions`
 
 Persists a completed workout and deletes its directly affected cache keys.
@@ -1389,6 +1435,21 @@ Notes:
 
 - Controller sets HTTP status `201 Created`.
 
+## Social
+
+All social routes require DPoP authentication and the `user` role. Request and response validation is defined by the plain-Zod contracts under `packages/shared/src/modules/social`.
+
+| Capability                | Routes                                                                                                                               | Behavior                                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Users and summary         | `GET /api/social/users`, `GET /api/social/users/:userId`, `GET /api/social/summary`                                                  | Search public profiles, inspect one profile, and summarize the caller's active crews and co-members    |
+| Crews                     | `GET/POST /api/social/crews`, `GET /api/social/crews/mine`, `GET/PATCH/DELETE /api/social/crews/:id`                                 | Cursor-based discovery, membership listing, creation, leader-managed updates, and deletion             |
+| Crew media and membership | `GET /api/social/crews/:crewId/participants`, `PUT/DELETE /api/social/crews/:id/profile-picture`, `POST /api/social/crews/:id/leave` | RLS-filtered participants, image management, and transactional leave/leadership transfer               |
+| Participation requests    | invitation, join-request, and participation-request routes listed above                                                              | Public instant joins, private approval, leader invitations, and accept/decline transitions             |
+| Posts                     | feed, crew-feed, create, update, and delete routes listed above                                                                      | Public or crew-only posts, optional workout references, multi-crew placement, stable cursor pagination |
+| Comments and reactions    | nested comment and reaction routes listed above                                                                                      | Visibility inherited from the parent post; author-owned comments and one reaction per user/post        |
+
+Mutations return `204 No Content` except crew profile-picture replacement, which returns the stored image path and public URL. List endpoints use validated limit/cursor query contracts. For the authorization matrix and lifecycle details, see [Social Module And Authorization](./social-module-and-authorization.md).
+
 ## Operational Notes
 
 ### Cache-backed routes
@@ -1397,7 +1458,9 @@ These routes return `X-Cache: HIT` or `X-Cache: MISS`:
 
 - `/api/workout-plan`
 - `/api/workout-history`
+- `/api/exercise-history`
 - `/api/workout-statistics`
+- `/api/personal-records`
 - `/api/aerobics`
 
 ### Mutation cache behavior

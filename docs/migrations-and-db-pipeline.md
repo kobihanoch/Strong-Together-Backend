@@ -20,10 +20,10 @@ Reviewed ERD sources live in `docs/db-diagrams/source`. After a Drizzle table/vi
 
 The local database pipeline is now split by environment:
 
-| Environment | Compose file | Container | Host port | Persistence |
-| --- | --- | --- | --- | --- |
-| Development | `docker-compose.development.yml` | `strongtogether_postgres_drizzle_dev` | `5435` | Persistent Docker volume |
-| Test | `docker-compose.test.yml` | `strongtogether_postgres_test` | `5433` | Ephemeral `tmpfs` |
+| Environment | Compose file                     | Container                             | Host port | Persistence              |
+| ----------- | -------------------------------- | ------------------------------------- | --------- | ------------------------ |
+| Development | `docker-compose.development.yml` | `strongtogether_postgres_drizzle_dev` | `5435`    | Persistent Docker volume |
+| Test        | `docker-compose.test.yml`        | `strongtogether_postgres_test`        | `5433`    | Ephemeral `tmpfs`        |
 
 That gives you two important guarantees:
 

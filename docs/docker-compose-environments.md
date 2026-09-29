@@ -4,10 +4,10 @@ The repo currently uses dedicated Compose files for local development and local 
 
 ## Available Compose Files
 
-| File | Purpose |
-| --- | --- |
+| File                             | Purpose                      |
+| -------------------------------- | ---------------------------- |
 | `docker-compose.development.yml` | Full local development stack |
-| `docker-compose.test.yml` | Infra-only stack for tests |
+| `docker-compose.test.yml`        | Infra-only stack for tests   |
 
 ## Development Compose
 
@@ -17,17 +17,17 @@ This stack is meant for daily local work and includes both infra and app service
 
 ### Services
 
-| Service | Purpose | Host port |
-| --- | --- | --- |
-| `postgres_drizzle_dev` | Drizzle-managed development Postgres | `5435` |
-| `redis` | Redis cache / pubsub / Bull queues | `6379` |
-| `redis-insight` | Redis UI | `5540` |
-| `localstack` | Local S3 and SQS emulation | `4566` |
-| `s3-explorer` | Local S3 browser UI | `8081` |
-| `maildev` | Local email SMTP/UI | `1026`, `1081` |
-| `main-server` | Nest API in watch mode | `5000` |
-| `background-workers` | Node workers in watch mode | none |
-| `python-service` | Python video-analysis worker | none |
+| Service                | Purpose                              | Host port      |
+| ---------------------- | ------------------------------------ | -------------- |
+| `postgres_drizzle_dev` | Drizzle-managed development Postgres | `5435`         |
+| `redis`                | Redis cache / pubsub / Bull queues   | `6379`         |
+| `redis-insight`        | Redis UI                             | `5540`         |
+| `localstack`           | Local S3 and SQS emulation           | `4566`         |
+| `s3-explorer`          | Local S3 browser UI                  | `8082`         |
+| `maildev`              | Local email SMTP/UI                  | `1026`, `1081` |
+| `main-server`          | Nest API in watch mode               | `5000`         |
+| `background-workers`   | Node workers in watch mode           | none           |
+| `python-service`       | Python video-analysis worker         | none           |
 
 ### Persistence
 
@@ -48,13 +48,13 @@ This stack is intentionally smaller and only contains outer infrastructure.
 
 ### Services
 
-| Service | Purpose | Host port |
-| --- | --- | --- |
-| `postgres_test` | Isolated test Postgres | `5433` |
-| `redis_test` | Isolated test Redis | `6380` |
-| `redis-insight_test` | Redis test UI | `5541` |
-| `localstack_test` | Isolated LocalStack S3/SQS | `4567` |
-| `maildev_test` | Isolated email SMTP/UI/API | `1025`, `1080` |
+| Service              | Purpose                    | Host port      |
+| -------------------- | -------------------------- | -------------- |
+| `postgres_test`      | Isolated test Postgres     | `5433`         |
+| `redis_test`         | Isolated test Redis        | `6380`         |
+| `redis-insight_test` | Redis test UI              | `5541`         |
+| `localstack_test`    | Isolated LocalStack S3/SQS | `4567`         |
+| `maildev_test`       | Isolated email SMTP/UI/API | `1025`, `1080` |
 
 ### Why server/workers/python are not in test compose
 
@@ -95,12 +95,12 @@ In TEST, database setup uses the administrator `DRIZZLE_DATABASE_URL`, while the
 
 ## Related Scripts
 
-| Script | Purpose |
-| --- | --- |
-| `npm run orch:dev` | Starts the development stack |
-| `npm run db:dev:start` | Starts the Drizzle dev DB, applies migrations, and applies missing seeds |
-| `npm run test:env:up` | Starts the test infra stack |
-| `npm run test:env:down` | Stops the test infra stack |
+| Script                  | Purpose                                                                  |
+| ----------------------- | ------------------------------------------------------------------------ |
+| `npm run orch:dev`      | Starts the development stack                                             |
+| `npm run db:dev:start`  | Starts the Drizzle dev DB, applies migrations, and applies missing seeds |
+| `npm run test:env:up`   | Starts the test infra stack                                              |
+| `npm run test:env:down` | Stops the test infra stack                                               |
 
 ## LocalStack Notes
 

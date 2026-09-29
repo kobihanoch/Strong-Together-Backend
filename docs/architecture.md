@@ -6,27 +6,136 @@ The backend combines a NestJS API, PostgreSQL, Redis, Socket.IO, Node workers, a
 
 ## Dependency Model
 
-```mermaid
-flowchart LR
-  http[HTTP / Socket inbound adapters]
-  presentation[Presentation<br/>controllers, validation, presenters]
-  application[Application core<br/>use cases, models, errors, ports]
-  domain[Domain<br/>entities and business rules]
-  outbound[Outbound adapters<br/>Postgres repositories, Redis caches,<br/>queues, storage, providers, events]
-  systems[(PostgreSQL / Redis / S3 / SQS<br/>Socket.IO / email / OAuth)]
-
-  http --> presentation --> application --> domain
-  application -->|port| outbound --> systems
-
-  classDef core fill:#ecfdf5,stroke:#059669,color:#111827
-  classDef adapter fill:#e8f1ff,stroke:#2563eb,color:#111827
-  class application,domain core
-  class http,presentation,outbound,systems adapter
-```
-
-![Dependency Model — Canva diagram](./media/dependency-model-canva.png)
+![Dependency Model - Canva diagram](./media/dependency-model-canva.png)
 
 [Edit the Dependency Model diagram in Canva](https://canva.link/bcs24w6bv9eej5j)
+
+## Backend Architecture Map
+
+The backend is a modular monolith with explicit asynchronous boundaries. Features follow the inward dependency model `Presentation -> Application -> Domain`, while infrastructure implements application-owned ports.
+
+```mermaid
+flowchart TB
+  subgraph actors["External actors"]
+    direction LR
+    mobile["Mobile client<br/>HTTPS  |  Socket.IO"]
+    cron["Scheduled jobs<br/>Cron JWT"]
+  end
+
+  edge["APPLICATION EDGE<br/>Helmet  |  CORS  |  Rate limits  |  Bot filter  |  App version  |  Request ID<br/>DPoP  |  JWT  |  Roles  |  Zod validation"]
+
+  subgraph monolith["NESTJS MODULAR MONOLITH"]
+    direction TB
+    subgraph domains["Business capability sectors"]
+      direction LR
+      subgraph identity["IDENTITY"]
+        direction TB
+        auth["<b>Auth</b><br/>Session  |  Password  |  Verification<br/>P  ->  A  ->  D  ->  Ports  <-  I"]
+        user["<b>User</b><br/>Create  |  Update  |  Push Tokens<br/>P  ->  A  ->  D  ->  Ports  <-  I"]
+        oauth["<b>OAuth</b><br/>Apple  |  Core  |  Google<br/>P  ->  A  ->  D  ->  Ports  <-  I"]
+      end
+      subgraph fitness["FITNESS"]
+        direction TB
+        workout["<b>Workout</b><br/>Plan  |  Tracking<br/>P  ->  A  ->  D  ->  Ports  <-  I"]
+        schedule["<b>Workout Schedule</b><br/>P  ->  A  ->  D  ->  Ports  <-  I"]
+        aerobics["<b>Aerobics</b><br/>P  ->  A  ->  D  ->  Ports  <-  I"]
+        catalog["<b>Exercises</b><br/>P  ->  A  ->  Ports  <-  I"]
+      end
+      subgraph community["COMMUNITY"]
+        direction TB
+        social["<b>Social Users + Summary</b><br/>P  ->  A  ->  Ports  <-  I"]
+        crews["<b>Crews</b><br/>Core  |  Participation Requests<br/>P  ->  A  ->  D  ->  Ports  <-  I"]
+        posts["<b>Posts</b><br/>Core  |  Comments  |  Reactions<br/>P  ->  A  ->  D  ->  Ports  <-  I"]
+      end
+      subgraph delivery["DELIVERY"]
+        direction TB
+        messages["<b>Messages</b><br/>Inbox  |  System Messages<br/>P or Listener  ->  A  ->  D  ->  Ports  <-  I"]
+        reminders["<b>Reminders</b><br/>P  ->  A  ->  D  ->  Ports  <-  I"]
+        push["<b>Push</b><br/>Controller  |  Worker<br/>P  ->  A  ->  Ports  <-  I"]
+      end
+      subgraph media["MEDIA + REALTIME"]
+        direction TB
+        video["<b>Video Analysis</b><br/>Upload  |  Result Delivery<br/>P or Event  ->  A  ->  Ports  <-  I"]
+        sockets["<b>WebSockets</b><br/>Ticketing<br/>P  ->  A  ->  Port  <-  I"]
+      end
+    end
+
+    appbase["SHARED APPLICATION FOUNDATION<br/>UnitOfWork  |  Application errors  |  Domain errors  |  Events<br/>Operation logger  |  @strong-together/shared contracts"]
+    infrabase["INFRASTRUCTURE FOUNDATION<br/>Connections: PostgreSQL  |  Redis  |  AWS<br/>Capabilities: Cache  |  Bull queues  |  Realtime  |  Mailer  |  Storage  |  Observability<br/>Persistence: Drizzle schemas  |  Migrations  |  Seeds  |  RLS"]
+    domains --> appbase --> infrabase
+  end
+
+  subgraph planes["Runtime and provider planes"]
+    direction LR
+    subgraph data["DATA PLANE"]
+      direction TB
+      pg[("PostgreSQL 16<br/>identity  |  workout  |  tracking<br/>schedules  |  reminders  |  messages  |  social")]
+      redis[("Redis<br/>Cache  |  Bull  |  Pub/Sub")]
+    end
+    subgraph async["ASYNC EXECUTION"]
+      direction TB
+      nodeworkers["Node workers<br/>Email  |  Push"]
+      s3["AWS S3<br/>ObjectCreated"]
+      sqs["AWS SQS<br/>Video analysis queue"]
+      python["Python CV worker<br/>OpenCV  |  MediaPipe"]
+      subscriber["Nest Redis subscriber"]
+      s3 -. event .-> sqs
+      sqs -. long poll .-> python
+      python -. results .-> redis
+      redis -. Pub/Sub .-> subscriber
+    end
+    subgraph providers["DELIVERY + PROVIDERS"]
+      direction TB
+      socketio["Socket.IO<br/>authenticated user rooms"]
+      email["Resend  |  Maildev"]
+      expo["Expo Push"]
+      ids["Apple  |  Google identity"]
+      storage["S3  |  Supabase-compatible storage"]
+    end
+  end
+
+  observe["OBSERVABILITY ENVELOPE<br/>Pino logs  |  Request IDs  |  Sentry traces  |  Cross-runtime propagation"]
+  mobile --> edge
+  cron --> edge
+  edge --> monolith
+  infrabase ==> pg
+  infrabase ==> redis
+  infrabase -. jobs .-> nodeworkers
+  infrabase -. uploads .-> s3
+  nodeworkers --> email
+  nodeworkers --> expo
+  subscriber --> socketio
+  infrabase --> ids
+  infrabase --> storage
+  planes --> observe
+  monolith --> observe
+
+  classDef actor fill:#ffffff,stroke:#0757b8,stroke-width:2px,color:#111827
+  classDef edgeNode fill:#e8f1ff,stroke:#0757b8,stroke-width:2px,color:#111827
+  classDef module fill:#ffffff,stroke:#2563eb,stroke-width:1.25px,color:#111827
+  classDef foundation fill:#ecfdf5,stroke:#059669,stroke-width:1.5px,color:#111827
+  classDef platform fill:#ffffff,stroke:#374151,stroke-width:1.5px,color:#111827
+  classDef observability fill:#f5f3ff,stroke:#6d28d9,stroke-width:1.5px,color:#111827
+  class mobile,cron actor
+  class edge edgeNode
+  class auth,user,oauth,workout,schedule,aerobics,catalog,social,crews,posts,messages,reminders,push,video,sockets module
+  class appbase,infrabase foundation
+  class pg,redis,nodeworkers,s3,sqs,python,subscriber,socketio,email,expo,ids,storage platform
+  class observe observability
+```
+
+### Architecture Map Legend
+
+| Mark         | Meaning                                                    |
+| ------------ | ---------------------------------------------------------- |
+| `P`          | Presentation controllers or inbound listeners              |
+| `A`          | Application commands, queries, and orchestration           |
+| `D`          | Domain aggregates, entities, value objects, and invariants |
+| `Ports`      | Application-owned outbound capability contracts            |
+| `I`          | Infrastructure adapters implementing application ports     |
+| Solid arrow  | Synchronous runtime flow                                   |
+| Dotted arrow | Event or asynchronous flow                                 |
+| Double arrow | Transactional PostgreSQL access                            |
 
 The application layer owns its ports. Infrastructure depends on those ports, never the reverse. Nest modules bind port tokens to concrete adapters and act as composition roots. See [Clean Architecture + Hexagonal Architecture Module Structure](./clean-architecture-module-structure.md) for the required feature layout.
 
@@ -125,14 +234,7 @@ Lifecycle reactions use application events instead of importing another feature'
 
 ## Asynchronous Boundaries
 
-```mermaid
-flowchart LR
-  api[NestJS API] -->|email/push job| bull[(Bull on Redis)] --> node[Node workers] --> providers[Resend / Maildev / Expo]
-  api -->|presigned URL| client[Mobile client] --> s3[(S3)] --> sqs[(SQS)] --> python[Python CV worker]
-  python -->|result| pubsub[(Redis Pub/Sub)] --> subscriber[Nest subscriber] --> socket[Socket.IO user room]
-```
-
-![Asynchronous Boundaries — Canva diagram](./media/asynchronous-boundaries-canva.png)
+![Asynchronous Boundaries - Canva diagram](./media/asynchronous-boundaries-canva.png)
 
 [Edit the Asynchronous Boundaries diagram in Canva](https://canva.link/z04iey1f6vhcgeq)
 

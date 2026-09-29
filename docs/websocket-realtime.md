@@ -68,7 +68,7 @@ During Socket.IO connection, the server expects:
 
 ```ts
 auth: {
-  ticket: "signed-socket-ticket"
+  ticket: 'signed-socket-ticket';
 }
 ```
 
@@ -95,9 +95,9 @@ this.socketIOService.emitToUser(userId, eventName, payload);
 
 Current user-targeted events include:
 
-| Event | Producer | Purpose |
-| --- | --- | --- |
-| `new_message` | `SocketMessagePublisher` | Delivers new user/system message payloads |
+| Event                    | Producer                       | Purpose                                             |
+| ------------------------ | ------------------------------ | --------------------------------------------------- |
+| `new_message`            | `SocketMessagePublisher`       | Delivers new user/system message payloads           |
 | `video_analysis_results` | `SocketVideoAnalysisPublisher` | Delivers completed or failed video-analysis results |
 
 This design keeps realtime delivery aligned with the backend authorization model: events are addressed to a user, not broadcast globally.

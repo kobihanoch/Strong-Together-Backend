@@ -39,8 +39,12 @@ Use these layers for non-trivial features. The goal is dependency separation, no
 ```text
 feature/
   domain/
-    feature.entity.ts
-    feature.errors.ts
+    entities/
+      feature.ts
+    value-objects/              # optional validated domain values
+      feature-name.ts
+    errors/
+      feature.errors.ts
   application/
     errors/
       feature.errors.ts
@@ -71,13 +75,43 @@ This layout is required for refactored features. Do not place application models
 
 ## Responsibilities
 
-- `domain/`: Entities and business rules. Add value objects, domain services, and events only when the feature needs them. It must not depend on NestJS, HTTP, PostgreSQL, Drizzle, Redis, or queues.
+- `domain/`: Entities and business rules for capabilities that own identity, lifecycle, state transitions, or invariants. Value objects, domain services, and events are added only when the behavior requires them. Domain code must not depend on NestJS, HTTP, PostgreSQL, Drizzle, Redis, or queues.
 - `application/commands/`: State-changing use cases. Commands depend on repository ports and execute in read-write units of work.
 - `application/queries/`: Read use cases. Queries depend on query ports and execute in PostgreSQL-enforced read-only units of work.
 - `application/ports/`: Repository, query, cache, queue, storage, and provider abstractions owned by the application.
 - `infrastructure/`: PostgreSQL repositories, raw SQL, Drizzle-derived row types, Redis implementations, queues, storage, and mappings to domain/application types.
 - `presentation/`: Controllers, request validation, authentication decorators, HTTP error mapping, and optional response presenters.
 - `feature.module.ts`: The composition root that connects application ports to infrastructure implementations.
+
+## Entities And The Optional Domain Layer
+
+The domain layer is optional only because not every capability owns domain behavior. A small read-only feature that returns a catalogue, feed, summary, or other projection may go directly from an application query port to an infrastructure query adapter. Adding an entity in that case would only duplicate the read model.
+
+An entity is expected when the feature owns a concept with stable identity or behavior over time. Typical signals include:
+
+- creation and restoration of the same concept
+- state transitions such as accept, complete, deactivate, leave, or replace
+- validation involving multiple fields or child objects
+- rules that depend on the entity's current state
+- an aggregate that decides changes to a child collection
+
+An entity is not a PostgreSQL row or an HTTP DTO. It exposes business behavior and keeps itself valid:
+
+```text
+validated request
+  -> application use case
+  -> Entity.create(...) or Entity.restore(...)
+  -> domain behavior
+  -> repository port
+  -> infrastructure mapping
+  -> PostgreSQL
+```
+
+Use `create(...)` for a new entity and `restore(...)` when rehydrating persisted state. Put state changes and invariants in intent-named methods such as `replaceSplits(...)`, `accept()`, or `leave()`. Repositories map between domain objects and persistence primitives; entities never execute SQL or know about transactions, caches, queues, controllers, or response schemas.
+
+Value objects belong beside entities when a scalar or small cohesive value has its own validity rules, such as a split name, repetition count, weekday, or local start time. They should be immutable and valid immediately after construction.
+
+For example, the workout-plan module needs a domain layer because `WorkoutPlan` owns split replacement. It preserves owned split IDs, creates new splits, deactivates omissions, and rejects foreign IDs before the repository persists the decided state. The exercises catalogue does not need an entity because it is a read-only projection with no lifecycle behavior.
 
 ## Compound Features and Submodules
 
