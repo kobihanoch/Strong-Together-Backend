@@ -3,13 +3,14 @@ import { UpdateProfilePictureSql } from './writes/update-profile-picture.sql';
 import { FindProfilePictureSql } from './reads/find-profile-picture.sql';
 import { DeleteSql } from './writes/delete.sql';
 import { UpdateEmailSql } from './writes/update-email.sql';
-import { UpdateSql } from './writes/update.sql';
-import { FindSql } from './reads/find.sql';
+import { SaveSql } from './writes/save.sql';
+import { FindByIdForUpdateSql } from './reads/find-by-id-for-update.sql';
 import postgres from 'postgres';
-import type { UpdateUserEmailOutcome, UpdateUserProfileOutcome, UserProfile } from '../../application/models/update-user.models';
+import type { UpdateUserEmailOutcome } from '../../application/models/update-user.models';
 import { UserProfileRepository } from '../../application/ports/user-profile.repository';
-import type { UserProfileChanges } from '../../domain/entities/user-profile-changes';
+import { UserProfile } from '../../domain/entities/user-profile';
 import type { ProfileEmail } from '../../domain/value-objects/profile-email';
+import { UserProfileIdentityConflictError } from '../../domain/errors/user-profile.errors';
 
 /** PostgreSQL adapter for user profile persistence. */
 
@@ -17,25 +18,26 @@ import type { ProfileEmail } from '../../domain/value-objects/profile-email';
 @Injectable()
 export class PostgresUserProfileRepository implements UserProfileRepository {
   public constructor(
-    private readonly findSql: FindSql,
-    private readonly updateSql: UpdateSql,
+    private readonly findByIdForUpdateSql: FindByIdForUpdateSql,
+    private readonly saveSql: SaveSql,
     private readonly updateEmailSql: UpdateEmailSql,
     private readonly deleteSql: DeleteSql,
     private readonly findProfilePictureSql: FindProfilePictureSql,
     private readonly updateProfilePictureSql: UpdateProfilePictureSql,
   ) {}
-  async find(userId: string): Promise<UserProfile | null> {
-    return (await this.findSql.find(userId))[0]?.userData ?? null;
+  async findByIdForUpdate(userId: string): Promise<UserProfile | undefined> {
+    const row = await this.findByIdForUpdateSql.findByIdForUpdate(userId);
+    return row ? UserProfile.restore({ id: row.id, username: row.username, fullName: row.name, email: row.email, profilePicturePath: row.profilePicturePath }) : undefined;
   }
-  async update(userId: string, changes: UserProfileChanges): Promise<UpdateUserProfileOutcome> {
+  async save(profile: UserProfile): Promise<void> {
     try {
-      return await this.updateSql.update(userId, {
-        username: changes.username,
-        fullName: changes.fullName,
-        email: changes.email?.value,
+      await this.saveSql.save(profile.id, {
+        username: profile.username,
+        fullName: profile.fullName,
+        ...(profile.pendingEmail ? { pendingEmail: profile.pendingEmail.value } : {}),
       });
     } catch (error) {
-      if (error instanceof postgres.PostgresError && error.code === '23505') return { kind: 'conflict' };
+      if (error instanceof postgres.PostgresError && error.code === '23505') throw new UserProfileIdentityConflictError();
       throw error;
     }
   }

@@ -1,16 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { UserProfileChanges } from './user-profile-changes';
+import { UserProfile } from './user-profile';
 
-describe('UserProfileChanges', () => {
+const restoreProfile = () => UserProfile.restore({ id: 'user-id', username: 'old', fullName: 'Old Name', email: 'old@example.com', profilePicturePath: null });
+
+describe('UserProfile', () => {
   it('normalizes provided profile fields', () => {
-    const changes = new UserProfileChanges({ username: ' runner ', fullName: ' Jane Doe ', email: 'JANE@EXAMPLE.COM' });
-    expect(changes.username).toBe('runner');
-    expect(changes.fullName).toBe('Jane Doe');
-    expect(changes.email?.value).toBe('jane@example.com');
+    const profile = restoreProfile();
+    profile.changeDetails({ username: ' runner ', fullName: ' Jane Doe ', email: 'JANE@EXAMPLE.COM' });
+    expect(profile.username).toBe('runner');
+    expect(profile.fullName).toBe('Jane Doe');
+    expect(profile.pendingEmail?.value).toBe('jane@example.com');
   });
 
   it('requires at least one valid change', () => {
-    expect(() => new UserProfileChanges({})).toThrow('At least one profile field must be provided');
-    expect(() => new UserProfileChanges({ username: 'x' })).toThrow('Invalid username');
+    expect(() => restoreProfile().changeDetails({})).toThrow('At least one profile field must be provided');
+    expect(() => restoreProfile().changeDetails({ username: 'x' })).toThrow('Invalid username');
+  });
+
+  it('does not request confirmation when the normalized email is unchanged', () => {
+    const profile = restoreProfile();
+    profile.changeDetails({ email: ' OLD@EXAMPLE.COM ' });
+    expect(profile.pendingEmail).toBeUndefined();
   });
 });

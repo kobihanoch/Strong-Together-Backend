@@ -5,16 +5,16 @@ const valid = { username: 'runner_1', fullName: 'Jane Doe', email: 'Jane@Example
 
 describe('UserRegistration', () => {
   it('normalizes valid registration values', () => {
-    const registration = new UserRegistration(valid);
+    const registration = UserRegistration.create(valid);
     expect(registration.username.value).toBe('runner_1');
     expect(registration.email.value).toBe('jane@example.com');
   });
 
   it('enforces username, name, email, password, and gender rules', () => {
-    expect(() => new UserRegistration({ ...valid, username: 'x' })).toThrow();
-    expect(() => new UserRegistration({ ...valid, fullName: 'Jane 1' })).toThrow();
-    expect(() => new UserRegistration({ ...valid, email: 'invalid' })).toThrow();
-    expect(() => new UserRegistration({ ...valid, password: 'short' })).toThrow();
-    expect(() => new UserRegistration({ ...valid, gender: 'invalid' })).toThrow();
+    expect(() => UserRegistration.create({ ...valid, username: 'x' })).toThrow();
+    expect(() => UserRegistration.create({ ...valid, fullName: 'Jane 1' })).toThrow();
+    expect(() => UserRegistration.create({ ...valid, email: 'invalid' })).toThrow();
+    expect(() => UserRegistration.create({ ...valid, password: 'short' })).toThrow();
+    expect(() => UserRegistration.create({ ...valid, gender: 'invalid' })).toThrow();
   });
 });

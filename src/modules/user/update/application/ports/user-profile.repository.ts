@@ -1,10 +1,10 @@
-import type { UserProfileChanges } from '../../domain/entities/user-profile-changes';
+import type { UserProfile } from '../../domain/entities/user-profile';
 import type { ProfileEmail } from '../../domain/value-objects/profile-email';
-import type { UpdateUserEmailOutcome, UpdateUserProfileOutcome, UserProfile } from '../models/update-user.models';
+import type { UpdateUserEmailOutcome } from '../models/update-user.models';
 /** Provides persistence operations for user profile management. */
 export abstract class UserProfileRepository {
-  abstract find(userId: string): Promise<UserProfile | null>;
-  abstract update(userId: string, changes: UserProfileChanges): Promise<UpdateUserProfileOutcome>;
+  abstract findByIdForUpdate(userId: string): Promise<UserProfile | undefined>;
+  abstract save(profile: UserProfile): Promise<void>;
   abstract updateEmail(userId: string, email: ProfileEmail): Promise<UpdateUserEmailOutcome>;
   abstract delete(userId: string): Promise<void>;
   abstract findProfilePicture(userId: string): Promise<string | null>;

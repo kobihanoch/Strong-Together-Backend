@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
-import { UserConflictError, UserNotFoundError } from '../errors/update-user.errors';
+import { UserNotFoundError } from '../errors/update-user.errors';
 import type { UpdateUserInput } from '../models/update-user.models';
 import { UpdateEmailSender } from '../ports/update-email-sender.port';
 import { UserProfileRepository } from '../ports/user-profile.repository';
-import { UserProfileChanges } from '../../domain/entities/user-profile-changes';
 
 /** Updates profile fields and schedules address confirmation when needed. */
 @Injectable()
@@ -26,16 +25,12 @@ export class UpdateCurrentUserUseCase {
    */
   async execute(userId: string, input: UpdateUserInput, requestId?: string): Promise<void> {
     return this.unitOfWork.execute(userId, async () => {
-      const current = await this.repository.find(userId);
-      if (!current) throw new UserNotFoundError();
-      const changes = new UserProfileChanges(input);
-      const outcome = await this.repository.update(userId, changes);
-      if (outcome.kind === 'conflict') throw new UserConflictError();
-      if (outcome.kind === 'not-found') throw new UserNotFoundError();
-
-      const candidate = changes.email?.value ?? '';
-      if (candidate && candidate !== current.email.trim().toLowerCase())
-        this.unitOfWork.afterCommit(() => this.emailSender.send(candidate, userId, outcome.profile.name || 'there', requestId));
+      const profile = await this.repository.findByIdForUpdate(userId);
+      if (!profile) throw new UserNotFoundError();
+      profile.changeDetails(input);
+      await this.repository.save(profile);
+      if (profile.pendingEmail)
+        this.unitOfWork.afterCommit(() => this.emailSender.send(profile.pendingEmail!.value, userId, profile.fullName || 'there', requestId));
     });
   }
 }

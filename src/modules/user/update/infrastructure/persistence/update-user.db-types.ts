@@ -17,3 +17,9 @@ export interface UserProfileSqlRow {
 }
 /** Represents the user profile picture sql row value. */
 export type UserProfilePictureSqlRow = Pick<UserDbRow, 'profilePicPath'>;
+
+/** Complete mutable profile state used to restore the command aggregate. */
+export interface UserProfileDomainSqlRow extends Pick<UserDbRow, 'id' | 'username' | 'email'> {
+  name: string;
+  profilePicturePath: string | null;
+}

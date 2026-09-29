@@ -26,11 +26,13 @@ export class CreateUserUseCase {
    */
   async execute(input: CreateUserInput, requestId?: string): Promise<void> {
     return this.unitOfWork.execute(undefined, async () => {
-      const registration = new UserRegistration(input);
+      const registration = UserRegistration.create(input);
       if (await this.repository.exists(registration)) throw new UserAlreadyExistsError();
       const passwordHash = await this.passwordHasher.hash(registration.password.value);
       const created = await this.repository.create(registration, passwordHash);
-      this.unitOfWork.afterCommit(() => this.events.userRegistered(created.id, registration.email.value, registration.fullName, requestId));
+      const createdUserId = created.id;
+      if (!createdUserId) throw new Error('Created user is missing an ID');
+      this.unitOfWork.afterCommit(() => this.events.userRegistered(createdUserId, created.email.value, created.fullName, requestId));
     });
   }
 }

@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { CreateSql } from './writes/create.sql';
 import { ExistsSql } from './reads/exists.sql';
-import type { CreatedUser } from '../../application/models/create-user.models';
 import { CreateUserRepository } from '../../application/ports/create-user.repository';
-import type { UserRegistration } from '../../domain/entities/user-registration';
+import { UserRegistration } from '../../domain/entities/user-registration';
 
 /** PostgreSQL registration repository. */
 @Injectable()
@@ -17,16 +16,20 @@ export class PostgresCreateUserRepository implements CreateUserRepository {
     return this.existsSql.exists(registration.username.value, registration.email.value);
   }
 
-  async create(registration: UserRegistration, passwordHash: string): Promise<CreatedUser> {
-    const { created_at: createdAt, ...user } = (
-      await this.createSql.create(
+  async create(registration: UserRegistration, passwordHash: string): Promise<UserRegistration> {
+    const created = await this.createSql.create(
         registration.username.value,
         registration.fullName,
         registration.email.value,
         registration.gender,
         passwordHash,
-      )
-    ).userData;
-    return { ...user, createdAt };
+      );
+    return UserRegistration.restore(created.userData.id, {
+      username: registration.username.value,
+      fullName: registration.fullName,
+      email: registration.email.value,
+      password: registration.password.value,
+      gender: registration.gender,
+    });
   }
 }

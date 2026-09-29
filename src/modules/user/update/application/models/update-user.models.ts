@@ -51,8 +51,5 @@ export type EmailChangeOutcome =
       reason: string;
     };
 
-/** Persistence outcome for mutable profile fields. */
-export type UpdateUserProfileOutcome = { kind: 'updated'; profile: UserProfile } | { kind: 'not-found' } | { kind: 'conflict' };
-
 /** Persistence outcome for committing a confirmed email address. */
 export type UpdateUserEmailOutcome = { kind: 'updated' } | { kind: 'conflict' };

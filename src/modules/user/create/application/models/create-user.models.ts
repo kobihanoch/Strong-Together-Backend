@@ -6,14 +6,3 @@ export interface CreateUserInput {
   password: string;
   gender: string;
 }
-
-/** Persisted user data needed after registration. */
-export interface CreatedUser {
-  id: string;
-  username: string;
-  name: string;
-  email: string;
-  gender: string;
-  role: string;
-  createdAt: string;
-}

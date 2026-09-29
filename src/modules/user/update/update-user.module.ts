@@ -24,7 +24,8 @@ import { DeleteSql } from './infrastructure/persistence/writes/delete.sql';
 import { FindProfilePictureSql } from './infrastructure/persistence/reads/find-profile-picture.sql';
 import { UpdateEmailSql } from './infrastructure/persistence/writes/update-email.sql';
 import { UpdateProfilePictureSql } from './infrastructure/persistence/writes/update-profile-picture.sql';
-import { UpdateSql } from './infrastructure/persistence/writes/update.sql';
+import { SaveSql } from './infrastructure/persistence/writes/save.sql';
+import { FindByIdForUpdateSql } from './infrastructure/persistence/reads/find-by-id-for-update.sql';
 import { UpdateUserController } from './presentation/update-user.controller';
 import { UserProfileQueries } from './application/ports/user-profile.queries';
 import { PostgresUserProfileQueries } from './infrastructure/persistence/postgres-user-profile.queries';
@@ -40,7 +41,8 @@ import { PostgresUserProfileQueries } from './infrastructure/persistence/postgre
     FindProfilePictureSql,
     UpdateEmailSql,
     UpdateProfilePictureSql,
-    UpdateSql,
+    FindByIdForUpdateSql,
+    SaveSql,
     { provide: UserProfileRepository, useClass: PostgresUserProfileRepository },
     { provide: UpdateEmailSender, useClass: QueuedUpdateEmailSender },
     { provide: ProfilePictureStorage, useClass: SupabaseProfilePictureStorage },
