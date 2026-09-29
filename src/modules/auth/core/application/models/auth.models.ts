@@ -1,15 +1,3 @@
-/** User data required to validate credentials. */
-export interface LoginUser {
-  id: string;
-  name: string | null;
-  username: string;
-  email?: string;
-  passwordHash: string | null;
-  role: string;
-  isVerified: boolean;
-  lastLogin?: string | null;
-}
-
 /** Authenticated user projection returned while rotating token state. */
 export interface SessionUserData {
   id: string;

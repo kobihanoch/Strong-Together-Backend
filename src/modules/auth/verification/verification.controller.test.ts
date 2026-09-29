@@ -97,7 +97,7 @@ describe('VerificationController', () => {
   });
 
   it('PATCH /api/auth/unverified-account/email updates pending email in DB and sends verification email', async () => {
-    const user = await createUnverified('verify_change');
+    const user = await createUnverified('v_change');
     const newEmail = `updated_${crypto.randomUUID().slice(0, 8)}@example.com`;
 
     const response = await request(app.getHttpServer()).patch('/api/auth/unverified-account/email').set('x-app-version', '4.5.0').send({

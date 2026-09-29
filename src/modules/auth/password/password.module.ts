@@ -4,12 +4,14 @@ import { EmailsModule } from '../../../infrastructure/capabilities/queues/emails
 import { AuthCoreModule } from '../core/auth-core.module';
 import { SessionModule } from '../session/session.module';
 import { PasswordRepository } from './application/ports/password.repository';
+import { PasswordResetQueries } from './application/ports/password-reset.queries';
 import { PasswordResetEmailSender } from './application/ports/password-reset-email-sender.port';
 import { CreatePasswordResetRequestUseCase } from './application/commands/create-password-reset-request.use-case';
 import { ResetPasswordUseCase } from './application/commands/reset-password.use-case';
 import { FindResetRecipientSql } from './infrastructure/persistence/reads/find-reset-recipient.sql';
-import { UpdatePasswordSql } from './infrastructure/persistence/writes/update-password.sql';
+import { SaveSql } from './infrastructure/persistence/writes/save.sql';
 import { PostgresPasswordRepository } from './infrastructure/persistence/postgres-password.repository';
+import { PostgresPasswordResetQueries } from './infrastructure/persistence/postgres-password-reset.queries';
 import { QueuedPasswordResetEmailSender } from './infrastructure/queued-password-reset-email.sender';
 import { PasswordController } from './presentation/password.controller';
 
@@ -18,7 +20,8 @@ import { PasswordController } from './presentation/password.controller';
   controllers: [PasswordController],
   providers: [
     FindResetRecipientSql,
-    UpdatePasswordSql,
+    SaveSql,
+    { provide: PasswordResetQueries, useClass: PostgresPasswordResetQueries },
     { provide: PasswordRepository, useClass: PostgresPasswordRepository },
     { provide: PasswordResetEmailSender, useClass: QueuedPasswordResetEmailSender },
     CreatePasswordResetRequestUseCase,

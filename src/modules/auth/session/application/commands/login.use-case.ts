@@ -38,8 +38,8 @@ export class LoginUseCase {
   async execute(identifier: string, password: string, jkt: string | undefined): Promise<LoginResult> {
     return this.unitOfWork.execute(undefined, async () => {
       if (this.policy.dpopEnabled && !jkt) throw new SessionBadRequestError('DPoP-Key-Binding header is missing.');
-      const credentials = new LoginCredentials(identifier, password);
-      const user = await this.repository.findLoginUser(credentials.identifier);
+      const credentials = LoginCredentials.create(identifier, password);
+      const user = await this.repository.findByIdentifier(credentials.identifier);
       if (!user) throw new SessionUnauthorizedError('Invalid credentials');
 
       const matches = await this.passwordHasher.compare(credentials.password, user.passwordHash!);

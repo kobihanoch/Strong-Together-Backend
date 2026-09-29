@@ -16,6 +16,6 @@ export class FindResetRecipientSql {
       SELECT
         guest_api.find_login_user (${identifier}) AS "userData"
     `;
-    return row?.userData ?? null;
+    return row?.userData ?? undefined;
   }
 }

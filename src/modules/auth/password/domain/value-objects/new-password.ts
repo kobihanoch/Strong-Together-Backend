@@ -2,8 +2,9 @@
 export class NewPassword {
   public readonly value: string;
   public constructor(value: string) {
-    if (value.length < 8) throw new Error('Password must be at least 8 characters long');
-    if (value.length > 128) throw new Error('Password must be at most 128 characters long');
+    if (value.length < 8) throw new NewPasswordTooShortError();
+    if (value.length > 128) throw new NewPasswordTooLongError();
     this.value = value;
   }
 }
+import { NewPasswordTooLongError, NewPasswordTooShortError } from '../errors/password.errors';

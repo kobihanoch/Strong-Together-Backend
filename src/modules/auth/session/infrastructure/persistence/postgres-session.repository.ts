@@ -6,7 +6,8 @@ import { RotateIfVersionSql } from './writes/rotate-if-version.sql';
 import { RotateSql } from './writes/rotate.sql';
 import { FindLastLoginSql } from './reads/find-last-login.sql';
 import { FindLoginUserSql } from './reads/find-login-user.sql';
-import type { LoginUser, RotatedSession, RotateSessionOutcome } from '../../../core/application/models/auth.models';
+import type { RotatedSession, RotateSessionOutcome } from '../../../core/application/models/auth.models';
+import { AuthAccount } from '../../../core/domain/entities/auth-account';
 import { SessionRepository } from '../../application/ports/session.repository';
 import type { LoginIdentifier } from '../../domain/value-objects/login-identifier';
 
@@ -23,8 +24,9 @@ export class PostgresSessionRepository implements SessionRepository {
     private readonly logoutSql: LogoutSql,
   ) {}
 
-  findLoginUser(identifier: LoginIdentifier): Promise<LoginUser | null> {
-    return this.findLoginUserSql.findLoginUser(identifier.value);
+  async findByIdentifier(identifier: LoginIdentifier): Promise<AuthAccount | undefined> {
+    const user = await this.findLoginUserSql.findLoginUser(identifier.value);
+    return user ? AuthAccount.restore(user) : undefined;
   }
 
   findLastLogin(userId: string): Promise<Date | null> {

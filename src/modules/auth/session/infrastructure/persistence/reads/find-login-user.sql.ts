@@ -16,7 +16,7 @@ export class FindLoginUserSql {
       SELECT
         guest_api.find_login_user (${identifier}) AS "userData"
     `;
-    if (!row?.userData) return null;
+    if (!row?.userData) return undefined;
     const { password_hash: passwordHash, is_verified: isVerified, last_login: lastLogin, ...userData } = row.userData;
     return { ...userData, passwordHash, isVerified, lastLogin };
   }

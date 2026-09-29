@@ -16,6 +16,6 @@ export class FindByEmailSql {
       SELECT
         guest_api.find_user_for_email (${email}) AS "userData"
     `;
-    return row?.userData ? { ...row.userData, email } : null;
+    return row?.userData ? { ...row.userData, email } : undefined;
   }
 }

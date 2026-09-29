@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
-import { VerificationBadRequestError, VerificationConflictError, VerificationUnauthorizedError } from '../errors/verification.errors';
+import { VerificationConflictError, VerificationUnauthorizedError } from '../errors/verification.errors';
 import { AuthenticationTransaction } from '../../../core/application/ports/authentication-transaction.port';
 import { PasswordHasher } from '../../../core/application/ports/password-hasher.port';
 import { VerificationEmailSender } from '../ports/verification-email-sender.port';
@@ -32,12 +32,12 @@ export class UpdateUnverifiedEmailUseCase {
    */
   async execute(username: string, password: string, newEmail: string, requestId?: string): Promise<void> {
     return this.unitOfWork.execute(undefined, async () => {
-      const change = new UnverifiedEmailChange(username, password, newEmail);
+      const change = UnverifiedEmailChange.create(username, password, newEmail);
       const user = await this.repository.findByUsername(change.username);
       if (!user) throw new VerificationUnauthorizedError('Invalid credentials');
       const matches = await this.passwordHasher.compare(change.password, user.passwordHash!);
       if (!matches) throw new VerificationUnauthorizedError('Invalid credentials');
-      if (user.isVerified) throw new VerificationBadRequestError('Account already verified');
+      user.ensureEmailCanBeChangedBeforeVerification();
       if (await this.repository.emailExists(change.newEmail)) throw new VerificationConflictError('Email already in use');
 
       await this.transaction.promoteToUser(user.id);

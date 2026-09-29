@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UnitOfWork } from '../../../../../common/application/ports/unit-of-work.port';
 import { PasswordBadRequestError } from '../errors/password.errors';
-import { PasswordRepository } from '../ports/password.repository';
+import { PasswordResetQueries } from '../ports/password-reset.queries';
 import { PasswordResetEmailSender } from '../ports/password-reset-email-sender.port';
 import { PasswordResetRequest } from '../../domain/entities/password-reset-request';
 
@@ -10,7 +10,7 @@ import { PasswordResetRequest } from '../../domain/entities/password-reset-reque
 export class CreatePasswordResetRequestUseCase {
   constructor(
     private readonly unitOfWork: UnitOfWork,
-    private readonly repository: PasswordRepository,
+    private readonly queries: PasswordResetQueries,
     private readonly emailSender: PasswordResetEmailSender,
   ) {}
 
@@ -25,8 +25,8 @@ export class CreatePasswordResetRequestUseCase {
   async execute(identifier: string, requestId?: string): Promise<void> {
     return this.unitOfWork.execute(undefined, async () => {
       if (!identifier) throw new PasswordBadRequestError('Please fill username or email');
-      const request = new PasswordResetRequest(identifier);
-      const user = await this.repository.findResetRecipient(request);
+      const request = PasswordResetRequest.create(identifier);
+      const user = await this.queries.findRecipient(request);
       if (!user) return;
 
       this.unitOfWork.afterCommit(() =>

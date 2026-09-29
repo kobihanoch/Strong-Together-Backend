@@ -44,7 +44,7 @@ export class ResetPasswordUseCase {
 
       const passwordHash = await this.passwordHasher.hash(new NewPassword(newPassword).value);
       await this.transaction.promoteToUser(decoded.sub);
-      await Promise.all([this.passwords.updatePassword(decoded.sub, passwordHash), this.sessions.rotate(decoded.sub)]);
+      await Promise.all([this.passwords.save(decoded.sub, passwordHash), this.sessions.rotate(decoded.sub)]);
     });
   }
 }

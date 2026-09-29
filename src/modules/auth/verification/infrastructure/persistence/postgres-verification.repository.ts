@@ -4,7 +4,8 @@ import { UpdateVerificationSql } from './writes/update-verification.sql';
 import { EmailExistsSql } from './reads/email-exists.sql';
 import { FindByUsernameSql } from './reads/find-by-username.sql';
 import { FindByEmailSql } from './reads/find-by-email.sql';
-import type { AuthEmailRecipient, LoginUser } from '../../../core/application/models/auth.models';
+import type { AuthEmailRecipient } from '../../../core/application/models/auth.models';
+import { AuthAccount } from '../../../core/domain/entities/auth-account';
 import { VerificationRepository } from '../../application/ports/verification.repository';
 import type { VerificationEmail } from '../../domain/value-objects/verification-email';
 
@@ -20,11 +21,12 @@ export class PostgresVerificationRepository implements VerificationRepository {
     private readonly updateVerificationSql: UpdateVerificationSql,
     private readonly updateEmailSql: UpdateEmailSql,
   ) {}
-  findByEmail(email: VerificationEmail): Promise<AuthEmailRecipient | null> {
+  async findByEmail(email: VerificationEmail): Promise<AuthEmailRecipient | undefined> {
     return this.findByEmailSql.findByEmail(email.value);
   }
-  findByUsername(username: string): Promise<LoginUser | null> {
-    return this.findByUsernameSql.findByUsername(username);
+  async findByUsername(username: string): Promise<AuthAccount | undefined> {
+    const user = await this.findByUsernameSql.findByUsername(username);
+    return user ? AuthAccount.restore(user) : undefined;
   }
   emailExists(email: VerificationEmail): Promise<boolean> {
     return this.emailExistsSql.emailExists(email.value);
