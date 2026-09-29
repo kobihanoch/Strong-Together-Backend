@@ -173,6 +173,4 @@ export class FindActiveByUserSql {
         1;
     `;
   }
-
-  // Save a complete plan snapshot: IDs update existing splits, while missing IDs create new splits.
 }
