@@ -1,5 +1,6 @@
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Controller, Get, HttpCode, HttpStatus, Put, Res, UseGuards } from '@nestjs/common';
-import type { GetWorkoutPlanQuery, GetWorkoutPlanResponse, ReplaceWorkoutPlanBody } from '@strong-together/shared';
+import type { GetWorkoutPlanQuery as GetWorkoutPlanRequestQuery, GetWorkoutPlanResponse, ReplaceWorkoutPlanBody } from '@strong-together/shared';
 import { getWorkoutPlanRequestSchema, replaceWorkoutPlanRequestSchema } from '@strong-together/shared';
 import type { Response } from 'express';
 import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
@@ -9,17 +10,16 @@ import { AuthorizationGuard, Roles } from '../../../../common/guards/authorizati
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
-import { GetWorkoutPlanUseCase } from '../application/queries/get-workout-plan.use-case';
-import { ReplaceWorkoutPlanUseCase } from '../application/commands/replace-workout-plan.use-case';
+import { GetWorkoutPlanQuery } from '../application/queries/get-workout-plan/get-workout-plan.query';
+import { ReplaceWorkoutPlanCommand } from '../application/commands/replace-workout-plan/replace-workout-plan.command';
 
 /** E */
 @Controller('api/workout-plan')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class WorkoutPlanController {
-  constructor(
-    private readonly getPlan: GetWorkoutPlanUseCase,
-    private readonly replacePlan: ReplaceWorkoutPlanUseCase,
+  constructor(private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
   ) {}
   /**
    * Retrieves the active plan.
@@ -38,11 +38,11 @@ export class WorkoutPlanController {
    */
   @Get()
   async getWorkoutPlan(
-    @RequestData(new ValidateRequestPipe(getWorkoutPlanRequestSchema)) data: { query: GetWorkoutPlanQuery },
+    @RequestData(new ValidateRequestPipe(getWorkoutPlanRequestSchema)) data: { query: GetWorkoutPlanRequestQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GetWorkoutPlanResponse> {
-    const result = await this.getPlan.execute(user.id, true, data.query.tz);
+    const result = await this.queryBus.execute(new GetWorkoutPlanQuery(user.id, true, data.query.tz));
     res.set('X-Cache', result.cacheHit ? 'HIT' : 'MISS');
     return result.payload;
   }
@@ -67,6 +67,6 @@ export class WorkoutPlanController {
     @RequestData(new ValidateRequestPipe(replaceWorkoutPlanRequestSchema)) data: { body: ReplaceWorkoutPlanBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.replacePlan.execute(user.id, data.body.workoutData);
+    await this.commandBus.execute(new ReplaceWorkoutPlanCommand(user.id, data.body.workoutData));
   }
 }

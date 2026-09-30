@@ -1,3 +1,4 @@
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Controller, Get, HttpCode, HttpStatus, Patch, Post, UseGuards } from '@nestjs/common';
 import type {
   InviteCrewUserBody,
@@ -25,23 +26,19 @@ import { AuthorizationGuard, Roles } from '../../../../../common/guards/authoriz
 import { DpopGuard } from '../../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../../common/types/express';
-import { InviteCrewUserUseCase } from '../application/commands/invite-crew-user.use-case';
-import { ListCrewInvitationsUseCase } from '../application/queries/list-crew-invitations.use-case';
-import { ListPendingCrewJoinRequestsUseCase } from '../application/queries/list-pending-crew-join-requests.use-case';
-import { RequestToJoinCrewUseCase } from '../application/commands/request-to-join-crew.use-case';
-import { UpdateCrewParticipationRequestUseCase } from '../application/commands/update-crew-participation-request.use-case';
+import { InviteCrewUserCommand } from '../application/commands/invite-crew-user/invite-crew-user.command';
+import { ListCrewInvitationsQuery } from '../application/queries/list-crew-invitations/list-crew-invitations.query';
+import { ListPendingCrewJoinRequestsQuery } from '../application/queries/list-pending-crew-join-requests/list-pending-crew-join-requests.query';
+import { RequestToJoinCrewCommand } from '../application/commands/request-to-join-crew/request-to-join-crew.command';
+import { UpdateCrewParticipationRequestCommand } from '../application/commands/update-crew-participation-request/update-crew-participation-request.command';
 
 /** Exposes authenticated endpoints for creating and resolving crew participation requests. */
 @Controller('api/social/crews')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class CrewRequestsController {
-  public constructor(
-    private readonly inviteCrewUser: InviteCrewUserUseCase,
-    private readonly requestCrewMembership: RequestToJoinCrewUseCase,
-    private readonly listCrewInvitations: ListCrewInvitationsUseCase,
-    private readonly listPendingRequests: ListPendingCrewJoinRequestsUseCase,
-    private readonly updateParticipationRequest: UpdateCrewParticipationRequestUseCase,
+  public constructor(private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
   ) {}
 
   /**
@@ -66,7 +63,7 @@ export class CrewRequestsController {
     data: { params: InviteCrewUserParams; body: InviteCrewUserBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<InviteCrewUserResponse> {
-    await this.inviteCrewUser.execute(data.params.crewId, user.id, data.body.userId);
+    await this.commandBus.execute(new InviteCrewUserCommand(data.params.crewId, user.id, data.body.userId));
   }
 
   /**
@@ -90,7 +87,7 @@ export class CrewRequestsController {
     @RequestData(new ValidateRequestPipe(requestToJoinCrewRequestSchema)) data: { params: RequestToJoinCrewParams },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<RequestToJoinCrewResponse> {
-    await this.requestCrewMembership.execute(data.params.crewId, user.id);
+    await this.commandBus.execute(new RequestToJoinCrewCommand(data.params.crewId, user.id));
   }
 
   /**
@@ -106,7 +103,7 @@ export class CrewRequestsController {
    */
   @Get('invitations')
   async listInvitations(@CurrentUser() user: AuthenticatedUser): Promise<ListCrewInvitationsResponse> {
-    return this.listCrewInvitations.execute(user.id);
+    return this.queryBus.execute(new ListCrewInvitationsQuery(user.id));
   }
 
   /**
@@ -130,7 +127,7 @@ export class CrewRequestsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListPendingCrewJoinRequestsResponse> {
-    return this.listPendingRequests.execute(user.id, data.params.crewId);
+    return this.queryBus.execute(new ListPendingCrewJoinRequestsQuery(user.id, data.params.crewId));
   }
 
   /**
@@ -157,6 +154,6 @@ export class CrewRequestsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<UpdateCrewParticipationRequestStatusResponse> {
-    await this.updateParticipationRequest.execute(user.id, data.params.requestId, data.body.status);
+    await this.commandBus.execute(new UpdateCrewParticipationRequestCommand(user.id, data.params.requestId, data.body.status));
   }
 }

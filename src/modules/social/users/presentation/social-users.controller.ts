@@ -1,5 +1,6 @@
+import { QueryBus } from '@nestjs/cqrs';
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import type { GetSocialUserParams, GetSocialUserResponse, SearchSocialUsersQuery, SearchSocialUsersResponse } from '@strong-together/shared';
+import type { GetSocialUserParams, GetSocialUserResponse, SearchSocialUsersQuery as SearchSocialUsersRequestQuery, SearchSocialUsersResponse } from '@strong-together/shared';
 import { getSocialUserRequestSchema, searchSocialUsersRequestSchema } from '@strong-together/shared';
 import { RequestData } from '../../../../common/decorators/request-data.decorator';
 import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
@@ -8,17 +9,15 @@ import { AuthenticationGuard } from '../../../../common/guards/authentication.gu
 import { AuthorizationGuard, Roles } from '../../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
-import { GetSocialUserUseCase } from '../application/queries/get-social-user.use-case';
-import { SearchSocialUsersUseCase } from '../application/queries/search-social-users.use-case';
+import { GetSocialUserQuery } from '../application/queries/get-social-user/get-social-user.query';
+import { SearchSocialUsersQuery } from '../application/queries/search-social-users/search-social-users.query';
 
 /** E */
 @Controller('api/social/users')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class SocialUsersController {
-  public constructor(
-    private readonly searchSocialUsers: SearchSocialUsersUseCase,
-    private readonly getSocialUser: GetSocialUserUseCase,
+  public constructor(private readonly queryBus: QueryBus
   ) {}
 
   /**
@@ -36,10 +35,10 @@ export class SocialUsersController {
    */
   @Get()
   public search(
-    @RequestData(new ValidateRequestPipe(searchSocialUsersRequestSchema)) data: { query: SearchSocialUsersQuery },
+    @RequestData(new ValidateRequestPipe(searchSocialUsersRequestSchema)) data: { query: SearchSocialUsersRequestQuery },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<SearchSocialUsersResponse> {
-    return this.searchSocialUsers.execute(user.id, data.query.search, data.query.limit, data.query.cursor);
+    return this.queryBus.execute(new SearchSocialUsersQuery(user.id, data.query.search, data.query.limit, data.query.cursor));
   }
 
   /**
@@ -61,6 +60,6 @@ export class SocialUsersController {
     @RequestData(new ValidateRequestPipe(getSocialUserRequestSchema)) data: { params: GetSocialUserParams },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<GetSocialUserResponse> {
-    return this.getSocialUser.execute(user.id, data.params.userId);
+    return this.queryBus.execute(new GetSocialUserQuery(user.id, data.params.userId));
   }
 }

@@ -1,11 +1,12 @@
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Controller, Get, HttpCode, HttpStatus, Post, Res, UseGuards } from '@nestjs/common';
 import type {
   CreateWorkoutSessionBody,
-  GetExerciseHistoryQuery,
+  GetExerciseHistoryQuery as GetExerciseHistoryRequestQuery,
   GetExerciseHistoryResponse,
-  GetPersonalRecordsQuery,
+  GetPersonalRecordsQuery as GetPersonalRecordsRequestQuery,
   GetPersonalRecordsResponse,
-  GetWorkoutHistoryQuery,
+  GetWorkoutHistoryQuery as GetWorkoutHistoryRequestQuery,
   GetWorkoutHistoryResponse,
   GetWorkoutStatisticsResponse,
 } from '@strong-together/shared';
@@ -23,22 +24,18 @@ import { AuthorizationGuard, Roles } from '../../../../common/guards/authorizati
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
-import { CreateWorkoutSessionUseCase } from '../application/commands/create-workout-session.use-case';
-import { GetExerciseHistoryUseCase } from '../application/queries/get-exercise-history.use-case';
-import { GetPersonalRecordsUseCase } from '../application/queries/get-personal-records.use-case';
-import { GetWorkoutHistoryUseCase } from '../application/queries/get-workout-history.use-case';
-import { GetWorkoutStatisticsUseCase } from '../application/queries/get-workout-statistics.use-case';
+import { CreateWorkoutSessionCommand } from '../application/commands/create-workout-session/create-workout-session.command';
+import { GetExerciseHistoryQuery } from '../application/queries/get-exercise-history/get-exercise-history.query';
+import { GetPersonalRecordsQuery } from '../application/queries/get-personal-records/get-personal-records.query';
+import { GetWorkoutHistoryQuery } from '../application/queries/get-workout-history/get-workout-history.query';
+import { GetWorkoutStatisticsQuery } from '../application/queries/get-workout-statistics/get-workout-statistics.query';
 /** E */
 @Controller('api')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class WorkoutTrackingController {
-  constructor(
-    private readonly history: GetWorkoutHistoryUseCase,
-    private readonly exerciseHistory: GetExerciseHistoryUseCase,
-    private readonly statistics: GetWorkoutStatisticsUseCase,
-    private readonly records: GetPersonalRecordsUseCase,
-    private readonly createSession: CreateWorkoutSessionUseCase,
+  constructor(private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
   ) {}
   private cache(res: Response, hit: boolean) {
     res.set('X-Cache', hit ? 'HIT' : 'MISS');
@@ -60,11 +57,11 @@ export class WorkoutTrackingController {
    */
   @Get('workout-history')
   async getWorkoutHistory(
-    @RequestData(new ValidateRequestPipe(getWorkoutHistoryRequestSchema)) data: { query: GetWorkoutHistoryQuery },
+    @RequestData(new ValidateRequestPipe(getWorkoutHistoryRequestSchema)) data: { query: GetWorkoutHistoryRequestQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GetWorkoutHistoryResponse> {
-    const r = await this.history.execute(user.id, 45, true, data.query.tz || 'Asia/Jerusalem');
+    const r = await this.queryBus.execute(new GetWorkoutHistoryQuery(user.id, 45, true, data.query.tz || 'Asia/Jerusalem'));
     this.cache(res, r.cacheHit);
     return r.payload;
   }
@@ -85,11 +82,11 @@ export class WorkoutTrackingController {
    */
   @Get('exercise-history')
   async getExerciseHistory(
-    @RequestData(new ValidateRequestPipe(getExerciseHistoryRequestSchema)) data: { query: GetExerciseHistoryQuery },
+    @RequestData(new ValidateRequestPipe(getExerciseHistoryRequestSchema)) data: { query: GetExerciseHistoryRequestQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GetExerciseHistoryResponse> {
-    const r = await this.exerciseHistory.execute(user.id, 45, true, data.query.tz || 'Asia/Jerusalem');
+    const r = await this.queryBus.execute(new GetExerciseHistoryQuery(user.id, 45, true, data.query.tz || 'Asia/Jerusalem'));
     this.cache(res, r.cacheHit);
     return r.payload;
   }
@@ -110,11 +107,11 @@ export class WorkoutTrackingController {
    */
   @Get('workout-statistics')
   async getWorkoutStatistics(
-    @RequestData(new ValidateRequestPipe(getWorkoutHistoryRequestSchema)) data: { query: GetWorkoutHistoryQuery },
+    @RequestData(new ValidateRequestPipe(getWorkoutHistoryRequestSchema)) data: { query: GetWorkoutHistoryRequestQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GetWorkoutStatisticsResponse> {
-    const r = await this.statistics.execute(user.id, 45, true, data.query.tz || 'Asia/Jerusalem');
+    const r = await this.queryBus.execute(new GetWorkoutStatisticsQuery(user.id, 45, true, data.query.tz || 'Asia/Jerusalem'));
     this.cache(res, r.cacheHit);
     return r.payload;
   }
@@ -135,11 +132,11 @@ export class WorkoutTrackingController {
    */
   @Get('personal-records')
   async getPersonalRecords(
-    @RequestData(new ValidateRequestPipe(getPersonalRecordsRequestSchema)) data: { query: GetPersonalRecordsQuery },
+    @RequestData(new ValidateRequestPipe(getPersonalRecordsRequestSchema)) data: { query: GetPersonalRecordsRequestQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GetPersonalRecordsResponse> {
-    const r = await this.records.execute(user.id, true, data.query.tz || 'Asia/Jerusalem');
+    const r = await this.queryBus.execute(new GetPersonalRecordsQuery(user.id, true, data.query.tz || 'Asia/Jerusalem'));
     this.cache(res, r.cacheHit);
     return r.payload;
   }
@@ -164,6 +161,6 @@ export class WorkoutTrackingController {
     @RequestData(new ValidateRequestPipe(createWorkoutSessionRequestSchema)) data: { body: CreateWorkoutSessionBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.createSession.execute(user.id, data.body);
+    await this.commandBus.execute(new CreateWorkoutSessionCommand(user.id, data.body));
   }
 }

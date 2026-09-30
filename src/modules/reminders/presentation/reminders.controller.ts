@@ -1,3 +1,4 @@
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Controller, Get, HttpCode, HttpStatus, Patch, Put, UseGuards } from '@nestjs/common';
 import type { GetReminderSettingsResponse, UpdateReminderTimeZoneBody, UpsertReminderSettingsBody } from '@strong-together/shared';
 import { updateReminderTimeZoneRequestSchema, upsertReminderSettingsRequestSchema } from '@strong-together/shared';
@@ -8,19 +9,17 @@ import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../common/types/express';
-import { GetReminderSettingsUseCase } from '../application/queries/get-reminder-settings.use-case';
-import { UpdateReminderTimeZoneUseCase } from '../application/commands/update-reminder-time-zone.use-case';
-import { UpsertReminderSettingsUseCase } from '../application/commands/upsert-reminder-settings.use-case';
+import { GetReminderSettingsQuery } from '../application/queries/get-reminder-settings/get-reminder-settings.query';
+import { UpdateReminderTimeZoneCommand } from '../application/commands/update-reminder-time-zone/update-reminder-time-zone.command';
+import { UpsertReminderSettingsCommand } from '../application/commands/upsert-reminder-settings/upsert-reminder-settings.command';
 
 /** Reminder-settings routes for authenticated users. */
 @Controller('api/reminders')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class RemindersController {
-  constructor(
-    private readonly getReminderSettingsUseCase: GetReminderSettingsUseCase,
-    private readonly upsertReminderSettingsUseCase: UpsertReminderSettingsUseCase,
-    private readonly updateReminderTimeZoneUseCase: UpdateReminderTimeZoneUseCase,
+  constructor(private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
   ) {}
 
   /**
@@ -37,7 +36,7 @@ export class RemindersController {
    */
   @Get()
   async getReminderSettings(@CurrentUser() user: AuthenticatedUser): Promise<GetReminderSettingsResponse> {
-    return this.getReminderSettingsUseCase.execute(user.id);
+    return this.queryBus.execute(new GetReminderSettingsQuery(user.id));
   }
 
   /**
@@ -64,7 +63,7 @@ export class RemindersController {
     data: { body: UpsertReminderSettingsBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.upsertReminderSettingsUseCase.execute(user.id, data.body);
+    await this.commandBus.execute(new UpsertReminderSettingsCommand(user.id, data.body));
   }
 
   /**
@@ -90,6 +89,6 @@ export class RemindersController {
     data: { body: UpdateReminderTimeZoneBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.updateReminderTimeZoneUseCase.execute(user.id, data.body);
+    await this.commandBus.execute(new UpdateReminderTimeZoneCommand(user.id, data.body));
   }
 }

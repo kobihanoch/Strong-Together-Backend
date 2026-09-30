@@ -9,12 +9,12 @@ import { EmailChangeTokens } from './application/ports/email-change-tokens.port'
 import { ProfilePictureStorage } from './application/ports/profile-picture-storage.port';
 import { UpdateEmailSender } from './application/ports/update-email-sender.port';
 import { UserProfileRepository } from './application/ports/user-profile.repository';
-import { ConfirmEmailChangeUseCase } from './application/commands/confirm-email-change.use-case';
-import { DeleteProfilePictureUseCase } from './application/commands/delete-profile-picture.use-case';
-import { DeleteUserUseCase } from './application/commands/delete-user.use-case';
-import { GetCurrentUserUseCase } from './application/queries/get-current-user.use-case';
-import { ReplaceProfilePictureUseCase } from './application/commands/replace-profile-picture.use-case';
-import { UpdateCurrentUserUseCase } from './application/commands/update-current-user.use-case';
+import { ConfirmEmailChangeHandler } from './application/commands/confirm-email-change/confirm-email-change.handler';
+import { DeleteProfilePictureHandler } from './application/commands/delete-profile-picture/delete-profile-picture.handler';
+import { DeleteUserHandler } from './application/commands/delete-user/delete-user.handler';
+import { GetCurrentUserHandler } from './application/queries/get-current-user/get-current-user.handler';
+import { ReplaceProfilePictureHandler } from './application/commands/replace-profile-picture/replace-profile-picture.handler';
+import { UpdateCurrentUserHandler } from './application/commands/update-current-user/update-current-user.handler';
 import { JwtEmailChangeTokens } from './infrastructure/jwt-email-change.tokens';
 import { PostgresUserProfileRepository } from './infrastructure/persistence/postgres-user-profile.repository';
 import { QueuedUpdateEmailSender } from './infrastructure/queued-update-email.sender';
@@ -47,12 +47,12 @@ import { PostgresUserProfileQueries } from './infrastructure/persistence/postgre
     { provide: UpdateEmailSender, useClass: QueuedUpdateEmailSender },
     { provide: ProfilePictureStorage, useClass: SupabaseProfilePictureStorage },
     { provide: EmailChangeTokens, useClass: JwtEmailChangeTokens },
-    GetCurrentUserUseCase,
-    UpdateCurrentUserUseCase,
-    ConfirmEmailChangeUseCase,
-    DeleteUserUseCase,
-    ReplaceProfilePictureUseCase,
-    DeleteProfilePictureUseCase,
+    GetCurrentUserHandler,
+    UpdateCurrentUserHandler,
+    ConfirmEmailChangeHandler,
+    DeleteUserHandler,
+    ReplaceProfilePictureHandler,
+    DeleteProfilePictureHandler,
     DpopGuard,
     AuthenticationGuard,
     AuthorizationGuard,

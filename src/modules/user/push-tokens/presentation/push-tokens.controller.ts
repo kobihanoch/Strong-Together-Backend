@@ -1,3 +1,4 @@
+import { CommandBus } from '@nestjs/cqrs';
 import { Controller, Put, UseGuards } from '@nestjs/common';
 import type { ReplacePushTokenBody } from '@strong-together/shared';
 import { replacePushTokenRequestSchema } from '@strong-together/shared';
@@ -8,14 +9,14 @@ import { AuthorizationGuard, Roles } from '../../../../common/guards/authorizati
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
-import { ReplacePushTokenUseCase } from '../application/commands/replace-push-token.use-case';
+import { ReplacePushTokenCommand } from '../application/commands/replace-push-token/replace-push-token.command';
 
 /** E */
 @Controller('api/users')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class PushTokensController {
-  constructor(private readonly replaceToken: ReplacePushTokenUseCase) {}
+  constructor(private readonly commandBus: CommandBus) {}
   /**
    * Replaces the authenticated user's push-notification token.
    *
@@ -35,6 +36,6 @@ export class PushTokensController {
     @RequestData(new ValidateRequestPipe(replacePushTokenRequestSchema)) data: { body: ReplacePushTokenBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.replaceToken.execute(user.id, data.body.token);
+    await this.commandBus.execute(new ReplacePushTokenCommand(user.id, data.body.token));
   }
 }

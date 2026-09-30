@@ -1,3 +1,4 @@
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Controller, Delete, Get, HttpCode, HttpStatus, Post, Put, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import type {
@@ -5,7 +6,7 @@ import type {
   CreateAerobicEntryQuery,
   DeleteAerobicEntryParams,
   DeleteAerobicEntryQuery,
-  GetAerobicHistoryQuery,
+  GetAerobicHistoryQuery as GetAerobicHistoryRequestQuery,
   GetAerobicHistoryResponse,
   UpdateAerobicEntryBody,
   UpdateAerobicEntryParams,
@@ -18,10 +19,10 @@ import {
   getAerobicHistoryRequestSchema,
   updateAerobicEntryRequestSchema,
 } from '@strong-together/shared';
-import { CreateAerobicActivityUseCase } from '../application/commands/create-aerobic-activity.use-case';
-import { DeleteAerobicActivityUseCase } from '../application/commands/delete-aerobic-activity.use-case';
-import { GetAerobicHistoryUseCase } from '../application/queries/get-aerobic-history.use-case';
-import { UpdateAerobicActivityUseCase } from '../application/commands/update-aerobic-activity.use-case';
+import { CreateAerobicActivityCommand } from '../application/commands/create-aerobic-activity/create-aerobic-activity.command';
+import { DeleteAerobicActivityCommand } from '../application/commands/delete-aerobic-activity/delete-aerobic-activity.command';
+import { GetAerobicHistoryQuery } from '../application/queries/get-aerobic-history/get-aerobic-history.query';
+import { UpdateAerobicActivityCommand } from '../application/commands/update-aerobic-activity/update-aerobic-activity.command';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { AuthenticationGuard } from '../../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.guard';
@@ -34,11 +35,8 @@ import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class AerobicsController {
-  constructor(
-    private readonly getAerobicHistoryUseCase: GetAerobicHistoryUseCase,
-    private readonly createAerobicActivityUseCase: CreateAerobicActivityUseCase,
-    private readonly updateAerobicActivityUseCase: UpdateAerobicActivityUseCase,
-    private readonly deleteAerobicActivityUseCase: DeleteAerobicActivityUseCase,
+  constructor(private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
   ) {}
 
   /**
@@ -62,12 +60,12 @@ export class AerobicsController {
    */
   @Get()
   async getAerobicHistory(
-    @RequestData(new ValidateRequestPipe(getAerobicHistoryRequestSchema)) data: { query: GetAerobicHistoryQuery },
+    @RequestData(new ValidateRequestPipe(getAerobicHistoryRequestSchema)) data: { query: GetAerobicHistoryRequestQuery },
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<GetAerobicHistoryResponse> {
     const tz = data.query.tz;
-    const { payload, cacheHit } = await this.getAerobicHistoryUseCase.execute(user.id, 45, true, tz);
+    const { payload, cacheHit } = await this.queryBus.execute(new GetAerobicHistoryQuery(user.id, 45, true, tz));
 
     res.set('X-Cache', cacheHit ? 'HIT' : 'MISS');
     return payload;
@@ -100,7 +98,7 @@ export class AerobicsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.createAerobicActivityUseCase.execute(user.id, data.body.record);
+    await this.commandBus.execute(new CreateAerobicActivityCommand(user.id, data.body.record));
   }
 
   /**
@@ -130,7 +128,7 @@ export class AerobicsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.updateAerobicActivityUseCase.execute(user.id, data.params.id, data.body.record);
+    await this.commandBus.execute(new UpdateAerobicActivityCommand(user.id, data.params.id, data.body.record));
   }
 
   /**
@@ -159,6 +157,6 @@ export class AerobicsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.deleteAerobicActivityUseCase.execute(user.id, data.params.id);
+    await this.commandBus.execute(new DeleteAerobicActivityCommand(user.id, data.params.id));
   }
 }

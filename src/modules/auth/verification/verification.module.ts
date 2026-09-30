@@ -4,10 +4,10 @@ import { EmailsModule } from '../../../infrastructure/capabilities/queues/emails
 import { AuthCoreModule } from '../core/auth-core.module';
 import { VerificationEmailSender } from './application/ports/verification-email-sender.port';
 import { VerificationRepository } from './application/ports/verification.repository';
-import { CreateVerificationEmailUseCase } from './application/commands/create-verification-email.use-case';
-import { GetVerificationStatusUseCase } from './application/queries/get-verification-status.use-case';
-import { UpdateUnverifiedEmailUseCase } from './application/commands/update-unverified-email.use-case';
-import { VerifyEmailUseCase } from './application/commands/verify-email.use-case';
+import { CreateVerificationEmailHandler } from './application/commands/create-verification-email/create-verification-email.handler';
+import { GetVerificationStatusHandler } from './application/queries/get-verification-status/get-verification-status.handler';
+import { UpdateUnverifiedEmailHandler } from './application/commands/update-unverified-email/update-unverified-email.handler';
+import { VerifyEmailHandler } from './application/commands/verify-email/verify-email.handler';
 import { PostgresVerificationRepository } from './infrastructure/persistence/postgres-verification.repository';
 import { QueuedVerificationEmailSender } from './infrastructure/queued-verification-email.sender';
 import { GetVerificationStatusSql } from './infrastructure/persistence/reads/get-verification-status.sql';
@@ -34,10 +34,10 @@ import { PostgresVerificationQueries } from './infrastructure/persistence/postgr
     UpdateVerificationSql,
     { provide: VerificationRepository, useClass: PostgresVerificationRepository },
     { provide: VerificationEmailSender, useClass: QueuedVerificationEmailSender },
-    VerifyEmailUseCase,
-    CreateVerificationEmailUseCase,
-    UpdateUnverifiedEmailUseCase,
-    GetVerificationStatusUseCase,
+    VerifyEmailHandler,
+    CreateVerificationEmailHandler,
+    UpdateUnverifiedEmailHandler,
+    GetVerificationStatusHandler,
     UserRegisteredListener,
     RateLimitGuard,
   ],

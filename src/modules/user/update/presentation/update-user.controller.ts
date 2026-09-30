@@ -1,3 +1,4 @@
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Put, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { ConfirmEmailChangeQuery, DeleteProfilePictureBody, GetCurrentUserResponse, ReplaceProfilePictureResponse, UpdateCurrentUserBody } from '@strong-together/shared';
@@ -14,12 +15,12 @@ import { imageUploadOptions } from '../../../../common/interceptors/image-upload
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
 import type { EmailChangeOutcome } from '../application/models/update-user.models';
-import { ConfirmEmailChangeUseCase } from '../application/commands/confirm-email-change.use-case';
-import { DeleteProfilePictureUseCase } from '../application/commands/delete-profile-picture.use-case';
-import { DeleteUserUseCase } from '../application/commands/delete-user.use-case';
-import { GetCurrentUserUseCase } from '../application/queries/get-current-user.use-case';
-import { ReplaceProfilePictureUseCase } from '../application/commands/replace-profile-picture.use-case';
-import { UpdateCurrentUserUseCase } from '../application/commands/update-current-user.use-case';
+import { ConfirmEmailChangeCommand } from '../application/commands/confirm-email-change/confirm-email-change.command';
+import { DeleteProfilePictureCommand } from '../application/commands/delete-profile-picture/delete-profile-picture.command';
+import { DeleteUserCommand } from '../application/commands/delete-user/delete-user.command';
+import { GetCurrentUserQuery } from '../application/queries/get-current-user/get-current-user.query';
+import { ReplaceProfilePictureCommand } from '../application/commands/replace-profile-picture/replace-profile-picture.command';
+import { UpdateCurrentUserCommand } from '../application/commands/update-current-user/update-current-user.command';
 import { generateEmailChangeFailedHTML, generateEmailChangeSuccessHTML } from './update-user.views';
 
 const emailChangeStatus: Record<EmailChangeOutcome['kind'], HttpStatus> = {
@@ -35,13 +36,8 @@ const emailChangeStatus: Record<EmailChangeOutcome['kind'], HttpStatus> = {
 /** E */
 @Controller('api/users')
 export class UpdateUserController {
-  constructor(
-    private readonly getUser: GetCurrentUserUseCase,
-    private readonly updateUser: UpdateCurrentUserUseCase,
-    private readonly confirmEmail: ConfirmEmailChangeUseCase,
-    private readonly deleteUser: DeleteUserUseCase,
-    private readonly replacePicture: ReplaceProfilePictureUseCase,
-    private readonly deletePicture: DeleteProfilePictureUseCase,
+  constructor(private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
   ) {}
 
   /**
@@ -61,7 +57,7 @@ export class UpdateUserController {
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
   @Roles('user')
   async getCurrentUser(@CurrentUser() user: AuthenticatedUser): Promise<GetCurrentUserResponse> {
-    return this.getUser.execute(user.id);
+    return this.queryBus.execute(new GetCurrentUserQuery(user.id));
   }
 
   /**
@@ -92,7 +88,7 @@ export class UpdateUserController {
     @CurrentUser() user: AuthenticatedUser,
     @CurrentRequestId() requestId?: string,
   ): Promise<void> {
-    await this.updateUser.execute(user.id, data.body, requestId);
+    await this.commandBus.execute(new UpdateCurrentUserCommand(user.id, data.body, requestId));
   }
 
   /**
@@ -111,7 +107,7 @@ export class UpdateUserController {
     @RequestData(new ValidateRequestPipe(confirmEmailChangeRequestSchema)) data: { query: ConfirmEmailChangeQuery },
     @Res() res: Response,
   ): Promise<void> {
-    const result = await this.confirmEmail.execute(data.query.token);
+    const result = await this.commandBus.execute(new ConfirmEmailChangeCommand(data.query.token));
     const html = result.kind === 'confirmed' ? generateEmailChangeSuccessHTML() : generateEmailChangeFailedHTML(result.reason);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.status(emailChangeStatus[result.kind]).type('html').set('Cache-Control', 'no-store').send(html);
@@ -134,7 +130,7 @@ export class UpdateUserController {
   @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
   @Roles('user')
   async deleteSelfUser(@CurrentUser() user: AuthenticatedUser): Promise<void> {
-    await this.deleteUser.execute(user.id);
+    await this.commandBus.execute(new DeleteUserCommand(user.id));
   }
 
   /**
@@ -162,7 +158,7 @@ export class UpdateUserController {
     @UploadedFile() file: Express.Multer.File | undefined,
     @Res({ passthrough: true }) res: Response,
   ): Promise<ReplaceProfilePictureResponse> {
-    const result = await this.replacePicture.execute(user.id, file);
+    const result = await this.commandBus.execute(new ReplaceProfilePictureCommand(user.id, file));
     res.status(201);
     return result;
   }
@@ -188,6 +184,6 @@ export class UpdateUserController {
     @RequestData(new ValidateRequestPipe(deleteProfilePictureRequestSchema)) data: { body: DeleteProfilePictureBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.deletePicture.execute(user.id, data.body.profilePicPath);
+    await this.commandBus.execute(new DeleteProfilePictureCommand(user.id, data.body.profilePicPath));
   }
 }

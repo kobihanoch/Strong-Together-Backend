@@ -4,8 +4,8 @@ import { AuthorizationGuard } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { WorkoutScheduleCache } from './application/ports/workout-schedule-cache.port';
 import { WorkoutScheduleRepository } from './application/ports/workout-schedule.repository';
-import { GetWorkoutSchedulesUseCase } from './application/queries/get-workout-schedules.use-case';
-import { ReplaceWorkoutSchedulesUseCase } from './application/commands/replace-workout-schedules.use-case';
+import { GetWorkoutSchedulesHandler } from './application/queries/get-workout-schedules/get-workout-schedules.handler';
+import { ReplaceWorkoutSchedulesHandler } from './application/commands/replace-workout-schedules/replace-workout-schedules.handler';
 import { PostgresWorkoutScheduleRepository } from './infrastructure/persistence/postgres-workout-schedule.repository';
 import { RedisWorkoutScheduleCache } from './infrastructure/redis-workout-schedule.cache';
 import { FindByUserSql } from './infrastructure/persistence/reads/find-by-user.sql';
@@ -18,8 +18,8 @@ import { PostgresWorkoutScheduleQueries } from './infrastructure/persistence/pos
   controllers: [WorkoutScheduleController],
   providers: [
     { provide: WorkoutScheduleQueries, useClass: PostgresWorkoutScheduleQueries },
-    GetWorkoutSchedulesUseCase,
-    ReplaceWorkoutSchedulesUseCase,
+    GetWorkoutSchedulesHandler,
+    ReplaceWorkoutSchedulesHandler,
     FindByUserSql,
     SaveSql,
     {

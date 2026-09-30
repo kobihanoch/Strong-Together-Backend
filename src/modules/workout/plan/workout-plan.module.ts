@@ -4,8 +4,8 @@ import { AuthorizationGuard } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { WorkoutPlanCache } from './application/ports/workout-plan-cache.port';
 import { WorkoutPlanRepository } from './application/ports/workout-plan.repository';
-import { GetWorkoutPlanUseCase } from './application/queries/get-workout-plan.use-case';
-import { ReplaceWorkoutPlanUseCase } from './application/commands/replace-workout-plan.use-case';
+import { GetWorkoutPlanHandler } from './application/queries/get-workout-plan/get-workout-plan.handler';
+import { ReplaceWorkoutPlanHandler } from './application/commands/replace-workout-plan/replace-workout-plan.handler';
 import { PostgresWorkoutPlanRepository } from './infrastructure/persistence/postgres-workout-plan.repository';
 import { RedisWorkoutPlanCache } from './infrastructure/redis-workout-plan.cache';
 import { FindActiveByUserSql } from './infrastructure/persistence/reads/find-active-by-user.sql';
@@ -28,8 +28,8 @@ import { PostgresWorkoutPlanQueries } from './infrastructure/persistence/postgre
     SavePlannedExercisesSql,
     { provide: WorkoutPlanRepository, useClass: PostgresWorkoutPlanRepository },
     { provide: WorkoutPlanCache, useClass: RedisWorkoutPlanCache },
-    GetWorkoutPlanUseCase,
-    ReplaceWorkoutPlanUseCase,
+    GetWorkoutPlanHandler,
+    ReplaceWorkoutPlanHandler,
     DpopGuard,
     AuthenticationGuard,
     AuthorizationGuard,

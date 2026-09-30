@@ -6,8 +6,8 @@ import { SessionModule } from '../session/session.module';
 import { PasswordRepository } from './application/ports/password.repository';
 import { PasswordResetQueries } from './application/ports/password-reset.queries';
 import { PasswordResetEmailSender } from './application/ports/password-reset-email-sender.port';
-import { CreatePasswordResetRequestUseCase } from './application/commands/create-password-reset-request.use-case';
-import { ResetPasswordUseCase } from './application/commands/reset-password.use-case';
+import { CreatePasswordResetRequestHandler } from './application/commands/create-password-reset-request/create-password-reset-request.handler';
+import { ResetPasswordHandler } from './application/commands/reset-password/reset-password.handler';
 import { FindResetRecipientSql } from './infrastructure/persistence/reads/find-reset-recipient.sql';
 import { SaveSql } from './infrastructure/persistence/writes/save.sql';
 import { PostgresPasswordRepository } from './infrastructure/persistence/postgres-password.repository';
@@ -24,8 +24,8 @@ import { PasswordController } from './presentation/password.controller';
     { provide: PasswordResetQueries, useClass: PostgresPasswordResetQueries },
     { provide: PasswordRepository, useClass: PostgresPasswordRepository },
     { provide: PasswordResetEmailSender, useClass: QueuedPasswordResetEmailSender },
-    CreatePasswordResetRequestUseCase,
-    ResetPasswordUseCase,
+    CreatePasswordResetRequestHandler,
+    ResetPasswordHandler,
     RateLimitGuard,
   ],
 })

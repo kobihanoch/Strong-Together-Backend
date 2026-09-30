@@ -4,9 +4,9 @@ import { RateLimitGuard } from '../../../common/guards/rate-limit.guard';
 import { AuthCoreModule } from '../core/auth-core.module';
 import { AuthenticationEvents } from './application/ports/authentication-events.port';
 import { SessionRepository } from './application/ports/session.repository';
-import { LoginUseCase } from './application/commands/login.use-case';
-import { LogoutUseCase } from './application/commands/logout.use-case';
-import { RefreshSessionUseCase } from './application/commands/refresh-session.use-case';
+import { LoginHandler } from './application/commands/login/login.handler';
+import { LogoutHandler } from './application/commands/logout/logout.handler';
+import { RefreshSessionHandler } from './application/commands/refresh-session/refresh-session.handler';
 import { NestAuthenticationEvents } from './infrastructure/nest-authentication-events';
 import { PostgresSessionRepository } from './infrastructure/persistence/postgres-session.repository';
 import { ClearPushTokenSql } from './infrastructure/persistence/writes/clear-push-token.sql';
@@ -31,9 +31,9 @@ import { SessionController } from './presentation/session.controller';
     RotateSql,
     { provide: SessionRepository, useClass: PostgresSessionRepository },
     { provide: AuthenticationEvents, useClass: NestAuthenticationEvents },
-    LoginUseCase,
-    LogoutUseCase,
-    RefreshSessionUseCase,
+    LoginHandler,
+    LogoutHandler,
+    RefreshSessionHandler,
     DpopGuard,
     RateLimitGuard,
   ],

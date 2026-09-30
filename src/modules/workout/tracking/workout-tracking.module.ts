@@ -4,11 +4,11 @@ import { AuthorizationGuard } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { WorkoutTrackingCache } from './application/ports/workout-tracking-cache.port';
 import { WorkoutTrackingRepository } from './application/ports/workout-tracking.repository';
-import { CreateWorkoutSessionUseCase } from './application/commands/create-workout-session.use-case';
-import { GetExerciseHistoryUseCase } from './application/queries/get-exercise-history.use-case';
-import { GetPersonalRecordsUseCase } from './application/queries/get-personal-records.use-case';
-import { GetWorkoutHistoryUseCase } from './application/queries/get-workout-history.use-case';
-import { GetWorkoutStatisticsUseCase } from './application/queries/get-workout-statistics.use-case';
+import { CreateWorkoutSessionHandler } from './application/commands/create-workout-session/create-workout-session.handler';
+import { GetExerciseHistoryHandler } from './application/queries/get-exercise-history/get-exercise-history.handler';
+import { GetPersonalRecordsHandler } from './application/queries/get-personal-records/get-personal-records.handler';
+import { GetWorkoutHistoryHandler } from './application/queries/get-workout-history/get-workout-history.handler';
+import { GetWorkoutStatisticsHandler } from './application/queries/get-workout-statistics/get-workout-statistics.handler';
 import { PostgresWorkoutTrackingRepository } from './infrastructure/persistence/postgres-workout-tracking.repository';
 import { RedisWorkoutTrackingCache } from './infrastructure/redis-workout-tracking.cache';
 import { FindExerciseHistorySql } from './infrastructure/persistence/reads/find-exercise-history.sql';
@@ -31,11 +31,11 @@ import { PostgresWorkoutTrackingQueries } from './infrastructure/persistence/pos
     CreateSql,
     { provide: WorkoutTrackingRepository, useClass: PostgresWorkoutTrackingRepository },
     { provide: WorkoutTrackingCache, useClass: RedisWorkoutTrackingCache },
-    GetWorkoutHistoryUseCase,
-    GetExerciseHistoryUseCase,
-    GetWorkoutStatisticsUseCase,
-    GetPersonalRecordsUseCase,
-    CreateWorkoutSessionUseCase,
+    GetWorkoutHistoryHandler,
+    GetExerciseHistoryHandler,
+    GetWorkoutStatisticsHandler,
+    GetPersonalRecordsHandler,
+    CreateWorkoutSessionHandler,
     DpopGuard,
     AuthenticationGuard,
     AuthorizationGuard,

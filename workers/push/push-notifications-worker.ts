@@ -1,9 +1,10 @@
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { createLogger } from '../../src/infrastructure/capabilities/observability/logger';
 import { PushNotificationsQueueService } from '../../src/infrastructure/capabilities/queues/push-notifications/push-notifications-queue';
 import { captureWorkerException } from '../../src/infrastructure/capabilities/observability/sentry';
-import { FindEligiblePushTokenUseCase } from '../../src/modules/push/application/queries/find-eligible-push-token.use-case';
-import { SendPushNotificationUseCase } from '../../src/modules/push/application/commands/send-push-notification.use-case';
+import { FindEligiblePushTokenQuery } from '../../src/modules/push/application/queries/find-eligible-push-token/find-eligible-push-token.query';
+import { SendPushNotificationCommand } from '../../src/modules/push/application/commands/send-push-notification/send-push-notification.command';
 
 const logger = createLogger('worker:push-notifications', {
   queue: 'pushNotificationsQueue',
@@ -11,10 +12,9 @@ const logger = createLogger('worker:push-notifications', {
 
 @Injectable()
 export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDestroy {
-  constructor(
-    private readonly pushNotificationsQueueService: PushNotificationsQueueService,
-    private readonly findEligiblePushToken: FindEligiblePushTokenUseCase,
-    private readonly sendPushNotification: SendPushNotificationUseCase,
+  constructor(private readonly pushNotificationsQueueService: PushNotificationsQueueService,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
   ) {}
 
   async onModuleInit() {
@@ -50,13 +50,13 @@ export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDes
           }
 
           // Recheck the user's current settings and schedule after the job delay.
-          const token = await this.findEligiblePushToken.execute(userId, workoutScheduleId, occurrenceDate);
+          const token = await this.queryBus.execute(new FindEligiblePushTokenQuery(userId, workoutScheduleId, occurrenceDate));
           if (!token) {
             jobLogger.info({ event: 'job.skipped_ineligible' }, 'Skipping ineligible workout reminder');
             return;
           }
 
-          const delivery = await this.sendPushNotification.execute({ token, title, body });
+          const delivery = await this.commandBus.execute(new SendPushNotificationCommand({ token, title, body }));
           const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
           if (delivery.kind === 'permanent-failure') {
             jobLogger.warn(

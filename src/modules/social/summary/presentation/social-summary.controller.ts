@@ -1,9 +1,10 @@
+import { QueryBus } from '@nestjs/cqrs';
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import type { GetSocialSummaryResponse } from '@strong-together/shared';
 import { AuthenticationGuard } from '../../../../common/guards/authentication.guard';
 import { AuthorizationGuard, Roles } from '../../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
-import { GetSocialSummaryUseCase } from '../application/queries/get-social-summary.use-case';
+import { GetSocialSummaryQuery } from '../application/queries/get-social-summary/get-social-summary.query';
 import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../../common/types/express';
 
@@ -12,7 +13,7 @@ import type { AuthenticatedUser } from '../../../../common/types/express';
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class SocialSummaryController {
-  public constructor(private readonly getSocialSummary: GetSocialSummaryUseCase) {}
+  public constructor(private readonly queryBus: QueryBus) {}
 
   /**
    * Gets the caller's active crew total and unique co-member previews.
@@ -27,6 +28,6 @@ export class SocialSummaryController {
    */
   @Get()
   public getSummary(@CurrentUser() user: AuthenticatedUser): Promise<GetSocialSummaryResponse> {
-    return this.getSocialSummary.execute(user.id);
+    return this.queryBus.execute(new GetSocialSummaryQuery(user.id));
   }
 }

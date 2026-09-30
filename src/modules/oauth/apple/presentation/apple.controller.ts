@@ -1,3 +1,4 @@
+import { CommandBus } from '@nestjs/cqrs';
 import { Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import type { AppleOAuthBody, OAuthLoginResponse } from '@strong-together/shared';
@@ -6,12 +7,12 @@ import { RequestData } from '../../../../common/decorators/request-data.decorato
 import { RateLimit, RateLimitGuard, loginRateLimit } from '../../../../common/guards/rate-limit.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import { validateJkt } from '../../core/presentation/oauth-request.utils';
-import { SignInWithAppleUseCase } from '../application/commands/sign-in-with-apple.use-case';
+import { SignInWithAppleCommand } from '../application/commands/sign-in-with-apple/sign-in-with-apple.command';
 
 /** OAuth routes for Apple sign-in. */
 @Controller('api/oauth')
 export class AppleController {
-  constructor(private readonly signInWithAppleUseCase: SignInWithAppleUseCase) {}
+  constructor(private readonly commandBus: CommandBus) {}
 
   /**
    * Authenticate or register a user with Apple OAuth.
@@ -43,7 +44,7 @@ export class AppleController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<OAuthLoginResponse> {
     const jkt = validateJkt(req);
-    const payload = await this.signInWithAppleUseCase.execute(data.body, jkt);
+    const payload = await this.commandBus.execute(new SignInWithAppleCommand(data.body, jkt));
 
     res.set('Cache-Control', 'no-store');
     return payload;

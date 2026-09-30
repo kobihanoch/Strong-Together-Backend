@@ -4,10 +4,10 @@ import { AuthorizationGuard } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { AerobicsCache } from './application/ports/aerobics-cache.port';
 import { AerobicsRepository } from './application/ports/aerobics.repository';
-import { CreateAerobicActivityUseCase } from './application/commands/create-aerobic-activity.use-case';
-import { DeleteAerobicActivityUseCase } from './application/commands/delete-aerobic-activity.use-case';
-import { GetAerobicHistoryUseCase } from './application/queries/get-aerobic-history.use-case';
-import { UpdateAerobicActivityUseCase } from './application/commands/update-aerobic-activity.use-case';
+import { CreateAerobicActivityHandler } from './application/commands/create-aerobic-activity/create-aerobic-activity.handler';
+import { DeleteAerobicActivityHandler } from './application/commands/delete-aerobic-activity/delete-aerobic-activity.handler';
+import { GetAerobicHistoryHandler } from './application/queries/get-aerobic-history/get-aerobic-history.handler';
+import { UpdateAerobicActivityHandler } from './application/commands/update-aerobic-activity/update-aerobic-activity.handler';
 import { FindByUserSql } from './infrastructure/persistence/reads/find-by-user.sql';
 import { CreateSql } from './infrastructure/persistence/writes/create.sql';
 import { DeleteSql } from './infrastructure/persistence/writes/delete.sql';
@@ -36,10 +36,10 @@ import { PostgresAerobicsQueries } from './infrastructure/persistence/postgres-a
       provide: AerobicsCache,
       useClass: RedisAerobicsCache,
     },
-    GetAerobicHistoryUseCase,
-    CreateAerobicActivityUseCase,
-    UpdateAerobicActivityUseCase,
-    DeleteAerobicActivityUseCase,
+    GetAerobicHistoryHandler,
+    CreateAerobicActivityHandler,
+    UpdateAerobicActivityHandler,
+    DeleteAerobicActivityHandler,
     DpopGuard,
     AuthenticationGuard,
     AuthorizationGuard,

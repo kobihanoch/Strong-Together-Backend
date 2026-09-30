@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { CreateUserRepository } from './application/ports/create-user.repository';
 import { PasswordHasher } from './application/ports/password-hasher.port';
 import { UserRegistrationEvents } from './application/ports/user-registration-events.port';
-import { CreateUserUseCase } from './application/commands/create-user.use-case';
+import { CreateUserHandler } from './application/commands/create-user/create-user.handler';
 import { BcryptPasswordHasher } from './infrastructure/bcrypt-password.hasher';
 import { CreateSql } from './infrastructure/persistence/writes/create.sql';
 import { ExistsSql } from './infrastructure/persistence/reads/exists.sql';
@@ -18,7 +18,7 @@ import { CreateUserController } from './presentation/create-user.controller';
     { provide: CreateUserRepository, useClass: PostgresCreateUserRepository },
     { provide: PasswordHasher, useClass: BcryptPasswordHasher },
     { provide: UserRegistrationEvents, useClass: NestUserRegistrationEvents },
-    CreateUserUseCase,
+    CreateUserHandler,
   ],
 })
 export class CreateUserModule {}

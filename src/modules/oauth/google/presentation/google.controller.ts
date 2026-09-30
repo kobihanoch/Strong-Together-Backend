@@ -1,3 +1,4 @@
+import { CommandBus } from '@nestjs/cqrs';
 import { Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import type { GoogleOAuthBody, OAuthLoginResponse } from '@strong-together/shared';
@@ -6,12 +7,12 @@ import { RequestData } from '../../../../common/decorators/request-data.decorato
 import { RateLimit, RateLimitGuard, loginRateLimit } from '../../../../common/guards/rate-limit.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import { validateJkt } from '../../core/presentation/oauth-request.utils';
-import { SignInWithGoogleUseCase } from '../application/commands/sign-in-with-google.use-case';
+import { SignInWithGoogleCommand } from '../application/commands/sign-in-with-google/sign-in-with-google.command';
 
 /** OAuth routes for Google sign-in. */
 @Controller('api/oauth')
 export class GoogleController {
-  constructor(private readonly signInWithGoogleUseCase: SignInWithGoogleUseCase) {}
+  constructor(private readonly commandBus: CommandBus) {}
 
   /**
    * Authenticate or register a user with Google OAuth.
@@ -42,7 +43,7 @@ export class GoogleController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<OAuthLoginResponse> {
     const jkt = validateJkt(req);
-    const payload = await this.signInWithGoogleUseCase.execute(data.body, jkt);
+    const payload = await this.commandBus.execute(new SignInWithGoogleCommand(data.body, jkt));
 
     res.set('Cache-Control', 'no-store');
     return payload;

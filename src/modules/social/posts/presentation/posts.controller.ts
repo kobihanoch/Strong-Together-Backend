@@ -1,12 +1,13 @@
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, UseGuards } from '@nestjs/common';
 import type {
   CreatePostBody,
   CreatePostResponse,
   DeletePostParams,
   ListCrewPostsParams,
-  ListCrewPostsQuery,
+  ListCrewPostsQuery as ListCrewPostsRequestQuery,
   ListCrewPostsResponse,
-  ListVisiblePostsQuery,
+  ListVisiblePostsQuery as ListVisiblePostsRequestQuery,
   ListVisiblePostsResponse,
   UpdatePostBody,
   UpdatePostParams,
@@ -26,23 +27,19 @@ import { AuthorizationGuard, Roles } from '../../../../common/guards/authorizati
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
-import { CreatePostUseCase } from '../application/commands/create-post.use-case';
-import { DeletePostUseCase } from '../application/commands/delete-post.use-case';
-import { ListCrewPostsUseCase } from '../application/queries/list-crew-posts.use-case';
-import { ListVisiblePostsUseCase } from '../application/queries/list-visible-posts.use-case';
-import { UpdatePostUseCase } from '../application/commands/update-post.use-case';
+import { CreatePostCommand } from '../application/commands/create-post/create-post.command';
+import { DeletePostCommand } from '../application/commands/delete-post/delete-post.command';
+import { ListCrewPostsQuery } from '../application/queries/list-crew-posts/list-crew-posts.query';
+import { ListVisiblePostsQuery } from '../application/queries/list-visible-posts/list-visible-posts.query';
+import { UpdatePostCommand } from '../application/commands/update-post/update-post.command';
 
 /** Exposes authenticated CRUD endpoints for social posts. */
 @Controller('api/social/posts')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class PostsController {
-  public constructor(
-    private readonly listVisiblePosts: ListVisiblePostsUseCase,
-    private readonly listCrewPosts: ListCrewPostsUseCase,
-    private readonly createPost: CreatePostUseCase,
-    private readonly updatePost: UpdatePostUseCase,
-    private readonly deletePost: DeletePostUseCase,
+  public constructor(private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
   ) {}
 
   /**
@@ -62,11 +59,11 @@ export class PostsController {
   async getVisiblePosts(
     @RequestData(new ValidateRequestPipe(listVisiblePostsRequestSchema))
     data: {
-      query: ListVisiblePostsQuery;
+      query: ListVisiblePostsRequestQuery;
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListVisiblePostsResponse> {
-    return this.listVisiblePosts.execute(user.id, data.query.limit, data.query.cursor);
+    return this.queryBus.execute(new ListVisiblePostsQuery(user.id, data.query.limit, data.query.cursor));
   }
 
   /**
@@ -87,11 +84,11 @@ export class PostsController {
     @RequestData(new ValidateRequestPipe(listCrewPostsRequestSchema))
     data: {
       params: ListCrewPostsParams;
-      query: ListCrewPostsQuery;
+      query: ListCrewPostsRequestQuery;
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListCrewPostsResponse> {
-    return this.listCrewPosts.execute(user.id, data.params.crewId, data.query.limit, data.query.cursor);
+    return this.queryBus.execute(new ListCrewPostsQuery(user.id, data.params.crewId, data.query.limit, data.query.cursor));
   }
 
   /**
@@ -115,7 +112,7 @@ export class PostsController {
     data: { body: CreatePostBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<CreatePostResponse> {
-    await this.createPost.execute(user.id, data.body);
+    await this.commandBus.execute(new CreatePostCommand(user.id, data.body));
   }
 
   /**
@@ -142,7 +139,7 @@ export class PostsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<UpdatePostResponse> {
-    await this.updatePost.execute(user.id, data.params.id, data.body.content);
+    await this.commandBus.execute(new UpdatePostCommand(user.id, data.params.id, data.body.content));
   }
 
   /**
@@ -168,6 +165,6 @@ export class PostsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.deletePost.execute(user.id, data.params.id);
+    await this.commandBus.execute(new DeletePostCommand(user.id, data.params.id));
   }
 }

@@ -1,15 +1,16 @@
+import { CommandBus } from '@nestjs/cqrs';
 import { Controller, Headers, HttpCode, HttpStatus, Post, UnauthorizedException } from '@nestjs/common';
 import jwt from 'jsonwebtoken';
 import { extractBearerToken } from '../../../common/authentication/authentication.utils';
 import { CurrentRequestId } from '../../../common/decorators/current-request-id.decorator';
 import { authConfig } from '../../../config/auth.config';
 import type { PushBatchResult } from '../application/models/push.models';
-import { EnqueueDueWorkoutRemindersUseCase } from '../application/commands/enqueue-due-workout-reminders.use-case';
+import { EnqueueDueWorkoutRemindersCommand } from '../application/commands/enqueue-due-workout-reminders/enqueue-due-workout-reminders.command';
 
 /** Push-notification trigger routes. */
 @Controller('api/push-jobs')
 export class PushController {
-  constructor(private readonly enqueueDueWorkoutRemindersUseCase: EnqueueDueWorkoutRemindersUseCase) {}
+  constructor(private readonly commandBus: CommandBus) {}
 
   /**
    * Enqueues workout reminders due during the cron look-ahead window.
@@ -37,6 +38,6 @@ export class PushController {
       throw new UnauthorizedException('Invalid cron JWT');
     }
 
-    return this.enqueueDueWorkoutRemindersUseCase.execute(requestId);
+    return this.commandBus.execute(new EnqueueDueWorkoutRemindersCommand(requestId));
   }
 }

@@ -3,11 +3,11 @@ import { AuthenticationGuard } from '../../../common/guards/authentication.guard
 import { AuthorizationGuard } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { PostsRepository } from './application/ports/posts.repository';
-import { CreatePostUseCase } from './application/commands/create-post.use-case';
-import { DeletePostUseCase } from './application/commands/delete-post.use-case';
-import { ListCrewPostsUseCase } from './application/queries/list-crew-posts.use-case';
-import { ListVisiblePostsUseCase } from './application/queries/list-visible-posts.use-case';
-import { UpdatePostUseCase } from './application/commands/update-post.use-case';
+import { CreatePostHandler } from './application/commands/create-post/create-post.handler';
+import { DeletePostHandler } from './application/commands/delete-post/delete-post.handler';
+import { ListCrewPostsHandler } from './application/queries/list-crew-posts/list-crew-posts.handler';
+import { ListVisiblePostsHandler } from './application/queries/list-visible-posts/list-visible-posts.handler';
+import { UpdatePostHandler } from './application/commands/update-post/update-post.handler';
 import { PostgresPostsRepository } from './infrastructure/persistence/postgres-posts.repository';
 import { ListForCrewSql } from './infrastructure/persistence/reads/list-for-crew.sql';
 import { ListVisibleSql } from './infrastructure/persistence/reads/list-visible.sql';
@@ -23,11 +23,11 @@ import { FindPostByIdForUpdateSql } from './infrastructure/persistence/reads/fin
   controllers: [PostsController],
   providers: [
     { provide: PostsQueries, useClass: PostgresPostsQueries },
-    ListVisiblePostsUseCase,
-    ListCrewPostsUseCase,
-    CreatePostUseCase,
-    UpdatePostUseCase,
-    DeletePostUseCase,
+    ListVisiblePostsHandler,
+    ListCrewPostsHandler,
+    CreatePostHandler,
+    UpdatePostHandler,
+    DeletePostHandler,
     ListForCrewSql,
     ListVisibleSql,
     CreateSql,

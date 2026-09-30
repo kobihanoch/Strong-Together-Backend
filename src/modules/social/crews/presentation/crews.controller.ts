@@ -1,3 +1,4 @@
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Put, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type {
@@ -9,11 +10,11 @@ import type {
   GetCrewParams,
   GetCrewResponse,
   ListCrewParticipantsParams,
-  ListCrewParticipantsQuery,
+  ListCrewParticipantsQuery as ListCrewParticipantsRequestQuery,
   ListCrewParticipantsResponse,
-  ListCrewsQuery,
+  ListCrewsQuery as ListCrewsRequestQuery,
   ListCrewsResponse,
-  ListMyCrewsQuery,
+  ListMyCrewsQuery as ListMyCrewsRequestQuery,
   ListMyCrewsResponse,
   LeaveCrewParams,
   LeaveCrewResponse,
@@ -44,34 +45,25 @@ import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { imageUploadOptions } from '../../../../common/interceptors/image-upload.config';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
-import { CreateCrewUseCase } from '../application/commands/create-crew.use-case';
-import { DeleteCrewProfilePictureUseCase } from '../application/commands/delete-crew-profile-picture.use-case';
-import { DeleteCrewUseCase } from '../application/commands/delete-crew.use-case';
-import { GetCrewUseCase } from '../application/queries/get-crew.use-case';
-import { LeaveCrewUseCase } from '../application/commands/leave-crew.use-case';
-import { ListCrewParticipantsUseCase } from '../application/queries/list-crew-participants.use-case';
-import { ListCrewsUseCase } from '../application/queries/list-crews.use-case';
-import { ListMyCrewsUseCase } from '../application/queries/list-my-crews.use-case';
-import { ReplaceCrewProfilePictureUseCase } from '../application/commands/replace-crew-profile-picture.use-case';
-import { UpdateCrewUseCase } from '../application/commands/update-crew.use-case';
+import { CreateCrewCommand } from '../application/commands/create-crew/create-crew.command';
+import { DeleteCrewProfilePictureCommand } from '../application/commands/delete-crew-profile-picture/delete-crew-profile-picture.command';
+import { DeleteCrewCommand } from '../application/commands/delete-crew/delete-crew.command';
+import { GetCrewQuery } from '../application/queries/get-crew/get-crew.query';
+import { LeaveCrewCommand } from '../application/commands/leave-crew/leave-crew.command';
+import { ListCrewParticipantsQuery } from '../application/queries/list-crew-participants/list-crew-participants.query';
+import { ListCrewsQuery } from '../application/queries/list-crews/list-crews.query';
+import { ListMyCrewsQuery } from '../application/queries/list-my-crews/list-my-crews.query';
+import { ReplaceCrewProfilePictureCommand } from '../application/commands/replace-crew-profile-picture/replace-crew-profile-picture.command';
+import { UpdateCrewCommand } from '../application/commands/update-crew/update-crew.command';
 
 /** Exposes authenticated CRUD endpoints for crews. */
 @Controller('api/social/crews')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class CrewsController {
-  public constructor(
-    private readonly listCrews: ListCrewsUseCase,
-    private readonly listMyCrews: ListMyCrewsUseCase,
-    private readonly listCrewParticipants: ListCrewParticipantsUseCase,
-    private readonly getCrew: GetCrewUseCase,
-    private readonly createCrew: CreateCrewUseCase,
-    private readonly updateCrew: UpdateCrewUseCase,
-    private readonly replaceCrewPicture: ReplaceCrewProfilePictureUseCase,
-    private readonly deleteCrewPicture: DeleteCrewProfilePictureUseCase,
-    private readonly leaveCrew: LeaveCrewUseCase,
-    private readonly deleteCrew: DeleteCrewUseCase,
-    private readonly logger: OperationLogger,
+  public constructor(private readonly logger: OperationLogger,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
   ) {}
 
   /**
@@ -91,11 +83,11 @@ export class CrewsController {
   async list(
     @RequestData(new ValidateRequestPipe(listCrewsRequestSchema))
     data: {
-      query: ListCrewsQuery;
+      query: ListCrewsRequestQuery;
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListCrewsResponse> {
-    return this.listCrews.execute(user.id, data.query.limit, data.query.cursor, data.query.search);
+    return this.queryBus.execute(new ListCrewsQuery(user.id, data.query.limit, data.query.cursor, data.query.search));
   }
 
   /**
@@ -115,11 +107,11 @@ export class CrewsController {
   async listMine(
     @RequestData(new ValidateRequestPipe(listMyCrewsRequestSchema))
     data: {
-      query: ListMyCrewsQuery;
+      query: ListMyCrewsRequestQuery;
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListMyCrewsResponse> {
-    return this.listMyCrews.execute(user.id, data.query.limit, data.query.cursor);
+    return this.queryBus.execute(new ListMyCrewsQuery(user.id, data.query.limit, data.query.cursor));
   }
 
   /**
@@ -142,11 +134,11 @@ export class CrewsController {
     @RequestData(new ValidateRequestPipe(listCrewParticipantsRequestSchema))
     data: {
       params: ListCrewParticipantsParams;
-      query: ListCrewParticipantsQuery;
+      query: ListCrewParticipantsRequestQuery;
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListCrewParticipantsResponse> {
-    return this.listCrewParticipants.execute(user.id, data.params.crewId, data.query.limit, data.query.cursor);
+    return this.queryBus.execute(new ListCrewParticipantsQuery(user.id, data.params.crewId, data.query.limit, data.query.cursor));
   }
 
   /**
@@ -171,7 +163,7 @@ export class CrewsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<GetCrewResponse> {
-    return this.getCrew.execute(user.id, data.params.id);
+    return this.queryBus.execute(new GetCrewQuery(user.id, data.params.id));
   }
 
   /**
@@ -195,7 +187,7 @@ export class CrewsController {
     data: { body: CreateCrewBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<CreateCrewResponse> {
-    await this.createCrew.execute(user.id, data.body);
+    await this.commandBus.execute(new CreateCrewCommand(user.id, data.body));
   }
 
   /**
@@ -222,7 +214,7 @@ export class CrewsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<UpdateCrewResponse> {
-    await this.updateCrew.execute(user.id, data.params.id, data.body);
+    await this.commandBus.execute(new UpdateCrewCommand(user.id, data.params.id, data.body));
   }
 
   /**
@@ -246,8 +238,8 @@ export class CrewsController {
     @UploadedFile() file: Express.Multer.File | undefined,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ReplaceCrewProfilePictureResponse> {
-    return this.replaceCrewPicture.execute(user.id, data.params.id, file, (error, oldPath) =>
-      this.logger.warn({ err: error, crewId: data.params.id, oldPath }, 'Failed to delete old crew profile image'),
+    return this.commandBus.execute(new ReplaceCrewProfilePictureCommand(user.id, data.params.id, file, (error, oldPath) =>
+      this.logger.warn({ err: error, crewId: data.params.id, oldPath }, 'Failed to delete old crew profile image'))
     );
   }
 
@@ -271,7 +263,7 @@ export class CrewsController {
     @RequestData(new ValidateRequestPipe(deleteCrewProfilePictureRequestSchema)) data: { params: DeleteCrewProfilePictureParams },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<DeleteCrewProfilePictureResponse> {
-    await this.deleteCrewPicture.execute(user.id, data.params.id);
+    await this.commandBus.execute(new DeleteCrewProfilePictureCommand(user.id, data.params.id));
   }
 
   /**
@@ -300,7 +292,7 @@ export class CrewsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<LeaveCrewResponse> {
-    await this.leaveCrew.execute(user.id, data.params.id);
+    await this.commandBus.execute(new LeaveCrewCommand(user.id, data.params.id));
   }
 
   /**
@@ -326,6 +318,6 @@ export class CrewsController {
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.deleteCrew.execute(user.id, data.params.id);
+    await this.commandBus.execute(new DeleteCrewCommand(user.id, data.params.id));
   }
 }

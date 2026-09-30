@@ -1,3 +1,4 @@
+import { CommandBus } from '@nestjs/cqrs';
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import {
   analyzeVideoResultPayloadDtoSchema,
@@ -11,7 +12,7 @@ import { RedisClientType } from 'redis';
 import { appConfig } from '../../../config/app.config';
 import { createLogger } from '../../../infrastructure/capabilities/observability/logger';
 import { REDIS_SUBSCRIBER } from '../../../infrastructure/connections/redis/redis.tokens';
-import { PublishVideoAnalysisResultUseCase } from '../application/commands/publish-video-analysis-result.use-case';
+import { PublishVideoAnalysisResultCommand } from '../application/commands/publish-video-analysis-result/publish-video-analysis-result.command';
 
 @Injectable()
 export class RedisVideoAnalysisSubscriber implements OnModuleInit {
@@ -20,9 +21,8 @@ export class RedisVideoAnalysisSubscriber implements OnModuleInit {
     channel: this.videoAnalysisResultsChannel,
   });
 
-  constructor(
-    @Inject(REDIS_SUBSCRIBER) private subscriberClient: RedisClientType,
-    private readonly publishVideoAnalysisResultUseCase: PublishVideoAnalysisResultUseCase,
+  constructor(@Inject(REDIS_SUBSCRIBER) private subscriberClient: RedisClientType,
+    private readonly commandBus: CommandBus
   ) {}
 
   private async handleMessage(message: string): Promise<void> {
@@ -45,7 +45,7 @@ export class RedisVideoAnalysisSubscriber implements OnModuleInit {
         payloadLogger.error({ event: 'video_analysis.processing_error', error }, 'Video analysis reported an error');
       }
 
-      this.publishVideoAnalysisResultUseCase.execute(payload);
+      this.commandBus.execute(new PublishVideoAnalysisResultCommand(payload));
     } catch (e) {
       if (e instanceof Error) {
         this.logger.error({ err: e, event: 'video_analysis.subscription_failed' }, 'Failed to process video analysis message');

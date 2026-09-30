@@ -1,10 +1,11 @@
+import { CommandBus } from '@nestjs/cqrs';
 import { Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import type { LoginRequestBody, LoginResponse, LogoutResponse, RefreshTokenResponse } from '@strong-together/shared';
 import { loginRequestSchema } from '@strong-together/shared';
-import { LoginUseCase } from '../application/commands/login.use-case';
-import { LogoutUseCase } from '../application/commands/logout.use-case';
-import { RefreshSessionUseCase } from '../application/commands/refresh-session.use-case';
+import { LoginCommand } from '../application/commands/login/login.command';
+import { LogoutCommand } from '../application/commands/logout/logout.command';
+import { RefreshSessionCommand } from '../application/commands/refresh-session/refresh-session.command';
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { RateLimit, RateLimitGuard, loginIpRateLimit, loginRateLimit } from '../../../../common/guards/rate-limit.guard';
 import { RequestData } from '../../../../common/decorators/request-data.decorator';
@@ -15,10 +16,7 @@ import { getRefreshToken } from './refresh-token.extractor';
 /** H */
 @Controller('api/auth')
 export class SessionController {
-  constructor(
-    private readonly loginUseCase: LoginUseCase,
-    private readonly logoutUseCase: LogoutUseCase,
-    private readonly refreshSessionUseCase: RefreshSessionUseCase,
+  constructor(private readonly commandBus: CommandBus
   ) {}
 
   /**
@@ -53,7 +51,7 @@ export class SessionController {
   ): Promise<LoginResponse> {
     const { identifier, password } = data.body;
     const jkt = req.headers['dpop-key-binding'] as string | undefined;
-    const payload = await this.loginUseCase.execute(identifier, password, jkt);
+    const payload = await this.commandBus.execute(new LoginCommand(identifier, password, jkt));
 
     res.set('Cache-Control', 'no-store');
     return payload;
@@ -79,7 +77,7 @@ export class SessionController {
   async logoutUser(@Req() req: AppRequest): Promise<LogoutResponse> {
     const jkt = req.dpopJkt;
     const refreshToken = getRefreshToken(req);
-    await this.logoutUseCase.execute(refreshToken, jkt);
+    await this.commandBus.execute(new LogoutCommand(refreshToken, jkt));
     return { message: 'Logged out successfully' };
   }
 
@@ -105,7 +103,7 @@ export class SessionController {
   async refreshAccessToken(@Req() req: AppRequest, @Res({ passthrough: true }) res: Response): Promise<RefreshTokenResponse> {
     const dpopJkt = req.dpopJkt;
     const refreshToken = getRefreshToken(req);
-    const payload = await this.refreshSessionUseCase.execute(refreshToken, dpopJkt);
+    const payload = await this.commandBus.execute(new RefreshSessionCommand(refreshToken, dpopJkt));
 
     res.set('Cache-Control', 'no-store');
     return payload;

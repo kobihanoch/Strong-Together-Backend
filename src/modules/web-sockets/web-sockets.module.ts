@@ -3,7 +3,7 @@ import { AuthenticationGuard } from '../../common/guards/authentication.guard';
 import { AuthorizationGuard } from '../../common/guards/authorization.guard';
 import { DpopGuard } from '../../common/guards/dpop-validation.guard';
 import { WebSocketTicketIssuer } from './application/ports/web-socket-ticket-issuer.port';
-import { CreateWebSocketTicketUseCase } from './application/commands/create-web-socket-ticket.use-case';
+import { CreateWebSocketTicketHandler } from './application/commands/create-web-socket-ticket/create-web-socket-ticket.handler';
 import { JwtWebSocketTicketIssuer } from './infrastructure/jwt-web-socket-ticket.issuer';
 import { WebSocketsController } from './presentation/web-sockets.controller';
 
@@ -11,7 +11,7 @@ import { WebSocketsController } from './presentation/web-sockets.controller';
   controllers: [WebSocketsController],
   providers: [
     { provide: WebSocketTicketIssuer, useClass: JwtWebSocketTicketIssuer },
-    CreateWebSocketTicketUseCase,
+    CreateWebSocketTicketHandler,
     DpopGuard,
     AuthenticationGuard,
     AuthorizationGuard,

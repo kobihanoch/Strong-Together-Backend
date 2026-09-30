@@ -3,11 +3,11 @@ import { AuthenticationGuard } from '../../../../common/guards/authentication.gu
 import { AuthorizationGuard } from '../../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { CrewRequestsRepository } from './application/ports/crew-requests.repository';
-import { InviteCrewUserUseCase } from './application/commands/invite-crew-user.use-case';
-import { ListCrewInvitationsUseCase } from './application/queries/list-crew-invitations.use-case';
-import { ListPendingCrewJoinRequestsUseCase } from './application/queries/list-pending-crew-join-requests.use-case';
-import { RequestToJoinCrewUseCase } from './application/commands/request-to-join-crew.use-case';
-import { UpdateCrewParticipationRequestUseCase } from './application/commands/update-crew-participation-request.use-case';
+import { InviteCrewUserHandler } from './application/commands/invite-crew-user/invite-crew-user.handler';
+import { ListCrewInvitationsHandler } from './application/queries/list-crew-invitations/list-crew-invitations.handler';
+import { ListPendingCrewJoinRequestsHandler } from './application/queries/list-pending-crew-join-requests/list-pending-crew-join-requests.handler';
+import { RequestToJoinCrewHandler } from './application/commands/request-to-join-crew/request-to-join-crew.handler';
+import { UpdateCrewParticipationRequestHandler } from './application/commands/update-crew-participation-request/update-crew-participation-request.handler';
 import { IsCrewLeaderSql } from './infrastructure/persistence/reads/is-crew-leader.sql';
 import { ListInvitationsSql } from './infrastructure/persistence/reads/list-invitations.sql';
 import { ListPendingJoinRequestsSql } from './infrastructure/persistence/reads/list-pending-join-requests.sql';
@@ -24,11 +24,11 @@ import { PostgresCrewRequestsQueries } from './infrastructure/persistence/postgr
   controllers: [CrewRequestsController],
   providers: [
     { provide: CrewRequestsQueries, useClass: PostgresCrewRequestsQueries },
-    InviteCrewUserUseCase,
-    RequestToJoinCrewUseCase,
-    ListCrewInvitationsUseCase,
-    ListPendingCrewJoinRequestsUseCase,
-    UpdateCrewParticipationRequestUseCase,
+    InviteCrewUserHandler,
+    RequestToJoinCrewHandler,
+    ListCrewInvitationsHandler,
+    ListPendingCrewJoinRequestsHandler,
+    UpdateCrewParticipationRequestHandler,
     IsCrewLeaderSql,
     ListInvitationsSql,
     ListPendingJoinRequestsSql,

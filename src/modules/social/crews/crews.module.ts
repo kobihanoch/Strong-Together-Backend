@@ -5,16 +5,16 @@ import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { SupabaseModule } from '../../../infrastructure/capabilities/storage/supabase/supabase.module';
 import { CrewImageStorage } from './application/ports/crew-image-storage.port';
 import { CrewsRepository } from './application/ports/crews.repository';
-import { CreateCrewUseCase } from './application/commands/create-crew.use-case';
-import { DeleteCrewProfilePictureUseCase } from './application/commands/delete-crew-profile-picture.use-case';
-import { DeleteCrewUseCase } from './application/commands/delete-crew.use-case';
-import { GetCrewUseCase } from './application/queries/get-crew.use-case';
-import { LeaveCrewUseCase } from './application/commands/leave-crew.use-case';
-import { ListCrewParticipantsUseCase } from './application/queries/list-crew-participants.use-case';
-import { ListCrewsUseCase } from './application/queries/list-crews.use-case';
-import { ListMyCrewsUseCase } from './application/queries/list-my-crews.use-case';
-import { ReplaceCrewProfilePictureUseCase } from './application/commands/replace-crew-profile-picture.use-case';
-import { UpdateCrewUseCase } from './application/commands/update-crew.use-case';
+import { CreateCrewHandler } from './application/commands/create-crew/create-crew.handler';
+import { DeleteCrewProfilePictureHandler } from './application/commands/delete-crew-profile-picture/delete-crew-profile-picture.handler';
+import { DeleteCrewHandler } from './application/commands/delete-crew/delete-crew.handler';
+import { GetCrewHandler } from './application/queries/get-crew/get-crew.handler';
+import { LeaveCrewHandler } from './application/commands/leave-crew/leave-crew.handler';
+import { ListCrewParticipantsHandler } from './application/queries/list-crew-participants/list-crew-participants.handler';
+import { ListCrewsHandler } from './application/queries/list-crews/list-crews.handler';
+import { ListMyCrewsHandler } from './application/queries/list-my-crews/list-my-crews.handler';
+import { ReplaceCrewProfilePictureHandler } from './application/commands/replace-crew-profile-picture/replace-crew-profile-picture.handler';
+import { UpdateCrewHandler } from './application/commands/update-crew/update-crew.handler';
 import { FindByIdSql } from './infrastructure/persistence/reads/find-by-id.sql';
 import { ListMineSql } from './infrastructure/persistence/reads/list-mine.sql';
 import { ListParticipantsSql } from './infrastructure/persistence/reads/list-participants.sql';
@@ -38,16 +38,16 @@ import { PostgresCrewsQueries } from './infrastructure/persistence/postgres-crew
   controllers: [CrewsController],
   providers: [
     { provide: CrewsQueries, useClass: PostgresCrewsQueries },
-    ListCrewsUseCase,
-    ListMyCrewsUseCase,
-    ListCrewParticipantsUseCase,
-    GetCrewUseCase,
-    CreateCrewUseCase,
-    UpdateCrewUseCase,
-    ReplaceCrewProfilePictureUseCase,
-    DeleteCrewProfilePictureUseCase,
-    LeaveCrewUseCase,
-    DeleteCrewUseCase,
+    ListCrewsHandler,
+    ListMyCrewsHandler,
+    ListCrewParticipantsHandler,
+    GetCrewHandler,
+    CreateCrewHandler,
+    UpdateCrewHandler,
+    ReplaceCrewProfilePictureHandler,
+    DeleteCrewProfilePictureHandler,
+    LeaveCrewHandler,
+    DeleteCrewHandler,
     FindByIdSql,
 
     ListMineSql,

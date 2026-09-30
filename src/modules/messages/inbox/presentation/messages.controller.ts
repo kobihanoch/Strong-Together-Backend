@@ -1,5 +1,6 @@
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, UseGuards } from '@nestjs/common';
-import type { DeleteMessageParams, ListMessagesQuery, ListMessagesResponse, MarkMessageAsReadParams } from '@strong-together/shared';
+import type { DeleteMessageParams, ListMessagesQuery as ListMessagesRequestQuery, ListMessagesResponse, MarkMessageAsReadParams } from '@strong-together/shared';
 import { deleteMessageRequestSchema, listMessagesRequestSchema, markMessageAsReadRequestSchema } from '@strong-together/shared';
 import { CurrentUser } from '../../../../common/decorators/current-user.decorator';
 import { RequestData } from '../../../../common/decorators/request-data.decorator';
@@ -8,19 +9,17 @@ import { AuthorizationGuard, Roles } from '../../../../common/guards/authorizati
 import { DpopGuard } from '../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../common/types/express';
-import { DeleteMessageUseCase } from '../application/commands/delete-message.use-case';
-import { ListMessagesUseCase } from '../application/queries/list-messages.use-case';
-import { MarkMessageAsReadUseCase } from '../application/commands/mark-message-as-read.use-case';
+import { DeleteMessageCommand } from '../application/commands/delete-message/delete-message.command';
+import { ListMessagesQuery } from '../application/queries/list-messages/list-messages.query';
+import { MarkMessageAsReadCommand } from '../application/commands/mark-message-as-read/mark-message-as-read.command';
 
 /** E */
 @Controller('api/messages')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class MessagesController {
-  constructor(
-    private readonly listMessages: ListMessagesUseCase,
-    private readonly markAsRead: MarkMessageAsReadUseCase,
-    private readonly deleteMessageUseCase: DeleteMessageUseCase,
+  constructor(private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
   ) {}
 
   /**
@@ -39,10 +38,10 @@ export class MessagesController {
    */
   @Get()
   async list(
-    @RequestData(new ValidateRequestPipe(listMessagesRequestSchema)) data: { query: ListMessagesQuery },
+    @RequestData(new ValidateRequestPipe(listMessagesRequestSchema)) data: { query: ListMessagesRequestQuery },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListMessagesResponse> {
-    return this.listMessages.execute(user.id, data.query.tz);
+    return this.queryBus.execute(new ListMessagesQuery(user.id, data.query.tz));
   }
 
   /**
@@ -66,7 +65,7 @@ export class MessagesController {
     @RequestData(new ValidateRequestPipe(markMessageAsReadRequestSchema)) data: { params: MarkMessageAsReadParams },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.markAsRead.execute(data.params.id, user.id);
+    await this.commandBus.execute(new MarkMessageAsReadCommand(data.params.id, user.id));
   }
 
   /**
@@ -90,6 +89,6 @@ export class MessagesController {
     @RequestData(new ValidateRequestPipe(deleteMessageRequestSchema)) data: { params: DeleteMessageParams },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
-    await this.deleteMessageUseCase.execute(data.params.id, user.id);
+    await this.commandBus.execute(new DeleteMessageCommand(data.params.id, user.id));
   }
 }

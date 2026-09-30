@@ -1,9 +1,10 @@
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Controller, Delete, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import type {
   DeleteReactionParams,
   DeleteReactionResponse,
   ListPostReactionsParams,
-  ListPostReactionsQuery,
+  ListPostReactionsQuery as ListPostReactionsRequestQuery,
   ListPostReactionsResponse,
   ReactToPostBody,
   ReactToPostParams,
@@ -17,9 +18,9 @@ import { AuthorizationGuard, Roles } from '../../../../../common/guards/authoriz
 import { DpopGuard } from '../../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../../common/types/express';
-import { DeleteReactionUseCase } from '../application/commands/delete-reaction.use-case';
-import { ListPostReactionsUseCase } from '../application/queries/list-post-reactions.use-case';
-import { ReactToPostUseCase } from '../application/commands/react-to-post.use-case';
+import { DeleteReactionCommand } from '../application/commands/delete-reaction/delete-reaction.command';
+import { ListPostReactionsQuery } from '../application/queries/list-post-reactions/list-post-reactions.query';
+import { ReactToPostCommand } from '../application/commands/react-to-post/react-to-post.command';
 
 /** Exposes authenticated reaction writes for social posts. */
 @Controller('api/social/posts')
@@ -31,10 +32,8 @@ export class ReactionsController {
    *
    * @param service - The reaction application service.
    */
-  public constructor(
-    private readonly listPostReactions: ListPostReactionsUseCase,
-    private readonly reactToPost: ReactToPostUseCase,
-    private readonly deletePostReaction: DeleteReactionUseCase,
+  public constructor(private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
   ) {}
 
   /**
@@ -55,11 +54,11 @@ export class ReactionsController {
     @RequestData(new ValidateRequestPipe(listPostReactionsRequestSchema))
     data: {
       params: ListPostReactionsParams;
-      query: ListPostReactionsQuery;
+      query: ListPostReactionsRequestQuery;
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListPostReactionsResponse> {
-    return this.listPostReactions.execute(user.id, data.params.postId, data.query.limit, data.query.cursor);
+    return this.queryBus.execute(new ListPostReactionsQuery(user.id, data.params.postId, data.query.limit, data.query.cursor));
   }
 
   /**
@@ -82,7 +81,7 @@ export class ReactionsController {
     @RequestData(new ValidateRequestPipe(reactToPostRequestSchema)) data: { params: ReactToPostParams; body: ReactToPostBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ReactToPostResponse> {
-    await this.reactToPost.execute(data.params.postId, user.id, data.body.type);
+    await this.commandBus.execute(new ReactToPostCommand(data.params.postId, user.id, data.body.type));
   }
 
   /**
@@ -105,6 +104,6 @@ export class ReactionsController {
     @RequestData(new ValidateRequestPipe(deleteReactionRequestSchema)) data: { params: DeleteReactionParams },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<DeleteReactionResponse> {
-    await this.deletePostReaction.execute(data.params.postId, user.id);
+    await this.commandBus.execute(new DeleteReactionCommand(data.params.postId, user.id));
   }
 }

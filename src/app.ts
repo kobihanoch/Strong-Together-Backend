@@ -3,6 +3,7 @@ import { Controller, Get, MiddlewareConsumer, Module, NestModule } from '@nestjs
 import helmet from 'helmet';
 import { APP_FILTER } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { CqrsModule } from '@nestjs/cqrs';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AerobicsModule } from './modules/aerobics/aerobics.module';
@@ -48,6 +49,7 @@ class AppController {
 
 @Module({
   imports: [
+    CqrsModule.forRoot(),
     EventEmitterModule.forRoot(),
     LoggingModule,
     RedisModule,

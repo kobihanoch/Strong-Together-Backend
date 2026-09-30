@@ -1,3 +1,4 @@
+import { CommandBus } from '@nestjs/cqrs';
 import { Controller, Post, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import type { CreateWebSocketTicketBody, CreateWebSocketTicketResponse } from '@strong-together/shared';
@@ -9,14 +10,14 @@ import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../common/types/express';
-import { CreateWebSocketTicketUseCase } from '../application/commands/create-web-socket-ticket.use-case';
+import { CreateWebSocketTicketCommand } from '../application/commands/create-web-socket-ticket/create-web-socket-ticket.command';
 
 /** WebSocket helper routes for authenticated users. */
 @Controller('api/websocket-tickets')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class WebSocketsController {
-  constructor(private readonly createWebSocketTicketUseCase: CreateWebSocketTicketUseCase) {}
+  constructor(private readonly commandBus: CommandBus) {}
 
   /**
    * Generate a signed WebSocket connection ticket for the authenticated user.
@@ -43,7 +44,7 @@ export class WebSocketsController {
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<CreateWebSocketTicketResponse> {
-    const payload = this.createWebSocketTicketUseCase.execute(user.id, data.body.username);
+    const payload = this.commandBus.execute(new CreateWebSocketTicketCommand(user.id, data.body.username));
     res.status(201);
     return payload;
   }

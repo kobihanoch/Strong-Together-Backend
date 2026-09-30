@@ -1,3 +1,4 @@
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, UseGuards } from '@nestjs/common';
 import type {
   AddCommentBody,
@@ -9,7 +10,7 @@ import type {
   EditCommentParams,
   EditCommentResponse,
   ListPostCommentsParams,
-  ListPostCommentsQuery,
+  ListPostCommentsQuery as ListPostCommentsRequestQuery,
   ListPostCommentsResponse,
 } from '@strong-together/shared';
 import {
@@ -25,10 +26,10 @@ import { AuthorizationGuard, Roles } from '../../../../../common/guards/authoriz
 import { DpopGuard } from '../../../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../../../common/types/express';
-import { AddCommentUseCase } from '../application/commands/add-comment.use-case';
-import { DeleteCommentUseCase } from '../application/commands/delete-comment.use-case';
-import { EditCommentUseCase } from '../application/commands/edit-comment.use-case';
-import { ListPostCommentsUseCase } from '../application/queries/list-post-comments.use-case';
+import { AddCommentCommand } from '../application/commands/add-comment/add-comment.command';
+import { DeleteCommentCommand } from '../application/commands/delete-comment/delete-comment.command';
+import { EditCommentCommand } from '../application/commands/edit-comment/edit-comment.command';
+import { ListPostCommentsQuery } from '../application/queries/list-post-comments/list-post-comments.query';
 
 /** Exposes authenticated comment writes for social posts. */
 @Controller('api/social/posts')
@@ -40,11 +41,8 @@ export class CommentsController {
    *
    * @param service - The comment application service.
    */
-  public constructor(
-    private readonly listPostComments: ListPostCommentsUseCase,
-    private readonly addPostComment: AddCommentUseCase,
-    private readonly editPostComment: EditCommentUseCase,
-    private readonly deletePostComment: DeleteCommentUseCase,
+  public constructor(private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
   ) {}
 
   /**
@@ -65,11 +63,11 @@ export class CommentsController {
     @RequestData(new ValidateRequestPipe(listPostCommentsRequestSchema))
     data: {
       params: ListPostCommentsParams;
-      query: ListPostCommentsQuery;
+      query: ListPostCommentsRequestQuery;
     },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ListPostCommentsResponse> {
-    return this.listPostComments.execute(user.id, data.params.postId, data.query.limit, data.query.cursor);
+    return this.queryBus.execute(new ListPostCommentsQuery(user.id, data.params.postId, data.query.limit, data.query.cursor));
   }
 
   /**
@@ -92,7 +90,7 @@ export class CommentsController {
     @RequestData(new ValidateRequestPipe(addCommentRequestSchema)) data: { params: AddCommentParams; body: AddCommentBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<AddCommentResponse> {
-    await this.addPostComment.execute(data.params.postId, user.id, data.body.content);
+    await this.commandBus.execute(new AddCommentCommand(data.params.postId, user.id, data.body.content));
   }
 
   /**
@@ -114,7 +112,7 @@ export class CommentsController {
     @RequestData(new ValidateRequestPipe(editCommentRequestSchema)) data: { params: EditCommentParams; body: EditCommentBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<EditCommentResponse> {
-    await this.editPostComment.execute(user.id, data.params.id, data.body.content);
+    await this.commandBus.execute(new EditCommentCommand(user.id, data.params.id, data.body.content));
   }
 
   /**
@@ -136,6 +134,6 @@ export class CommentsController {
     @RequestData(new ValidateRequestPipe(deleteCommentRequestSchema)) data: { params: DeleteCommentParams },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<DeleteCommentResponse> {
-    await this.deletePostComment.execute(user.id, data.params.id);
+    await this.commandBus.execute(new DeleteCommentCommand(user.id, data.params.id));
   }
 }

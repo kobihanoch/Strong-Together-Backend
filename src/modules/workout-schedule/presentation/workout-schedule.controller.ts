@@ -1,3 +1,4 @@
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Controller, Get, HttpCode, HttpStatus, Put, UseGuards } from '@nestjs/common';
 import type { GetWorkoutSchedulesResponse, ReplaceWorkoutSchedulesBody, ReplaceWorkoutSchedulesResponse } from '@strong-together/shared';
 import { replaceWorkoutSchedulesRequestSchema } from '@strong-together/shared';
@@ -8,17 +9,16 @@ import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../common/types/express';
-import { GetWorkoutSchedulesUseCase } from '../application/queries/get-workout-schedules.use-case';
-import { ReplaceWorkoutSchedulesUseCase } from '../application/commands/replace-workout-schedules.use-case';
+import { GetWorkoutSchedulesQuery } from '../application/queries/get-workout-schedules/get-workout-schedules.query';
+import { ReplaceWorkoutSchedulesCommand } from '../application/commands/replace-workout-schedules/replace-workout-schedules.command';
 
 /** E */
 @Controller('api/workout-schedules')
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class WorkoutScheduleController {
-  public constructor(
-    private readonly getWorkoutSchedules: GetWorkoutSchedulesUseCase,
-    private readonly replaceWorkoutSchedules: ReplaceWorkoutSchedulesUseCase,
+  public constructor(private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
   ) {}
 
   /**
@@ -35,7 +35,7 @@ export class WorkoutScheduleController {
    */
   @Get()
   public get(@CurrentUser() user: AuthenticatedUser): Promise<GetWorkoutSchedulesResponse> {
-    return this.getWorkoutSchedules.execute(user.id);
+    return this.queryBus.execute(new GetWorkoutSchedulesQuery(user.id));
   }
 
   /**
@@ -60,6 +60,6 @@ export class WorkoutScheduleController {
     data: { body: ReplaceWorkoutSchedulesBody },
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ReplaceWorkoutSchedulesResponse> {
-    await this.replaceWorkoutSchedules.execute(user.id, data.body.schedules);
+    await this.commandBus.execute(new ReplaceWorkoutSchedulesCommand(user.id, data.body.schedules));
   }
 }

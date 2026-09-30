@@ -1,3 +1,4 @@
+import { CommandBus } from '@nestjs/cqrs';
 import { Controller, Post, Req, UseGuards } from '@nestjs/common';
 import type { Request } from 'express';
 import type { CreateVideoUploadUrlBody, CreateVideoUploadUrlResponse } from '@strong-together/shared';
@@ -11,7 +12,7 @@ import { AuthorizationGuard, Roles } from '../../../common/guards/authorization.
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { ValidateRequestPipe } from '../../../common/pipes/validate-request.pipe';
 import type { AuthenticatedUser } from '../../../common/types/express';
-import { CreateVideoUploadUrlUseCase } from '../application/commands/create-video-upload-url.use-case';
+import { CreateVideoUploadUrlCommand } from '../application/commands/create-video-upload-url/create-video-upload-url.command';
 import { normalizeHeaderValue } from './video-analysis.utils';
 
 /** Video-analysis routes for authenticated users. */
@@ -19,9 +20,8 @@ import { normalizeHeaderValue } from './video-analysis.utils';
 @UseGuards(DpopGuard, AuthenticationGuard, AuthorizationGuard)
 @Roles('user')
 export class VideoAnalysisController {
-  constructor(
-    private readonly createVideoUploadUrlUseCase: CreateVideoUploadUrlUseCase,
-    private readonly logger: OperationLogger,
+  constructor(private readonly logger: OperationLogger,
+    private readonly commandBus: CommandBus
   ) {}
 
   /**
@@ -56,7 +56,7 @@ export class VideoAnalysisController {
     const userId = user.id;
     const sentryTrace = normalizeHeaderValue(req.headers['sentry-trace']);
     const baggage = normalizeHeaderValue(req.headers['baggage']);
-    const { payload, fileKey } = await this.createVideoUploadUrlUseCase.execute({
+    const { payload, fileKey } = await this.commandBus.execute(new CreateVideoUploadUrlCommand({
       exercise,
       fileType,
       jobId,
@@ -64,7 +64,7 @@ export class VideoAnalysisController {
       ...(requestId ? { requestId } : {}),
       sentryTrace,
       baggage,
-    });
+    }));
     this.logger.info(
       { event: 'video_analysis.upload_url_generated', fileKey, fileType, jobId, requestId, userId },
       'Generated presigned upload URL for video analysis',

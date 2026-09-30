@@ -1,8 +1,9 @@
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Controller, Get, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import type {
   UpdateUnverifiedAccountEmailBody,
-  GetVerificationStatusQuery,
+  GetVerificationStatusQuery as GetVerificationStatusRequestQuery,
   CreateVerificationEmailBody,
   VerifyEmailQuery,
 } from '@strong-together/shared';
@@ -12,10 +13,10 @@ import {
   createVerificationEmailRequestSchema,
   verifyEmailRequestSchema,
 } from '@strong-together/shared';
-import { CreateVerificationEmailUseCase } from '../application/commands/create-verification-email.use-case';
-import { GetVerificationStatusUseCase } from '../application/queries/get-verification-status.use-case';
-import { UpdateUnverifiedEmailUseCase } from '../application/commands/update-unverified-email.use-case';
-import { VerifyEmailUseCase } from '../application/commands/verify-email.use-case';
+import { CreateVerificationEmailCommand } from '../application/commands/create-verification-email/create-verification-email.command';
+import { GetVerificationStatusQuery } from '../application/queries/get-verification-status/get-verification-status.query';
+import { UpdateUnverifiedEmailCommand } from '../application/commands/update-unverified-email/update-unverified-email.command';
+import { VerifyEmailCommand } from '../application/commands/verify-email/verify-email.command';
 import { generateVerificationFailedHTML, generateVerifiedHTML } from './verification.views';
 import {
   RateLimit,
@@ -30,11 +31,8 @@ import type { AppRequest } from '../../../../common/types/express';
 /** H */
 @Controller('api/auth')
 export class VerificationController {
-  constructor(
-    private readonly verifyEmailUseCase: VerifyEmailUseCase,
-    private readonly createVerificationEmailUseCase: CreateVerificationEmailUseCase,
-    private readonly updateUnverifiedEmailUseCase: UpdateUnverifiedEmailUseCase,
-    private readonly getVerificationStatusUseCase: GetVerificationStatusUseCase,
+  constructor(private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
   ) {}
 
   /**
@@ -60,7 +58,7 @@ export class VerificationController {
     data: { query: VerifyEmailQuery },
     @Res() res: Response,
   ): Promise<void> {
-    const outcome = await this.verifyEmailUseCase.execute(data.query.token);
+    const outcome = await this.commandBus.execute(new VerifyEmailCommand(data.query.token));
     const statusCode = outcome === 'verified' ? 200 : outcome === 'unauthorized' ? 401 : 400;
     const html = outcome === 'verified' ? generateVerifiedHTML() : generateVerificationFailedHTML();
     res.status(statusCode).type('html').set('Cache-Control', 'no-store').send(html);
@@ -90,7 +88,7 @@ export class VerificationController {
     data: { body: CreateVerificationEmailBody },
     @Req() req: AppRequest,
   ): Promise<void> {
-    await this.createVerificationEmailUseCase.execute(data.body.email, req.requestId);
+    await this.commandBus.execute(new CreateVerificationEmailCommand(data.body.email, req.requestId));
   }
 
   /**
@@ -121,7 +119,7 @@ export class VerificationController {
     data: { body: UpdateUnverifiedAccountEmailBody },
     @Req() req: AppRequest,
   ): Promise<void> {
-    await this.updateUnverifiedEmailUseCase.execute(data.body.username, data.body.password, data.body.newEmail, req.requestId);
+    await this.commandBus.execute(new UpdateUnverifiedEmailCommand(data.body.username, data.body.password, data.body.newEmail, req.requestId));
   }
 
   /**
@@ -141,9 +139,9 @@ export class VerificationController {
   async getVerificationStatus(
     @RequestData(new ValidateRequestPipe(getVerificationStatusRequestSchema))
     data: {
-      query: GetVerificationStatusQuery;
+      query: GetVerificationStatusRequestQuery;
     },
   ): Promise<{ isVerified: boolean }> {
-    return this.getVerificationStatusUseCase.execute(data.query.username);
+    return this.queryBus.execute(new GetVerificationStatusQuery(data.query.username));
   }
 }

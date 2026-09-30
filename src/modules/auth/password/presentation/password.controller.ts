@@ -1,8 +1,9 @@
+import { CommandBus } from '@nestjs/cqrs';
 import { Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import type { ResetPasswordBody, ResetPasswordQuery, CreatePasswordResetRequestBody } from '@strong-together/shared';
 import { resetPasswordRequestSchema, createPasswordResetRequestSchema } from '@strong-together/shared';
-import { CreatePasswordResetRequestUseCase } from '../application/commands/create-password-reset-request.use-case';
-import { ResetPasswordUseCase } from '../application/commands/reset-password.use-case';
+import { CreatePasswordResetRequestCommand } from '../application/commands/create-password-reset-request/create-password-reset-request.command';
+import { ResetPasswordCommand } from '../application/commands/reset-password/reset-password.command';
 import { RateLimit, RateLimitGuard, resetPasswordEmailRateLimit, resetPasswordEmailRateLimitDaily } from '../../../../common/guards/rate-limit.guard';
 import { RequestData } from '../../../../common/decorators/request-data.decorator';
 import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
@@ -11,9 +12,7 @@ import type { AppRequest } from '../../../../common/types/express';
 /** H */
 @Controller('api/auth')
 export class PasswordController {
-  constructor(
-    private readonly createPasswordResetRequestUseCase: CreatePasswordResetRequestUseCase,
-    private readonly resetPasswordUseCase: ResetPasswordUseCase,
+  constructor(private readonly commandBus: CommandBus
   ) {}
 
   /**
@@ -40,7 +39,7 @@ export class PasswordController {
     data: { body: CreatePasswordResetRequestBody },
     @Req() req: AppRequest,
   ): Promise<void> {
-    await this.createPasswordResetRequestUseCase.execute(data.body.identifier, req.requestId);
+    await this.commandBus.execute(new CreatePasswordResetRequestCommand(data.body.identifier, req.requestId));
   }
 
   /**
@@ -67,6 +66,6 @@ export class PasswordController {
       query: ResetPasswordQuery;
     },
   ): Promise<void> {
-    await this.resetPasswordUseCase.execute(data.query.token, data.body.newPassword);
+    await this.commandBus.execute(new ResetPasswordCommand(data.query.token, data.body.newPassword));
   }
 }

@@ -3,9 +3,9 @@ import { AuthenticationGuard } from '../../../common/guards/authentication.guard
 import { AuthorizationGuard } from '../../../common/guards/authorization.guard';
 import { DpopGuard } from '../../../common/guards/dpop-validation.guard';
 import { MessagesRepository } from './application/ports/messages.repository';
-import { DeleteMessageUseCase } from './application/commands/delete-message.use-case';
-import { ListMessagesUseCase } from './application/queries/list-messages.use-case';
-import { MarkMessageAsReadUseCase } from './application/commands/mark-message-as-read.use-case';
+import { DeleteMessageHandler } from './application/commands/delete-message/delete-message.handler';
+import { ListMessagesHandler } from './application/queries/list-messages/list-messages.handler';
+import { MarkMessageAsReadHandler } from './application/commands/mark-message-as-read/mark-message-as-read.handler';
 import { FindByUserSql } from './infrastructure/persistence/reads/find-by-user.sql';
 import { DeleteSql } from './infrastructure/persistence/writes/delete.sql';
 import { SaveSql } from './infrastructure/persistence/writes/save.sql';
@@ -25,9 +25,9 @@ import { PostgresMessagesQueries } from './infrastructure/persistence/postgres-m
     SaveSql,
     DeleteSql,
     { provide: MessagesRepository, useClass: PostgresMessagesRepository },
-    ListMessagesUseCase,
-    MarkMessageAsReadUseCase,
-    DeleteMessageUseCase,
+    ListMessagesHandler,
+    MarkMessageAsReadHandler,
+    DeleteMessageHandler,
     DpopGuard,
     AuthenticationGuard,
     AuthorizationGuard,
