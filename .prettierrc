@@ -6,7 +6,7 @@
   "bracketSpacing": true,
   "arrowParens": "always",
   "plugins": ["prettier-plugin-embed", "prettier-plugin-sql"],
-  "embeddedSqlTags": ["sql", "this.sql", "drizzleSql"],
+  "embeddedSqlTags": ["sql", "this.sql", "this.db.sql", "this.dbService.sql", "drizzleSql"],
   "language": "postgresql",
   "keywordCase": "upper",
   "dataTypeCase": "upper",

@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import request from 'supertest';
-import { createVerifiedTestUser, deleteUserByUsername } from './db';
+import { createVerifiedTestUser, deleteCrewsByCreatorUsernames, deleteUserByUsername } from './db';
 
 type TestApp = {
   getHttpServer(): any;
@@ -35,5 +35,7 @@ export async function createAndLoginTestUser(app: TestApp, prefix = 'ctrl') {
 }
 
 export async function cleanupTestUsers(usernames: Iterable<string>) {
-  await Promise.all([...usernames].map((username) => deleteUserByUsername(username)));
+  const usernameList = [...usernames];
+  await deleteCrewsByCreatorUsernames(usernameList);
+  await Promise.all(usernameList.map((username) => deleteUserByUsername(username)));
 }

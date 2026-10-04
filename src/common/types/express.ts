@@ -1,13 +1,13 @@
 import type { Request } from 'express';
 import type { Logger } from 'pino';
-import type { UserRow } from '@strong-together/shared';
 
+/** Represents the authenticated user value. */
 export type AuthenticatedUser = {
-  id: UserRow['id'];
-  role: UserRow['role'];
-  isVerified: UserRow['isVerified'];
+  id: string;
+  role: string;
 };
 
+/** Represents the app request value. */
 export type AppRequest = Request & {
   user?: AuthenticatedUser;
   dpopJkt?: string;

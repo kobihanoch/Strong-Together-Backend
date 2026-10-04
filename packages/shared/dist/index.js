@@ -4,7 +4,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 // src/common/transport.schemas.ts
 import { z } from "zod/v4";
 var serializedDateSchema = z.string();
-var timezoneSchema = z.string().refine((timeZone) => {
+var timezoneSchema = z.string().trim().min(1).max(100).refine((timeZone) => {
   try {
     new Intl.DateTimeFormat("en-US", {
       timeZone
@@ -17,2095 +17,328 @@ var timezoneSchema = z.string().refine((timeZone) => {
   message: "Time zone must be a valid IANA time zone"
 });
 
-// src/database/database.schemas.ts
-import { createInsertSchema, createSelectSchema, createUpdateSchema } from "drizzle-zod";
-
-// ../../src/infrastructure/db/schema/drizzle/roles.ts
-import { pgRole } from "drizzle-orm/pg-core";
-var anonRole = pgRole("anon");
-var authenticatedRole = pgRole("authenticated");
-var guestRole = pgRole("guest");
-var serviceRole = pgRole("service_role");
-var appUserRole = pgRole("app_user");
-var appRuntimeUserRole = pgRole("app_runtime_user", {
-  createDb: false,
-  createRole: false,
-  inherit: false
-});
-
-// ../../src/infrastructure/db/schema/drizzle/schemas.ts
-import { pgSchema } from "drizzle-orm/pg-core";
-var authSchema = pgSchema("auth");
-var identitySchema = pgSchema("identity");
-var workoutSchema = pgSchema("workout");
-var trackingSchema = pgSchema("tracking");
-var remindersSchema = pgSchema("reminders");
-var schedulesSchema = pgSchema("schedules");
-var messagesSchema = pgSchema("messages");
-var authProviders = identitySchema.enum("Auth Providers", [
-  "apple",
-  "google",
-  "app"
-]);
-
-// ../../src/infrastructure/db/schema/drizzle/identity/user/table.ts
-import { relations as relations14, sql as drizzleSql22 } from "drizzle-orm";
-import { bigint as bigint11, boolean as boolean6, primaryKey as primaryKey14, text as text8, timestamp as timestamp10, uniqueIndex as uniqueIndex4, uuid as uuid11 } from "drizzle-orm/pg-core";
-
-// ../../src/infrastructure/db/schema/drizzle/messages/messages/table.ts
-import { relations, sql as drizzleSql2 } from "drizzle-orm";
-import { boolean, foreignKey, index, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
-
-// ../../src/infrastructure/db/schema/drizzle/messages/messages/policies.ts
-import { sql as drizzleSql } from "drizzle-orm";
-import { pgPolicy } from "drizzle-orm/pg-core";
-var uid = drizzleSql`"identity"."current_user_id"()`;
-function messagePolicies(t) {
-  const participant = drizzleSql`${uid} = ${t.senderId} or ${uid} = ${t.receiverId}`;
-  return [
-    // Lets authenticated message participants read their sent or received messages.
-    pgPolicy("Enable read access for auth users on message", {
-      for: "select",
-      to: authenticatedRole,
-      using: participant
-    }),
-    // Lets authenticated users send as themselves or as the existing system sender.
-    pgPolicy("Enable insert for auth users on message", {
-      for: "insert",
-      to: authenticatedRole,
-      withCheck: drizzleSql`${uid} = ${t.senderId} or ${t.senderId} = '8dedd0e0-8c25-4c84-a05b-4ae5f5c48f3a'::uuid`
-    }),
-    // Lets authenticated message participants update a message while remaining participants.
-    pgPolicy("Enable update for auth users on message", {
-      for: "update",
-      to: authenticatedRole,
-      using: participant,
-      withCheck: participant
-    }),
-    // Lets authenticated message participants delete their sent or received messages.
-    pgPolicy("Enable delete for auth users on message", {
-      for: "delete",
-      to: authenticatedRole,
-      using: participant
-    })
-  ];
-}
-__name(messagePolicies, "messagePolicies");
-
-// ../../src/infrastructure/db/schema/drizzle/messages/messages/table.ts
-var uid2 = drizzleSql2`"identity"."current_user_id"()`;
-var message = messagesSchema.table("message", {
-  id: uuid("id").defaultRandom().notNull(),
-  senderId: uuid("sender_id").default(uid2).notNull(),
-  receiverId: uuid("receiver_id").default(uid2).notNull(),
-  subject: text("subject").default("Subject").notNull(),
-  msg: text("msg").default("Hello World").notNull(),
-  sentAt: timestamp("sent_at", {
-    withTimezone: true
-  }).defaultNow().notNull(),
-  isRead: boolean("is_read").default(false).notNull()
-}, (t) => [
-  primaryKey({
-    name: "message_pkey",
-    columns: [
-      t.id
-    ]
-  }),
-  foreignKey({
-    name: "message_sender_id_fkey",
-    columns: [
-      t.senderId
-    ],
-    foreignColumns: [
-      user.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  foreignKey({
-    name: "message_receiver_id_fkey",
-    columns: [
-      t.receiverId
-    ],
-    foreignColumns: [
-      user.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  index("message_receiver_id_idx").on(t.receiverId),
-  ...messagePolicies(t)
-]);
-var messageRelations = relations(message, ({ one }) => ({
-  sender: one(user, {
-    fields: [
-      message.senderId
-    ],
-    references: [
-      user.id
-    ],
-    relationName: "messageSender"
-  }),
-  receiver: one(user, {
-    fields: [
-      message.receiverId
-    ],
-    references: [
-      user.id
-    ],
-    relationName: "messageReceiver"
-  })
-}));
-
-// ../../src/infrastructure/db/schema/drizzle/reminders/user_reminder_setting/table.ts
-import { relations as relations2 } from "drizzle-orm";
-import { boolean as boolean2, foreignKey as foreignKey2, primaryKey as primaryKey2, text as text2, timestamp as timestamp2, unique, uuid as uuid2 } from "drizzle-orm/pg-core";
-
-// ../../src/infrastructure/db/schema/drizzle/reminders/user_reminder_setting/policies.ts
-import { sql as drizzleSql3 } from "drizzle-orm";
-import { pgPolicy as pgPolicy2 } from "drizzle-orm/pg-core";
-var uid3 = drizzleSql3`"identity"."current_user_id"()`;
-function userReminderSettingPolicies(t) {
-  return [
-    // Lets authenticated users read only their own reminder settings.
-    pgPolicy2("auth can SELECT own reminder settings", {
-      for: "select",
-      to: authenticatedRole,
-      using: drizzleSql3`${uid3} = ${t.userId}`
-    }),
-    // Lets authenticated users insert reminder settings only for themselves.
-    pgPolicy2("auth can INSERT own reminder settings", {
-      for: "insert",
-      to: authenticatedRole,
-      withCheck: drizzleSql3`${uid3} = ${t.userId}`
-    }),
-    // Lets authenticated users update their own reminder settings and preserves ownership.
-    pgPolicy2("auth can UPDATE own reminder settings", {
-      for: "update",
-      to: authenticatedRole,
-      using: drizzleSql3`${uid3} = ${t.userId}`,
-      withCheck: drizzleSql3`${uid3} = ${t.userId}`
-    }),
-    // Provides the original additional update policy for settings owned by the user.
-    pgPolicy2("Allow authenticated users to update their own reminder settings", {
-      for: "update",
-      to: authenticatedRole,
-      using: drizzleSql3`${uid3} = ${t.userId}`
-    })
-  ];
-}
-__name(userReminderSettingPolicies, "userReminderSettingPolicies");
-
-// ../../src/infrastructure/db/schema/drizzle/reminders/user_reminder_setting/table.ts
-var userReminderSetting = remindersSchema.table("user_reminder_setting", {
-  id: uuid2("id").defaultRandom().notNull(),
-  userId: uuid2("user_id").notNull(),
-  reminderEnabled: boolean2("reminder_enabled").default(false).notNull(),
-  createdAt: timestamp2("created_at", {
-    withTimezone: true
-  }).defaultNow().notNull(),
-  updatedAt: timestamp2("updated_at", {
-    withTimezone: true
-  }).defaultNow().notNull(),
-  timeZone: text2("time_zone").notNull()
-}, (t) => [
-  primaryKey2({
-    name: "user_reminder_setting_pkey",
-    columns: [
-      t.id
-    ]
-  }),
-  unique("user_reminder_setting_user_id_key").on(t.userId),
-  foreignKey2({
-    name: "user_reminder_setting_user_id_fkey",
-    columns: [
-      t.userId
-    ],
-    foreignColumns: [
-      user.id
-    ]
-  }).onDelete("cascade"),
-  ...userReminderSettingPolicies(t)
-]);
-var userReminderSettingRelations = relations2(userReminderSetting, ({ one }) => ({
-  user: one(user, {
-    fields: [
-      userReminderSetting.userId
-    ],
-    references: [
-      user.id
-    ]
-  })
-}));
-
-// ../../src/infrastructure/db/schema/drizzle/schedules/workout_schedule/table.ts
-import { relations as relations11, sql as drizzleSql18 } from "drizzle-orm";
-import { bigint as bigint9, check as check2, foreignKey as foreignKey10, integer as integer4, primaryKey as primaryKey11, time, timestamp as timestamp7, unique as unique5, uuid as uuid8 } from "drizzle-orm/pg-core";
-
-// ../../src/infrastructure/db/schema/drizzle/workout/workout_split/table.ts
-import { sql as drizzleSql16, relations as relations10 } from "drizzle-orm";
-import { bigint as bigint8, boolean as boolean5, foreignKey as foreignKey9, index as index7, integer as integer3, primaryKey as primaryKey10, text as text5, timestamp as timestamp6, uniqueIndex as uniqueIndex3 } from "drizzle-orm/pg-core";
-
-// ../../src/infrastructure/db/schema/drizzle/tracking/workout_summary/table.ts
-import { relations as relations8, sql as drizzleSql12 } from "drizzle-orm";
-import { bigint as bigint6, foreignKey as foreignKey7, index as index6, primaryKey as primaryKey8, timestamp as timestamp4, uuid as uuid6 } from "drizzle-orm/pg-core";
-
-// ../../src/infrastructure/db/schema/drizzle/tracking/exercise_tracking/table.ts
-import { relations as relations7, sql as drizzleSql10 } from "drizzle-orm";
-import { bigint as bigint5, foreignKey as foreignKey6, index as index5, primaryKey as primaryKey7, text as text4, uuid as uuid5 } from "drizzle-orm/pg-core";
-
-// ../../src/infrastructure/db/schema/drizzle/workout/exercises/table.ts
-import { relations as relations5 } from "drizzle-orm";
-import { bigint as bigint3, primaryKey as primaryKey5, text as text3, uniqueIndex } from "drizzle-orm/pg-core";
-
-// ../../src/infrastructure/db/schema/drizzle/workout/exercisetoworkoutsplit/table.ts
-import { relations as relations4, sql as drizzleSql6 } from "drizzle-orm";
-import { bigint as bigint2, boolean as boolean3, foreignKey as foreignKey4, index as index3, primaryKey as primaryKey4, timestamp as timestamp3, unique as unique3 } from "drizzle-orm/pg-core";
-
-// ../../src/infrastructure/db/schema/drizzle/workout/workout_set/table.ts
-import { relations as relations3 } from "drizzle-orm";
-import { bigint, foreignKey as foreignKey3, index as index2, integer, primaryKey as primaryKey3, unique as unique2, uuid as uuid3 } from "drizzle-orm/pg-core";
-
-// ../../src/infrastructure/db/schema/drizzle/workout/workout_set/policies.ts
-import { sql as drizzleSql4 } from "drizzle-orm";
-import { pgPolicy as pgPolicy3 } from "drizzle-orm/pg-core";
-var currentUserId = drizzleSql4`"identity"."current_user_id"()`;
-function workoutSetPolicies(table) {
-  const ownsWorkoutSet = drizzleSql4`exists (
-    select 1
-    from "workout"."exercise_to_workout_split" ets
-    join "workout"."workout_split" ws on ws."id" = ets."workout_split_id"
-    join "workout"."workout_plan" wp on wp."id" = ws."workout_id"
-    where ets."id" = ${table.exerciseToSplitId}
-      and wp."user_id" = ${currentUserId}
-  )`;
-  return [
-    // Lets authenticated users read planned sets only from workout plans they own.
-    pgPolicy3("Enable read access for auth users on workout_set", {
-      for: "select",
-      to: authenticatedRole,
-      using: ownsWorkoutSet
-    }),
-    // Lets authenticated users add planned sets only to workout plans they own.
-    pgPolicy3("Enable insert for auth users on workout_set", {
-      for: "insert",
-      to: authenticatedRole,
-      withCheck: ownsWorkoutSet
-    }),
-    // Lets authenticated users update planned sets only within workout plans they own.
-    pgPolicy3("Enable update for auth users on workout_set", {
-      for: "update",
-      to: authenticatedRole,
-      using: ownsWorkoutSet,
-      withCheck: ownsWorkoutSet
-    }),
-    // Lets authenticated users delete planned sets only from workout plans they own.
-    pgPolicy3("Enable delete for auth users on workout_set", {
-      for: "delete",
-      to: authenticatedRole,
-      using: ownsWorkoutSet
-    })
-  ];
-}
-__name(workoutSetPolicies, "workoutSetPolicies");
-
-// ../../src/infrastructure/db/schema/drizzle/workout/workout_set/table.ts
-var workoutSet = workoutSchema.table("workout_set", {
-  id: uuid3("id").defaultRandom().notNull(),
-  exerciseToSplitId: bigint("exercise_to_split_id", {
-    mode: "number"
-  }).notNull(),
-  orderIndex: integer("order_index").notNull(),
-  reps: integer("reps").notNull()
-}, (t) => [
-  primaryKey3({
-    name: "workout_set_pkey",
-    columns: [
-      t.id
-    ]
-  }),
-  unique2("workout_set_exercise_order_unique").on(t.exerciseToSplitId, t.orderIndex),
-  foreignKey3({
-    name: "workout_set_exercise_to_split_id_fkey",
-    columns: [
-      t.exerciseToSplitId
-    ],
-    foreignColumns: [
-      exerciseToWorkoutSplit.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  index2("workout_set_exercise_to_split_id_idx").on(t.exerciseToSplitId),
-  ...workoutSetPolicies(t)
-]);
-var workoutSetRelations = relations3(workoutSet, ({ one }) => ({
-  exerciseToWorkoutSplit: one(exerciseToWorkoutSplit, {
-    fields: [
-      workoutSet.exerciseToSplitId
-    ],
-    references: [
-      exerciseToWorkoutSplit.id
-    ]
-  })
-}));
-
-// ../../src/infrastructure/db/schema/drizzle/workout/exercisetoworkoutsplit/policies.ts
-import { sql as drizzleSql5 } from "drizzle-orm";
-import { pgPolicy as pgPolicy4 } from "drizzle-orm/pg-core";
-var uid4 = drizzleSql5`"identity"."current_user_id"()`;
-function exerciseToWorkoutSplitPolicies(t) {
-  const owns = drizzleSql5`${uid4} = (select wp."user_id" from "workout"."workout_plan" wp join "workout"."workout_split" ws on ws."workout_id" = wp."id" where ws."id" = ${t.workoutSplitId})`;
-  const ownsForDelete = drizzleSql5`exists (select 1 from "workout"."workout_split" ws join "workout"."workout_plan" wp on wp."id" = ws."workout_id" where ws."id" = ${t.workoutSplitId} and wp."user_id" = ${uid4})`;
-  return [
-    // Lets authenticated users read exercise assignments in splits they own.
-    pgPolicy4("Enable read access for auth users on exercise_to_workout_split", {
-      for: "select",
-      to: authenticatedRole,
-      using: owns
-    }),
-    // Lets authenticated users add exercise assignments only to splits they own.
-    pgPolicy4("Enable insert for auth users on exercise_to_workout_split", {
-      for: "insert",
-      to: authenticatedRole,
-      withCheck: owns
-    }),
-    // Lets authenticated users update exercise assignments only in splits they own.
-    pgPolicy4("Enable update for auth users on exercise_to_workout_split", {
-      for: "update",
-      to: authenticatedRole,
-      using: owns,
-      withCheck: owns
-    }),
-    // Lets authenticated users delete exercise assignments only from splits they own.
-    pgPolicy4("Enable delete for auth users on exercise_to_workout_split", {
-      for: "delete",
-      to: authenticatedRole,
-      using: ownsForDelete
-    })
-  ];
-}
-__name(exerciseToWorkoutSplitPolicies, "exerciseToWorkoutSplitPolicies");
-
-// ../../src/infrastructure/db/schema/drizzle/workout/exercisetoworkoutsplit/table.ts
-var exerciseToWorkoutSplit = workoutSchema.table("exercise_to_workout_split", {
-  id: bigint2("id", {
-    mode: "number"
-  }).generatedByDefaultAsIdentity({
-    name: "exercise_to_workout_split_id_seq"
-  }).notNull(),
-  workoutSplitId: bigint2("workout_split_id", {
-    mode: "number"
-  }).notNull(),
-  exerciseId: bigint2("exercise_id", {
-    mode: "number"
-  }).notNull(),
-  createdAt: timestamp3("created_at", {
-    withTimezone: true
-  }).defaultNow().notNull(),
-  orderIndex: bigint2("order_index", {
-    mode: "number"
-  }).notNull(),
-  isActive: boolean3("is_active").default(true).notNull()
-}, (t) => [
-  primaryKey4({
-    name: "exercise_to_workout_split_pkey",
-    columns: [
-      t.id
-    ]
-  }),
-  unique3("uq_exercise_to_workout_split_workout_split_exercise").on(t.workoutSplitId, t.exerciseId),
-  foreignKey4({
-    name: "exercise_to_workout_split_exercise_id_fkey",
-    columns: [
-      t.exerciseId
-    ],
-    foreignColumns: [
-      exercise.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  foreignKey4({
-    name: "exercise_to_workout_split_workout_split_id_fkey",
-    columns: [
-      t.workoutSplitId
-    ],
-    foreignColumns: [
-      workoutSplit.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  index3("exercise_to_workout_split_active_idx").on(t.workoutSplitId, t.orderIndex).where(drizzleSql6`${t.isActive} = true`),
-  index3("exercise_to_workout_split_workout_split_id_order_index_idx").on(t.workoutSplitId, t.orderIndex),
-  ...exerciseToWorkoutSplitPolicies(t)
-]);
-var exerciseToWorkoutSplitRelations = relations4(exerciseToWorkoutSplit, ({ many, one }) => ({
-  exercise: one(exercise, {
-    fields: [
-      exerciseToWorkoutSplit.exerciseId
-    ],
-    references: [
-      exercise.id
-    ]
-  }),
-  workoutSplit: one(workoutSplit, {
-    fields: [
-      exerciseToWorkoutSplit.workoutSplitId
-    ],
-    references: [
-      workoutSplit.id
-    ]
-  }),
-  exerciseTrackings: many(exerciseTracking),
-  workoutSets: many(workoutSet)
-}));
-
-// ../../src/infrastructure/db/schema/drizzle/workout/exercises/policies.ts
-import { sql as drizzleSql7 } from "drizzle-orm";
-import { pgPolicy as pgPolicy5 } from "drizzle-orm/pg-core";
-var exercisePolicies = /* @__PURE__ */ __name(() => [
-  // Makes the shared exercise catalog readable to every authenticated user.
-  pgPolicy5("Allow all authenticated users to read exercise", {
-    for: "select",
-    to: authenticatedRole,
-    using: drizzleSql7`true`
-  })
-], "exercisePolicies");
-
-// ../../src/infrastructure/db/schema/drizzle/workout/exercises/table.ts
-var exercise = workoutSchema.table("exercise", {
-  id: bigint3("id", {
-    mode: "number"
-  }).generatedByDefaultAsIdentity({
-    name: "exercise_id_seq"
-  }).notNull(),
-  name: text3("name").notNull(),
-  description: text3("description").notNull(),
-  targetMuscle: text3("target_muscle").notNull(),
-  specificTargetMuscle: text3("specific_target_muscle").notNull()
-}, (t) => [
-  primaryKey5({
-    name: "exercise_pkey",
-    columns: [
-      t.id
-    ]
-  }),
-  uniqueIndex("exercise_name_unique").on(t.name),
-  ...exercisePolicies()
-]);
-var exerciseRelations = relations5(exercise, ({ many }) => ({
-  workoutSplitAssignments: many(exerciseToWorkoutSplit)
-}));
-
-// ../../src/infrastructure/db/schema/drizzle/tracking/tracking_set/table.ts
-import { relations as relations6 } from "drizzle-orm";
-import { bigint as bigint4, foreignKey as foreignKey5, index as index4, integer as integer2, primaryKey as primaryKey6, real, unique as unique4, uuid as uuid4 } from "drizzle-orm/pg-core";
-
-// ../../src/infrastructure/db/schema/drizzle/tracking/tracking_set/policies.ts
-import { sql as drizzleSql8 } from "drizzle-orm";
-import { pgPolicy as pgPolicy6 } from "drizzle-orm/pg-core";
-var currentUserId2 = drizzleSql8`"identity"."current_user_id"()`;
-function trackingSetPolicies(table) {
-  const ownsExerciseTracking = drizzleSql8`exists (
-    select 1
-    from "tracking"."exercise_tracking" et
-    join "tracking"."workout_summary" ws on ws."id" = et."workout_summary_id"
-    where et."id" = ${table.exerciseTrackingId}
-      and ws."user_id" = ${currentUserId2}
-  )`;
-  return [
-    // Lets authenticated users read tracked sets only from workout summaries they own.
-    pgPolicy6("Enable read access for auth users on tracking_set", {
-      for: "select",
-      to: authenticatedRole,
-      using: ownsExerciseTracking
-    }),
-    // Lets authenticated users add tracked sets only to their own exercise tracking rows.
-    pgPolicy6("Enable insert for auth users on tracking_set", {
-      for: "insert",
-      to: authenticatedRole,
-      withCheck: ownsExerciseTracking
-    }),
-    // Lets authenticated users update tracked sets without moving them outside their own workout.
-    pgPolicy6("Enable update for auth users on tracking_set", {
-      for: "update",
-      to: authenticatedRole,
-      using: ownsExerciseTracking,
-      withCheck: ownsExerciseTracking
-    }),
-    // Lets authenticated users delete tracked sets only from workout summaries they own.
-    pgPolicy6("Enable delete for auth users on tracking_set", {
-      for: "delete",
-      to: authenticatedRole,
-      using: ownsExerciseTracking
-    })
-  ];
-}
-__name(trackingSetPolicies, "trackingSetPolicies");
-
-// ../../src/infrastructure/db/schema/drizzle/tracking/tracking_set/table.ts
-var trackingSet = trackingSchema.table("tracking_set", {
-  id: uuid4("id").defaultRandom().notNull(),
-  exerciseTrackingId: bigint4("exercise_tracking_id", {
-    mode: "number"
-  }).notNull(),
-  setIndex: integer2("set_index").notNull(),
-  reps: integer2("reps").notNull(),
-  weight: real("weight").notNull()
-}, (t) => [
-  primaryKey6({
-    name: "tracking_set_pkey",
-    columns: [
-      t.id
-    ]
-  }),
-  unique4("tracking_set_exercise_index_unique").on(t.exerciseTrackingId, t.setIndex),
-  foreignKey5({
-    name: "tracking_set_exercise_tracking_id_fkey",
-    columns: [
-      t.exerciseTrackingId
-    ],
-    foreignColumns: [
-      exerciseTracking.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  index4("tracking_set_exercise_tracking_id_idx").on(t.exerciseTrackingId),
-  ...trackingSetPolicies(t)
-]);
-var trackingSetRelations = relations6(trackingSet, ({ one }) => ({
-  exerciseTracking: one(exerciseTracking, {
-    fields: [
-      trackingSet.exerciseTrackingId
-    ],
-    references: [
-      exerciseTracking.id
-    ]
-  })
-}));
-
-// ../../src/infrastructure/db/schema/drizzle/tracking/exercise_tracking/policies.ts
-import { sql as drizzleSql9 } from "drizzle-orm";
-import { pgPolicy as pgPolicy7 } from "drizzle-orm/pg-core";
-var uid5 = drizzleSql9`"identity"."current_user_id"()`;
-function exerciseTrackingPolicies(t) {
-  const owns = drizzleSql9`exists (select 1 from "tracking"."workout_summary" ws where ws."id" = ${t.workoutSummaryId} and ws."user_id" = ${uid5})`;
-  return [
-    // Lets authenticated users read exercise tracking rows through summaries they own.
-    pgPolicy7("exercise_tracking_select_by_summary_owner", {
-      for: "select",
-      to: authenticatedRole,
-      using: owns
-    }),
-    // Lets authenticated users insert exercise tracking rows through summaries they own.
-    pgPolicy7("exercise_tracking_insert_by_summary_owner", {
-      for: "insert",
-      to: authenticatedRole,
-      withCheck: owns
-    }),
-    // Lets authenticated users update exercise tracking rows through summaries they own.
-    pgPolicy7("exercise_tracking_update_by_summary_owner", {
-      for: "update",
-      to: authenticatedRole,
-      using: owns,
-      withCheck: owns
-    }),
-    // Lets authenticated users delete exercise tracking rows through summaries they own.
-    pgPolicy7("exercise_tracking_delete_by_summary_owner", {
-      for: "delete",
-      to: authenticatedRole,
-      using: owns
-    })
-  ];
-}
-__name(exerciseTrackingPolicies, "exerciseTrackingPolicies");
-
-// ../../src/infrastructure/db/schema/drizzle/tracking/exercise_tracking/table.ts
-import { check } from "drizzle-orm/pg-core";
-var exerciseTracking = trackingSchema.table("exercise_tracking", {
-  id: bigint5("id", {
-    mode: "number"
-  }).generatedByDefaultAsIdentity({
-    name: "exercise_tracking_id_seq"
-  }).notNull(),
-  workoutSummaryId: uuid5("workout_summary_id").notNull(),
-  exerciseToSplitId: bigint5("exercise_to_split_id", {
-    mode: "number"
-  }),
-  exerciseId: bigint5("exercise_id", {
-    mode: "number"
-  }),
-  notes: text4("notes")
-}, (t) => [
-  primaryKey7({
-    name: "exercise_tracking_pkey",
-    columns: [
-      t.id
-    ]
-  }),
-  foreignKey6({
-    name: "exercise_tracking_exercise_to_split_id_fkey",
-    columns: [
-      t.exerciseToSplitId
-    ],
-    foreignColumns: [
-      exerciseToWorkoutSplit.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  foreignKey6({
-    name: "exercise_tracking_exercise_id_fkey",
-    columns: [
-      t.exerciseId
-    ],
-    foreignColumns: [
-      exercise.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  foreignKey6({
-    name: "exercise_tracking_workout_summary_id_fkey",
-    columns: [
-      t.workoutSummaryId
-    ],
-    foreignColumns: [
-      workoutSummary.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  check("exercise_tracking_xor_check", drizzleSql10`num_nonnulls(${t.exerciseToSplitId}, ${t.exerciseId}) = 1`),
-  index5("exercise_tracking_workout_summary_id_idx").on(t.workoutSummaryId),
-  ...exerciseTrackingPolicies(t)
-]);
-var exerciseTrackingRelations = relations7(exerciseTracking, ({ many, one }) => ({
-  exerciseToWorkoutSplit: one(exerciseToWorkoutSplit, {
-    fields: [
-      exerciseTracking.exerciseToSplitId
-    ],
-    references: [
-      exerciseToWorkoutSplit.id
-    ]
-  }),
-  workoutSummary: one(workoutSummary, {
-    fields: [
-      exerciseTracking.workoutSummaryId
-    ],
-    references: [
-      workoutSummary.id
-    ]
-  }),
-  trackingSets: many(trackingSet),
-  exercise: one(exercise, {
-    fields: [
-      exerciseTracking.exerciseId
-    ],
-    references: [
-      exercise.id
-    ]
-  })
-}));
-
-// ../../src/infrastructure/db/schema/drizzle/tracking/workout_summary/policies.ts
-import { sql as drizzleSql11 } from "drizzle-orm";
-import { pgPolicy as pgPolicy8 } from "drizzle-orm/pg-core";
-var uid6 = drizzleSql11`"identity"."current_user_id"()`;
-function workoutSummaryPolicies(t) {
-  return [
-    // Lets authenticated users read only their own completed workout summaries.
-    pgPolicy8("users can read their workout summaries", {
-      for: "select",
-      to: authenticatedRole,
-      using: drizzleSql11`${t.userId} = ${uid6}`
-    }),
-    // Lets authenticated users insert completed workout summaries only for themselves.
-    pgPolicy8("users can insert their workout summaries", {
-      for: "insert",
-      to: authenticatedRole,
-      withCheck: drizzleSql11`${t.userId} = ${uid6}`
-    }),
-    // Lets authenticated users update only their own completed workout summaries.
-    pgPolicy8("users can update their workout summaries", {
-      for: "update",
-      to: authenticatedRole,
-      using: drizzleSql11`${t.userId} = ${uid6}`,
-      withCheck: drizzleSql11`${t.userId} = ${uid6}`
-    }),
-    // Lets authenticated users delete only their own completed workout summaries.
-    pgPolicy8("users can delete their workout summaries", {
-      for: "delete",
-      to: authenticatedRole,
-      using: drizzleSql11`${t.userId} = ${uid6}`
-    })
-  ];
-}
-__name(workoutSummaryPolicies, "workoutSummaryPolicies");
-
-// ../../src/infrastructure/db/schema/drizzle/tracking/workout_summary/table.ts
-var workoutSummary = trackingSchema.table("workout_summary", {
-  id: uuid6("id").defaultRandom().notNull(),
-  userId: uuid6("user_id").notNull(),
-  workoutSplitId: bigint6("workout_split_id", {
-    mode: "number"
-  }).notNull(),
-  workoutStartUtc: timestamp4("workout_start_utc", {
-    withTimezone: true
-  }).notNull(),
-  workoutEndUtc: timestamp4("workout_end_utc", {
-    withTimezone: true
-  }).notNull(),
-  createdAt: timestamp4("created_at", {
-    withTimezone: true
-  }).defaultNow().notNull()
-}, (t) => [
-  primaryKey8({
-    name: "workout_summary_pkey",
-    columns: [
-      t.id
-    ]
-  }),
-  foreignKey7({
-    name: "workout_summary_user_id_fkey",
-    columns: [
-      t.userId
-    ],
-    foreignColumns: [
-      user.id
-    ]
-  }).onDelete("cascade"),
-  foreignKey7({
-    name: "workout_summary_workout_split_id_fkey",
-    columns: [
-      t.workoutSplitId
-    ],
-    foreignColumns: [
-      workoutSplit.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  index6("workout_summary_start_date_idx").on(drizzleSql12`((${t.workoutStartUtc} at time zone 'UTC')::date)`),
-  index6("workout_summary_user_start_utc_idx").on(t.userId, t.workoutStartUtc.desc().nullsFirst()),
-  ...workoutSummaryPolicies(t)
-]);
-var workoutSummaryRelations = relations8(workoutSummary, ({ many, one }) => ({
-  user: one(user, {
-    fields: [
-      workoutSummary.userId
-    ],
-    references: [
-      user.id
-    ]
-  }),
-  workoutSplit: one(workoutSplit, {
-    fields: [
-      workoutSummary.workoutSplitId
-    ],
-    references: [
-      workoutSplit.id
-    ]
-  }),
-  exerciseTrackings: many(exerciseTracking)
-}));
-
-// ../../src/infrastructure/db/schema/drizzle/workout/workout_plan/table.ts
-import { relations as relations9, sql as drizzleSql14 } from "drizzle-orm";
-import { bigint as bigint7, boolean as boolean4, foreignKey as foreignKey8, primaryKey as primaryKey9, timestamp as timestamp5, uniqueIndex as uniqueIndex2, uuid as uuid7 } from "drizzle-orm/pg-core";
-
-// ../../src/infrastructure/db/schema/drizzle/workout/workout_plan/policies.ts
-import { sql as drizzleSql13 } from "drizzle-orm";
-import { pgPolicy as pgPolicy9 } from "drizzle-orm/pg-core";
-var uid7 = drizzleSql13`"identity"."current_user_id"()`;
-function workoutPlanPolicies(t) {
-  return [
-    // Lets authenticated users read only workout plans they own.
-    pgPolicy9("Enable read access for auth users on workout_plan", {
-      for: "select",
-      to: authenticatedRole,
-      using: drizzleSql13`${uid7} = ${t.userId}`
-    }),
-    // Lets authenticated users create workout plans only for themselves.
-    pgPolicy9("Enable insert for auth users on workout_plan", {
-      for: "insert",
-      to: authenticatedRole,
-      withCheck: drizzleSql13`${uid7} = ${t.userId}`
-    }),
-    // Lets authenticated users update only workout plans they own.
-    pgPolicy9("Enable update for auth users on workout_plan", {
-      for: "update",
-      to: authenticatedRole,
-      using: drizzleSql13`${uid7} = ${t.userId}`,
-      withCheck: drizzleSql13`${uid7} = ${t.userId}`
-    }),
-    // Lets authenticated users delete only workout plans they own.
-    pgPolicy9("Enable delete for auth users on workout_plan", {
-      for: "delete",
-      to: authenticatedRole,
-      using: drizzleSql13`${uid7} = ${t.userId}`
-    })
-  ];
-}
-__name(workoutPlanPolicies, "workoutPlanPolicies");
-
-// ../../src/infrastructure/db/schema/drizzle/workout/workout_plan/table.ts
-var workoutPlan = workoutSchema.table("workout_plan", {
-  id: bigint7("id", {
-    mode: "number"
-  }).generatedByDefaultAsIdentity({
-    name: "workout_plan_id_seq"
-  }).notNull(),
-  userId: uuid7("user_id").notNull(),
-  isActive: boolean4("is_active").default(true).notNull(),
-  updatedAt: timestamp5("updated_at", {
-    withTimezone: true
-  }).defaultNow().notNull(),
-  createdAt: timestamp5("created_at", {
-    withTimezone: true
-  }).defaultNow().notNull()
-}, (t) => [
-  primaryKey9({
-    name: "workout_plan_pkey",
-    columns: [
-      t.id
-    ]
-  }),
-  foreignKey8({
-    name: "workout_plan_user_id_fkey",
-    columns: [
-      t.userId
-    ],
-    foreignColumns: [
-      user.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  uniqueIndex2("uq_workout_plan_active_user").on(t.userId).where(drizzleSql14`${t.isActive}`),
-  ...workoutPlanPolicies(t)
-]);
-var workoutPlanRelations = relations9(workoutPlan, ({ many, one }) => ({
-  owner: one(user, {
-    fields: [
-      workoutPlan.userId
-    ],
-    references: [
-      user.id
-    ],
-    relationName: "workoutPlanOwner"
-  }),
-  splits: many(workoutSplit)
-}));
-
-// ../../src/infrastructure/db/schema/drizzle/workout/workout_split/policies.ts
-import { sql as drizzleSql15 } from "drizzle-orm";
-import { pgPolicy as pgPolicy10 } from "drizzle-orm/pg-core";
-var uid8 = drizzleSql15`"identity"."current_user_id"()`;
-function workoutSplitPolicies(t) {
-  const owns = drizzleSql15`${uid8} = (select wp."user_id" from "workout"."workout_plan" wp where wp."id" = ${t.workoutId})`;
-  const ownsForDelete = drizzleSql15`exists (select 1 from "workout"."workout_plan" wp where wp."id" = ${t.workoutId} and wp."user_id" = ${uid8})`;
-  return [
-    // Lets authenticated users read splits belonging to their own plans.
-    pgPolicy10("Enable read access for auth users on workout_split", {
-      for: "select",
-      to: authenticatedRole,
-      using: owns
-    }),
-    // Lets authenticated users add splits only to their own plans.
-    pgPolicy10("Enable insert for auth users on workout_split", {
-      for: "insert",
-      to: authenticatedRole,
-      withCheck: owns
-    }),
-    // Lets authenticated users update splits only within their own plans.
-    pgPolicy10("Enable update for auth users on workout_split", {
-      for: "update",
-      to: authenticatedRole,
-      using: owns,
-      withCheck: owns
-    }),
-    // Lets authenticated users delete splits only from their own plans.
-    pgPolicy10("Enable delete for auth users on workout_split", {
-      for: "delete",
-      to: authenticatedRole,
-      using: ownsForDelete
-    })
-  ];
-}
-__name(workoutSplitPolicies, "workoutSplitPolicies");
-
-// ../../src/infrastructure/db/schema/drizzle/workout/workout_split/table.ts
-var workoutSplit = workoutSchema.table("workout_split", {
-  id: bigint8("id", {
-    mode: "number"
-  }).generatedByDefaultAsIdentity({
-    name: "workout_split_id_seq"
-  }).notNull(),
-  workoutId: bigint8("workout_id", {
-    mode: "number"
-  }).notNull(),
-  name: text5("name").notNull(),
-  orderIndex: integer3("order_index").notNull(),
-  createdAt: timestamp6("created_at", {
-    withTimezone: true
-  }).defaultNow().notNull(),
-  updatedAt: timestamp6("updated_at", {
-    withTimezone: true
-  }).defaultNow().notNull(),
-  isActive: boolean5("is_active").default(true).notNull()
-}, (t) => [
-  primaryKey10({
-    name: "workout_split_pkey",
-    columns: [
-      t.id
-    ]
-  }),
-  uniqueIndex3("uq_active_workout_split_order_index").on(t.workoutId, t.orderIndex).where(drizzleSql16`${t.isActive} = TRUE`),
-  foreignKey9({
-    name: "workout_split_workout_id_fkey",
-    columns: [
-      t.workoutId
-    ],
-    foreignColumns: [
-      workoutPlan.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  index7("workout_split_workout_id_idx").on(t.workoutId),
-  ...workoutSplitPolicies(t)
-]);
-var workoutSplitRelations = relations10(workoutSplit, ({ many, one }) => ({
-  workoutPlan: one(workoutPlan, {
-    fields: [
-      workoutSplit.workoutId
-    ],
-    references: [
-      workoutPlan.id
-    ]
-  }),
-  exerciseAssignments: many(exerciseToWorkoutSplit),
-  workoutSummaries: many(workoutSummary),
-  schedules: many(workoutSchedule)
-}));
-
-// ../../src/infrastructure/db/schema/drizzle/schedules/workout_schedule/policies.ts
-import { sql as drizzleSql17 } from "drizzle-orm";
-import { pgPolicy as pgPolicy11 } from "drizzle-orm/pg-core";
-var uid9 = drizzleSql17`"identity"."current_user_id"()`;
-function workoutSchedulePolicies(t) {
-  const owns = drizzleSql17`${uid9} = ${t.userId}`;
-  return [
-    pgPolicy11("auth can SELECT own workout schedules", {
-      for: "select",
-      to: authenticatedRole,
-      using: owns
-    }),
-    pgPolicy11("auth can INSERT own workout schedules", {
-      for: "insert",
-      to: authenticatedRole,
-      withCheck: owns
-    }),
-    pgPolicy11("auth can UPDATE own workout schedules", {
-      for: "update",
-      to: authenticatedRole,
-      using: owns,
-      withCheck: owns
-    }),
-    pgPolicy11("auth can DELETE own workout schedules", {
-      for: "delete",
-      to: authenticatedRole,
-      using: owns
-    })
-  ];
-}
-__name(workoutSchedulePolicies, "workoutSchedulePolicies");
-
-// ../../src/infrastructure/db/schema/drizzle/schedules/workout_schedule/table.ts
-var workoutSchedule = schedulesSchema.table("workout_schedule", {
-  id: uuid8("id").defaultRandom().notNull(),
-  userId: uuid8("user_id").notNull(),
-  workoutSplitId: bigint9("workout_split_id", {
-    mode: "number"
-  }).notNull(),
-  dayOfWeek: integer4("day_of_week").notNull(),
-  startTime: time("start_time", {
-    precision: 0
-  }).notNull(),
-  createdAt: timestamp7("created_at", {
-    withTimezone: true
-  }).defaultNow().notNull(),
-  updatedAt: timestamp7("updated_at", {
-    withTimezone: true
-  }).defaultNow().notNull()
-}, (t) => [
-  primaryKey11({
-    name: "workout_schedule_pkey",
-    columns: [
-      t.id
-    ]
-  }),
-  unique5("workout_schedule_user_split_weekday_key").on(t.userId, t.workoutSplitId, t.dayOfWeek),
-  check2("workout_schedule_day_of_week_check", drizzleSql18`${t.dayOfWeek} BETWEEN 0 AND 6`),
-  foreignKey10({
-    name: "workout_schedule_user_id_fkey",
-    columns: [
-      t.userId
-    ],
-    foreignColumns: [
-      user.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  foreignKey10({
-    name: "workout_schedule_workout_split_id_fkey",
-    columns: [
-      t.workoutSplitId
-    ],
-    foreignColumns: [
-      workoutSplit.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  ...workoutSchedulePolicies(t)
-]).enableRLS();
-var workoutScheduleRelations = relations11(workoutSchedule, ({ one }) => ({
-  user: one(user, {
-    fields: [
-      workoutSchedule.userId
-    ],
-    references: [
-      user.id
-    ]
-  }),
-  workoutSplit: one(workoutSplit, {
-    fields: [
-      workoutSchedule.workoutSplitId
-    ],
-    references: [
-      workoutSplit.id
-    ]
-  })
-}));
-
-// ../../src/infrastructure/db/schema/drizzle/tracking/aerobic_tracking/table.ts
-import { relations as relations12 } from "drizzle-orm";
-import { bigint as bigint10, foreignKey as foreignKey11, index as index8, primaryKey as primaryKey12, text as text6, timestamp as timestamp8, uuid as uuid9 } from "drizzle-orm/pg-core";
-
-// ../../src/infrastructure/db/schema/drizzle/tracking/aerobic_tracking/policies.ts
-import { sql as drizzleSql19 } from "drizzle-orm";
-import { pgPolicy as pgPolicy12 } from "drizzle-orm/pg-core";
-var uid10 = drizzleSql19`"identity"."current_user_id"()`;
-function aerobicTrackingPolicies(t) {
-  return [
-    // Lets authenticated users read only their own aerobic tracking rows.
-    pgPolicy12("Enable read access for auth users on aerobic_tracking", {
-      for: "select",
-      to: authenticatedRole,
-      using: drizzleSql19`${uid10} = ${t.userId}`
-    }),
-    // Lets authenticated users insert aerobic tracking rows only for themselves.
-    pgPolicy12("Enable insert for auth users on aerobic_tracking", {
-      for: "insert",
-      to: authenticatedRole,
-      withCheck: drizzleSql19`${uid10} = ${t.userId}`
-    }),
-    // Lets authenticated users update only their own aerobic tracking rows.
-    pgPolicy12("Enable update for auth users on aerobic_tracking", {
-      for: "update",
-      to: authenticatedRole,
-      using: drizzleSql19`${uid10} = ${t.userId}`,
-      withCheck: drizzleSql19`${uid10} = ${t.userId}`
-    }),
-    // Lets authenticated users delete only their own aerobic tracking rows.
-    pgPolicy12("Enable delete for auth users on aerobic_tracking", {
-      for: "delete",
-      to: authenticatedRole,
-      using: drizzleSql19`${uid10} = ${t.userId}`
-    })
-  ];
-}
-__name(aerobicTrackingPolicies, "aerobicTrackingPolicies");
-
-// ../../src/infrastructure/db/schema/drizzle/tracking/aerobic_tracking/table.ts
-var aerobicTracking = trackingSchema.table("aerobic_tracking", {
-  id: bigint10("id", {
-    mode: "number"
-  }).generatedByDefaultAsIdentity({
-    name: "aerobic_tracking_id_seq"
-  }).notNull(),
-  userId: uuid9("user_id").notNull(),
-  type: text6("type").notNull(),
-  durationSec: bigint10("duration_sec", {
-    mode: "number"
-  }).default(0).notNull(),
-  workoutTimeUtc: timestamp8("workout_time_utc", {
-    withTimezone: true
-  }).defaultNow().notNull()
-}, (t) => [
-  primaryKey12({
-    name: "aerobic_tracking_pkey",
-    columns: [
-      t.id
-    ]
-  }),
-  foreignKey11({
-    name: "aerobic_tracking_user_id_fkey",
-    columns: [
-      t.userId
-    ],
-    foreignColumns: [
-      user.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  index8("aerobic_tracking_user_id_workout_time_utc_idx").on(t.userId, t.workoutTimeUtc.desc().nullsFirst()),
-  ...aerobicTrackingPolicies(t)
-]);
-var aerobicTrackingRelations = relations12(aerobicTracking, ({ one }) => ({
-  user: one(user, {
-    fields: [
-      aerobicTracking.userId
-    ],
-    references: [
-      user.id
-    ]
-  })
-}));
-
-// ../../src/infrastructure/db/schema/drizzle/identity/oauth_account/table.ts
-import { relations as relations13 } from "drizzle-orm";
-import { foreignKey as foreignKey12, primaryKey as primaryKey13, text as text7, timestamp as timestamp9, unique as unique6, uuid as uuid10 } from "drizzle-orm/pg-core";
-
-// ../../src/infrastructure/db/schema/drizzle/identity/oauth_account/policies.ts
-import { sql as drizzleSql20 } from "drizzle-orm";
-import { pgPolicy as pgPolicy13 } from "drizzle-orm/pg-core";
-var currentUserId3 = drizzleSql20`"identity"."current_user_id"()`;
-function oauthAccountPolicies(table) {
-  return [
-    // Lets authenticated users read only OAuth accounts linked to themselves.
-    pgPolicy13("Enable read access for auth users on oauth_account", {
-      for: "select",
-      to: authenticatedRole,
-      using: drizzleSql20`${currentUserId3} = ${table.userId}`
-    }),
-    // Lets authenticated users link OAuth accounts only to themselves.
-    pgPolicy13("Enable insert for auth users on oauth_account", {
-      for: "insert",
-      to: authenticatedRole,
-      withCheck: drizzleSql20`${currentUserId3} = ${table.userId}`
-    }),
-    // Lets authenticated users update only OAuth accounts linked to themselves.
-    pgPolicy13("Enable update for auth users on oauth_account", {
-      for: "update",
-      to: authenticatedRole,
-      using: drizzleSql20`${currentUserId3} = ${table.userId}`,
-      withCheck: drizzleSql20`${currentUserId3} = ${table.userId}`
-    }),
-    // Lets authenticated users delete only OAuth accounts linked to themselves.
-    pgPolicy13("Enable delete for auth users on oauth_account", {
-      for: "delete",
-      to: authenticatedRole,
-      using: drizzleSql20`${currentUserId3} = ${table.userId}`
-    })
-  ];
-}
-__name(oauthAccountPolicies, "oauthAccountPolicies");
-
-// ../../src/infrastructure/db/schema/drizzle/identity/oauth_account/table.ts
-var oauthAccount = identitySchema.table("oauth_account", {
-  id: uuid10("id").defaultRandom().notNull(),
-  userId: uuid10("user_id").notNull(),
-  provider: text7("provider").notNull(),
-  providerUserId: text7("provider_user_id").notNull(),
-  providerEmail: text7("provider_email").notNull(),
-  linkedAt: timestamp9("linked_at", {
-    withTimezone: true
-  }).defaultNow().notNull()
-}, (t) => [
-  primaryKey13({
-    name: "oauth_account_pkey",
-    columns: [
-      t.id
-    ]
-  }),
-  unique6("oauth_account_provider_user_unique").on(t.provider, t.providerUserId),
-  foreignKey12({
-    name: "oauth_account_user_id_fkey",
-    columns: [
-      t.userId
-    ],
-    foreignColumns: [
-      user.id
-    ]
-  }).onUpdate("cascade").onDelete("cascade"),
-  ...oauthAccountPolicies(t)
-]);
-var oauthAccountRelations = relations13(oauthAccount, ({ one }) => ({
-  user: one(user, {
-    fields: [
-      oauthAccount.userId
-    ],
-    references: [
-      user.id
-    ]
-  })
-}));
-
-// ../../src/infrastructure/db/schema/drizzle/identity/user/policies.ts
-import { sql as drizzleSql21 } from "drizzle-orm";
-import { pgPolicy as pgPolicy14 } from "drizzle-orm/pg-core";
-var currentUserId4 = drizzleSql21`"identity"."current_user_id"()`;
-function userPolicies(table) {
-  return [
-    // Lets an authenticated user read their own profile.
-    pgPolicy14("Enable read access for auth users on own profile", {
-      for: "select",
-      to: authenticatedRole,
-      using: drizzleSql21`${currentUserId4} = ${table.id}`
-    }),
-    // Lets a message receiver read the profile of a sender in their inbox.
-    pgPolicy14("Allow user to view senders in their messages", {
-      for: "select",
-      to: authenticatedRole,
-      using: drizzleSql21`exists (select 1 from "messages"."message" m where m."sender_id" = ${table.id} and m."receiver_id" = ${currentUserId4})`
-    }),
-    // Lets an authenticated user create only their own profile row.
-    pgPolicy14("Enable insert for auth users on own profile", {
-      for: "insert",
-      to: authenticatedRole,
-      withCheck: drizzleSql21`${currentUserId4} = ${table.id}`
-    }),
-    // Preserves the legacy public self-registration policy for compatibility.
-    pgPolicy14("Enable insert for public users on own profile", {
-      for: "insert",
-      to: "public",
-      withCheck: drizzleSql21`${currentUserId4} = ${table.id}`
-    }),
-    // Lets an authenticated user update only their own profile.
-    pgPolicy14("Enable update for auth users on own profile", {
-      for: "update",
-      to: authenticatedRole,
-      using: drizzleSql21`${currentUserId4} = ${table.id}`,
-      withCheck: drizzleSql21`${currentUserId4} = ${table.id}`
-    }),
-    // Lets an authenticated user delete only their own profile.
-    pgPolicy14("Enable delete for auth users on own profile", {
-      for: "delete",
-      to: authenticatedRole,
-      using: drizzleSql21`${currentUserId4} = ${table.id}`
-    })
-  ];
-}
-__name(userPolicies, "userPolicies");
-
-// ../../src/infrastructure/db/schema/drizzle/identity/user/table.ts
-var user = identitySchema.table("user", {
-  username: text8("username").notNull(),
-  email: text8("email").notNull(),
-  name: text8("name").notNull(),
-  gender: text8("gender").default("Unknown").notNull(),
-  createdAt: timestamp10("created_at", {
-    withTimezone: true
-  }).defaultNow().notNull(),
-  updatedAt: timestamp10("updated_at", {
-    withTimezone: true
-  }).defaultNow().notNull(),
-  profilePicPath: text8("profile_pic_path"),
-  id: uuid11("id").defaultRandom().notNull(),
-  pushToken: text8("push_token"),
-  passwordHash: text8("password_hash"),
-  role: text8("role").default("User").notNull(),
-  tokenVersion: bigint11("token_version", {
-    mode: "number"
-  }).default(0).notNull(),
-  isVerified: boolean6("is_verified").default(false).notNull(),
-  authProvider: text8("auth_provider").default("app").notNull(),
-  lastLogin: timestamp10("last_login", {
-    withTimezone: true
-  })
-}, (t) => [
-  primaryKey14({
-    name: "user_pkey",
-    columns: [
-      t.id
-    ]
-  }),
-  uniqueIndex4("user_email_ci_unique").on(drizzleSql22`
-      LOWER(
-        TRIM(
-          BOTH
-          FROM
-            ${t.email}
-        )
-      )
-    `),
-  uniqueIndex4("user_username_ci_unique").on(drizzleSql22`
-      LOWER(
-        TRIM(
-          BOTH
-          FROM
-            ${t.username}
-        )
-      )
-    `),
-  ...userPolicies(t)
-]);
-var userRelations = relations14(user, ({ many, one }) => ({
-  oauthAccounts: many(oauthAccount),
-  ownedWorkoutPlans: many(workoutPlan, {
-    relationName: "workoutPlanOwner"
-  }),
-  trainedWorkoutPlans: many(workoutPlan, {
-    relationName: "workoutPlanTrainer"
-  }),
-  workoutSummaries: many(workoutSummary),
-  aerobicTrackings: many(aerobicTracking),
-  reminderSettings: one(userReminderSetting),
-  workoutSchedules: many(workoutSchedule),
-  sentMessages: many(message, {
-    relationName: "messageSender"
-  }),
-  receivedMessages: many(message, {
-    relationName: "messageReceiver"
-  })
-}));
-
-// ../../src/infrastructure/db/schema/drizzle/tracking/views/prs.view.ts
-import { sql as drizzleSql23 } from "drizzle-orm";
-import { bigint as bigint12, integer as integer5, real as real2, text as text9, timestamp as timestamp11, uuid as uuid12 } from "drizzle-orm/pg-core";
-var prsView = trackingSchema.view("v_prs", {
-  id: bigint12("id", {
-    mode: "number"
-  }),
-  exerciseToSplitId: bigint12("exercise_to_split_id", {
-    mode: "number"
-  }),
-  exerciseId: bigint12("exercise_id", {
-    mode: "number"
-  }),
-  exercise: text9("exercise"),
-  setIndex: integer5("set_index"),
-  weight: real2("weight"),
-  reps: bigint12("reps", {
-    mode: "number"
-  }),
-  workoutSummaryId: uuid12("workout_summary_id"),
-  workoutStartUtc: timestamp11("workout_start_utc", {
-    withTimezone: true
-  }),
-  workoutEndUtc: timestamp11("workout_end_utc", {
-    withTimezone: true
-  })
-}).with({
-  securityInvoker: true
-}).as(drizzleSql23`
-    SELECT DISTINCT
-      ON (et.exercise_id) et.id,
-      et.exercise_to_split_id,
-      et.exercise_id,
-      et.exercise,
-      et.set_index,
-      et.weight,
-      et.reps,
-      et.workout_summary_id,
-      et.workout_start_utc,
-      et.workout_end_utc
-    FROM
-      tracking.v_exercise_tracking_set_expanded et
-    ORDER BY
-      et.exercise_id,
-      et.weight DESC,
-      et.reps DESC,
-      et.workout_start_utc DESC,
-      et.id DESC
-  `);
-
-// ../../src/infrastructure/db/schema/drizzle/tracking/views/exercise-tracking-expanded.view.ts
-import { sql as drizzleSql24 } from "drizzle-orm";
-import { bigint as bigint13, boolean as boolean7, integer as integer6, real as real3, text as text10, timestamp as timestamp12, uuid as uuid13 } from "drizzle-orm/pg-core";
-var exerciseTrackingSetExpandedView = trackingSchema.view("v_exercise_tracking_set_expanded", {
-  id: bigint13("id", {
-    mode: "number"
-  }),
-  exerciseToSplitId: bigint13("exercise_to_split_id", {
-    mode: "number"
-  }),
-  weight: real3("weight"),
-  reps: integer6("reps"),
-  orderIndex: bigint13("order_index", {
-    mode: "number"
-  }),
-  setIndex: integer6("set_index"),
-  exerciseId: bigint13("exercise_id", {
-    mode: "number"
-  }),
-  workoutSplitId: bigint13("workout_split_id", {
-    mode: "number"
-  }),
-  splitName: text10("split_name"),
-  exercise: text10("exercise"),
-  targetMuscle: text10("target_muscle"),
-  specificTargetMuscle: text10("specific_target_muscle"),
-  notes: text10("notes"),
-  workoutSummaryId: uuid13("workout_summary_id"),
-  workoutStartUtc: timestamp12("workout_start_utc", {
-    withTimezone: true
-  }),
-  workoutEndUtc: timestamp12("workout_end_utc", {
-    withTimezone: true
-  }),
-  isAssignedToSplit: boolean7("is_assigned_to_split")
-}).with({
-  securityInvoker: true
-}).as(drizzleSql24`
-    SELECT
-      et.id,
-      et.exercise_to_split_id,
-      tracking_set.weight AS weight,
-      tracking_set.reps AS reps,
-      ews.order_index AS order_index,
-      tracking_set.set_index AS set_index,
-      COALESCE(ews.exercise_id, et.exercise_id) AS exercise_id,
-      wsumm.workout_split_id,
-      ws.name AS split_name,
-      ex.name AS exercise,
-      ex.target_muscle AS target_muscle,
-      ex.specific_target_muscle AS specific_target_muscle,
-      et.notes,
-      et.workout_summary_id,
-      wsumm.workout_start_utc,
-      wsumm.workout_end_utc,
-      CASE
-        WHEN et.exercise_to_split_id IS NOT NULL THEN TRUE
-        WHEN et.exercise_id IS NOT NULL THEN FALSE
-      END AS is_assigned_to_split
-    FROM
-      tracking.exercise_tracking et
-      LEFT JOIN tracking.workout_summary wsumm ON wsumm.id = et.workout_summary_id
-      LEFT JOIN workout.exercise_to_workout_split ews ON ews.id = et.exercise_to_split_id
-      LEFT JOIN workout.workout_split ws ON ws.id = wsumm.workout_split_id
-      LEFT JOIN workout.exercise ex ON ex.id = COALESCE(ews.exercise_id, et.exercise_id)
-      LEFT JOIN tracking.tracking_set tracking_set ON tracking_set.exercise_tracking_id = et.id
-  `);
-
-// ../../src/infrastructure/db/schema/drizzle/workout/views/exercise-to-workoutsplit-expanded.view.ts
-import { bigint as bigint14, boolean as boolean8, text as text11, timestamp as timestamp13 } from "drizzle-orm/pg-core";
-import { sql as drizzleSql25 } from "drizzle-orm";
-import { integer as integer7 } from "drizzle-orm/pg-core";
-var exerciseToWorkoutSplitSetExpandedView = workoutSchema.view("v_exercise_to_workout_split_set_expanded", {
-  id: bigint14("id", {
-    mode: "number"
-  }),
-  workoutSplitId: bigint14("workout_split_id", {
-    mode: "number"
-  }),
-  workoutId: bigint14("workout_id", {
-    mode: "number"
-  }),
-  exerciseId: bigint14("exercise_id", {
-    mode: "number"
-  }),
-  exercise: text11("exercise"),
-  workoutSplit: text11("workout_split"),
-  reps: integer7("reps"),
-  orderIndex: bigint14("order_index", {
-    mode: "number"
-  }),
-  setIndex: integer7("set_index"),
-  createdAt: timestamp13("created_at", {
-    withTimezone: true
-  }),
-  isActive: boolean8("is_active")
-}).with({
-  securityInvoker: true
-}).as(drizzleSql25`
-    SELECT
-      ews.id,
-      ews.workout_split_id,
-      ws.workout_id,
-      ews.exercise_id,
-      ex.name AS exercise,
-      ws.name AS workout_split,
-      workout_set.reps AS reps,
-      workout_set.order_index AS set_index,
-      ews.order_index,
-      ews.created_at,
-      ews.is_active
-    FROM
-      workout.exercise_to_workout_split ews
-      JOIN workout.workout_split ws ON ws.id = ews.workout_split_id
-      JOIN workout.exercise ex ON ex.id = ews.exercise_id
-      LEFT JOIN workout.workout_set workout_set ON workout_set.exercise_to_split_id = ews.id
-    GROUP BY
-      ews.id,
-      ews.workout_split_id,
-      ws.workout_id,
-      ews.exercise_id,
-      ex.name,
-      ws.name,
-      workout_set.reps,
-      workout_set.order_index,
-      ews.order_index,
-      ews.created_at,
-      ews.is_active
-  `);
-
-// src/database/database.schemas.ts
-var userDbSchema = createSelectSchema(user);
-var userInsertDbSchema = createInsertSchema(user);
-var userUpdateDbSchema = createUpdateSchema(user);
-var oauthAccountDbSchema = createSelectSchema(oauthAccount);
-var exerciseDbSchema = createSelectSchema(exercise);
-var workoutPlanDbSchema = createSelectSchema(workoutPlan);
-var workoutSplitDbSchema = createSelectSchema(workoutSplit);
-var exerciseToWorkoutSplitDbSchema = createSelectSchema(exerciseToWorkoutSplit);
-var exerciseToWorkoutSplitSetExpandedViewDbSchema = createSelectSchema(exerciseToWorkoutSplitSetExpandedView);
-var workoutSetDbSchema = createSelectSchema(workoutSet);
-var workoutSummaryDbSchema = createSelectSchema(workoutSummary);
-var exerciseTrackingDbSchema = createSelectSchema(exerciseTracking);
-var trackingSetDbSchema = createSelectSchema(trackingSet);
-var aerobicTrackingDbSchema = createSelectSchema(aerobicTracking);
-var messageDbSchema = createSelectSchema(message);
-var userReminderSettingDbSchema = createSelectSchema(userReminderSetting);
-var workoutScheduleDbSchema = createSelectSchema(workoutSchedule);
-var exerciseTrackingSetExpandedViewDbSchema = createSelectSchema(exerciseTrackingSetExpandedView);
-var prsViewDbSchema = createSelectSchema(prsView);
-
 // src/modules/aerobics/aerobics.contracts.ts
-import { z as z3 } from "zod/v4";
-
-// src/modules/aerobics/aerobics.dtos.ts
 import { z as z2 } from "zod/v4";
-var addAerobicInputQueryDtoSchema = z2.object({
-  durationMins: z2.number(),
-  durationSec: aerobicTrackingDbSchema.shape.durationSec,
-  type: aerobicTrackingDbSchema.shape.type
+var aerobicEntrySchema = z2.object({
+  durationMins: z2.number().int().min(0).max(10080),
+  durationSec: z2.number().int().min(0).max(59),
+  type: z2.string().trim().min(1).max(50)
+}).refine((entry) => entry.durationMins > 0 || entry.durationSec > 0, {
+  message: "Aerobic duration must be greater than zero"
 });
-var aerobicsDailyRecordQueryDtoSchema = z2.object({
-  id: aerobicTrackingDbSchema.shape.id,
-  type: aerobicTrackingDbSchema.shape.type,
-  durationSec: aerobicTrackingDbSchema.shape.durationSec,
-  durationMins: aerobicTrackingDbSchema.shape.durationSec
+var aerobicsDailyRecordSchema = z2.object({
+  id: z2.number(),
+  type: z2.string(),
+  durationSec: z2.number(),
+  durationMins: z2.number()
 });
-var aerobicsWeeklyRecordQueryDtoSchema = aerobicsDailyRecordQueryDtoSchema.extend({
+var aerobicsWeeklyRecordSchema = aerobicsDailyRecordSchema.extend({
   workoutTimeLocal: serializedDateSchema
 });
-var weeklyDataQueryDtoSchema = z2.object({
-  records: z2.array(aerobicsWeeklyRecordQueryDtoSchema),
+var aerobicsWeeklyDataSchema = z2.object({
+  records: z2.array(aerobicsWeeklyRecordSchema),
   totalDurationSec: z2.number(),
   totalDurationMins: z2.number()
 });
-var userAerobicsQueryDtoSchema = z2.object({
-  daily: z2.record(z2.string(), z2.array(aerobicsDailyRecordQueryDtoSchema)),
-  weekly: z2.record(z2.string(), weeklyDataQueryDtoSchema)
+var aerobicHistorySchema = z2.object({
+  daily: z2.record(z2.string(), z2.array(aerobicsDailyRecordSchema)),
+  weekly: z2.record(z2.string(), aerobicsWeeklyDataSchema)
 });
-var userAerobicsRowQueryDtoSchema = z2.object({
-  data: userAerobicsQueryDtoSchema
-});
-var aerobicMutationRowQueryDtoSchema = z2.object({
-  id: aerobicTrackingDbSchema.shape.id
-});
-
-// src/modules/aerobics/aerobics.contracts.ts
-var createAerobicEntryRequestSchema = z3.object({
-  query: z3.object({
+var createAerobicEntryRequestSchema = z2.object({
+  query: z2.object({
     tz: timezoneSchema.optional()
   }),
-  body: z3.object({
-    record: addAerobicInputQueryDtoSchema
+  body: z2.object({
+    record: aerobicEntrySchema
   })
 });
-var createAerobicEntryResponseSchema = z3.void();
+var createAerobicEntryResponseSchema = z2.void();
 var createAerobicEntryContract = {
   request: createAerobicEntryRequestSchema,
   response: createAerobicEntryResponseSchema
 };
-var getAerobicHistoryRequestSchema = z3.object({
-  query: z3.object({
+var getAerobicHistoryRequestSchema = z2.object({
+  query: z2.object({
     tz: timezoneSchema.optional()
   })
 });
-var getAerobicHistoryResponseSchema = userAerobicsQueryDtoSchema;
+var getAerobicHistoryResponseSchema = aerobicHistorySchema;
 var getAerobicHistoryContract = {
   request: getAerobicHistoryRequestSchema,
   response: getAerobicHistoryResponseSchema
 };
-var aerobicEntryIdParamsSchema = z3.object({
-  id: z3.coerce.number().int().positive()
+var aerobicEntryIdParamsSchema = z2.object({
+  id: z2.coerce.number().int().positive()
 });
-var updateAerobicEntryRequestSchema = z3.object({
+var updateAerobicEntryRequestSchema = z2.object({
   params: aerobicEntryIdParamsSchema,
-  query: z3.object({
+  query: z2.object({
     tz: timezoneSchema.optional()
   }),
-  body: z3.object({
-    record: addAerobicInputQueryDtoSchema
+  body: z2.object({
+    record: aerobicEntrySchema
   })
 });
 var updateAerobicEntryContract = {
   request: updateAerobicEntryRequestSchema,
-  response: z3.void()
+  response: z2.void()
 };
-var deleteAerobicEntryRequestSchema = z3.object({
+var deleteAerobicEntryRequestSchema = z2.object({
   params: aerobicEntryIdParamsSchema,
-  query: z3.object({
+  query: z2.object({
     tz: timezoneSchema.optional()
   })
 });
 var deleteAerobicEntryContract = {
   request: deleteAerobicEntryRequestSchema,
-  response: z3.void()
+  response: z2.void()
 };
 
 // src/modules/auth/password/password.contracts.ts
-import { z as z4 } from "zod/v4";
-var createPasswordResetRequestSchema = z4.object({
-  body: z4.object({
-    identifier: z4.string()
+import { z as z3 } from "zod/v4";
+var createPasswordResetRequestSchema = z3.object({
+  body: z3.object({
+    identifier: z3.string().trim().min(1).max(254)
   })
 });
 var createPasswordResetRequestContract = {
   request: createPasswordResetRequestSchema
 };
-var resetPasswordRequestSchema = z4.object({
-  body: z4.object({
-    newPassword: z4.string().min(8, "Password must be at least 8 characters long")
+var resetPasswordRequestSchema = z3.object({
+  body: z3.object({
+    newPassword: z3.string().min(8, "Password must be at least 8 characters long").max(128, "Password must be at most 128 characters long")
   }),
-  query: z4.object({
-    token: z4.string().optional()
+  query: z3.object({
+    token: z3.string().min(1).max(16384).optional()
   })
 });
-var resetPasswordResponseSchema = z4.void();
+var resetPasswordResponseSchema = z3.void();
 var resetPasswordContract = {
   request: resetPasswordRequestSchema,
   response: resetPasswordResponseSchema
 };
 
-// src/modules/auth/password/password.dtos.ts
-import { z as z5 } from "zod/v4";
-var forgotPasswordPayloadDtoSchema = z5.object({
-  sub: userDbSchema.shape.id,
-  jti: z5.string(),
-  exp: z5.number(),
-  iss: z5.string(),
-  typ: z5.string()
-});
-
 // src/modules/auth/session/session.contracts.ts
-import { z as z6 } from "zod/v4";
-var loginRequestSchema = z6.object({
-  body: z6.object({
-    identifier: z6.string().min(3).refine((value) => z6.string().email().safeParse(value).success || /^[a-zA-Z0-9_]{3,20}$/.test(value), {
+import { z as z4 } from "zod/v4";
+var userIdSchema = z4.string().uuid();
+var loginRequestSchema = z4.object({
+  body: z4.object({
+    identifier: z4.string().trim().min(3).max(254).refine((value) => z4.string().email().safeParse(value).success || /^[a-zA-Z0-9_]{3,20}$/.test(value), {
       message: "Must be a valid email or username"
     }),
-    password: z6.string().min(1, "Username and password are required")
+    password: z4.string().min(1, "Username and password are required").max(128)
   })
 });
-var loginResponseSchema = z6.object({
-  message: z6.string(),
-  user: userDbSchema.shape.id,
-  accessToken: z6.string(),
-  refreshToken: z6.string()
+var loginResponseSchema = z4.object({
+  message: z4.string(),
+  user: userIdSchema,
+  accessToken: z4.string(),
+  refreshToken: z4.string()
 });
 var loginContract = {
   request: loginRequestSchema,
   response: loginResponseSchema
 };
-var refreshTokenResponseSchema = z6.object({
-  message: z6.string(),
-  accessToken: z6.string(),
-  refreshToken: z6.string(),
-  userId: userDbSchema.shape.id
+var refreshTokenResponseSchema = z4.object({
+  message: z4.string(),
+  accessToken: z4.string(),
+  refreshToken: z4.string(),
+  userId: userIdSchema
 });
 var refreshTokenContract = {
   response: refreshTokenResponseSchema
 };
-var logoutResponseSchema = z6.object({
-  message: z6.string()
+var logoutResponseSchema = z4.object({
+  message: z4.string()
 });
 var logoutContract = {
   response: logoutResponseSchema
 };
 
-// src/modules/auth/session/session.dtos.ts
-import { z as z8 } from "zod/v4";
-
-// src/modules/user/update/update.dtos.ts
-import { z as z7 } from "zod/v4";
-var authenticatedUserForUpdateQueryDtoSchema = z7.object({
-  username: userDbSchema.shape.username.trim().min(3, "Username must be at least 3 characters").max(15, "Username must be at most 15 characters").regex(/^[a-zA-Z0-9_]+$/, "Username may contain letters, numbers, and underscore only"),
-  fullName: userDbSchema.shape.name.trim().min(1, "Full name is required").max(20, "Full name is too long").regex(/^[a-zA-Z\s]+$/, "Full name may contain letters and spaces only"),
-  email: userDbSchema.shape.email.trim().toLowerCase().email("Invalid email format")
-}).partial();
-var userDataQueryDtoSchema = z7.object({
-  id: userDbSchema.shape.id,
-  username: userDbSchema.shape.username,
-  email: userDbSchema.shape.email,
-  name: userDbSchema.shape.name,
-  gender: userDbSchema.shape.gender,
-  createdAt: serializedDateSchema,
-  updatedAt: serializedDateSchema,
-  profilePicPath: userDbSchema.shape.profilePicPath,
-  pushToken: userDbSchema.shape.pushToken,
-  role: userDbSchema.shape.role,
-  isFirstLogin: z7.boolean(),
-  tokenVersion: userDbSchema.shape.tokenVersion,
-  isVerified: userDbSchema.shape.isVerified,
-  authProvider: userDbSchema.shape.authProvider,
-  lastLogin: serializedDateSchema.nullable()
-});
-var userDataRowQueryDtoSchema = z7.object({
-  userData: userDataQueryDtoSchema
-});
-var userConflictQueryDtoSchema = z7.object({
-  conflict: z7.boolean()
-});
-var userMessageIdentityQueryDtoSchema = z7.object({
-  id: userDbSchema.shape.id,
-  username: userDbSchema.shape.username,
-  name: userDbSchema.shape.name,
-  profilePicPath: userDbSchema.shape.profilePicPath
-});
-var userProfilePicQueryDtoSchema = z7.object({
-  profilePicPath: userDbSchema.shape.profilePicPath
-});
-var changeEmailTokenPayloadDtoSchema = z7.object({
-  jti: z7.string(),
-  sub: z7.string(),
-  newEmail: z7.string(),
-  exp: z7.number(),
-  iss: z7.string(),
-  typ: z7.string()
-});
-
-// src/modules/auth/session/session.dtos.ts
-var accessTokenPayloadDtoSchema = z8.object({
-  id: userDbSchema.shape.id,
-  role: userDbSchema.shape.role,
-  tokenVer: userDbSchema.shape.tokenVersion,
-  cnf: z8.object({
-    jkt: z8.string()
-  }).optional(),
-  iat: z8.number().optional(),
-  exp: z8.number().optional()
-});
-var userAfterBumpQueryDtoSchema = z8.object({
-  tokenVersion: userDbSchema.shape.tokenVersion,
-  userData: userDataQueryDtoSchema
-});
-var tokenVersionQueryDtoSchema = z8.object({
-  tokenVersion: userDbSchema.shape.tokenVersion
-});
-var lastLoginQueryDtoSchema = z8.object({
-  lastLogin: z8.date().nullable()
-});
-
 // src/modules/auth/verification/verification.contracts.ts
-import { z as z9 } from "zod/v4";
-var verifyEmailRequestSchema = z9.object({
-  query: z9.object({
-    token: z9.string().optional()
+import { z as z5 } from "zod/v4";
+var usernameSchema = z5.string().trim().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/, "Invalid username");
+var emailSchema = z5.string().trim().max(254).email("Invalid email");
+var verifyEmailRequestSchema = z5.object({
+  query: z5.object({
+    token: z5.string().min(1).max(16384).optional()
   })
 });
 var verifyEmailContract = {
   request: verifyEmailRequestSchema
 };
-var createVerificationEmailRequestSchema = z9.object({
-  body: z9.object({
-    email: userDbSchema.shape.email.trim().email("Invalid email")
+var createVerificationEmailRequestSchema = z5.object({
+  body: z5.object({
+    email: emailSchema
   })
 });
 var createVerificationEmailContract = {
   request: createVerificationEmailRequestSchema
 };
-var updateUnverifiedAccountEmailRequestSchema = z9.object({
-  body: z9.object({
-    username: userDbSchema.shape.username,
-    password: z9.string(),
-    newEmail: userDbSchema.shape.email.trim().email("Invalid email")
+var updateUnverifiedAccountEmailRequestSchema = z5.object({
+  body: z5.object({
+    username: usernameSchema,
+    password: z5.string().min(1).max(128),
+    newEmail: emailSchema
   })
 });
 var updateUnverifiedAccountEmailContract = {
   request: updateUnverifiedAccountEmailRequestSchema
 };
-var getVerificationStatusRequestSchema = z9.object({
-  query: z9.object({
-    username: userDbSchema.shape.username
+var getVerificationStatusRequestSchema = z5.object({
+  query: z5.object({
+    username: usernameSchema
   })
 });
 var getVerificationStatusContract = {
   request: getVerificationStatusRequestSchema
 };
 
-// src/modules/auth/verification/verification.dtos.ts
-import { z as z10 } from "zod/v4";
-var emailVerifyPayloadDtoSchema = z10.object({
-  sub: userDbSchema.shape.id,
-  jti: z10.string(),
-  exp: z10.number(),
-  iss: z10.string(),
-  typ: z10.string()
-});
-
-// src/modules/auth/auth.dtos.ts
-import { z as z11 } from "zod/v4";
-var userByIdentifierQueryDtoSchema = z11.object({
-  id: userDbSchema.shape.id,
-  name: userDbSchema.shape.name,
-  username: userDbSchema.shape.username,
-  email: userDbSchema.shape.email.optional(),
-  passwordHash: userDbSchema.shape.passwordHash,
-  role: userDbSchema.shape.role,
-  isVerified: userDbSchema.shape.isVerified,
-  lastLogin: serializedDateSchema.nullable().optional()
-});
-var userByIdentifierRawQueryDtoSchema = userByIdentifierQueryDtoSchema.omit({
-  isVerified: true,
-  lastLogin: true,
-  passwordHash: true
-}).extend({
-  password_hash: userDbSchema.shape.passwordHash,
-  is_verified: z11.boolean(),
-  last_login: serializedDateSchema.nullable()
-});
-var userByIdentifierRowQueryDtoSchema = z11.object({
-  userData: userByIdentifierRawQueryDtoSchema.nullable()
-});
-var userByUsernameRawQueryDtoSchema = userByIdentifierQueryDtoSchema.omit({
-  isVerified: true,
-  passwordHash: true
-}).extend({
-  password_hash: userDbSchema.shape.passwordHash,
-  is_verified: z11.boolean()
-});
-var userByUsernameRowQueryDtoSchema = z11.object({
-  userData: userByUsernameRawQueryDtoSchema.nullable()
-});
-
-// src/modules/exercises/exercises.dtos.ts
-import { z as z12 } from "zod/v4";
-var getAllExercisesExerciseQueryDtoSchema = z12.object({
-  id: exerciseDbSchema.shape.id,
-  name: exerciseDbSchema.shape.name,
-  specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle
-});
-var exercisesMapByMuscleQueryDtoSchema = z12.record(z12.string(), z12.array(getAllExercisesExerciseQueryDtoSchema));
-var exerciseMapByMuscleRowQueryDtoSchema = z12.object({
-  result: z12.object({
-    map: exercisesMapByMuscleQueryDtoSchema.nullable()
-  }).nullable()
-});
-
 // src/modules/exercises/exercises.contracts.ts
-var listExercisesResponseSchema = exercisesMapByMuscleQueryDtoSchema;
+import { z as z6 } from "zod/v4";
+var listExercisesResponseSchema = z6.record(z6.string(), z6.array(z6.object({
+  id: z6.number().int(),
+  name: z6.string(),
+  specificTargetMuscle: z6.string()
+})));
 var listExercisesContract = {
   response: listExercisesResponseSchema
 };
 
 // src/modules/messages/messages.contracts.ts
-import { z as z14 } from "zod/v4";
-
-// src/modules/messages/messages.dtos.ts
-import { z as z13 } from "zod/v4";
-var allUserMessageQueryDtoSchema = z13.object({
-  id: messageDbSchema.shape.id,
-  subject: messageDbSchema.shape.subject,
-  msg: messageDbSchema.shape.msg,
-  sentAt: serializedDateSchema,
-  isRead: messageDbSchema.shape.isRead,
-  senderFullName: userDbSchema.shape.name,
-  senderProfilePicPath: userDbSchema.shape.profilePicPath
-});
-var messageAsReadQueryDtoSchema = z13.object({
-  id: messageDbSchema.shape.id,
-  isRead: messageDbSchema.shape.isRead
-});
-var deletedMessageQueryDtoSchema = z13.object({
-  id: messageDbSchema.shape.id
-});
-var messageAfterSendQueryDtoSchema = z13.object({
-  id: messageDbSchema.shape.id,
-  senderId: messageDbSchema.shape.senderId,
-  receiverId: messageDbSchema.shape.receiverId,
-  subject: messageDbSchema.shape.subject,
-  msg: messageDbSchema.shape.msg,
-  sentAt: serializedDateSchema,
-  isRead: messageDbSchema.shape.isRead,
-  senderUsername: userDbSchema.shape.username,
-  senderFullName: userDbSchema.shape.name,
-  senderProfilePicPath: userDbSchema.shape.profilePicPath,
-  senderGender: userDbSchema.shape.gender
-});
-
-// src/modules/messages/messages.contracts.ts
-var listMessagesRequestSchema = z14.object({
-  query: z14.object({
+import { z as z7 } from "zod/v4";
+var listMessagesRequestSchema = z7.object({
+  query: z7.object({
     tz: timezoneSchema
   })
 });
-var listMessagesResponseSchema = z14.object({
-  messages: z14.array(allUserMessageQueryDtoSchema)
+var listMessagesResponseSchema = z7.object({
+  messages: z7.array(z7.object({
+    id: z7.string().uuid(),
+    subject: z7.string(),
+    msg: z7.string(),
+    sentAt: serializedDateSchema,
+    isRead: z7.boolean(),
+    senderFullName: z7.string(),
+    senderProfilePicPath: z7.string().nullable()
+  }))
 });
 var listMessagesContract = {
   request: listMessagesRequestSchema,
   response: listMessagesResponseSchema
 };
-var markMessageAsReadRequestSchema = z14.object({
-  params: z14.object({
-    id: messageDbSchema.shape.id
+var markMessageAsReadRequestSchema = z7.object({
+  params: z7.object({
+    id: z7.string().uuid()
   })
 });
-var markMessageAsReadResponseSchema = z14.void();
+var markMessageAsReadResponseSchema = z7.void();
 var markMessageAsReadContract = {
   request: markMessageAsReadRequestSchema,
   response: markMessageAsReadResponseSchema
 };
-var deleteMessageRequestSchema = z14.object({
-  params: z14.object({
-    id: messageDbSchema.shape.id
+var deleteMessageRequestSchema = z7.object({
+  params: z7.object({
+    id: z7.string().uuid()
   })
 });
-var deleteMessageResponseSchema = z14.void();
+var deleteMessageResponseSchema = z7.void();
 var deleteMessageContract = {
   request: deleteMessageRequestSchema,
   response: deleteMessageResponseSchema
 };
 
 // src/modules/oauth/apple/apple.contracts.ts
-import { z as z15 } from "zod/v4";
-var appleNameInputSchema = z15.object({
-  givenName: z15.string().nullable(),
-  familyName: z15.string().nullable()
+import { z as z8 } from "zod/v4";
+var appleNameInputSchema = z8.object({
+  givenName: z8.string().trim().min(1).max(100).nullable(),
+  familyName: z8.string().trim().min(1).max(100).nullable()
 });
-var appleOAuthRequestSchema = z15.object({
-  body: z15.object({
-    idToken: z15.string({
+var appleOAuthRequestSchema = z8.object({
+  body: z8.object({
+    idToken: z8.string({
       error: "Missing or invalid Apple identityToken"
-    }),
-    rawNonce: z15.string(),
+    }).min(1).max(2e4),
+    rawNonce: z8.string().min(1).max(1024),
     name: appleNameInputSchema.optional(),
-    email: userDbSchema.shape.email.email().nullable()
+    email: z8.email().max(254).nullable()
   })
 });
 var appleOAuthContract = {
   request: appleOAuthRequestSchema
 };
 
-// src/modules/oauth/apple/apple.dtos.ts
-import { z as z16 } from "zod/v4";
-var appleTokenVerificationResultDtoSchema = z16.object({
-  appleSub: z16.string(),
-  email: userDbSchema.shape.email.nullable(),
-  emailVerified: z16.boolean(),
-  fullName: userDbSchema.shape.name
-});
-
 // src/modules/oauth/google/google.contracts.ts
-import { z as z17 } from "zod/v4";
-var googleOAuthRequestSchema = z17.object({
-  body: z17.object({
-    idToken: z17.string().optional()
+import { z as z9 } from "zod/v4";
+var googleOAuthRequestSchema = z9.object({
+  body: z9.object({
+    idToken: z9.string().min(1).max(2e4).optional()
   })
 });
 var googleOAuthContract = {
   request: googleOAuthRequestSchema
 };
 
-// src/modules/oauth/google/google.dtos.ts
-import { z as z18 } from "zod/v4";
-var googleTokenVerificationResultDtoSchema = z18.object({
-  googleSub: z18.string(),
-  email: userDbSchema.shape.email.nullable(),
-  emailVerified: z18.boolean(),
-  fullName: userDbSchema.shape.name
-});
-
 // src/modules/oauth/oauth.contracts.ts
-import { z as z19 } from "zod/v4";
-var oAuthLoginResponseSchema = z19.object({
-  message: z19.string(),
-  user: userDbSchema.shape.id,
-  accessToken: z19.string(),
-  refreshToken: z19.string()
+import { z as z10 } from "zod/v4";
+var oAuthLoginResponseSchema = z10.object({
+  message: z10.string(),
+  user: z10.string().uuid(),
+  accessToken: z10.string(),
+  refreshToken: z10.string()
 });
 var proceedLoginResponseSchema = loginResponseSchema;
 var oAuthLoginContract = {
   response: oAuthLoginResponseSchema
 };
 
-// src/modules/oauth/oauth.dtos.ts
-import { z as z20 } from "zod/v4";
-var oAuthLookupQueryDtoSchema = z20.object({
-  userId: userDbSchema.shape.id.nullable()
-});
-var oAuthLookupRawQueryDtoSchema = z20.object({
-  user_id: userDbSchema.shape.id
-});
-var oAuthLookupRowQueryDtoSchema = z20.object({
-  oauth_data: oAuthLookupRawQueryDtoSchema.nullable()
-});
-var oAuthLinkQueryDtoSchema = z20.object({
-  userId: userDbSchema.shape.id.nullable()
-});
-var oAuthLinkRowQueryDtoSchema = z20.object({
-  user_id: userDbSchema.shape.id.nullable()
-});
-var oAuthCreatedUserRowQueryDtoSchema = z20.object({
-  user_id: userDbSchema.shape.id
-});
-
-// src/modules/push/push.dtos.ts
-import { z as z21 } from "zod/v4";
-var userWithNotificationsEnabledQueryDtoSchema = z21.object({
-  pushToken: userDbSchema.shape.pushToken,
-  name: userDbSchema.shape.name
-});
-
 // src/modules/reminders/reminders.contracts.ts
-import { z as z22 } from "zod/v4";
-var getReminderSettingsResponseSchema = z22.object({
-  reminderSettings: userReminderSettingDbSchema.extend({
-    createdAt: serializedDateSchema,
-    updatedAt: serializedDateSchema
-  }).nullable()
+import { z as z11 } from "zod/v4";
+var reminderSettingsSchema = z11.object({
+  id: z11.string().uuid(),
+  userId: z11.string().uuid(),
+  reminderEnabled: z11.boolean(),
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema,
+  timeZone: timezoneSchema
+});
+var getReminderSettingsResponseSchema = z11.object({
+  reminderSettings: reminderSettingsSchema.nullable()
 });
 var getReminderSettingsContract = {
   response: getReminderSettingsResponseSchema
 };
-var upsertReminderSettingsRequestSchema = z22.object({
-  body: z22.object({
-    reminderEnabled: userReminderSettingDbSchema.shape.reminderEnabled,
+var upsertReminderSettingsRequestSchema = z11.object({
+  body: z11.object({
+    reminderEnabled: z11.boolean(),
     timeZone: timezoneSchema
   })
 });
 var upsertReminderSettingsContract = {
   request: upsertReminderSettingsRequestSchema,
-  response: z22.void()
+  response: z11.void()
 };
-var updateReminderTimeZoneRequestSchema = z22.object({
-  body: z22.object({
+var updateReminderTimeZoneRequestSchema = z11.object({
+  body: z11.object({
     timeZone: timezoneSchema
   })
 });
 var updateReminderTimeZoneContract = {
   request: updateReminderTimeZoneRequestSchema,
-  response: z22.void()
+  response: z11.void()
 };
 
 // src/modules/user/create/create.contracts.ts
-import { z as z24 } from "zod/v4";
-
-// src/modules/user/create/create.dtos.ts
-import { z as z23 } from "zod/v4";
-var createdUserQueryDtoSchema = z23.object({
-  id: userDbSchema.shape.id,
-  username: userDbSchema.shape.username,
-  name: userDbSchema.shape.name,
-  email: userDbSchema.shape.email,
-  gender: userDbSchema.shape.gender,
-  role: userDbSchema.shape.role,
-  createdAt: serializedDateSchema
-});
-var createdUserRawQueryDtoSchema = createdUserQueryDtoSchema.omit({
-  createdAt: true
-}).extend({
-  created_at: serializedDateSchema
-});
-var createdUserRowQueryDtoSchema = z23.object({
-  userData: createdUserRawQueryDtoSchema
-});
-var userExistsQueryDtoSchema = z23.object({
-  id: userDbSchema.shape.id.nullable()
-});
-
-// src/modules/user/create/create.contracts.ts
-var usernameSchema = userDbSchema.shape.username.trim().min(3, "Username must be at least 3 characters").max(15, "Username must be at most 15 characters").regex(/^[a-zA-Z0-9_]+$/, "Username may contain letters, numbers, and underscore only");
-var fullNameSchema = userDbSchema.shape.name.trim().max(20, "Full name is too long").regex(/^[a-zA-Z\s]+$/, "Full name may contain letters and spaces only");
-var createUserRequestSchema = z24.object({
-  body: z24.object({
-    username: usernameSchema,
-    fullName: z24.preprocess((value) => value == null || typeof value === "string" && value.trim() === "" ? "User" : value, fullNameSchema),
-    email: userDbSchema.shape.email.trim().toLowerCase().email("Invalid email format"),
-    password: z24.string().min(8, "Password must be at least 8 characters long"),
-    gender: z24.preprocess((value) => value === "" || value == null ? "Unknown" : value, z24.enum([
+import { z as z12 } from "zod/v4";
+var usernameSchema2 = z12.string().trim().min(1, "Full name is required").min(3, "Username must be at least 3 characters").max(15, "Username must be at most 15 characters").regex(/^[a-zA-Z0-9_]+$/, "Username may contain letters, numbers, and underscore only");
+var fullNameSchema = z12.string().trim().max(20, "Full name is too long").regex(/^[a-zA-Z\s]+$/, "Full name may contain letters and spaces only");
+var createUserRequestSchema = z12.object({
+  body: z12.object({
+    username: usernameSchema2,
+    fullName: z12.preprocess((value) => value == null || typeof value === "string" && value.trim() === "" ? "User" : value, fullNameSchema),
+    email: z12.string().trim().toLowerCase().max(254).email("Invalid email format"),
+    password: z12.string().min(8, "Password must be at least 8 characters long").max(128, "Password must be at most 128 characters long"),
+    gender: z12.preprocess((value) => value === "" || value == null ? "Unknown" : value, z12.enum([
       "Male",
       "Female",
       "Other",
@@ -2113,18 +346,26 @@ var createUserRequestSchema = z24.object({
     ]))
   })
 });
-var createUserUserSchema = createdUserQueryDtoSchema;
-var createUserResponseSchema = z24.void();
+var createUserUserSchema = z12.object({
+  id: z12.string().uuid(),
+  username: z12.string(),
+  name: z12.string(),
+  email: z12.string(),
+  gender: z12.string(),
+  role: z12.string(),
+  createdAt: z12.string()
+});
+var createUserResponseSchema = z12.void();
 var createUserContract = {
   request: createUserRequestSchema,
   response: createUserResponseSchema
 };
 
 // src/modules/user/push-tokens/push-tokens.contracts.ts
-import { z as z25 } from "zod/v4";
-var replacePushTokenRequestSchema = z25.object({
-  body: z25.object({
-    token: userDbSchema.shape.pushToken.unwrap()
+import { z as z13 } from "zod/v4";
+var replacePushTokenRequestSchema = z13.object({
+  body: z13.object({
+    token: z13.string().trim().min(1).max(4096)
   })
 });
 var replacePushTokenContract = {
@@ -2132,120 +373,153 @@ var replacePushTokenContract = {
 };
 
 // src/modules/user/update/update.contracts.ts
-import { z as z26 } from "zod/v4";
-var updateCurrentUserRequestSchema = z26.object({
-  body: authenticatedUserForUpdateQueryDtoSchema
+import { z as z14 } from "zod/v4";
+var authenticatedUserForUpdateSchema = z14.object({
+  username: z14.string().trim().min(3, "Username must be at least 3 characters").max(15, "Username must be at most 15 characters").regex(/^[a-zA-Z0-9_]+$/, "Username may contain letters, numbers, and underscore only").optional(),
+  fullName: z14.string().trim().min(1, "Full name is required").max(20, "Full name is too long").regex(/^[a-zA-Z\s]+$/, "Full name may contain letters and spaces only").optional(),
+  email: z14.string().trim().toLowerCase().max(254).email("Invalid email format").optional()
+}).refine((input) => Object.values(input).some((value) => value !== void 0), {
+  message: "At least one profile field must be provided"
 });
-var updateCurrentUserResponseSchema = z26.void();
+var userDataSchema = z14.object({
+  id: z14.string().uuid(),
+  username: z14.string(),
+  email: z14.string(),
+  name: z14.string(),
+  gender: z14.string(),
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema,
+  profilePicPath: z14.string().nullable(),
+  pushToken: z14.string().nullable(),
+  role: z14.string(),
+  isFirstLogin: z14.boolean(),
+  tokenVersion: z14.number(),
+  isVerified: z14.boolean(),
+  authProvider: z14.string(),
+  lastLogin: serializedDateSchema.nullable()
+});
+var updateCurrentUserRequestSchema = z14.object({
+  body: authenticatedUserForUpdateSchema
+});
+var updateCurrentUserResponseSchema = z14.void();
 var updateCurrentUserContract = {
   request: updateCurrentUserRequestSchema,
   response: updateCurrentUserResponseSchema
 };
-var userDataResponseSchema = z26.object({
-  userData: userDataQueryDtoSchema
+var confirmEmailChangeRequestSchema = z14.object({
+  query: z14.object({
+    token: z14.string().min(1).max(16384).optional()
+  })
+});
+var confirmEmailChangeContract = {
+  request: confirmEmailChangeRequestSchema
+};
+var userDataResponseSchema = z14.object({
+  userData: userDataSchema
 });
 var userDataContract = {
   response: userDataResponseSchema
 };
-var getCurrentUserResponseSchema = userDataQueryDtoSchema;
+var getCurrentUserResponseSchema = userDataSchema;
 var getCurrentUserContract = {
   response: getCurrentUserResponseSchema
 };
-var deleteProfilePictureRequestSchema = z26.object({
-  body: z26.object({
-    profilePicPath: z26.string()
+var deleteProfilePictureRequestSchema = z14.object({
+  body: z14.object({
+    profilePicPath: z14.string().trim().min(1).max(2048)
   })
 });
 var deleteProfilePictureContract = {
   request: deleteProfilePictureRequestSchema
 };
-var replaceProfilePictureResponseSchema = z26.object({
-  profilePicPath: z26.string(),
-  url: z26.string(),
-  message: z26.string()
+var replaceProfilePictureResponseSchema = z14.object({
+  profilePicPath: z14.string(),
+  url: z14.string(),
+  message: z14.string()
 });
 var replaceProfilePictureContract = {
   response: replaceProfilePictureResponseSchema
 };
 
 // src/modules/video-analysis/video-analysis.contracts.ts
-import { z as z27 } from "zod/v4";
-var createVideoUploadUrlRequestSchema = z27.object({
-  body: z27.object({
-    exercise: exerciseDbSchema.shape.name,
-    fileType: z27.string(),
-    jobId: z27.string()
+import { z as z15 } from "zod/v4";
+var createVideoUploadUrlRequestSchema = z15.object({
+  body: z15.object({
+    exercise: z15.string().trim().min(1).max(100).regex(/^[a-zA-Z0-9_-]+$/, "Invalid exercise name"),
+    fileType: z15.enum([
+      "video/mp4",
+      "video/quicktime",
+      "video/webm"
+    ]),
+    jobId: z15.string().trim().min(1).max(128)
   })
 });
-var createVideoUploadUrlResponseSchema = z27.object({
-  uploadUrl: z27.string(),
-  fileKey: z27.string(),
-  requestId: z27.string()
+var createVideoUploadUrlResponseSchema = z15.object({
+  uploadUrl: z15.string(),
+  fileKey: z15.string(),
+  requestId: z15.string()
 });
 var createVideoUploadUrlContract = {
   request: createVideoUploadUrlRequestSchema,
   response: createVideoUploadUrlResponseSchema
 };
-
-// src/modules/video-analysis/video-analysis.dtos.ts
-import { z as z28 } from "zod/v4";
-var enqueueAnalyzeVideoParamsDtoSchema = z28.object({
-  fileKey: z28.string(),
-  exercise: z28.string(),
-  userId: userDbSchema.shape.id,
-  requestId: z28.string(),
-  sentryTrace: z28.string().optional(),
-  baggage: z28.string().optional()
+var enqueueAnalyzeVideoParamsDtoSchema = z15.object({
+  fileKey: z15.string(),
+  exercise: z15.string(),
+  userId: z15.string().uuid(),
+  requestId: z15.string(),
+  sentryTrace: z15.string().optional(),
+  baggage: z15.string().optional()
 });
 var analyzeVideoPayloadDtoSchema = enqueueAnalyzeVideoParamsDtoSchema.extend({
-  expiresAt: z28.number()
+  expiresAt: z15.number()
 });
-var squatRepetitionDtoSchema = z28.object({
-  depth: z28.object({
-    value: z28.number(),
-    status: z28.string(),
-    confidence: z28.number()
+var squatRepetitionDtoSchema = z15.object({
+  depth: z15.object({
+    value: z15.number(),
+    status: z15.string(),
+    confidence: z15.number()
   }),
-  backLean: z28.object({
-    value: z28.number(),
-    excessive: z28.boolean(),
-    confidence: z28.number()
+  backLean: z15.object({
+    value: z15.number(),
+    excessive: z15.boolean(),
+    confidence: z15.number()
   }),
-  audit: z28.object({
-    framesAnalyzed: z28.number(),
-    validFrames: z28.number(),
-    cameraAngle: z28.string(),
-    rawBottomAngle: z28.number(),
-    samplingRate: z28.string()
+  audit: z15.object({
+    framesAnalyzed: z15.number(),
+    validFrames: z15.number(),
+    cameraAngle: z15.string(),
+    rawBottomAngle: z15.number(),
+    samplingRate: z15.string()
   })
 });
-var analyzeVideoResultPayloadDtoSchema = /* @__PURE__ */ __name((resultSchema) => z28.intersection(z28.object({
-  jobId: z28.string(),
-  userId: userDbSchema.shape.id,
-  exercise: z28.string(),
-  requestId: z28.string().optional()
-}), z28.discriminatedUnion("status", [
-  z28.object({
-    status: z28.literal("completed"),
-    result: z28.array(resultSchema),
-    error: z28.null()
+var analyzeVideoResultPayloadDtoSchema = /* @__PURE__ */ __name((resultSchema) => z15.intersection(z15.object({
+  jobId: z15.string(),
+  userId: z15.string().uuid(),
+  exercise: z15.string(),
+  requestId: z15.string().optional()
+}), z15.discriminatedUnion("status", [
+  z15.object({
+    status: z15.literal("completed"),
+    result: z15.array(resultSchema),
+    error: z15.null()
   }),
-  z28.object({
-    status: z28.literal("failed"),
-    result: z28.null(),
-    error: z28.string()
+  z15.object({
+    status: z15.literal("failed"),
+    result: z15.null(),
+    error: z15.string()
   })
 ])), "analyzeVideoResultPayloadDtoSchema");
 
 // src/modules/web-sockets/web-sockets.contracts.ts
-import { z as z29 } from "zod/v4";
-var createWebSocketTicketRequestSchema = z29.object({
-  body: z29.object({
-    username: userDbSchema.shape.username
+import { z as z16 } from "zod/v4";
+var createWebSocketTicketRequestSchema = z16.object({
+  body: z16.object({
+    username: z16.string().trim().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/, "Invalid username")
   })
 });
-var createWebSocketTicketResponseSchema = z29.object({
-  ticket: z29.string()
+var createWebSocketTicketResponseSchema = z16.object({
+  ticket: z16.string()
 });
 var createWebSocketTicketContract = {
   request: createWebSocketTicketRequestSchema,
@@ -2253,145 +527,246 @@ var createWebSocketTicketContract = {
 };
 
 // src/modules/workout/plan/plan.contracts.ts
-import { z as z31 } from "zod/v4";
+import { z as z18 } from "zod/v4";
 
 // src/modules/workout/plan/plan.dtos.ts
-import { z as z30 } from "zod/v4";
-var workoutExerciseInputQueryDtoSchema = z30.object({
-  exerciseId: exerciseDbSchema.shape.id,
-  sets: z30.array(workoutSetDbSchema.shape.reps),
-  orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex
+import { z as z17 } from "zod/v4";
+var idSchema = z17.number().int().positive();
+var uuidSchema = z17.string().uuid();
+var textSchema = z17.string();
+var booleanSchema = z17.boolean();
+var numberSchema = z17.number().finite();
+var orderIndexSchema = z17.number().int().nonnegative();
+var repetitionsSchema = z17.number().int().min(1).max(1e4);
+var workoutExerciseInputQueryDtoSchema = z17.object({
+  exerciseId: idSchema,
+  sets: z17.array(repetitionsSchema).min(1, "Each exercise must include at least one set").max(100, "An exercise cannot include more than 100 sets"),
+  orderIndex: orderIndexSchema
 });
-var workoutSplitInputBaseQueryDtoSchema = z30.object({
-  name: workoutSplitDbSchema.shape.name.min(1, "Split name is required"),
-  orderIndex: z30.number().int().nonnegative(),
-  exercises: z30.array(workoutExerciseInputQueryDtoSchema).min(1, "Each split must include at least one exercise")
+var workoutSplitInputBaseQueryDtoSchema = z17.object({
+  name: textSchema.trim().min(1, "Split name is required").max(100, "Split name must be at most 100 characters"),
+  orderIndex: orderIndexSchema,
+  exercises: z17.array(workoutExerciseInputQueryDtoSchema).min(1, "Each split must include at least one exercise").max(100, "A split cannot include more than 100 exercises").superRefine((exercises, context) => {
+    const exerciseIds = /* @__PURE__ */ new Set();
+    const orderIndexes = /* @__PURE__ */ new Set();
+    exercises.forEach((exercise, index) => {
+      if (exerciseIds.has(exercise.exerciseId)) context.addIssue({
+        code: "custom",
+        path: [
+          index,
+          "exerciseId"
+        ],
+        message: "Exercise IDs must be unique within a split"
+      });
+      if (orderIndexes.has(exercise.orderIndex)) context.addIssue({
+        code: "custom",
+        path: [
+          index,
+          "orderIndex"
+        ],
+        message: "Exercise order indexes must be unique within a split"
+      });
+      exerciseIds.add(exercise.exerciseId);
+      orderIndexes.add(exercise.orderIndex);
+    });
+  })
 });
 var saveWorkoutSplitInputQueryDtoSchema = workoutSplitInputBaseQueryDtoSchema.extend({
-  id: workoutSplitDbSchema.shape.id.optional()
+  id: idSchema.optional()
 });
-var saveWorkoutSplitPayloadQueryDtoSchema = z30.array(saveWorkoutSplitInputQueryDtoSchema).min(1, "Workout must include at least one split");
-var exerciseInPlanQueryDtoSchema = z30.object({
-  exerciseToSplitId: exerciseToWorkoutSplitDbSchema.shape.id,
-  exerciseId: exerciseDbSchema.shape.id,
-  name: exerciseDbSchema.shape.name,
-  sets: z30.array(z30.object({
-    orderIndex: workoutSetDbSchema.shape.orderIndex,
-    reps: workoutSetDbSchema.shape.reps
+var saveWorkoutSplitPayloadQueryDtoSchema = z17.array(saveWorkoutSplitInputQueryDtoSchema).min(1, "Workout must include at least one split").max(20, "A workout cannot include more than 20 splits").superRefine((splits, context) => {
+  const ids = /* @__PURE__ */ new Set();
+  const orderIndexes = /* @__PURE__ */ new Set();
+  splits.forEach((split, index) => {
+    if (split.id !== void 0) {
+      if (ids.has(split.id)) context.addIssue({
+        code: "custom",
+        path: [
+          index,
+          "id"
+        ],
+        message: "Workout split IDs must be unique"
+      });
+      ids.add(split.id);
+    }
+    if (orderIndexes.has(split.orderIndex)) context.addIssue({
+      code: "custom",
+      path: [
+        index,
+        "orderIndex"
+      ],
+      message: "Workout split order indexes must be unique"
+    });
+    orderIndexes.add(split.orderIndex);
+  });
+});
+var exerciseInPlanQueryDtoSchema = z17.object({
+  exerciseToSplitId: idSchema,
+  exerciseId: idSchema,
+  name: textSchema,
+  sets: z17.array(z17.object({
+    orderIndex: numberSchema,
+    reps: numberSchema
   })),
-  orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex,
-  isActive: exerciseToWorkoutSplitDbSchema.shape.isActive,
-  targetMuscle: exerciseDbSchema.shape.targetMuscle,
-  specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle
+  orderIndex: numberSchema,
+  isActive: booleanSchema,
+  targetMuscle: textSchema,
+  specificTargetMuscle: textSchema
 });
-var workoutSplitQueryDtoSchema = z30.object({
-  id: workoutSplitDbSchema.shape.id,
-  workoutId: workoutSplitDbSchema.shape.workoutId,
-  name: workoutSplitDbSchema.shape.name,
-  orderIndex: workoutSplitDbSchema.shape.orderIndex,
+var workoutSplitQueryDtoSchema = z17.object({
+  id: idSchema,
+  workoutId: idSchema,
+  name: textSchema,
+  orderIndex: numberSchema,
   createdAt: serializedDateSchema,
-  muscleGroup: z30.string().nullable(),
-  estimatedDurationMinutes: z30.number().nullable(),
-  isActive: workoutSplitDbSchema.shape.isActive,
-  exercises: z30.array(exerciseInPlanQueryDtoSchema)
+  muscleGroup: z17.string().nullable(),
+  estimatedDurationMinutes: z17.number().nullable(),
+  isActive: booleanSchema,
+  exercises: z17.array(exerciseInPlanQueryDtoSchema)
 });
-var wholeUserWorkoutPlanQueryDtoSchema = z30.object({
-  id: workoutPlanDbSchema.shape.id,
-  numberOfSplits: z30.number(),
+var wholeUserWorkoutPlanQueryDtoSchema = z17.object({
+  id: idSchema,
+  numberOfSplits: z17.number(),
   createdAt: serializedDateSchema,
-  userId: userDbSchema.shape.id,
-  isActive: workoutPlanDbSchema.shape.isActive,
+  userId: uuidSchema,
+  isActive: booleanSchema,
   updatedAt: serializedDateSchema,
-  workoutSplits: z30.array(workoutSplitQueryDtoSchema).nullable()
-});
-var workoutPlanIdQueryDtoSchema = z30.object({
-  id: workoutPlanDbSchema.shape.id
-});
-var workoutSplitIdQueryDtoSchema = z30.object({
-  id: workoutSplitDbSchema.shape.id
-});
-var exerciseAssignmentIdQueryDtoSchema = z30.object({
-  id: exerciseToWorkoutSplitDbSchema.shape.id
+  workoutSplits: z17.array(workoutSplitQueryDtoSchema).nullable()
 });
 
 // src/modules/workout/plan/plan.contracts.ts
-var getWorkoutPlanRequestSchema = z31.object({
-  query: z31.object({
+var getWorkoutPlanRequestSchema = z18.object({
+  query: z18.object({
     tz: timezoneSchema.optional()
   })
 });
-var getWorkoutPlanResponseSchema = z31.object({
+var getWorkoutPlanResponseSchema = z18.object({
   workoutPlan: wholeUserWorkoutPlanQueryDtoSchema.nullable()
 });
 var getWorkoutPlanContract = {
   request: getWorkoutPlanRequestSchema,
   response: getWorkoutPlanResponseSchema
 };
-var replaceWorkoutPlanRequestSchema = z31.object({
-  body: z31.object({
+var replaceWorkoutPlanRequestSchema = z18.object({
+  body: z18.object({
     workoutData: saveWorkoutSplitPayloadQueryDtoSchema,
-    workoutName: z31.string().optional(),
+    workoutName: z18.string().trim().min(1).max(100).optional(),
     tz: timezoneSchema
   })
 });
-var replaceWorkoutPlanResponseSchema = z31.void();
+var replaceWorkoutPlanResponseSchema = z18.void();
 var replaceWorkoutPlanContract = {
   request: replaceWorkoutPlanRequestSchema,
   response: replaceWorkoutPlanResponseSchema
 };
 
 // src/modules/workout/tracking/tracking.contracts.ts
-import { z as z33 } from "zod/v4";
+import { z as z20 } from "zod/v4";
 
 // src/modules/workout/tracking/tracking.dtos.ts
-import { z as z32 } from "zod/v4";
-var trackedSetQueryDtoSchema = z32.object({
-  reps: trackingSetDbSchema.shape.reps,
-  weight: trackingSetDbSchema.shape.weight,
-  setIndex: trackingSetDbSchema.shape.setIndex
+import { z as z19 } from "zod/v4";
+var exerciseDbSchema = {
+  shape: {
+    id: z19.number().int(),
+    name: z19.string(),
+    targetMuscle: z19.string(),
+    specificTargetMuscle: z19.string()
+  }
+};
+var exerciseToWorkoutSplitDbSchema = {
+  shape: {
+    id: z19.number().int(),
+    orderIndex: z19.number(),
+    isActive: z19.boolean()
+  }
+};
+var exerciseTrackingDbSchema = {
+  shape: {
+    id: z19.number().int(),
+    notes: z19.string().nullable(),
+    exerciseToSplitId: z19.number().int().nullable(),
+    exerciseId: z19.number().int().nullable()
+  }
+};
+var trackingSetDbSchema = {
+  shape: {
+    reps: z19.number(),
+    weight: z19.number(),
+    setIndex: z19.number()
+  }
+};
+var workoutSetDbSchema = {
+  shape: {
+    reps: z19.number()
+  }
+};
+var workoutSplitDbSchema = {
+  shape: {
+    id: z19.number().int(),
+    name: z19.string(),
+    orderIndex: z19.number()
+  }
+};
+var trackedSetQueryDtoSchema = z19.object({
+  reps: trackingSetDbSchema.shape.reps.int().min(1).max(1e4),
+  weight: trackingSetDbSchema.shape.weight.finite().nonnegative().max(1e5),
+  setIndex: trackingSetDbSchema.shape.setIndex.int().nonnegative()
 });
-var finishedWorkoutEntryBaseQueryDtoSchema = z32.object({
-  trackedSets: z32.array(trackedSetQueryDtoSchema),
-  notes: exerciseTrackingDbSchema.shape.notes.optional()
+var finishedWorkoutEntryBaseQueryDtoSchema = z19.object({
+  trackedSets: z19.array(trackedSetQueryDtoSchema).min(1, "Each exercise must include at least one tracked set").max(100, "An exercise cannot include more than 100 tracked sets").superRefine((sets, context) => {
+    const indexes = /* @__PURE__ */ new Set();
+    sets.forEach((set, index) => {
+      if (indexes.has(set.setIndex)) context.addIssue({
+        code: "custom",
+        path: [
+          index,
+          "setIndex"
+        ],
+        message: "Set indexes must be unique"
+      });
+      indexes.add(set.setIndex);
+    });
+  }),
+  notes: z19.string().trim().max(2e3).nullable().optional()
 });
-var finishedWorkoutEntryQueryDtoSchema = z32.discriminatedUnion("isExerciseAssignedToSplit", [
+var finishedWorkoutEntryQueryDtoSchema = z19.discriminatedUnion("isExerciseAssignedToSplit", [
   finishedWorkoutEntryBaseQueryDtoSchema.extend({
-    isExerciseAssignedToSplit: z32.literal(true),
-    exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId.unwrap(),
+    isExerciseAssignedToSplit: z19.literal(true),
+    exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId.unwrap().positive(),
     // Accepted temporarily for clients using the previous redundant payload.
-    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.optional()
+    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap().positive().optional()
   }),
   finishedWorkoutEntryBaseQueryDtoSchema.extend({
-    isExerciseAssignedToSplit: z32.literal(false),
-    exerciseToSplitId: z32.null().optional(),
-    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap()
+    isExerciseAssignedToSplit: z19.literal(false),
+    exerciseToSplitId: z19.null().optional(),
+    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap().positive()
   })
 ]);
-var exerciseMetadataQueryDtoSchema = z32.object({
+var exerciseMetadataQueryDtoSchema = z19.object({
   targetMuscle: exerciseDbSchema.shape.targetMuscle,
   specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle
 });
-var exerciseTrackingPrMaxQueryDtoSchema = z32.object({
+var exerciseTrackingPrMaxQueryDtoSchema = z19.object({
   exercise: exerciseDbSchema.shape.name,
   weight: trackingSetDbSchema.shape.weight,
   reps: trackingSetDbSchema.shape.reps,
   workoutTimeUtc: serializedDateSchema
 });
-var exerciseTrackingAnalysisQueryDtoSchema = z32.object({
-  uniqueDays: z32.number(),
-  mostFrequentSplit: z32.string().nullable(),
-  mostFrequentSplitDays: z32.number().nullable(),
-  lastWorkoutDate: z32.string().nullable(),
-  splitDaysByName: z32.record(z32.string(), z32.number()),
-  prs: z32.object({
+var exerciseTrackingAnalysisQueryDtoSchema = z19.object({
+  uniqueDays: z19.number(),
+  mostFrequentSplit: z19.string().nullable(),
+  mostFrequentSplitDays: z19.number().nullable(),
+  lastWorkoutDate: z19.string().nullable(),
+  splitDaysByName: z19.record(z19.string(), z19.number()),
+  prs: z19.object({
     prMax: exerciseTrackingPrMaxQueryDtoSchema.nullable()
   })
 });
-var trackingMapItemQueryDtoSchema = z32.object({
+var trackingMapItemQueryDtoSchema = z19.object({
   id: exerciseTrackingDbSchema.shape.id,
   exerciseToSplitId: exerciseToWorkoutSplitDbSchema.shape.id,
-  weight: z32.array(trackingSetDbSchema.shape.weight),
-  reps: z32.array(trackingSetDbSchema.shape.reps),
+  weight: z19.array(trackingSetDbSchema.shape.weight),
+  reps: z19.array(trackingSetDbSchema.shape.reps),
   notes: exerciseTrackingDbSchema.shape.notes,
   exerciseId: exerciseDbSchema.shape.id,
   workoutSplitId: workoutSplitDbSchema.shape.id,
@@ -2399,8 +774,8 @@ var trackingMapItemQueryDtoSchema = z32.object({
   exercise: exerciseDbSchema.shape.name,
   workoutDate: serializedDateSchema,
   orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex,
-  exerciseToWorkoutSplit: z32.object({
-    sets: z32.array(workoutSetDbSchema.shape.reps),
+  exerciseToWorkoutSplit: z19.object({
+    sets: z19.array(workoutSetDbSchema.shape.reps),
     exercises: exerciseMetadataQueryDtoSchema
   })
 });
@@ -2410,16 +785,16 @@ var trackingByDateItemQueryDtoSchema = trackingMapItemQueryDtoSchema.omit({
 var trackingBySplitNameItemQueryDtoSchema = trackingMapItemQueryDtoSchema.omit({
   splitName: true
 });
-var groupedTrackingItemQueryDtoSchema = z32.object({
-  exerciseTracking: z32.object({
+var groupedTrackingItemQueryDtoSchema = z19.object({
+  exerciseTracking: z19.object({
     exerciseTrackingId: exerciseTrackingDbSchema.shape.id,
-    sets: z32.array(z32.object({
+    sets: z19.array(z19.object({
       setIndex: trackingSetDbSchema.shape.setIndex,
       weight: trackingSetDbSchema.shape.weight,
       reps: trackingSetDbSchema.shape.reps
     })),
     notes: exerciseTrackingDbSchema.shape.notes,
-    exerciseAssignment: z32.object({
+    exerciseAssignment: z19.object({
       exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
       orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex.nullable(),
       exerciseId: exerciseDbSchema.shape.id,
@@ -2436,86 +811,62 @@ var trackingByExerciseToSplitIdItemQueryDtoSchema = groupedTrackingItemQueryDtoS
 }).extend({
   workoutStartLocal: serializedDateSchema
 });
-var personalRecordQueryDtoSchema = z32.object({
+var personalRecordQueryDtoSchema = z19.object({
   exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId,
   exerciseId: exerciseDbSchema.shape.id,
   exerciseName: exerciseDbSchema.shape.name,
   prWeight: trackingSetDbSchema.shape.weight,
   prReps: trackingSetDbSchema.shape.reps,
   prSetIndex: trackingSetDbSchema.shape.setIndex,
-  estimatedOneRepMax: z32.number().nullable(),
+  estimatedOneRepMax: z19.number().nullable(),
   workoutStartLocal: serializedDateSchema
 });
-var personalRecordsQueryDtoSchema = z32.object({
-  prs: z32.record(z32.string(), personalRecordQueryDtoSchema.omit({
+var personalRecordsQueryDtoSchema = z19.object({
+  prs: z19.record(z19.string(), personalRecordQueryDtoSchema.omit({
     exerciseId: true
   }))
 });
-var nextSplitQueryDtoSchema = z32.object({
+var nextSplitQueryDtoSchema = z19.object({
   id: workoutSplitDbSchema.shape.id,
   name: workoutSplitDbSchema.shape.name,
   orderIndex: workoutSplitDbSchema.shape.orderIndex,
-  muscleGroup: z32.string().nullable()
+  muscleGroup: z19.string().nullable()
 });
-var exerciseTrackingStatsQueryDtoSchema = z32.object({
-  workoutCount: z32.coerce.number(),
-  hasExerciseTracking: z32.boolean(),
+var exerciseTrackingStatsQueryDtoSchema = z19.object({
+  workoutCount: z19.coerce.number(),
+  hasExerciseTracking: z19.boolean(),
   nextSplitByOrderIndex: nextSplitQueryDtoSchema.nullable(),
-  workoutTargets: z32.object({
-    workoutCountThisWeek: z32.coerce.number(),
-    workoutCountScheduledPerWeek: z32.coerce.number()
+  workoutTargets: z19.object({
+    workoutCountThisWeek: z19.coerce.number(),
+    workoutCountScheduledPerWeek: z19.coerce.number()
   }),
-  lastWorkoutStats: z32.object({
-    workoutDate: z32.string().nullable(),
+  lastWorkoutStats: z19.object({
+    workoutDate: z19.string().nullable(),
     workoutSplitName: workoutSplitDbSchema.shape.name.nullable(),
-    exerciseTrackedCount: z32.coerce.number().nullable(),
-    setTrackedCount: z32.coerce.number().nullable()
+    exerciseTrackedCount: z19.coerce.number().nullable(),
+    setTrackedCount: z19.coerce.number().nullable()
   }),
-  latestPr: z32.array(personalRecordQueryDtoSchema).max(1)
+  latestPr: z19.array(personalRecordQueryDtoSchema).max(1)
 });
-var exerciseTrackingMapsQueryDtoSchema = z32.object({
-  byDate: z32.record(z32.string(), z32.object({
-    durationMins: z32.number(),
-    exerciseTracked: z32.array(groupedTrackingItemQueryDtoSchema)
+var exerciseTrackingMapsQueryDtoSchema = z19.object({
+  byDate: z19.record(z19.string(), z19.object({
+    durationMins: z19.number(),
+    exerciseTracked: z19.array(groupedTrackingItemQueryDtoSchema)
   }))
 });
-var exerciseHistoryQueryDtoSchema = z32.object({
-  byExerciseToSplitId: z32.record(z32.string(), z32.object({
-    exerciseTracked: z32.array(trackingByExerciseToSplitIdItemQueryDtoSchema)
+var exerciseHistoryQueryDtoSchema = z19.object({
+  byExerciseToSplitId: z19.record(z19.string(), z19.object({
+    exerciseTracked: z19.array(trackingByExerciseToSplitIdItemQueryDtoSchema)
   }))
 });
-var exerciseTrackingAndStatsQueryDtoSchema = z32.object({
+var exerciseTrackingAndStatsQueryDtoSchema = z19.object({
   trackingStats: exerciseTrackingStatsQueryDtoSchema,
   trackingMaps: exerciseTrackingMapsQueryDtoSchema
 });
-var exerciseTrackingAndStatsRowQueryDtoSchema = z32.object({
-  data: exerciseTrackingAndStatsQueryDtoSchema
-});
-var exerciseTrackingStatsRowQueryDtoSchema = z32.object({
-  data: exerciseTrackingStatsQueryDtoSchema
-});
-var exerciseTrackingMapsRowQueryDtoSchema = z32.object({
-  data: exerciseTrackingMapsQueryDtoSchema
-});
-var exerciseHistoryRowQueryDtoSchema = z32.object({
-  data: exerciseHistoryQueryDtoSchema
-});
-var personalRecordsRowQueryDtoSchema = z32.object({
-  data: personalRecordsQueryDtoSchema
-});
-var workoutSplitLookupQueryDtoSchema = z32.object({
-  workoutSplitId: workoutSplitDbSchema.shape.id
-});
-var workoutSummaryIdQueryDtoSchema = z32.object({
-  id: z32.string().uuid()
-});
-var exerciseTrackingIdQueryDtoSchema = z32.object({
-  id: exerciseTrackingDbSchema.shape.id
-});
 
 // src/modules/workout/tracking/tracking.contracts.ts
-var getWorkoutHistoryRequestSchema = z33.object({
-  query: z33.object({
+var getWorkoutHistoryRequestSchema = z20.object({
+  query: z20.object({
     tz: timezoneSchema.optional()
   })
 });
@@ -2524,8 +875,8 @@ var getWorkoutHistoryContract = {
   request: getWorkoutHistoryRequestSchema,
   response: getWorkoutHistoryResponseSchema
 };
-var getExerciseHistoryRequestSchema = z33.object({
-  query: z33.object({
+var getExerciseHistoryRequestSchema = z20.object({
+  query: z20.object({
     tz: timezoneSchema.optional()
   })
 });
@@ -2539,22 +890,33 @@ var getWorkoutStatisticsContract = {
   request: getWorkoutHistoryRequestSchema,
   response: getWorkoutStatisticsResponseSchema
 };
-var createWorkoutSessionRequestSchema = z33.object({
-  body: z33.object({
-    workout: z33.array(finishedWorkoutEntryQueryDtoSchema),
+var createWorkoutSessionRequestSchema = z20.object({
+  body: z20.object({
+    workout: z20.array(finishedWorkoutEntryQueryDtoSchema).min(1, "Workout must include at least one exercise").max(200),
     tz: timezoneSchema.optional(),
-    workoutStartUtc: z33.string().datetime("workoutStartUtc must be a valid ISO datetime"),
-    workoutEndUtc: z33.string().datetime("workoutEndUtc must be a valid ISO datetime").optional().nullable()
+    workoutStartUtc: z20.string().datetime({
+      offset: true,
+      message: "workoutStartUtc must be a valid ISO datetime"
+    }),
+    workoutEndUtc: z20.string().datetime({
+      offset: true,
+      message: "workoutEndUtc must be a valid ISO datetime"
+    }).optional().nullable()
+  }).refine((body) => !body.workoutEndUtc || Date.parse(body.workoutEndUtc) >= Date.parse(body.workoutStartUtc), {
+    path: [
+      "workoutEndUtc"
+    ],
+    message: "workoutEndUtc must not be earlier than workoutStartUtc"
   })
 });
-var createWorkoutSessionResponseSchema = z33.void();
+var createWorkoutSessionResponseSchema = z20.void();
 var createWorkoutSessionContract = {
   request: createWorkoutSessionRequestSchema,
   response: createWorkoutSessionResponseSchema
 };
 var getPersonalRecordsResponseSchema = personalRecordsQueryDtoSchema;
-var getPersonalRecordsRequestSchema = z33.object({
-  query: z33.object({
+var getPersonalRecordsRequestSchema = z20.object({
+  query: z20.object({
     tz: timezoneSchema.optional()
   })
 });
@@ -2564,30 +926,28 @@ var getPersonalRecordsContract = {
 };
 
 // src/modules/workout-schedule/workout-schedule.contracts.ts
-import { z as z35 } from "zod/v4";
-
-// src/modules/workout-schedule/workout-schedule.dtos.ts
-import { z as z34 } from "zod/v4";
-var workoutScheduleInputDtoSchema = z34.object({
-  workoutSplitId: workoutScheduleDbSchema.shape.workoutSplitId,
-  dayOfWeek: workoutScheduleDbSchema.shape.dayOfWeek.int().min(0).max(6),
-  startTime: workoutScheduleDbSchema.shape.startTime.regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/)
+import { z as z21 } from "zod/v4";
+var workoutScheduleInputSchema = z21.object({
+  workoutSplitId: z21.number().int().positive(),
+  dayOfWeek: z21.number().int().min(0).max(6),
+  startTime: z21.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/)
 });
-var workoutScheduleQueryDtoSchema = workoutScheduleDbSchema.extend({
+var workoutScheduleSchema = workoutScheduleInputSchema.extend({
+  id: z21.string().uuid(),
+  userId: z21.string().uuid(),
+  startTime: z21.string(),
   createdAt: serializedDateSchema,
   updatedAt: serializedDateSchema
 });
-
-// src/modules/workout-schedule/workout-schedule.contracts.ts
-var getWorkoutSchedulesResponseSchema = z35.object({
-  schedules: z35.array(workoutScheduleQueryDtoSchema)
+var getWorkoutSchedulesResponseSchema = z21.object({
+  schedules: z21.array(workoutScheduleSchema)
 });
 var getWorkoutSchedulesContract = {
   response: getWorkoutSchedulesResponseSchema
 };
-var replaceWorkoutSchedulesRequestSchema = z35.object({
-  body: z35.object({
-    schedules: z35.array(workoutScheduleInputDtoSchema).superRefine((schedules, context) => {
+var replaceWorkoutSchedulesRequestSchema = z21.object({
+  body: z21.object({
+    schedules: z21.array(workoutScheduleInputSchema).max(140, "A weekly schedule cannot contain more than 140 entries").superRefine((schedules, context) => {
       const keys = /* @__PURE__ */ new Set();
       for (const schedule of schedules) {
         const key = `${schedule.workoutSplitId}:${schedule.dayOfWeek}`;
@@ -2604,28 +964,587 @@ var replaceWorkoutSchedulesRequestSchema = z35.object({
 });
 var replaceWorkoutSchedulesContract = {
   request: replaceWorkoutSchedulesRequestSchema,
-  response: z35.void()
+  response: z21.void()
+};
+
+// src/modules/social/crews/crews.contracts.ts
+import { z as z23 } from "zod/v4";
+
+// src/modules/social/crews/crews.schemas.ts
+import { z as z22 } from "zod/v4";
+var crewSchema = z22.object({
+  id: z22.string().uuid(),
+  name: z22.string(),
+  createdBy: z22.string().uuid(),
+  privacy: z22.enum([
+    "public",
+    "private"
+  ]),
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema
+});
+var crewWithParticipantCountSchema = crewSchema.extend({
+  participantCount: z22.number().int().nonnegative()
+});
+var crewParticipantPreviewSchema = z22.object({
+  username: z22.string(),
+  fullName: z22.string(),
+  profilePicPath: z22.string().nullable()
+});
+var discoverableCrewSchema = crewWithParticipantCountSchema.extend({
+  top5Participants: crewParticipantPreviewSchema.array()
+});
+var crewParticipantSchema = z22.object({
+  id: z22.string().uuid(),
+  crewId: z22.string().uuid(),
+  userId: z22.string().uuid(),
+  status: z22.enum([
+    "active",
+    "left",
+    "removed",
+    "banned"
+  ]),
+  role: z22.enum([
+    "leader",
+    "admin",
+    "member"
+  ]),
+  joinedAt: serializedDateSchema,
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema,
+  fullName: z22.string(),
+  profilePicPath: z22.string().nullable(),
+  username: z22.string()
+});
+
+// src/modules/social/crews/crews.contracts.ts
+var crewIdParamsSchema = z23.object({
+  id: z23.string().uuid()
+});
+var crewNameSchema = z23.string().trim().min(1, "Crew name is required").max(100, "Crew name must be at most 100 characters");
+var cursorSchema = z23.string().min(1).max(2048).optional();
+var listCrewsRequestSchema = z23.object({
+  query: z23.object({
+    search: z23.string().trim().min(1).max(50).optional(),
+    limit: z23.coerce.number().int().min(1).max(100).default(20),
+    cursor: cursorSchema
+  })
+});
+var listCrewsResponseSchema = z23.object({
+  crews: z23.array(discoverableCrewSchema),
+  nextCursor: z23.string().nullable()
+});
+var listCrewsContract = {
+  request: listCrewsRequestSchema,
+  response: listCrewsResponseSchema
+};
+var listMyCrewsRequestSchema = z23.object({
+  query: z23.object({
+    limit: z23.coerce.number().int().min(1).max(100).default(20),
+    cursor: cursorSchema
+  })
+});
+var listMyCrewsResponseSchema = listCrewsResponseSchema;
+var listMyCrewsContract = {
+  request: listMyCrewsRequestSchema,
+  response: listMyCrewsResponseSchema
+};
+var listCrewParticipantsRequestSchema = z23.object({
+  params: z23.object({
+    crewId: z23.string().uuid()
+  }),
+  query: z23.object({
+    limit: z23.coerce.number().int().min(1).max(100).default(20),
+    cursor: cursorSchema
+  })
+});
+var listCrewParticipantsResponseSchema = z23.object({
+  participants: z23.array(crewParticipantSchema),
+  nextCursor: z23.string().nullable()
+});
+var listCrewParticipantsContract = {
+  request: listCrewParticipantsRequestSchema,
+  response: listCrewParticipantsResponseSchema
+};
+var getCrewRequestSchema = z23.object({
+  params: crewIdParamsSchema
+});
+var getCrewResponseSchema = crewWithParticipantCountSchema;
+var getCrewContract = {
+  request: getCrewRequestSchema,
+  response: getCrewResponseSchema
+};
+var createCrewRequestSchema = z23.object({
+  body: z23.object({
+    name: crewNameSchema,
+    privacy: z23.enum([
+      "public",
+      "private"
+    ])
+  })
+});
+var createCrewResponseSchema = z23.void();
+var createCrewContract = {
+  request: createCrewRequestSchema,
+  response: createCrewResponseSchema
+};
+var updateCrewRequestSchema = z23.object({
+  params: crewIdParamsSchema,
+  body: z23.object({
+    name: crewNameSchema,
+    privacy: z23.enum([
+      "public",
+      "private"
+    ])
+  })
+});
+var updateCrewResponseSchema = z23.void();
+var updateCrewContract = {
+  request: updateCrewRequestSchema,
+  response: updateCrewResponseSchema
+};
+var leaveCrewRequestSchema = z23.object({
+  params: crewIdParamsSchema
+});
+var leaveCrewResponseSchema = z23.void();
+var leaveCrewContract = {
+  request: leaveCrewRequestSchema,
+  response: leaveCrewResponseSchema
+};
+var deleteCrewRequestSchema = z23.object({
+  params: crewIdParamsSchema
+});
+var deleteCrewResponseSchema = z23.void();
+var deleteCrewContract = {
+  request: deleteCrewRequestSchema,
+  response: deleteCrewResponseSchema
+};
+var replaceCrewProfilePictureRequestSchema = z23.object({
+  params: crewIdParamsSchema
+});
+var replaceCrewProfilePictureResponseSchema = z23.object({
+  profilePicPath: z23.string(),
+  url: z23.string(),
+  message: z23.string()
+});
+var replaceCrewProfilePictureContract = {
+  request: replaceCrewProfilePictureRequestSchema,
+  response: replaceCrewProfilePictureResponseSchema
+};
+var deleteCrewProfilePictureRequestSchema = z23.object({
+  params: crewIdParamsSchema
+});
+var deleteCrewProfilePictureContract = {
+  request: deleteCrewProfilePictureRequestSchema,
+  response: z23.void()
+};
+
+// src/modules/social/crews/requests/crew-requests.contracts.ts
+import { z as z25 } from "zod/v4";
+
+// src/modules/social/crews/requests/crew-requests.schemas.ts
+import { z as z24 } from "zod/v4";
+var crewParticipationRequestSchema = z24.object({
+  id: z24.string().uuid(),
+  crewId: z24.string().uuid(),
+  initiatorUserId: z24.string().uuid(),
+  participantUserId: z24.string().uuid(),
+  status: z24.enum([
+    "pending",
+    "accepted",
+    "declined",
+    "cancelled",
+    "expired"
+  ]),
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema,
+  respondedAt: serializedDateSchema.nullable()
+});
+
+// src/modules/social/crews/requests/crew-requests.contracts.ts
+var crewParamsSchema = z25.object({
+  crewId: z25.string().uuid()
+});
+var requestParamsSchema = z25.object({
+  requestId: z25.uuid()
+});
+var inviteCrewUserRequestSchema = z25.object({
+  params: crewParamsSchema,
+  body: z25.object({
+    userId: z25.uuid()
+  })
+});
+var inviteCrewUserContract = {
+  request: inviteCrewUserRequestSchema,
+  response: z25.void()
+};
+var requestToJoinCrewRequestSchema = z25.object({
+  params: crewParamsSchema
+});
+var requestToJoinCrewContract = {
+  request: requestToJoinCrewRequestSchema,
+  response: z25.void()
+};
+var updateCrewParticipationRequestStatusRequestSchema = z25.object({
+  params: requestParamsSchema,
+  body: z25.object({
+    status: z25.enum([
+      "accepted",
+      "declined"
+    ])
+  })
+});
+var updateCrewParticipationRequestStatusContract = {
+  request: updateCrewParticipationRequestStatusRequestSchema,
+  response: z25.void()
+};
+var listCrewInvitationsRequestSchema = z25.object({});
+var listCrewInvitationsResponseSchema = z25.object({
+  invitations: z25.array(crewParticipationRequestSchema)
+});
+var listCrewInvitationsContract = {
+  request: listCrewInvitationsRequestSchema,
+  response: listCrewInvitationsResponseSchema
+};
+var listPendingCrewJoinRequestsRequestSchema = z25.object({
+  params: crewParamsSchema
+});
+var listPendingCrewJoinRequestsResponseSchema = z25.object({
+  requests: z25.array(crewParticipationRequestSchema)
+});
+var listPendingCrewJoinRequestsContract = {
+  request: listPendingCrewJoinRequestsRequestSchema,
+  response: listPendingCrewJoinRequestsResponseSchema
+};
+
+// src/modules/social/posts/posts.contracts.ts
+import { z as z27 } from "zod/v4";
+
+// src/modules/social/posts/posts.schemas.ts
+import { z as z26 } from "zod/v4";
+var postSchema = z26.object({
+  id: z26.string().uuid(),
+  authorUserId: z26.string().uuid(),
+  workoutSummaryId: z26.string().uuid().nullable(),
+  content: z26.string(),
+  visibility: z26.enum([
+    "crews_only",
+    "public"
+  ]),
+  publishedAt: serializedDateSchema,
+  updatedAt: serializedDateSchema,
+  username: z26.string(),
+  fullName: z26.string(),
+  profilePicPath: z26.string().nullable(),
+  interactions: z26.object({
+    reactionsCount: z26.object({
+      likesCount: z26.number().int().nonnegative(),
+      fireUpCount: z26.number().int().nonnegative(),
+      muscleCount: z26.number().int().nonnegative()
+    }),
+    commentsCount: z26.number().int().nonnegative()
+  })
+});
+
+// src/modules/social/posts/posts.contracts.ts
+var postIdParamsSchema = z27.object({
+  id: z27.string().uuid()
+});
+var postContentSchema = z27.string().trim().min(1, "Post content is required").max(5e3, "Post content must be at most 5000 characters");
+var postPaginationSchema = z27.object({
+  limit: z27.coerce.number().int().min(1).max(100).default(20),
+  cursor: z27.string().min(1).max(2048).optional()
+});
+var listVisiblePostsRequestSchema = z27.object({
+  query: postPaginationSchema
+});
+var listVisiblePostsResponseSchema = z27.object({
+  posts: z27.array(postSchema),
+  nextCursor: z27.string().nullable()
+});
+var listVisiblePostsContract = {
+  request: listVisiblePostsRequestSchema,
+  response: listVisiblePostsResponseSchema
+};
+var listCrewPostsRequestSchema = z27.object({
+  params: z27.object({
+    crewId: z27.uuid()
+  }),
+  query: postPaginationSchema
+});
+var listCrewPostsResponseSchema = z27.object({
+  posts: z27.array(postSchema),
+  nextCursor: z27.string().nullable()
+});
+var listCrewPostsContract = {
+  request: listCrewPostsRequestSchema,
+  response: listCrewPostsResponseSchema
+};
+var createPostBodySchema = z27.object({
+  content: postContentSchema,
+  visibility: z27.enum([
+    "crews_only",
+    "public"
+  ]),
+  crewIds: z27.array(z27.uuid()).max(100, "A post cannot target more than 100 crews").default([]),
+  workoutSummaryId: z27.string().uuid().nullable().optional()
+}).superRefine((body, context) => {
+  if (body.visibility === "crews_only" && body.crewIds.length === 0) {
+    context.addIssue({
+      code: "custom",
+      path: [
+        "crewIds"
+      ],
+      message: "Crew-only posts require at least one crew"
+    });
+  }
+  if (new Set(body.crewIds).size !== body.crewIds.length) {
+    context.addIssue({
+      code: "custom",
+      path: [
+        "crewIds"
+      ],
+      message: "Crew IDs must be unique"
+    });
+  }
+});
+var createPostRequestSchema = z27.object({
+  body: createPostBodySchema
+});
+var createPostResponseSchema = z27.void();
+var createPostContract = {
+  request: createPostRequestSchema,
+  response: createPostResponseSchema
+};
+var updatePostRequestSchema = z27.object({
+  params: postIdParamsSchema,
+  body: z27.object({
+    content: postContentSchema
+  })
+});
+var updatePostResponseSchema = z27.void();
+var updatePostContract = {
+  request: updatePostRequestSchema,
+  response: updatePostResponseSchema
+};
+var deletePostRequestSchema = z27.object({
+  params: postIdParamsSchema
+});
+var deletePostResponseSchema = z27.void();
+var deletePostContract = {
+  request: deletePostRequestSchema,
+  response: deletePostResponseSchema
+};
+
+// src/modules/social/posts/comments/comments.contracts.ts
+import { z as z29 } from "zod/v4";
+
+// src/modules/social/posts/comments/comments.schemas.ts
+import { z as z28 } from "zod/v4";
+var commentSchema = z28.object({
+  id: z28.string().uuid(),
+  postId: z28.string().uuid(),
+  userId: z28.string().uuid(),
+  content: z28.string(),
+  createdAt: serializedDateSchema,
+  updatedAt: serializedDateSchema,
+  authorFullName: z28.string(),
+  authorProfilePicPath: z28.string().nullable(),
+  authorUsername: z28.string()
+});
+
+// src/modules/social/posts/comments/comments.contracts.ts
+var postParamsSchema = z29.object({
+  postId: z29.string().uuid()
+});
+var commentParamsSchema = z29.object({
+  id: z29.string().uuid()
+});
+var commentContentSchema = z29.string().trim().min(1).max(2e3);
+var listPostCommentsRequestSchema = z29.object({
+  params: postParamsSchema,
+  query: z29.object({
+    limit: z29.coerce.number().int().min(1).max(100).default(20),
+    cursor: z29.string().min(1).max(2048).optional()
+  })
+});
+var listPostCommentsResponseSchema = z29.object({
+  comments: z29.array(commentSchema),
+  nextCursor: z29.string().nullable()
+});
+var listPostCommentsContract = {
+  request: listPostCommentsRequestSchema,
+  response: listPostCommentsResponseSchema
+};
+var addCommentRequestSchema = z29.object({
+  params: postParamsSchema,
+  body: z29.object({
+    content: commentContentSchema
+  })
+});
+var addCommentResponseSchema = z29.void();
+var addCommentContract = {
+  request: addCommentRequestSchema,
+  response: addCommentResponseSchema
+};
+var editCommentRequestSchema = z29.object({
+  params: commentParamsSchema,
+  body: z29.object({
+    content: commentContentSchema
+  })
+});
+var editCommentResponseSchema = z29.void();
+var editCommentContract = {
+  request: editCommentRequestSchema,
+  response: editCommentResponseSchema
+};
+var deleteCommentRequestSchema = z29.object({
+  params: commentParamsSchema
+});
+var deleteCommentResponseSchema = z29.void();
+var deleteCommentContract = {
+  request: deleteCommentRequestSchema,
+  response: deleteCommentResponseSchema
+};
+
+// src/modules/social/posts/reactions/reactions.contracts.ts
+import { z as z31 } from "zod/v4";
+
+// src/modules/social/posts/reactions/reactions.schemas.ts
+import { z as z30 } from "zod/v4";
+var reactionSchema = z30.object({
+  id: z30.string().uuid(),
+  postId: z30.string().uuid(),
+  userId: z30.string().uuid(),
+  type: z30.enum([
+    "like",
+    "fire up",
+    "muscle"
+  ]),
+  reactedAt: serializedDateSchema
+});
+
+// src/modules/social/posts/reactions/reactions.contracts.ts
+var postParamsSchema2 = z31.object({
+  postId: z31.string().uuid()
+});
+var listPostReactionsRequestSchema = z31.object({
+  params: postParamsSchema2,
+  query: z31.object({
+    limit: z31.coerce.number().int().min(1).max(100).default(20),
+    cursor: z31.string().min(1).max(2048).optional()
+  })
+});
+var listPostReactionsResponseSchema = z31.object({
+  reactions: z31.array(reactionSchema),
+  nextCursor: z31.string().nullable()
+});
+var listPostReactionsContract = {
+  request: listPostReactionsRequestSchema,
+  response: listPostReactionsResponseSchema
+};
+var reactToPostRequestSchema = z31.object({
+  params: postParamsSchema2,
+  body: z31.object({
+    type: z31.enum([
+      "like",
+      "fire up",
+      "muscle"
+    ])
+  })
+});
+var reactToPostResponseSchema = z31.void();
+var reactToPostContract = {
+  request: reactToPostRequestSchema,
+  response: reactToPostResponseSchema
+};
+var deleteReactionRequestSchema = z31.object({
+  params: postParamsSchema2
+});
+var deleteReactionResponseSchema = z31.void();
+var deleteReactionContract = {
+  request: deleteReactionRequestSchema,
+  response: deleteReactionResponseSchema
+};
+
+// src/modules/social/summary/social-summary.contracts.ts
+import { z as z32 } from "zod/v4";
+var socialSummaryParticipantPreviewSchema = z32.object({
+  userId: z32.string().uuid(),
+  username: z32.string(),
+  fullName: z32.string(),
+  profilePicPath: z32.string().nullable()
+});
+var getSocialSummaryResponseSchema = z32.object({
+  activeCrewCount: z32.number().int().nonnegative(),
+  participantPreviews: socialSummaryParticipantPreviewSchema.array().max(3)
+});
+var getSocialSummaryContract = {
+  response: getSocialSummaryResponseSchema
+};
+
+// src/modules/social/users/social-users.contracts.ts
+import { z as z34 } from "zod/v4";
+
+// src/modules/social/users/social-users.schemas.ts
+import { z as z33 } from "zod/v4";
+var socialUserSchema = z33.object({
+  userId: z33.string().uuid(),
+  username: z33.string(),
+  fullName: z33.string(),
+  profilePicPath: z33.string().nullable(),
+  createdAt: serializedDateSchema
+});
+
+// src/modules/social/users/social-users.contracts.ts
+var searchSocialUsersRequestSchema = z34.object({
+  query: z34.object({
+    search: z34.string().trim().min(1).max(50),
+    limit: z34.coerce.number().int().min(1).max(100).default(20),
+    cursor: z34.string().min(1).max(2048).optional()
+  })
+});
+var searchSocialUsersResponseSchema = z34.object({
+  users: z34.array(socialUserSchema),
+  nextCursor: z34.string().nullable()
+});
+var searchSocialUsersContract = {
+  request: searchSocialUsersRequestSchema,
+  response: searchSocialUsersResponseSchema
+};
+var getSocialUserRequestSchema = z34.object({
+  params: z34.object({
+    userId: z34.string().uuid()
+  })
+});
+var getSocialUserResponseSchema = socialUserSchema.omit({
+  createdAt: true
+});
+var getSocialUserContract = {
+  request: getSocialUserRequestSchema,
+  response: getSocialUserResponseSchema
 };
 export {
-  accessTokenPayloadDtoSchema,
-  addAerobicInputQueryDtoSchema,
-  aerobicMutationRowQueryDtoSchema,
-  aerobicTrackingDbSchema,
-  aerobicsDailyRecordQueryDtoSchema,
-  aerobicsWeeklyRecordQueryDtoSchema,
-  allUserMessageQueryDtoSchema,
+  addCommentContract,
+  addCommentRequestSchema,
+  addCommentResponseSchema,
   analyzeVideoPayloadDtoSchema,
   analyzeVideoResultPayloadDtoSchema,
   appleOAuthContract,
   appleOAuthRequestSchema,
-  appleTokenVerificationResultDtoSchema,
-  authenticatedUserForUpdateQueryDtoSchema,
-  changeEmailTokenPayloadDtoSchema,
+  confirmEmailChangeContract,
+  confirmEmailChangeRequestSchema,
   createAerobicEntryContract,
   createAerobicEntryRequestSchema,
   createAerobicEntryResponseSchema,
+  createCrewContract,
+  createCrewRequestSchema,
+  createCrewResponseSchema,
   createPasswordResetRequestContract,
   createPasswordResetRequestSchema,
+  createPostContract,
+  createPostRequestSchema,
+  createPostResponseSchema,
   createUserContract,
   createUserRequestSchema,
   createUserResponseSchema,
@@ -2641,46 +1560,37 @@ export {
   createWorkoutSessionContract,
   createWorkoutSessionRequestSchema,
   createWorkoutSessionResponseSchema,
-  createdUserQueryDtoSchema,
-  createdUserRawQueryDtoSchema,
-  createdUserRowQueryDtoSchema,
   deleteAerobicEntryContract,
   deleteAerobicEntryRequestSchema,
+  deleteCommentContract,
+  deleteCommentRequestSchema,
+  deleteCommentResponseSchema,
+  deleteCrewContract,
+  deleteCrewProfilePictureContract,
+  deleteCrewProfilePictureRequestSchema,
+  deleteCrewRequestSchema,
+  deleteCrewResponseSchema,
   deleteMessageContract,
   deleteMessageRequestSchema,
   deleteMessageResponseSchema,
+  deletePostContract,
+  deletePostRequestSchema,
+  deletePostResponseSchema,
   deleteProfilePictureContract,
   deleteProfilePictureRequestSchema,
-  deletedMessageQueryDtoSchema,
-  emailVerifyPayloadDtoSchema,
+  deleteReactionContract,
+  deleteReactionRequestSchema,
+  deleteReactionResponseSchema,
+  editCommentContract,
+  editCommentRequestSchema,
+  editCommentResponseSchema,
   enqueueAnalyzeVideoParamsDtoSchema,
-  exerciseAssignmentIdQueryDtoSchema,
-  exerciseDbSchema,
-  exerciseHistoryQueryDtoSchema,
-  exerciseHistoryRowQueryDtoSchema,
-  exerciseInPlanQueryDtoSchema,
-  exerciseMapByMuscleRowQueryDtoSchema,
-  exerciseMetadataQueryDtoSchema,
-  exerciseToWorkoutSplitDbSchema,
-  exerciseToWorkoutSplitSetExpandedViewDbSchema,
-  exerciseTrackingAnalysisQueryDtoSchema,
-  exerciseTrackingAndStatsQueryDtoSchema,
-  exerciseTrackingAndStatsRowQueryDtoSchema,
-  exerciseTrackingDbSchema,
-  exerciseTrackingIdQueryDtoSchema,
-  exerciseTrackingMapsQueryDtoSchema,
-  exerciseTrackingMapsRowQueryDtoSchema,
-  exerciseTrackingPrMaxQueryDtoSchema,
-  exerciseTrackingSetExpandedViewDbSchema,
-  exerciseTrackingStatsQueryDtoSchema,
-  exerciseTrackingStatsRowQueryDtoSchema,
-  exercisesMapByMuscleQueryDtoSchema,
-  finishedWorkoutEntryQueryDtoSchema,
-  forgotPasswordPayloadDtoSchema,
   getAerobicHistoryContract,
   getAerobicHistoryRequestSchema,
   getAerobicHistoryResponseSchema,
-  getAllExercisesExerciseQueryDtoSchema,
+  getCrewContract,
+  getCrewRequestSchema,
+  getCrewResponseSchema,
   getCurrentUserContract,
   getCurrentUserResponseSchema,
   getExerciseHistoryContract,
@@ -2691,6 +1601,11 @@ export {
   getPersonalRecordsResponseSchema,
   getReminderSettingsContract,
   getReminderSettingsResponseSchema,
+  getSocialSummaryContract,
+  getSocialSummaryResponseSchema,
+  getSocialUserContract,
+  getSocialUserRequestSchema,
+  getSocialUserResponseSchema,
   getVerificationStatusContract,
   getVerificationStatusRequestSchema,
   getWorkoutHistoryContract,
@@ -2705,13 +1620,43 @@ export {
   getWorkoutStatisticsResponseSchema,
   googleOAuthContract,
   googleOAuthRequestSchema,
-  googleTokenVerificationResultDtoSchema,
-  lastLoginQueryDtoSchema,
+  inviteCrewUserContract,
+  inviteCrewUserRequestSchema,
+  leaveCrewContract,
+  leaveCrewRequestSchema,
+  leaveCrewResponseSchema,
+  listCrewInvitationsContract,
+  listCrewInvitationsRequestSchema,
+  listCrewInvitationsResponseSchema,
+  listCrewParticipantsContract,
+  listCrewParticipantsRequestSchema,
+  listCrewParticipantsResponseSchema,
+  listCrewPostsContract,
+  listCrewPostsRequestSchema,
+  listCrewPostsResponseSchema,
+  listCrewsContract,
+  listCrewsRequestSchema,
+  listCrewsResponseSchema,
   listExercisesContract,
   listExercisesResponseSchema,
   listMessagesContract,
   listMessagesRequestSchema,
   listMessagesResponseSchema,
+  listMyCrewsContract,
+  listMyCrewsRequestSchema,
+  listMyCrewsResponseSchema,
+  listPendingCrewJoinRequestsContract,
+  listPendingCrewJoinRequestsRequestSchema,
+  listPendingCrewJoinRequestsResponseSchema,
+  listPostCommentsContract,
+  listPostCommentsRequestSchema,
+  listPostCommentsResponseSchema,
+  listPostReactionsContract,
+  listPostReactionsRequestSchema,
+  listPostReactionsResponseSchema,
+  listVisiblePostsContract,
+  listVisiblePostsRequestSchema,
+  listVisiblePostsResponseSchema,
   loginContract,
   loginRequestSchema,
   loginResponseSchema,
@@ -2720,25 +1665,17 @@ export {
   markMessageAsReadContract,
   markMessageAsReadRequestSchema,
   markMessageAsReadResponseSchema,
-  messageAfterSendQueryDtoSchema,
-  messageAsReadQueryDtoSchema,
-  messageDbSchema,
-  oAuthCreatedUserRowQueryDtoSchema,
-  oAuthLinkQueryDtoSchema,
-  oAuthLinkRowQueryDtoSchema,
   oAuthLoginContract,
   oAuthLoginResponseSchema,
-  oAuthLookupQueryDtoSchema,
-  oAuthLookupRawQueryDtoSchema,
-  oAuthLookupRowQueryDtoSchema,
-  oauthAccountDbSchema,
-  personalRecordQueryDtoSchema,
-  personalRecordsQueryDtoSchema,
-  personalRecordsRowQueryDtoSchema,
   proceedLoginResponseSchema,
-  prsViewDbSchema,
+  reactToPostContract,
+  reactToPostRequestSchema,
+  reactToPostResponseSchema,
   refreshTokenContract,
   refreshTokenResponseSchema,
+  replaceCrewProfilePictureContract,
+  replaceCrewProfilePictureRequestSchema,
+  replaceCrewProfilePictureResponseSchema,
   replaceProfilePictureContract,
   replaceProfilePictureResponseSchema,
   replacePushTokenContract,
@@ -2748,66 +1685,39 @@ export {
   replaceWorkoutPlanResponseSchema,
   replaceWorkoutSchedulesContract,
   replaceWorkoutSchedulesRequestSchema,
+  requestToJoinCrewContract,
+  requestToJoinCrewRequestSchema,
   resetPasswordContract,
   resetPasswordRequestSchema,
   resetPasswordResponseSchema,
-  saveWorkoutSplitInputQueryDtoSchema,
-  saveWorkoutSplitPayloadQueryDtoSchema,
+  searchSocialUsersContract,
+  searchSocialUsersRequestSchema,
+  searchSocialUsersResponseSchema,
   serializedDateSchema,
+  socialSummaryParticipantPreviewSchema,
   squatRepetitionDtoSchema,
   timezoneSchema,
-  tokenVersionQueryDtoSchema,
-  trackingByDateItemQueryDtoSchema,
-  trackingBySplitNameItemQueryDtoSchema,
-  trackingMapItemQueryDtoSchema,
-  trackingSetDbSchema,
   updateAerobicEntryContract,
   updateAerobicEntryRequestSchema,
+  updateCrewContract,
+  updateCrewParticipationRequestStatusContract,
+  updateCrewParticipationRequestStatusRequestSchema,
+  updateCrewRequestSchema,
+  updateCrewResponseSchema,
   updateCurrentUserContract,
   updateCurrentUserRequestSchema,
   updateCurrentUserResponseSchema,
+  updatePostContract,
+  updatePostRequestSchema,
+  updatePostResponseSchema,
   updateReminderTimeZoneContract,
   updateReminderTimeZoneRequestSchema,
   updateUnverifiedAccountEmailContract,
   updateUnverifiedAccountEmailRequestSchema,
   upsertReminderSettingsContract,
   upsertReminderSettingsRequestSchema,
-  userAerobicsQueryDtoSchema,
-  userAerobicsRowQueryDtoSchema,
-  userAfterBumpQueryDtoSchema,
-  userByIdentifierQueryDtoSchema,
-  userByIdentifierRawQueryDtoSchema,
-  userByIdentifierRowQueryDtoSchema,
-  userByUsernameRawQueryDtoSchema,
-  userByUsernameRowQueryDtoSchema,
-  userConflictQueryDtoSchema,
   userDataContract,
-  userDataQueryDtoSchema,
   userDataResponseSchema,
-  userDataRowQueryDtoSchema,
-  userDbSchema,
-  userExistsQueryDtoSchema,
-  userInsertDbSchema,
-  userMessageIdentityQueryDtoSchema,
-  userProfilePicQueryDtoSchema,
-  userReminderSettingDbSchema,
-  userUpdateDbSchema,
-  userWithNotificationsEnabledQueryDtoSchema,
   verifyEmailContract,
-  verifyEmailRequestSchema,
-  weeklyDataQueryDtoSchema,
-  wholeUserWorkoutPlanQueryDtoSchema,
-  workoutExerciseInputQueryDtoSchema,
-  workoutPlanDbSchema,
-  workoutPlanIdQueryDtoSchema,
-  workoutScheduleDbSchema,
-  workoutScheduleInputDtoSchema,
-  workoutScheduleQueryDtoSchema,
-  workoutSetDbSchema,
-  workoutSplitDbSchema,
-  workoutSplitIdQueryDtoSchema,
-  workoutSplitLookupQueryDtoSchema,
-  workoutSplitQueryDtoSchema,
-  workoutSummaryDbSchema,
-  workoutSummaryIdQueryDtoSchema
+  verifyEmailRequestSchema
 };

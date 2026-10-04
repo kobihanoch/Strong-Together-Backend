@@ -1,17 +1,19 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, QueryOf } from '../../../common';
-import { userDbSchema } from '../../../database';
+
+const usernameSchema = z.string().trim().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/, 'Invalid username');
+const emailSchema = z.string().trim().max(254).email('Invalid email');
 
 // Verify user account
 
-export const verifyEmailRequestSchema = z.object({ query: z.object({ token: z.string().optional() }) });
+export const verifyEmailRequestSchema = z.object({ query: z.object({ token: z.string().min(1).max(16_384).optional() }) });
 
 export const verifyEmailContract = { request: verifyEmailRequestSchema } satisfies Contract;
 
 // Send verification email
 
 export const createVerificationEmailRequestSchema = z.object({
-  body: z.object({ email: userDbSchema.shape.email.trim().email('Invalid email') }),
+  body: z.object({ email: emailSchema }),
 });
 export const createVerificationEmailContract = { request: createVerificationEmailRequestSchema } satisfies Contract;
 
@@ -19,9 +21,9 @@ export const createVerificationEmailContract = { request: createVerificationEmai
 
 export const updateUnverifiedAccountEmailRequestSchema = z.object({
   body: z.object({
-    username: userDbSchema.shape.username,
-    password: z.string(),
-    newEmail: userDbSchema.shape.email.trim().email('Invalid email'),
+    username: usernameSchema,
+    password: z.string().min(1).max(128),
+    newEmail: emailSchema,
   }),
 });
 export const updateUnverifiedAccountEmailContract = {
@@ -31,11 +33,15 @@ export const updateUnverifiedAccountEmailContract = {
 // Check verification status
 
 export const getVerificationStatusRequestSchema = z.object({
-  query: z.object({ username: userDbSchema.shape.username }),
+  query: z.object({ username: usernameSchema }),
 });
 export const getVerificationStatusContract = { request: getVerificationStatusRequestSchema } satisfies Contract;
 
+/** Represents the verify email query value. */
 export type VerifyEmailQuery = QueryOf<typeof verifyEmailContract>;
+/** Represents the create verification email body value. */
 export type CreateVerificationEmailBody = BodyOf<typeof createVerificationEmailContract>;
+/** Represents the update unverified account email body value. */
 export type UpdateUnverifiedAccountEmailBody = BodyOf<typeof updateUnverifiedAccountEmailContract>;
+/** Represents the get verification status query value. */
 export type GetVerificationStatusQuery = QueryOf<typeof getVerificationStatusContract>;

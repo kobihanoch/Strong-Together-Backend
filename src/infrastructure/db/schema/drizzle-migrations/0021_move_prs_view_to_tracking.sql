@@ -1,1 +1,0 @@
-ALTER VIEW "analytics"."v_prs" SET SCHEMA "tracking";

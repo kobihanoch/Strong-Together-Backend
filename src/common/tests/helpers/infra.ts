@@ -1,10 +1,4 @@
-import {
-  CreateBucketCommand,
-  DeleteObjectCommand,
-  HeadObjectCommand,
-  PutBucketNotificationConfigurationCommand,
-  S3Client,
-} from '@aws-sdk/client-s3';
+import { CreateBucketCommand, DeleteObjectCommand, HeadObjectCommand, PutBucketNotificationConfigurationCommand, S3Client } from '@aws-sdk/client-s3';
 import {
   CreateQueueCommand,
   DeleteMessageCommand,
@@ -18,7 +12,7 @@ import { createClient } from 'redis';
 import { redisConfig } from '../../../config/redis.config';
 import { emailConfig } from '../../../config/email.config';
 import { awsConfig } from '../../../config/storage.config';
-import { MailerService } from '../../../infrastructure/mailer/mailer.service';
+import { MailerService } from '../../../infrastructure/capabilities/mailer/mailer.service';
 
 const emailQueue = new Bull('test:emailsQueue', redisConfig.url);
 const pushQueue = new Bull('test:pushNotificationsQueue', redisConfig.url);
@@ -64,6 +58,15 @@ async function connectedRedis() {
 
 export async function getRedisKey(key: string) {
   return (await connectedRedis()).get(key);
+}
+
+export async function getUserCacheGeneration(userId: string): Promise<number> {
+  const value = await getRedisKey(`xt:cache-generation:v${redisConfig.cacheVersion}:${userId}`);
+  return Number(value ?? 0);
+}
+
+export async function getVersionedRedisKey(userId: string, dataKey: string) {
+  return getRedisKey(`${dataKey}:g${await getUserCacheGeneration(userId)}`);
 }
 
 export async function deleteRedisKeysByPattern(pattern: string) {
@@ -245,4 +248,3 @@ export async function receiveAnalysisQueueMessage() {
 
   return message;
 }
-

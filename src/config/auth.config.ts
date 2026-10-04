@@ -1,6 +1,9 @@
 import './app.config';
 
 export const authConfig = {
+  jwtIssuer: 'strong-together',
+  jwtAccessAudience: 'strong-together-api',
+  jwtRefreshAudience: 'strong-together-refresh',
   jwtAccessSecret: process.env.JWT_ACCESS_SECRET as string,
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET as string,
   jwtVerifySecret: process.env.JWT_VERIFY_SECRET as string,

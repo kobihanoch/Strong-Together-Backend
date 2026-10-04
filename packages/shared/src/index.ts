@@ -1,5 +1,4 @@
 export * from './common';
-export * from './database';
 export * from './modules/aerobics';
 export * from './modules/auth';
 export * from './modules/exercises';
@@ -12,3 +11,4 @@ export * from './modules/video-analysis';
 export * from './modules/web-sockets';
 export * from './modules/workout';
 export * from './modules/workout-schedule';
+export * from './modules/social';

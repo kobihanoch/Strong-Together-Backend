@@ -5,9 +5,9 @@ import { createApp } from '../../../app';
 import { authHeaders } from '../../../common/tests/helpers/auth';
 import { expectSchema } from '../../../common/tests/helpers/assert-schema';
 import { getActiveWorkoutSplitNames } from '../../../common/tests/helpers/db';
-import { deleteRedisKeysByPattern, getRedisKey } from '../../../common/tests/helpers/infra';
+import { deleteRedisKeysByPattern, getUserCacheGeneration, getVersionedRedisKey } from '../../../common/tests/helpers/infra';
 import { cleanupTestUsers, createAndLoginTestUser } from '../../../common/tests/helpers/users';
-import { buildPlanKeyStable } from './plan.cache';
+import { buildPlanKeyStable } from './infrastructure/redis-workout-plan.cache';
 
 let app: Awaited<ReturnType<typeof createApp>>;
 const users = new Set<string>();
@@ -41,7 +41,7 @@ describe('WorkoutPlanController', () => {
     expect(response.headers['x-cache']).toBe('MISS');
     expectSchema(getWorkoutPlanResponseSchema, response.body);
     expect(response.body).toEqual({ workoutPlan: null });
-    expect(await getRedisKey(buildPlanKeyStable(user.userId, 'Asia/Jerusalem'))).toBeTypeOf('string');
+    expect(await getVersionedRedisKey(user.userId, buildPlanKeyStable(user.userId, 'Asia/Jerusalem'))).toBeTypeOf('string');
   });
 
   it('PUT /api/workout-plan creates User B plan, deletes its cache key, and returns 204', async () => {
@@ -61,7 +61,7 @@ describe('WorkoutPlanController', () => {
     expect(response.status).toBe(204);
     expect(response.text).toBe('');
     expect(await getActiveWorkoutSplitNames(user.userId)).toEqual(['A', 'B']);
-    expect(await getRedisKey(buildPlanKeyStable(user.userId, 'Asia/Jerusalem'))).toBeNull();
+    expect(await getUserCacheGeneration(user.userId)).toBe(1);
   });
 
   it('GET /api/workout-plan returns User B plan from Redis on repeated reads', async () => {
@@ -116,7 +116,7 @@ describe('WorkoutPlanController', () => {
         ],
       });
 
-    expect(updated.status).toBe(204);
+    expect(updated.status, JSON.stringify(updated.body)).toBe(204);
     const updatedPlan = await request(app.getHttpServer())
       .get('/api/workout-plan')
       .query({ tz: 'Asia/Jerusalem' })
@@ -141,6 +141,76 @@ describe('WorkoutPlanController', () => {
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Each split must include at least one exercise');
+  });
+
+  it('PUT /api/workout-plan deactivates omitted splits and can reactivate the same split ID', async () => {
+    const user = await workoutUser('plan_reactivate');
+    await request(app.getHttpServer())
+      .put('/api/workout-plan')
+      .set(authHeaders(user.accessToken))
+      .send({
+        tz: 'Asia/Jerusalem',
+        workoutData: [
+          { name: 'Keep', orderIndex: 0, exercises: [{ exerciseId: 20, sets: [8], orderIndex: 0 }] },
+          { name: 'Return', orderIndex: 1, exercises: [{ exerciseId: 12, sets: [10], orderIndex: 0 }] },
+        ],
+      });
+    const originalPlan = await request(app.getHttpServer())
+      .get('/api/workout-plan')
+      .query({ tz: 'Asia/Jerusalem' })
+      .set(authHeaders(user.accessToken));
+    const [keptSplit, removedSplit] = originalPlan.body.workoutPlan.workoutSplits;
+
+    const omit = await request(app.getHttpServer())
+      .put('/api/workout-plan')
+      .set(authHeaders(user.accessToken))
+      .send({
+        tz: 'Asia/Jerusalem',
+        workoutData: [{ id: keptSplit.id, name: 'Keep', orderIndex: 0, exercises: [{ exerciseId: 20, sets: [8], orderIndex: 0 }] }],
+      });
+    expect(omit.status, JSON.stringify(omit.body)).toBe(204);
+    expect(await getActiveWorkoutSplitNames(user.userId)).toEqual(['Keep']);
+
+    const reactivate = await request(app.getHttpServer())
+      .put('/api/workout-plan')
+      .set(authHeaders(user.accessToken))
+      .send({
+        tz: 'Asia/Jerusalem',
+        workoutData: [
+          { id: keptSplit.id, name: 'Keep', orderIndex: 0, exercises: [{ exerciseId: 20, sets: [8], orderIndex: 0 }] },
+          { id: removedSplit.id, name: 'Return', orderIndex: 1, exercises: [{ exerciseId: 12, sets: [10], orderIndex: 0 }] },
+        ],
+      });
+    expect(reactivate.status, JSON.stringify(reactivate.body)).toBe(204);
+    expect(await getActiveWorkoutSplitNames(user.userId)).toEqual(['Keep', 'Return']);
+  });
+
+  it('PUT /api/workout-plan rejects a split ID owned by another user', async () => {
+    const owner = await workoutUser('plan_owner');
+    const otherUser = await workoutUser('plan_other');
+    await request(app.getHttpServer())
+      .put('/api/workout-plan')
+      .set(authHeaders(owner.accessToken))
+      .send({
+        tz: 'Asia/Jerusalem',
+        workoutData: [{ name: 'Owned', orderIndex: 0, exercises: [{ exerciseId: 20, sets: [8], orderIndex: 0 }] }],
+      });
+    const ownerPlan = await request(app.getHttpServer())
+      .get('/api/workout-plan')
+      .query({ tz: 'Asia/Jerusalem' })
+      .set(authHeaders(owner.accessToken));
+    const foreignSplitId = ownerPlan.body.workoutPlan.workoutSplits[0].id;
+
+    const response = await request(app.getHttpServer())
+      .put('/api/workout-plan')
+      .set(authHeaders(otherUser.accessToken))
+      .send({
+        tz: 'Asia/Jerusalem',
+        workoutData: [{ id: foreignSplitId, name: 'Foreign', orderIndex: 0, exercises: [{ exerciseId: 20, sets: [8], orderIndex: 0 }] }],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe(`Workout split ${foreignSplitId} does not belong to the active workout plan`);
   });
 
   it('GET and POST /api/workouts plan endpoints reject unauthenticated requests with 401', async () => {

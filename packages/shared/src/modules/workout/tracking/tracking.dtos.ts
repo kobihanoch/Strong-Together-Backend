@@ -1,37 +1,53 @@
 import { z } from 'zod/v4';
 import { serializedDateSchema } from '../../../common';
-import {
-  exerciseDbSchema,
-  exerciseToWorkoutSplitDbSchema,
-  exerciseTrackingDbSchema,
-  trackingSetDbSchema,
-  workoutSetDbSchema,
-  workoutSplitDbSchema,
-} from '../../../database';
+// Plain transport-field schemas; these intentionally do not depend on database metadata.
+const exerciseDbSchema = { shape: { id: z.number().int(), name: z.string(), targetMuscle: z.string(), specificTargetMuscle: z.string() } };
+const exerciseToWorkoutSplitDbSchema = { shape: { id: z.number().int(), orderIndex: z.number(), isActive: z.boolean() } };
+const exerciseTrackingDbSchema = {
+  shape: {
+    id: z.number().int(),
+    notes: z.string().nullable(),
+    exerciseToSplitId: z.number().int().nullable(),
+    exerciseId: z.number().int().nullable(),
+  },
+};
+const trackingSetDbSchema = { shape: { reps: z.number(), weight: z.number(), setIndex: z.number() } };
+const workoutSetDbSchema = { shape: { reps: z.number() } };
+const workoutSplitDbSchema = { shape: { id: z.number().int(), name: z.string(), orderIndex: z.number() } };
 
 /** Finished exercise entry consumed by the workout-insertion query. */
 const trackedSetQueryDtoSchema = z.object({
-  reps: trackingSetDbSchema.shape.reps,
-  weight: trackingSetDbSchema.shape.weight,
-  setIndex: trackingSetDbSchema.shape.setIndex,
+  reps: trackingSetDbSchema.shape.reps.int().min(1).max(10_000),
+  weight: trackingSetDbSchema.shape.weight.finite().nonnegative().max(100_000),
+  setIndex: trackingSetDbSchema.shape.setIndex.int().nonnegative(),
 });
 
 const finishedWorkoutEntryBaseQueryDtoSchema = z.object({
-  trackedSets: z.array(trackedSetQueryDtoSchema),
-  notes: exerciseTrackingDbSchema.shape.notes.optional(),
+  trackedSets: z
+    .array(trackedSetQueryDtoSchema)
+    .min(1, 'Each exercise must include at least one tracked set')
+    .max(100, 'An exercise cannot include more than 100 tracked sets')
+    .superRefine((sets, context) => {
+      const indexes = new Set<number>();
+      sets.forEach((set, index) => {
+        if (indexes.has(set.setIndex)) context.addIssue({ code: 'custom', path: [index, 'setIndex'], message: 'Set indexes must be unique' });
+        indexes.add(set.setIndex);
+      });
+    }),
+  notes: z.string().trim().max(2_000).nullable().optional(),
 });
 
 export const finishedWorkoutEntryQueryDtoSchema = z.discriminatedUnion('isExerciseAssignedToSplit', [
   finishedWorkoutEntryBaseQueryDtoSchema.extend({
     isExerciseAssignedToSplit: z.literal(true),
-    exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId.unwrap(),
+    exerciseToSplitId: exerciseTrackingDbSchema.shape.exerciseToSplitId.unwrap().positive(),
     // Accepted temporarily for clients using the previous redundant payload.
-    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.optional(),
+    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap().positive().optional(),
   }),
   finishedWorkoutEntryBaseQueryDtoSchema.extend({
     isExerciseAssignedToSplit: z.literal(false),
     exerciseToSplitId: z.null().optional(),
-    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap(),
+    exerciseId: exerciseTrackingDbSchema.shape.exerciseId.unwrap().positive(),
   }),
 ]);
 
@@ -170,44 +186,32 @@ export const exerciseTrackingAndStatsQueryDtoSchema = z.object({
   trackingMaps: exerciseTrackingMapsQueryDtoSchema,
 });
 
-/** SQL row wrapping the complete tracking aggregate under `data`. */
-export const exerciseTrackingAndStatsRowQueryDtoSchema = z.object({ data: exerciseTrackingAndStatsQueryDtoSchema });
-export const exerciseTrackingStatsRowQueryDtoSchema = z.object({ data: exerciseTrackingStatsQueryDtoSchema });
-export const exerciseTrackingMapsRowQueryDtoSchema = z.object({ data: exerciseTrackingMapsQueryDtoSchema });
-export const exerciseHistoryRowQueryDtoSchema = z.object({ data: exerciseHistoryQueryDtoSchema });
-export const personalRecordsRowQueryDtoSchema = z.object({ data: personalRecordsQueryDtoSchema });
-
-/** SQL row resolving the workout split for an exercise assignment. */
-export const workoutSplitLookupQueryDtoSchema = z.object({ workoutSplitId: workoutSplitDbSchema.shape.id });
-
-/** SQL row returned after inserting a workout summary. */
-export const workoutSummaryIdQueryDtoSchema = z.object({ id: z.string().uuid() });
-
-/** SQL row returned after inserting an exercise-tracking record. */
-export const exerciseTrackingIdQueryDtoSchema = z.object({ id: exerciseTrackingDbSchema.shape.id });
-
 // SQL query DTO types
 
+/** Represents the exercise tracking analysis query dto value. */
 export type ExerciseTrackingAnalysisQueryDto = z.infer<typeof exerciseTrackingAnalysisQueryDtoSchema>;
+/** Represents the exercise metadata query dto value. */
 export type ExerciseMetadataQueryDto = z.infer<typeof exerciseMetadataQueryDtoSchema>;
+/** Represents the exercise tracking pr max query dto value. */
 export type ExerciseTrackingPrMaxQueryDto = z.infer<typeof exerciseTrackingPrMaxQueryDtoSchema>;
+/** Represents the tracking map item query dto value. */
 export type TrackingMapItemQueryDto = z.infer<typeof trackingMapItemQueryDtoSchema>;
+/** Represents the tracking by date item query dto value. */
 export type TrackingByDateItemQueryDto = z.infer<typeof trackingByDateItemQueryDtoSchema>;
+/** Represents the tracking by split name item query dto value. */
 export type TrackingBySplitNameItemQueryDto = z.infer<typeof trackingBySplitNameItemQueryDtoSchema>;
+/** Represents the exercise tracking and stats query dto value. */
 export type ExerciseTrackingAndStatsQueryDto = z.infer<typeof exerciseTrackingAndStatsQueryDtoSchema>;
-export type ExerciseTrackingAndStatsRowQueryDto = z.infer<typeof exerciseTrackingAndStatsRowQueryDtoSchema>;
+/** Represents the exercise tracking stats query dto value. */
 export type ExerciseTrackingStatsQueryDto = z.infer<typeof exerciseTrackingStatsQueryDtoSchema>;
-export type ExerciseTrackingStatsRowQueryDto = z.infer<typeof exerciseTrackingStatsRowQueryDtoSchema>;
+/** Represents the exercise tracking maps query dto value. */
 export type ExerciseTrackingMapsQueryDto = z.infer<typeof exerciseTrackingMapsQueryDtoSchema>;
-export type ExerciseTrackingMapsRowQueryDto = z.infer<typeof exerciseTrackingMapsRowQueryDtoSchema>;
+/** Represents the exercise history query dto value. */
 export type ExerciseHistoryQueryDto = z.infer<typeof exerciseHistoryQueryDtoSchema>;
-export type ExerciseHistoryRowQueryDto = z.infer<typeof exerciseHistoryRowQueryDtoSchema>;
+/** Represents the personal records query dto value. */
 export type PersonalRecordsQueryDto = z.infer<typeof personalRecordsQueryDtoSchema>;
-export type PersonalRecordsRowQueryDto = z.infer<typeof personalRecordsRowQueryDtoSchema>;
-export type WorkoutSplitLookupQueryDto = z.infer<typeof workoutSplitLookupQueryDtoSchema>;
-export type WorkoutSummaryIdQueryDto = z.infer<typeof workoutSummaryIdQueryDtoSchema>;
-export type ExerciseTrackingIdQueryDto = z.infer<typeof exerciseTrackingIdQueryDtoSchema>;
 
 // SQL query input DTOs
 
+/** Represents the finished workout entry query dto value. */
 export type FinishedWorkoutEntryQueryDto = z.infer<typeof finishedWorkoutEntryQueryDtoSchema>;

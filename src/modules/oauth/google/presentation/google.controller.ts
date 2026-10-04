@@ -1,0 +1,51 @@
+import { CommandBus } from '@nestjs/cqrs';
+import { Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
+import type { Request, Response } from 'express';
+import type { GoogleOAuthBody, OAuthLoginResponse } from '@strong-together/shared';
+import { googleOAuthRequestSchema } from '@strong-together/shared';
+import { RequestData } from '../../../../common/decorators/request-data.decorator';
+import { RateLimit, RateLimitGuard, loginRateLimit } from '../../../../common/guards/rate-limit.guard';
+import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
+import { validateJkt } from '../../core/presentation/oauth-request.utils';
+import { SignInWithGoogleCommand } from '../application/commands/sign-in-with-google/sign-in-with-google.command';
+
+/** OAuth routes for Google sign-in. */
+@Controller('api/oauth')
+export class GoogleController {
+  constructor(private readonly commandBus: CommandBus) {}
+
+  /**
+   * Authenticate or register a user with Google OAuth.
+   *
+   * Verifies the Google identity token, links or creates the local user record as
+   * needed, and returns the session payload.
+   *
+   * API: `POST /api/oauth/google`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `201 Created`; `400 Bad Request`; `401 Unauthorized`; `429 Too Many Requests`.
+   *
+   * @param data - The validated request data.
+   * @param req - The HTTP request.
+   * @param res - The HTTP response.
+   * @returns The response payload.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {InvalidGoogleOAuthError} When the Google identity token is invalid.
+   * @throws {GoogleOAuthUnauthorizedError} When the account cannot start a session.
+   * @throws {HttpException} When the rate limit is exceeded.
+   */
+  @Post('google')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(loginRateLimit)
+  async createOrSignInWithGoogle(
+    @RequestData(new ValidateRequestPipe(googleOAuthRequestSchema))
+    data: { body: GoogleOAuthBody },
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<OAuthLoginResponse> {
+    const jkt = validateJkt(req);
+    const payload = await this.commandBus.execute(new SignInWithGoogleCommand(data.body, jkt));
+
+    res.set('Cache-Control', 'no-store');
+    return payload;
+  }
+}

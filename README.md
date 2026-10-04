@@ -1,223 +1,53 @@
-# Strong Together Backend (v5.0.1)
+# Strong Together Backend (v5.1.0)
+
+<div align="center">
+
+**A production-oriented fitness platform backend built as a secure modular monolith with explicit distributed-system boundaries.** Strong Together combines a Clean/Hexagonal NestJS core, pragmatic CQRS, PostgreSQL row-level security, typed Zod contracts, Redis-backed caching and realtime delivery, Bull workers, and an event-driven S3/SQS Python computer-vision pipeline. It serves identity, workouts, analytics, scheduling, social crews, messaging, reminders, media, and notifications without turning tightly related product domains into premature microservices.
 
 [![CI](https://github.com/kobihanoch/Strong-Together-Backend/actions/workflows/ci.yml/badge.svg)](https://github.com/kobihanoch/Strong-Together-Backend/actions)
+![Version](https://img.shields.io/badge/version-5.0.2-111827?style=flat-square)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=flat-square&logo=nestjs&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white)
+![AWS](https://img.shields.io/badge/S3%20%2B%20SQS-FF9900?style=flat-square&logo=amazonwebservices&logoColor=white)
+![Socket.IO](https://img.shields.io/badge/Socket.IO-010101?style=flat-square&logo=socketdotio&logoColor=white)
+![Python](https://img.shields.io/badge/Python%20CV-3776AB?style=flat-square&logo=python&logoColor=white)
 
-![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)
-![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
-![AWS S3](https://img.shields.io/badge/AWS%20S3-569A31?style=for-the-badge&logo=amazons3&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![Socket.IO](https://img.shields.io/badge/Socket.IO-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Amazon SQS](https://img.shields.io/badge/Amazon%20SQS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white)
-![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white)
-![MediaPipe](https://img.shields.io/badge/MediaPipe-FF6F00?style=for-the-badge&logo=google&logoColor=white)
-![Zod](https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=typescript&logoColor=white)
-![Sentry](https://img.shields.io/badge/Sentry-362D59?style=for-the-badge&logo=sentry&logoColor=white)
-![Pino](https://img.shields.io/badge/Pino-FFD43B?style=for-the-badge&logo=javascript&logoColor=black)
-![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)
+[API Reference](./docs/api-documentation.md) | [Architecture](./docs/architecture.md) | [Run Locally](./docs/scripts-usage.md) | [Security](./docs/security-deep-dive.md)
 
-Backend for **Strong Together**, a **fitness and health platform** with **authentication**, **workout planning**, **progress tracking**, **realtime messaging**, **push notifications**, and **asynchronous exercise video analysis**. The system combines a **NestJS modular monolith**, **PostgreSQL RLS**, **Redis-backed realtime infrastructure**, **S3/SQS event pipelines**, and a **Python computer-vision worker** into a **locally reproducible backend platform**.
+</div>
 
-- Backend repository: [Strong-Together-Backend](https://github.com/kobihanoch/Strong-Together-Backend)
-- Frontend repository: [Strong-Together-App](https://github.com/kobihanoch/Strong-Together-App)
+## At A Glance
 
-## Key Highlights
+| Area                 | What is implemented                                                                                                                                                                       |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Product domains**  | Authentication and OAuth, user profiles, workout plans and tracking, PRs and analytics, aerobics, weekly schedules, social crews and feeds, messages, reminders, push, and video analysis |
+| **Architecture**     | Modular monolith, Clean Architecture, Hexagonal ports/adapters, command/query separation, domain entities, application-owned units of work                                                |
+| **Security**         | DPoP-bound JWTs, refresh rotation, token versioning, role guards, Zod validation, rate limiting, PostgreSQL RLS, least-privilege guest and cron database APIs                             |
+| **Async + realtime** | Bull/Redis email and push workers, S3 events to SQS, Python OpenCV/MediaPipe processing, Redis Pub/Sub, authenticated Socket.IO user rooms                                                |
+| **Data + contracts** | Drizzle-owned PostgreSQL schema and migrations, explicit repository SQL, security-invoker views, database-independent `@strong-together/shared` Zod contracts                             |
+| **Operations**       | Docker Compose development/test stacks, LocalStack, Maildev, Pino logs, request correlation, Sentry trace propagation across the Node/Python boundary                                     |
 
-- **Version 5 scheduling:** Users can replace or clear a weekly workout schedule, configure timezone-aware reminders, and receive deduplicated delayed push notifications from a JWT-protected cron trigger.
-- **Richer workout insights:** Separate 45-day history, exercise-history, statistics, and personal-record endpoints expose ordered workouts, next-split guidance, estimated durations, and estimated one-rep max values.
-- **Drizzle-first data model:** Normalized workout/tracking sets, domain schemas, reproducible migrations, generated shared Zod contracts, least-privilege runtime roles, and PostgreSQL RLS now form one versioned source of truth.
-- **Realtime communication:** **Socket.IO** with **authenticated tickets**, **Redis adapter** support, **per-user rooms**, and **targeted result delivery**.
-- **Async pipelines:** **Bull/Redis workers** for **email** and **push jobs**, plus **SQS-driven media processing** outside the request path.
-- **Video processing:** **Direct S3 uploads**, **S3 `ObjectCreated` events**, **SQS long polling**, **Python OpenCV/MediaPipe analysis**, **Redis Pub/Sub**, and **Socket.IO fanout**.
-- **Security:** **DPoP proof-of-possession**, **JWT refresh rotation**, **token versioning**, **role guards**, **app-version gates**, **rate limits**, **bot filtering**, **Zod validation**, and **PostgreSQL RLS**.
-- **Observability:** **Pino structured logs**, **request IDs**, **Sentry tracing**, and **trace propagation** from **NestJS** to **Python** through **S3 metadata**.
-- **Infrastructure:** **Docker Compose** dev/test stacks with **Drizzle-managed Postgres**, **Redis**, **LocalStack S3/SQS**, **Maildev**, **Node workers**, and the **Python service**.
-- **Contracts:** Shared **`@strong-together/shared`** package for **runtime request validation** and **response contract testing**.
+![Strong Together dependency model](./docs/media/dependency-model-canva.png)
 
-## Table Of Contents
+The synchronous core keeps related business workflows and RLS-bound transactions together. Work that is slow, CPU-heavy, provider-dependent, or independently scalable crosses a deliberate boundary into Redis queues or the S3/SQS media pipeline. Nest modules are composition roots; application code depends on ports, while PostgreSQL, Redis, storage, queues, OAuth providers, and realtime delivery remain adapters.
 
-- [System Architecture](#system-architecture)
-- [Core Capabilities](#core-capabilities)
-  - [Security Model](#security-model)
-  - [Video Analysis Pipeline](#video-analysis-pipeline)
-  - [Realtime And Background Work](#realtime-and-background-work)
-  - [Database And Migrations](#database-and-migrations)
-  - [Local Distributed-System Environment](#local-distributed-system-environment)
-  - [Testing Strategy](#testing-strategy)
-- [Engineering Decisions & Tradeoffs](#engineering-decisions--tradeoffs)
-- [Quick Start](#quick-start)
-- [Repository Map](#repository-map)
-- [Documentation](#documentation)
-- [Current Tradeoffs](#current-tradeoffs)
-- [What This Demonstrates](#what-this-demonstrates)
-
-## System Architecture
-
-**Strong Together** is built as a **modular monolith** with **explicit async boundaries**. **User-facing requests** stay in the **NestJS API**, while **slower** or **failure-prone work** is pushed into **queues**, **workers**, **object-storage events**, **Redis Pub/Sub**, and **realtime delivery channels**.
+## Repository Map
 
 ```text
-Mobile Client
-  -> NestJS API
-      -> Middleware / Guards / Pipes / Interceptors
-      -> Feature Modules
-      -> PostgreSQL with RLS
-      -> Redis cache / queues / Pub/Sub
-      -> Socket.IO
-      -> S3 / SQS
-      -> Node workers
-      -> Python CV worker
+src/                  NestJS API, feature modules, shared infrastructure, Drizzle schema
+packages/shared/      Plain-Zod HTTP and cross-process contracts
+workers/              Bull consumers for email and push delivery
+pythonService/        SQS-driven exercise video analysis
+scripts/              Database, migration, LocalStack, and diagram automation
+docs/                 Architecture, API, security, data, testing, and operations
 ```
-
-Typical **synchronous request flow**:
-
-```text
-Request
-  -> HTTP middleware
-  -> DPoP + JWT + role guards
-  -> Zod validation
-  -> RLS-bound transaction
-  -> domain service
-  -> response
-```
-
-Typical **asynchronous flow**:
-
-```text
-Request
-  -> enqueue job / create presigned upload
-  -> worker or AWS-shaped event
-  -> background processing
-  -> Redis Pub/Sub or persisted side effect
-  -> Socket.IO, email, push, or API-visible state
-```
-
-This keeps the **API responsive** while preserving **domain cohesion**: **authentication**, **workouts**, **messages**, **analytics**, **reminders**, **realtime delivery**, and **user data** share one **authorization** and **database model**, while **expensive workloads** run out of band.
-
-**Deep dives:** [System Architecture](./docs/architecture.md) | [Security Deep Dive](./docs/security-deep-dive.md) | [Video Pipeline](./docs/video-analysis-pipeline.md) | [WebSocket Realtime](./docs/websocket-realtime.md) | [Testing Policy](./docs/testing-policy.md)
-
-## Core Capabilities
-
-### Security Model
-
-**Security** is enforced across the **HTTP edge**, **token lifecycle**, **Nest guards**, **runtime validation**, and **database policies**.
-
-```text
-Request
-  -> Rate limit / bot blocker / app-version gate
-  -> DPoP proof validation
-  -> JWT + token_version validation
-  -> role authorization
-  -> Zod request validation
-  -> RLS-bound PostgreSQL transaction
-```
-
-Key controls include **DPoP replay protection**, **JWT token versioning** for **centralized revocation**, **refresh rotation**, **role-based route authorization**, **Helmet/CORS hardening**, and **PostgreSQL row-level security** bound to the **authenticated user**.
-
-**Read more:** [Security Deep Dive](./docs/security-deep-dive.md) | [API And Engineering Standards](./docs/api-and-standards.md)
-
-### Video Analysis Pipeline
-
-**Video analysis** is implemented as an **event-driven media pipeline**. **Large uploads** and **CPU-heavy computer-vision work** never block the **HTTP request** that starts the job.
-
-```text
-Client
-  -> Presigned S3 upload URL
-  -> S3 ObjectCreated event
-  -> SQS queue
-  -> Python CV worker
-  -> Redis Pub/Sub
-  -> Nest subscriber
-  -> Socket.IO result
-  -> Client
-```
-
-The **API** attaches **request**, **job**, **user**, **exercise**, and **Sentry trace metadata** to the **S3 upload**. The **Python worker** **long-polls SQS**, **downloads the object**, **analyzes the exercise**, **publishes the result to Redis**, **deletes the source video**, and **deletes the SQS message** only after **successful processing**.
-
-**Read more:** [Video Analysis Pipeline](./docs/video-analysis-pipeline.md)
-
-### Realtime And Background Work
-
-The backend separates **interactive responses** from **background side effects**:
-
-- **Socket.IO** delivers **user-targeted realtime events**.
-- **Redis Pub/Sub** carries **video-analysis results** from **Python** back into **NestJS**.
-- **Bull/Redis queues** handle **email** and **push jobs**.
-- **Authenticated WebSocket tickets** protect **socket connections**.
-- **Redis caching** accelerates repeated reads for **workouts**, **tracking**, **analytics**, and **aerobics**.
-
-**Read more:** [WebSocket Realtime](./docs/websocket-realtime.md) | [API And Engineering Standards](./docs/api-and-standards.md)
-
-### Database And Migrations
-
-The **database workflow** is **migration-first** and **repository-owned**.
-
-```text
-Drizzle schema change
-  -> Drizzle migration diff
-  -> committed migration
-  -> dev apply
-  -> test rebuild from zero
-```
-
-The **schema** is organized into domains such as **`identity`**, **`workout`**, **`tracking`**, **`schedules`**, **`reminders`**, and **`messages`**. **RLS policies** protect **user-owned data**, while **explicit SQL** keeps **analytics-heavy queries** visible and tunable.
-
-**Read more:** [Database Schemas And Flows](./docs/database-schemas-and-flows.md) | [Migrations And DB Pipeline](./docs/migrations-and-db-pipeline.md)
-
-### Local Distributed-System Environment
-
-**`npm run orch:dev`** starts the **development stack** with **Docker Compose**:
-
-- **NestJS API**
-- **Node background workers**
-- **Python video-analysis service**
-- **PostgreSQL**
-- **Redis** and **RedisInsight**
-- **Persisted LocalStack S3/SQS in dev**
-- **Maildev**
-
-This makes **S3 events**, **SQS delivery**, **Redis Pub/Sub**, **Redis queues**, **database migrations**, and **email capture** reproducible in **local development**.
-
-**Read more:** [Docker Compose Environments](./docs/docker-compose-environments.md) | [Scripts Usage](./docs/scripts-usage.md)
-
-### Testing Strategy
-
-The **test suite** prioritizes **integration confidence** because the highest-risk behavior crosses **real boundaries**: **auth**, **token rotation**, **RLS**, **Postgres**, **Redis**, **queues**, **S3/SQS emulation**, **Maildev**, and **WebSocket-adjacent flows**.
-
-```bash
-npm test
-```
-
-Focused suites:
-
-```bash
-npm run test:auth
-npm run test:workouts
-npm run test:videoanalysis
-npm run test:websockets
-```
-
-**Controller test documentation** is kept beside the suites as short checklists describing **happy paths**, **bad paths**, and **edge cases**.
-
-**Read more:** [Testing Policy](./docs/testing-policy.md)
-
-## Engineering Decisions & Tradeoffs
-
-**Queues for slow or unreliable work:** **Email**, **push**, and **video-analysis jobs** run outside the **HTTP request path** so the **API** can return quickly and **workers** can retry or scale independently.
-
-**Modular monolith over microservices:** The **product domains** share **user identity**, **RLS authorization**, and **database transactions**. Keeping them in one **NestJS codebase** reduces **distributed-system overhead** while still using **queues** and **workers** for independent execution.
-
-**Async pipelines for media processing:** **Video uploads** are sent directly to **S3**, then processed from **SQS** by **Python**. This avoids routing **large files** through the **API** and isolates **CPU-heavy OpenCV/MediaPipe work** from normal request traffic.
-
-**RLS-backed security:** **Authorization** is enforced in both **application code** and the **database**. **Nest guards** validate **identity** and **roles**, while **PostgreSQL RLS** protects **user-owned rows** even when queries cross complex **domain schemas**. Unauthenticated database access is limited to allow-listed `SECURITY DEFINER` functions in `guest_api`; the guest role has no direct application-table grants or guest RLS policies.
-
-**LocalStack for AWS-shaped development:** Local **S3/SQS behavior** is reproduced without **cloud dependencies**, making the **async media pipeline** testable and debuggable on a developer machine.
 
 ## Quick Start
+
+Requirements: Node.js, npm, Docker, and Docker Compose.
 
 ```bash
 npm install
@@ -225,55 +55,24 @@ npm run db:dev:start
 npm run orch:dev
 ```
 
-Useful **local tools**:
-
-- RedisInsight: `http://localhost:5540`
-- Maildev: `http://localhost:1081`
-- S3 explorer: `http://localhost:8082`
-- LocalStack: `http://localhost:4566`
-
-**Read more:** [Scripts Usage](./docs/scripts-usage.md) | [Docker Compose Environments](./docs/docker-compose-environments.md)
-
-## Repository Map
-
-```text
-src/
-  app.ts                         Nest application composition
-  index.ts                       HTTP bootstrap and shutdown lifecycle
-  common/                        Guards, middleware, pipes, filters, decorators, test helpers
-  config/                        Runtime configuration modules
-  infrastructure/                DB, Redis, queues, AWS, cache, Socket.IO, mailer, Sentry
-  modules/                       Domain modules and controllers
-workers/                         Node background workers for email and push jobs
-pythonService/                   SQS-driven video-analysis service
-scripts/                         LocalStack and DB automation
-docs/                            Architecture, security, testing, DB, and operations docs
-```
+The API runs at `http://localhost:5000`; local tooling includes [Maildev](http://localhost:1081), [RedisInsight](http://localhost:5540), and the [S3 explorer](http://localhost:8082). See the [scripts guide](./docs/scripts-usage.md) for focused services, migrations, and tests, or run the complete integration suite with `npm test`.
 
 ## Documentation
 
-| Document                                                               | What it covers                                                             |
-| ---------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| [System Architecture](./docs/architecture.md)                          | NestJS modules, runtime components, request lifecycle, async boundaries    |
-| [Security Deep Dive](./docs/security-deep-dive.md)                     | Middleware, DPoP, token versioning, authorization, validation, RLS         |
-| [Video Analysis Pipeline](./docs/video-analysis-pipeline.md)           | S3, SQS, Python worker, Redis Pub/Sub, Socket.IO delivery                  |
-| [WebSocket Realtime](./docs/websocket-realtime.md)                     | Socket.IO ticketing, Redis adapter, per-user rooms, targeted events        |
-| [Environment Example](./docs/environment-example.md)                   | Placeholder-only environment templates and secret-handling notes           |
-| [API Documentation](./docs/api-documentation.md)                       | Route index, request conventions, response shapes, operational route notes |
-| [Testing Policy](./docs/testing-policy.md)                             | Test types, isolation, database reset strategy, when to add tests          |
-| [API And Engineering Standards](./docs/api-and-standards.md)           | Contract standards, auth standards, error model, observability, caching    |
-| [Drizzle-first Shared Package](./docs/drizzle-first-shared-package.md) | Package layers, Zod/Drizzle dependency flow, frontend contracts            |
-| [Database Schemas And Flows](./docs/database-schemas-and-flows.md)     | Domain schemas, RLS flow, migration lifecycle                              |
-| [Migrations And DB Pipeline](./docs/migrations-and-db-pipeline.md)     | Drizzle workflow, dev/test/prod database lifecycle                         |
-| [Docker Compose Environments](./docs/docker-compose-environments.md)   | Development and test Compose stacks                                        |
-| [Scripts Usage](./docs/scripts-usage.md)                               | Practical command guide for development, tests, and migrations             |
+| Topic                          | Start here                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **System design**              | [Workout plan replacement](./docs/workout-plan-replacement.md); [Architecture overview and backend map](./docs/architecture.md); [Module structure and dependency rules](./docs/clean-architecture-module-structure.md); [Domain refactoring rules](./docs/refactoring-guidelines/domain-and-persistence-refactoring-guidelines.md) |
+| **API and contracts**          | [HTTP API reference](./docs/api-documentation.md); [API and engineering standards](./docs/api-and-standards.md); [Shared contract package](./docs/drizzle-first-shared-package.md)                                                                                                                                                  |
+| **Security and authorization** | [Security deep dive](./docs/security-deep-dive.md); [Social authorization and RLS](./docs/social-module-and-authorization.md)                                                                                                                                                                                                       |
+| **Database**                   | [Schemas and flows](./docs/database-schemas-and-flows.md); [Migrations and DB pipeline](./docs/migrations-and-db-pipeline.md)                                                                                                                                                                                                       |
+| **Async and realtime**         | [Video-analysis pipeline](./docs/video-analysis-pipeline.md); [WebSocket delivery](./docs/websocket-realtime.md)                                                                                                                                                                                                                    |
+| **Development and operations** | [Scripts](./docs/scripts-usage.md); [Docker environments](./docs/docker-compose-environments.md); [Environment variables](./docs/environment-example.md); [Testing policy](./docs/testing-policy.md)                                                                                                                                |
 
-## Current Tradeoffs
+## Design Tradeoffs
 
-- Video-analysis results are currently delivered realtime-first; durable Postgres persistence for historical analysis results is a natural future extension.
-- The Python video worker processes one SQS message at a time in the local environment; horizontal worker scaling is the intended path for higher throughput.
-- Local development uses persisted LocalStack to exercise AWS-shaped S3/SQS behavior without requiring cloud resources, while tests keep LocalStack ephemeral.
+- **Modular monolith over microservices:** identity, authorization, workouts, and social workflows benefit from one transaction and policy model; workers split out workloads that actually need independent execution.
+- **Explicit SQL with Drizzle-owned schema:** migrations and database types stay reproducible, while authorization-sensitive and analytics-heavy queries remain visible and tunable.
+- **Realtime-first video results:** analysis results are delivered to authenticated user rooms and are not yet retained as a historical PostgreSQL record.
+- **At-least-once media processing:** SQS remains the retry authority; consumers must tolerate redelivery, and the local Python worker processes one message at a time.
 
-## What This Demonstrates
-
-This project demonstrates **secure backend design**, **typed API contracts**, **event-driven processing**, **local infrastructure automation**, **database ownership modeling**, **realtime delivery**, **observability**, and **integration testing** across **real service boundaries**.
+Frontend: [Strong-Together-App](https://github.com/kobihanoch/Strong-Together-App)

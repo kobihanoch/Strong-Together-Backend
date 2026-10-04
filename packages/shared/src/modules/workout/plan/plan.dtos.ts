@@ -1,94 +1,117 @@
 import { z } from 'zod/v4';
 import { serializedDateSchema } from '../../../common';
-import {
-  exerciseDbSchema,
-  exerciseToWorkoutSplitDbSchema,
-  userDbSchema,
-  workoutPlanDbSchema,
-  workoutSetDbSchema,
-  workoutSplitDbSchema,
-} from '../../../database';
+const idSchema = z.number().int().positive();
+const uuidSchema = z.string().uuid();
+const textSchema = z.string();
+const booleanSchema = z.boolean();
+const numberSchema = z.number().finite();
+const orderIndexSchema = z.number().int().nonnegative();
+const repetitionsSchema = z.number().int().min(1).max(10_000);
 
 /** Exercise input stored while adding a workout plan. */
 export const workoutExerciseInputQueryDtoSchema = z.object({
-  exerciseId: exerciseDbSchema.shape.id,
-  sets: z.array(workoutSetDbSchema.shape.reps),
-  orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex,
+  exerciseId: idSchema,
+  sets: z.array(repetitionsSchema).min(1, 'Each exercise must include at least one set').max(100, 'An exercise cannot include more than 100 sets'),
+  orderIndex: orderIndexSchema,
 });
 
 const workoutSplitInputBaseQueryDtoSchema = z.object({
-  name: workoutSplitDbSchema.shape.name.min(1, 'Split name is required'),
-  orderIndex: z.number().int().nonnegative(),
-  exercises: z.array(workoutExerciseInputQueryDtoSchema).min(1, 'Each split must include at least one exercise'),
+  name: textSchema.trim().min(1, 'Split name is required').max(100, 'Split name must be at most 100 characters'),
+  orderIndex: orderIndexSchema,
+  exercises: z
+    .array(workoutExerciseInputQueryDtoSchema)
+    .min(1, 'Each split must include at least one exercise')
+    .max(100, 'A split cannot include more than 100 exercises')
+    .superRefine((exercises, context) => {
+      const exerciseIds = new Set<number>();
+      const orderIndexes = new Set<number>();
+      exercises.forEach((exercise, index) => {
+        if (exerciseIds.has(exercise.exerciseId))
+          context.addIssue({ code: 'custom', path: [index, 'exerciseId'], message: 'Exercise IDs must be unique within a split' });
+        if (orderIndexes.has(exercise.orderIndex))
+          context.addIssue({ code: 'custom', path: [index, 'orderIndex'], message: 'Exercise order indexes must be unique within a split' });
+        exerciseIds.add(exercise.exerciseId);
+        orderIndexes.add(exercise.orderIndex);
+      });
+    }),
 });
 
 /** Split input used while saving a plan. An omitted ID creates a new split. */
 export const saveWorkoutSplitInputQueryDtoSchema = workoutSplitInputBaseQueryDtoSchema.extend({
-  id: workoutSplitDbSchema.shape.id.optional(),
+  id: idSchema.optional(),
 });
 
 export const saveWorkoutSplitPayloadQueryDtoSchema = z
   .array(saveWorkoutSplitInputQueryDtoSchema)
-  .min(1, 'Workout must include at least one split');
+  .min(1, 'Workout must include at least one split')
+  .max(20, 'A workout cannot include more than 20 splits')
+  .superRefine((splits, context) => {
+    const ids = new Set<number>();
+    const orderIndexes = new Set<number>();
+    splits.forEach((split, index) => {
+      if (split.id !== undefined) {
+        if (ids.has(split.id)) context.addIssue({ code: 'custom', path: [index, 'id'], message: 'Workout split IDs must be unique' });
+        ids.add(split.id);
+      }
+      if (orderIndexes.has(split.orderIndex))
+        context.addIssue({ code: 'custom', path: [index, 'orderIndex'], message: 'Workout split order indexes must be unique' });
+      orderIndexes.add(split.orderIndex);
+    });
+  });
 
 /** Exercise assignment included in a complete workout-plan query. */
 export const exerciseInPlanQueryDtoSchema = z.object({
-  exerciseToSplitId: exerciseToWorkoutSplitDbSchema.shape.id,
-  exerciseId: exerciseDbSchema.shape.id,
-  name: exerciseDbSchema.shape.name,
+  exerciseToSplitId: idSchema,
+  exerciseId: idSchema,
+  name: textSchema,
   sets: z.array(
     z.object({
-      orderIndex: workoutSetDbSchema.shape.orderIndex,
-      reps: workoutSetDbSchema.shape.reps,
+      orderIndex: numberSchema,
+      reps: numberSchema,
     }),
   ),
-  orderIndex: exerciseToWorkoutSplitDbSchema.shape.orderIndex,
-  isActive: exerciseToWorkoutSplitDbSchema.shape.isActive,
-  targetMuscle: exerciseDbSchema.shape.targetMuscle,
-  specificTargetMuscle: exerciseDbSchema.shape.specificTargetMuscle,
+  orderIndex: numberSchema,
+  isActive: booleanSchema,
+  targetMuscle: textSchema,
+  specificTargetMuscle: textSchema,
 });
 /** Workout split included in a complete workout-plan query. */
 export const workoutSplitQueryDtoSchema = z.object({
-  id: workoutSplitDbSchema.shape.id,
-  workoutId: workoutSplitDbSchema.shape.workoutId,
-  name: workoutSplitDbSchema.shape.name,
-  orderIndex: workoutSplitDbSchema.shape.orderIndex,
+  id: idSchema,
+  workoutId: idSchema,
+  name: textSchema,
+  orderIndex: numberSchema,
   createdAt: serializedDateSchema,
   muscleGroup: z.string().nullable(),
   estimatedDurationMinutes: z.number().nullable(),
-  isActive: workoutSplitDbSchema.shape.isActive,
+  isActive: booleanSchema,
   exercises: z.array(exerciseInPlanQueryDtoSchema),
 });
 /** Complete active workout plan returned for a user. */
 export const wholeUserWorkoutPlanQueryDtoSchema = z.object({
-  id: workoutPlanDbSchema.shape.id,
+  id: idSchema,
   numberOfSplits: z.number(),
   createdAt: serializedDateSchema,
-  userId: userDbSchema.shape.id,
-  isActive: workoutPlanDbSchema.shape.isActive,
+  userId: uuidSchema,
+  isActive: booleanSchema,
   updatedAt: serializedDateSchema,
   workoutSplits: z.array(workoutSplitQueryDtoSchema).nullable(),
 });
-/** SQL row returned when inserting or retrieving a workout plan. */
-export const workoutPlanIdQueryDtoSchema = z.object({ id: workoutPlanDbSchema.shape.id });
-
-/** SQL row returned when inserting or reactivating a workout split. */
-export const workoutSplitIdQueryDtoSchema = z.object({ id: workoutSplitDbSchema.shape.id });
-
-/** SQL row returned when inserting or reactivating an exercise assignment. */
-export const exerciseAssignmentIdQueryDtoSchema = z.object({ id: exerciseToWorkoutSplitDbSchema.shape.id });
 
 // SQL query DTO types
 
+/** Represents the workout exercise input query dto value. */
 export type WorkoutExerciseInputQueryDto = z.infer<typeof workoutExerciseInputQueryDtoSchema>;
+/** Represents the save workout split input query dto value. */
 export type SaveWorkoutSplitInputQueryDto = z.infer<typeof saveWorkoutSplitInputQueryDtoSchema>;
+/** Represents the exercise in plan query dto value. */
 export type ExerciseInPlanQueryDto = z.infer<typeof exerciseInPlanQueryDtoSchema>;
+/** Represents the workout split query dto value. */
 export type WorkoutSplitQueryDto = z.infer<typeof workoutSplitQueryDtoSchema>;
+/** Represents the whole user workout plan query dto value. */
 export type WholeUserWorkoutPlanQueryDto = z.infer<typeof wholeUserWorkoutPlanQueryDtoSchema>;
 
 // SQL query input DTOs
 
+/** Represents the save workout split payload query dto value. */
 export type SaveWorkoutSplitPayloadQueryDto = z.infer<typeof saveWorkoutSplitPayloadQueryDtoSchema>;
-export type WorkoutPlanIdQueryDto = z.infer<typeof workoutPlanIdQueryDtoSchema>;
-export type WorkoutSplitIdQueryDto = z.infer<typeof workoutSplitIdQueryDtoSchema>;
-export type ExerciseAssignmentIdQueryDto = z.infer<typeof exerciseAssignmentIdQueryDtoSchema>;

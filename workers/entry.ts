@@ -1,14 +1,15 @@
 import 'reflect-metadata';
 import '../src/instrument';
 import { NestFactory } from '@nestjs/core';
-import { createLogger } from '../src/infrastructure/logger';
-import { flushSentry } from '../src/infrastructure/sentry';
+import { createLogger } from '../src/infrastructure/capabilities/observability/logger';
+import { flushSentry } from '../src/infrastructure/capabilities/observability/sentry';
 import { Module } from '@nestjs/common';
+import { CqrsModule } from '@nestjs/cqrs';
 import { EmailsWorkerModule } from './emails/emails-worker.module';
 import { PushNotificationsWorkerModule } from './push/push-notifications-worker.module';
 
 @Module({
-  imports: [EmailsWorkerModule, PushNotificationsWorkerModule],
+  imports: [CqrsModule.forRoot(), EmailsWorkerModule, PushNotificationsWorkerModule],
 })
 export class EntryModule {}
 
