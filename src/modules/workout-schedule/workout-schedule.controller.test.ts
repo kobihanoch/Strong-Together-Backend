@@ -109,27 +109,17 @@ describe('WorkoutScheduleController', () => {
       .send({ schedules: [original] })
       .expect(204);
 
-    const malformedResponses = await Promise.all([
-      request(app.getHttpServer()).put('/api/workout-schedules').set(headers).send({}),
-      request(app.getHttpServer())
-        .put('/api/workout-schedules')
-        .set(headers)
-        .send({ schedules: [{ ...original, dayOfWeek: 7 }] }),
-      request(app.getHttpServer())
-        .put('/api/workout-schedules')
-        .set(headers)
-        .send({ schedules: [{ ...original, startTime: '25:00' }] }),
-      request(app.getHttpServer())
-        .put('/api/workout-schedules')
-        .set(headers)
-        .send({ schedules: [original, original] }),
-      request(app.getHttpServer())
-        .put('/api/workout-schedules')
-        .set(headers)
-        .send({ schedules: [{ ...original, workoutSplitId: other.pushSplitId }] }),
-    ]);
+    const malformedBodies = [
+      {},
+      { schedules: [{ ...original, dayOfWeek: 7 }] },
+      { schedules: [{ ...original, startTime: '25:00' }] },
+      { schedules: [original, original] },
+      { schedules: [{ ...original, workoutSplitId: other.pushSplitId }] },
+    ];
 
-    expect(malformedResponses.map((response) => response.status)).toEqual([400, 400, 400, 400, 400]);
+    for (const body of malformedBodies) {
+      await request(app.getHttpServer()).put('/api/workout-schedules').set(headers).send(body).expect(400);
+    }
     const unchanged = await request(app.getHttpServer()).get('/api/workout-schedules').set(headers);
     expect(unchanged.body.schedules).toHaveLength(1);
     expect(unchanged.body.schedules[0]).toMatchObject({ ...original, startTime: '08:00:00' });
