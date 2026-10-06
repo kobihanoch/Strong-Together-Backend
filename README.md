@@ -1,4 +1,4 @@
-# Strong Together Backend (v5.1.0)
+# Strong Together Backend (v6.0.0)
 
 <div align="center">
 
