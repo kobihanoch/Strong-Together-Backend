@@ -1,0 +1,71 @@
+import { CommandBus } from '@nestjs/cqrs';
+import { Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
+import type { ResetPasswordBody, ResetPasswordQuery, CreatePasswordResetRequestBody } from '@strong-together/shared';
+import { resetPasswordRequestSchema, createPasswordResetRequestSchema } from '@strong-together/shared';
+import { CreatePasswordResetRequestCommand } from '../application/commands/create-password-reset-request/create-password-reset-request.command';
+import { ResetPasswordCommand } from '../application/commands/reset-password/reset-password.command';
+import { RateLimit, RateLimitGuard, resetPasswordEmailRateLimit, resetPasswordEmailRateLimitDaily } from '../../../../common/guards/rate-limit.guard';
+import { RequestData } from '../../../../common/decorators/request-data.decorator';
+import { ValidateRequestPipe } from '../../../../common/pipes/validate-request.pipe';
+import type { AppRequest } from '../../../../common/types/express';
+
+/** H */
+@Controller('api/auth')
+export class PasswordController {
+  constructor(private readonly commandBus: CommandBus
+  ) {}
+
+  /**
+   * Send a password-reset email when the submitted identifier matches an app user.
+   *
+   * Accepts a username or email address and dispatches a reset email without
+   * revealing whether the account exists.
+   *
+   * API: `POST /api/auth/password-reset-requests`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `201 Created`; `400 Bad Request`; `429 Too Many Requests`.
+   *
+   * @param data - The validated request data.
+   * @param req - The HTTP request.
+   * @returns A promise that resolves without disclosing account existence.
+   * @throws {BadRequestException} When request validation fails.
+   * @throws {HttpException} When the rate limit is exceeded.
+   */
+  @Post('password-reset-requests')
+  @UseGuards(RateLimitGuard)
+  @RateLimit(resetPasswordEmailRateLimitDaily, resetPasswordEmailRateLimit)
+  async createPasswordResetRequest(
+    @RequestData(new ValidateRequestPipe(createPasswordResetRequestSchema))
+    data: { body: CreatePasswordResetRequestBody },
+    @Req() req: AppRequest,
+  ): Promise<void> {
+    await this.commandBus.execute(new CreatePasswordResetRequestCommand(data.body.identifier, req.requestId));
+  }
+
+  /**
+   * Reset a user's password from a password-reset link.
+   *
+   * Validates the reset token, enforces one-time use through the JTI cache,
+   * updates the stored password hash, invalidates older sessions by bumping
+   * token version state, and responds with 204 No Content.
+   *
+   * API: `POST /api/auth/password-resets`.
+   * Authorized roles: None (public endpoint).
+   * HTTP responses: `204 No Content`; `400 Bad Request`.
+   *
+   * @param data - The validated request data.
+   * @returns A promise that resolves with no response body after reset.
+   * @throws {BadRequestException} When request validation fails.
+   */
+  @Post('password-resets')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async resetPassword(
+    @RequestData(new ValidateRequestPipe(resetPasswordRequestSchema))
+    data: {
+      body: ResetPasswordBody;
+      query: ResetPasswordQuery;
+    },
+  ): Promise<void> {
+    await this.commandBus.execute(new ResetPasswordCommand(data.query.token, data.body.newPassword));
+  }
+}

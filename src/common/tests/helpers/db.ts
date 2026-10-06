@@ -1,8 +1,11 @@
 import postgres from 'postgres';
 import dotenv from 'dotenv';
-import type { AerobicTrackingRow, UserRow } from '@strong-together/shared';
 import { appConfig } from '../../../config/app.config';
 import { databaseConfig } from '../../../config/database.config';
+import { aerobicTracking, user } from '../../../infrastructure/persistence/schema/drizzle/index';
+
+type AerobicTrackingRow = typeof aerobicTracking.$inferSelect;
+type UserRow = typeof user.$inferSelect;
 
 dotenv.config({ path: '.env.test', override: true });
 
@@ -191,9 +194,17 @@ export async function messageExists(messageId: string) {
 
 export async function insertSystemMessage(receiverId: string, subject = 'Test message', message = 'Test body') {
   const [row] = await sql<{ id: string }[]>`
-    INSERT INTO messages.message (sender_id, receiver_id, subject, msg)
-    VALUES (${appConfig.systemUserId}::UUID, ${receiverId}::UUID, ${subject}, ${message})
-    RETURNING id
+    INSERT INTO
+      messages.message (sender_id, receiver_id, subject, msg)
+    VALUES
+      (
+        ${appConfig.systemUserId}::UUID,
+        ${receiverId}::UUID,
+        ${subject},
+        ${message}
+      )
+    RETURNING
+      id
   `;
   return row.id;
 }
@@ -354,11 +365,38 @@ export async function setUserPushTokenByUsername(username: string, pushToken: st
   `;
 }
 
+export async function setUserVerificationByUsername(username: string, isVerified: boolean) {
+  await sql`
+    UPDATE identity.user
+    SET
+      is_verified = ${isVerified}
+    WHERE
+      username = ${username}
+  `;
+}
+
 export async function deleteUserByUsername(username: string) {
   await sql`
     DELETE FROM identity.user
     WHERE
       username = ${username}
+  `;
+}
+
+export async function deleteCrewsByCreatorUsernames(usernames: string[]) {
+  if (usernames.length === 0) return;
+
+  await sql`
+    DELETE FROM social.crew
+    WHERE
+      created_by IN (
+        SELECT
+          id
+        FROM
+          identity.user
+        WHERE
+          username = ANY (${usernames})
+      )
   `;
 }
 
@@ -408,4 +446,172 @@ export async function hasReminderSettings(userId: string) {
   `;
 
   return Number(row?.count ?? '0') > 0;
+}
+
+export async function getCrewByCreatedBy(createdBy: string) {
+  const [row] = await sql<{ id: string; created_by: string; privacy: 'public' | 'private' }[]>`
+    SELECT
+      id,
+      created_by,
+      privacy
+    FROM
+      social.crew
+    WHERE
+      created_by = ${createdBy}::UUID
+    ORDER BY
+      created_at DESC
+    LIMIT
+      1
+  `;
+
+  return row ?? null;
+}
+
+export async function crewExists(crewId: string) {
+  const [row] = await sql<{ exists: boolean }[]>`
+    SELECT
+      EXISTS (
+        SELECT
+          1
+        FROM
+          social.crew
+        WHERE
+          id = ${crewId}::UUID
+      ) AS EXISTS
+  `;
+
+  return row?.exists ?? false;
+}
+
+/** Returns a crew by ID for leadership-transfer assertions. */
+export async function getCrewById(crewId: string) {
+  const [row] = await sql<{ id: string; created_by: string; privacy: 'public' | 'private'; profile_pic_path: string | null }[]>`
+    SELECT
+      id,
+      created_by,
+      privacy,
+      profile_pic_path
+    FROM
+      social.crew
+    WHERE
+      id = ${crewId}::UUID
+  `;
+
+  return row ?? null;
+}
+
+/** Returns one user's membership state and role in a crew. */
+export async function getCrewMembership(crewId: string, userId: string) {
+  const [row] = await sql<{ status: 'active' | 'left' | 'removed' | 'banned'; role: 'leader' | 'admin' | 'member' }[]>`
+    SELECT
+      status,
+      role
+    FROM
+      social.crew_membership
+    WHERE
+      crew_id = ${crewId}::UUID
+      AND user_id = ${userId}::UUID
+  `;
+
+  return row ?? null;
+}
+
+export async function insertCrewMembership(crewId: string, userId: string, role: 'leader' | 'admin' | 'member' = 'member') {
+  await sql`
+    INSERT INTO
+      social.crew_membership (crew_id, user_id, role, joined_at)
+    VALUES
+      (
+        ${crewId}::UUID,
+        ${userId}::UUID,
+        ${role},
+        NOW()
+      )
+  `;
+}
+
+/** Returns the newest post authored by a test user for direct persistence assertions. */
+export async function getPostByAuthorId(authorUserId: string) {
+  const [row] = await sql<{ id: string; visibility: 'crews_only' | 'public'; content: string }[]>`
+    SELECT
+      id,
+      visibility,
+      content
+    FROM
+      social.post
+    WHERE
+      author_user_id = ${authorUserId}::UUID
+    ORDER BY
+      published_at DESC
+    LIMIT
+      1
+  `;
+
+  return row ?? null;
+}
+
+/** Returns a post by its unique test content for direct persistence assertions. */
+export async function getPostByContent(content: string) {
+  const [row] = await sql<{ id: string; visibility: 'crews_only' | 'public'; content: string }[]>`
+    SELECT
+      id,
+      visibility,
+      content
+    FROM
+      social.post
+    WHERE
+      content = ${content}
+    LIMIT
+      1
+  `;
+
+  return row ?? null;
+}
+
+/** Counts the crews in which a post is shared. */
+export async function getPostPlacementCount(postId: string) {
+  const [row] = await sql<{ count: string }[]>`
+    SELECT
+      COUNT(*)::TEXT AS count
+    FROM
+      social.crew_shared_post
+    WHERE
+      post_id = ${postId}::UUID
+  `;
+
+  return Number(row?.count ?? '0');
+}
+
+/** Changes a membership state directly for authorization boundary tests. */
+export async function setCrewMembershipStatus(crewId: string, userId: string, status: 'active' | 'left' | 'removed' | 'banned') {
+  await sql`
+    UPDATE social.crew_membership
+    SET
+      status = ${status},
+      updated_at = NOW()
+    WHERE
+      crew_id = ${crewId}::UUID
+      AND user_id = ${userId}::UUID
+  `;
+}
+
+/** Returns the newest participation request for a crew participant. */
+export async function getCrewParticipationRequest(crewId: string, participantUserId: string) {
+  const [row] = await sql<{ id: string; initiator_user_id: string; participant_user_id: string; status: string }[]>`
+    SELECT
+      id,
+      initiator_user_id,
+      participant_user_id,
+      status
+    FROM
+      social.crew_participation_request
+    WHERE
+      crew_id = ${crewId}::UUID
+      AND participant_user_id = ${participantUserId}::UUID
+    ORDER BY
+      created_at DESC
+    LIMIT
+      1
+  `;
+  return row ?? null;
 }

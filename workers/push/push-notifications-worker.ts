@@ -1,9 +1,10 @@
-import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { createLogger } from '../../src/infrastructure/logger';
-import { PushNotificationsQueueService } from '../../src/infrastructure/queues/push-notifications/push-notifications-queue';
-import { captureWorkerException } from '../../src/infrastructure/sentry';
-import { sendPushNotification } from '../../src/modules/push/push.service';
-import { PushQueries } from '../../src/modules/push/push.queries';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { createLogger } from '../../src/infrastructure/capabilities/observability/logger';
+import { PushNotificationsQueueService } from '../../src/infrastructure/capabilities/queues/push-notifications/push-notifications-queue';
+import { captureWorkerException } from '../../src/infrastructure/capabilities/observability/sentry';
+import { FindEligiblePushTokenQuery } from '../../src/modules/push/application/queries/find-eligible-push-token/find-eligible-push-token.query';
+import { SendPushNotificationCommand } from '../../src/modules/push/application/commands/send-push-notification/send-push-notification.command';
 
 const logger = createLogger('worker:push-notifications', {
   queue: 'pushNotificationsQueue',
@@ -11,11 +12,9 @@ const logger = createLogger('worker:push-notifications', {
 
 @Injectable()
 export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDestroy {
-  constructor(
-    @Inject(PushNotificationsQueueService)
-    private readonly pushNotificationsQueueService: PushNotificationsQueueService,
-    @Inject(PushQueries)
-    private readonly pushQueries: PushQueries,
+  constructor(private readonly pushNotificationsQueueService: PushNotificationsQueueService,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus
   ) {}
 
   async onModuleInit() {
@@ -51,18 +50,22 @@ export class PushNotificationsWorkerService implements OnModuleInit, OnModuleDes
           }
 
           // Recheck the user's current settings and schedule after the job delay.
-          const token = await this.pushQueries.queryExpoPushToken(userId, workoutScheduleId, occurrenceDate);
+          const token = await this.queryBus.execute(new FindEligiblePushTokenQuery(userId, workoutScheduleId, occurrenceDate));
           if (!token) {
             jobLogger.info({ event: 'job.skipped_ineligible' }, 'Skipping ineligible workout reminder');
             return;
           }
 
-          await sendPushNotification(token, title, body);
+          const delivery = await this.commandBus.execute(new SendPushNotificationCommand({ token, title, body }));
           const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
-          jobLogger.info(
-            { event: 'job.succeeded', durationMs: Number(durationMs.toFixed(2)) },
-            'Push notification sent',
-          );
+          if (delivery.kind === 'permanent-failure') {
+            jobLogger.warn(
+              { event: 'job.skipped_permanent_failure', durationMs: Number(durationMs.toFixed(2)), reason: delivery.reason },
+              'Push notification permanently rejected',
+            );
+            return;
+          }
+          jobLogger.info({ event: 'job.succeeded', durationMs: Number(durationMs.toFixed(2)) }, 'Push notification sent');
         } catch (e) {
           if (e instanceof Error) {
             const sentryEventId = captureWorkerException(e, {

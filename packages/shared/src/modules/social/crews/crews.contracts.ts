@@ -1,0 +1,218 @@
+import { z } from 'zod/v4';
+import type { BodyOf, Contract, ParamsOf, QueryOf, ResponseOf } from '../../../common';
+import { crewParticipantSchema, crewWithParticipantCountSchema, discoverableCrewSchema } from './crews.schemas';
+
+const crewIdParamsSchema = z.object({ id: z.string().uuid() });
+const crewNameSchema = z.string().trim().min(1, 'Crew name is required').max(100, 'Crew name must be at most 100 characters');
+const cursorSchema = z.string().min(1).max(2_048).optional();
+
+// List crews
+
+/** Validates a request to list crews visible to the authenticated user. */
+export const listCrewsRequestSchema = z.object({
+  query: z.object({
+    search: z.string().trim().min(1).max(50).optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    cursor: cursorSchema,
+  }),
+});
+
+/** Validates the collection returned by the list-crews endpoint. */
+export const listCrewsResponseSchema = z.object({ crews: z.array(discoverableCrewSchema), nextCursor: z.string().nullable() });
+
+/** Defines the request and response contract for listing visible crews. */
+export const listCrewsContract = { request: listCrewsRequestSchema, response: listCrewsResponseSchema } satisfies Contract;
+
+/** Pagination query accepted by the list-crews endpoint. */
+export type ListCrewsQuery = QueryOf<typeof listCrewsContract>;
+
+/** Response returned when listing crews visible to the caller. */
+export type ListCrewsResponse = ResponseOf<typeof listCrewsContract>;
+
+// List my crews
+
+/** Validates pagination for crews in which the authenticated user is an active member. */
+export const listMyCrewsRequestSchema = z.object({
+  query: z.object({
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    cursor: cursorSchema,
+  }),
+});
+
+/** Validates the authenticated user's crew collection. */
+export const listMyCrewsResponseSchema = listCrewsResponseSchema;
+
+/** Defines the request and response contract for listing the authenticated user's crews. */
+export const listMyCrewsContract = { request: listMyCrewsRequestSchema, response: listMyCrewsResponseSchema } satisfies Contract;
+
+/** Pagination query accepted by the list-my-crews endpoint. */
+export type ListMyCrewsQuery = QueryOf<typeof listMyCrewsContract>;
+
+/** Response containing crews in which the authenticated user is an active member. */
+export type ListMyCrewsResponse = ResponseOf<typeof listMyCrewsContract>;
+
+// List crew participants
+
+/** Validates the crew identifier and pagination for listing participants. */
+export const listCrewParticipantsRequestSchema = z.object({
+  params: z.object({ crewId: z.string().uuid() }),
+  query: z.object({
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    cursor: cursorSchema,
+  }),
+});
+
+/** Validates the participant collection returned by the endpoint. */
+export const listCrewParticipantsResponseSchema = z.object({
+  participants: z.array(crewParticipantSchema),
+  nextCursor: z.string().nullable(),
+});
+
+/** Defines the request and response contract for listing crew participants. */
+export const listCrewParticipantsContract = {
+  request: listCrewParticipantsRequestSchema,
+  response: listCrewParticipantsResponseSchema,
+} satisfies Contract;
+
+/** Route parameters accepted by the list-crew-participants endpoint. */
+export type ListCrewParticipantsParams = ParamsOf<typeof listCrewParticipantsContract>;
+
+/** Pagination query accepted by the list-crew-participants endpoint. */
+export type ListCrewParticipantsQuery = QueryOf<typeof listCrewParticipantsContract>;
+
+/** Response returned after listing authorized crew participants. */
+export type ListCrewParticipantsResponse = ResponseOf<typeof listCrewParticipantsContract>;
+
+// Get crew
+
+/** Validates the route parameters used to retrieve one crew. */
+export const getCrewRequestSchema = z.object({ params: crewIdParamsSchema });
+
+/** Validates the crew returned by the get-crew endpoint. */
+export const getCrewResponseSchema = crewWithParticipantCountSchema;
+
+/** Defines the request and response contract for retrieving one crew. */
+export const getCrewContract = { request: getCrewRequestSchema, response: getCrewResponseSchema } satisfies Contract;
+
+/** Route parameters accepted by the get-crew endpoint. */
+export type GetCrewParams = ParamsOf<typeof getCrewContract>;
+
+/** Response returned after retrieving one crew. */
+export type GetCrewResponse = ResponseOf<typeof getCrewContract>;
+
+// Create crew
+
+/** Validates the body used to create a crew. */
+export const createCrewRequestSchema = z.object({
+  body: z.object({ name: crewNameSchema, privacy: z.enum(['public', 'private']) }),
+});
+
+/** Validates the empty response returned after crew creation. */
+export const createCrewResponseSchema = z.void();
+
+/** Defines the request and response contract for creating a crew. */
+export const createCrewContract = { request: createCrewRequestSchema, response: createCrewResponseSchema } satisfies Contract;
+
+/** Request body accepted by the create-crew endpoint. */
+export type CreateCrewBody = BodyOf<typeof createCrewContract>;
+
+/** Empty response returned after creating a crew. */
+export type CreateCrewResponse = ResponseOf<typeof createCrewContract>;
+
+// Update crew
+
+/** Validates the route parameters and body used to update a crew. */
+export const updateCrewRequestSchema = z.object({
+  params: crewIdParamsSchema,
+  body: z.object({ name: crewNameSchema, privacy: z.enum(['public', 'private']) }),
+});
+
+/** Validates the empty response returned after updating a crew. */
+export const updateCrewResponseSchema = z.void();
+
+/** Defines the request and response contract for updating a crew. */
+export const updateCrewContract = { request: updateCrewRequestSchema, response: updateCrewResponseSchema } satisfies Contract;
+
+/** Route parameters accepted by the update-crew endpoint. */
+export type UpdateCrewParams = ParamsOf<typeof updateCrewContract>;
+
+/** Request body accepted by the update-crew endpoint. */
+export type UpdateCrewBody = BodyOf<typeof updateCrewContract>;
+
+/** Empty response returned after updating a crew. */
+export type UpdateCrewResponse = ResponseOf<typeof updateCrewContract>;
+
+// Leave crew
+
+/** Validates the crew identifier used by the authenticated user leaving a crew. */
+export const leaveCrewRequestSchema = z.object({ params: crewIdParamsSchema });
+
+/** Validates the empty response returned after leaving a crew. */
+export const leaveCrewResponseSchema = z.void();
+
+/** Defines the request and response contract for leaving a crew. */
+export const leaveCrewContract = { request: leaveCrewRequestSchema, response: leaveCrewResponseSchema } satisfies Contract;
+
+/** Route parameters accepted by the leave-crew endpoint. */
+export type LeaveCrewParams = ParamsOf<typeof leaveCrewContract>;
+
+/** Empty response returned after leaving a crew. */
+export type LeaveCrewResponse = ResponseOf<typeof leaveCrewContract>;
+
+// Delete crew
+
+/** Validates the route parameters used to delete a crew. */
+export const deleteCrewRequestSchema = z.object({ params: crewIdParamsSchema });
+
+/** Validates the empty response returned after deleting a crew. */
+export const deleteCrewResponseSchema = z.void();
+
+/** Defines the request and response contract for deleting a crew. */
+export const deleteCrewContract = { request: deleteCrewRequestSchema, response: deleteCrewResponseSchema } satisfies Contract;
+
+/** Route parameters accepted by the delete-crew endpoint. */
+export type DeleteCrewParams = ParamsOf<typeof deleteCrewContract>;
+
+/** Response returned after deleting a crew. */
+export type DeleteCrewResponse = ResponseOf<typeof deleteCrewContract>;
+
+// Replace crew profile picture
+
+/** Validates the crew ID used when replacing its profile picture. */
+export const replaceCrewProfilePictureRequestSchema = z.object({ params: crewIdParamsSchema });
+
+/** Validates the stored path and public URL returned after upload. */
+export const replaceCrewProfilePictureResponseSchema = z.object({
+  profilePicPath: z.string(),
+  url: z.string(),
+  message: z.string(),
+});
+
+/** Defines the replace-crew-profile-picture request and response. */
+export const replaceCrewProfilePictureContract = {
+  request: replaceCrewProfilePictureRequestSchema,
+  response: replaceCrewProfilePictureResponseSchema,
+} satisfies Contract;
+
+/** Route parameters accepted when replacing a crew profile picture. */
+export type ReplaceCrewProfilePictureParams = ParamsOf<typeof replaceCrewProfilePictureContract>;
+
+/** Response returned after replacing a crew profile picture. */
+export type ReplaceCrewProfilePictureResponse = ResponseOf<typeof replaceCrewProfilePictureContract>;
+
+// Delete crew profile picture
+
+/** Validates the crew ID used when deleting its profile picture. */
+export const deleteCrewProfilePictureRequestSchema = z.object({ params: crewIdParamsSchema });
+
+/** Defines the delete-crew-profile-picture request and empty response. */
+export const deleteCrewProfilePictureContract = {
+  request: deleteCrewProfilePictureRequestSchema,
+  response: z.void(),
+} satisfies Contract;
+
+/** Route parameters accepted when deleting a crew profile picture. */
+export type DeleteCrewProfilePictureParams = ParamsOf<typeof deleteCrewProfilePictureContract>;
+
+/** Empty response returned after deleting a crew profile picture. */
+export type DeleteCrewProfilePictureResponse = ResponseOf<typeof deleteCrewProfilePictureContract>;

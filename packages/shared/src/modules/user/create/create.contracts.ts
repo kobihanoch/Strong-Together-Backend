@@ -1,16 +1,17 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, ResponseOf } from '../../../common';
-import { userDbSchema } from '../../../database';
-import { createdUserQueryDtoSchema } from './create.dtos';
 
 // Create user
 
-const usernameSchema = userDbSchema.shape.username
+const usernameSchema = z
+  .string()
   .trim()
+  .min(1, 'Full name is required')
   .min(3, 'Username must be at least 3 characters')
   .max(15, 'Username must be at most 15 characters')
   .regex(/^[a-zA-Z0-9_]+$/, 'Username may contain letters, numbers, and underscore only');
-const fullNameSchema = userDbSchema.shape.name
+const fullNameSchema = z
+  .string()
   .trim()
   .max(20, 'Full name is too long')
   .regex(/^[a-zA-Z\s]+$/, 'Full name may contain letters and spaces only');
@@ -18,12 +19,20 @@ export const createUserRequestSchema = z.object({
   body: z.object({
     username: usernameSchema,
     fullName: z.preprocess((value) => (value == null || (typeof value === 'string' && value.trim() === '') ? 'User' : value), fullNameSchema),
-    email: userDbSchema.shape.email.trim().toLowerCase().email('Invalid email format'),
-    password: z.string().min(8, 'Password must be at least 8 characters long'),
+    email: z.string().trim().toLowerCase().max(254).email('Invalid email format'),
+    password: z.string().min(8, 'Password must be at least 8 characters long').max(128, 'Password must be at most 128 characters long'),
     gender: z.preprocess((value) => (value === '' || value == null ? 'Unknown' : value), z.enum(['Male', 'Female', 'Other', 'Unknown'])),
   }),
 });
-export const createUserUserSchema = createdUserQueryDtoSchema;
+export const createUserUserSchema = z.object({
+  id: z.string().uuid(),
+  username: z.string(),
+  name: z.string(),
+  email: z.string(),
+  gender: z.string(),
+  role: z.string(),
+  createdAt: z.string(),
+});
 export const createUserResponseSchema = z.void();
 
 export const createUserContract = {
@@ -31,5 +40,7 @@ export const createUserContract = {
   response: createUserResponseSchema,
 } satisfies Contract;
 
+/** Represents the create user body value. */
 export type CreateUserBody = BodyOf<typeof createUserContract>;
+/** Represents the create user response value. */
 export type CreateUserResponse = ResponseOf<typeof createUserContract>;

@@ -4,15 +4,16 @@ Strong Together uses Vitest and Supertest to test the NestJS API against real lo
 
 ## Test Types Present In The Repo
 
-| Type | Evidence | Purpose |
-| --- | --- | --- |
-| Controller/API integration tests | `src/modules/**/*.controller.test.ts` | Exercise HTTP routes through the Nest application and Supertest |
-| Contract tests | shared schema assertions such as `expectSchema(loginResponseSchema, response.body)` | Detect drift from `@strong-together/shared` response contracts |
-| Auth/security behavior tests | `session.controller.test.ts`, password and verification tests | Validate token rotation, logout invalidation, reset flows, and protected-route behavior |
-| Domain integration tests | workouts, tracking, aerobics, analytics, messages, users | Validate SQL/query behavior through the real app stack |
-| Infrastructure-facing tests | video-analysis, websockets, push, profile image flows | Validate S3/Redis/WebSocket-adjacent behavior using local test infrastructure |
+| Type                             | Evidence                                                                            | Purpose                                                                                              |
+| -------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Controller/API integration tests | `src/modules/**/*.controller.test.ts`                                               | Exercise HTTP routes through the Nest application and Supertest                                      |
+| Contract tests                   | shared schema assertions such as `expectSchema(loginResponseSchema, response.body)` | Detect drift from `@strong-together/shared` response contracts                                       |
+| Domain unit tests                | `src/modules/**/domain/**/*.test.ts`                                                | Exercise entity transitions, value-object validation, and business invariants without infrastructure |
+| Auth/security behavior tests     | `session.controller.test.ts`, password and verification tests                       | Validate token rotation, logout invalidation, reset flows, and protected-route behavior              |
+| Domain integration tests         | workouts, tracking, aerobics, analytics, messages, users                            | Validate SQL/query behavior through the real app stack                                               |
+| Infrastructure-facing tests      | video-analysis, websockets, push, profile image flows                               | Validate S3/Redis/WebSocket-adjacent behavior using local test infrastructure                        |
 
-The repo currently does not emphasize isolated unit tests. That is acceptable here because the service surface is database and infrastructure heavy; integration coverage provides higher confidence than mocking every adapter.
+The suite deliberately combines domain unit tests with integration-heavy API tests. Pure invariants run without infrastructure; flows whose risk lies in authentication, RLS, persistence, queues, or provider boundaries run through the real application stack.
 
 Contract fixtures and assertions use the same camelCase wire names exported by the shared package. Raw administrator-only database helpers may use snake_case aliases when intentionally asserting physical PostgreSQL columns; those are not API contracts.
 
@@ -117,7 +118,7 @@ Add integration coverage when a change touches:
 - S3/SQS/Redis/Socket.IO handoffs
 - worker-triggered side effects
 
-Add focused unit tests when:
+Add focused domain unit tests when:
 
 - logic is pure and high-branching
 - a bug was caused by a calculation or parser

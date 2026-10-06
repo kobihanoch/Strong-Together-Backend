@@ -1,0 +1,55 @@
+import { Injectable } from '@nestjs/common';
+import { LogoutSql } from './writes/logout.sql';
+import { ClearPushTokenSql } from './writes/clear-push-token.sql';
+import { FindTokenVersionSql } from './reads/find-token-version.sql';
+import { RotateIfVersionSql } from './writes/rotate-if-version.sql';
+import { RotateSql } from './writes/rotate.sql';
+import { FindLastLoginSql } from './reads/find-last-login.sql';
+import { FindLoginUserSql } from './reads/find-login-user.sql';
+import type { RotatedSession, RotateSessionOutcome } from '../../../core/application/models/auth.models';
+import { AuthAccount } from '../../../core/domain/entities/auth-account';
+import { SessionRepository } from '../../application/ports/session.repository';
+import type { LoginIdentifier } from '../../domain/value-objects/login-identifier';
+
+/** PostgreSQL session repository. */
+@Injectable()
+export class PostgresSessionRepository implements SessionRepository {
+  public constructor(
+    private readonly findLoginUserSql: FindLoginUserSql,
+    private readonly findLastLoginSql: FindLastLoginSql,
+    private readonly rotateSql: RotateSql,
+    private readonly rotateIfVersionSql: RotateIfVersionSql,
+    private readonly findTokenVersionSql: FindTokenVersionSql,
+    private readonly clearPushTokenSql: ClearPushTokenSql,
+    private readonly logoutSql: LogoutSql,
+  ) {}
+
+  async findByIdentifier(identifier: LoginIdentifier): Promise<AuthAccount | undefined> {
+    const user = await this.findLoginUserSql.findLoginUser(identifier.value);
+    return user ? AuthAccount.restore(user) : undefined;
+  }
+
+  findLastLogin(userId: string): Promise<Date | null> {
+    return this.findLastLoginSql.findLastLogin(userId);
+  }
+
+  rotate(userId: string): Promise<RotatedSession> {
+    return this.rotateSql.rotate(userId);
+  }
+
+  rotateIfVersion(userId: string, previousTokenVersion: number): Promise<RotateSessionOutcome> {
+    return this.rotateIfVersionSql.rotateIfVersion(userId, previousTokenVersion);
+  }
+
+  findTokenVersion(userId: string): Promise<number | null> {
+    return this.findTokenVersionSql.findTokenVersion(userId);
+  }
+
+  clearPushToken(userId: string): Promise<void> {
+    return this.clearPushTokenSql.clearPushToken(userId);
+  }
+
+  logout(userId: string): Promise<void> {
+    return this.logoutSql.logout(userId);
+  }
+}

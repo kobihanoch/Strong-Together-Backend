@@ -1,11 +1,14 @@
 import { z } from 'zod/v4';
 import type { BodyOf, Contract, ResponseOf } from '../../common';
-import { exerciseDbSchema } from '../../database';
 
 // Get presigned S3 upload URL
 
 export const createVideoUploadUrlRequestSchema = z.object({
-  body: z.object({ exercise: exerciseDbSchema.shape.name, fileType: z.string(), jobId: z.string() }),
+  body: z.object({
+    exercise: z.string().trim().min(1).max(100).regex(/^[a-zA-Z0-9_-]+$/, 'Invalid exercise name'),
+    fileType: z.enum(['video/mp4', 'video/quicktime', 'video/webm']),
+    jobId: z.string().trim().min(1).max(128),
+  }),
 });
 export const createVideoUploadUrlResponseSchema = z.object({
   uploadUrl: z.string(),
@@ -18,5 +21,52 @@ export const createVideoUploadUrlContract = {
   response: createVideoUploadUrlResponseSchema,
 } satisfies Contract;
 
+/** Represents the create video upload url body value. */
 export type CreateVideoUploadUrlBody = BodyOf<typeof createVideoUploadUrlContract>;
+/** Represents the create video upload url response value. */
 export type CreateVideoUploadUrlResponse = ResponseOf<typeof createVideoUploadUrlContract>;
+
+/** Parameters used to enqueue a video-analysis job. */
+export const enqueueAnalyzeVideoParamsDtoSchema = z.object({
+  fileKey: z.string(),
+  exercise: z.string(),
+  userId: z.string().uuid(),
+  requestId: z.string(),
+  sentryTrace: z.string().optional(),
+  baggage: z.string().optional(),
+});
+
+/** Queue payload containing video-analysis parameters and expiration. */
+export const analyzeVideoPayloadDtoSchema = enqueueAnalyzeVideoParamsDtoSchema.extend({ expiresAt: z.number() });
+
+/** Analysis result for one detected squat repetition. */
+export const squatRepetitionDtoSchema = z.object({
+  depth: z.object({ value: z.number(), status: z.string(), confidence: z.number() }),
+  backLean: z.object({ value: z.number(), excessive: z.boolean(), confidence: z.number() }),
+  audit: z.object({
+    framesAnalyzed: z.number(),
+    validFrames: z.number(),
+    cameraAngle: z.string(),
+    rawBottomAngle: z.number(),
+    samplingRate: z.string(),
+  }),
+});
+
+/** Completed-or-failed result emitted by a video-analysis worker. */
+export const analyzeVideoResultPayloadDtoSchema = <TResultSchema extends z.ZodType>(resultSchema: TResultSchema) =>
+  z.intersection(
+    z.object({ jobId: z.string(), userId: z.string().uuid(), exercise: z.string(), requestId: z.string().optional() }),
+    z.discriminatedUnion('status', [
+      z.object({ status: z.literal('completed'), result: z.array(resultSchema), error: z.null() }),
+      z.object({ status: z.literal('failed'), result: z.null(), error: z.string() }),
+    ]),
+  );
+
+/** Represents the enqueue analyze video params dto value. */
+export type EnqueueAnalyzeVideoParamsDto = z.infer<typeof enqueueAnalyzeVideoParamsDtoSchema>;
+/** Represents the analyze video payload dto value. */
+export type AnalyzeVideoPayloadDto = z.infer<typeof analyzeVideoPayloadDtoSchema>;
+/** Represents the squat repetition dto value. */
+export type SquatRepetitionDto = z.infer<typeof squatRepetitionDtoSchema>;
+/** Represents the analyze video result payload dto value. */
+export type AnalyzeVideoResultPayloadDto<TResult> = z.infer<ReturnType<typeof analyzeVideoResultPayloadDtoSchema<z.ZodType<TResult>>>>;
