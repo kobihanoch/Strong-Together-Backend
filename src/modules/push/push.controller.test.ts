@@ -28,9 +28,7 @@ describe('PushController', () => {
 
   it('rejects malformed tokens and tokens signed with another secret', async () => {
     const wrongSecretToken = jwt.sign({ job: 'workout-reminders' }, 'not-the-cron-secret', { expiresIn: '5m' });
-    const malformed = await request(app.getHttpServer())
-      .post('/api/push-jobs/workout-reminders')
-      .set('Authorization', 'Bearer not-a-jwt');
+    const malformed = await request(app.getHttpServer()).post('/api/push-jobs/workout-reminders').set('Authorization', 'Bearer not-a-jwt');
     const wrongSecret = await request(app.getHttpServer())
       .post('/api/push-jobs/workout-reminders')
       .set('Authorization', `Bearer ${wrongSecretToken}`);
@@ -41,9 +39,7 @@ describe('PushController', () => {
 
   it('accepts a JWT signed with the configured cron secret', async () => {
     const cronToken = jwt.sign({ job: 'workout-reminders' }, authConfig.cronJwtSecret, { expiresIn: '5m' });
-    const response = await request(app.getHttpServer())
-      .post('/api/push-jobs/workout-reminders')
-      .set('Authorization', `Bearer ${cronToken}`);
+    const response = await request(app.getHttpServer()).post('/api/push-jobs/workout-reminders').set('Authorization', `Bearer ${cronToken}`);
 
     expect(response.status, JSON.stringify(response.body)).toBe(200);
     expect(response.body).toMatchObject({ success: true, message: 'Workout reminders enqueued' });

@@ -6,13 +6,11 @@ This project uses a repo-owned PostgreSQL migration flow built around Drizzle.
 
 The database pipeline is based on committed files inside the repo:
 
-- Drizzle schema: [`src/infrastructure/db/schema/drizzle`](../src/infrastructure/db/schema/drizzle)
-- Active migrations: [`src/infrastructure/db/schema/drizzle-migrations`](../src/infrastructure/db/schema/drizzle-migrations)
-- Archived Atlas history: [`src/infrastructure/db/schema/migrations`](../src/infrastructure/db/schema/migrations)
-- Seeds: [`src/infrastructure/db/schema/seeds`](../src/infrastructure/db/schema/seeds)
+- Drizzle schema: [`src/infrastructure/persistence/schema/drizzle`](../src/infrastructure/persistence/schema/drizzle)
+- Active migrations: [`src/infrastructure/persistence/schema/migrations`](../src/infrastructure/persistence/schema/migrations)
+- Seeds: [`src/infrastructure/persistence/schema/seeds`](../src/infrastructure/persistence/schema/seeds)
 
-The Drizzle `0000_baseline.sql` migration represents the database state after the
-last archived Atlas migration. New schema changes must be generated with Drizzle.
+The Drizzle `0000_baseline.sql` migration is the consolidated starting point. The same directory contains every active migration through the current schema; new changes must be generated with Drizzle.
 
 Drizzle schema files are also the source of truth for tables and RLS policies. PostgreSQL routines, explicit grants, revokes, and schemas such as `guest_api` are reviewed SQL additions inside the generated migration because Drizzle Kit does not fully model those objects.
 
@@ -22,10 +20,10 @@ Reviewed ERD sources live in `docs/db-diagrams/source`. After a Drizzle table/vi
 
 The local database pipeline is now split by environment:
 
-| Environment | Compose file | Container | Host port | Persistence |
-| --- | --- | --- | --- | --- |
-| Development | `docker-compose.development.yml` | `strongtogether_postgres_drizzle_dev` | `5435` | Persistent Docker volume |
-| Test | `docker-compose.test.yml` | `strongtogether_postgres_test` | `5433` | Ephemeral `tmpfs` |
+| Environment | Compose file                     | Container                             | Host port | Persistence              |
+| ----------- | -------------------------------- | ------------------------------------- | --------- | ------------------------ |
+| Development | `docker-compose.development.yml` | `strongtogether_postgres_drizzle_dev` | `5435`    | Persistent Docker volume |
+| Test        | `docker-compose.test.yml`        | `strongtogether_postgres_test`        | `5433`    | Ephemeral `tmpfs`        |
 
 That gives you two important guarantees:
 

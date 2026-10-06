@@ -1,14 +1,12 @@
-import * as zod_v4 from 'zod/v4';
 import { z } from 'zod/v4';
-import * as drizzle_zod from 'drizzle-zod';
-import * as drizzle_orm_pg_core from 'drizzle-orm/pg-core';
-import * as zod_v4_core from 'zod/v4/core';
 
+/** Represents the request schema value. */
 type RequestSchema = z.ZodObject<{
     body?: z.ZodTypeAny;
     query?: z.ZodTypeAny;
     params?: z.ZodTypeAny;
 }>;
+/** Represents the contract value. */
 type Contract = {
     request: RequestSchema;
     response?: z.ZodTypeAny;
@@ -16,18 +14,23 @@ type Contract = {
     request?: RequestSchema;
     response: z.ZodTypeAny;
 };
+/** Represents the request of value. */
 type RequestOf<TContract extends Contract> = TContract extends {
     request: infer TRequest extends RequestSchema;
 } ? z.infer<TRequest> : never;
+/** Represents the body of value. */
 type BodyOf<TContract extends Contract> = RequestOf<TContract> extends {
     body: infer TBody;
 } ? TBody : never;
+/** Represents the query of value. */
 type QueryOf<TContract extends Contract> = RequestOf<TContract> extends {
     query: infer TQuery;
 } ? TQuery : never;
+/** Represents the params of value. */
 type ParamsOf<TContract extends Contract> = RequestOf<TContract> extends {
     params: infer TParams;
 } ? TParams : never;
+/** Represents the response of value. */
 type ResponseOf<TContract extends Contract> = TContract extends {
     response: infer TResponse extends z.ZodTypeAny;
 } ? z.infer<TResponse> : never;
@@ -37,3833 +40,6 @@ declare const serializedDateSchema: z.ZodString;
 /** Valid IANA timezone identifier accepted at API boundaries. */
 declare const timezoneSchema: z.ZodString;
 
-declare const user: drizzle_orm_pg_core.PgTableWithColumns<{
-    name: "user";
-    schema: "identity";
-    columns: {
-        username: drizzle_orm_pg_core.PgColumn<{
-            name: "username";
-            tableName: "user";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        email: drizzle_orm_pg_core.PgColumn<{
-            name: "email";
-            tableName: "user";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        name: drizzle_orm_pg_core.PgColumn<{
-            name: "name";
-            tableName: "user";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        gender: drizzle_orm_pg_core.PgColumn<{
-            name: "gender";
-            tableName: "user";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        createdAt: drizzle_orm_pg_core.PgColumn<{
-            name: "created_at";
-            tableName: "user";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        updatedAt: drizzle_orm_pg_core.PgColumn<{
-            name: "updated_at";
-            tableName: "user";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        profilePicPath: drizzle_orm_pg_core.PgColumn<{
-            name: "profile_pic_path";
-            tableName: "user";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: false;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        id: drizzle_orm_pg_core.PgColumn<{
-            name: "id";
-            tableName: "user";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        pushToken: drizzle_orm_pg_core.PgColumn<{
-            name: "push_token";
-            tableName: "user";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: false;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        passwordHash: drizzle_orm_pg_core.PgColumn<{
-            name: "password_hash";
-            tableName: "user";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: false;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        role: drizzle_orm_pg_core.PgColumn<{
-            name: "role";
-            tableName: "user";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        tokenVersion: drizzle_orm_pg_core.PgColumn<{
-            name: "token_version";
-            tableName: "user";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        isVerified: drizzle_orm_pg_core.PgColumn<{
-            name: "is_verified";
-            tableName: "user";
-            dataType: "boolean";
-            columnType: "PgBoolean";
-            data: boolean;
-            driverParam: boolean;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        authProvider: drizzle_orm_pg_core.PgColumn<{
-            name: "auth_provider";
-            tableName: "user";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        lastLogin: drizzle_orm_pg_core.PgColumn<{
-            name: "last_login";
-            tableName: "user";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: false;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-    };
-    dialect: "pg";
-}>;
-
-declare const exercise: drizzle_orm_pg_core.PgTableWithColumns<{
-    name: "exercise";
-    schema: "workout";
-    columns: {
-        id: drizzle_orm_pg_core.PgColumn<{
-            name: "id";
-            tableName: "exercise";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: "byDefault";
-            generated: undefined;
-        }, {}, {}>;
-        name: drizzle_orm_pg_core.PgColumn<{
-            name: "name";
-            tableName: "exercise";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        description: drizzle_orm_pg_core.PgColumn<{
-            name: "description";
-            tableName: "exercise";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        targetMuscle: drizzle_orm_pg_core.PgColumn<{
-            name: "target_muscle";
-            tableName: "exercise";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        specificTargetMuscle: drizzle_orm_pg_core.PgColumn<{
-            name: "specific_target_muscle";
-            tableName: "exercise";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-    };
-    dialect: "pg";
-}>;
-
-declare const workoutPlan: drizzle_orm_pg_core.PgTableWithColumns<{
-    name: "workout_plan";
-    schema: "workout";
-    columns: {
-        id: drizzle_orm_pg_core.PgColumn<{
-            name: "id";
-            tableName: "workout_plan";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: "byDefault";
-            generated: undefined;
-        }, {}, {}>;
-        userId: drizzle_orm_pg_core.PgColumn<{
-            name: "user_id";
-            tableName: "workout_plan";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        isActive: drizzle_orm_pg_core.PgColumn<{
-            name: "is_active";
-            tableName: "workout_plan";
-            dataType: "boolean";
-            columnType: "PgBoolean";
-            data: boolean;
-            driverParam: boolean;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        updatedAt: drizzle_orm_pg_core.PgColumn<{
-            name: "updated_at";
-            tableName: "workout_plan";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        createdAt: drizzle_orm_pg_core.PgColumn<{
-            name: "created_at";
-            tableName: "workout_plan";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-    };
-    dialect: "pg";
-}>;
-
-declare const workoutSplit: drizzle_orm_pg_core.PgTableWithColumns<{
-    name: "workout_split";
-    schema: "workout";
-    columns: {
-        id: drizzle_orm_pg_core.PgColumn<{
-            name: "id";
-            tableName: "workout_split";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: "byDefault";
-            generated: undefined;
-        }, {}, {}>;
-        workoutId: drizzle_orm_pg_core.PgColumn<{
-            name: "workout_id";
-            tableName: "workout_split";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        name: drizzle_orm_pg_core.PgColumn<{
-            name: "name";
-            tableName: "workout_split";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        orderIndex: drizzle_orm_pg_core.PgColumn<{
-            name: "order_index";
-            tableName: "workout_split";
-            dataType: "number";
-            columnType: "PgInteger";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        createdAt: drizzle_orm_pg_core.PgColumn<{
-            name: "created_at";
-            tableName: "workout_split";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        updatedAt: drizzle_orm_pg_core.PgColumn<{
-            name: "updated_at";
-            tableName: "workout_split";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        isActive: drizzle_orm_pg_core.PgColumn<{
-            name: "is_active";
-            tableName: "workout_split";
-            dataType: "boolean";
-            columnType: "PgBoolean";
-            data: boolean;
-            driverParam: boolean;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-    };
-    dialect: "pg";
-}>;
-
-declare const exerciseToWorkoutSplit: drizzle_orm_pg_core.PgTableWithColumns<{
-    name: "exercise_to_workout_split";
-    schema: "workout";
-    columns: {
-        id: drizzle_orm_pg_core.PgColumn<{
-            name: "id";
-            tableName: "exercise_to_workout_split";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: "byDefault";
-            generated: undefined;
-        }, {}, {}>;
-        workoutSplitId: drizzle_orm_pg_core.PgColumn<{
-            name: "workout_split_id";
-            tableName: "exercise_to_workout_split";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        exerciseId: drizzle_orm_pg_core.PgColumn<{
-            name: "exercise_id";
-            tableName: "exercise_to_workout_split";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        createdAt: drizzle_orm_pg_core.PgColumn<{
-            name: "created_at";
-            tableName: "exercise_to_workout_split";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        orderIndex: drizzle_orm_pg_core.PgColumn<{
-            name: "order_index";
-            tableName: "exercise_to_workout_split";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        isActive: drizzle_orm_pg_core.PgColumn<{
-            name: "is_active";
-            tableName: "exercise_to_workout_split";
-            dataType: "boolean";
-            columnType: "PgBoolean";
-            data: boolean;
-            driverParam: boolean;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-    };
-    dialect: "pg";
-}>;
-
-declare const workoutSummary: drizzle_orm_pg_core.PgTableWithColumns<{
-    name: "workout_summary";
-    schema: "tracking";
-    columns: {
-        id: drizzle_orm_pg_core.PgColumn<{
-            name: "id";
-            tableName: "workout_summary";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        userId: drizzle_orm_pg_core.PgColumn<{
-            name: "user_id";
-            tableName: "workout_summary";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        workoutSplitId: drizzle_orm_pg_core.PgColumn<{
-            name: "workout_split_id";
-            tableName: "workout_summary";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        workoutStartUtc: drizzle_orm_pg_core.PgColumn<{
-            name: "workout_start_utc";
-            tableName: "workout_summary";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        workoutEndUtc: drizzle_orm_pg_core.PgColumn<{
-            name: "workout_end_utc";
-            tableName: "workout_summary";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        createdAt: drizzle_orm_pg_core.PgColumn<{
-            name: "created_at";
-            tableName: "workout_summary";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-    };
-    dialect: "pg";
-}>;
-
-declare const exerciseTracking: drizzle_orm_pg_core.PgTableWithColumns<{
-    name: "exercise_tracking";
-    schema: "tracking";
-    columns: {
-        id: drizzle_orm_pg_core.PgColumn<{
-            name: "id";
-            tableName: "exercise_tracking";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: "byDefault";
-            generated: undefined;
-        }, {}, {}>;
-        workoutSummaryId: drizzle_orm_pg_core.PgColumn<{
-            name: "workout_summary_id";
-            tableName: "exercise_tracking";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        exerciseToSplitId: drizzle_orm_pg_core.PgColumn<{
-            name: "exercise_to_split_id";
-            tableName: "exercise_tracking";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: false;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        exerciseId: drizzle_orm_pg_core.PgColumn<{
-            name: "exercise_id";
-            tableName: "exercise_tracking";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: false;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        notes: drizzle_orm_pg_core.PgColumn<{
-            name: "notes";
-            tableName: "exercise_tracking";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: false;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-    };
-    dialect: "pg";
-}>;
-
-declare const aerobicTracking: drizzle_orm_pg_core.PgTableWithColumns<{
-    name: "aerobic_tracking";
-    schema: "tracking";
-    columns: {
-        id: drizzle_orm_pg_core.PgColumn<{
-            name: "id";
-            tableName: "aerobic_tracking";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: "byDefault";
-            generated: undefined;
-        }, {}, {}>;
-        userId: drizzle_orm_pg_core.PgColumn<{
-            name: "user_id";
-            tableName: "aerobic_tracking";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        type: drizzle_orm_pg_core.PgColumn<{
-            name: "type";
-            tableName: "aerobic_tracking";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        durationSec: drizzle_orm_pg_core.PgColumn<{
-            name: "duration_sec";
-            tableName: "aerobic_tracking";
-            dataType: "number";
-            columnType: "PgBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        workoutTimeUtc: drizzle_orm_pg_core.PgColumn<{
-            name: "workout_time_utc";
-            tableName: "aerobic_tracking";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-    };
-    dialect: "pg";
-}>;
-
-declare const message: drizzle_orm_pg_core.PgTableWithColumns<{
-    name: "message";
-    schema: "messages";
-    columns: {
-        id: drizzle_orm_pg_core.PgColumn<{
-            name: "id";
-            tableName: "message";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        senderId: drizzle_orm_pg_core.PgColumn<{
-            name: "sender_id";
-            tableName: "message";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        receiverId: drizzle_orm_pg_core.PgColumn<{
-            name: "receiver_id";
-            tableName: "message";
-            dataType: "string";
-            columnType: "PgUUID";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        subject: drizzle_orm_pg_core.PgColumn<{
-            name: "subject";
-            tableName: "message";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        msg: drizzle_orm_pg_core.PgColumn<{
-            name: "msg";
-            tableName: "message";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        sentAt: drizzle_orm_pg_core.PgColumn<{
-            name: "sent_at";
-            tableName: "message";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        isRead: drizzle_orm_pg_core.PgColumn<{
-            name: "is_read";
-            tableName: "message";
-            dataType: "boolean";
-            columnType: "PgBoolean";
-            data: boolean;
-            driverParam: boolean;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-    };
-    dialect: "pg";
-}>;
-
-declare const userDbSchema: drizzle_zod.BuildSchema<"select", {
-    username: drizzle_orm_pg_core.PgColumn<{
-        name: "username";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    email: drizzle_orm_pg_core.PgColumn<{
-        name: "email";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    name: drizzle_orm_pg_core.PgColumn<{
-        name: "name";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    gender: drizzle_orm_pg_core.PgColumn<{
-        name: "gender";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    createdAt: drizzle_orm_pg_core.PgColumn<{
-        name: "created_at";
-        tableName: "user";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    updatedAt: drizzle_orm_pg_core.PgColumn<{
-        name: "updated_at";
-        tableName: "user";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    profilePicPath: drizzle_orm_pg_core.PgColumn<{
-        name: "profile_pic_path";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    pushToken: drizzle_orm_pg_core.PgColumn<{
-        name: "push_token";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    passwordHash: drizzle_orm_pg_core.PgColumn<{
-        name: "password_hash";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    role: drizzle_orm_pg_core.PgColumn<{
-        name: "role";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    tokenVersion: drizzle_orm_pg_core.PgColumn<{
-        name: "token_version";
-        tableName: "user";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    isVerified: drizzle_orm_pg_core.PgColumn<{
-        name: "is_verified";
-        tableName: "user";
-        dataType: "boolean";
-        columnType: "PgBoolean";
-        data: boolean;
-        driverParam: boolean;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    authProvider: drizzle_orm_pg_core.PgColumn<{
-        name: "auth_provider";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    lastLogin: drizzle_orm_pg_core.PgColumn<{
-        name: "last_login";
-        tableName: "user";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const userInsertDbSchema: drizzle_zod.BuildSchema<"insert", {
-    username: drizzle_orm_pg_core.PgColumn<{
-        name: "username";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    email: drizzle_orm_pg_core.PgColumn<{
-        name: "email";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    name: drizzle_orm_pg_core.PgColumn<{
-        name: "name";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    gender: drizzle_orm_pg_core.PgColumn<{
-        name: "gender";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    createdAt: drizzle_orm_pg_core.PgColumn<{
-        name: "created_at";
-        tableName: "user";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    updatedAt: drizzle_orm_pg_core.PgColumn<{
-        name: "updated_at";
-        tableName: "user";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    profilePicPath: drizzle_orm_pg_core.PgColumn<{
-        name: "profile_pic_path";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    pushToken: drizzle_orm_pg_core.PgColumn<{
-        name: "push_token";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    passwordHash: drizzle_orm_pg_core.PgColumn<{
-        name: "password_hash";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    role: drizzle_orm_pg_core.PgColumn<{
-        name: "role";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    tokenVersion: drizzle_orm_pg_core.PgColumn<{
-        name: "token_version";
-        tableName: "user";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    isVerified: drizzle_orm_pg_core.PgColumn<{
-        name: "is_verified";
-        tableName: "user";
-        dataType: "boolean";
-        columnType: "PgBoolean";
-        data: boolean;
-        driverParam: boolean;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    authProvider: drizzle_orm_pg_core.PgColumn<{
-        name: "auth_provider";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    lastLogin: drizzle_orm_pg_core.PgColumn<{
-        name: "last_login";
-        tableName: "user";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const userUpdateDbSchema: drizzle_zod.BuildSchema<"update", {
-    username: drizzle_orm_pg_core.PgColumn<{
-        name: "username";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    email: drizzle_orm_pg_core.PgColumn<{
-        name: "email";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    name: drizzle_orm_pg_core.PgColumn<{
-        name: "name";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    gender: drizzle_orm_pg_core.PgColumn<{
-        name: "gender";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    createdAt: drizzle_orm_pg_core.PgColumn<{
-        name: "created_at";
-        tableName: "user";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    updatedAt: drizzle_orm_pg_core.PgColumn<{
-        name: "updated_at";
-        tableName: "user";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    profilePicPath: drizzle_orm_pg_core.PgColumn<{
-        name: "profile_pic_path";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    pushToken: drizzle_orm_pg_core.PgColumn<{
-        name: "push_token";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    passwordHash: drizzle_orm_pg_core.PgColumn<{
-        name: "password_hash";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    role: drizzle_orm_pg_core.PgColumn<{
-        name: "role";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    tokenVersion: drizzle_orm_pg_core.PgColumn<{
-        name: "token_version";
-        tableName: "user";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    isVerified: drizzle_orm_pg_core.PgColumn<{
-        name: "is_verified";
-        tableName: "user";
-        dataType: "boolean";
-        columnType: "PgBoolean";
-        data: boolean;
-        driverParam: boolean;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    authProvider: drizzle_orm_pg_core.PgColumn<{
-        name: "auth_provider";
-        tableName: "user";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    lastLogin: drizzle_orm_pg_core.PgColumn<{
-        name: "last_login";
-        tableName: "user";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const oauthAccountDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "oauth_account";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    userId: drizzle_orm_pg_core.PgColumn<{
-        name: "user_id";
-        tableName: "oauth_account";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    provider: drizzle_orm_pg_core.PgColumn<{
-        name: "provider";
-        tableName: "oauth_account";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    providerUserId: drizzle_orm_pg_core.PgColumn<{
-        name: "provider_user_id";
-        tableName: "oauth_account";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    providerEmail: drizzle_orm_pg_core.PgColumn<{
-        name: "provider_email";
-        tableName: "oauth_account";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    linkedAt: drizzle_orm_pg_core.PgColumn<{
-        name: "linked_at";
-        tableName: "oauth_account";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const exerciseDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "exercise";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: "byDefault";
-        generated: undefined;
-    }, {}, {}>;
-    name: drizzle_orm_pg_core.PgColumn<{
-        name: "name";
-        tableName: "exercise";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    description: drizzle_orm_pg_core.PgColumn<{
-        name: "description";
-        tableName: "exercise";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    targetMuscle: drizzle_orm_pg_core.PgColumn<{
-        name: "target_muscle";
-        tableName: "exercise";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    specificTargetMuscle: drizzle_orm_pg_core.PgColumn<{
-        name: "specific_target_muscle";
-        tableName: "exercise";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const workoutPlanDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "workout_plan";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: "byDefault";
-        generated: undefined;
-    }, {}, {}>;
-    userId: drizzle_orm_pg_core.PgColumn<{
-        name: "user_id";
-        tableName: "workout_plan";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    isActive: drizzle_orm_pg_core.PgColumn<{
-        name: "is_active";
-        tableName: "workout_plan";
-        dataType: "boolean";
-        columnType: "PgBoolean";
-        data: boolean;
-        driverParam: boolean;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    updatedAt: drizzle_orm_pg_core.PgColumn<{
-        name: "updated_at";
-        tableName: "workout_plan";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    createdAt: drizzle_orm_pg_core.PgColumn<{
-        name: "created_at";
-        tableName: "workout_plan";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const workoutSplitDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "workout_split";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: "byDefault";
-        generated: undefined;
-    }, {}, {}>;
-    workoutId: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_id";
-        tableName: "workout_split";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    name: drizzle_orm_pg_core.PgColumn<{
-        name: "name";
-        tableName: "workout_split";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    orderIndex: drizzle_orm_pg_core.PgColumn<{
-        name: "order_index";
-        tableName: "workout_split";
-        dataType: "number";
-        columnType: "PgInteger";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    createdAt: drizzle_orm_pg_core.PgColumn<{
-        name: "created_at";
-        tableName: "workout_split";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    updatedAt: drizzle_orm_pg_core.PgColumn<{
-        name: "updated_at";
-        tableName: "workout_split";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    isActive: drizzle_orm_pg_core.PgColumn<{
-        name: "is_active";
-        tableName: "workout_split";
-        dataType: "boolean";
-        columnType: "PgBoolean";
-        data: boolean;
-        driverParam: boolean;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const exerciseToWorkoutSplitDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "exercise_to_workout_split";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: "byDefault";
-        generated: undefined;
-    }, {}, {}>;
-    workoutSplitId: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_split_id";
-        tableName: "exercise_to_workout_split";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    exerciseId: drizzle_orm_pg_core.PgColumn<{
-        name: "exercise_id";
-        tableName: "exercise_to_workout_split";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    createdAt: drizzle_orm_pg_core.PgColumn<{
-        name: "created_at";
-        tableName: "exercise_to_workout_split";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    orderIndex: drizzle_orm_pg_core.PgColumn<{
-        name: "order_index";
-        tableName: "exercise_to_workout_split";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    isActive: drizzle_orm_pg_core.PgColumn<{
-        name: "is_active";
-        tableName: "exercise_to_workout_split";
-        dataType: "boolean";
-        columnType: "PgBoolean";
-        data: boolean;
-        driverParam: boolean;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const exerciseToWorkoutSplitSetExpandedViewDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "v_exercise_to_workout_split_set_expanded";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutSplitId: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_split_id";
-        tableName: "v_exercise_to_workout_split_set_expanded";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutId: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_id";
-        tableName: "v_exercise_to_workout_split_set_expanded";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    exerciseId: drizzle_orm_pg_core.PgColumn<{
-        name: "exercise_id";
-        tableName: "v_exercise_to_workout_split_set_expanded";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    exercise: drizzle_orm_pg_core.PgColumn<{
-        name: "exercise";
-        tableName: "v_exercise_to_workout_split_set_expanded";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutSplit: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_split";
-        tableName: "v_exercise_to_workout_split_set_expanded";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    reps: drizzle_orm_pg_core.PgColumn<{
-        name: "reps";
-        tableName: "v_exercise_to_workout_split_set_expanded";
-        dataType: "number";
-        columnType: "PgInteger";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    orderIndex: drizzle_orm_pg_core.PgColumn<{
-        name: "order_index";
-        tableName: "v_exercise_to_workout_split_set_expanded";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    setIndex: drizzle_orm_pg_core.PgColumn<{
-        name: "set_index";
-        tableName: "v_exercise_to_workout_split_set_expanded";
-        dataType: "number";
-        columnType: "PgInteger";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    createdAt: drizzle_orm_pg_core.PgColumn<{
-        name: "created_at";
-        tableName: "v_exercise_to_workout_split_set_expanded";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    isActive: drizzle_orm_pg_core.PgColumn<{
-        name: "is_active";
-        tableName: "v_exercise_to_workout_split_set_expanded";
-        dataType: "boolean";
-        columnType: "PgBoolean";
-        data: boolean;
-        driverParam: boolean;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const workoutSetDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "workout_set";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    exerciseToSplitId: drizzle_orm_pg_core.PgColumn<{
-        name: "exercise_to_split_id";
-        tableName: "workout_set";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    orderIndex: drizzle_orm_pg_core.PgColumn<{
-        name: "order_index";
-        tableName: "workout_set";
-        dataType: "number";
-        columnType: "PgInteger";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    reps: drizzle_orm_pg_core.PgColumn<{
-        name: "reps";
-        tableName: "workout_set";
-        dataType: "number";
-        columnType: "PgInteger";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const workoutSummaryDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "workout_summary";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    userId: drizzle_orm_pg_core.PgColumn<{
-        name: "user_id";
-        tableName: "workout_summary";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutSplitId: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_split_id";
-        tableName: "workout_summary";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutStartUtc: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_start_utc";
-        tableName: "workout_summary";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutEndUtc: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_end_utc";
-        tableName: "workout_summary";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    createdAt: drizzle_orm_pg_core.PgColumn<{
-        name: "created_at";
-        tableName: "workout_summary";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const exerciseTrackingDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "exercise_tracking";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: "byDefault";
-        generated: undefined;
-    }, {}, {}>;
-    workoutSummaryId: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_summary_id";
-        tableName: "exercise_tracking";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    exerciseToSplitId: drizzle_orm_pg_core.PgColumn<{
-        name: "exercise_to_split_id";
-        tableName: "exercise_tracking";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    exerciseId: drizzle_orm_pg_core.PgColumn<{
-        name: "exercise_id";
-        tableName: "exercise_tracking";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    notes: drizzle_orm_pg_core.PgColumn<{
-        name: "notes";
-        tableName: "exercise_tracking";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const trackingSetDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "tracking_set";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    exerciseTrackingId: drizzle_orm_pg_core.PgColumn<{
-        name: "exercise_tracking_id";
-        tableName: "tracking_set";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    setIndex: drizzle_orm_pg_core.PgColumn<{
-        name: "set_index";
-        tableName: "tracking_set";
-        dataType: "number";
-        columnType: "PgInteger";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    reps: drizzle_orm_pg_core.PgColumn<{
-        name: "reps";
-        tableName: "tracking_set";
-        dataType: "number";
-        columnType: "PgInteger";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    weight: drizzle_orm_pg_core.PgColumn<{
-        name: "weight";
-        tableName: "tracking_set";
-        dataType: "number";
-        columnType: "PgReal";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const aerobicTrackingDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "aerobic_tracking";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: "byDefault";
-        generated: undefined;
-    }, {}, {}>;
-    userId: drizzle_orm_pg_core.PgColumn<{
-        name: "user_id";
-        tableName: "aerobic_tracking";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    type: drizzle_orm_pg_core.PgColumn<{
-        name: "type";
-        tableName: "aerobic_tracking";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    durationSec: drizzle_orm_pg_core.PgColumn<{
-        name: "duration_sec";
-        tableName: "aerobic_tracking";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutTimeUtc: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_time_utc";
-        tableName: "aerobic_tracking";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const messageDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "message";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    senderId: drizzle_orm_pg_core.PgColumn<{
-        name: "sender_id";
-        tableName: "message";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    receiverId: drizzle_orm_pg_core.PgColumn<{
-        name: "receiver_id";
-        tableName: "message";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    subject: drizzle_orm_pg_core.PgColumn<{
-        name: "subject";
-        tableName: "message";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    msg: drizzle_orm_pg_core.PgColumn<{
-        name: "msg";
-        tableName: "message";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    sentAt: drizzle_orm_pg_core.PgColumn<{
-        name: "sent_at";
-        tableName: "message";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    isRead: drizzle_orm_pg_core.PgColumn<{
-        name: "is_read";
-        tableName: "message";
-        dataType: "boolean";
-        columnType: "PgBoolean";
-        data: boolean;
-        driverParam: boolean;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const userReminderSettingDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "user_reminder_setting";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    userId: drizzle_orm_pg_core.PgColumn<{
-        name: "user_id";
-        tableName: "user_reminder_setting";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    reminderEnabled: drizzle_orm_pg_core.PgColumn<{
-        name: "reminder_enabled";
-        tableName: "user_reminder_setting";
-        dataType: "boolean";
-        columnType: "PgBoolean";
-        data: boolean;
-        driverParam: boolean;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    createdAt: drizzle_orm_pg_core.PgColumn<{
-        name: "created_at";
-        tableName: "user_reminder_setting";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    updatedAt: drizzle_orm_pg_core.PgColumn<{
-        name: "updated_at";
-        tableName: "user_reminder_setting";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    timeZone: drizzle_orm_pg_core.PgColumn<{
-        name: "time_zone";
-        tableName: "user_reminder_setting";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const workoutScheduleDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "workout_schedule";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    userId: drizzle_orm_pg_core.PgColumn<{
-        name: "user_id";
-        tableName: "workout_schedule";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutSplitId: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_split_id";
-        tableName: "workout_schedule";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    dayOfWeek: drizzle_orm_pg_core.PgColumn<{
-        name: "day_of_week";
-        tableName: "workout_schedule";
-        dataType: "number";
-        columnType: "PgInteger";
-        data: number;
-        driverParam: string | number;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    startTime: drizzle_orm_pg_core.PgColumn<{
-        name: "start_time";
-        tableName: "workout_schedule";
-        dataType: "string";
-        columnType: "PgTime";
-        data: string;
-        driverParam: string;
-        notNull: true;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    createdAt: drizzle_orm_pg_core.PgColumn<{
-        name: "created_at";
-        tableName: "workout_schedule";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    updatedAt: drizzle_orm_pg_core.PgColumn<{
-        name: "updated_at";
-        tableName: "workout_schedule";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: true;
-        hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const exerciseTrackingSetExpandedViewDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    exerciseToSplitId: drizzle_orm_pg_core.PgColumn<{
-        name: "exercise_to_split_id";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    weight: drizzle_orm_pg_core.PgColumn<{
-        name: "weight";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "number";
-        columnType: "PgReal";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    reps: drizzle_orm_pg_core.PgColumn<{
-        name: "reps";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "number";
-        columnType: "PgInteger";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    orderIndex: drizzle_orm_pg_core.PgColumn<{
-        name: "order_index";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    setIndex: drizzle_orm_pg_core.PgColumn<{
-        name: "set_index";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "number";
-        columnType: "PgInteger";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    exerciseId: drizzle_orm_pg_core.PgColumn<{
-        name: "exercise_id";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutSplitId: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_split_id";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    splitName: drizzle_orm_pg_core.PgColumn<{
-        name: "split_name";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    exercise: drizzle_orm_pg_core.PgColumn<{
-        name: "exercise";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    targetMuscle: drizzle_orm_pg_core.PgColumn<{
-        name: "target_muscle";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    specificTargetMuscle: drizzle_orm_pg_core.PgColumn<{
-        name: "specific_target_muscle";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    notes: drizzle_orm_pg_core.PgColumn<{
-        name: "notes";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutSummaryId: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_summary_id";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutStartUtc: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_start_utc";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutEndUtc: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_end_utc";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    isAssignedToSplit: drizzle_orm_pg_core.PgColumn<{
-        name: "is_assigned_to_split";
-        tableName: "v_exercise_tracking_set_expanded";
-        dataType: "boolean";
-        columnType: "PgBoolean";
-        data: boolean;
-        driverParam: boolean;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-declare const prsViewDbSchema: drizzle_zod.BuildSchema<"select", {
-    id: drizzle_orm_pg_core.PgColumn<{
-        name: "id";
-        tableName: "v_prs";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    exerciseToSplitId: drizzle_orm_pg_core.PgColumn<{
-        name: "exercise_to_split_id";
-        tableName: "v_prs";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    exerciseId: drizzle_orm_pg_core.PgColumn<{
-        name: "exercise_id";
-        tableName: "v_prs";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    exercise: drizzle_orm_pg_core.PgColumn<{
-        name: "exercise";
-        tableName: "v_prs";
-        dataType: "string";
-        columnType: "PgText";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: [string, ...string[]];
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    setIndex: drizzle_orm_pg_core.PgColumn<{
-        name: "set_index";
-        tableName: "v_prs";
-        dataType: "number";
-        columnType: "PgInteger";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    weight: drizzle_orm_pg_core.PgColumn<{
-        name: "weight";
-        tableName: "v_prs";
-        dataType: "number";
-        columnType: "PgReal";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    reps: drizzle_orm_pg_core.PgColumn<{
-        name: "reps";
-        tableName: "v_prs";
-        dataType: "number";
-        columnType: "PgBigInt53";
-        data: number;
-        driverParam: string | number;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutSummaryId: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_summary_id";
-        tableName: "v_prs";
-        dataType: "string";
-        columnType: "PgUUID";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutStartUtc: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_start_utc";
-        tableName: "v_prs";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    workoutEndUtc: drizzle_orm_pg_core.PgColumn<{
-        name: "workout_end_utc";
-        tableName: "v_prs";
-        dataType: "date";
-        columnType: "PgTimestamp";
-        data: Date;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-}, undefined, undefined>;
-type UserRow = typeof user.$inferSelect;
-type UserInsert = typeof user.$inferInsert;
-type AerobicTrackingRow = typeof aerobicTracking.$inferSelect;
-type MessageRow = typeof message.$inferSelect;
-type ExerciseRow = typeof exercise.$inferSelect;
-type WorkoutPlanRow = typeof workoutPlan.$inferSelect;
-type WorkoutSplitRow = typeof workoutSplit.$inferSelect;
-type ExerciseToWorkoutSplitRow = typeof exerciseToWorkoutSplit.$inferSelect;
-type WorkoutSummaryRow = typeof workoutSummary.$inferSelect;
-type ExerciseTrackingRow = typeof exerciseTracking.$inferSelect;
-
 declare const createAerobicEntryRequestSchema: z.ZodObject<{
     query: z.ZodObject<{
         tz: z.ZodOptional<z.ZodString>;
@@ -3871,7 +47,7 @@ declare const createAerobicEntryRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         record: z.ZodObject<{
             durationMins: z.ZodNumber;
-            durationSec: z.ZodInt;
+            durationSec: z.ZodNumber;
             type: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
@@ -3885,7 +61,7 @@ declare const createAerobicEntryContract: {
         body: z.ZodObject<{
             record: z.ZodObject<{
                 durationMins: z.ZodNumber;
-                durationSec: z.ZodInt;
+                durationSec: z.ZodNumber;
                 type: z.ZodString;
             }, z.core.$strip>;
         }, z.core.$strip>;
@@ -3899,17 +75,17 @@ declare const getAerobicHistoryRequestSchema: z.ZodObject<{
 }, z.core.$strip>;
 declare const getAerobicHistoryResponseSchema: z.ZodObject<{
     daily: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-        id: z.ZodInt;
+        id: z.ZodNumber;
         type: z.ZodString;
-        durationSec: z.ZodInt;
-        durationMins: z.ZodInt;
+        durationSec: z.ZodNumber;
+        durationMins: z.ZodNumber;
     }, z.core.$strip>>>;
     weekly: z.ZodRecord<z.ZodString, z.ZodObject<{
         records: z.ZodArray<z.ZodObject<{
-            id: z.ZodInt;
+            id: z.ZodNumber;
             type: z.ZodString;
-            durationSec: z.ZodInt;
-            durationMins: z.ZodInt;
+            durationSec: z.ZodNumber;
+            durationMins: z.ZodNumber;
             workoutTimeLocal: z.ZodString;
         }, z.core.$strip>>;
         totalDurationSec: z.ZodNumber;
@@ -3924,17 +100,17 @@ declare const getAerobicHistoryContract: {
     }, z.core.$strip>;
     response: z.ZodObject<{
         daily: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-            id: z.ZodInt;
+            id: z.ZodNumber;
             type: z.ZodString;
-            durationSec: z.ZodInt;
-            durationMins: z.ZodInt;
+            durationSec: z.ZodNumber;
+            durationMins: z.ZodNumber;
         }, z.core.$strip>>>;
         weekly: z.ZodRecord<z.ZodString, z.ZodObject<{
             records: z.ZodArray<z.ZodObject<{
-                id: z.ZodInt;
+                id: z.ZodNumber;
                 type: z.ZodString;
-                durationSec: z.ZodInt;
-                durationMins: z.ZodInt;
+                durationSec: z.ZodNumber;
+                durationMins: z.ZodNumber;
                 workoutTimeLocal: z.ZodString;
             }, z.core.$strip>>;
             totalDurationSec: z.ZodNumber;
@@ -3952,7 +128,7 @@ declare const updateAerobicEntryRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         record: z.ZodObject<{
             durationMins: z.ZodNumber;
-            durationSec: z.ZodInt;
+            durationSec: z.ZodNumber;
             type: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
@@ -3968,7 +144,7 @@ declare const updateAerobicEntryContract: {
         body: z.ZodObject<{
             record: z.ZodObject<{
                 durationMins: z.ZodNumber;
-                durationSec: z.ZodInt;
+                durationSec: z.ZodNumber;
                 type: z.ZodString;
             }, z.core.$strip>;
         }, z.core.$strip>;
@@ -3994,104 +170,28 @@ declare const deleteAerobicEntryContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the create aerobic entry body value. */
 type CreateAerobicEntryBody = BodyOf<typeof createAerobicEntryContract>;
+/** Represents the create aerobic entry query value. */
 type CreateAerobicEntryQuery = QueryOf<typeof createAerobicEntryContract>;
+/** Represents the get aerobic history query value. */
 type GetAerobicHistoryQuery = QueryOf<typeof getAerobicHistoryContract>;
+/** Represents the get aerobic history response value. */
 type GetAerobicHistoryResponse = ResponseOf<typeof getAerobicHistoryContract>;
+/** Represents the update aerobic entry body value. */
 type UpdateAerobicEntryBody = BodyOf<typeof updateAerobicEntryContract>;
+/** Represents the update aerobic entry params value. */
 type UpdateAerobicEntryParams = ParamsOf<typeof updateAerobicEntryContract>;
+/** Represents the update aerobic entry query value. */
 type UpdateAerobicEntryQuery = QueryOf<typeof updateAerobicEntryContract>;
+/** Represents the update aerobic entry response value. */
 type UpdateAerobicEntryResponse = ResponseOf<typeof updateAerobicEntryContract>;
+/** Represents the delete aerobic entry query value. */
 type DeleteAerobicEntryQuery = QueryOf<typeof deleteAerobicEntryContract>;
+/** Represents the delete aerobic entry params value. */
 type DeleteAerobicEntryParams = ParamsOf<typeof deleteAerobicEntryContract>;
+/** Represents the delete aerobic entry response value. */
 type DeleteAerobicEntryResponse = ResponseOf<typeof deleteAerobicEntryContract>;
-
-/** Aerobic record accepted by the insert query. */
-declare const addAerobicInputQueryDtoSchema: z.ZodObject<{
-    durationMins: z.ZodNumber;
-    durationSec: z.ZodInt;
-    type: z.ZodString;
-}, z.core.$strip>;
-/** Daily aerobic record produced by the aerobics aggregation query. */
-declare const aerobicsDailyRecordQueryDtoSchema: z.ZodObject<{
-    id: z.ZodInt;
-    type: z.ZodString;
-    durationSec: z.ZodInt;
-    durationMins: z.ZodInt;
-}, z.core.$strip>;
-/** Weekly aerobic record with its localized workout timestamp. */
-declare const aerobicsWeeklyRecordQueryDtoSchema: z.ZodObject<{
-    id: z.ZodInt;
-    type: z.ZodString;
-    durationSec: z.ZodInt;
-    durationMins: z.ZodInt;
-    workoutTimeLocal: z.ZodString;
-}, z.core.$strip>;
-/** Weekly aerobic aggregation containing records and duration totals. */
-declare const weeklyDataQueryDtoSchema: z.ZodObject<{
-    records: z.ZodArray<z.ZodObject<{
-        id: z.ZodInt;
-        type: z.ZodString;
-        durationSec: z.ZodInt;
-        durationMins: z.ZodInt;
-        workoutTimeLocal: z.ZodString;
-    }, z.core.$strip>>;
-    totalDurationSec: z.ZodNumber;
-    totalDurationMins: z.ZodNumber;
-}, z.core.$strip>;
-/** Complete aerobics aggregate returned by the history SQL query. */
-declare const userAerobicsQueryDtoSchema: z.ZodObject<{
-    daily: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-        id: z.ZodInt;
-        type: z.ZodString;
-        durationSec: z.ZodInt;
-        durationMins: z.ZodInt;
-    }, z.core.$strip>>>;
-    weekly: z.ZodRecord<z.ZodString, z.ZodObject<{
-        records: z.ZodArray<z.ZodObject<{
-            id: z.ZodInt;
-            type: z.ZodString;
-            durationSec: z.ZodInt;
-            durationMins: z.ZodInt;
-            workoutTimeLocal: z.ZodString;
-        }, z.core.$strip>>;
-        totalDurationSec: z.ZodNumber;
-        totalDurationMins: z.ZodNumber;
-    }, z.core.$strip>>;
-}, z.core.$strip>;
-/** SQL row wrapping the aerobics aggregate under the selected `data` alias. */
-declare const userAerobicsRowQueryDtoSchema: z.ZodObject<{
-    data: z.ZodObject<{
-        daily: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-            id: z.ZodInt;
-            type: z.ZodString;
-            durationSec: z.ZodInt;
-            durationMins: z.ZodInt;
-        }, z.core.$strip>>>;
-        weekly: z.ZodRecord<z.ZodString, z.ZodObject<{
-            records: z.ZodArray<z.ZodObject<{
-                id: z.ZodInt;
-                type: z.ZodString;
-                durationSec: z.ZodInt;
-                durationMins: z.ZodInt;
-                workoutTimeLocal: z.ZodString;
-            }, z.core.$strip>>;
-            totalDurationSec: z.ZodNumber;
-            totalDurationMins: z.ZodNumber;
-        }, z.core.$strip>>;
-    }, z.core.$strip>;
-}, z.core.$strip>;
-/** Row returned after mutating an aerobic entry owned by a user. */
-declare const aerobicMutationRowQueryDtoSchema: z.ZodObject<{
-    id: z.ZodInt;
-}, z.core.$strip>;
-type AddAerobicInputQueryDto = z.infer<typeof addAerobicInputQueryDtoSchema>;
-type AerobicsDailyRecordQueryDto = z.infer<typeof aerobicsDailyRecordQueryDtoSchema>;
-type AerobicsWeeklyRecordQueryDto = z.infer<typeof aerobicsWeeklyRecordQueryDtoSchema>;
-type WeeklyDataQueryDto = z.infer<typeof weeklyDataQueryDtoSchema>;
-type UserAerobicsQueryDto = z.infer<typeof userAerobicsQueryDtoSchema>;
-type UserAerobicsRowQueryDto = z.infer<typeof userAerobicsRowQueryDtoSchema>;
-type AerobicMutationRowQueryDto = z.infer<typeof aerobicMutationRowQueryDtoSchema>;
 
 declare const createPasswordResetRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
@@ -4125,20 +225,14 @@ declare const resetPasswordContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the create password reset request body value. */
 type CreatePasswordResetRequestBody = BodyOf<typeof createPasswordResetRequestContract>;
+/** Represents the reset password body value. */
 type ResetPasswordBody = BodyOf<typeof resetPasswordContract>;
+/** Represents the reset password query value. */
 type ResetPasswordQuery = QueryOf<typeof resetPasswordContract>;
+/** Represents the reset password response value. */
 type ResetPasswordResponse = ResponseOf<typeof resetPasswordContract>;
-
-/** Claims carried by a forgot-password token. */
-declare const forgotPasswordPayloadDtoSchema: z.ZodObject<{
-    sub: z.ZodUUID;
-    jti: z.ZodString;
-    exp: z.ZodNumber;
-    iss: z.ZodString;
-    typ: z.ZodString;
-}, z.core.$strip>;
-type ForgotPasswordPayloadDto = z.infer<typeof forgotPasswordPayloadDtoSchema>;
 
 declare const loginRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
@@ -4148,7 +242,7 @@ declare const loginRequestSchema: z.ZodObject<{
 }, z.core.$strip>;
 declare const loginResponseSchema: z.ZodObject<{
     message: z.ZodString;
-    user: z.ZodUUID;
+    user: z.ZodString;
     accessToken: z.ZodString;
     refreshToken: z.ZodString;
 }, z.core.$strip>;
@@ -4161,7 +255,7 @@ declare const loginContract: {
     }, z.core.$strip>;
     response: z.ZodObject<{
         message: z.ZodString;
-        user: z.ZodUUID;
+        user: z.ZodString;
         accessToken: z.ZodString;
         refreshToken: z.ZodString;
     }, z.core.$strip>;
@@ -4170,14 +264,14 @@ declare const refreshTokenResponseSchema: z.ZodObject<{
     message: z.ZodString;
     accessToken: z.ZodString;
     refreshToken: z.ZodString;
-    userId: z.ZodUUID;
+    userId: z.ZodString;
 }, z.core.$strip>;
 declare const refreshTokenContract: {
     response: z.ZodObject<{
         message: z.ZodString;
         accessToken: z.ZodString;
         refreshToken: z.ZodString;
-        userId: z.ZodUUID;
+        userId: z.ZodString;
     }, z.core.$strip>;
 };
 declare const logoutResponseSchema: z.ZodObject<{
@@ -4188,55 +282,14 @@ declare const logoutContract: {
         message: z.ZodString;
     }, z.core.$strip>;
 };
+/** Represents the login request body value. */
 type LoginRequestBody = BodyOf<typeof loginContract>;
+/** Represents the login response value. */
 type LoginResponse = ResponseOf<typeof loginContract>;
+/** Represents the refresh token response value. */
 type RefreshTokenResponse = ResponseOf<typeof refreshTokenContract>;
+/** Represents the logout response value. */
 type LogoutResponse = ResponseOf<typeof logoutContract>;
-
-/** Claims carried by an issued access token. */
-declare const accessTokenPayloadDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    role: z.ZodString;
-    tokenVer: z.ZodInt;
-    cnf: z.ZodOptional<z.ZodObject<{
-        jkt: z.ZodString;
-    }, z.core.$strip>>;
-    iat: z.ZodOptional<z.ZodNumber>;
-    exp: z.ZodOptional<z.ZodNumber>;
-}, z.core.$strip>;
-/** User data returned after atomically incrementing the token version. */
-declare const userAfterBumpQueryDtoSchema: z.ZodObject<{
-    tokenVersion: z.ZodInt;
-    userData: z.ZodObject<{
-        id: z.ZodUUID;
-        username: z.ZodString;
-        email: z.ZodString;
-        name: z.ZodString;
-        gender: z.ZodString;
-        createdAt: z.ZodString;
-        updatedAt: z.ZodString;
-        profilePicPath: z.ZodNullable<z.ZodString>;
-        pushToken: z.ZodNullable<z.ZodString>;
-        role: z.ZodString;
-        isFirstLogin: z.ZodBoolean;
-        tokenVersion: z.ZodInt;
-        isVerified: z.ZodBoolean;
-        authProvider: z.ZodString;
-        lastLogin: z.ZodNullable<z.ZodString>;
-    }, z.core.$strip>;
-}, z.core.$strip>;
-/** Current token-version row returned by authentication checks. */
-declare const tokenVersionQueryDtoSchema: z.ZodObject<{
-    tokenVersion: z.ZodInt;
-}, z.core.$strip>;
-/** Last-login row returned by the session lookup function. */
-declare const lastLoginQueryDtoSchema: z.ZodObject<{
-    lastLogin: z.ZodNullable<z.ZodDate>;
-}, z.core.$strip>;
-type AccessTokenPayloadDto = z.infer<typeof accessTokenPayloadDtoSchema>;
-type UserAfterBumpQueryDto = z.infer<typeof userAfterBumpQueryDtoSchema>;
-type TokenVersionQueryDto = z.infer<typeof tokenVersionQueryDtoSchema>;
-type LastLoginQueryDto = z.infer<typeof lastLoginQueryDtoSchema>;
 
 declare const verifyEmailRequestSchema: z.ZodObject<{
     query: z.ZodObject<{
@@ -4290,125 +343,29 @@ declare const getVerificationStatusContract: {
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
+/** Represents the verify email query value. */
 type VerifyEmailQuery = QueryOf<typeof verifyEmailContract>;
+/** Represents the create verification email body value. */
 type CreateVerificationEmailBody = BodyOf<typeof createVerificationEmailContract>;
+/** Represents the update unverified account email body value. */
 type UpdateUnverifiedAccountEmailBody = BodyOf<typeof updateUnverifiedAccountEmailContract>;
+/** Represents the get verification status query value. */
 type GetVerificationStatusQuery = QueryOf<typeof getVerificationStatusContract>;
 
-/** Claims carried by an email-verification token. */
-declare const emailVerifyPayloadDtoSchema: z.ZodObject<{
-    sub: z.ZodUUID;
-    jti: z.ZodString;
-    exp: z.ZodNumber;
-    iss: z.ZodString;
-    typ: z.ZodString;
-}, z.core.$strip>;
-type EmailVerifyPayloadDto = z.infer<typeof emailVerifyPayloadDtoSchema>;
-
-/** Normalized user record returned by identifier-based authentication queries. */
-declare const userByIdentifierQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    name: z.ZodString;
-    username: z.ZodString;
-    email: z.ZodOptional<z.ZodString>;
-    passwordHash: z.ZodNullable<z.ZodString>;
-    role: z.ZodString;
-    isVerified: z.ZodBoolean;
-    lastLogin: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-}, z.core.$strip>;
-/** Raw database function payload before snake_case fields are normalized. */
-declare const userByIdentifierRawQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    name: z.ZodString;
-    username: z.ZodString;
-    email: z.ZodOptional<z.ZodString>;
-    role: z.ZodString;
-    password_hash: z.ZodNullable<z.ZodString>;
-    is_verified: z.ZodBoolean;
-    last_login: z.ZodNullable<z.ZodString>;
-}, z.core.$strip>;
-/** SQL row wrapping an identifier lookup result under `userData`. */
-declare const userByIdentifierRowQueryDtoSchema: z.ZodObject<{
-    userData: z.ZodNullable<z.ZodObject<{
-        id: z.ZodUUID;
-        name: z.ZodString;
-        username: z.ZodString;
-        email: z.ZodOptional<z.ZodString>;
-        role: z.ZodString;
-        password_hash: z.ZodNullable<z.ZodString>;
-        is_verified: z.ZodBoolean;
-        last_login: z.ZodNullable<z.ZodString>;
-    }, z.core.$strip>>;
-}, z.core.$strip>;
-/** Raw username lookup payload before `is_verified` is normalized. */
-declare const userByUsernameRawQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    name: z.ZodString;
-    username: z.ZodString;
-    email: z.ZodOptional<z.ZodString>;
-    role: z.ZodString;
-    lastLogin: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    password_hash: z.ZodNullable<z.ZodString>;
-    is_verified: z.ZodBoolean;
-}, z.core.$strip>;
-/** SQL row wrapping a username lookup result under `userData`. */
-declare const userByUsernameRowQueryDtoSchema: z.ZodObject<{
-    userData: z.ZodNullable<z.ZodObject<{
-        id: z.ZodUUID;
-        name: z.ZodString;
-        username: z.ZodString;
-        email: z.ZodOptional<z.ZodString>;
-        role: z.ZodString;
-        lastLogin: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-        password_hash: z.ZodNullable<z.ZodString>;
-        is_verified: z.ZodBoolean;
-    }, z.core.$strip>>;
-}, z.core.$strip>;
-type UserByIdentifierQueryDto = z.infer<typeof userByIdentifierQueryDtoSchema>;
-type UserByIdentifierRawQueryDto = z.infer<typeof userByIdentifierRawQueryDtoSchema>;
-type UserByIdentifierRowQueryDto = z.infer<typeof userByIdentifierRowQueryDtoSchema>;
-type UserByUsernameRawQueryDto = z.infer<typeof userByUsernameRawQueryDtoSchema>;
-type UserByUsernameRowQueryDto = z.infer<typeof userByUsernameRowQueryDtoSchema>;
-
-declare const listExercisesResponseSchema: zod_v4.ZodRecord<zod_v4.ZodString, zod_v4.ZodArray<zod_v4.ZodObject<{
-    id: zod_v4.ZodInt;
-    name: zod_v4.ZodString;
-    specificTargetMuscle: zod_v4.ZodString;
-}, zod_v4_core.$strip>>>;
-declare const listExercisesContract: {
-    response: zod_v4.ZodRecord<zod_v4.ZodString, zod_v4.ZodArray<zod_v4.ZodObject<{
-        id: zod_v4.ZodInt;
-        name: zod_v4.ZodString;
-        specificTargetMuscle: zod_v4.ZodString;
-    }, zod_v4_core.$strip>>>;
-};
-type ListExercisesResponse = ResponseOf<typeof listExercisesContract>;
-
-/** Exercise row included in the muscle-grouped exercise query result. */
-declare const getAllExercisesExerciseQueryDtoSchema: z.ZodObject<{
-    id: z.ZodInt;
-    name: z.ZodString;
-    specificTargetMuscle: z.ZodString;
-}, z.core.$strip>;
-/** Exercise map grouped by target muscle. */
-declare const exercisesMapByMuscleQueryDtoSchema: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-    id: z.ZodInt;
+declare const listExercisesResponseSchema: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
+    id: z.ZodNumber;
     name: z.ZodString;
     specificTargetMuscle: z.ZodString;
 }, z.core.$strip>>>;
-/** SQL row wrapping the exercise map under the `result` alias. */
-declare const exerciseMapByMuscleRowQueryDtoSchema: z.ZodObject<{
-    result: z.ZodNullable<z.ZodObject<{
-        map: z.ZodNullable<z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
-            id: z.ZodInt;
-            name: z.ZodString;
-            specificTargetMuscle: z.ZodString;
-        }, z.core.$strip>>>>;
-    }, z.core.$strip>>;
-}, z.core.$strip>;
-type GetAllExercisesExerciseQueryDto = z.infer<typeof getAllExercisesExerciseQueryDtoSchema>;
-type ExercisesMapByMuscleQueryDto = z.infer<typeof exercisesMapByMuscleQueryDtoSchema>;
-type ExerciseMapByMuscleRowQueryDto = z.infer<typeof exerciseMapByMuscleRowQueryDtoSchema>;
+declare const listExercisesContract: {
+    response: z.ZodRecord<z.ZodString, z.ZodArray<z.ZodObject<{
+        id: z.ZodNumber;
+        name: z.ZodString;
+        specificTargetMuscle: z.ZodString;
+    }, z.core.$strip>>>;
+};
+/** Represents the list exercises response value. */
+type ListExercisesResponse = ResponseOf<typeof listExercisesContract>;
 
 declare const listMessagesRequestSchema: z.ZodObject<{
     query: z.ZodObject<{
@@ -4417,7 +374,7 @@ declare const listMessagesRequestSchema: z.ZodObject<{
 }, z.core.$strip>;
 declare const listMessagesResponseSchema: z.ZodObject<{
     messages: z.ZodArray<z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
         subject: z.ZodString;
         msg: z.ZodString;
         sentAt: z.ZodString;
@@ -4434,7 +391,7 @@ declare const listMessagesContract: {
     }, z.core.$strip>;
     response: z.ZodObject<{
         messages: z.ZodArray<z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
             subject: z.ZodString;
             msg: z.ZodString;
             sentAt: z.ZodString;
@@ -4444,78 +401,46 @@ declare const listMessagesContract: {
         }, z.core.$strip>>;
     }, z.core.$strip>;
 };
+/** Represents the list messages query value. */
 type ListMessagesQuery = QueryOf<typeof listMessagesContract>;
+/** Represents the list messages response value. */
 type ListMessagesResponse = ResponseOf<typeof listMessagesContract>;
 declare const markMessageAsReadRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
 declare const markMessageAsReadResponseSchema: z.ZodVoid;
 declare const markMessageAsReadContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the mark message as read params value. */
 type MarkMessageAsReadParams = ParamsOf<typeof markMessageAsReadContract>;
+/** Represents the mark message as read response value. */
 type MarkMessageAsReadResponse = ResponseOf<typeof markMessageAsReadContract>;
 declare const deleteMessageRequestSchema: z.ZodObject<{
     params: z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
 declare const deleteMessageResponseSchema: z.ZodVoid;
 declare const deleteMessageContract: {
     request: z.ZodObject<{
         params: z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the delete message params value. */
 type DeleteMessageParams = ParamsOf<typeof deleteMessageContract>;
+/** Represents the delete message response value. */
 type DeleteMessageResponse = ResponseOf<typeof deleteMessageContract>;
-
-/** SQL row returned when querying a user's inbox. */
-declare const allUserMessageQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    subject: z.ZodString;
-    msg: z.ZodString;
-    sentAt: z.ZodString;
-    isRead: z.ZodBoolean;
-    senderFullName: z.ZodString;
-    senderProfilePicPath: z.ZodNullable<z.ZodString>;
-}, z.core.$strip>;
-/** SQL row returned after marking a message as read. */
-declare const messageAsReadQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    isRead: z.ZodBoolean;
-}, z.core.$strip>;
-/** SQL row returned after deleting a message. */
-declare const deletedMessageQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-}, z.core.$strip>;
-/** SQL row returned after inserting a message. */
-declare const messageAfterSendQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    senderId: z.ZodUUID;
-    receiverId: z.ZodUUID;
-    subject: z.ZodString;
-    msg: z.ZodString;
-    sentAt: z.ZodString;
-    isRead: z.ZodBoolean;
-    senderUsername: z.ZodString;
-    senderFullName: z.ZodString;
-    senderProfilePicPath: z.ZodNullable<z.ZodString>;
-    senderGender: z.ZodString;
-}, z.core.$strip>;
-type AllUserMessageQueryDto = z.infer<typeof allUserMessageQueryDtoSchema>;
-type MessageAsReadQueryDto = z.infer<typeof messageAsReadQueryDtoSchema>;
-type DeletedMessageQueryDto = z.infer<typeof deletedMessageQueryDtoSchema>;
-type MessageAfterSendQueryDto = z.infer<typeof messageAfterSendQueryDtoSchema>;
 
 declare const appleOAuthRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
@@ -4525,7 +450,7 @@ declare const appleOAuthRequestSchema: z.ZodObject<{
             givenName: z.ZodNullable<z.ZodString>;
             familyName: z.ZodNullable<z.ZodString>;
         }, z.core.$strip>>;
-        email: z.ZodNullable<z.ZodString>;
+        email: z.ZodNullable<z.ZodEmail>;
     }, z.core.$strip>;
 }, z.core.$strip>;
 declare const appleOAuthContract: {
@@ -4537,20 +462,12 @@ declare const appleOAuthContract: {
                 givenName: z.ZodNullable<z.ZodString>;
                 familyName: z.ZodNullable<z.ZodString>;
             }, z.core.$strip>>;
-            email: z.ZodNullable<z.ZodString>;
+            email: z.ZodNullable<z.ZodEmail>;
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
+/** Represents the apple oauth body value. */
 type AppleOAuthBody = BodyOf<typeof appleOAuthContract>;
-
-/** Normalized verification result extracted from an Apple identity token. */
-declare const appleTokenVerificationResultDtoSchema: z.ZodObject<{
-    appleSub: z.ZodString;
-    email: z.ZodNullable<z.ZodString>;
-    emailVerified: z.ZodBoolean;
-    fullName: z.ZodString;
-}, z.core.$strip>;
-type AppleTokenVerificationResultDto = z.infer<typeof appleTokenVerificationResultDtoSchema>;
 
 declare const googleOAuthRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
@@ -4564,105 +481,52 @@ declare const googleOAuthContract: {
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
+/** Represents the google oauth body value. */
 type GoogleOAuthBody = BodyOf<typeof googleOAuthContract>;
-
-/** Normalized verification result extracted from a Google identity token. */
-declare const googleTokenVerificationResultDtoSchema: z.ZodObject<{
-    googleSub: z.ZodString;
-    email: z.ZodNullable<z.ZodString>;
-    emailVerified: z.ZodBoolean;
-    fullName: z.ZodString;
-}, z.core.$strip>;
-type GoogleTokenVerificationResultDto = z.infer<typeof googleTokenVerificationResultDtoSchema>;
 
 declare const oAuthLoginResponseSchema: z.ZodObject<{
     message: z.ZodString;
-    user: z.ZodUUID;
+    user: z.ZodString;
     accessToken: z.ZodString;
     refreshToken: z.ZodString;
 }, z.core.$strip>;
 declare const proceedLoginResponseSchema: z.ZodObject<{
     message: z.ZodString;
-    user: z.ZodUUID;
+    user: z.ZodString;
     accessToken: z.ZodString;
     refreshToken: z.ZodString;
 }, z.core.$strip>;
 declare const oAuthLoginContract: {
     response: z.ZodObject<{
         message: z.ZodString;
-        user: z.ZodUUID;
+        user: z.ZodString;
         accessToken: z.ZodString;
         refreshToken: z.ZodString;
     }, z.core.$strip>;
 };
+/** Represents the oauth login response value. */
 type OAuthLoginResponse = ResponseOf<typeof oAuthLoginContract>;
-
-/** Normalized OAuth-account lookup result returned by query adapters. */
-declare const oAuthLookupQueryDtoSchema: z.ZodObject<{
-    userId: z.ZodNullable<z.ZodUUID>;
-}, z.core.$strip>;
-/** Raw OAuth lookup function payload using database column names. */
-declare const oAuthLookupRawQueryDtoSchema: z.ZodObject<{
-    user_id: z.ZodUUID;
-}, z.core.$strip>;
-/** SQL row wrapping the raw OAuth lookup payload under `oauth_data`. */
-declare const oAuthLookupRowQueryDtoSchema: z.ZodObject<{
-    oauth_data: z.ZodNullable<z.ZodObject<{
-        user_id: z.ZodUUID;
-    }, z.core.$strip>>;
-}, z.core.$strip>;
-/** Normalized result of attempting to link an OAuth account by email. */
-declare const oAuthLinkQueryDtoSchema: z.ZodObject<{
-    userId: z.ZodNullable<z.ZodUUID>;
-}, z.core.$strip>;
-/** SQL row returned by the OAuth link-by-email function. */
-declare const oAuthLinkRowQueryDtoSchema: z.ZodObject<{
-    user_id: z.ZodNullable<z.ZodUUID>;
-}, z.core.$strip>;
-/** SQL row returned after creating a user through an OAuth provider. */
-declare const oAuthCreatedUserRowQueryDtoSchema: z.ZodObject<{
-    user_id: z.ZodUUID;
-}, z.core.$strip>;
-type OAuthLookupQueryDto = z.infer<typeof oAuthLookupQueryDtoSchema>;
-type OAuthLookupRawQueryDto = z.infer<typeof oAuthLookupRawQueryDtoSchema>;
-type OAuthLookupRowQueryDto = z.infer<typeof oAuthLookupRowQueryDtoSchema>;
-type OAuthLinkQueryDto = z.infer<typeof oAuthLinkQueryDtoSchema>;
-type OAuthLinkRowQueryDto = z.infer<typeof oAuthLinkRowQueryDtoSchema>;
-type OAuthCreatedUserRowQueryDto = z.infer<typeof oAuthCreatedUserRowQueryDtoSchema>;
-
-/** User row returned when selecting all users with push notifications enabled. */
-declare const userWithNotificationsEnabledQueryDtoSchema: z.ZodObject<{
-    pushToken: z.ZodNullable<z.ZodString>;
-    name: z.ZodString;
-}, z.core.$strip>;
-type UserWithNotificationsEnabledQueryDto = z.infer<typeof userWithNotificationsEnabledQueryDtoSchema>;
 
 declare const getReminderSettingsResponseSchema: z.ZodObject<{
     reminderSettings: z.ZodNullable<z.ZodObject<{
-        id: z.ZodUUID;
-        userId: z.ZodUUID;
+        id: z.ZodString;
+        userId: z.ZodString;
         reminderEnabled: z.ZodBoolean;
-        timeZone: z.ZodString;
         createdAt: z.ZodString;
         updatedAt: z.ZodString;
-    }, {
-        out: {};
-        in: {};
-    }>>;
+        timeZone: z.ZodString;
+    }, z.core.$strip>>;
 }, z.core.$strip>;
 declare const getReminderSettingsContract: {
     response: z.ZodObject<{
         reminderSettings: z.ZodNullable<z.ZodObject<{
-            id: z.ZodUUID;
-            userId: z.ZodUUID;
+            id: z.ZodString;
+            userId: z.ZodString;
             reminderEnabled: z.ZodBoolean;
-            timeZone: z.ZodString;
             createdAt: z.ZodString;
             updatedAt: z.ZodString;
-        }, {
-            out: {};
-            in: {};
-        }>>;
+            timeZone: z.ZodString;
+        }, z.core.$strip>>;
     }, z.core.$strip>;
 };
 declare const upsertReminderSettingsRequestSchema: z.ZodObject<{
@@ -4693,10 +557,15 @@ declare const updateReminderTimeZoneContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the upsert reminder settings body value. */
 type UpsertReminderSettingsBody = BodyOf<typeof upsertReminderSettingsContract>;
+/** Represents the upsert reminder settings response value. */
 type UpsertReminderSettingsResponse = ResponseOf<typeof upsertReminderSettingsContract>;
+/** Represents the update reminder time zone body value. */
 type UpdateReminderTimeZoneBody = BodyOf<typeof updateReminderTimeZoneContract>;
+/** Represents the update reminder time zone response value. */
 type UpdateReminderTimeZoneResponse = ResponseOf<typeof updateReminderTimeZoneContract>;
+/** Represents the get reminder settings response value. */
 type GetReminderSettingsResponse = ResponseOf<typeof getReminderSettingsContract>;
 
 declare const createUserRequestSchema: z.ZodObject<{
@@ -4706,15 +575,15 @@ declare const createUserRequestSchema: z.ZodObject<{
         email: z.ZodString;
         password: z.ZodString;
         gender: z.ZodPipe<z.ZodTransform<{}, unknown>, z.ZodEnum<{
-            Unknown: "Unknown";
             Male: "Male";
             Female: "Female";
             Other: "Other";
+            Unknown: "Unknown";
         }>>;
     }, z.core.$strip>;
 }, z.core.$strip>;
 declare const createUserUserSchema: z.ZodObject<{
-    id: z.ZodUUID;
+    id: z.ZodString;
     username: z.ZodString;
     name: z.ZodString;
     email: z.ZodString;
@@ -4731,58 +600,19 @@ declare const createUserContract: {
             email: z.ZodString;
             password: z.ZodString;
             gender: z.ZodPipe<z.ZodTransform<{}, unknown>, z.ZodEnum<{
-                Unknown: "Unknown";
                 Male: "Male";
                 Female: "Female";
                 Other: "Other";
+                Unknown: "Unknown";
             }>>;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the create user body value. */
 type CreateUserBody = BodyOf<typeof createUserContract>;
+/** Represents the create user response value. */
 type CreateUserResponse = ResponseOf<typeof createUserContract>;
-
-/** Normalized user object returned after account creation. */
-declare const createdUserQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    username: z.ZodString;
-    name: z.ZodString;
-    email: z.ZodString;
-    gender: z.ZodString;
-    role: z.ZodString;
-    createdAt: z.ZodString;
-}, z.core.$strip>;
-/** Raw account-creation function payload before `created_at` is normalized. */
-declare const createdUserRawQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    name: z.ZodString;
-    username: z.ZodString;
-    email: z.ZodString;
-    gender: z.ZodString;
-    role: z.ZodString;
-    created_at: z.ZodString;
-}, z.core.$strip>;
-/** SQL row wrapping the raw created user under `userData`. */
-declare const createdUserRowQueryDtoSchema: z.ZodObject<{
-    userData: z.ZodObject<{
-        id: z.ZodUUID;
-        name: z.ZodString;
-        username: z.ZodString;
-        email: z.ZodString;
-        gender: z.ZodString;
-        role: z.ZodString;
-        created_at: z.ZodString;
-    }, z.core.$strip>;
-}, z.core.$strip>;
-/** SQL row returned by the username/email existence function. */
-declare const userExistsQueryDtoSchema: z.ZodObject<{
-    id: z.ZodNullable<z.ZodUUID>;
-}, z.core.$strip>;
-type CreatedUserQueryDto = z.infer<typeof createdUserQueryDtoSchema>;
-type CreatedUserRawQueryDto = z.infer<typeof createdUserRawQueryDtoSchema>;
-type CreatedUserRowQueryDto = z.infer<typeof createdUserRowQueryDtoSchema>;
-type UserExistsQueryDto = z.infer<typeof userExistsQueryDtoSchema>;
 
 declare const replacePushTokenRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
@@ -4796,6 +626,7 @@ declare const replacePushTokenContract: {
         }, z.core.$strip>;
     }, z.core.$strip>;
 };
+/** Represents the replace push token body value. */
 type ReplacePushTokenBody = BodyOf<typeof replacePushTokenContract>;
 
 declare const updateCurrentUserRequestSchema: z.ZodObject<{
@@ -4816,9 +647,21 @@ declare const updateCurrentUserContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+declare const confirmEmailChangeRequestSchema: z.ZodObject<{
+    query: z.ZodObject<{
+        token: z.ZodOptional<z.ZodString>;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+declare const confirmEmailChangeContract: {
+    request: z.ZodObject<{
+        query: z.ZodObject<{
+            token: z.ZodOptional<z.ZodString>;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+};
 declare const userDataResponseSchema: z.ZodObject<{
     userData: z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
         username: z.ZodString;
         email: z.ZodString;
         name: z.ZodString;
@@ -4829,7 +672,7 @@ declare const userDataResponseSchema: z.ZodObject<{
         pushToken: z.ZodNullable<z.ZodString>;
         role: z.ZodString;
         isFirstLogin: z.ZodBoolean;
-        tokenVersion: z.ZodInt;
+        tokenVersion: z.ZodNumber;
         isVerified: z.ZodBoolean;
         authProvider: z.ZodString;
         lastLogin: z.ZodNullable<z.ZodString>;
@@ -4838,7 +681,7 @@ declare const userDataResponseSchema: z.ZodObject<{
 declare const userDataContract: {
     response: z.ZodObject<{
         userData: z.ZodObject<{
-            id: z.ZodUUID;
+            id: z.ZodString;
             username: z.ZodString;
             email: z.ZodString;
             name: z.ZodString;
@@ -4849,7 +692,7 @@ declare const userDataContract: {
             pushToken: z.ZodNullable<z.ZodString>;
             role: z.ZodString;
             isFirstLogin: z.ZodBoolean;
-            tokenVersion: z.ZodInt;
+            tokenVersion: z.ZodNumber;
             isVerified: z.ZodBoolean;
             authProvider: z.ZodString;
             lastLogin: z.ZodNullable<z.ZodString>;
@@ -4857,7 +700,7 @@ declare const userDataContract: {
     }, z.core.$strip>;
 };
 declare const getCurrentUserResponseSchema: z.ZodObject<{
-    id: z.ZodUUID;
+    id: z.ZodString;
     username: z.ZodString;
     email: z.ZodString;
     name: z.ZodString;
@@ -4868,14 +711,14 @@ declare const getCurrentUserResponseSchema: z.ZodObject<{
     pushToken: z.ZodNullable<z.ZodString>;
     role: z.ZodString;
     isFirstLogin: z.ZodBoolean;
-    tokenVersion: z.ZodInt;
+    tokenVersion: z.ZodNumber;
     isVerified: z.ZodBoolean;
     authProvider: z.ZodString;
     lastLogin: z.ZodNullable<z.ZodString>;
 }, z.core.$strip>;
 declare const getCurrentUserContract: {
     response: z.ZodObject<{
-        id: z.ZodUUID;
+        id: z.ZodString;
         username: z.ZodString;
         email: z.ZodString;
         name: z.ZodString;
@@ -4886,7 +729,7 @@ declare const getCurrentUserContract: {
         pushToken: z.ZodNullable<z.ZodString>;
         role: z.ZodString;
         isFirstLogin: z.ZodBoolean;
-        tokenVersion: z.ZodInt;
+        tokenVersion: z.ZodNumber;
         isVerified: z.ZodBoolean;
         authProvider: z.ZodString;
         lastLogin: z.ZodNullable<z.ZodString>;
@@ -4916,94 +759,29 @@ declare const replaceProfilePictureContract: {
         message: z.ZodString;
     }, z.core.$strip>;
 };
+/** Represents the update current user body value. */
 type UpdateCurrentUserBody = BodyOf<typeof updateCurrentUserContract>;
+/** Represents the update current user response value. */
 type UpdateCurrentUserResponse = ResponseOf<typeof updateCurrentUserContract>;
+/** Represents the confirm email change query value. */
+type ConfirmEmailChangeQuery = QueryOf<typeof confirmEmailChangeContract>;
+/** Represents the user data response value. */
 type UserDataResponse = ResponseOf<typeof userDataContract>;
+/** Represents the get current user response value. */
 type GetCurrentUserResponse = ResponseOf<typeof getCurrentUserContract>;
+/** Represents the delete profile picture body value. */
 type DeleteProfilePictureBody = BodyOf<typeof deleteProfilePictureContract>;
+/** Represents the replace profile picture response value. */
 type ReplaceProfilePictureResponse = ResponseOf<typeof replaceProfilePictureContract>;
-
-/** Fields consumed by the authenticated-user update query. */
-declare const authenticatedUserForUpdateQueryDtoSchema: z.ZodObject<{
-    username: z.ZodOptional<z.ZodString>;
-    fullName: z.ZodOptional<z.ZodString>;
-    email: z.ZodOptional<z.ZodString>;
-}, z.core.$strip>;
-/** User JSON object produced by authenticated-user SQL queries. */
-declare const userDataQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    username: z.ZodString;
-    email: z.ZodString;
-    name: z.ZodString;
-    gender: z.ZodString;
-    createdAt: z.ZodString;
-    updatedAt: z.ZodString;
-    profilePicPath: z.ZodNullable<z.ZodString>;
-    pushToken: z.ZodNullable<z.ZodString>;
-    role: z.ZodString;
-    isFirstLogin: z.ZodBoolean;
-    tokenVersion: z.ZodInt;
-    isVerified: z.ZodBoolean;
-    authProvider: z.ZodString;
-    lastLogin: z.ZodNullable<z.ZodString>;
-}, z.core.$strip>;
-/** SQL row wrapping authenticated-user JSON under `userData`. */
-declare const userDataRowQueryDtoSchema: z.ZodObject<{
-    userData: z.ZodObject<{
-        id: z.ZodUUID;
-        username: z.ZodString;
-        email: z.ZodString;
-        name: z.ZodString;
-        gender: z.ZodString;
-        createdAt: z.ZodString;
-        updatedAt: z.ZodString;
-        profilePicPath: z.ZodNullable<z.ZodString>;
-        pushToken: z.ZodNullable<z.ZodString>;
-        role: z.ZodString;
-        isFirstLogin: z.ZodBoolean;
-        tokenVersion: z.ZodInt;
-        isVerified: z.ZodBoolean;
-        authProvider: z.ZodString;
-        lastLogin: z.ZodNullable<z.ZodString>;
-    }, z.core.$strip>;
-}, z.core.$strip>;
-/** SQL row returned by the username/email conflict check. */
-declare const userConflictQueryDtoSchema: z.ZodObject<{
-    conflict: z.ZodBoolean;
-}, z.core.$strip>;
-/** Compact user row used when sending user-related messages. */
-declare const userMessageIdentityQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    username: z.ZodString;
-    name: z.ZodString;
-    profilePicPath: z.ZodNullable<z.ZodString>;
-}, z.core.$strip>;
-/** Profile-picture path returned by profile picture queries. */
-declare const userProfilePicQueryDtoSchema: z.ZodObject<{
-    profilePicPath: z.ZodNullable<z.ZodString>;
-}, z.core.$strip>;
-/** Claims carried by an email-change token. */
-declare const changeEmailTokenPayloadDtoSchema: z.ZodObject<{
-    jti: z.ZodString;
-    sub: z.ZodString;
-    newEmail: z.ZodString;
-    exp: z.ZodNumber;
-    iss: z.ZodString;
-    typ: z.ZodString;
-}, z.core.$strip>;
-type ChangeEmailTokenPayloadDto = z.infer<typeof changeEmailTokenPayloadDtoSchema>;
-/** Input fields accepted by the authenticated-user update SQL query. */
-type AuthenticatedUserForUpdateQueryDto = z.infer<typeof authenticatedUserForUpdateQueryDtoSchema>;
-type UserDataQueryDto = z.infer<typeof userDataQueryDtoSchema>;
-type UserDataRowQueryDto = z.infer<typeof userDataRowQueryDtoSchema>;
-type UserConflictQueryDto = z.infer<typeof userConflictQueryDtoSchema>;
-type UserMessageIdentityQueryDto = z.infer<typeof userMessageIdentityQueryDtoSchema>;
-type UserProfilePicQueryDto = z.infer<typeof userProfilePicQueryDtoSchema>;
 
 declare const createVideoUploadUrlRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         exercise: z.ZodString;
-        fileType: z.ZodString;
+        fileType: z.ZodEnum<{
+            "video/mp4": "video/mp4";
+            "video/quicktime": "video/quicktime";
+            "video/webm": "video/webm";
+        }>;
         jobId: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
@@ -5016,7 +794,11 @@ declare const createVideoUploadUrlContract: {
     request: z.ZodObject<{
         body: z.ZodObject<{
             exercise: z.ZodString;
-            fileType: z.ZodString;
+            fileType: z.ZodEnum<{
+                "video/mp4": "video/mp4";
+                "video/quicktime": "video/quicktime";
+                "video/webm": "video/webm";
+            }>;
             jobId: z.ZodString;
         }, z.core.$strip>;
     }, z.core.$strip>;
@@ -5026,14 +808,15 @@ declare const createVideoUploadUrlContract: {
         requestId: z.ZodString;
     }, z.core.$strip>;
 };
+/** Represents the create video upload url body value. */
 type CreateVideoUploadUrlBody = BodyOf<typeof createVideoUploadUrlContract>;
+/** Represents the create video upload url response value. */
 type CreateVideoUploadUrlResponse = ResponseOf<typeof createVideoUploadUrlContract>;
-
 /** Parameters used to enqueue a video-analysis job. */
 declare const enqueueAnalyzeVideoParamsDtoSchema: z.ZodObject<{
     fileKey: z.ZodString;
     exercise: z.ZodString;
-    userId: z.ZodUUID;
+    userId: z.ZodString;
     requestId: z.ZodString;
     sentryTrace: z.ZodOptional<z.ZodString>;
     baggage: z.ZodOptional<z.ZodString>;
@@ -5042,7 +825,7 @@ declare const enqueueAnalyzeVideoParamsDtoSchema: z.ZodObject<{
 declare const analyzeVideoPayloadDtoSchema: z.ZodObject<{
     fileKey: z.ZodString;
     exercise: z.ZodString;
-    userId: z.ZodUUID;
+    userId: z.ZodString;
     requestId: z.ZodString;
     sentryTrace: z.ZodOptional<z.ZodString>;
     baggage: z.ZodOptional<z.ZodString>;
@@ -5068,10 +851,10 @@ declare const squatRepetitionDtoSchema: z.ZodObject<{
         samplingRate: z.ZodString;
     }, z.core.$strip>;
 }, z.core.$strip>;
-/** Completed-or-failed result payload emitted by a video-analysis worker. */
+/** Completed-or-failed result emitted by a video-analysis worker. */
 declare const analyzeVideoResultPayloadDtoSchema: <TResultSchema extends z.ZodType>(resultSchema: TResultSchema) => z.ZodIntersection<z.ZodObject<{
     jobId: z.ZodString;
-    userId: z.ZodUUID;
+    userId: z.ZodString;
     exercise: z.ZodString;
     requestId: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>, z.ZodDiscriminatedUnion<[z.ZodObject<{
@@ -5083,9 +866,13 @@ declare const analyzeVideoResultPayloadDtoSchema: <TResultSchema extends z.ZodTy
     result: z.ZodNull;
     error: z.ZodString;
 }, z.core.$strip>]>>;
+/** Represents the enqueue analyze video params dto value. */
 type EnqueueAnalyzeVideoParamsDto = z.infer<typeof enqueueAnalyzeVideoParamsDtoSchema>;
+/** Represents the analyze video payload dto value. */
 type AnalyzeVideoPayloadDto = z.infer<typeof analyzeVideoPayloadDtoSchema>;
+/** Represents the squat repetition dto value. */
 type SquatRepetitionDto = z.infer<typeof squatRepetitionDtoSchema>;
+/** Represents the analyze video result payload dto value. */
 type AnalyzeVideoResultPayloadDto<TResult> = z.infer<ReturnType<typeof analyzeVideoResultPayloadDtoSchema<z.ZodType<TResult>>>>;
 
 declare const createWebSocketTicketRequestSchema: z.ZodObject<{
@@ -5106,7 +893,9 @@ declare const createWebSocketTicketContract: {
         ticket: z.ZodString;
     }, z.core.$strip>;
 };
+/** Represents the create web socket ticket body value. */
 type CreateWebSocketTicketBody = BodyOf<typeof createWebSocketTicketContract>;
+/** Represents the create web socket ticket response value. */
 type CreateWebSocketTicketResponse = ResponseOf<typeof createWebSocketTicketContract>;
 
 declare const getWorkoutPlanRequestSchema: z.ZodObject<{
@@ -5116,30 +905,30 @@ declare const getWorkoutPlanRequestSchema: z.ZodObject<{
 }, z.core.$strip>;
 declare const getWorkoutPlanResponseSchema: z.ZodObject<{
     workoutPlan: z.ZodNullable<z.ZodObject<{
-        id: z.ZodInt;
+        id: z.ZodNumber;
         numberOfSplits: z.ZodNumber;
         createdAt: z.ZodString;
-        userId: z.ZodUUID;
+        userId: z.ZodString;
         isActive: z.ZodBoolean;
         updatedAt: z.ZodString;
         workoutSplits: z.ZodNullable<z.ZodArray<z.ZodObject<{
-            id: z.ZodInt;
-            workoutId: z.ZodInt;
+            id: z.ZodNumber;
+            workoutId: z.ZodNumber;
             name: z.ZodString;
-            orderIndex: z.ZodInt;
+            orderIndex: z.ZodNumber;
             createdAt: z.ZodString;
             muscleGroup: z.ZodNullable<z.ZodString>;
             estimatedDurationMinutes: z.ZodNullable<z.ZodNumber>;
             isActive: z.ZodBoolean;
             exercises: z.ZodArray<z.ZodObject<{
-                exerciseToSplitId: z.ZodInt;
-                exerciseId: z.ZodInt;
+                exerciseToSplitId: z.ZodNumber;
+                exerciseId: z.ZodNumber;
                 name: z.ZodString;
                 sets: z.ZodArray<z.ZodObject<{
-                    orderIndex: z.ZodInt;
-                    reps: z.ZodInt;
+                    orderIndex: z.ZodNumber;
+                    reps: z.ZodNumber;
                 }, z.core.$strip>>;
-                orderIndex: z.ZodInt;
+                orderIndex: z.ZodNumber;
                 isActive: z.ZodBoolean;
                 targetMuscle: z.ZodString;
                 specificTargetMuscle: z.ZodString;
@@ -5155,30 +944,30 @@ declare const getWorkoutPlanContract: {
     }, z.core.$strip>;
     response: z.ZodObject<{
         workoutPlan: z.ZodNullable<z.ZodObject<{
-            id: z.ZodInt;
+            id: z.ZodNumber;
             numberOfSplits: z.ZodNumber;
             createdAt: z.ZodString;
-            userId: z.ZodUUID;
+            userId: z.ZodString;
             isActive: z.ZodBoolean;
             updatedAt: z.ZodString;
             workoutSplits: z.ZodNullable<z.ZodArray<z.ZodObject<{
-                id: z.ZodInt;
-                workoutId: z.ZodInt;
+                id: z.ZodNumber;
+                workoutId: z.ZodNumber;
                 name: z.ZodString;
-                orderIndex: z.ZodInt;
+                orderIndex: z.ZodNumber;
                 createdAt: z.ZodString;
                 muscleGroup: z.ZodNullable<z.ZodString>;
                 estimatedDurationMinutes: z.ZodNullable<z.ZodNumber>;
                 isActive: z.ZodBoolean;
                 exercises: z.ZodArray<z.ZodObject<{
-                    exerciseToSplitId: z.ZodInt;
-                    exerciseId: z.ZodInt;
+                    exerciseToSplitId: z.ZodNumber;
+                    exerciseId: z.ZodNumber;
                     name: z.ZodString;
                     sets: z.ZodArray<z.ZodObject<{
-                        orderIndex: z.ZodInt;
-                        reps: z.ZodInt;
+                        orderIndex: z.ZodNumber;
+                        reps: z.ZodNumber;
                     }, z.core.$strip>>;
-                    orderIndex: z.ZodInt;
+                    orderIndex: z.ZodNumber;
                     isActive: z.ZodBoolean;
                     targetMuscle: z.ZodString;
                     specificTargetMuscle: z.ZodString;
@@ -5193,11 +982,11 @@ declare const replaceWorkoutPlanRequestSchema: z.ZodObject<{
             name: z.ZodString;
             orderIndex: z.ZodNumber;
             exercises: z.ZodArray<z.ZodObject<{
-                exerciseId: z.ZodInt;
-                sets: z.ZodArray<z.ZodInt>;
-                orderIndex: z.ZodInt;
+                exerciseId: z.ZodNumber;
+                sets: z.ZodArray<z.ZodNumber>;
+                orderIndex: z.ZodNumber;
             }, z.core.$strip>>;
-            id: z.ZodOptional<z.ZodInt>;
+            id: z.ZodOptional<z.ZodNumber>;
         }, z.core.$strip>>;
         workoutName: z.ZodOptional<z.ZodString>;
         tz: z.ZodString;
@@ -5211,11 +1000,11 @@ declare const replaceWorkoutPlanContract: {
                 name: z.ZodString;
                 orderIndex: z.ZodNumber;
                 exercises: z.ZodArray<z.ZodObject<{
-                    exerciseId: z.ZodInt;
-                    sets: z.ZodArray<z.ZodInt>;
-                    orderIndex: z.ZodInt;
+                    exerciseId: z.ZodNumber;
+                    sets: z.ZodArray<z.ZodNumber>;
+                    orderIndex: z.ZodNumber;
                 }, z.core.$strip>>;
-                id: z.ZodOptional<z.ZodInt>;
+                id: z.ZodOptional<z.ZodNumber>;
             }, z.core.$strip>>;
             workoutName: z.ZodOptional<z.ZodString>;
             tz: z.ZodString;
@@ -5223,129 +1012,14 @@ declare const replaceWorkoutPlanContract: {
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the get workout plan query value. */
 type GetWorkoutPlanQuery = QueryOf<typeof getWorkoutPlanContract>;
+/** Represents the get workout plan response value. */
 type GetWorkoutPlanResponse = ResponseOf<typeof getWorkoutPlanContract>;
+/** Represents the replace workout plan body value. */
 type ReplaceWorkoutPlanBody = BodyOf<typeof replaceWorkoutPlanContract>;
+/** Represents the replace workout plan response value. */
 type ReplaceWorkoutPlanResponse = ResponseOf<typeof replaceWorkoutPlanContract>;
-
-/** Exercise input stored while adding a workout plan. */
-declare const workoutExerciseInputQueryDtoSchema: z.ZodObject<{
-    exerciseId: z.ZodInt;
-    sets: z.ZodArray<z.ZodInt>;
-    orderIndex: z.ZodInt;
-}, z.core.$strip>;
-/** Split input used while saving a plan. An omitted ID creates a new split. */
-declare const saveWorkoutSplitInputQueryDtoSchema: z.ZodObject<{
-    name: z.ZodString;
-    orderIndex: z.ZodNumber;
-    exercises: z.ZodArray<z.ZodObject<{
-        exerciseId: z.ZodInt;
-        sets: z.ZodArray<z.ZodInt>;
-        orderIndex: z.ZodInt;
-    }, z.core.$strip>>;
-    id: z.ZodOptional<z.ZodInt>;
-}, z.core.$strip>;
-declare const saveWorkoutSplitPayloadQueryDtoSchema: z.ZodArray<z.ZodObject<{
-    name: z.ZodString;
-    orderIndex: z.ZodNumber;
-    exercises: z.ZodArray<z.ZodObject<{
-        exerciseId: z.ZodInt;
-        sets: z.ZodArray<z.ZodInt>;
-        orderIndex: z.ZodInt;
-    }, z.core.$strip>>;
-    id: z.ZodOptional<z.ZodInt>;
-}, z.core.$strip>>;
-/** Exercise assignment included in a complete workout-plan query. */
-declare const exerciseInPlanQueryDtoSchema: z.ZodObject<{
-    exerciseToSplitId: z.ZodInt;
-    exerciseId: z.ZodInt;
-    name: z.ZodString;
-    sets: z.ZodArray<z.ZodObject<{
-        orderIndex: z.ZodInt;
-        reps: z.ZodInt;
-    }, z.core.$strip>>;
-    orderIndex: z.ZodInt;
-    isActive: z.ZodBoolean;
-    targetMuscle: z.ZodString;
-    specificTargetMuscle: z.ZodString;
-}, z.core.$strip>;
-/** Workout split included in a complete workout-plan query. */
-declare const workoutSplitQueryDtoSchema: z.ZodObject<{
-    id: z.ZodInt;
-    workoutId: z.ZodInt;
-    name: z.ZodString;
-    orderIndex: z.ZodInt;
-    createdAt: z.ZodString;
-    muscleGroup: z.ZodNullable<z.ZodString>;
-    estimatedDurationMinutes: z.ZodNullable<z.ZodNumber>;
-    isActive: z.ZodBoolean;
-    exercises: z.ZodArray<z.ZodObject<{
-        exerciseToSplitId: z.ZodInt;
-        exerciseId: z.ZodInt;
-        name: z.ZodString;
-        sets: z.ZodArray<z.ZodObject<{
-            orderIndex: z.ZodInt;
-            reps: z.ZodInt;
-        }, z.core.$strip>>;
-        orderIndex: z.ZodInt;
-        isActive: z.ZodBoolean;
-        targetMuscle: z.ZodString;
-        specificTargetMuscle: z.ZodString;
-    }, z.core.$strip>>;
-}, z.core.$strip>;
-/** Complete active workout plan returned for a user. */
-declare const wholeUserWorkoutPlanQueryDtoSchema: z.ZodObject<{
-    id: z.ZodInt;
-    numberOfSplits: z.ZodNumber;
-    createdAt: z.ZodString;
-    userId: z.ZodUUID;
-    isActive: z.ZodBoolean;
-    updatedAt: z.ZodString;
-    workoutSplits: z.ZodNullable<z.ZodArray<z.ZodObject<{
-        id: z.ZodInt;
-        workoutId: z.ZodInt;
-        name: z.ZodString;
-        orderIndex: z.ZodInt;
-        createdAt: z.ZodString;
-        muscleGroup: z.ZodNullable<z.ZodString>;
-        estimatedDurationMinutes: z.ZodNullable<z.ZodNumber>;
-        isActive: z.ZodBoolean;
-        exercises: z.ZodArray<z.ZodObject<{
-            exerciseToSplitId: z.ZodInt;
-            exerciseId: z.ZodInt;
-            name: z.ZodString;
-            sets: z.ZodArray<z.ZodObject<{
-                orderIndex: z.ZodInt;
-                reps: z.ZodInt;
-            }, z.core.$strip>>;
-            orderIndex: z.ZodInt;
-            isActive: z.ZodBoolean;
-            targetMuscle: z.ZodString;
-            specificTargetMuscle: z.ZodString;
-        }, z.core.$strip>>;
-    }, z.core.$strip>>>;
-}, z.core.$strip>;
-/** SQL row returned when inserting or retrieving a workout plan. */
-declare const workoutPlanIdQueryDtoSchema: z.ZodObject<{
-    id: z.ZodInt;
-}, z.core.$strip>;
-/** SQL row returned when inserting or reactivating a workout split. */
-declare const workoutSplitIdQueryDtoSchema: z.ZodObject<{
-    id: z.ZodInt;
-}, z.core.$strip>;
-/** SQL row returned when inserting or reactivating an exercise assignment. */
-declare const exerciseAssignmentIdQueryDtoSchema: z.ZodObject<{
-    id: z.ZodInt;
-}, z.core.$strip>;
-type WorkoutExerciseInputQueryDto = z.infer<typeof workoutExerciseInputQueryDtoSchema>;
-type SaveWorkoutSplitInputQueryDto = z.infer<typeof saveWorkoutSplitInputQueryDtoSchema>;
-type ExerciseInPlanQueryDto = z.infer<typeof exerciseInPlanQueryDtoSchema>;
-type WorkoutSplitQueryDto = z.infer<typeof workoutSplitQueryDtoSchema>;
-type WholeUserWorkoutPlanQueryDto = z.infer<typeof wholeUserWorkoutPlanQueryDtoSchema>;
-type SaveWorkoutSplitPayloadQueryDto = z.infer<typeof saveWorkoutSplitPayloadQueryDtoSchema>;
-type WorkoutPlanIdQueryDto = z.infer<typeof workoutPlanIdQueryDtoSchema>;
-type WorkoutSplitIdQueryDto = z.infer<typeof workoutSplitIdQueryDtoSchema>;
-type ExerciseAssignmentIdQueryDto = z.infer<typeof exerciseAssignmentIdQueryDtoSchema>;
 
 declare const getWorkoutHistoryRequestSchema: z.ZodObject<{
     query: z.ZodObject<{
@@ -5357,18 +1031,18 @@ declare const getWorkoutHistoryResponseSchema: z.ZodObject<{
         durationMins: z.ZodNumber;
         exerciseTracked: z.ZodArray<z.ZodObject<{
             exerciseTracking: z.ZodObject<{
-                exerciseTrackingId: z.ZodInt;
+                exerciseTrackingId: z.ZodNumber;
                 sets: z.ZodArray<z.ZodObject<{
-                    setIndex: z.ZodInt;
+                    setIndex: z.ZodNumber;
                     weight: z.ZodNumber;
-                    reps: z.ZodInt;
+                    reps: z.ZodNumber;
                 }, z.core.$strip>>;
                 notes: z.ZodNullable<z.ZodString>;
                 exerciseAssignment: z.ZodObject<{
-                    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-                    orderIndex: z.ZodNullable<z.ZodInt>;
-                    exerciseId: z.ZodInt;
-                    workoutSplitId: z.ZodInt;
+                    exerciseToSplitId: z.ZodNullable<z.ZodNumber>;
+                    orderIndex: z.ZodNullable<z.ZodNumber>;
+                    exerciseId: z.ZodNumber;
+                    workoutSplitId: z.ZodNumber;
                     workoutSplitName: z.ZodString;
                     exerciseName: z.ZodString;
                     targetMuscle: z.ZodString;
@@ -5389,18 +1063,18 @@ declare const getWorkoutHistoryContract: {
             durationMins: z.ZodNumber;
             exerciseTracked: z.ZodArray<z.ZodObject<{
                 exerciseTracking: z.ZodObject<{
-                    exerciseTrackingId: z.ZodInt;
+                    exerciseTrackingId: z.ZodNumber;
                     sets: z.ZodArray<z.ZodObject<{
-                        setIndex: z.ZodInt;
+                        setIndex: z.ZodNumber;
                         weight: z.ZodNumber;
-                        reps: z.ZodInt;
+                        reps: z.ZodNumber;
                     }, z.core.$strip>>;
                     notes: z.ZodNullable<z.ZodString>;
                     exerciseAssignment: z.ZodObject<{
-                        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-                        orderIndex: z.ZodNullable<z.ZodInt>;
-                        exerciseId: z.ZodInt;
-                        workoutSplitId: z.ZodInt;
+                        exerciseToSplitId: z.ZodNullable<z.ZodNumber>;
+                        orderIndex: z.ZodNullable<z.ZodNumber>;
+                        exerciseId: z.ZodNumber;
+                        workoutSplitId: z.ZodNumber;
                         workoutSplitName: z.ZodString;
                         exerciseName: z.ZodString;
                         targetMuscle: z.ZodString;
@@ -5419,17 +1093,17 @@ declare const getExerciseHistoryRequestSchema: z.ZodObject<{
 declare const getExerciseHistoryResponseSchema: z.ZodObject<{
     byExerciseToSplitId: z.ZodRecord<z.ZodString, z.ZodObject<{
         exerciseTracked: z.ZodArray<z.ZodObject<{
-            exerciseTrackingId: z.ZodInt;
             sets: z.ZodArray<z.ZodObject<{
-                setIndex: z.ZodInt;
+                setIndex: z.ZodNumber;
                 weight: z.ZodNumber;
-                reps: z.ZodInt;
+                reps: z.ZodNumber;
             }, z.core.$strip>>;
+            exerciseTrackingId: z.ZodNumber;
             exerciseAssignment: z.ZodObject<{
-                exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-                orderIndex: z.ZodNullable<z.ZodInt>;
-                exerciseId: z.ZodInt;
-                workoutSplitId: z.ZodInt;
+                exerciseToSplitId: z.ZodNullable<z.ZodNumber>;
+                orderIndex: z.ZodNullable<z.ZodNumber>;
+                exerciseId: z.ZodNumber;
+                workoutSplitId: z.ZodNumber;
                 workoutSplitName: z.ZodString;
                 exerciseName: z.ZodString;
                 targetMuscle: z.ZodString;
@@ -5448,17 +1122,17 @@ declare const getExerciseHistoryContract: {
     response: z.ZodObject<{
         byExerciseToSplitId: z.ZodRecord<z.ZodString, z.ZodObject<{
             exerciseTracked: z.ZodArray<z.ZodObject<{
-                exerciseTrackingId: z.ZodInt;
                 sets: z.ZodArray<z.ZodObject<{
-                    setIndex: z.ZodInt;
+                    setIndex: z.ZodNumber;
                     weight: z.ZodNumber;
-                    reps: z.ZodInt;
+                    reps: z.ZodNumber;
                 }, z.core.$strip>>;
+                exerciseTrackingId: z.ZodNumber;
                 exerciseAssignment: z.ZodObject<{
-                    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-                    orderIndex: z.ZodNullable<z.ZodInt>;
-                    exerciseId: z.ZodInt;
-                    workoutSplitId: z.ZodInt;
+                    exerciseToSplitId: z.ZodNullable<z.ZodNumber>;
+                    orderIndex: z.ZodNullable<z.ZodNumber>;
+                    exerciseId: z.ZodNumber;
+                    workoutSplitId: z.ZodNumber;
                     workoutSplitName: z.ZodString;
                     exerciseName: z.ZodString;
                     targetMuscle: z.ZodString;
@@ -5473,9 +1147,9 @@ declare const getWorkoutStatisticsResponseSchema: z.ZodObject<{
     workoutCount: z.ZodCoercedNumber<unknown>;
     hasExerciseTracking: z.ZodBoolean;
     nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
-        id: z.ZodInt;
+        id: z.ZodNumber;
         name: z.ZodString;
-        orderIndex: z.ZodInt;
+        orderIndex: z.ZodNumber;
         muscleGroup: z.ZodNullable<z.ZodString>;
     }, z.core.$strip>>;
     workoutTargets: z.ZodObject<{
@@ -5489,12 +1163,12 @@ declare const getWorkoutStatisticsResponseSchema: z.ZodObject<{
         setTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
     }, z.core.$strip>;
     latestPr: z.ZodArray<z.ZodObject<{
-        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-        exerciseId: z.ZodInt;
+        exerciseToSplitId: z.ZodNullable<z.ZodNumber>;
+        exerciseId: z.ZodNumber;
         exerciseName: z.ZodString;
         prWeight: z.ZodNumber;
-        prReps: z.ZodInt;
-        prSetIndex: z.ZodInt;
+        prReps: z.ZodNumber;
+        prSetIndex: z.ZodNumber;
         estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
         workoutStartLocal: z.ZodString;
     }, z.core.$strip>>;
@@ -5509,9 +1183,9 @@ declare const getWorkoutStatisticsContract: {
         workoutCount: z.ZodCoercedNumber<unknown>;
         hasExerciseTracking: z.ZodBoolean;
         nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
-            id: z.ZodInt;
+            id: z.ZodNumber;
             name: z.ZodString;
-            orderIndex: z.ZodInt;
+            orderIndex: z.ZodNumber;
             muscleGroup: z.ZodNullable<z.ZodString>;
         }, z.core.$strip>>;
         workoutTargets: z.ZodObject<{
@@ -5525,12 +1199,12 @@ declare const getWorkoutStatisticsContract: {
             setTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
         }, z.core.$strip>;
         latestPr: z.ZodArray<z.ZodObject<{
-            exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-            exerciseId: z.ZodInt;
+            exerciseToSplitId: z.ZodNullable<z.ZodNumber>;
+            exerciseId: z.ZodNumber;
             exerciseName: z.ZodString;
             prWeight: z.ZodNumber;
-            prReps: z.ZodInt;
-            prSetIndex: z.ZodInt;
+            prReps: z.ZodNumber;
+            prSetIndex: z.ZodNumber;
             estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
             workoutStartLocal: z.ZodString;
         }, z.core.$strip>>;
@@ -5540,24 +1214,24 @@ declare const createWorkoutSessionRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         workout: z.ZodArray<z.ZodDiscriminatedUnion<[z.ZodObject<{
             trackedSets: z.ZodArray<z.ZodObject<{
-                reps: z.ZodInt;
+                reps: z.ZodNumber;
                 weight: z.ZodNumber;
-                setIndex: z.ZodInt;
+                setIndex: z.ZodNumber;
             }, z.core.$strip>>;
             notes: z.ZodOptional<z.ZodNullable<z.ZodString>>;
             isExerciseAssignedToSplit: z.ZodLiteral<true>;
-            exerciseToSplitId: z.ZodInt;
-            exerciseId: z.ZodOptional<z.ZodNullable<z.ZodInt>>;
+            exerciseToSplitId: z.ZodNumber;
+            exerciseId: z.ZodOptional<z.ZodNumber>;
         }, z.core.$strip>, z.ZodObject<{
             trackedSets: z.ZodArray<z.ZodObject<{
-                reps: z.ZodInt;
+                reps: z.ZodNumber;
                 weight: z.ZodNumber;
-                setIndex: z.ZodInt;
+                setIndex: z.ZodNumber;
             }, z.core.$strip>>;
             notes: z.ZodOptional<z.ZodNullable<z.ZodString>>;
             isExerciseAssignedToSplit: z.ZodLiteral<false>;
             exerciseToSplitId: z.ZodOptional<z.ZodNull>;
-            exerciseId: z.ZodInt;
+            exerciseId: z.ZodNumber;
         }, z.core.$strip>]>>;
         tz: z.ZodOptional<z.ZodString>;
         workoutStartUtc: z.ZodString;
@@ -5570,24 +1244,24 @@ declare const createWorkoutSessionContract: {
         body: z.ZodObject<{
             workout: z.ZodArray<z.ZodDiscriminatedUnion<[z.ZodObject<{
                 trackedSets: z.ZodArray<z.ZodObject<{
-                    reps: z.ZodInt;
+                    reps: z.ZodNumber;
                     weight: z.ZodNumber;
-                    setIndex: z.ZodInt;
+                    setIndex: z.ZodNumber;
                 }, z.core.$strip>>;
                 notes: z.ZodOptional<z.ZodNullable<z.ZodString>>;
                 isExerciseAssignedToSplit: z.ZodLiteral<true>;
-                exerciseToSplitId: z.ZodInt;
-                exerciseId: z.ZodOptional<z.ZodNullable<z.ZodInt>>;
+                exerciseToSplitId: z.ZodNumber;
+                exerciseId: z.ZodOptional<z.ZodNumber>;
             }, z.core.$strip>, z.ZodObject<{
                 trackedSets: z.ZodArray<z.ZodObject<{
-                    reps: z.ZodInt;
+                    reps: z.ZodNumber;
                     weight: z.ZodNumber;
-                    setIndex: z.ZodInt;
+                    setIndex: z.ZodNumber;
                 }, z.core.$strip>>;
                 notes: z.ZodOptional<z.ZodNullable<z.ZodString>>;
                 isExerciseAssignedToSplit: z.ZodLiteral<false>;
                 exerciseToSplitId: z.ZodOptional<z.ZodNull>;
-                exerciseId: z.ZodInt;
+                exerciseId: z.ZodNumber;
             }, z.core.$strip>]>>;
             tz: z.ZodOptional<z.ZodString>;
             workoutStartUtc: z.ZodString;
@@ -5598,12 +1272,12 @@ declare const createWorkoutSessionContract: {
 };
 declare const getPersonalRecordsResponseSchema: z.ZodObject<{
     prs: z.ZodRecord<z.ZodString, z.ZodObject<{
-        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+        exerciseToSplitId: z.ZodNullable<z.ZodNumber>;
         exerciseName: z.ZodString;
         workoutStartLocal: z.ZodString;
         prWeight: z.ZodNumber;
-        prReps: z.ZodInt;
-        prSetIndex: z.ZodInt;
+        prReps: z.ZodNumber;
+        prSetIndex: z.ZodNumber;
         estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
     }, z.core.$strip>>;
 }, z.core.$strip>;
@@ -5620,521 +1294,64 @@ declare const getPersonalRecordsContract: {
     }, z.core.$strip>;
     response: z.ZodObject<{
         prs: z.ZodRecord<z.ZodString, z.ZodObject<{
-            exerciseToSplitId: z.ZodNullable<z.ZodInt>;
+            exerciseToSplitId: z.ZodNullable<z.ZodNumber>;
             exerciseName: z.ZodString;
             workoutStartLocal: z.ZodString;
             prWeight: z.ZodNumber;
-            prReps: z.ZodInt;
-            prSetIndex: z.ZodInt;
+            prReps: z.ZodNumber;
+            prSetIndex: z.ZodNumber;
             estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
         }, z.core.$strip>>;
     }, z.core.$strip>;
 };
+/** Represents the get workout history query value. */
 type GetWorkoutHistoryQuery = QueryOf<typeof getWorkoutHistoryContract>;
+/** Represents the get exercise history query value. */
 type GetExerciseHistoryQuery = QueryOf<typeof getExerciseHistoryContract>;
+/** Represents the get personal records query value. */
 type GetPersonalRecordsQuery = QueryOf<typeof getPersonalRecordsContract>;
+/** Represents the get workout history response value. */
 type GetWorkoutHistoryResponse = ResponseOf<typeof getWorkoutHistoryContract>;
+/** Represents the get exercise history response value. */
 type GetExerciseHistoryResponse = ResponseOf<typeof getExerciseHistoryContract>;
+/** Represents the get workout statistics response value. */
 type GetWorkoutStatisticsResponse = ResponseOf<typeof getWorkoutStatisticsContract>;
+/** Represents the get personal records response value. */
 type GetPersonalRecordsResponse = ResponseOf<typeof getPersonalRecordsContract>;
+/** Represents the create workout session body value. */
 type CreateWorkoutSessionBody = BodyOf<typeof createWorkoutSessionContract>;
+/** Represents the create workout session response value. */
 type CreateWorkoutSessionResponse = ResponseOf<typeof createWorkoutSessionContract>;
-
-declare const finishedWorkoutEntryQueryDtoSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
-    trackedSets: z.ZodArray<z.ZodObject<{
-        reps: z.ZodInt;
-        weight: z.ZodNumber;
-        setIndex: z.ZodInt;
-    }, z.core.$strip>>;
-    notes: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    isExerciseAssignedToSplit: z.ZodLiteral<true>;
-    exerciseToSplitId: z.ZodInt;
-    exerciseId: z.ZodOptional<z.ZodNullable<z.ZodInt>>;
-}, z.core.$strip>, z.ZodObject<{
-    trackedSets: z.ZodArray<z.ZodObject<{
-        reps: z.ZodInt;
-        weight: z.ZodNumber;
-        setIndex: z.ZodInt;
-    }, z.core.$strip>>;
-    notes: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    isExerciseAssignedToSplit: z.ZodLiteral<false>;
-    exerciseToSplitId: z.ZodOptional<z.ZodNull>;
-    exerciseId: z.ZodInt;
-}, z.core.$strip>]>;
-/** Target-muscle metadata nested in a tracking-map item. */
-declare const exerciseMetadataQueryDtoSchema: z.ZodObject<{
-    targetMuscle: z.ZodString;
-    specificTargetMuscle: z.ZodString;
-}, z.core.$strip>;
-/** Personal-record maximum returned by the tracking analysis query. */
-declare const exerciseTrackingPrMaxQueryDtoSchema: z.ZodObject<{
-    exercise: z.ZodString;
-    weight: z.ZodNumber;
-    reps: z.ZodInt;
-    workoutTimeUtc: z.ZodString;
-}, z.core.$strip>;
-/** Aggregate workout-frequency and personal-record analysis. */
-declare const exerciseTrackingAnalysisQueryDtoSchema: z.ZodObject<{
-    uniqueDays: z.ZodNumber;
-    mostFrequentSplit: z.ZodNullable<z.ZodString>;
-    mostFrequentSplitDays: z.ZodNullable<z.ZodNumber>;
-    lastWorkoutDate: z.ZodNullable<z.ZodString>;
-    splitDaysByName: z.ZodRecord<z.ZodString, z.ZodNumber>;
-    prs: z.ZodObject<{
-        prMax: z.ZodNullable<z.ZodObject<{
-            exercise: z.ZodString;
-            weight: z.ZodNumber;
-            reps: z.ZodInt;
-            workoutTimeUtc: z.ZodString;
-        }, z.core.$strip>>;
-    }, z.core.$strip>;
-}, z.core.$strip>;
-/** Detailed exercise-tracking item used by each tracking map. */
-declare const trackingMapItemQueryDtoSchema: z.ZodObject<{
-    id: z.ZodInt;
-    exerciseToSplitId: z.ZodInt;
-    weight: z.ZodArray<z.ZodNumber>;
-    reps: z.ZodArray<z.ZodInt>;
-    notes: z.ZodNullable<z.ZodString>;
-    exerciseId: z.ZodInt;
-    workoutSplitId: z.ZodInt;
-    splitName: z.ZodString;
-    exercise: z.ZodString;
-    workoutDate: z.ZodString;
-    orderIndex: z.ZodInt;
-    exerciseToWorkoutSplit: z.ZodObject<{
-        sets: z.ZodArray<z.ZodInt>;
-        exercises: z.ZodObject<{
-            targetMuscle: z.ZodString;
-            specificTargetMuscle: z.ZodString;
-        }, z.core.$strip>;
-    }, z.core.$strip>;
-}, z.core.$strip>;
-/** Tracking item used in maps already grouped by workout date. */
-declare const trackingByDateItemQueryDtoSchema: z.ZodObject<{
-    id: z.ZodInt;
-    exerciseToSplitId: z.ZodInt;
-    orderIndex: z.ZodInt;
-    reps: z.ZodArray<z.ZodInt>;
-    workoutSplitId: z.ZodInt;
-    exerciseId: z.ZodInt;
-    exercise: z.ZodString;
-    exerciseToWorkoutSplit: z.ZodObject<{
-        sets: z.ZodArray<z.ZodInt>;
-        exercises: z.ZodObject<{
-            targetMuscle: z.ZodString;
-            specificTargetMuscle: z.ZodString;
-        }, z.core.$strip>;
-    }, z.core.$strip>;
-    notes: z.ZodNullable<z.ZodString>;
-    weight: z.ZodArray<z.ZodNumber>;
-    splitName: z.ZodString;
-}, z.core.$strip>;
-/** Tracking item used in maps already grouped by workout split name. */
-declare const trackingBySplitNameItemQueryDtoSchema: z.ZodObject<{
-    id: z.ZodInt;
-    exerciseToSplitId: z.ZodInt;
-    orderIndex: z.ZodInt;
-    reps: z.ZodArray<z.ZodInt>;
-    workoutSplitId: z.ZodInt;
-    exerciseId: z.ZodInt;
-    exercise: z.ZodString;
-    exerciseToWorkoutSplit: z.ZodObject<{
-        sets: z.ZodArray<z.ZodInt>;
-        exercises: z.ZodObject<{
-            targetMuscle: z.ZodString;
-            specificTargetMuscle: z.ZodString;
-        }, z.core.$strip>;
-    }, z.core.$strip>;
-    notes: z.ZodNullable<z.ZodString>;
-    weight: z.ZodArray<z.ZodNumber>;
-    workoutDate: z.ZodString;
-}, z.core.$strip>;
-declare const personalRecordQueryDtoSchema: z.ZodObject<{
-    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-    exerciseId: z.ZodInt;
-    exerciseName: z.ZodString;
-    prWeight: z.ZodNumber;
-    prReps: z.ZodInt;
-    prSetIndex: z.ZodInt;
-    estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
-    workoutStartLocal: z.ZodString;
-}, z.core.$strip>;
-declare const personalRecordsQueryDtoSchema: z.ZodObject<{
-    prs: z.ZodRecord<z.ZodString, z.ZodObject<{
-        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-        exerciseName: z.ZodString;
-        workoutStartLocal: z.ZodString;
-        prWeight: z.ZodNumber;
-        prReps: z.ZodInt;
-        prSetIndex: z.ZodInt;
-        estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
-    }, z.core.$strip>>;
-}, z.core.$strip>;
-declare const exerciseTrackingStatsQueryDtoSchema: z.ZodObject<{
-    workoutCount: z.ZodCoercedNumber<unknown>;
-    hasExerciseTracking: z.ZodBoolean;
-    nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
-        id: z.ZodInt;
-        name: z.ZodString;
-        orderIndex: z.ZodInt;
-        muscleGroup: z.ZodNullable<z.ZodString>;
-    }, z.core.$strip>>;
-    workoutTargets: z.ZodObject<{
-        workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
-        workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-    }, z.core.$strip>;
-    lastWorkoutStats: z.ZodObject<{
-        workoutDate: z.ZodNullable<z.ZodString>;
-        workoutSplitName: z.ZodNullable<z.ZodString>;
-        exerciseTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
-        setTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
-    }, z.core.$strip>;
-    latestPr: z.ZodArray<z.ZodObject<{
-        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-        exerciseId: z.ZodInt;
-        exerciseName: z.ZodString;
-        prWeight: z.ZodNumber;
-        prReps: z.ZodInt;
-        prSetIndex: z.ZodInt;
-        estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
-        workoutStartLocal: z.ZodString;
-    }, z.core.$strip>>;
-}, z.core.$strip>;
-declare const exerciseTrackingMapsQueryDtoSchema: z.ZodObject<{
-    byDate: z.ZodRecord<z.ZodString, z.ZodObject<{
-        durationMins: z.ZodNumber;
-        exerciseTracked: z.ZodArray<z.ZodObject<{
-            exerciseTracking: z.ZodObject<{
-                exerciseTrackingId: z.ZodInt;
-                sets: z.ZodArray<z.ZodObject<{
-                    setIndex: z.ZodInt;
-                    weight: z.ZodNumber;
-                    reps: z.ZodInt;
-                }, z.core.$strip>>;
-                notes: z.ZodNullable<z.ZodString>;
-                exerciseAssignment: z.ZodObject<{
-                    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-                    orderIndex: z.ZodNullable<z.ZodInt>;
-                    exerciseId: z.ZodInt;
-                    workoutSplitId: z.ZodInt;
-                    workoutSplitName: z.ZodString;
-                    exerciseName: z.ZodString;
-                    targetMuscle: z.ZodString;
-                    specificTargetMuscle: z.ZodString;
-                }, z.core.$strip>;
-            }, z.core.$strip>;
-        }, z.core.$strip>>;
-    }, z.core.$strip>>;
-}, z.core.$strip>;
-declare const exerciseHistoryQueryDtoSchema: z.ZodObject<{
-    byExerciseToSplitId: z.ZodRecord<z.ZodString, z.ZodObject<{
-        exerciseTracked: z.ZodArray<z.ZodObject<{
-            exerciseTrackingId: z.ZodInt;
-            sets: z.ZodArray<z.ZodObject<{
-                setIndex: z.ZodInt;
-                weight: z.ZodNumber;
-                reps: z.ZodInt;
-            }, z.core.$strip>>;
-            exerciseAssignment: z.ZodObject<{
-                exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-                orderIndex: z.ZodNullable<z.ZodInt>;
-                exerciseId: z.ZodInt;
-                workoutSplitId: z.ZodInt;
-                workoutSplitName: z.ZodString;
-                exerciseName: z.ZodString;
-                targetMuscle: z.ZodString;
-                specificTargetMuscle: z.ZodString;
-            }, z.core.$strip>;
-            workoutStartLocal: z.ZodString;
-        }, z.core.$strip>>;
-    }, z.core.$strip>>;
-}, z.core.$strip>;
-declare const exerciseTrackingAndStatsQueryDtoSchema: z.ZodObject<{
-    trackingStats: z.ZodObject<{
-        workoutCount: z.ZodCoercedNumber<unknown>;
-        hasExerciseTracking: z.ZodBoolean;
-        nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
-            id: z.ZodInt;
-            name: z.ZodString;
-            orderIndex: z.ZodInt;
-            muscleGroup: z.ZodNullable<z.ZodString>;
-        }, z.core.$strip>>;
-        workoutTargets: z.ZodObject<{
-            workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
-            workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-        }, z.core.$strip>;
-        lastWorkoutStats: z.ZodObject<{
-            workoutDate: z.ZodNullable<z.ZodString>;
-            workoutSplitName: z.ZodNullable<z.ZodString>;
-            exerciseTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
-            setTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
-        }, z.core.$strip>;
-        latestPr: z.ZodArray<z.ZodObject<{
-            exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-            exerciseId: z.ZodInt;
-            exerciseName: z.ZodString;
-            prWeight: z.ZodNumber;
-            prReps: z.ZodInt;
-            prSetIndex: z.ZodInt;
-            estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
-            workoutStartLocal: z.ZodString;
-        }, z.core.$strip>>;
-    }, z.core.$strip>;
-    trackingMaps: z.ZodObject<{
-        byDate: z.ZodRecord<z.ZodString, z.ZodObject<{
-            durationMins: z.ZodNumber;
-            exerciseTracked: z.ZodArray<z.ZodObject<{
-                exerciseTracking: z.ZodObject<{
-                    exerciseTrackingId: z.ZodInt;
-                    sets: z.ZodArray<z.ZodObject<{
-                        setIndex: z.ZodInt;
-                        weight: z.ZodNumber;
-                        reps: z.ZodInt;
-                    }, z.core.$strip>>;
-                    notes: z.ZodNullable<z.ZodString>;
-                    exerciseAssignment: z.ZodObject<{
-                        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-                        orderIndex: z.ZodNullable<z.ZodInt>;
-                        exerciseId: z.ZodInt;
-                        workoutSplitId: z.ZodInt;
-                        workoutSplitName: z.ZodString;
-                        exerciseName: z.ZodString;
-                        targetMuscle: z.ZodString;
-                        specificTargetMuscle: z.ZodString;
-                    }, z.core.$strip>;
-                }, z.core.$strip>;
-            }, z.core.$strip>>;
-        }, z.core.$strip>>;
-    }, z.core.$strip>;
-}, z.core.$strip>;
-/** SQL row wrapping the complete tracking aggregate under `data`. */
-declare const exerciseTrackingAndStatsRowQueryDtoSchema: z.ZodObject<{
-    data: z.ZodObject<{
-        trackingStats: z.ZodObject<{
-            workoutCount: z.ZodCoercedNumber<unknown>;
-            hasExerciseTracking: z.ZodBoolean;
-            nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
-                id: z.ZodInt;
-                name: z.ZodString;
-                orderIndex: z.ZodInt;
-                muscleGroup: z.ZodNullable<z.ZodString>;
-            }, z.core.$strip>>;
-            workoutTargets: z.ZodObject<{
-                workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
-                workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-            }, z.core.$strip>;
-            lastWorkoutStats: z.ZodObject<{
-                workoutDate: z.ZodNullable<z.ZodString>;
-                workoutSplitName: z.ZodNullable<z.ZodString>;
-                exerciseTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
-                setTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
-            }, z.core.$strip>;
-            latestPr: z.ZodArray<z.ZodObject<{
-                exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-                exerciseId: z.ZodInt;
-                exerciseName: z.ZodString;
-                prWeight: z.ZodNumber;
-                prReps: z.ZodInt;
-                prSetIndex: z.ZodInt;
-                estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
-                workoutStartLocal: z.ZodString;
-            }, z.core.$strip>>;
-        }, z.core.$strip>;
-        trackingMaps: z.ZodObject<{
-            byDate: z.ZodRecord<z.ZodString, z.ZodObject<{
-                durationMins: z.ZodNumber;
-                exerciseTracked: z.ZodArray<z.ZodObject<{
-                    exerciseTracking: z.ZodObject<{
-                        exerciseTrackingId: z.ZodInt;
-                        sets: z.ZodArray<z.ZodObject<{
-                            setIndex: z.ZodInt;
-                            weight: z.ZodNumber;
-                            reps: z.ZodInt;
-                        }, z.core.$strip>>;
-                        notes: z.ZodNullable<z.ZodString>;
-                        exerciseAssignment: z.ZodObject<{
-                            exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-                            orderIndex: z.ZodNullable<z.ZodInt>;
-                            exerciseId: z.ZodInt;
-                            workoutSplitId: z.ZodInt;
-                            workoutSplitName: z.ZodString;
-                            exerciseName: z.ZodString;
-                            targetMuscle: z.ZodString;
-                            specificTargetMuscle: z.ZodString;
-                        }, z.core.$strip>;
-                    }, z.core.$strip>;
-                }, z.core.$strip>>;
-            }, z.core.$strip>>;
-        }, z.core.$strip>;
-    }, z.core.$strip>;
-}, z.core.$strip>;
-declare const exerciseTrackingStatsRowQueryDtoSchema: z.ZodObject<{
-    data: z.ZodObject<{
-        workoutCount: z.ZodCoercedNumber<unknown>;
-        hasExerciseTracking: z.ZodBoolean;
-        nextSplitByOrderIndex: z.ZodNullable<z.ZodObject<{
-            id: z.ZodInt;
-            name: z.ZodString;
-            orderIndex: z.ZodInt;
-            muscleGroup: z.ZodNullable<z.ZodString>;
-        }, z.core.$strip>>;
-        workoutTargets: z.ZodObject<{
-            workoutCountThisWeek: z.ZodCoercedNumber<unknown>;
-            workoutCountScheduledPerWeek: z.ZodCoercedNumber<unknown>;
-        }, z.core.$strip>;
-        lastWorkoutStats: z.ZodObject<{
-            workoutDate: z.ZodNullable<z.ZodString>;
-            workoutSplitName: z.ZodNullable<z.ZodString>;
-            exerciseTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
-            setTrackedCount: z.ZodNullable<z.ZodCoercedNumber<unknown>>;
-        }, z.core.$strip>;
-        latestPr: z.ZodArray<z.ZodObject<{
-            exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-            exerciseId: z.ZodInt;
-            exerciseName: z.ZodString;
-            prWeight: z.ZodNumber;
-            prReps: z.ZodInt;
-            prSetIndex: z.ZodInt;
-            estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
-            workoutStartLocal: z.ZodString;
-        }, z.core.$strip>>;
-    }, z.core.$strip>;
-}, z.core.$strip>;
-declare const exerciseTrackingMapsRowQueryDtoSchema: z.ZodObject<{
-    data: z.ZodObject<{
-        byDate: z.ZodRecord<z.ZodString, z.ZodObject<{
-            durationMins: z.ZodNumber;
-            exerciseTracked: z.ZodArray<z.ZodObject<{
-                exerciseTracking: z.ZodObject<{
-                    exerciseTrackingId: z.ZodInt;
-                    sets: z.ZodArray<z.ZodObject<{
-                        setIndex: z.ZodInt;
-                        weight: z.ZodNumber;
-                        reps: z.ZodInt;
-                    }, z.core.$strip>>;
-                    notes: z.ZodNullable<z.ZodString>;
-                    exerciseAssignment: z.ZodObject<{
-                        exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-                        orderIndex: z.ZodNullable<z.ZodInt>;
-                        exerciseId: z.ZodInt;
-                        workoutSplitId: z.ZodInt;
-                        workoutSplitName: z.ZodString;
-                        exerciseName: z.ZodString;
-                        targetMuscle: z.ZodString;
-                        specificTargetMuscle: z.ZodString;
-                    }, z.core.$strip>;
-                }, z.core.$strip>;
-            }, z.core.$strip>>;
-        }, z.core.$strip>>;
-    }, z.core.$strip>;
-}, z.core.$strip>;
-declare const exerciseHistoryRowQueryDtoSchema: z.ZodObject<{
-    data: z.ZodObject<{
-        byExerciseToSplitId: z.ZodRecord<z.ZodString, z.ZodObject<{
-            exerciseTracked: z.ZodArray<z.ZodObject<{
-                exerciseTrackingId: z.ZodInt;
-                sets: z.ZodArray<z.ZodObject<{
-                    setIndex: z.ZodInt;
-                    weight: z.ZodNumber;
-                    reps: z.ZodInt;
-                }, z.core.$strip>>;
-                exerciseAssignment: z.ZodObject<{
-                    exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-                    orderIndex: z.ZodNullable<z.ZodInt>;
-                    exerciseId: z.ZodInt;
-                    workoutSplitId: z.ZodInt;
-                    workoutSplitName: z.ZodString;
-                    exerciseName: z.ZodString;
-                    targetMuscle: z.ZodString;
-                    specificTargetMuscle: z.ZodString;
-                }, z.core.$strip>;
-                workoutStartLocal: z.ZodString;
-            }, z.core.$strip>>;
-        }, z.core.$strip>>;
-    }, z.core.$strip>;
-}, z.core.$strip>;
-declare const personalRecordsRowQueryDtoSchema: z.ZodObject<{
-    data: z.ZodObject<{
-        prs: z.ZodRecord<z.ZodString, z.ZodObject<{
-            exerciseToSplitId: z.ZodNullable<z.ZodInt>;
-            exerciseName: z.ZodString;
-            workoutStartLocal: z.ZodString;
-            prWeight: z.ZodNumber;
-            prReps: z.ZodInt;
-            prSetIndex: z.ZodInt;
-            estimatedOneRepMax: z.ZodNullable<z.ZodNumber>;
-        }, z.core.$strip>>;
-    }, z.core.$strip>;
-}, z.core.$strip>;
-/** SQL row resolving the workout split for an exercise assignment. */
-declare const workoutSplitLookupQueryDtoSchema: z.ZodObject<{
-    workoutSplitId: z.ZodInt;
-}, z.core.$strip>;
-/** SQL row returned after inserting a workout summary. */
-declare const workoutSummaryIdQueryDtoSchema: z.ZodObject<{
-    id: z.ZodString;
-}, z.core.$strip>;
-/** SQL row returned after inserting an exercise-tracking record. */
-declare const exerciseTrackingIdQueryDtoSchema: z.ZodObject<{
-    id: z.ZodInt;
-}, z.core.$strip>;
-type ExerciseTrackingAnalysisQueryDto = z.infer<typeof exerciseTrackingAnalysisQueryDtoSchema>;
-type ExerciseMetadataQueryDto = z.infer<typeof exerciseMetadataQueryDtoSchema>;
-type ExerciseTrackingPrMaxQueryDto = z.infer<typeof exerciseTrackingPrMaxQueryDtoSchema>;
-type TrackingMapItemQueryDto = z.infer<typeof trackingMapItemQueryDtoSchema>;
-type TrackingByDateItemQueryDto = z.infer<typeof trackingByDateItemQueryDtoSchema>;
-type TrackingBySplitNameItemQueryDto = z.infer<typeof trackingBySplitNameItemQueryDtoSchema>;
-type ExerciseTrackingAndStatsQueryDto = z.infer<typeof exerciseTrackingAndStatsQueryDtoSchema>;
-type ExerciseTrackingAndStatsRowQueryDto = z.infer<typeof exerciseTrackingAndStatsRowQueryDtoSchema>;
-type ExerciseTrackingStatsQueryDto = z.infer<typeof exerciseTrackingStatsQueryDtoSchema>;
-type ExerciseTrackingStatsRowQueryDto = z.infer<typeof exerciseTrackingStatsRowQueryDtoSchema>;
-type ExerciseTrackingMapsQueryDto = z.infer<typeof exerciseTrackingMapsQueryDtoSchema>;
-type ExerciseTrackingMapsRowQueryDto = z.infer<typeof exerciseTrackingMapsRowQueryDtoSchema>;
-type ExerciseHistoryQueryDto = z.infer<typeof exerciseHistoryQueryDtoSchema>;
-type ExerciseHistoryRowQueryDto = z.infer<typeof exerciseHistoryRowQueryDtoSchema>;
-type PersonalRecordsQueryDto = z.infer<typeof personalRecordsQueryDtoSchema>;
-type PersonalRecordsRowQueryDto = z.infer<typeof personalRecordsRowQueryDtoSchema>;
-type WorkoutSplitLookupQueryDto = z.infer<typeof workoutSplitLookupQueryDtoSchema>;
-type WorkoutSummaryIdQueryDto = z.infer<typeof workoutSummaryIdQueryDtoSchema>;
-type ExerciseTrackingIdQueryDto = z.infer<typeof exerciseTrackingIdQueryDtoSchema>;
-type FinishedWorkoutEntryQueryDto = z.infer<typeof finishedWorkoutEntryQueryDtoSchema>;
 
 declare const getWorkoutSchedulesResponseSchema: z.ZodObject<{
     schedules: z.ZodArray<z.ZodObject<{
-        id: z.ZodUUID;
-        userId: z.ZodUUID;
-        workoutSplitId: z.ZodInt;
-        dayOfWeek: z.ZodInt;
+        workoutSplitId: z.ZodNumber;
+        dayOfWeek: z.ZodNumber;
+        id: z.ZodString;
+        userId: z.ZodString;
         startTime: z.ZodString;
         createdAt: z.ZodString;
         updatedAt: z.ZodString;
-    }, {
-        out: {};
-        in: {};
-    }>>;
+    }, z.core.$strip>>;
 }, z.core.$strip>;
 declare const getWorkoutSchedulesContract: {
     response: z.ZodObject<{
         schedules: z.ZodArray<z.ZodObject<{
-            id: z.ZodUUID;
-            userId: z.ZodUUID;
-            workoutSplitId: z.ZodInt;
-            dayOfWeek: z.ZodInt;
+            workoutSplitId: z.ZodNumber;
+            dayOfWeek: z.ZodNumber;
+            id: z.ZodString;
+            userId: z.ZodString;
             startTime: z.ZodString;
             createdAt: z.ZodString;
             updatedAt: z.ZodString;
-        }, {
-            out: {};
-            in: {};
-        }>>;
+        }, z.core.$strip>>;
     }, z.core.$strip>;
 };
 declare const replaceWorkoutSchedulesRequestSchema: z.ZodObject<{
     body: z.ZodObject<{
         schedules: z.ZodArray<z.ZodObject<{
-            workoutSplitId: z.ZodInt;
-            dayOfWeek: z.ZodInt;
+            workoutSplitId: z.ZodNumber;
+            dayOfWeek: z.ZodNumber;
             startTime: z.ZodString;
         }, z.core.$strip>>;
     }, z.core.$strip>;
@@ -6143,36 +1360,1193 @@ declare const replaceWorkoutSchedulesContract: {
     request: z.ZodObject<{
         body: z.ZodObject<{
             schedules: z.ZodArray<z.ZodObject<{
-                workoutSplitId: z.ZodInt;
-                dayOfWeek: z.ZodInt;
+                workoutSplitId: z.ZodNumber;
+                dayOfWeek: z.ZodNumber;
                 startTime: z.ZodString;
             }, z.core.$strip>>;
         }, z.core.$strip>;
     }, z.core.$strip>;
     response: z.ZodVoid;
 };
+/** Represents the get workout schedules response value. */
 type GetWorkoutSchedulesResponse = ResponseOf<typeof getWorkoutSchedulesContract>;
+/** Represents the replace workout schedules body value. */
 type ReplaceWorkoutSchedulesBody = BodyOf<typeof replaceWorkoutSchedulesContract>;
+/** Represents the replace workout schedules response value. */
 type ReplaceWorkoutSchedulesResponse = ResponseOf<typeof replaceWorkoutSchedulesContract>;
 
-declare const workoutScheduleInputDtoSchema: z.ZodObject<{
-    workoutSplitId: z.ZodInt;
-    dayOfWeek: z.ZodInt;
-    startTime: z.ZodString;
+/** Validates a request to list crews visible to the authenticated user. */
+declare const listCrewsRequestSchema: z.ZodObject<{
+    query: z.ZodObject<{
+        search: z.ZodOptional<z.ZodString>;
+        limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+        cursor: z.ZodOptional<z.ZodString>;
+    }, z.core.$strip>;
 }, z.core.$strip>;
-declare const workoutScheduleQueryDtoSchema: z.ZodObject<{
-    id: z.ZodUUID;
-    userId: z.ZodUUID;
-    workoutSplitId: z.ZodInt;
-    dayOfWeek: z.ZodInt;
-    startTime: z.ZodString;
+/** Validates the collection returned by the list-crews endpoint. */
+declare const listCrewsResponseSchema: z.ZodObject<{
+    crews: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        name: z.ZodString;
+        createdBy: z.ZodString;
+        privacy: z.ZodEnum<{
+            public: "public";
+            private: "private";
+        }>;
+        createdAt: z.ZodString;
+        updatedAt: z.ZodString;
+        participantCount: z.ZodNumber;
+        top5Participants: z.ZodArray<z.ZodObject<{
+            username: z.ZodString;
+            fullName: z.ZodString;
+            profilePicPath: z.ZodNullable<z.ZodString>;
+        }, z.core.$strip>>;
+    }, z.core.$strip>>;
+    nextCursor: z.ZodNullable<z.ZodString>;
+}, z.core.$strip>;
+/** Defines the request and response contract for listing visible crews. */
+declare const listCrewsContract: {
+    request: z.ZodObject<{
+        query: z.ZodObject<{
+            search: z.ZodOptional<z.ZodString>;
+            limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+            cursor: z.ZodOptional<z.ZodString>;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodObject<{
+        crews: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            name: z.ZodString;
+            createdBy: z.ZodString;
+            privacy: z.ZodEnum<{
+                public: "public";
+                private: "private";
+            }>;
+            createdAt: z.ZodString;
+            updatedAt: z.ZodString;
+            participantCount: z.ZodNumber;
+            top5Participants: z.ZodArray<z.ZodObject<{
+                username: z.ZodString;
+                fullName: z.ZodString;
+                profilePicPath: z.ZodNullable<z.ZodString>;
+            }, z.core.$strip>>;
+        }, z.core.$strip>>;
+        nextCursor: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>;
+};
+/** Pagination query accepted by the list-crews endpoint. */
+type ListCrewsQuery = QueryOf<typeof listCrewsContract>;
+/** Response returned when listing crews visible to the caller. */
+type ListCrewsResponse = ResponseOf<typeof listCrewsContract>;
+/** Validates pagination for crews in which the authenticated user is an active member. */
+declare const listMyCrewsRequestSchema: z.ZodObject<{
+    query: z.ZodObject<{
+        limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+        cursor: z.ZodOptional<z.ZodString>;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates the authenticated user's crew collection. */
+declare const listMyCrewsResponseSchema: z.ZodObject<{
+    crews: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        name: z.ZodString;
+        createdBy: z.ZodString;
+        privacy: z.ZodEnum<{
+            public: "public";
+            private: "private";
+        }>;
+        createdAt: z.ZodString;
+        updatedAt: z.ZodString;
+        participantCount: z.ZodNumber;
+        top5Participants: z.ZodArray<z.ZodObject<{
+            username: z.ZodString;
+            fullName: z.ZodString;
+            profilePicPath: z.ZodNullable<z.ZodString>;
+        }, z.core.$strip>>;
+    }, z.core.$strip>>;
+    nextCursor: z.ZodNullable<z.ZodString>;
+}, z.core.$strip>;
+/** Defines the request and response contract for listing the authenticated user's crews. */
+declare const listMyCrewsContract: {
+    request: z.ZodObject<{
+        query: z.ZodObject<{
+            limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+            cursor: z.ZodOptional<z.ZodString>;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodObject<{
+        crews: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            name: z.ZodString;
+            createdBy: z.ZodString;
+            privacy: z.ZodEnum<{
+                public: "public";
+                private: "private";
+            }>;
+            createdAt: z.ZodString;
+            updatedAt: z.ZodString;
+            participantCount: z.ZodNumber;
+            top5Participants: z.ZodArray<z.ZodObject<{
+                username: z.ZodString;
+                fullName: z.ZodString;
+                profilePicPath: z.ZodNullable<z.ZodString>;
+            }, z.core.$strip>>;
+        }, z.core.$strip>>;
+        nextCursor: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>;
+};
+/** Pagination query accepted by the list-my-crews endpoint. */
+type ListMyCrewsQuery = QueryOf<typeof listMyCrewsContract>;
+/** Response containing crews in which the authenticated user is an active member. */
+type ListMyCrewsResponse = ResponseOf<typeof listMyCrewsContract>;
+/** Validates the crew identifier and pagination for listing participants. */
+declare const listCrewParticipantsRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        crewId: z.ZodString;
+    }, z.core.$strip>;
+    query: z.ZodObject<{
+        limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+        cursor: z.ZodOptional<z.ZodString>;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates the participant collection returned by the endpoint. */
+declare const listCrewParticipantsResponseSchema: z.ZodObject<{
+    participants: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        crewId: z.ZodString;
+        userId: z.ZodString;
+        status: z.ZodEnum<{
+            active: "active";
+            left: "left";
+            removed: "removed";
+            banned: "banned";
+        }>;
+        role: z.ZodEnum<{
+            leader: "leader";
+            admin: "admin";
+            member: "member";
+        }>;
+        joinedAt: z.ZodString;
+        createdAt: z.ZodString;
+        updatedAt: z.ZodString;
+        fullName: z.ZodString;
+        profilePicPath: z.ZodNullable<z.ZodString>;
+        username: z.ZodString;
+    }, z.core.$strip>>;
+    nextCursor: z.ZodNullable<z.ZodString>;
+}, z.core.$strip>;
+/** Defines the request and response contract for listing crew participants. */
+declare const listCrewParticipantsContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            crewId: z.ZodString;
+        }, z.core.$strip>;
+        query: z.ZodObject<{
+            limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+            cursor: z.ZodOptional<z.ZodString>;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodObject<{
+        participants: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            crewId: z.ZodString;
+            userId: z.ZodString;
+            status: z.ZodEnum<{
+                active: "active";
+                left: "left";
+                removed: "removed";
+                banned: "banned";
+            }>;
+            role: z.ZodEnum<{
+                leader: "leader";
+                admin: "admin";
+                member: "member";
+            }>;
+            joinedAt: z.ZodString;
+            createdAt: z.ZodString;
+            updatedAt: z.ZodString;
+            fullName: z.ZodString;
+            profilePicPath: z.ZodNullable<z.ZodString>;
+            username: z.ZodString;
+        }, z.core.$strip>>;
+        nextCursor: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>;
+};
+/** Route parameters accepted by the list-crew-participants endpoint. */
+type ListCrewParticipantsParams = ParamsOf<typeof listCrewParticipantsContract>;
+/** Pagination query accepted by the list-crew-participants endpoint. */
+type ListCrewParticipantsQuery = QueryOf<typeof listCrewParticipantsContract>;
+/** Response returned after listing authorized crew participants. */
+type ListCrewParticipantsResponse = ResponseOf<typeof listCrewParticipantsContract>;
+/** Validates the route parameters used to retrieve one crew. */
+declare const getCrewRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        id: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates the crew returned by the get-crew endpoint. */
+declare const getCrewResponseSchema: z.ZodObject<{
+    id: z.ZodString;
+    name: z.ZodString;
+    createdBy: z.ZodString;
+    privacy: z.ZodEnum<{
+        public: "public";
+        private: "private";
+    }>;
     createdAt: z.ZodString;
     updatedAt: z.ZodString;
-}, {
-    out: {};
-    in: {};
-}>;
-type WorkoutScheduleInputDto = z.infer<typeof workoutScheduleInputDtoSchema>;
-type WorkoutScheduleQueryDto = z.infer<typeof workoutScheduleQueryDtoSchema>;
+    participantCount: z.ZodNumber;
+}, z.core.$strip>;
+/** Defines the request and response contract for retrieving one crew. */
+declare const getCrewContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            id: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodObject<{
+        id: z.ZodString;
+        name: z.ZodString;
+        createdBy: z.ZodString;
+        privacy: z.ZodEnum<{
+            public: "public";
+            private: "private";
+        }>;
+        createdAt: z.ZodString;
+        updatedAt: z.ZodString;
+        participantCount: z.ZodNumber;
+    }, z.core.$strip>;
+};
+/** Route parameters accepted by the get-crew endpoint. */
+type GetCrewParams = ParamsOf<typeof getCrewContract>;
+/** Response returned after retrieving one crew. */
+type GetCrewResponse = ResponseOf<typeof getCrewContract>;
+/** Validates the body used to create a crew. */
+declare const createCrewRequestSchema: z.ZodObject<{
+    body: z.ZodObject<{
+        name: z.ZodString;
+        privacy: z.ZodEnum<{
+            public: "public";
+            private: "private";
+        }>;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates the empty response returned after crew creation. */
+declare const createCrewResponseSchema: z.ZodVoid;
+/** Defines the request and response contract for creating a crew. */
+declare const createCrewContract: {
+    request: z.ZodObject<{
+        body: z.ZodObject<{
+            name: z.ZodString;
+            privacy: z.ZodEnum<{
+                public: "public";
+                private: "private";
+            }>;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Request body accepted by the create-crew endpoint. */
+type CreateCrewBody = BodyOf<typeof createCrewContract>;
+/** Empty response returned after creating a crew. */
+type CreateCrewResponse = ResponseOf<typeof createCrewContract>;
+/** Validates the route parameters and body used to update a crew. */
+declare const updateCrewRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        id: z.ZodString;
+    }, z.core.$strip>;
+    body: z.ZodObject<{
+        name: z.ZodString;
+        privacy: z.ZodEnum<{
+            public: "public";
+            private: "private";
+        }>;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates the empty response returned after updating a crew. */
+declare const updateCrewResponseSchema: z.ZodVoid;
+/** Defines the request and response contract for updating a crew. */
+declare const updateCrewContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            id: z.ZodString;
+        }, z.core.$strip>;
+        body: z.ZodObject<{
+            name: z.ZodString;
+            privacy: z.ZodEnum<{
+                public: "public";
+                private: "private";
+            }>;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Route parameters accepted by the update-crew endpoint. */
+type UpdateCrewParams = ParamsOf<typeof updateCrewContract>;
+/** Request body accepted by the update-crew endpoint. */
+type UpdateCrewBody = BodyOf<typeof updateCrewContract>;
+/** Empty response returned after updating a crew. */
+type UpdateCrewResponse = ResponseOf<typeof updateCrewContract>;
+/** Validates the crew identifier used by the authenticated user leaving a crew. */
+declare const leaveCrewRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        id: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates the empty response returned after leaving a crew. */
+declare const leaveCrewResponseSchema: z.ZodVoid;
+/** Defines the request and response contract for leaving a crew. */
+declare const leaveCrewContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            id: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Route parameters accepted by the leave-crew endpoint. */
+type LeaveCrewParams = ParamsOf<typeof leaveCrewContract>;
+/** Empty response returned after leaving a crew. */
+type LeaveCrewResponse = ResponseOf<typeof leaveCrewContract>;
+/** Validates the route parameters used to delete a crew. */
+declare const deleteCrewRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        id: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates the empty response returned after deleting a crew. */
+declare const deleteCrewResponseSchema: z.ZodVoid;
+/** Defines the request and response contract for deleting a crew. */
+declare const deleteCrewContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            id: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Route parameters accepted by the delete-crew endpoint. */
+type DeleteCrewParams = ParamsOf<typeof deleteCrewContract>;
+/** Response returned after deleting a crew. */
+type DeleteCrewResponse = ResponseOf<typeof deleteCrewContract>;
+/** Validates the crew ID used when replacing its profile picture. */
+declare const replaceCrewProfilePictureRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        id: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates the stored path and public URL returned after upload. */
+declare const replaceCrewProfilePictureResponseSchema: z.ZodObject<{
+    profilePicPath: z.ZodString;
+    url: z.ZodString;
+    message: z.ZodString;
+}, z.core.$strip>;
+/** Defines the replace-crew-profile-picture request and response. */
+declare const replaceCrewProfilePictureContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            id: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodObject<{
+        profilePicPath: z.ZodString;
+        url: z.ZodString;
+        message: z.ZodString;
+    }, z.core.$strip>;
+};
+/** Route parameters accepted when replacing a crew profile picture. */
+type ReplaceCrewProfilePictureParams = ParamsOf<typeof replaceCrewProfilePictureContract>;
+/** Response returned after replacing a crew profile picture. */
+type ReplaceCrewProfilePictureResponse = ResponseOf<typeof replaceCrewProfilePictureContract>;
+/** Validates the crew ID used when deleting its profile picture. */
+declare const deleteCrewProfilePictureRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        id: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Defines the delete-crew-profile-picture request and empty response. */
+declare const deleteCrewProfilePictureContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            id: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Route parameters accepted when deleting a crew profile picture. */
+type DeleteCrewProfilePictureParams = ParamsOf<typeof deleteCrewProfilePictureContract>;
+/** Empty response returned after deleting a crew profile picture. */
+type DeleteCrewProfilePictureResponse = ResponseOf<typeof deleteCrewProfilePictureContract>;
 
-export { type AccessTokenPayloadDto, type AddAerobicInputQueryDto, type AerobicMutationRowQueryDto, type AerobicTrackingRow, type AerobicsDailyRecordQueryDto, type AerobicsWeeklyRecordQueryDto, type AllUserMessageQueryDto, type AnalyzeVideoPayloadDto, type AnalyzeVideoResultPayloadDto, type AppleOAuthBody, type AppleTokenVerificationResultDto, type AuthenticatedUserForUpdateQueryDto, type BodyOf, type ChangeEmailTokenPayloadDto, type Contract, type CreateAerobicEntryBody, type CreateAerobicEntryQuery, type CreatePasswordResetRequestBody, type CreateUserBody, type CreateUserResponse, type CreateVerificationEmailBody, type CreateVideoUploadUrlBody, type CreateVideoUploadUrlResponse, type CreateWebSocketTicketBody, type CreateWebSocketTicketResponse, type CreateWorkoutSessionBody, type CreateWorkoutSessionResponse, type CreatedUserQueryDto, type CreatedUserRawQueryDto, type CreatedUserRowQueryDto, type DeleteAerobicEntryParams, type DeleteAerobicEntryQuery, type DeleteAerobicEntryResponse, type DeleteMessageParams, type DeleteMessageResponse, type DeleteProfilePictureBody, type DeletedMessageQueryDto, type EmailVerifyPayloadDto, type EnqueueAnalyzeVideoParamsDto, type ExerciseAssignmentIdQueryDto, type ExerciseHistoryQueryDto, type ExerciseHistoryRowQueryDto, type ExerciseInPlanQueryDto, type ExerciseMapByMuscleRowQueryDto, type ExerciseMetadataQueryDto, type ExerciseRow, type ExerciseToWorkoutSplitRow, type ExerciseTrackingAnalysisQueryDto, type ExerciseTrackingAndStatsQueryDto, type ExerciseTrackingAndStatsRowQueryDto, type ExerciseTrackingIdQueryDto, type ExerciseTrackingMapsQueryDto, type ExerciseTrackingMapsRowQueryDto, type ExerciseTrackingPrMaxQueryDto, type ExerciseTrackingRow, type ExerciseTrackingStatsQueryDto, type ExerciseTrackingStatsRowQueryDto, type ExercisesMapByMuscleQueryDto, type FinishedWorkoutEntryQueryDto, type ForgotPasswordPayloadDto, type GetAerobicHistoryQuery, type GetAerobicHistoryResponse, type GetAllExercisesExerciseQueryDto, type GetCurrentUserResponse, type GetExerciseHistoryQuery, type GetExerciseHistoryResponse, type GetPersonalRecordsQuery, type GetPersonalRecordsResponse, type GetReminderSettingsResponse, type GetVerificationStatusQuery, type GetWorkoutHistoryQuery, type GetWorkoutHistoryResponse, type GetWorkoutPlanQuery, type GetWorkoutPlanResponse, type GetWorkoutSchedulesResponse, type GetWorkoutStatisticsResponse, type GoogleOAuthBody, type GoogleTokenVerificationResultDto, type LastLoginQueryDto, type ListExercisesResponse, type ListMessagesQuery, type ListMessagesResponse, type LoginRequestBody, type LoginResponse, type LogoutResponse, type MarkMessageAsReadParams, type MarkMessageAsReadResponse, type MessageAfterSendQueryDto, type MessageAsReadQueryDto, type MessageRow, type OAuthCreatedUserRowQueryDto, type OAuthLinkQueryDto, type OAuthLinkRowQueryDto, type OAuthLoginResponse, type OAuthLookupQueryDto, type OAuthLookupRawQueryDto, type OAuthLookupRowQueryDto, type ParamsOf, type PersonalRecordsQueryDto, type PersonalRecordsRowQueryDto, type QueryOf, type RefreshTokenResponse, type ReplaceProfilePictureResponse, type ReplacePushTokenBody, type ReplaceWorkoutPlanBody, type ReplaceWorkoutPlanResponse, type ReplaceWorkoutSchedulesBody, type ReplaceWorkoutSchedulesResponse, type RequestOf, type RequestSchema, type ResetPasswordBody, type ResetPasswordQuery, type ResetPasswordResponse, type ResponseOf, type SaveWorkoutSplitInputQueryDto, type SaveWorkoutSplitPayloadQueryDto, type SquatRepetitionDto, type TokenVersionQueryDto, type TrackingByDateItemQueryDto, type TrackingBySplitNameItemQueryDto, type TrackingMapItemQueryDto, type UpdateAerobicEntryBody, type UpdateAerobicEntryParams, type UpdateAerobicEntryQuery, type UpdateAerobicEntryResponse, type UpdateCurrentUserBody, type UpdateCurrentUserResponse, type UpdateReminderTimeZoneBody, type UpdateReminderTimeZoneResponse, type UpdateUnverifiedAccountEmailBody, type UpsertReminderSettingsBody, type UpsertReminderSettingsResponse, type UserAerobicsQueryDto, type UserAerobicsRowQueryDto, type UserAfterBumpQueryDto, type UserByIdentifierQueryDto, type UserByIdentifierRawQueryDto, type UserByIdentifierRowQueryDto, type UserByUsernameRawQueryDto, type UserByUsernameRowQueryDto, type UserConflictQueryDto, type UserDataQueryDto, type UserDataResponse, type UserDataRowQueryDto, type UserExistsQueryDto, type UserInsert, type UserMessageIdentityQueryDto, type UserProfilePicQueryDto, type UserRow, type UserWithNotificationsEnabledQueryDto, type VerifyEmailQuery, type WeeklyDataQueryDto, type WholeUserWorkoutPlanQueryDto, type WorkoutExerciseInputQueryDto, type WorkoutPlanIdQueryDto, type WorkoutPlanRow, type WorkoutScheduleInputDto, type WorkoutScheduleQueryDto, type WorkoutSplitIdQueryDto, type WorkoutSplitLookupQueryDto, type WorkoutSplitQueryDto, type WorkoutSplitRow, type WorkoutSummaryIdQueryDto, type WorkoutSummaryRow, accessTokenPayloadDtoSchema, addAerobicInputQueryDtoSchema, aerobicMutationRowQueryDtoSchema, aerobicTrackingDbSchema, aerobicsDailyRecordQueryDtoSchema, aerobicsWeeklyRecordQueryDtoSchema, allUserMessageQueryDtoSchema, analyzeVideoPayloadDtoSchema, analyzeVideoResultPayloadDtoSchema, appleOAuthContract, appleOAuthRequestSchema, appleTokenVerificationResultDtoSchema, authenticatedUserForUpdateQueryDtoSchema, changeEmailTokenPayloadDtoSchema, createAerobicEntryContract, createAerobicEntryRequestSchema, createAerobicEntryResponseSchema, createPasswordResetRequestContract, createPasswordResetRequestSchema, createUserContract, createUserRequestSchema, createUserResponseSchema, createUserUserSchema, createVerificationEmailContract, createVerificationEmailRequestSchema, createVideoUploadUrlContract, createVideoUploadUrlRequestSchema, createVideoUploadUrlResponseSchema, createWebSocketTicketContract, createWebSocketTicketRequestSchema, createWebSocketTicketResponseSchema, createWorkoutSessionContract, createWorkoutSessionRequestSchema, createWorkoutSessionResponseSchema, createdUserQueryDtoSchema, createdUserRawQueryDtoSchema, createdUserRowQueryDtoSchema, deleteAerobicEntryContract, deleteAerobicEntryRequestSchema, deleteMessageContract, deleteMessageRequestSchema, deleteMessageResponseSchema, deleteProfilePictureContract, deleteProfilePictureRequestSchema, deletedMessageQueryDtoSchema, emailVerifyPayloadDtoSchema, enqueueAnalyzeVideoParamsDtoSchema, exerciseAssignmentIdQueryDtoSchema, exerciseDbSchema, exerciseHistoryQueryDtoSchema, exerciseHistoryRowQueryDtoSchema, exerciseInPlanQueryDtoSchema, exerciseMapByMuscleRowQueryDtoSchema, exerciseMetadataQueryDtoSchema, exerciseToWorkoutSplitDbSchema, exerciseToWorkoutSplitSetExpandedViewDbSchema, exerciseTrackingAnalysisQueryDtoSchema, exerciseTrackingAndStatsQueryDtoSchema, exerciseTrackingAndStatsRowQueryDtoSchema, exerciseTrackingDbSchema, exerciseTrackingIdQueryDtoSchema, exerciseTrackingMapsQueryDtoSchema, exerciseTrackingMapsRowQueryDtoSchema, exerciseTrackingPrMaxQueryDtoSchema, exerciseTrackingSetExpandedViewDbSchema, exerciseTrackingStatsQueryDtoSchema, exerciseTrackingStatsRowQueryDtoSchema, exercisesMapByMuscleQueryDtoSchema, finishedWorkoutEntryQueryDtoSchema, forgotPasswordPayloadDtoSchema, getAerobicHistoryContract, getAerobicHistoryRequestSchema, getAerobicHistoryResponseSchema, getAllExercisesExerciseQueryDtoSchema, getCurrentUserContract, getCurrentUserResponseSchema, getExerciseHistoryContract, getExerciseHistoryRequestSchema, getExerciseHistoryResponseSchema, getPersonalRecordsContract, getPersonalRecordsRequestSchema, getPersonalRecordsResponseSchema, getReminderSettingsContract, getReminderSettingsResponseSchema, getVerificationStatusContract, getVerificationStatusRequestSchema, getWorkoutHistoryContract, getWorkoutHistoryRequestSchema, getWorkoutHistoryResponseSchema, getWorkoutPlanContract, getWorkoutPlanRequestSchema, getWorkoutPlanResponseSchema, getWorkoutSchedulesContract, getWorkoutSchedulesResponseSchema, getWorkoutStatisticsContract, getWorkoutStatisticsResponseSchema, googleOAuthContract, googleOAuthRequestSchema, googleTokenVerificationResultDtoSchema, lastLoginQueryDtoSchema, listExercisesContract, listExercisesResponseSchema, listMessagesContract, listMessagesRequestSchema, listMessagesResponseSchema, loginContract, loginRequestSchema, loginResponseSchema, logoutContract, logoutResponseSchema, markMessageAsReadContract, markMessageAsReadRequestSchema, markMessageAsReadResponseSchema, messageAfterSendQueryDtoSchema, messageAsReadQueryDtoSchema, messageDbSchema, oAuthCreatedUserRowQueryDtoSchema, oAuthLinkQueryDtoSchema, oAuthLinkRowQueryDtoSchema, oAuthLoginContract, oAuthLoginResponseSchema, oAuthLookupQueryDtoSchema, oAuthLookupRawQueryDtoSchema, oAuthLookupRowQueryDtoSchema, oauthAccountDbSchema, personalRecordQueryDtoSchema, personalRecordsQueryDtoSchema, personalRecordsRowQueryDtoSchema, proceedLoginResponseSchema, prsViewDbSchema, refreshTokenContract, refreshTokenResponseSchema, replaceProfilePictureContract, replaceProfilePictureResponseSchema, replacePushTokenContract, replacePushTokenRequestSchema, replaceWorkoutPlanContract, replaceWorkoutPlanRequestSchema, replaceWorkoutPlanResponseSchema, replaceWorkoutSchedulesContract, replaceWorkoutSchedulesRequestSchema, resetPasswordContract, resetPasswordRequestSchema, resetPasswordResponseSchema, saveWorkoutSplitInputQueryDtoSchema, saveWorkoutSplitPayloadQueryDtoSchema, serializedDateSchema, squatRepetitionDtoSchema, timezoneSchema, tokenVersionQueryDtoSchema, trackingByDateItemQueryDtoSchema, trackingBySplitNameItemQueryDtoSchema, trackingMapItemQueryDtoSchema, trackingSetDbSchema, updateAerobicEntryContract, updateAerobicEntryRequestSchema, updateCurrentUserContract, updateCurrentUserRequestSchema, updateCurrentUserResponseSchema, updateReminderTimeZoneContract, updateReminderTimeZoneRequestSchema, updateUnverifiedAccountEmailContract, updateUnverifiedAccountEmailRequestSchema, upsertReminderSettingsContract, upsertReminderSettingsRequestSchema, userAerobicsQueryDtoSchema, userAerobicsRowQueryDtoSchema, userAfterBumpQueryDtoSchema, userByIdentifierQueryDtoSchema, userByIdentifierRawQueryDtoSchema, userByIdentifierRowQueryDtoSchema, userByUsernameRawQueryDtoSchema, userByUsernameRowQueryDtoSchema, userConflictQueryDtoSchema, userDataContract, userDataQueryDtoSchema, userDataResponseSchema, userDataRowQueryDtoSchema, userDbSchema, userExistsQueryDtoSchema, userInsertDbSchema, userMessageIdentityQueryDtoSchema, userProfilePicQueryDtoSchema, userReminderSettingDbSchema, userUpdateDbSchema, userWithNotificationsEnabledQueryDtoSchema, verifyEmailContract, verifyEmailRequestSchema, weeklyDataQueryDtoSchema, wholeUserWorkoutPlanQueryDtoSchema, workoutExerciseInputQueryDtoSchema, workoutPlanDbSchema, workoutPlanIdQueryDtoSchema, workoutScheduleDbSchema, workoutScheduleInputDtoSchema, workoutScheduleQueryDtoSchema, workoutSetDbSchema, workoutSplitDbSchema, workoutSplitIdQueryDtoSchema, workoutSplitLookupQueryDtoSchema, workoutSplitQueryDtoSchema, workoutSummaryDbSchema, workoutSummaryIdQueryDtoSchema };
+/** Validates a crew invitation creation request. */
+declare const inviteCrewUserRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        crewId: z.ZodString;
+    }, z.core.$strip>;
+    body: z.ZodObject<{
+        userId: z.ZodUUID;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+declare const inviteCrewUserContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            crewId: z.ZodString;
+        }, z.core.$strip>;
+        body: z.ZodObject<{
+            userId: z.ZodUUID;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Represents the invite crew user params value. */
+type InviteCrewUserParams = ParamsOf<typeof inviteCrewUserContract>;
+/** Represents the invite crew user body value. */
+type InviteCrewUserBody = BodyOf<typeof inviteCrewUserContract>;
+/** Represents the invite crew user response value. */
+type InviteCrewUserResponse = ResponseOf<typeof inviteCrewUserContract>;
+/** Validates a request by the authenticated user to join a crew. */
+declare const requestToJoinCrewRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        crewId: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+declare const requestToJoinCrewContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            crewId: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Represents the request to join crew params value. */
+type RequestToJoinCrewParams = ParamsOf<typeof requestToJoinCrewContract>;
+/** Represents the request to join crew response value. */
+type RequestToJoinCrewResponse = ResponseOf<typeof requestToJoinCrewContract>;
+/** Validates an accepted or declined participation-request status update. */
+declare const updateCrewParticipationRequestStatusRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        requestId: z.ZodUUID;
+    }, z.core.$strip>;
+    body: z.ZodObject<{
+        status: z.ZodEnum<{
+            accepted: "accepted";
+            declined: "declined";
+        }>;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+declare const updateCrewParticipationRequestStatusContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            requestId: z.ZodUUID;
+        }, z.core.$strip>;
+        body: z.ZodObject<{
+            status: z.ZodEnum<{
+                accepted: "accepted";
+                declined: "declined";
+            }>;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Represents the update crew participation request status params value. */
+type UpdateCrewParticipationRequestStatusParams = ParamsOf<typeof updateCrewParticipationRequestStatusContract>;
+/** Represents the update crew participation request status body value. */
+type UpdateCrewParticipationRequestStatusBody = BodyOf<typeof updateCrewParticipationRequestStatusContract>;
+/** Represents the update crew participation request status response value. */
+type UpdateCrewParticipationRequestStatusResponse = ResponseOf<typeof updateCrewParticipationRequestStatusContract>;
+/** Validates a request to list invitations addressed to the authenticated user. */
+declare const listCrewInvitationsRequestSchema: z.ZodObject<{}, z.core.$strip>;
+declare const listCrewInvitationsResponseSchema: z.ZodObject<{
+    invitations: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        crewId: z.ZodString;
+        initiatorUserId: z.ZodString;
+        participantUserId: z.ZodString;
+        status: z.ZodEnum<{
+            pending: "pending";
+            accepted: "accepted";
+            declined: "declined";
+            cancelled: "cancelled";
+            expired: "expired";
+        }>;
+        createdAt: z.ZodString;
+        updatedAt: z.ZodString;
+        respondedAt: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>>;
+}, z.core.$strip>;
+declare const listCrewInvitationsContract: {
+    request: z.ZodObject<{}, z.core.$strip>;
+    response: z.ZodObject<{
+        invitations: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            crewId: z.ZodString;
+            initiatorUserId: z.ZodString;
+            participantUserId: z.ZodString;
+            status: z.ZodEnum<{
+                pending: "pending";
+                accepted: "accepted";
+                declined: "declined";
+                cancelled: "cancelled";
+                expired: "expired";
+            }>;
+            createdAt: z.ZodString;
+            updatedAt: z.ZodString;
+            respondedAt: z.ZodNullable<z.ZodString>;
+        }, z.core.$strip>>;
+    }, z.core.$strip>;
+};
+/** Represents the list crew invitations response value. */
+type ListCrewInvitationsResponse = ResponseOf<typeof listCrewInvitationsContract>;
+/** Validates a request to list pending join requests for a crew. */
+declare const listPendingCrewJoinRequestsRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        crewId: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+declare const listPendingCrewJoinRequestsResponseSchema: z.ZodObject<{
+    requests: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        crewId: z.ZodString;
+        initiatorUserId: z.ZodString;
+        participantUserId: z.ZodString;
+        status: z.ZodEnum<{
+            pending: "pending";
+            accepted: "accepted";
+            declined: "declined";
+            cancelled: "cancelled";
+            expired: "expired";
+        }>;
+        createdAt: z.ZodString;
+        updatedAt: z.ZodString;
+        respondedAt: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>>;
+}, z.core.$strip>;
+declare const listPendingCrewJoinRequestsContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            crewId: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodObject<{
+        requests: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            crewId: z.ZodString;
+            initiatorUserId: z.ZodString;
+            participantUserId: z.ZodString;
+            status: z.ZodEnum<{
+                pending: "pending";
+                accepted: "accepted";
+                declined: "declined";
+                cancelled: "cancelled";
+                expired: "expired";
+            }>;
+            createdAt: z.ZodString;
+            updatedAt: z.ZodString;
+            respondedAt: z.ZodNullable<z.ZodString>;
+        }, z.core.$strip>>;
+    }, z.core.$strip>;
+};
+/** Represents the list pending crew join requests params value. */
+type ListPendingCrewJoinRequestsParams = ParamsOf<typeof listPendingCrewJoinRequestsContract>;
+/** Represents the list pending crew join requests response value. */
+type ListPendingCrewJoinRequestsResponse = ResponseOf<typeof listPendingCrewJoinRequestsContract>;
+
+/** Validates a request to list posts visible to the authenticated user. */
+declare const listVisiblePostsRequestSchema: z.ZodObject<{
+    query: z.ZodObject<{
+        limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+        cursor: z.ZodOptional<z.ZodString>;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates the collection returned by the list-posts endpoint. */
+declare const listVisiblePostsResponseSchema: z.ZodObject<{
+    posts: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        authorUserId: z.ZodString;
+        workoutSummaryId: z.ZodNullable<z.ZodString>;
+        content: z.ZodString;
+        visibility: z.ZodEnum<{
+            public: "public";
+            crews_only: "crews_only";
+        }>;
+        publishedAt: z.ZodString;
+        updatedAt: z.ZodString;
+        username: z.ZodString;
+        fullName: z.ZodString;
+        profilePicPath: z.ZodNullable<z.ZodString>;
+        interactions: z.ZodObject<{
+            reactionsCount: z.ZodObject<{
+                likesCount: z.ZodNumber;
+                fireUpCount: z.ZodNumber;
+                muscleCount: z.ZodNumber;
+            }, z.core.$strip>;
+            commentsCount: z.ZodNumber;
+        }, z.core.$strip>;
+    }, z.core.$strip>>;
+    nextCursor: z.ZodNullable<z.ZodString>;
+}, z.core.$strip>;
+/** Defines the request and response contract for listing visible posts. */
+declare const listVisiblePostsContract: {
+    request: z.ZodObject<{
+        query: z.ZodObject<{
+            limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+            cursor: z.ZodOptional<z.ZodString>;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodObject<{
+        posts: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            authorUserId: z.ZodString;
+            workoutSummaryId: z.ZodNullable<z.ZodString>;
+            content: z.ZodString;
+            visibility: z.ZodEnum<{
+                public: "public";
+                crews_only: "crews_only";
+            }>;
+            publishedAt: z.ZodString;
+            updatedAt: z.ZodString;
+            username: z.ZodString;
+            fullName: z.ZodString;
+            profilePicPath: z.ZodNullable<z.ZodString>;
+            interactions: z.ZodObject<{
+                reactionsCount: z.ZodObject<{
+                    likesCount: z.ZodNumber;
+                    fireUpCount: z.ZodNumber;
+                    muscleCount: z.ZodNumber;
+                }, z.core.$strip>;
+                commentsCount: z.ZodNumber;
+            }, z.core.$strip>;
+        }, z.core.$strip>>;
+        nextCursor: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>;
+};
+/** Pagination query accepted by the list-visible-posts endpoint. */
+type ListVisiblePostsQuery = QueryOf<typeof listVisiblePostsContract>;
+/** Response containing each visible post once, regardless of its crew placements. */
+type ListVisiblePostsResponse = ResponseOf<typeof listVisiblePostsContract>;
+/** Validates the crew identifier and pagination used to list a crew's posts. */
+declare const listCrewPostsRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        crewId: z.ZodUUID;
+    }, z.core.$strip>;
+    query: z.ZodObject<{
+        limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+        cursor: z.ZodOptional<z.ZodString>;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates the collection returned by the list-crew-posts endpoint. */
+declare const listCrewPostsResponseSchema: z.ZodObject<{
+    posts: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        authorUserId: z.ZodString;
+        workoutSummaryId: z.ZodNullable<z.ZodString>;
+        content: z.ZodString;
+        visibility: z.ZodEnum<{
+            public: "public";
+            crews_only: "crews_only";
+        }>;
+        publishedAt: z.ZodString;
+        updatedAt: z.ZodString;
+        username: z.ZodString;
+        fullName: z.ZodString;
+        profilePicPath: z.ZodNullable<z.ZodString>;
+        interactions: z.ZodObject<{
+            reactionsCount: z.ZodObject<{
+                likesCount: z.ZodNumber;
+                fireUpCount: z.ZodNumber;
+                muscleCount: z.ZodNumber;
+            }, z.core.$strip>;
+            commentsCount: z.ZodNumber;
+        }, z.core.$strip>;
+    }, z.core.$strip>>;
+    nextCursor: z.ZodNullable<z.ZodString>;
+}, z.core.$strip>;
+/** Defines the request and response contract for listing posts from one crew. */
+declare const listCrewPostsContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            crewId: z.ZodUUID;
+        }, z.core.$strip>;
+        query: z.ZodObject<{
+            limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+            cursor: z.ZodOptional<z.ZodString>;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodObject<{
+        posts: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            authorUserId: z.ZodString;
+            workoutSummaryId: z.ZodNullable<z.ZodString>;
+            content: z.ZodString;
+            visibility: z.ZodEnum<{
+                public: "public";
+                crews_only: "crews_only";
+            }>;
+            publishedAt: z.ZodString;
+            updatedAt: z.ZodString;
+            username: z.ZodString;
+            fullName: z.ZodString;
+            profilePicPath: z.ZodNullable<z.ZodString>;
+            interactions: z.ZodObject<{
+                reactionsCount: z.ZodObject<{
+                    likesCount: z.ZodNumber;
+                    fireUpCount: z.ZodNumber;
+                    muscleCount: z.ZodNumber;
+                }, z.core.$strip>;
+                commentsCount: z.ZodNumber;
+            }, z.core.$strip>;
+        }, z.core.$strip>>;
+        nextCursor: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>;
+};
+/** Route parameters accepted by the list-crew-posts endpoint. */
+type ListCrewPostsParams = ParamsOf<typeof listCrewPostsContract>;
+/** Pagination query accepted by the list-crew-posts endpoint. */
+type ListCrewPostsQuery = QueryOf<typeof listCrewPostsContract>;
+/** Response containing posts from the requested accessible crew. */
+type ListCrewPostsResponse = ResponseOf<typeof listCrewPostsContract>;
+/** Validates a public or crew-only post and all requested crew placements. */
+declare const createPostRequestSchema: z.ZodObject<{
+    body: z.ZodObject<{
+        content: z.ZodString;
+        visibility: z.ZodEnum<{
+            public: "public";
+            crews_only: "crews_only";
+        }>;
+        crewIds: z.ZodDefault<z.ZodArray<z.ZodUUID>>;
+        workoutSummaryId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates the empty response returned after post creation. */
+declare const createPostResponseSchema: z.ZodVoid;
+/** Defines the request and response contract for creating a post. */
+declare const createPostContract: {
+    request: z.ZodObject<{
+        body: z.ZodObject<{
+            content: z.ZodString;
+            visibility: z.ZodEnum<{
+                public: "public";
+                crews_only: "crews_only";
+            }>;
+            crewIds: z.ZodDefault<z.ZodArray<z.ZodUUID>>;
+            workoutSummaryId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Request body accepted by the create-post endpoint. */
+type CreatePostBody = BodyOf<typeof createPostContract>;
+/** Empty response returned after creating a post. */
+type CreatePostResponse = ResponseOf<typeof createPostContract>;
+/** Validates the route parameters and body used to update a post. */
+declare const updatePostRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        id: z.ZodString;
+    }, z.core.$strip>;
+    body: z.ZodObject<{
+        content: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates the empty response returned after updating a post. */
+declare const updatePostResponseSchema: z.ZodVoid;
+/** Defines the request and response contract for updating a post. */
+declare const updatePostContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            id: z.ZodString;
+        }, z.core.$strip>;
+        body: z.ZodObject<{
+            content: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Route parameters accepted by the update-post endpoint. */
+type UpdatePostParams = ParamsOf<typeof updatePostContract>;
+/** Request body accepted by the update-post endpoint. */
+type UpdatePostBody = BodyOf<typeof updatePostContract>;
+/** Empty response returned after updating a post. */
+type UpdatePostResponse = ResponseOf<typeof updatePostContract>;
+/** Validates the route parameters used to delete a post. */
+declare const deletePostRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        id: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates the empty response returned after deleting a post. */
+declare const deletePostResponseSchema: z.ZodVoid;
+/** Defines the request and response contract for deleting a post. */
+declare const deletePostContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            id: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Route parameters accepted by the delete-post endpoint. */
+type DeletePostParams = ParamsOf<typeof deletePostContract>;
+/** Response returned after deleting a post. */
+type DeletePostResponse = ResponseOf<typeof deletePostContract>;
+
+/** Validates cursor pagination for comments on a visible post. */
+declare const listPostCommentsRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        postId: z.ZodString;
+    }, z.core.$strip>;
+    query: z.ZodObject<{
+        limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+        cursor: z.ZodOptional<z.ZodString>;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates a page of comments and its continuation cursor. */
+declare const listPostCommentsResponseSchema: z.ZodObject<{
+    comments: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        postId: z.ZodString;
+        userId: z.ZodString;
+        content: z.ZodString;
+        createdAt: z.ZodString;
+        updatedAt: z.ZodString;
+        authorFullName: z.ZodString;
+        authorProfilePicPath: z.ZodNullable<z.ZodString>;
+        authorUsername: z.ZodString;
+    }, z.core.$strip>>;
+    nextCursor: z.ZodNullable<z.ZodString>;
+}, z.core.$strip>;
+/** Defines the contract for listing comments on a post. */
+declare const listPostCommentsContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            postId: z.ZodString;
+        }, z.core.$strip>;
+        query: z.ZodObject<{
+            limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+            cursor: z.ZodOptional<z.ZodString>;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodObject<{
+        comments: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            postId: z.ZodString;
+            userId: z.ZodString;
+            content: z.ZodString;
+            createdAt: z.ZodString;
+            updatedAt: z.ZodString;
+            authorFullName: z.ZodString;
+            authorProfilePicPath: z.ZodNullable<z.ZodString>;
+            authorUsername: z.ZodString;
+        }, z.core.$strip>>;
+        nextCursor: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>;
+};
+/** Route parameters accepted by the list-post-comments endpoint. */
+type ListPostCommentsParams = ParamsOf<typeof listPostCommentsContract>;
+/** Cursor pagination accepted by the list-post-comments endpoint. */
+type ListPostCommentsQuery = QueryOf<typeof listPostCommentsContract>;
+/** Paginated comments returned for a visible post. */
+type ListPostCommentsResponse = ResponseOf<typeof listPostCommentsContract>;
+/** Validates a comment to add to a post. */
+declare const addCommentRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        postId: z.ZodString;
+    }, z.core.$strip>;
+    body: z.ZodObject<{
+        content: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Defines the contract for adding a comment. */
+declare const addCommentResponseSchema: z.ZodVoid;
+/** Defines the contract for adding a comment. */
+declare const addCommentContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            postId: z.ZodString;
+        }, z.core.$strip>;
+        body: z.ZodObject<{
+            content: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Route parameters accepted by the add-comment endpoint. */
+type AddCommentParams = ParamsOf<typeof addCommentContract>;
+/** Request body accepted by the add-comment endpoint. */
+type AddCommentBody = BodyOf<typeof addCommentContract>;
+/** Empty response returned after adding a comment. */
+type AddCommentResponse = ResponseOf<typeof addCommentContract>;
+/** Validates a comment identifier and its replacement content. */
+declare const editCommentRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        id: z.ZodString;
+    }, z.core.$strip>;
+    body: z.ZodObject<{
+        content: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Defines the contract for editing an authored comment. */
+declare const editCommentResponseSchema: z.ZodVoid;
+/** Defines the contract for editing an authored comment. */
+declare const editCommentContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            id: z.ZodString;
+        }, z.core.$strip>;
+        body: z.ZodObject<{
+            content: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Route parameters accepted by the edit-comment endpoint. */
+type EditCommentParams = ParamsOf<typeof editCommentContract>;
+/** Request body accepted by the edit-comment endpoint. */
+type EditCommentBody = BodyOf<typeof editCommentContract>;
+/** Empty response returned after editing a comment. */
+type EditCommentResponse = ResponseOf<typeof editCommentContract>;
+/** Validates the identifier of a comment to delete. */
+declare const deleteCommentRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        id: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Defines the contract for deleting an authored comment. */
+declare const deleteCommentResponseSchema: z.ZodVoid;
+/** Defines the contract for deleting an authored comment. */
+declare const deleteCommentContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            id: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Route parameters accepted by the delete-comment endpoint. */
+type DeleteCommentParams = ParamsOf<typeof deleteCommentContract>;
+/** Empty response returned after deleting a comment. */
+type DeleteCommentResponse = ResponseOf<typeof deleteCommentContract>;
+
+/** Validates cursor pagination for reactions on a visible post. */
+declare const listPostReactionsRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        postId: z.ZodString;
+    }, z.core.$strip>;
+    query: z.ZodObject<{
+        limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+        cursor: z.ZodOptional<z.ZodString>;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates a page of reactions and its continuation cursor. */
+declare const listPostReactionsResponseSchema: z.ZodObject<{
+    reactions: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        postId: z.ZodString;
+        userId: z.ZodString;
+        type: z.ZodEnum<{
+            like: "like";
+            "fire up": "fire up";
+            muscle: "muscle";
+        }>;
+        reactedAt: z.ZodString;
+    }, z.core.$strip>>;
+    nextCursor: z.ZodNullable<z.ZodString>;
+}, z.core.$strip>;
+/** Defines the contract for listing reactions on a post. */
+declare const listPostReactionsContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            postId: z.ZodString;
+        }, z.core.$strip>;
+        query: z.ZodObject<{
+            limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+            cursor: z.ZodOptional<z.ZodString>;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodObject<{
+        reactions: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            postId: z.ZodString;
+            userId: z.ZodString;
+            type: z.ZodEnum<{
+                like: "like";
+                "fire up": "fire up";
+                muscle: "muscle";
+            }>;
+            reactedAt: z.ZodString;
+        }, z.core.$strip>>;
+        nextCursor: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>;
+};
+/** Route parameters accepted by the list-post-reactions endpoint. */
+type ListPostReactionsParams = ParamsOf<typeof listPostReactionsContract>;
+/** Cursor pagination accepted by the list-post-reactions endpoint. */
+type ListPostReactionsQuery = QueryOf<typeof listPostReactionsContract>;
+/** Paginated reactions returned for a visible post. */
+type ListPostReactionsResponse = ResponseOf<typeof listPostReactionsContract>;
+/** Validates a request that creates or replaces the caller's reaction to a post. */
+declare const reactToPostRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        postId: z.ZodString;
+    }, z.core.$strip>;
+    body: z.ZodObject<{
+        type: z.ZodEnum<{
+            like: "like";
+            "fire up": "fire up";
+            muscle: "muscle";
+        }>;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Defines the empty response returned after reacting to a post. */
+declare const reactToPostResponseSchema: z.ZodVoid;
+/** Defines the contract for creating or replacing a reaction. */
+declare const reactToPostContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            postId: z.ZodString;
+        }, z.core.$strip>;
+        body: z.ZodObject<{
+            type: z.ZodEnum<{
+                like: "like";
+                "fire up": "fire up";
+                muscle: "muscle";
+            }>;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Route parameters accepted by the react-to-post endpoint. */
+type ReactToPostParams = ParamsOf<typeof reactToPostContract>;
+/** Request body accepted by the react-to-post endpoint. */
+type ReactToPostBody = BodyOf<typeof reactToPostContract>;
+/** Empty response returned after reacting to a post. */
+type ReactToPostResponse = ResponseOf<typeof reactToPostContract>;
+/** Validates the post whose reaction the caller wants to remove. */
+declare const deleteReactionRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        postId: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Defines the empty response returned after deleting a reaction. */
+declare const deleteReactionResponseSchema: z.ZodVoid;
+/** Defines the contract for deleting the caller's reaction from a post. */
+declare const deleteReactionContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            postId: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodVoid;
+};
+/** Route parameters accepted by the delete-reaction endpoint. */
+type DeleteReactionParams = ParamsOf<typeof deleteReactionContract>;
+/** Empty response returned after deleting a reaction. */
+type DeleteReactionResponse = ResponseOf<typeof deleteReactionContract>;
+
+/** Validates the public profile fields shown in the social summary. */
+declare const socialSummaryParticipantPreviewSchema: z.ZodObject<{
+    userId: z.ZodString;
+    username: z.ZodString;
+    fullName: z.ZodString;
+    profilePicPath: z.ZodNullable<z.ZodString>;
+}, z.core.$strip>;
+/** Validates the authenticated user's social summary. */
+declare const getSocialSummaryResponseSchema: z.ZodObject<{
+    activeCrewCount: z.ZodNumber;
+    participantPreviews: z.ZodArray<z.ZodObject<{
+        userId: z.ZodString;
+        username: z.ZodString;
+        fullName: z.ZodString;
+        profilePicPath: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>>;
+}, z.core.$strip>;
+/** Defines the response contract for retrieving the authenticated user's social summary. */
+declare const getSocialSummaryContract: {
+    response: z.ZodObject<{
+        activeCrewCount: z.ZodNumber;
+        participantPreviews: z.ZodArray<z.ZodObject<{
+            userId: z.ZodString;
+            username: z.ZodString;
+            fullName: z.ZodString;
+            profilePicPath: z.ZodNullable<z.ZodString>;
+        }, z.core.$strip>>;
+    }, z.core.$strip>;
+};
+/** Social summary containing the caller's active crew total and up to three unique co-members. */
+type GetSocialSummaryResponse = ResponseOf<typeof getSocialSummaryContract>;
+
+/** Validates user-search text and cursor pagination. */
+declare const searchSocialUsersRequestSchema: z.ZodObject<{
+    query: z.ZodObject<{
+        search: z.ZodString;
+        limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+        cursor: z.ZodOptional<z.ZodString>;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates a page of public user search results. */
+declare const searchSocialUsersResponseSchema: z.ZodObject<{
+    users: z.ZodArray<z.ZodObject<{
+        userId: z.ZodString;
+        username: z.ZodString;
+        fullName: z.ZodString;
+        profilePicPath: z.ZodNullable<z.ZodString>;
+        createdAt: z.ZodString;
+    }, z.core.$strip>>;
+    nextCursor: z.ZodNullable<z.ZodString>;
+}, z.core.$strip>;
+/** Defines the social user-search request and response. */
+declare const searchSocialUsersContract: {
+    request: z.ZodObject<{
+        query: z.ZodObject<{
+            search: z.ZodString;
+            limit: z.ZodDefault<z.ZodCoercedNumber<unknown>>;
+            cursor: z.ZodOptional<z.ZodString>;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodObject<{
+        users: z.ZodArray<z.ZodObject<{
+            userId: z.ZodString;
+            username: z.ZodString;
+            fullName: z.ZodString;
+            profilePicPath: z.ZodNullable<z.ZodString>;
+            createdAt: z.ZodString;
+        }, z.core.$strip>>;
+        nextCursor: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>;
+};
+/** Query accepted by social user search. */
+type SearchSocialUsersQuery = QueryOf<typeof searchSocialUsersContract>;
+/** Response returned by social user search. */
+type SearchSocialUsersResponse = ResponseOf<typeof searchSocialUsersContract>;
+/** Validates the user ID used to retrieve one public profile. */
+declare const getSocialUserRequestSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        userId: z.ZodString;
+    }, z.core.$strip>;
+}, z.core.$strip>;
+/** Validates the public profile returned for one user. */
+declare const getSocialUserResponseSchema: z.ZodObject<{
+    userId: z.ZodString;
+    username: z.ZodString;
+    fullName: z.ZodString;
+    profilePicPath: z.ZodNullable<z.ZodString>;
+}, z.core.$strip>;
+/** Defines the get-social-user request and response. */
+declare const getSocialUserContract: {
+    request: z.ZodObject<{
+        params: z.ZodObject<{
+            userId: z.ZodString;
+        }, z.core.$strip>;
+    }, z.core.$strip>;
+    response: z.ZodObject<{
+        userId: z.ZodString;
+        username: z.ZodString;
+        fullName: z.ZodString;
+        profilePicPath: z.ZodNullable<z.ZodString>;
+    }, z.core.$strip>;
+};
+/** Route parameters accepted by the get-social-user endpoint. */
+type GetSocialUserParams = ParamsOf<typeof getSocialUserContract>;
+/** Public profile returned by the get-social-user endpoint. */
+type GetSocialUserResponse = ResponseOf<typeof getSocialUserContract>;
+
+export { type AddCommentBody, type AddCommentParams, type AddCommentResponse, type AnalyzeVideoPayloadDto, type AnalyzeVideoResultPayloadDto, type AppleOAuthBody, type BodyOf, type ConfirmEmailChangeQuery, type Contract, type CreateAerobicEntryBody, type CreateAerobicEntryQuery, type CreateCrewBody, type CreateCrewResponse, type CreatePasswordResetRequestBody, type CreatePostBody, type CreatePostResponse, type CreateUserBody, type CreateUserResponse, type CreateVerificationEmailBody, type CreateVideoUploadUrlBody, type CreateVideoUploadUrlResponse, type CreateWebSocketTicketBody, type CreateWebSocketTicketResponse, type CreateWorkoutSessionBody, type CreateWorkoutSessionResponse, type DeleteAerobicEntryParams, type DeleteAerobicEntryQuery, type DeleteAerobicEntryResponse, type DeleteCommentParams, type DeleteCommentResponse, type DeleteCrewParams, type DeleteCrewProfilePictureParams, type DeleteCrewProfilePictureResponse, type DeleteCrewResponse, type DeleteMessageParams, type DeleteMessageResponse, type DeletePostParams, type DeletePostResponse, type DeleteProfilePictureBody, type DeleteReactionParams, type DeleteReactionResponse, type EditCommentBody, type EditCommentParams, type EditCommentResponse, type EnqueueAnalyzeVideoParamsDto, type GetAerobicHistoryQuery, type GetAerobicHistoryResponse, type GetCrewParams, type GetCrewResponse, type GetCurrentUserResponse, type GetExerciseHistoryQuery, type GetExerciseHistoryResponse, type GetPersonalRecordsQuery, type GetPersonalRecordsResponse, type GetReminderSettingsResponse, type GetSocialSummaryResponse, type GetSocialUserParams, type GetSocialUserResponse, type GetVerificationStatusQuery, type GetWorkoutHistoryQuery, type GetWorkoutHistoryResponse, type GetWorkoutPlanQuery, type GetWorkoutPlanResponse, type GetWorkoutSchedulesResponse, type GetWorkoutStatisticsResponse, type GoogleOAuthBody, type InviteCrewUserBody, type InviteCrewUserParams, type InviteCrewUserResponse, type LeaveCrewParams, type LeaveCrewResponse, type ListCrewInvitationsResponse, type ListCrewParticipantsParams, type ListCrewParticipantsQuery, type ListCrewParticipantsResponse, type ListCrewPostsParams, type ListCrewPostsQuery, type ListCrewPostsResponse, type ListCrewsQuery, type ListCrewsResponse, type ListExercisesResponse, type ListMessagesQuery, type ListMessagesResponse, type ListMyCrewsQuery, type ListMyCrewsResponse, type ListPendingCrewJoinRequestsParams, type ListPendingCrewJoinRequestsResponse, type ListPostCommentsParams, type ListPostCommentsQuery, type ListPostCommentsResponse, type ListPostReactionsParams, type ListPostReactionsQuery, type ListPostReactionsResponse, type ListVisiblePostsQuery, type ListVisiblePostsResponse, type LoginRequestBody, type LoginResponse, type LogoutResponse, type MarkMessageAsReadParams, type MarkMessageAsReadResponse, type OAuthLoginResponse, type ParamsOf, type QueryOf, type ReactToPostBody, type ReactToPostParams, type ReactToPostResponse, type RefreshTokenResponse, type ReplaceCrewProfilePictureParams, type ReplaceCrewProfilePictureResponse, type ReplaceProfilePictureResponse, type ReplacePushTokenBody, type ReplaceWorkoutPlanBody, type ReplaceWorkoutPlanResponse, type ReplaceWorkoutSchedulesBody, type ReplaceWorkoutSchedulesResponse, type RequestOf, type RequestSchema, type RequestToJoinCrewParams, type RequestToJoinCrewResponse, type ResetPasswordBody, type ResetPasswordQuery, type ResetPasswordResponse, type ResponseOf, type SearchSocialUsersQuery, type SearchSocialUsersResponse, type SquatRepetitionDto, type UpdateAerobicEntryBody, type UpdateAerobicEntryParams, type UpdateAerobicEntryQuery, type UpdateAerobicEntryResponse, type UpdateCrewBody, type UpdateCrewParams, type UpdateCrewParticipationRequestStatusBody, type UpdateCrewParticipationRequestStatusParams, type UpdateCrewParticipationRequestStatusResponse, type UpdateCrewResponse, type UpdateCurrentUserBody, type UpdateCurrentUserResponse, type UpdatePostBody, type UpdatePostParams, type UpdatePostResponse, type UpdateReminderTimeZoneBody, type UpdateReminderTimeZoneResponse, type UpdateUnverifiedAccountEmailBody, type UpsertReminderSettingsBody, type UpsertReminderSettingsResponse, type UserDataResponse, type VerifyEmailQuery, addCommentContract, addCommentRequestSchema, addCommentResponseSchema, analyzeVideoPayloadDtoSchema, analyzeVideoResultPayloadDtoSchema, appleOAuthContract, appleOAuthRequestSchema, confirmEmailChangeContract, confirmEmailChangeRequestSchema, createAerobicEntryContract, createAerobicEntryRequestSchema, createAerobicEntryResponseSchema, createCrewContract, createCrewRequestSchema, createCrewResponseSchema, createPasswordResetRequestContract, createPasswordResetRequestSchema, createPostContract, createPostRequestSchema, createPostResponseSchema, createUserContract, createUserRequestSchema, createUserResponseSchema, createUserUserSchema, createVerificationEmailContract, createVerificationEmailRequestSchema, createVideoUploadUrlContract, createVideoUploadUrlRequestSchema, createVideoUploadUrlResponseSchema, createWebSocketTicketContract, createWebSocketTicketRequestSchema, createWebSocketTicketResponseSchema, createWorkoutSessionContract, createWorkoutSessionRequestSchema, createWorkoutSessionResponseSchema, deleteAerobicEntryContract, deleteAerobicEntryRequestSchema, deleteCommentContract, deleteCommentRequestSchema, deleteCommentResponseSchema, deleteCrewContract, deleteCrewProfilePictureContract, deleteCrewProfilePictureRequestSchema, deleteCrewRequestSchema, deleteCrewResponseSchema, deleteMessageContract, deleteMessageRequestSchema, deleteMessageResponseSchema, deletePostContract, deletePostRequestSchema, deletePostResponseSchema, deleteProfilePictureContract, deleteProfilePictureRequestSchema, deleteReactionContract, deleteReactionRequestSchema, deleteReactionResponseSchema, editCommentContract, editCommentRequestSchema, editCommentResponseSchema, enqueueAnalyzeVideoParamsDtoSchema, getAerobicHistoryContract, getAerobicHistoryRequestSchema, getAerobicHistoryResponseSchema, getCrewContract, getCrewRequestSchema, getCrewResponseSchema, getCurrentUserContract, getCurrentUserResponseSchema, getExerciseHistoryContract, getExerciseHistoryRequestSchema, getExerciseHistoryResponseSchema, getPersonalRecordsContract, getPersonalRecordsRequestSchema, getPersonalRecordsResponseSchema, getReminderSettingsContract, getReminderSettingsResponseSchema, getSocialSummaryContract, getSocialSummaryResponseSchema, getSocialUserContract, getSocialUserRequestSchema, getSocialUserResponseSchema, getVerificationStatusContract, getVerificationStatusRequestSchema, getWorkoutHistoryContract, getWorkoutHistoryRequestSchema, getWorkoutHistoryResponseSchema, getWorkoutPlanContract, getWorkoutPlanRequestSchema, getWorkoutPlanResponseSchema, getWorkoutSchedulesContract, getWorkoutSchedulesResponseSchema, getWorkoutStatisticsContract, getWorkoutStatisticsResponseSchema, googleOAuthContract, googleOAuthRequestSchema, inviteCrewUserContract, inviteCrewUserRequestSchema, leaveCrewContract, leaveCrewRequestSchema, leaveCrewResponseSchema, listCrewInvitationsContract, listCrewInvitationsRequestSchema, listCrewInvitationsResponseSchema, listCrewParticipantsContract, listCrewParticipantsRequestSchema, listCrewParticipantsResponseSchema, listCrewPostsContract, listCrewPostsRequestSchema, listCrewPostsResponseSchema, listCrewsContract, listCrewsRequestSchema, listCrewsResponseSchema, listExercisesContract, listExercisesResponseSchema, listMessagesContract, listMessagesRequestSchema, listMessagesResponseSchema, listMyCrewsContract, listMyCrewsRequestSchema, listMyCrewsResponseSchema, listPendingCrewJoinRequestsContract, listPendingCrewJoinRequestsRequestSchema, listPendingCrewJoinRequestsResponseSchema, listPostCommentsContract, listPostCommentsRequestSchema, listPostCommentsResponseSchema, listPostReactionsContract, listPostReactionsRequestSchema, listPostReactionsResponseSchema, listVisiblePostsContract, listVisiblePostsRequestSchema, listVisiblePostsResponseSchema, loginContract, loginRequestSchema, loginResponseSchema, logoutContract, logoutResponseSchema, markMessageAsReadContract, markMessageAsReadRequestSchema, markMessageAsReadResponseSchema, oAuthLoginContract, oAuthLoginResponseSchema, proceedLoginResponseSchema, reactToPostContract, reactToPostRequestSchema, reactToPostResponseSchema, refreshTokenContract, refreshTokenResponseSchema, replaceCrewProfilePictureContract, replaceCrewProfilePictureRequestSchema, replaceCrewProfilePictureResponseSchema, replaceProfilePictureContract, replaceProfilePictureResponseSchema, replacePushTokenContract, replacePushTokenRequestSchema, replaceWorkoutPlanContract, replaceWorkoutPlanRequestSchema, replaceWorkoutPlanResponseSchema, replaceWorkoutSchedulesContract, replaceWorkoutSchedulesRequestSchema, requestToJoinCrewContract, requestToJoinCrewRequestSchema, resetPasswordContract, resetPasswordRequestSchema, resetPasswordResponseSchema, searchSocialUsersContract, searchSocialUsersRequestSchema, searchSocialUsersResponseSchema, serializedDateSchema, socialSummaryParticipantPreviewSchema, squatRepetitionDtoSchema, timezoneSchema, updateAerobicEntryContract, updateAerobicEntryRequestSchema, updateCrewContract, updateCrewParticipationRequestStatusContract, updateCrewParticipationRequestStatusRequestSchema, updateCrewRequestSchema, updateCrewResponseSchema, updateCurrentUserContract, updateCurrentUserRequestSchema, updateCurrentUserResponseSchema, updatePostContract, updatePostRequestSchema, updatePostResponseSchema, updateReminderTimeZoneContract, updateReminderTimeZoneRequestSchema, updateUnverifiedAccountEmailContract, updateUnverifiedAccountEmailRequestSchema, upsertReminderSettingsContract, upsertReminderSettingsRequestSchema, userDataContract, userDataResponseSchema, verifyEmailContract, verifyEmailRequestSchema };

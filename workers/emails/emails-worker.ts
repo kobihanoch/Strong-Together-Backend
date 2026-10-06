@@ -1,8 +1,8 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { createLogger } from '../../src/infrastructure/logger';
-import { MailerService } from '../../src/infrastructure/mailer/mailer.service';
-import { EmailsQueueService } from '../../src/infrastructure/queues/emails/emails-queue';
-import { captureWorkerException } from '../../src/infrastructure/sentry';
+import { createLogger } from '../../src/infrastructure/capabilities/observability/logger';
+import { MailerService } from '../../src/infrastructure/capabilities/mailer/mailer.service';
+import { EmailsQueueService } from '../../src/infrastructure/capabilities/queues/emails/emails-queue';
+import { captureWorkerException } from '../../src/infrastructure/capabilities/observability/sentry';
 
 const logger = createLogger('worker:emails', {
   queue: 'emailsQueue',
@@ -59,10 +59,7 @@ export class EmailsWorkerService implements OnModuleInit, OnModuleDestroy {
               queue: 'emailsQueue',
             });
             const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
-            jobLogger.error(
-              { err: e, event: 'job.failed', durationMs: Number(durationMs.toFixed(2)), sentryEventId },
-              'Failed to send email',
-            );
+            jobLogger.error({ err: e, event: 'job.failed', durationMs: Number(durationMs.toFixed(2)), sentryEventId }, 'Failed to send email');
           }
           throw e;
         }

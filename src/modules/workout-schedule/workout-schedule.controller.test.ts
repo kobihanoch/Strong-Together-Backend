@@ -98,12 +98,16 @@ describe('WorkoutScheduleController', () => {
     expect(response.body).toEqual({ schedules: [] });
   });
 
-  it('PUT rejects malformed, duplicate, and another user\'s schedule entries without replacing existing rows', async () => {
+  it("PUT rejects malformed, duplicate, and another user's schedule entries without replacing existing rows", async () => {
     const user = await scheduledWorkoutUser('schedule_invalid');
     const other = await scheduledWorkoutUser('schedule_other');
     const headers = authHeaders(user.accessToken);
     const original = { workoutSplitId: user.pushSplitId, dayOfWeek: 1, startTime: '08:00' };
-    await request(app.getHttpServer()).put('/api/workout-schedules').set(headers).send({ schedules: [original] }).expect(204);
+    await request(app.getHttpServer())
+      .put('/api/workout-schedules')
+      .set(headers)
+      .send({ schedules: [original] })
+      .expect(204);
 
     const malformedResponses = await Promise.all([
       request(app.getHttpServer()).put('/api/workout-schedules').set(headers).send({}),
@@ -133,10 +137,7 @@ describe('WorkoutScheduleController', () => {
 
   it('GET and PUT reject unauthenticated requests', async () => {
     const getResponse = await request(app.getHttpServer()).get('/api/workout-schedules').set('x-app-version', '4.5.0');
-    const putResponse = await request(app.getHttpServer())
-      .put('/api/workout-schedules')
-      .set('x-app-version', '4.5.0')
-      .send({ schedules: [] });
+    const putResponse = await request(app.getHttpServer()).put('/api/workout-schedules').set('x-app-version', '4.5.0').send({ schedules: [] });
 
     expect(getResponse.status).toBe(401);
     expect(putResponse.status).toBe(401);

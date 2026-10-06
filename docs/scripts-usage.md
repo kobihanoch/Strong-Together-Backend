@@ -53,32 +53,32 @@ explicit alias for the same migrate-and-seed setup flow.
 
 ## What To Run When
 
-| Situation | Run |
-| --- | --- |
-| Start normal local development | `npm run orch:dev` |
-| First setup or rebuild dev DB with seeds | `npm run db:dev:start` |
-| Apply any newly added dev seed files | `npm run db:dev:seed` |
-| Apply new migrations without reseeding | `npm run db:dev:migrate` |
-| Run all tests once | `npm test` |
-| Run one domain test suite from scratch | `npm run test:auth`, `npm run test:workouts`, etc. |
-| Keep test infra up and rerun exact files | `npm run test:prepare`, then `npm run test:run:*` |
-| Create a new DB migration | `npm run db:migrate:diff -- <migration_name>` |
-| Apply migrations to production pipeline | `npm run db:prod:migrate` |
-| Regenerate database ERD SVGs | `npm run docs:db-diagrams` |
+| Situation                                | Run                                                |
+| ---------------------------------------- | -------------------------------------------------- |
+| Start normal local development           | `npm run orch:dev`                                 |
+| First setup or rebuild dev DB with seeds | `npm run db:dev:start`                             |
+| Apply any newly added dev seed files     | `npm run db:dev:seed`                              |
+| Apply new migrations without reseeding   | `npm run db:dev:migrate`                           |
+| Run all tests once                       | `npm test`                                         |
+| Run one domain test suite from scratch   | `npm run test:auth`, `npm run test:workouts`, etc. |
+| Keep test infra up and rerun exact files | `npm run test:prepare`, then `npm run test:run:*`  |
+| Create a new DB migration                | `npm run db:migrate:diff -- <migration_name>`      |
+| Apply migrations to production pipeline  | `npm run db:prod:migrate`                          |
+| Regenerate database ERD SVGs             | `npm run docs:db-diagrams`                         |
 
 ## Local Services
 
 Development stack:
 
-| Service | Purpose |
-| --- | --- |
-| `main-server` | Nest API |
-| `background-workers` | email and push workers |
-| `python-service` | video-analysis worker |
+| Service                | Purpose                                         |
+| ---------------------- | ----------------------------------------------- |
+| `main-server`          | Nest API                                        |
+| `background-workers`   | email and push workers                          |
+| `python-service`       | video-analysis worker                           |
 | `postgres_drizzle_dev` | Drizzle-managed dev database (`localhost:5435`) |
-| `redis` | cache, Redis Pub/Sub, Bull queues |
-| `localstack` | persisted local S3/SQS in development |
-| `maildev` | local email inbox |
+| `redis`                | cache, Redis Pub/Sub, Bull queues               |
+| `localstack`           | persisted local S3/SQS in development           |
+| `maildev`              | local email inbox                               |
 
 Useful local URLs:
 
@@ -128,17 +128,16 @@ npm run test:env:down
 ### Create a migration
 
 1. Start the Drizzle dev database.
-2. Change the TypeScript schema under `src/infrastructure/db/schema/drizzle`.
+2. Change the TypeScript schema under `src/infrastructure/persistence/schema/drizzle`.
 3. Generate the Drizzle diff:
 
 ```bash
 npm run db:migrate:diff -- add_feature_name
 ```
 
-4. Review the generated SQL in `src/infrastructure/db/schema/drizzle-migrations`.
+4. Review the generated SQL in `src/infrastructure/persistence/schema/migrations`.
 
-Drizzle Kit generates table and policy diffs, but it does not fully model PostgreSQL routines and detailed privilege boundaries. When a change includes `SECURITY DEFINER` functions or role grants, add and review those statements in the generated migration. Grant function execution explicitly and keep runtime roles without direct table access unless the documented RLS model requires it.
-5. Apply locally:
+Drizzle Kit generates table and policy diffs, but it does not fully model PostgreSQL routines and detailed privilege boundaries. When a change includes `SECURITY DEFINER` functions or role grants, add and review those statements in the generated migration. Grant function execution explicitly and keep runtime roles without direct table access unless the documented RLS model requires it. 5. Apply locally:
 
 ```bash
 npm run db:dev:migrate

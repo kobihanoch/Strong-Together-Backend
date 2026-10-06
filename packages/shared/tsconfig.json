@@ -7,5 +7,5 @@
     "noEmit": true,
     "rootDir": "../.."
   },
-  "include": ["src/**/*.ts", "../../src/infrastructure/db/schema/drizzle/**/*.ts"]
+  "include": ["src/**/*.ts", "../../src/infrastructure/persistence/schema/drizzle/**/*.ts"]
 }

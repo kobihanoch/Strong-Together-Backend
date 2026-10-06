@@ -1,8 +1,17 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import type { Response } from 'express';
-import { createLogger } from '../../infrastructure/logger';
-import { captureHttpException } from '../../infrastructure/sentry';
+import { createLogger } from '../../infrastructure/capabilities/observability/logger';
+import { captureHttpException } from '../../infrastructure/capabilities/observability/sentry';
 import type { AppRequest } from '../types/express';
+import {
+  ApplicationConflictError,
+  ApplicationForbiddenError,
+  ApplicationNotFoundError,
+  ApplicationServiceUnavailableError,
+  ApplicationUnauthorizedError,
+  ApplicationValidationError,
+} from '../application/errors/application.errors';
+import { DomainConflictError, DomainNotFoundError, DomainValidationError } from '../domain/errors/domain.errors';
 
 const logger = createLogger('filter:error-handler');
 
@@ -16,10 +25,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     const requestLogger = req.logger || logger;
 
-    const statusCode =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : this.getStatusCodeFromUnknownError(exception) || HttpStatus.INTERNAL_SERVER_ERROR;
+    const statusCode = exception instanceof HttpException ? exception.getStatus() : this.getApplicationErrorStatus(exception);
 
     const message =
       exception instanceof HttpException
@@ -48,17 +54,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     });
   }
 
-  private getStatusCodeFromUnknownError(exception: unknown): number | undefined {
-    if (
-      typeof exception === 'object' &&
-      exception !== null &&
-      'statusCode' in exception &&
-      typeof (exception as { statusCode?: unknown }).statusCode === 'number'
-    ) {
-      return (exception as { statusCode: number }).statusCode;
-    }
-
-    return undefined;
+  private getApplicationErrorStatus(exception: unknown): HttpStatus {
+    if (exception instanceof ApplicationNotFoundError || exception instanceof DomainNotFoundError) return HttpStatus.NOT_FOUND;
+    if (exception instanceof ApplicationValidationError || exception instanceof DomainValidationError) return HttpStatus.BAD_REQUEST;
+    if (exception instanceof ApplicationConflictError || exception instanceof DomainConflictError) return HttpStatus.CONFLICT;
+    if (exception instanceof ApplicationUnauthorizedError) return HttpStatus.UNAUTHORIZED;
+    if (exception instanceof ApplicationForbiddenError) return HttpStatus.FORBIDDEN;
+    if (exception instanceof ApplicationServiceUnavailableError) return HttpStatus.SERVICE_UNAVAILABLE;
+    return HttpStatus.INTERNAL_SERVER_ERROR;
   }
 
   private getMessageFromUnknownError(exception: unknown): string | undefined {

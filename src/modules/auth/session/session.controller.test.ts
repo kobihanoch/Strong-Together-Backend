@@ -11,6 +11,7 @@ import {
   getUserLastLoginByUsername,
   getUserSessionStateByUsername,
   setUserPushTokenByUsername,
+  setUserVerificationByUsername,
 } from '../../../common/tests/helpers/db';
 import { authHeaders, logoutHeaders, refreshHeaders } from '../../../common/tests/helpers/auth';
 import { authConfig } from '../../../config/auth.config';
@@ -72,7 +73,7 @@ describe('SessionController', () => {
       const afterLogin = await getUserSessionStateByUsername(user.username);
       expect(afterLogin?.tokenVersion).toBe((beforeLogin?.tokenVersion ?? 0) + 1);
       expect(afterLogin?.lastLogin).toBeInstanceOf(Date);
-      expect(tokenVersion(response.body.accessToken)).toBe(afterLogin?.tokenVersion);
+      expect(jwt.decode(response.body.accessToken)).not.toHaveProperty('tokenVer');
       expect(tokenVersion(response.body.refreshToken)).toBe(afterLogin?.tokenVersion);
 
       const { lastLogin, databaseNow } = await getUserLastLoginByUsername(user.username);
@@ -134,6 +135,26 @@ describe('SessionController', () => {
   });
 
   describe('POST /api/auth/refresh', () => {
+    it('accepts legacy access and refresh tokens during the compatibility window', async () => {
+      const user = await createSessionUser();
+      const loginResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+        identifier: user.username,
+        password: user.password,
+      });
+      const currentTokenVersion = tokenVersion(loginResponse.body.refreshToken);
+      const legacyAccessToken = jwt.sign({ id: user.userId, role: 'User' }, authConfig.jwtAccessSecret, { expiresIn: '5m' });
+      const legacyRefreshToken = jwt.sign({ id: user.userId, role: 'User', tokenVer: currentTokenVersion }, authConfig.jwtRefreshSecret, {
+        expiresIn: '14d',
+      });
+
+      const protectedResponse = await request(app.getHttpServer()).get('/api/users/me').set(authHeaders(legacyAccessToken));
+      expect(protectedResponse.status).toBe(200);
+
+      const refreshResponse = await request(app.getHttpServer()).post('/api/auth/refresh').set(refreshHeaders(legacyRefreshToken));
+      expect(refreshResponse.status).toBe(200);
+      expectSchema(refreshTokenResponseSchema, refreshResponse.body);
+    });
+
     it('rotates tokens and invalidates the previous refresh token', async () => {
       const user = await createSessionUser();
       const loginResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
@@ -154,12 +175,27 @@ describe('SessionController', () => {
 
       const afterRefresh = await getUserSessionStateByUsername(user.username);
       expect(afterRefresh?.tokenVersion).toBe((beforeRefresh?.tokenVersion ?? 0) + 1);
-      expect(tokenVersion(refreshResponse.body.accessToken)).toBe(afterRefresh?.tokenVersion);
+      expect(jwt.decode(refreshResponse.body.accessToken)).not.toHaveProperty('tokenVer');
       expect(tokenVersion(refreshResponse.body.refreshToken)).toBe(afterRefresh?.tokenVersion);
 
       const staleRefreshResponse = await request(app.getHttpServer()).post('/api/auth/refresh').set(refreshHeaders(loginResponse.body.refreshToken));
       expect(staleRefreshResponse.status).toBe(401);
       expect(staleRefreshResponse.body.message).toBe('New login required');
+    });
+
+    it('rejects refresh when the account is no longer verified', async () => {
+      const user = await createSessionUser();
+      const loginResponse = await request(app.getHttpServer()).post('/api/auth/login').set('x-app-version', '4.5.0').send({
+        identifier: user.username,
+        password: user.password,
+      });
+
+      await setUserVerificationByUsername(user.username, false);
+
+      const refreshResponse = await request(app.getHttpServer()).post('/api/auth/refresh').set(refreshHeaders(loginResponse.body.refreshToken));
+
+      expect(refreshResponse.status).toBe(401);
+      expect(refreshResponse.body.message).toBe('A verification email is pending');
     });
 
     it('rejects missing or invalid refresh tokens with 401', async () => {
@@ -174,7 +210,7 @@ describe('SessionController', () => {
   });
 
   describe('POST /api/auth/logout', () => {
-    it('logs out, clears push token, and invalidates the old access token', async () => {
+    it('logs out, clears push token, and leaves the short-lived access token valid', async () => {
       const user = await createSessionUser();
       await setUserPushTokenByUsername(user.username, 'ExponentPushToken[session-test]');
 
@@ -198,8 +234,7 @@ describe('SessionController', () => {
       expect(afterLogout?.tokenVersion).toBe((beforeLogout?.tokenVersion ?? 0) + 1);
 
       const protectedResponse = await request(app.getHttpServer()).get('/api/users/me').set(authHeaders(loginResponse.body.accessToken));
-      expect(protectedResponse.status).toBe(401);
-      expect(protectedResponse.body.message).toBe('New login required');
+      expect(protectedResponse.status).toBe(200);
     });
 
     it('logs out without an access token when the refresh token is valid', async () => {
@@ -226,7 +261,13 @@ describe('SessionController', () => {
     it('accepts a recently expired refresh token for notification cleanup', async () => {
       const user = await createSessionUser();
       await setUserPushTokenByUsername(user.username, 'ExponentPushToken[expired-refresh-logout]');
-      const expiredRefreshToken = jwt.sign({ id: user.userId, role: 'user', tokenVer: 1 }, authConfig.jwtRefreshSecret, { expiresIn: -1 });
+      const expiredRefreshToken = jwt.sign({ id: user.userId, role: 'user', typ: 'refresh', tokenVer: 1 }, authConfig.jwtRefreshSecret, {
+        algorithm: 'HS256',
+        issuer: authConfig.jwtIssuer,
+        audience: authConfig.jwtRefreshAudience,
+        subject: user.userId,
+        expiresIn: -1,
+      });
 
       const response = await request(app.getHttpServer()).post('/api/auth/logout').set(refreshHeaders(expiredRefreshToken));
 

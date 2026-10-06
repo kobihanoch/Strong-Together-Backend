@@ -36,6 +36,7 @@ DATABASE_URL=postgres://app_runtime_user:<local-runtime-password>@localhost:5435
 DRIZZLE_DATABASE_URL=postgres://postgres:postgres@localhost:5435/strongtogether_drizzle_dev
 
 # JWT and auth secrets
+CRON_JWT_SECRET=replace-with-local-cron-secret
 JWT_ACCESS_SECRET=replace-with-local-access-secret
 JWT_REFRESH_SECRET=replace-with-local-refresh-secret
 JWT_VERIFY_SECRET=replace-with-local-verify-secret
@@ -113,6 +114,7 @@ DATABASE_URL=postgres://app_runtime_user:app_runtime_test@127.0.0.1:5433/strongt
 DRIZZLE_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5433/strongtogether_test
 
 JWT_ACCESS_SECRET=replace-with-test-access-secret
+CRON_JWT_SECRET=replace-with-test-cron-secret
 JWT_REFRESH_SECRET=replace-with-test-refresh-secret
 JWT_VERIFY_SECRET=replace-with-test-verify-secret
 JWT_FORGOT_PASSWORD_SECRET=replace-with-test-forgot-password-secret
@@ -169,19 +171,19 @@ Production secrets should be generated uniquely per environment. Do not reuse lo
 
 ## Variable Groups
 
-| Group | Variables |
-| --- | --- |
-| Runtime | `NODE_ENV`, `PORT`, `PUBLIC_BASE_URL`, `PUBLIC_BASE_URL_V2`, `PUBLIC_BASE_URL_RENDER_DEFAULT`, `PRIVATE_BASE_URL_DEV`, `MIN_APP_VERSION`, `SYSTEM_USER_ID` |
-| Feature flags | `DPOP_ENABLED`, `CACHE_ENABLED`, `ENABLE_SOCKET_REDIS_ADAPTER` |
-| Database | `DATABASE_URL` (non-superuser application runtime), `DRIZZLE_DATABASE_URL` (local/test admin tooling), `PROD_DATABASE_URL` (production migration tooling) |
-| Auth | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_VERIFY_SECRET`, `JWT_FORGOT_PASSWORD_SECRET`, `CHANGE_EMAIL_SECRET`, `JWT_SOCKET_SECRET`, `APPLE_ALLOWED_AUDS` |
-| Redis | `REDIS_HOST`, `REDIS_PORT`, `REDIS_URL`, `REDIS_USERNAME`, `REDIS_PASSWORD` |
-| Cache configuration | `CACHE_VERSION`, `CACHE_TTL_TRACKING_SEC`, `CACHE_TTL_PLAN_SEC`, `CACHE_TTL_ANALYTICS_SEC`, `CACHE_TTL_AEROBICS_SEC` |
-| AWS / LocalStack | `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_BUCKET_NAME`, `AWS_S3_ENDPOINT_URL`, `AWS_S3_PRESIGN_ENDPOINT_URL`, `AWS_SQS_ENDPOINT_URL`, `AWS_ANALYSIS_SQS_QUEUE_URL` |
-| Supabase-compatible storage | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE`, `BUCKET_NAME` |
-| Email | `RESEND_API_KEY`, `MAILDEV_API_URL`, `MAILDEV_SMTP_HOST`, `MAILDEV_SMTP_PORT` |
-| Observability | `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`, `SENTRY_TRACES_SAMPLE_RATE`, `SENTRY_PROFILES_SAMPLE_RATE`, `LOG_SERVICE_NAME`, `LOG_LEVEL` |
-| Python service | `ENABLE_DEBUG_WINDOW` |
+| Group                       | Variables                                                                                                                                                                                 |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime                     | `NODE_ENV`, `PORT`, `PUBLIC_BASE_URL`, `PUBLIC_BASE_URL_V2`, `PUBLIC_BASE_URL_RENDER_DEFAULT`, `PRIVATE_BASE_URL_DEV`, `MIN_APP_VERSION`, `SYSTEM_USER_ID`                                |
+| Feature flags               | `DPOP_ENABLED`, `CACHE_ENABLED`, `ENABLE_SOCKET_REDIS_ADAPTER`                                                                                                                            |
+| Database                    | `DATABASE_URL` (non-superuser application runtime), `DRIZZLE_DATABASE_URL` (local/test admin tooling), `PROD_DATABASE_URL` (production migration tooling)                                 |
+| Auth                        | `CRON_JWT_SECRET`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `JWT_VERIFY_SECRET`, `JWT_FORGOT_PASSWORD_SECRET`, `CHANGE_EMAIL_SECRET`, `JWT_SOCKET_SECRET`, `APPLE_ALLOWED_AUDS`         |
+| Redis                       | `REDIS_HOST`, `REDIS_PORT`, `REDIS_URL`, `REDIS_USERNAME`, `REDIS_PASSWORD`                                                                                                               |
+| Cache configuration         | `CACHE_VERSION`, `CACHE_TTL_TRACKING_SEC`, `CACHE_TTL_PLAN_SEC`, `CACHE_TTL_ANALYTICS_SEC`, `CACHE_TTL_AEROBICS_SEC`                                                                      |
+| AWS / LocalStack            | `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_BUCKET_NAME`, `AWS_S3_ENDPOINT_URL`, `AWS_S3_PRESIGN_ENDPOINT_URL`, `AWS_SQS_ENDPOINT_URL`, `AWS_ANALYSIS_SQS_QUEUE_URL` |
+| Supabase-compatible storage | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE`, `BUCKET_NAME`                                                                                                                                    |
+| Email                       | `RESEND_API_KEY`, `MAILDEV_API_URL`, `MAILDEV_SMTP_HOST`, `MAILDEV_SMTP_PORT`                                                                                                             |
+| Observability               | `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`, `SENTRY_TRACES_SAMPLE_RATE`, `SENTRY_PROFILES_SAMPLE_RATE`, `LOG_SERVICE_NAME`, `LOG_LEVEL`                                         |
+| Python service              | `ENABLE_DEBUG_WINDOW`                                                                                                                                                                     |
 
 ## Safety Rules
 
