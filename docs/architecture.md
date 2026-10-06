@@ -14,6 +14,31 @@ The backend combines a NestJS API, PostgreSQL, Redis, Socket.IO, Node workers, a
 
 The backend is a modular monolith with explicit asynchronous boundaries. Features follow the inward dependency model `Presentation -> Application -> Domain`, while infrastructure implements application-owned ports.
 
+![Strong Together server architecture](./media/serverarch.png)
+
+### Numbered Request Flow In The Diagram
+
+The numbered path is the normal synchronous HTTP flow. The email worker on the right is an example of work deliberately moved beyond that request boundary.
+
+1. **HTTPS request enters the NestJS API.** The mobile client calls an `api/*` route over HTTPS. `src/app.ts` configures the common application edge: Helmet, CORS, the general rate limiter, request logging, bot filtering, and app-version checks.
+2. **Authentication, authorization, and schema validation protect the use case.** Route guards implement DPoP validation, JWT authentication, and role authorization. Controllers apply `ValidateRequestPipe` with the plain-Zod request schemas exported by `@strong-together/shared`. For example, `WorkoutScheduleController` uses `DpopGuard`, `AuthenticationGuard`, `AuthorizationGuard`, `@Roles('user')`, and `replaceWorkoutSchedulesRequestSchema`.
+3. **A presentation controller adapts HTTP into an application request.** Controllers extract validated request data and the authenticated user, construct a command or query, and contain no persistence or domain workflow. The controllers under each feature's `presentation/` directory are the concrete implementation of this boundary.
+4. **Nest CQRS dispatches to one handler.** `CqrsModule.forRoot()` installs the buses. Controllers send state-changing requests through `CommandBus` and reads through `QueryBus`; decorators such as `@CommandHandler` and `@QueryHandler` bind each message to its handler.
+5. **The application handler orchestrates the use case.** Command handlers perform writes and invoke domain entities/value objects to enforce business rules. Query handlers build read models through query ports. For example, `ReplaceWorkoutSchedulesHandler` creates a `WorkoutSchedule` domain entity and saves it through `WorkoutScheduleRepository`, while `GetWorkoutSchedulesHandler` reads through `WorkoutScheduleQueries`.
+6. **The Unit of Work owns the database boundary.** Application handlers depend on the `UnitOfWork` application port. Commands call `execute(userId, callback)` for a read-write RLS-aware PostgreSQL transaction; queries call `executeReadOnly(userId, callback)`, which is database-enforced as read-only. `afterCommit(callback)` defers cache changes and delivery side effects until the transaction commits. `PostgresUnitOfWork` is the adapter, and `DBService` supplies the transaction and request-scoped RLS context.
+7. **Application-owned ports isolate external systems.** Repository, query, cache, email queue, realtime publisher, and event interfaces live on the application side. Nest feature modules bind them to PostgreSQL/Drizzle, Redis, Bull, Socket.IO, and Nest event-emitter adapters. This is the project's Hexagonal Architecture seam: use cases depend on capability contracts rather than provider implementations.
+
+Email is the asynchronous example shown in the diagram. An application handler registers email enqueueing after commit; the Bull email queue is backed by Redis; the separate Node email worker consumes the job and calls `MailerService`, which selects Maildev in development/test and Resend outside those environments. Worker failures are retried according to the Bull job policy and reported through Pino and Sentry.
+
+### Diagram Scope And Accuracy
+
+The diagram accurately represents the implemented modular-monolith request path and its dependency direction. Two labels should be read as simplified architectural shorthand:
+
+- The box at number 2 groups several stages. Helmet, CORS, rate limiting, bot/version checks, and request logging run as application-edge middleware, while DPoP authentication, authentication, authorization, and Zod parsing run at the route boundary.
+- `Mailer Service Port` is conceptual in the current worker implementation. The worker injects the concrete infrastructure `MailerService` directly; it is not presently an application-owned abstract port. The Redis/Bull queue boundary and the Maildev/Resend provider selection are implemented as drawn.
+
+Observability is cross-cutting rather than a single numbered hop: Pino produces structured logs and Sentry captures errors and traces. Better Stack is a deployment-level log destination shown in the diagram; there is no Better Stack transport configured in the application code itself.
+
 ```mermaid
 flowchart TB
   subgraph actors["External actors"]
