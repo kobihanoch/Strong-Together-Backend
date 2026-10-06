@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [6.0.0-rc.0](https://github.com/kobihanoch/Strong-Together-Backend/compare/v5.0.2...v6.0.0-rc.0) (2026-10-06)
+
+
+### Features
+
+* **Social:** Added social DB schema and API ([7f36433](https://github.com/kobihanoch/Strong-Together-Backend/commit/7f3643330f185f6b8ff984538b09f3d19162338a))
+
+
+### Code Refactoring
+
+* **Cache:** Refactored cache behavior and code ([d0c40d0](https://github.com/kobihanoch/Strong-Together-Backend/commit/d0c40d0dcd48583d086d82f12dfce85378579c27))
+* **Codebase Architecture:** Refactored codebase arch. to Clean Architecture, using Hexagonal Architecture priniciples and implemeting DDD and CQRS ([ce4185a](https://github.com/kobihanoch/Strong-Together-Backend/commit/ce4185af6a4bc83245464be6076fb32e93fb3995))
+* **DB:** Created afterCommit for side effects running inside postgres transactions - to run after the transaction is closed. Made RLS tx interceptor global, and hardened JWTs. ([006fffc](https://github.com/kobihanoch/Strong-Together-Backend/commit/006fffc78b5835ec6ff789c1c03498d37f3f94c8))
+* **DB:** Refactored DB service ([c78e24a](https://github.com/kobihanoch/Strong-Together-Backend/commit/c78e24adbea3fbf09aaf2ae18903c8137b73cbaa))
+* Refactored AuthN guard to be stateless ([8ef2694](https://github.com/kobihanoch/Strong-Together-Backend/commit/8ef26941401970f2684f7bf100a84f0bdd641218))
+
 ### [5.0.2](https://github.com/kobihanoch/Strong-Together-Backend/compare/v5.0.1...v5.0.2) (2026-09-09)
 
 
